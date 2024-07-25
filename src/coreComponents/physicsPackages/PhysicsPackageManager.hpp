@@ -13,8 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_PHYSICSSOLVERMANAGER_HPP_
-#define GEOS_PHYSICSPACKAGES_PHYSICSSOLVERMANAGER_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_PHYSICSPACKAGEMANAGER_HPP_
+#define GEOS_PHYSICSPACKAGES_PHYSICSPACKAGEMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -27,13 +27,13 @@ namespace geos
 {
 class PhysicsPackageBase;
 
-class PhysicsSolverManager : public dataRepository::Group
+class PhysicsPackageManager : public dataRepository::Group
 {
 public:
-  PhysicsSolverManager( string const & name,
+  PhysicsPackageManager( string const & name,
                         Group * const parent );
 
-  virtual ~PhysicsSolverManager() override;
+  virtual ~PhysicsPackageManager() override;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
@@ -49,11 +49,11 @@ public:
   R1Tensor & gravityVector()       { return m_gravityVector; }
 
 private:
-  PhysicsSolverManager() = delete;
+  PhysicsPackageManager() = delete;
 
   R1Tensor m_gravityVector;
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSPACKAGES_PHYSICSSOLVERMANAGER_HPP_ */
+#endif /* GEOS_PHYSICSPACKAGES_PHYSICSPACKAGEMANAGER_HPP_ */

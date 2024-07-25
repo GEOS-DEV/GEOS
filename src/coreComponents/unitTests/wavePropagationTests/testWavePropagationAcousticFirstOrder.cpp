@@ -21,7 +21,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
 #include "physicsPackages/wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp"
 
@@ -181,7 +181,7 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
 {
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticFirstOrderWaveEquationSEM >( "acousticFirstOrderSolver" );
+  propagator = &state.getProblemManager().getPhysicsPackageManager().getGroup< AcousticFirstOrderWaveEquationSEM >( "acousticFirstOrderSolver" );
   real64 time_n = time;
   // run for 1s (20 steps)
   for( int i=0; i<20; i++ )

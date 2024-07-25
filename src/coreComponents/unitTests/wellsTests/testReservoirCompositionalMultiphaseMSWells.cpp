@@ -22,7 +22,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
@@ -472,7 +472,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoirAndWells<> >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< CompositionalMultiphaseReservoirAndWells<> >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

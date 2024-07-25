@@ -19,7 +19,7 @@
 
 #include "SolidMechanicsStateReset.hpp"
 
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -60,7 +60,7 @@ SolidMechanicsStateReset::~SolidMechanicsStateReset()
 void SolidMechanicsStateReset::postInputInitialization()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+  PhysicsPackageManager & physicsSolverManager = problemManager.getPhysicsPackageManager();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "Task {}: physics solver named {} not found",

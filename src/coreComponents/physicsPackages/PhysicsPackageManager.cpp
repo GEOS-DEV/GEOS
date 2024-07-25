@@ -14,10 +14,10 @@
  */
 
 /**
- * @file PhysicsSolverManager.cpp
+ * @file PhysicsPackageManager.cpp
  */
 
-#include "PhysicsSolverManager.hpp"
+#include "PhysicsPackageManager.hpp"
 
 #include "PhysicsPackageBase.hpp"
 
@@ -26,7 +26,7 @@ namespace geos
 
 using namespace dataRepository;
 
-PhysicsSolverManager::PhysicsSolverManager( string const & name,
+PhysicsPackageManager::PhysicsPackageManager( string const & name,
                                             Group * const parent ):
   Group( name, parent ),
   m_gravityVector( { 0.0, 0.0, -9.81 } )
@@ -39,12 +39,12 @@ PhysicsSolverManager::PhysicsSolverManager( string const & name,
     setDescription( "Gravity vector used in the physics solvers" );
 }
 
-PhysicsSolverManager::~PhysicsSolverManager()
+PhysicsPackageManager::~PhysicsPackageManager()
 {}
 
 
 //START_SPHINX_INCLUDE_00
-Group * PhysicsSolverManager::createChild( string const & childKey, string const & childName )
+Group * PhysicsPackageManager::createChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
   if( PhysicsPackageBase::CatalogInterface::hasKeyName( childKey ) )
@@ -57,7 +57,7 @@ Group * PhysicsSolverManager::createChild( string const & childKey, string const
 }
 
 
-void PhysicsSolverManager::expandObjectCatalogs()
+void PhysicsPackageManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from PhysicsPackageBase here
   for( auto & catalogIter: PhysicsPackageBase::getCatalog())

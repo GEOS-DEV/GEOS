@@ -44,7 +44,7 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/PhysicsPackageBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
@@ -79,7 +79,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   registerGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
-  m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
+  m_physicsSolverManager = &registerGroup< PhysicsPackageManager >( groupKeys.physicsSolverManager );
   m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 

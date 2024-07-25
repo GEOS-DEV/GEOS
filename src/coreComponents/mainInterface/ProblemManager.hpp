@@ -26,7 +26,7 @@
 namespace geos
 {
 
-class PhysicsSolverManager;
+class PhysicsPackageManager;
 class DomainPartition;
 class GeometricObjectManager;
 class FiniteElementDiscretization;
@@ -254,19 +254,19 @@ public:
   } groupKeys; ///< Child group viewKeys
 
   /**
-   * @brief Returns the PhysicsSolverManager
-   * @return Reference to the PhysicsSolverManager
+   * @brief Returns the PhysicsPackageManager
+   * @return Reference to the PhysicsPackageManager
    */
-  PhysicsSolverManager & getPhysicsSolverManager()
+  PhysicsPackageManager & getPhysicsPackageManager()
   {
     return *m_physicsSolverManager;
   }
 
   /**
-   * @brief Returns the PhysicsSolverManager
-   * @return Const reference to the PhysicsSolverManager
+   * @brief Returns the PhysicsPackageManager
+   * @return Const reference to the PhysicsPackageManager
    */
-  PhysicsSolverManager const & getPhysicsSolverManager() const
+  PhysicsPackageManager const & getPhysicsPackageManager() const
   {
     return *m_physicsSolverManager;
   }
@@ -370,8 +370,8 @@ private:
                             constitutive::ConstitutiveManager const & constitutiveManager,
                             map< std::tuple< string, string, string, string >, localIndex > const & regionQuadrature );
 
-  /// The PhysicsSolverManager
-  PhysicsSolverManager * m_physicsSolverManager;
+  /// The PhysicsPackageManager
+  PhysicsPackageManager * m_physicsSolverManager;
 
   /// The EventManager
   EventManager * m_eventManager;

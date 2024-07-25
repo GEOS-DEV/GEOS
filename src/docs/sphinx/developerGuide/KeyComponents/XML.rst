@@ -186,8 +186,8 @@ Now, when reading the XML file and encountering an "XmlNameOfMySolver" solver bl
 
 We saw that in the XML file, the new solver block appeared as child node of the XML block "Solvers".
 The internal construction mirrors this XML structure.
-Specifically, the new object of class ``CppNameOfMySolver`` is registered as a subgroup (to continue the analogy used so far, as a subfolder) of its parent ``Group``, the class ``PhysicsSolverManager`` (that has a ``catalogName`` "Solvers").
-To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is used.
+Specifically, the new object of class ``CppNameOfMySolver`` is registered as a subgroup (to continue the analogy used so far, as a subfolder) of its parent ``Group``, the class ``PhysicsPackageManager`` (that has a ``catalogName`` "Solvers").
+To do this, the method ``CreateChild`` of the ``PhysicsPackageManager`` class is used.
 
 
 .. code-block:: cpp
@@ -200,14 +200,14 @@ To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is 
     // hasKeyName = bool method to test if the childKey string is present in the Catalog
     // registerGroup = method to create a new instance of the solver and add it to the group tree
 
-.. literalinclude:: ../../../../coreComponents/physicsPackages/PhysicsSolverManager.cpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/PhysicsPackageManager.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: void
 
-*[Source: src/coreComponents/physicsPackages/PhysicsSolverManager.cpp]*
+*[Source: src/coreComponents/physicsPackages/PhysicsPackageManager.cpp]*
 
-In the code listing above, we see that in the ``PhysicsSolverManager`` class, the ``ObjectCatalog`` is searched to find the ``catalogName`` "CompositionalMultiphaseFlow" in the scope of the ``SolverBase`` class.
+In the code listing above, we see that in the ``PhysicsPackageManager`` class, the ``ObjectCatalog`` is searched to find the ``catalogName`` "CompositionalMultiphaseFlow" in the scope of the ``SolverBase`` class.
 Then, the factory function of the base class ``SolverBase`` is called.
 The ``catalogName`` (stored in ``childKey``) is passed as an argument of the factory function to ensure that it instantiates an object of the desired derived class.
 

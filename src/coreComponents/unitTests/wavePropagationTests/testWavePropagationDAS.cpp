@@ -21,7 +21,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
 #include "physicsPackages/wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.hpp"
 
@@ -174,7 +174,7 @@ TEST_F( ElasticWaveEquationSEMTest, SeismoTrace )
 {
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< ElasticWaveEquationSEM >( "elasticSolver" );
+  propagator = &state.getProblemManager().getPhysicsPackageManager().getGroup< ElasticWaveEquationSEM >( "elasticSolver" );
   real64 time_n = time;
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )

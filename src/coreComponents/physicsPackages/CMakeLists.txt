@@ -2,7 +2,7 @@
 set( physicsPackages_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
-     PhysicsSolverManager.hpp
+     PhysicsPackageManager.hpp
      PhysicsPackageBase.hpp
      PhysicsPackageBaseKernels.hpp
      SolverStatistics.hpp
@@ -13,7 +13,7 @@ set( physicsPackages_headers
 set( physicsPackages_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
-     PhysicsSolverManager.cpp
+     PhysicsPackageManager.cpp
      PhysicsPackageBase.cpp
      SolverStatistics.cpp )
 

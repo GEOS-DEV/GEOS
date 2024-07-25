@@ -19,7 +19,7 @@
 
 #include "PoromechanicsInitialization.hpp"
 
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsPackages/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsPackages/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
@@ -69,7 +69,7 @@ PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 postInputInitialization()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+  PhysicsPackageManager & physicsSolverManager = problemManager.getPhysicsPackageManager();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
                  GEOS_FMT( "{}: {} solver named {} not found",

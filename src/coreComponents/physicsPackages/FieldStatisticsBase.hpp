@@ -21,7 +21,7 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
 
 #include "events/tasks/TaskBase.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
@@ -85,7 +85,7 @@ protected:
   void postInputInitialization() override
   {
     ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-    PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+    PhysicsPackageManager & physicsSolverManager = problemManager.getPhysicsPackageManager();
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,

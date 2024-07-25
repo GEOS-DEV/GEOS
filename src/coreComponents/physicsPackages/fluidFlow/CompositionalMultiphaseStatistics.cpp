@@ -25,7 +25,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"

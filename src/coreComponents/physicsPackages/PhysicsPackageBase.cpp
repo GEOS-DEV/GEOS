@@ -14,7 +14,7 @@
  */
 
 #include "PhysicsPackageBase.hpp"
-#include "PhysicsSolverManager.hpp"
+#include "PhysicsPackageManager.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
@@ -1380,9 +1380,9 @@ Timestamp PhysicsPackageBase::getMeshModificationTimestamp( DomainPartition & do
 R1Tensor const PhysicsPackageBase::gravityVector() const
 {
   R1Tensor rval;
-  if( dynamicCast< PhysicsSolverManager const * >( &getParent() ) != nullptr )
+  if( dynamicCast< PhysicsPackageManager const * >( &getParent() ) != nullptr )
   {
-    rval = getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
+    rval = getParent().getReference< R1Tensor >( PhysicsPackageManager::viewKeyStruct::gravityVectorString() );
   }
   else
   {

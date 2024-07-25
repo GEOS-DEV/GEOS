@@ -615,11 +615,11 @@ public:
   void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
 
   /**
-   * @brief return the value of the gravity vector specified in PhysicsSolverManager
+   * @brief return the value of the gravity vector specified in PhysicsPackageManager
    * @return the value of the gravity vector
    *
    * @note if the solver is instantiated outside of a simulation (for instance for a unit test)
-   *       and therefore does not have a parent of type PhysicsSolverManager, this function returns
+   *       and therefore does not have a parent of type PhysicsPackageManager, this function returns
    *       {0.0,0.0,-9.81}
    */
   R1Tensor const gravityVector() const;

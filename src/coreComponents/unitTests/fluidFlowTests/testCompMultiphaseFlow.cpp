@@ -18,7 +18,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
@@ -216,7 +216,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

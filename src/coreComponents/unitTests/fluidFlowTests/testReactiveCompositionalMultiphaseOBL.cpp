@@ -15,7 +15,7 @@
 
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
@@ -477,7 +477,7 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
     removeFile( "obl_3comp_static.txt" );
 
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< ReactiveCompositionalMultiphaseOBL >( "compflow" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< ReactiveCompositionalMultiphaseOBL >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

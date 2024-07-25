@@ -22,7 +22,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseFVM.hpp"
@@ -346,7 +346,7 @@ protected:
 
   void SetUp() override
   {
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells<> >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< SinglePhaseReservoirAndWells<> >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

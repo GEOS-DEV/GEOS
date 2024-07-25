@@ -20,7 +20,7 @@
 #include "SinglePhaseStatistics.hpp"
 
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
