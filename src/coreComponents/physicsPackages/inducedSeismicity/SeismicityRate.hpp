@@ -13,8 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
-#define GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
+#ifndef GEOS_PHYSICSPACKAGES_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
+#define GEOS_PHYSICSPACKAGES_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
@@ -159,4 +159,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP */
+#endif /* GEOS_PHYSICSPACKAGES_INDUCED_SEISMICITY_SEISMICITYRATE_HPP */

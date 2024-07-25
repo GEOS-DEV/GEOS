@@ -17,8 +17,8 @@
  * @file HydrofractureSolver.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
-#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
+#define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
@@ -262,4 +262,4 @@ ENUM_STRINGS( HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_ */
+#endif /* GEOS_PHYSICSPACKAGES_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_ */

@@ -13,8 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_SEISMICITYRATEKERNELS_HPP_
-#define GEOS_PHYSICSSOLVERS_SEISMICITYRATEKERNELS_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_SEISMICITYRATEKERNELS_HPP_
+#define GEOS_PHYSICSPACKAGES_SEISMICITYRATEKERNELS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -199,4 +199,4 @@ createAndLaunch( ElementSubRegionBase & subRegion,
 
 }/* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_SEISMICITYRATEKERNELS_HPP_ */
+#endif /* GEOS_PHYSICSPACKAGES_SEISMICITYRATEKERNELS_HPP_ */

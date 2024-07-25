@@ -17,8 +17,8 @@
  * @file ContactFields.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
-#define GEOS_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_CONTACT_CONTACTFIELDS_HPP_
+#define GEOS_PHYSICSPACKAGES_CONTACT_CONTACTFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
 #include "codingUtilities/EnumStrings.hpp"
@@ -155,4 +155,4 @@ ENUM_STRINGS( FractureState::State, "stick", "new_slip", "slip", "open" );
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
+#endif // GEOS_PHYSICSPACKAGES_CONTACT_CONTACTFIELDS_HPP_

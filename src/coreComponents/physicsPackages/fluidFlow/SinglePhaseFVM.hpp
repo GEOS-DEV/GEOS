@@ -17,8 +17,8 @@
  * @file SinglePhaseFVM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEFVM_HPP_
+#define GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
@@ -225,4 +225,4 @@ private:
 
 } /* namespace geos */
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
+#endif //GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEFVM_HPP_

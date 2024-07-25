@@ -13,8 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
-#define GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
+#ifndef GEOS_PHYSICSPACKAGES_SIMPLEPDE_LAPLACE_BASE_HPP
+#define GEOS_PHYSICSPACKAGES_SIMPLEPDE_LAPLACE_BASE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
@@ -144,4 +144,4 @@ ENUM_STRINGS( LaplaceBaseH1::TimeIntegrationOption,
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP */
+#endif /* GEOS_PHYSICSPACKAGES_SIMPLEPDE_LAPLACE_BASE_HPP */

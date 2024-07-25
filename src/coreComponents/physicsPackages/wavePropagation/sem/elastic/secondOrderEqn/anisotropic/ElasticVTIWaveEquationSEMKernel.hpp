@@ -17,8 +17,8 @@
  * @file ElasticVTIWaveEquationSEMKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
+#define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
@@ -291,4 +291,4 @@ using ExplicitElasticVTISEMFactory = finiteElement::KernelFactory< ExplicitElast
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
+#endif //GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_

@@ -17,8 +17,8 @@
  * @file SinglePhaseBase.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#define GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
@@ -471,4 +471,4 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
 
 } /* namespace geos */
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#endif //GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEBASE_HPP_

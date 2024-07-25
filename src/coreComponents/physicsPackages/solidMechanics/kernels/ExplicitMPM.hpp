@@ -18,8 +18,8 @@
  * @file ExplicitMPM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_EXPLICITMPM_HPP_
-#define GEOS_PHYSICSSOLVERS_CONTACT_EXPLICITMPM_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_CONTACT_EXPLICITMPM_HPP_
+#define GEOS_PHYSICSPACKAGES_CONTACT_EXPLICITMPM_HPP_
 
 #include "constitutive/solid/SolidUtilities.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp"
@@ -163,4 +163,4 @@ struct StateUpdateKernel
 } // namespace geos
 
 
-#endif /* GEOS_PHYSICSSOLVERS_CONTACT_EXPLICITMPM_HPP_ */
+#endif /* GEOS_PHYSICSPACKAGES_CONTACT_EXPLICITMPM_HPP_ */
