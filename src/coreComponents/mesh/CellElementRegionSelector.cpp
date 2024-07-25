@@ -33,7 +33,7 @@ std::optional< string > getCellBlockAttributeValue( string_view cellBlockName )
 }
 
 
-CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks ):
+CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks )
 {
   cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
