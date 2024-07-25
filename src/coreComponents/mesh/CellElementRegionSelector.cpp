@@ -211,7 +211,7 @@ void CellElementRegionSelector::checkSelectionConsistency() const
     else if( owningRegions.size() > 1 )
     {
       multipleRefsErrors.push_back(
-        GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n- {}",
+        GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n{}",
                   attributeValueStr, CellElementRegion::catalogName(),
                   stringutilities::joinLamda( getRegionStr, owningRegions ) ) );
     }
@@ -229,7 +229,7 @@ void CellElementRegionSelector::checkSelectionConsistency() const
     else if( owningRegions.size() > 1 )
     {
       multipleRefsErrors.push_back(
-        GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n- {}",
+        GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n{}",
                   cellBlockName, CellElementRegion::catalogName(),
                   stringutilities::joinLamda( getRegionStr, owningRegions ) ) );
     }
