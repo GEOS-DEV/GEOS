@@ -122,8 +122,6 @@ private:
     static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
   };
 
-  virtual void postInputInitialization() override;
-
   real64 m_referenceNormalStress;
 
   real64 m_aperture0;                                
