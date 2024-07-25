@@ -60,9 +60,6 @@ public:
 
 private:
 
-  /// @brief The Group containing all the available cell-blocks.
-  dataRepository::Group const & m_cellBlocks;
-
   /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it (0 -> n).
   std::map< string, std::vector< CellElementRegion const * > > m_cellBlocksOwners;
 
