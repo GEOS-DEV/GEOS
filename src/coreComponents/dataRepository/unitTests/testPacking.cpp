@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,13 +18,11 @@
 #include "LvArray/src/Array.hpp"
 #include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
-#include "mainInterface/initialization.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
-
 #include "dataRepository/wrapperHelpers.hpp"
 
 #include <ctime>
 #include <cstdlib>
+#include <unistd.h>
 
 using namespace geos;
 
@@ -116,6 +115,32 @@ TEST( testPacking, testTensorPacking )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
 
+// void printArray( arrayView1d< R1Tensor const > const & arr,
+//                  arrayView1d< R1Tensor const > const & unpackArray )
+// {
+//   printf( "arr.size() = %d\n", arr.size() );
+//   printf( "unpackArray.size() = %d\n", unpackArray.size() );
+
+//   for( localIndex ii = 0; ii < unpackArray.size(); ++ii )
+//   {
+//     if( !( arr[ii] == unpackArray[ii] ) )
+//     {
+//       printf( "arr[%d]         = ( %f, %f, %f )\n", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
+//       printf( "unPackarray[%d] = ( %f, %f, %f ) : ", ii, unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+
+//       forAll< geos::parallelDevicePolicy<1> >( 1, [=] GEOS_DEVICE ( localIndex )
+//       {
+//         printf( "( %f, %f, %f ) : ", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+//       } );
+
+//       forAll< serialPolicy >( 1, [=]( localIndex )
+//       {
+//         printf( "( %f, %f, %f )\n", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+//       } );
+//       }
+//   }
+// }
+
 TEST( testPacking, testPackingDevice )
 {
   std::srand( std::time( nullptr ));
@@ -134,15 +159,32 @@ TEST( testPacking, testPackingDevice )
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
   bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
-  waitAllDeviceEvents( packEvents );
+  // waitAllDeviceEvents( packEvents );
+
+  // R1Tensor const * const castedBuffer = reinterpret_cast< R1Tensor const * >( &buf[16] );
+  // for( localIndex ii = 0; ii < size; ++ii )
+  // {
+  //   printf( " %d = ( %f, %f, %f ) != ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2], castedBuffer[ii][0],
+  // castedBuffer[ii][1], castedBuffer[ii][2] );
+  // }
 
   buffer_unit_type const * cbuffer = &buf[0];
   parallelDeviceEvents unpackEvents;
   bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents, MPI_REPLACE );
   waitAllDeviceEvents( unpackEvents );
   unpacked.move( hostMemorySpace );
+
+//  printArray( veloc, unpacked.toViewConst() );
+
   for( localIndex ii = 0; ii < size; ++ii )
+  {
     EXPECT_EQ( veloc[ii], unpacked[ii] );
+//    if( !(veloc[ii] == unpacked[ii]) )
+//    {
+//      printf( " veloc[%d]    = ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2] );
+//      printf( " unpacked[%d] = ( %f, %f, %f )\n", ii, unpacked[ii][0], unpacked[ii][1], unpacked[ii][2] );
+//    }
+  }
 }
 
 TEST( testPacking, testPackingDeviceHelper )
@@ -221,8 +263,6 @@ TEST( testPacking, testPackByIndexDevice )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geos::basicCleanup();
   return result;
 }

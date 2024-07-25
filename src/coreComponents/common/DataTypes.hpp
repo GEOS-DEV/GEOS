@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -45,7 +46,7 @@
 #include <camp/camp.hpp>
 
 // System includes
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
   #include <mpi.h>
 #endif
 
@@ -65,7 +66,7 @@
 #include <vector>
 
 /*
- * top level geosx namespace contains all code that is specific to GEOSX
+ * top level geos namespace contains all code that is specific to GEOSX
  */
 namespace geos
 {
@@ -105,7 +106,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 }
 
 /// Global MPI communicator used by GEOSX.
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
 extern int MPI_COMM_GEOSX;
@@ -123,10 +124,10 @@ using size_t      = std::size_t;
 using integer     = std::int32_t;
 
 /// Local index type (for indexing objects within an MPI partition).
-using localIndex  = GEOSX_LOCALINDEX_TYPE;
+using localIndex  = GEOS_LOCALINDEX_TYPE;
 
 /// Global index type (for indexing objects across MPI partitions).
-using globalIndex = GEOSX_GLOBALINDEX_TYPE;
+using globalIndex = GEOS_GLOBALINDEX_TYPE;
 
 /// String type.
 using string      = std::string;
@@ -149,7 +150,7 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-#ifdef GEOSX_USE_CHAI
+#ifdef GEOS_USE_CHAI
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
@@ -684,7 +685,7 @@ struct GEOS_FMT_NS::formatter< std::optional< T > > : GEOS_FMT_NS::formatter< T 
    * @param ctx formatting state consisting of the formatting arguments and the output iterator
    * @return return the corresponding value string. If std::optional<T> is empty retun an empty string
    */
-  auto format( std::optional< T > const & opt, format_context & ctx )
+  auto format( std::optional< T > const & opt, format_context & ctx ) const
   {
     if( opt )
     {
