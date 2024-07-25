@@ -55,14 +55,17 @@ def getLoadingFromXML(xmlFilePath):
 			if fsParam.get('setNames') == "{ rpos }":
 				Tout = float(fsParam.get('scale'))
             
-	thermalConductivity = float( extractDataFromXMLList( tree.find('Constitutive/SinglePhaseThermalConductivity').get('thermalConductivityComponents') )[0] )
+	tree_SinglePhaseThermalConductivities = tree.findall('Constitutive/SinglePhaseThermalConductivity')
+
+	for tree_SinglePhaseThermalConductivity in tree_SinglePhaseThermalConductivities:
+		if tree_SinglePhaseThermalConductivity.get('name') == "thermalCond_linear":
+			thermalConductivity = float( extractDataFromXMLList( tree_SinglePhaseThermalConductivity.get('defaultThermalConductivityComponents') )[0] )
 
 	tree_SolidInternalEnergies = tree.findall('Constitutive/SolidInternalEnergy')
 
 	for tree_SolidInternalEnergy in tree_SolidInternalEnergies:
 		if tree_SolidInternalEnergy.get('name') == "rockInternalEnergy_linear":
-			volumetricHeatCapacity = float( tree_SolidInternalEnergy.get('volumetricHeatCapacity') )
-			
+			volumetricHeatCapacity = float( tree_SolidInternalEnergy.get('referenceVolumetricHeatCapacity') )			
 	
 	permeability = float( extractDataFromXMLList( tree.find('Constitutive/ConstantPermeability').get('permeabilityComponents') )[0] )
 

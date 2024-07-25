@@ -38,8 +38,8 @@ def getDataFromXML(xmlFilePathPrefix):
 	fluidCompressibility = float( tree.find('Constitutive/ThermalCompressibleSinglePhaseFluid').get('compressibility') )
 	fluidViscosity = float( tree.find('Constitutive/ThermalCompressibleSinglePhaseFluid').get('defaultViscosity') )
 	fluidThermalExpansionCoefficient = float( tree.find('Constitutive/ThermalCompressibleSinglePhaseFluid').get('thermalExpansionCoeff') )
-	thermalConductivity = float( extractDataFromXMLList( tree.find('Constitutive/SinglePhaseThermalConductivity').get('thermalConductivityComponents') )[0] )
-	volumetricHeatCapacity = float( tree.find('Constitutive/SolidInternalEnergy').get('volumetricHeatCapacity') )	
+	thermalConductivity = float( extractDataFromXMLList( tree.find('Constitutive/SinglePhaseThermalConductivity').get('defaultThermalConductivityComponents') )[0] )
+	volumetricHeatCapacity = float( tree.find('Constitutive/SolidInternalEnergy').get('referenceVolumetricHeatCapacity') )	
 	permeability = float( extractDataFromXMLList( tree.find('Constitutive/ConstantPermeability').get('permeabilityComponents') )[0] )
 
 	return [ri, Ti, drainedBulkModulusRock, defaultShearModulus, defaultDrainedLinearTEC, defaultReferencePorosity, grainBulkModulus, fluidCompressibility, fluidViscosity, fluidThermalExpansionCoefficient, permeability, thermalConductivity, volumetricHeatCapacity]
