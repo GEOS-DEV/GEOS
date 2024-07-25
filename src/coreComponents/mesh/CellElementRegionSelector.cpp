@@ -66,8 +66,8 @@ CellElementRegionSelector::buildMatchPatterns( CellElementRegion const & region,
                    GEOS_FMT( "{}: Region attribute value '{}' not found.\nAvailable region attribute list: {{ {} }}",
                              region.getWrapperDataContext( ViewKeys::cellBlockAttributeValuesString() ),
                              attributeValueStr,
-                             stringutilities::joinLamda( []( auto pair ) { return pair->first; },
-                                                         m_regionAttributeOwners, ", " ) ),
+                             stringutilities::joinLamda( m_regionAttributeOwners, ", ",
+                                                         []( auto pair ) { return pair->first; } ) ),
                    InputError );
 
     // for each desired attribute values, we add the following the match patterns:
@@ -106,8 +106,8 @@ CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & regi
                    GEOS_FMT( "{}: No cellBlock name is satisfying the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
                              region.getWrapperDataContext( ViewKeys::cellBlockMatchPatternsString() ),
                              matchPattern,
-                             stringutilities::joinLamda( []( auto pair ) { return pair->first; },
-                                                         m_cellBlocksOwners, ", " ) ),
+                             stringutilities::joinLamda( m_cellBlocksOwners, ", ",
+                                                         []( auto pair ) { return pair->first; } ) ),
                    InputError );
   }
   return matchedCellBlocks;
@@ -124,8 +124,8 @@ CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & 
                    GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
                              region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
                              requestedCellBlockName,
-                             stringutilities::joinLamda( []( auto pair ) { return pair->first; },
-                                                         m_cellBlocksOwners, ", " ) ),
+                             stringutilities::joinLamda( m_cellBlocksOwners, ", ",
+                                                         []( auto pair ) { return pair->first; } ) ),
                    InputError );
   }
 }
@@ -145,6 +145,7 @@ CellElementRegionSelector::registerRegionSelection( CellElementRegion const & re
   for( string const & cellBlockName : cellBlockNames )
   {
     m_cellBlocksOwners[cellBlockName].push_back( &region );
+    GEOS_LOG( GEOS_FMT( "m_cellBlocksOwners[{}] += {} (x{})", cellBlockName, region.getName(), m_cellBlocksOwners[cellBlockName].size()));
   }
 }
 
@@ -202,14 +203,17 @@ void CellElementRegionSelector::checkSelectionConsistency() const
   // Search of never or multiple selected attribute values
   std::set< string > orphanRegionAttributes;
   std::vector< string > multipleRefsErrors;
+  GEOS_LOG("regions..");
   for( auto const & [attributeValueStr, owningRegions] : m_regionAttributeOwners )
   {
+    GEOS_LOG( GEOS_FMT( "m_regionAttributeOwners[{}] (x{}) = {{ {} }}", attributeValueStr, owningRegions.size(), stringutilities::joinLamda(owningRegions,", ",[](auto it){return (*it)->getName();})));
     if( owningRegions.size() == 0 )
     {
       orphanRegionAttributes.insert( attributeValueStr );
     }
     else if( owningRegions.size() > 1 )
     {
+      GEOS_LOG("multiple ref error! : "<<stringutilities::joinLamda( owningRegions, '\n', getRegionStr ) );
       multipleRefsErrors.push_back(
         GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n{}",
                   attributeValueStr, CellElementRegion::catalogName(),
@@ -220,14 +224,17 @@ void CellElementRegionSelector::checkSelectionConsistency() const
 
   // Search of never or multiple selected cell-blocks names
   std::set< string > orphanCellBlockNames;
+  GEOS_LOG("cb..");
   for( auto const & [cellBlockName, owningRegions] : m_cellBlocksOwners )
   {
+    GEOS_LOG( GEOS_FMT( "m_cellBlocksOwners[{}] (x{}) = {{ {} }}", cellBlockName, owningRegions.size(), stringutilities::joinLamda(owningRegions,", ",[](auto it){return (*it)->getName();})));
     if( owningRegions.size() == 0 )
     {
       orphanCellBlockNames.insert( cellBlockName );
     }
     else if( owningRegions.size() > 1 )
     {
+      GEOS_LOG("multiple ref error! : "<<stringutilities::joinLamda( owningRegions, '\n', getRegionStr ) );
       multipleRefsErrors.push_back(
         GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n{}",
                   cellBlockName, CellElementRegion::catalogName(),

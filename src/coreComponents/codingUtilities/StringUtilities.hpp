@@ -87,7 +87,7 @@ string join( CONTAINER const & container, S const & delim = S() )
  * @param delim              delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
-template< typename IT, typename S = char, typename LAMBDA >
+template< typename IT, typename S, typename LAMBDA >
 string joinLamda( IT first, IT last, S const & delim, LAMBDA iteratorFormatter )
 {
   if( first == last )
@@ -113,10 +113,10 @@ string joinLamda( IT first, IT last, S const & delim, LAMBDA iteratorFormatter )
  * @param delim              delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
-template< typename CONTAINER, typename S = char, typename LAMBDA >
+template< typename CONTAINER, typename S, typename LAMBDA >
 string joinLamda( CONTAINER const & container, S const & delim, LAMBDA iteratorFormatter )
 {
-  return joinLamda( iteratorFormatter, std::begin( container ), std::end( container ), delim );
+  return joinLamda( std::begin( container ), std::end( container ), delim, iteratorFormatter );
 }
 
 /**
