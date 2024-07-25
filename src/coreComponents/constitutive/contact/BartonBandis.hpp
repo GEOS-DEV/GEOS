@@ -71,9 +71,9 @@ public:
                                    real64 & dHydraulicAperture_dNormalStress ) const;
 
 private:
-  real64 const m_referenceNormalStress;
+  real64 m_referenceNormalStress;
   
-  real64 const m_aperture0;                                    
+  real64 m_aperture0;                                    
 };
 
 
