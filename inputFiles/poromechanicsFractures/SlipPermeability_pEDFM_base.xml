@@ -50,8 +50,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        usePEDFM="1"
-      />
+        usePEDFM="1"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -65,7 +64,7 @@
       name="Fracture"
       faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, fractureContact }"
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel}"
       defaultAperture="1e-3"/>
   </ElementRegions>
   

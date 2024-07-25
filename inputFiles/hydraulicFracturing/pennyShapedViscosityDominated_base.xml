@@ -51,9 +51,11 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      contactPenaltyStiffness="1.0e0"
-      apertureTableName="apertureTable"/>
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>  
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
 

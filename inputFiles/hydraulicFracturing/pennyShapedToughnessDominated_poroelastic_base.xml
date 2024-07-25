@@ -67,8 +67,11 @@
 
     <FrictionlessContact
       name="fractureContact"
-      contactPenaltyStiffness="1.0e0"
       apertureTableName="apertureTable"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/> 
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
   
@@ -82,8 +85,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        />
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_NUMERICAL_END -->
