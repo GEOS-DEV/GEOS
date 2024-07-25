@@ -114,9 +114,11 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="1.0"
-      apertureTableName="apertureTable" />
+      name="fractureContact"/>
+    
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/> 
 
   </Constitutive>
 

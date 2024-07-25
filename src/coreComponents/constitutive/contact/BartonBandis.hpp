@@ -115,15 +115,15 @@ private:
   
    struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    /// string/key for aperture tolerance
+    /// string/key for aperture under zero normal stress
     static constexpr char const * apertureZeroString() { return "apertureZero"; }
 
-    /// string/key for aperture table name
+    /// string/key for reference normal stress
     static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
   };
-
+  /// Reference normal stress
   real64 m_referenceNormalStress;
-
+  /// Hydraulic aperture under zero normal stress
   real64 m_aperture0;                                
 
 };
@@ -136,10 +136,10 @@ real64 BartonBandisUpdates::computeHydraulicAperture( real64 const aperture,
                                                       real64 & dHydraulicAperture_dNormalStress ) const
 {
   real64 const hydraulicAperture = ( aperture >= 0.0 ) ? (aperture + m_aperture0) : m_aperture0 / ( 1 + 9*normalTraction/m_referenceNormalStress );
-  dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*normalTraction/m_referenceNormalStress ) * 9/m_referenceNormalStress;
-  dHydraulicAperture_aperture = 0.0;
+  dHydraulicAperture_dNormalStress = ( aperture >= 0.0 ) ? 0.0 : -hydraulicAperture / ( 1 + 9*normalTraction/m_referenceNormalStress ) * 9/m_referenceNormalStress;
+  dHydraulicAperture_aperture = ( aperture >= 0.0 ) ? 1.0 : 0.0;
 
-  return hydraulicAperture;
+  return hydraulicAperture; ///It would be nice to change this to return a tuple.
 }
 
 } /* namespace constitutive */

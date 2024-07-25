@@ -121,7 +121,7 @@
 
     <FrictionlessContact
       name="fractureContact"
-      penaltyStiffness="4.0e9"
+      contactPenaltyStiffness="4.0e9"
       apertureTableName="apertureTable"/>    
   </Constitutive>
 

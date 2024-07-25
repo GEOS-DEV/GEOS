@@ -125,14 +125,6 @@ public:
    */
   virtual ~CoulombFriction() override;
 
-  /**
-   * @name Static Factory Catalog members and functions
-   */
-  ///@{
-
-  /**
-   * @return A string that is used to register/lookup this class in the registry
-   */
   static string catalogName() { return "Coulomb"; }
 
   virtual string getCatalogName() const override { return catalogName(); }

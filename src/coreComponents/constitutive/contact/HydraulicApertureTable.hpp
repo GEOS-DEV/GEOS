@@ -101,6 +101,10 @@ public:
    */
   virtual ~HydraulicApertureTable() override;
 
+  static string catalogName() { return "HydraulicApertureTable"; }
+
+  virtual string getCatalogName() const override { return catalogName(); }
+
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override final;
 

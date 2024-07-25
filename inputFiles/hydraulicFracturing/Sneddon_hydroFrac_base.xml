@@ -12,7 +12,8 @@
       logLevel="1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
-      maxNumResolves="2">
+      maxNumResolves="2"
+      contactPenaltyStiffness="1.0e0">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="20"
@@ -126,9 +127,11 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="1.0e0"
-      apertureTableName="apertureTable" />
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>    
   </Constitutive>
   <!-- SPHINX_SNEDDON_MATERIAL_END-->
 

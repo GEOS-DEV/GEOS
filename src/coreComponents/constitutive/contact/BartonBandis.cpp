@@ -35,11 +35,11 @@ BartonBandis::BartonBandis( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::referenceNormalStressString(), &m_referenceNormalStress ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "" );
+    setDescription( " Reference normal stress." );
 
   registerWrapper( viewKeyStruct::apertureZeroString(), &m_aperture0 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "" );
+    setDescription( "Hydraulic aperture under zero normal stress." );
 }  
 
 BartonBandis::~BartonBandis()

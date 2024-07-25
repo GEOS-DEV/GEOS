@@ -157,9 +157,11 @@
       compressibility="0.0"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="1e12"
-      apertureTableName="apertureTable"/>
+      name="fractureContact"/>
+
+     <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>  
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>

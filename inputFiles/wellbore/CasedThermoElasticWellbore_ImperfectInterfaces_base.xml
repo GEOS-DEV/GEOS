@@ -102,9 +102,11 @@
     <Coulomb
       name="fractureContact"
       cohesion="0"
-      frictionCoefficient="0.5"
-      penaltyStiffness="1.0e8"
-      apertureTableName="apertureTable"/>
+      frictionCoefficient="0.5"/>
+
+    <HydraulicApertureTable
+    
+    />  
 
     <!-- SPHINX_ContactFlowProperties -->
     <CompressibleSolidParallelPlatesPermeability
