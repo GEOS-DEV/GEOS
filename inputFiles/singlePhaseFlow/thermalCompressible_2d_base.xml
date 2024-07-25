@@ -65,7 +65,7 @@
       referenceVolumetricHeatCapacity="1.0e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
-	<!-- SPHINX_SolidInternalEnergyEnd_linear -->
+	<!-- SPHINX_SolidInternalEnergy_linearEnd -->
 
     <!-- SPHINX_SolidInternalEnergy_nonLinear -->
     <SolidInternalEnergy
@@ -100,7 +100,7 @@
       defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"
       thermalConductivityGradientComponents="{ 0, 0, 0 }"
       referenceTemperature="0"/>
-    <!-- SPHINX_SinglePhaseThermalConductivityEnd_linear -->    
+    <!-- SPHINX_SinglePhaseThermalConductivity_linearEnd -->    
 
 	<!-- SPHINX_SinglePhaseThermalConductivity_nonLinear -->
     <SinglePhaseThermalConductivity
@@ -108,7 +108,7 @@
       defaultThermalConductivityComponents="{ 1.5, 1.5, 1.5 }"
       thermalConductivityGradientComponents="{ -12e-4, -12e-4, -12e-4 }"
       referenceTemperature="20"/>
-	<!-- SPHINX_SinglePhaseThermalConductivityEnd_nonLinear -->    
+	<!-- SPHINX_SinglePhaseThermalConductivity_nonLinearEnd -->    
 	
   </Constitutive>
 

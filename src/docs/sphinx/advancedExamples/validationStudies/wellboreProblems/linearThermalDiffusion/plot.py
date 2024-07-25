@@ -15,9 +15,9 @@ def steadyState(Tin, Tout, Rin, Rout, radialCoordinate):
 def diffusionFunction(radialCoordinate, Rin, diffusionCoefficient, diffusionTime):
 	return special.erfc(  (radialCoordinate - Rin) / 2.0 / np.sqrt( diffusionCoefficient * diffusionTime ) )
 
-def computeTransientTemperature(Tin, Rin, radialCoordinate, thermalDiffusionCoefficient, diffusionTime):
+def computeTransientTemperature(Tin, Tout, Rin, radialCoordinate, thermalDiffusionCoefficient, diffusionTime):
 	# Ref. Wang and Papamichos (1994), https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94WR01774
-	return Tin * np.sqrt(Rin/radialCoordinate) * diffusionFunction(radialCoordinate, Rin, thermalDiffusionCoefficient, diffusionTime)
+	return Tout + (Tin-Tout) * np.sqrt(Rin/radialCoordinate) * diffusionFunction(radialCoordinate, Rin, thermalDiffusionCoefficient, diffusionTime)
 	 
 def computeThermalDiffusionCoefficient(thermalConductivity, volumetricHeatCapacity):
 	return thermalConductivity / volumetricHeatCapacity
@@ -95,15 +95,14 @@ def main():
 	for chart_idx, idx in enumerate([1, 2, 5, 10]):
 		# Numerical results
 		data = pd.read_csv(f'data_{idx}.csv')
-		radialCoordinate = data['elementCenter:0']
+		radialCoordinate = (data['elementCenter:0']**2.0 + data['elementCenter:1']**2.0)**0.5
 		temperature = data['temperature']
-		pressure = data['pressure']
 		diffusionTime = data['Time'][0]
 
 		# Analytical results
 		thermalDiffusionCoefficient = computeThermalDiffusionCoefficient(thermalConductivity, volumetricHeatCapacity)
 
-		T_transient = computeTransientTemperature(Tin, Rin, radialCoordinate, thermalDiffusionCoefficient, diffusionTime)
+		T_transient = computeTransientTemperature(Tin, Tout, Rin, radialCoordinate, thermalDiffusionCoefficient, diffusionTime)
 		
 		# Analytical results of the steady state regime for comparison
 		T_steadyState = steadyState(Tin, Tout, Rin, Rout, radialCoordinate)
@@ -112,7 +111,7 @@ def main():
 		# Temperature
 		plt.subplot(2,2,chart_idx+1)
 		plt.plot( radialCoordinate, temperature, 'k+' , label='GEOSX' )
-		plt.plot( radialCoordinate, T_transient, 'r-' , label='Analytic' )
+		plt.plot( radialCoordinate, T_transient, 'r-' , label='Analytic, infinite domain' )
 		plt.plot( radialCoordinate, T_steadyState, 'b-' , label='Steady State' )
 
 		if chart_idx==1:
@@ -124,7 +123,7 @@ def main():
 		if chart_idx in [0,2]:
 			plt.ylabel('Temperature (°C)')
 
-		plt.ylim(-10,100)
+		plt.ylim(-30,110)
 		plt.xlim(0,1.0)
 		plt.title('t = '+str(diffusionTime)+'(s)')
 		plt.tight_layout()
