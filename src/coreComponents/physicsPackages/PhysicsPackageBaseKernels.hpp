@@ -14,11 +14,11 @@
  */
 
 /**
- * @file SolverBaseKernels.hpp
+ * @file PhysicsPackageBaseKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_SOLVERBASEKERNELS_HPP
-#define GEOS_PHYSICSPACKAGES_SOLVERBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSPACKAGES_PHYSICSPACKAGEBASEKERNELS_HPP
+#define GEOS_PHYSICSPACKAGES_PHYSICSPACKAGEBASEKERNELS_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace solverBaseKernels
+namespace PhysicsPackageBaseKernels
 {
 
 /******************************** ResidualNormKernelBase ********************************/
@@ -342,8 +342,8 @@ ENUM_STRINGS( NormType,
               "L2" );
 
 
-} // namespace solverBaseKernels
+} // namespace PhysicsPackageBaseKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSPACKAGES_SOLVERBASEKERNELS_HPP
+#endif //GEOS_PHYSICSPACKAGES_PHYSICSPACKAGEBASEKERNELS_HPP

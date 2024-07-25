@@ -35,5 +35,5 @@ SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
 } /* namespace geos */

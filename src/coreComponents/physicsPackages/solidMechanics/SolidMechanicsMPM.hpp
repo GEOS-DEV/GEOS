@@ -27,7 +27,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 #include "MPMSolverFields.hpp"
 
@@ -42,7 +42,7 @@ class SpatialPartition;
  *
  * This class implements a material point method solution to the equations of motion.
  */
-class SolidMechanicsMPM : public SolverBase
+class SolidMechanicsMPM : public PhysicsPackageBase
 {
 public:
 
@@ -90,11 +90,11 @@ public:
   virtual ~SolidMechanicsMPM() override;
 
   /**
-   * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
+   * @return The string that may be used to generate a new instance from the PhysicsPackageBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_MPM"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -166,7 +166,7 @@ public:
    * @param solution the solution vector
    */
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsPackageBase::viewKeyStruct
   {
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }

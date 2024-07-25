@@ -838,7 +838,7 @@ public:
 /**
  * @class ResidualNormKernel
  */
-class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 2 >
+class ResidualNormKernel : public PhysicsPackageBaseKernels::ResidualNormKernelBase< 2 >
 {
 public:
 
@@ -1006,7 +1006,7 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( solverBaseKernels::NormType const normType,
+  createAndLaunch( PhysicsPackageBaseKernels::NormType const normType,
                    integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
@@ -1025,7 +1025,7 @@ public:
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
                                numComps, numPhases, subRegion, fluid, solid, solidInternalEnergy, minNormalizer );
-    if( normType == solverBaseKernels::NormType::Linf )
+    if( normType == PhysicsPackageBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
     }

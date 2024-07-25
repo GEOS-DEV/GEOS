@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSPACKAGES_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
 
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
 
@@ -51,7 +51,7 @@ class ElementRegionBase;
  * This solver manages the mesh topology splitting methods.
  *
  */
-class EmbeddedSurfaceGenerator : public SolverBase
+class EmbeddedSurfaceGenerator : public PhysicsPackageBase
 {
 public:
   EmbeddedSurfaceGenerator( const string & name,
@@ -61,7 +61,7 @@ public:
 
   static string catalogName() { return "EmbeddedSurfaceGenerator"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -118,7 +118,7 @@ private:
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsPackageBase::viewKeyStruct
   {
     constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
     constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }

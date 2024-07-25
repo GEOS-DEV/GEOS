@@ -87,7 +87,7 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
 
 FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsPackageBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
   m_keepFlowVariablesConstantDuringInitStep( 0 ),
@@ -124,12 +124,12 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
 
   // allow the user to select a norm
-  getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
+  getNonlinearSolverParameters().getWrapper< PhysicsPackageBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 {
-  SolverBase::registerDataOnMesh( meshBodies );
+  PhysicsPackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -297,7 +297,7 @@ void FlowSolverBase::enableJumpStabilization()
 
 void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
-  SolverBase::setConstitutiveNamesCallSuper( subRegion );
+  PhysicsPackageBase::setConstitutiveNamesCallSuper( subRegion );
 
   subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -348,7 +348,7 @@ void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) co
 
 void FlowSolverBase::initializePreSubGroups()
 {
-  SolverBase::initializePreSubGroups();
+  PhysicsPackageBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -403,7 +403,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
       localIndex numElemsBelowPoreVolumeThresholdInSubRegion = 0;
       localIndex numElemsAbovePorosityThresholdInSubRegion = 0;
 
-      flowSolverBaseKernels::MinPoreVolumeMaxPorosityKernel::
+      flowPhysicsPackageBaseKernels::MinPoreVolumeMaxPorosityKernel::
         computeMinPoreVolumeMaxPorosity( subRegion.size(),
                                          ghostRank,
                                          porosity,
@@ -436,7 +436,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
                       GEOS_FMT( "\nWarning! The mesh contains {} elements with a pore volume below {} m^3."
                                 "\nThe minimum pore volume is {} m^3."
                                 "\nOur recommendation is to check the validity of mesh and/or increase the porosity in these elements.\n",
-                                numElemsBelowPoreVolumeThreshold, flowSolverBaseKernels::poreVolumeThreshold, minPoreVolume ) );
+                                numElemsBelowPoreVolumeThreshold, flowPhysicsPackageBaseKernels::poreVolumeThreshold, minPoreVolume ) );
   GEOS_LOG_RANK_0_IF( numElemsAbovePorosityThreshold > 0,
                       GEOS_FMT( "\nWarning! The mesh contains {} elements with a porosity above 1."
                                 "\nThe maximum porosity is {}.\n",
@@ -445,7 +445,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
 
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 {
-  SolverBase::initializePostInitialConditionsPreSubGroups();
+  PhysicsPackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -763,7 +763,7 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
 
       STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
 
-      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::prepareStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
+      flowPhysicsPackageBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::prepareStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
     } );
   } );
 }
@@ -786,7 +786,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 
       STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
 
-      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::updateStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
+      flowPhysicsPackageBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::updateStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
     } );
   } );
 }

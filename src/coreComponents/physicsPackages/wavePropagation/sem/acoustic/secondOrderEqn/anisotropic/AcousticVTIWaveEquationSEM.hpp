@@ -22,7 +22,7 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
 #include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
 #include "AcousticVTIFields.hpp"
@@ -42,7 +42,7 @@ public:
 
   static string catalogName() { return "AcousticVTISEM"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 

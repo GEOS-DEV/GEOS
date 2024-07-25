@@ -33,7 +33,7 @@ Declaration file (reference)
 The included header is ``physicsPackages/simplePDE/LaplaceBaseH1.hpp`` which declares the base class ``LaplaceBaseH1``, shared by all Laplace solvers. Moreover, ``physicsSolver/simplePDE/LaplaceBaseH1.hpp`` includes the following headers:
 
  - ``common/EnumStrings.hpp`` which includes facilities for enum-string conversion (useful for reading enum values from input);
- - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers.
+ - ``physicsSolver/PhysicsPackageBase.hpp`` which declares the abstraction class shared by all physics solvers.
  - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain.
 
 Let us jump forward to the class enum and variable as they contain the data used

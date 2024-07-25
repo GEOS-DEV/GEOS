@@ -34,7 +34,7 @@ using namespace constitutive;
 
 SeismicityRate::SeismicityRate( const string & name,
                                 Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsPackageBase( name, parent ),
   m_stressSolver( nullptr )
 {
   this->registerWrapper( viewKeyStruct::directEffectString(), &m_directEffect ).
@@ -78,10 +78,10 @@ void SeismicityRate::postInputInitialization()
   // Initialize member stress solver as specified in XML input
   if( !m_stressSolverName.empty() )
   {
-    m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
+    m_stressSolver = &this->getParent().getGroup< PhysicsPackageBase >( m_stressSolverName );
   }
 
-  SolverBase::postInputInitialization();
+  PhysicsPackageBase::postInputInitialization();
 }
 
 SeismicityRate::~SeismicityRate()
@@ -91,7 +91,7 @@ SeismicityRate::~SeismicityRate()
 
 void SeismicityRate::registerDataOnMesh( Group & meshBodies )
 {
-  SolverBase::registerDataOnMesh( meshBodies );
+  PhysicsPackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -410,5 +410,5 @@ void SeismicityRate::integralSolverStep( real64 const & time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SeismicityRate, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SeismicityRate, string const &, dataRepository::Group * const )
 } // namespace geos

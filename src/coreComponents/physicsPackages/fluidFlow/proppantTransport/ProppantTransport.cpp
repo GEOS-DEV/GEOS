@@ -835,7 +835,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
 
-  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
+  PhysicsPackageBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
 
   localIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( fields::proppant::proppantConcentration::key() );
@@ -867,7 +867,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
       // step 2: first reduction across meshBodies/regions/subRegions
 
-      if( normType == solverBaseKernels::NormType::Linf )
+      if( normType == PhysicsPackageBaseKernels::NormType::Linf )
       {
         if( subRegionResidualNorm[0] > localResidualNorm )
         {
@@ -885,13 +885,13 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
   // step 3: second reduction across MPI ranks
 
   real64 residualNorm = 0.0;
-  if( normType == solverBaseKernels::NormType::Linf )
+  if( normType == PhysicsPackageBaseKernels::NormType::Linf )
   {
-    solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
+    PhysicsPackageBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
   }
   else
   {
-    solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
+    PhysicsPackageBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
@@ -1141,5 +1141,5 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, ProppantTransport, string const &, Group * const )
 } /* namespace geos */

@@ -23,7 +23,7 @@
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 
 struct stabledt
 {
@@ -40,7 +40,7 @@ class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
-class PhaseFieldDamageFEM : public SolverBase
+class PhaseFieldDamageFEM : public PhysicsPackageBase
 {
 public:
   PhaseFieldDamageFEM( const string & name, Group * const parent );
@@ -52,7 +52,7 @@ public:
     return "PhaseFieldDamageFEM";
   }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -147,7 +147,7 @@ public:
     Quadratic,
   };
 
-  struct viewKeyStruct : public SolverBase::viewKeyStruct
+  struct viewKeyStruct : public PhysicsPackageBase::viewKeyStruct
   {
     static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }

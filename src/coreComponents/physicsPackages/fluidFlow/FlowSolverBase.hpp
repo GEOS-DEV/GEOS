@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -32,7 +32,7 @@ namespace geos
  * Base class for finite volume fluid flow solvers.
  * Provides some common features
  */
-class FlowSolverBase : public SolverBase
+class FlowSolverBase : public PhysicsPackageBase
 {
 public:
 
@@ -65,7 +65,7 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsPackageBase::viewKeyStruct
   {
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }

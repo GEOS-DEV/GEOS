@@ -28,7 +28,7 @@
 #include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 #include "physicsPackages/fluidFlow/wells/WellControls.hpp"
-#include "physicsPackages/SolverBaseKernels.hpp"
+#include "physicsPackages/PhysicsPackageBaseKernels.hpp"
 
 namespace geos
 {
@@ -310,11 +310,11 @@ struct RateInitializationKernel
 /**
  * @class ResidualNormKernel
  */
-class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
+class ResidualNormKernel : public PhysicsPackageBaseKernels::ResidualNormKernelBase< 1 >
 {
 public:
 
-  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base = PhysicsPackageBaseKernels::ResidualNormKernelBase< 1 >;
   using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;

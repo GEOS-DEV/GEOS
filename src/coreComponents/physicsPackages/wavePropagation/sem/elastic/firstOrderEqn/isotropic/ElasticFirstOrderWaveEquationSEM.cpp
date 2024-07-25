@@ -648,7 +648,7 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
                                                 real64 const eventProgress,
                                                 DomainPartition & domain )
 {
-  SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+  PhysicsPackageBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
 
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -715,6 +715,6 @@ void ElasticFirstOrderWaveEquationSEM::applyPML( real64 const, DomainPartition &
   GEOS_ERROR( getDataContext() << ": PML for the first order elastic wave propagator not yet implemented" );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, ElasticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, ElasticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geos */

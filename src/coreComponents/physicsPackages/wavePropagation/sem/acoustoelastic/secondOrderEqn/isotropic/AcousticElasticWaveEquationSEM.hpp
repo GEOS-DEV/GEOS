@@ -23,7 +23,7 @@
 
 #include "physicsPackages/wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.hpp"
 #include "physicsPackages/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "AcoustoElasticFields.hpp"
 #include <tuple>
 
@@ -31,7 +31,7 @@ namespace geos
 {
 
 template< typename ... SOLVERS >
-class CoupledWaveSolver : public SolverBase
+class CoupledWaveSolver : public PhysicsPackageBase
 {
 
 public:
@@ -43,7 +43,7 @@ public:
    */
   CoupledWaveSolver( const string & name,
                      Group * const parent )
-    : SolverBase( name, parent )
+    : PhysicsPackageBase( name, parent )
   {
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
     {
@@ -71,7 +71,7 @@ public:
   virtual void
   postInputInitialization() override final
   {
-    SolverBase::postInputInitialization();
+    PhysicsPackageBase::postInputInitialization();
 
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
     {
@@ -136,7 +136,7 @@ public:
   static string catalogName() { return "AcousticElasticSEM"; }
 
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 

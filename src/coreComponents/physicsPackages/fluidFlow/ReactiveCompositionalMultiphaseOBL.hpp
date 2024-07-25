@@ -91,7 +91,7 @@ public:
    */
   static string catalogName() { return "ReactiveCompositionalMultiphaseOBL"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 

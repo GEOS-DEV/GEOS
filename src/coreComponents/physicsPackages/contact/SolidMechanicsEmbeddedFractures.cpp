@@ -807,5 +807,5 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
   return hasConfigurationConvergedGlobally;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
 } /* namespace geos */

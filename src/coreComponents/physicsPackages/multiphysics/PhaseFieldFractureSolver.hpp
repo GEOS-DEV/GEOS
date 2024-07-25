@@ -53,7 +53,7 @@ public:
     return "PhaseFieldFracture";
   }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 

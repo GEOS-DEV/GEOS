@@ -131,7 +131,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    // TODO: remove this and just call SolverBase::setupSystem when DofManager can handle the coupling
+    // TODO: remove this and just call PhysicsPackageBase::setupSystem when DofManager can handle the coupling
 
     // Populate off-diagonal sparsity between well and reservoir
 
@@ -349,11 +349,11 @@ template class SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingF
 namespace
 {
 typedef SinglePhaseReservoirAndWells<> SinglePhaseFlowAndWells;
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SinglePhaseFlowAndWells, string const &, Group * const )
 typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> > SinglePhasePoromechanicsAndWells;
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
 typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures<> > SinglePhasePoromechanicsConformingFracturesAndWells;
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFracturesAndWells, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SinglePhasePoromechanicsConformingFracturesAndWells, string const &, Group * const )
 }
 
 } /* namespace geos */

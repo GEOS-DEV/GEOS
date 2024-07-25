@@ -45,7 +45,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "physicsPackages/PhysicsSolverManager.hpp"
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
 // System includes
@@ -751,7 +751,7 @@ ProblemManager::getDiscretizations() const
   DomainPartition const & domain  = getDomainPartition();
   Group const & meshBodies = domain.getMeshBodies();
 
-  m_physicsSolverManager->forSubGroups< SolverBase >( [&]( SolverBase & solver )
+  m_physicsSolverManager->forSubGroups< PhysicsPackageBase >( [&]( PhysicsPackageBase & solver )
   {
 
     solver.generateMeshTargetsFromTargetRegions( meshBodies );
@@ -887,7 +887,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
   for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
-    SolverBase const * const solver = m_physicsSolverManager->getGroupPointer< SolverBase >( solverIndex );
+    PhysicsPackageBase const * const solver = m_physicsSolverManager->getGroupPointer< PhysicsPackageBase >( solverIndex );
 
     if( solver != nullptr )
     {

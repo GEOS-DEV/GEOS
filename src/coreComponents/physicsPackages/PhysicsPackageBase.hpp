@@ -34,21 +34,21 @@ namespace geos
 
 class DomainPartition;
 
-class SolverBase : public ExecutableGroup
+class PhysicsPackageBase : public ExecutableGroup
 {
 public:
 
-  explicit SolverBase( string const & name,
+  explicit PhysicsPackageBase( string const & name,
                        Group * const parent );
 
-  SolverBase( SolverBase && ) = default;
+  PhysicsPackageBase( PhysicsPackageBase && ) = default;
 
-  virtual ~SolverBase() override;
+  virtual ~PhysicsPackageBase() override;
 
-  SolverBase() = delete;
-  SolverBase( SolverBase const & ) = delete;
-  SolverBase & operator=( SolverBase const & ) = delete;
-  SolverBase & operator=( SolverBase && ) = delete;
+  PhysicsPackageBase() = delete;
+  PhysicsPackageBase( PhysicsPackageBase const & ) = delete;
+  PhysicsPackageBase & operator=( PhysicsPackageBase const & ) = delete;
+  PhysicsPackageBase & operator=( PhysicsPackageBase && ) = delete;
 
   /**
    * @return Get the final class Catalog name
@@ -574,7 +574,7 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< PhysicsPackageBase, string const &, Group * const >;
   static CatalogInterface::CatalogType & getCatalog();
 
   struct viewKeyStruct
@@ -848,7 +848,7 @@ private:
 };
 
 template< typename CONSTITUTIVE_BASE_TYPE >
-string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
+string PhysicsPackageBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
 {
   string validName;
   dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
@@ -862,7 +862,7 @@ string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
 }
 
 template< typename CONSTITUTIVE_BASE_TYPE >
-string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion ) // particle overload
+string PhysicsPackageBase::getConstitutiveName( ParticleSubRegionBase const & subRegion ) // particle overload
 {
   string validName;
   dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
@@ -876,7 +876,7 @@ string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion 
 }
 
 template< typename BASETYPE, typename LOOKUP_TYPE >
-BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
+BASETYPE const & PhysicsPackageBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
 {
   dataRepository::Group const & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
@@ -884,7 +884,7 @@ BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const &
 }
 
 template< typename BASETYPE, typename LOOKUP_TYPE >
-BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
+BASETYPE & PhysicsPackageBase::getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
 {
   Group & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 

@@ -33,7 +33,7 @@
 #include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsPackages/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsPackages/fluidFlow/StencilAccessors.hpp"
-#include "physicsPackages/SolverBaseKernels.hpp"
+#include "physicsPackages/PhysicsPackageBaseKernels.hpp"
 
 namespace geos
 {
@@ -461,11 +461,11 @@ struct ProppantPackVolumeKernel
 /**
  * @class ResidualNormKernel
  */
-class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
+class ResidualNormKernel : public PhysicsPackageBaseKernels::ResidualNormKernelBase< 1 >
 {
 public:
 
-  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base = PhysicsPackageBaseKernels::ResidualNormKernelBase< 1 >;
   using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
@@ -545,7 +545,7 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( solverBaseKernels::NormType const normType,
+  createAndLaunch( PhysicsPackageBaseKernels::NormType const normType,
                    integer const numComp,
                    globalIndex const rankOffset,
                    string const & dofKey,
@@ -560,7 +560,7 @@ public:
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
                                numComp, subRegion, minNormalizer );
-    if( normType == solverBaseKernels::NormType::Linf )
+    if( normType == PhysicsPackageBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
     }

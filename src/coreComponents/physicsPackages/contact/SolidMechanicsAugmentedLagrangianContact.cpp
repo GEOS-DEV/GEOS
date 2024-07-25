@@ -1341,5 +1341,5 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsAugmentedLagrangianContact, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SolidMechanicsAugmentedLagrangianContact, string const &, Group * const )
 } /* namespace geos */

@@ -174,7 +174,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 
 SurfaceGenerator::SurfaceGenerator( const string & name,
                                     Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsPackageBase( name, parent ),
   m_failCriterion( 1 ),
 //  m_maxTurnAngle(91.0),
   m_nodeBasedSIF( 1 ),
@@ -4575,7 +4575,7 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
 
 
 
-REGISTER_CATALOG_ENTRY( SolverBase,
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase,
                         SurfaceGenerator,
                         string const &, dataRepository::Group * const )
 

@@ -72,7 +72,7 @@ public:
   static string catalogName()
   { return "SinglePhaseHybridFVM"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 

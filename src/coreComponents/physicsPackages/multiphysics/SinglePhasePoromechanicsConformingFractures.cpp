@@ -808,9 +808,9 @@ namespace
 {
 //typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >
 // SinglePhaseReservoirPoromechanicsConformingFractures;
-//REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanicsConformingFractures, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SinglePhaseReservoirPoromechanicsConformingFractures, string const &, Group * const )
 typedef SinglePhasePoromechanicsConformingFractures<> SinglePhasePoromechanicsConformingFractures;
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
 }
 
 } /* namespace geos */

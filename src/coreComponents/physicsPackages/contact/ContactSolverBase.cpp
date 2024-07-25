@@ -250,7 +250,7 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
       setSizedFromParent( 0 );
 
     string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-    contactRelationName = SolverBase::getConstitutiveName< ContactBase >( subRegion );
+    contactRelationName = PhysicsPackageBase::getConstitutiveName< ContactBase >( subRegion );
     GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: ContactBase model not found on subregion {}",
                                                           getDataContext(), subRegion.getDataContext() ) );
   }

@@ -65,7 +65,7 @@ using namespace dataRepository;
 /* CONSTRUCTOR
    First, let us inspect the constructor of a "LaplaceFEM" object.
    This constructor does three important things:
-   1 - It constructs an instance of the LaplaceFEM class (here: using the SolverBase constructor and passing through the arguments).
+   1 - It constructs an instance of the LaplaceFEM class (here: using the PhysicsPackageBase constructor and passing through the arguments).
    2 - It sets some default values for the LaplaceFEM-specific private variables (here: m_fieldName and m_timeIntegrationOption).
    3 - It creates and activates a "registerWrapper" for each private variable.
    This is where the private variables are declared either as REQUIRED or OPTIONAL.
@@ -97,7 +97,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                               bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  PhysicsPackageBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -177,6 +177,6 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 //END_SPHINX_INCLUDE_ASSEMBLY
 
 //START_SPHINX_INCLUDE_REGISTER
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, LaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
 } /* namespace geos */

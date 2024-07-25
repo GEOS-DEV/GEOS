@@ -169,7 +169,7 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override
   {
-    SolverBase::registerDataOnMesh( meshBodies );
+    PhysicsPackageBase::registerDataOnMesh( meshBodies );
 
     if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
     {
@@ -184,7 +184,7 @@ public:
       flowSolver()->enableJumpStabilization();
     }
 
-    SolverBase::forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+    PhysicsPackageBase::forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                                   MeshLevel & mesh,
                                                                   arrayView1d< string const > const & regionNames )
     {
@@ -383,14 +383,14 @@ protected:
                                               array1d< real64 > & averageMeanTotalStressIncrement )
   {
     averageMeanTotalStressIncrement.resize( 0 );
-    SolverBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+    PhysicsPackageBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                              MeshLevel & mesh,
                                                                              arrayView1d< string const > const & regionNames ) {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)
         string const solidName = subRegion.template getReference< string >( "porousMaterialNames" );
-        constitutive::CoupledSolidBase & solid = SolverBase::getConstitutiveModel< constitutive::CoupledSolidBase >(
+        constitutive::CoupledSolidBase & solid = PhysicsPackageBase::getConstitutiveModel< constitutive::CoupledSolidBase >(
           subRegion, solidName );
 
         arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
@@ -406,14 +406,14 @@ protected:
                                                         array1d< real64 > & averageMeanTotalStressIncrement )
   {
     integer i = 0;
-    SolverBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+    PhysicsPackageBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                              MeshLevel & mesh,
                                                                              arrayView1d< string const > const & regionNames ) {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)
         string const solidName = subRegion.template getReference< string >( "porousMaterialNames" );
-        constitutive::CoupledSolidBase & solid = SolverBase::getConstitutiveModel< constitutive::CoupledSolidBase >(
+        constitutive::CoupledSolidBase & solid = PhysicsPackageBase::getConstitutiveModel< constitutive::CoupledSolidBase >(
           subRegion, solidName );
         auto & porosityModel = dynamic_cast< constitutive::BiotPorosity const & >( solid.getBasePorosityModel());
         arrayView1d< real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();

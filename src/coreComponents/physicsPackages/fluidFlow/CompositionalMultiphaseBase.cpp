@@ -2629,7 +2629,7 @@ real64 CompositionalMultiphaseBase::setNextDt( const geos::real64 & currentDt, g
 {
 
   if( m_targetFlowCFL < 0 )
-    return SolverBase::setNextDt( currentDt, domain );
+    return PhysicsPackageBase::setNextDt( currentDt, domain );
   else
     return setNextDtBasedOnCFL( currentDt, domain );
 }

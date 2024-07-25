@@ -20,7 +20,7 @@
 #define GEOS_PHYSICSPACKAGES_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos
@@ -57,7 +57,7 @@ class ElementRegionBase;
  * This solver manages the mesh topology splitting methods.
  *
  */
-class SurfaceGenerator : public SolverBase
+class SurfaceGenerator : public PhysicsPackageBase
 {
 public:
   SurfaceGenerator( const string & name,
@@ -67,7 +67,7 @@ public:
 
   static string catalogName() { return "SurfaceGenerator"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -506,7 +506,7 @@ private:
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsPackageBase::viewKeyStruct
   {
     constexpr static char const * failCriterionString() { return "failCriterion"; }
     constexpr static char const * solidMaterialNameString() { return "solidMaterialNames"; }

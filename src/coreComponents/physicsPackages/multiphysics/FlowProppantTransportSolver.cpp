@@ -140,6 +140,6 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
   return dtReturn;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, FlowProppantTransportSolver, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, FlowProppantTransportSolver, string const &, Group * const )
 
 } /* namespace geos */

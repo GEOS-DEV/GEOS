@@ -3,8 +3,8 @@ set( physicsPackages_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
-     SolverBase.hpp
-     SolverBaseKernels.hpp
+     PhysicsPackageBase.hpp
+     PhysicsPackageBaseKernels.hpp
      SolverStatistics.hpp
      FieldStatisticsBase.hpp
  )
@@ -14,7 +14,7 @@ set( physicsPackages_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
-     SolverBase.cpp
+     PhysicsPackageBase.cpp
      SolverStatistics.cpp )
 
 if( GEOS_ENABLE_CONTACT )

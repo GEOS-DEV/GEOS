@@ -46,7 +46,7 @@ public:
     return "SolidMechanicsLagrangeContact";
   }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 

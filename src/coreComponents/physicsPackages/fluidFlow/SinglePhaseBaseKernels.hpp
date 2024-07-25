@@ -27,7 +27,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsPackages/SolverBaseKernels.hpp"
+#include "physicsPackages/PhysicsPackageBaseKernels.hpp"
 
 namespace geos
 {
@@ -452,11 +452,11 @@ public:
 /**
  * @class ResidualNormKernel
  */
-class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
+class ResidualNormKernel : public PhysicsPackageBaseKernels::ResidualNormKernelBase< 1 >
 {
 public:
 
-  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base = PhysicsPackageBaseKernels::ResidualNormKernelBase< 1 >;
   using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
@@ -527,7 +527,7 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( solverBaseKernels::NormType const normType,
+  createAndLaunch( PhysicsPackageBaseKernels::NormType const normType,
                    globalIndex const rankOffset,
                    string const dofKey,
                    arrayView1d< real64 const > const & localResidual,
@@ -540,7 +540,7 @@ public:
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, minNormalizer );
-    if( normType == solverBaseKernels::NormType::Linf )
+    if( normType == PhysicsPackageBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
     }

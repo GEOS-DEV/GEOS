@@ -17,8 +17,8 @@
  * @file FlowSolverBaseKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWSOLVERBASEKERNELS_HPP
-#define GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWSOLVERBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWPHYSICSPACKAGEBASEKERNELS_HPP
+#define GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWPHYSICSPACKAGEBASEKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace flowSolverBaseKernels
+namespace flowPhysicsPackageBaseKernels
 {
 
 /// Threshold for the min pore volume (below, a warning is issued)
@@ -145,8 +145,8 @@ struct stencilWeightsUpdateKernel
   }
 };
 
-} // namespace flowSolverBaseKernels
+} // namespace flowPhysicsPackageBaseKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWSOLVERBASEKERNELS_HPP
+#endif //GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWPHYSICSPACKAGEBASEKERNELS_HPP

@@ -44,7 +44,7 @@ public:
    */
   static string catalogName() { return Base::catalogName() + "EmbeddedFractures"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsPackageBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 

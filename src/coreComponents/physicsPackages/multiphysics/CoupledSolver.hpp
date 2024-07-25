@@ -21,7 +21,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
-#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 
 #include <tuple>
 
@@ -29,7 +29,7 @@ namespace geos
 {
 
 template< typename ... SOLVERS >
-class CoupledSolver : public SolverBase
+class CoupledSolver : public PhysicsPackageBase
 {
 
 public:
@@ -41,7 +41,7 @@ public:
    */
   CoupledSolver( const string & name,
                  Group * const parent )
-    : SolverBase( name, parent )
+    : PhysicsPackageBase( name, parent )
   {
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
     {
@@ -53,7 +53,7 @@ public:
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
 
-    this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+    this->getWrapper< string >( PhysicsPackageBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
   }
 
@@ -317,7 +317,7 @@ public:
 
   virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt ) override
   {
-    real64 nextDt = SolverBase::setNextDtBasedOnNewtonIter( currentDt );
+    real64 nextDt = PhysicsPackageBase::setNextDtBasedOnNewtonIter( currentDt );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       real64 const singlePhysicsNextDt =
@@ -337,7 +337,7 @@ public:
     {
       solver->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
     } );
-    SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+    PhysicsPackageBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   /**@}*/
@@ -404,7 +404,7 @@ protected:
                                          int const cycleNumber,
                                          DomainPartition & domain )
   {
-    return SolverBase::solverStep( time_n, dt, cycleNumber, domain );
+    return PhysicsPackageBase::solverStep( time_n, dt, cycleNumber, domain );
   }
 
   /**
