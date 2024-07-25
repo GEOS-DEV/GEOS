@@ -21,8 +21,6 @@
 
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "functions/TableFunction.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
-
 
 namespace geos
 {
@@ -40,7 +38,7 @@ class BartonBandisUpdates
 public:
 
   BartonBandisUpdates( real64 const referenceNormalStress,
-                       real64 const aperture0)
+                       real64 const aperture0 )
     : m_referenceNormalStress( referenceNormalStress ),
       m_aperture0( aperture0 )
   {}
@@ -118,6 +116,16 @@ public:
   KernelWrapper createKernelWrapper() const;
 
 private:
+  
+   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  {
+    /// string/key for aperture tolerance
+    static constexpr char const * apertureZeroString() { return "apertureZero"; }
+
+    /// string/key for aperture table name
+    static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
+  };
+
   virtual void postInputInitialization() override;
 
   real64 m_referenceNormalStress;
@@ -133,8 +141,8 @@ real64 BartonBandisUpdates::computeHydraulicAperture( real64 const aperture,
                                                       real64 & dHydraulicAperture_aperture,
                                                       real64 & dHydraulicAperture_dNormalStress ) const
 {
-  real64 const hydraulicAperture = ( aperture >= 0.0 ) ? (aperture + m_aperture0) : m_aperture0 / ( 1 + 9*normalTraction/m_refNormalStress );
-  dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*normalTraction/m_refNormalStress ) * 9/m_refNormalStress;
+  real64 const hydraulicAperture = ( aperture >= 0.0 ) ? (aperture + m_aperture0) : m_aperture0 / ( 1 + 9*normalTraction/m_referenceNormalStress );
+  dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*normalTraction/m_referenceNormalStress ) * 9/m_referenceNormalStress;
   dHydraulicAperture_aperture = 0.0;
 
   return hydraulicAperture;

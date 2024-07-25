@@ -22,7 +22,6 @@
 
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "functions/TableFunction.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
 
 
 namespace geos
@@ -154,10 +153,10 @@ GEOS_FORCE_INLINE
 real64 HydraulicApertureTableUpdates::computeHydraulicAperture( real64 const aperture,
                                                                 real64 const normalTraction,
                                                                 real64 & dHydraulicAperture_aperture,
-                                                                real64 & dHydraulicAperture_dNormalStress ) const;
+                                                                real64 & dHydraulicAperture_dNormalStress ) const
 {
-  GEOS_UNUSED_VAR( normalTraction );
-  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dNormalStress );
+  GEOS_UNUSED_VAR( normalTraction, dHydraulicAperture_dNormalStress );
+  return m_apertureTable.compute( &aperture, &dHydraulicAperture_aperture );
 }
 
 } /* namespace constitutive */

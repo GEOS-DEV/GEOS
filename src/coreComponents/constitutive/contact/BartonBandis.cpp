@@ -26,8 +26,9 @@ namespace geos
 namespace constitutive
 {
 
-BartonBandis::BartonBandis( string const & name,
-                                                Group * const parent ):
+using namespace dataRepository;
+
+BartonBandis::BartonBandis( string const & name, Group * const parent ):
   HydraulicApertureBase( name, parent ),
   m_referenceNormalStress(0.0),
   m_aperture0(0.0)
