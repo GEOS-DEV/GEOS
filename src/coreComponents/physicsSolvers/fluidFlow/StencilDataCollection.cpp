@@ -206,6 +206,7 @@ public:
       minLclId.min( iConn );
       maxLclId.max( iConn );
     } );
+    connData.freeOnDevice();
     // DEBUG OUTPUTS
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "run count", runCount.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "lcl ids         ", minLclId.get(), maxLclId.get() ) );
