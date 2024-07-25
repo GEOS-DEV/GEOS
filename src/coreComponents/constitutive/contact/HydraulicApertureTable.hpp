@@ -67,7 +67,9 @@ public:
    */
   GEOS_HOST_DEVICE
   real64 computeHydraulicAperture( real64 const aperture,
-                                   real64 & dHydraulicAperture_dAperture ) const;
+                                   real64 const normalTraction,
+                                   real64 & dHydraulicAperture_aperture,
+                                   real64 & dHydraulicAperture_dNormalStress ) const;
 
 protected:
 
@@ -150,9 +152,12 @@ protected:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 HydraulicApertureTableUpdates::computeHydraulicAperture( real64 const aperture,
-                                                                real64 & dHydraulicAperture_dAperture ) const
+                                                                real64 const normalTraction,
+                                                                real64 & dHydraulicAperture_aperture,
+                                                                real64 & dHydraulicAperture_dNormalStress ) const;
 {
-  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
+  GEOS_UNUSED_VAR( normalTraction );
+  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dNormalStress );
 }
 
 } /* namespace constitutive */

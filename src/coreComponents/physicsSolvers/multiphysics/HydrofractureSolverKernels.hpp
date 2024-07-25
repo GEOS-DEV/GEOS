@@ -85,9 +85,15 @@ struct DeformationUpdateKernel
       aperture[kfe] = normalJump;
       minAperture.min( aperture[kfe] );
       maxAperture.max( aperture[kfe] );
-
-      real64 dHydraulicAperture_dNormalJump = 0;
-      real64 const newHydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dNormalJump );
+      
+      real64 normalTraction = 0.0; /// TODO: must be changed to use actual traction
+      real64 dHydraulicAperture_dNormalTraction = 0.0;
+      real64 dHydraulicAperture_dNormalJump = 0.0;
+      real64 const newHydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture[kfe],
+                                                                                             normalTraction,
+                                                                                             dHydraulicAperture_dNormalJump
+                                                                                             dHydraulicAperture_dNormalTraction );
+                                                                                             
       maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
       real64 const oldHydraulicAperture = hydraulicAperture[kfe];
       hydraulicAperture[kfe] = newHydraulicAperture;
@@ -143,8 +149,13 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
   {
-    real64 dHydraulicAperture_dNormalJump = 0;
-    real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
+    real64 dHydraulicAperture_dNormalJump = 0.0;
+    real64 dHydraulicAperture_dTraction = 0.0;
+    real64 fractureTraction = 0.0
+    real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture, 
+                                                                                        fractureTraction,
+                                                                                        dHydraulicAperture_dNormalJump,
+                                                                                        dHydraulicAperture_dTraction );
     GEOS_UNUSED_VAR( hydraulicAperture );
 
     constexpr integer kfSign[2] = { -1, 1 };

@@ -351,9 +351,12 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dHydraulicAperture_dNormalJump = 0;
-      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
-                                                                      dHydraulicAperture_dNormalJump );
+      real64 dHydraulicAperture_dNormalJump = 0.0;
+      real64 dHydraulicAperture_dNormalTraction = 0.0;
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k], 
+                                                                      fractureTraction[k][0], 
+                                                                      dHydraulicAperture_dNormalJump,
+                                                                      dHydraulicAperture_dNormalTraction );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
