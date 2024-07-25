@@ -51,11 +51,11 @@ SolidMechanicsPenaltyContact::~SolidMechanicsPenaltyContact()
 }
 
 void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
-                                               DofManager & dofManager,
-                                               CRSMatrix< real64, globalIndex > & localMatrix,
-                                               ParallelVector & rhs,
-                                               ParallelVector & solution,
-                                               bool const setSparsity )
+                                                DofManager & dofManager,
+                                                CRSMatrix< real64, globalIndex > & localMatrix,
+                                                ParallelVector & rhs,
+                                                ParallelVector & solution,
+                                                bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, false );
@@ -72,7 +72,7 @@ void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
     arrayView1d< globalIndex const > const
     dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
 
-  
+
     ElementRegionManager const & elemManager = mesh.getElemManager();
     array1d< string > allFaceElementRegions;
     elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
@@ -81,23 +81,21 @@ void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
     } );
 
     finiteElement::
-        fillSparsity< FaceElementSubRegion,
-                      solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
-                                                                                            allFaceElementRegions,
-                                                                                            this->getDiscretizationName(),
-                                                                                            dofNumber,
-                                                                                            dofManager.rankOffset(),
-                                                                                            sparsityPattern );
-
-    }
-    finiteElement::
-      fillSparsity< CellElementSubRegion,
+      fillSparsity< FaceElementSubRegion,
                     solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
-                                                                                          regionNames,
+                                                                                          allFaceElementRegions,
                                                                                           this->getDiscretizationName(),
                                                                                           dofNumber,
                                                                                           dofManager.rankOffset(),
                                                                                           sparsityPattern );
+
+    finiteElement::fillSparsity< CellElementSubRegion,
+                                 solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
+                                                                                                       regionNames,
+                                                                                                       this->getDiscretizationName(),
+                                                                                                       dofNumber,
+                                                                                                       dofManager.rankOffset(),
+                                                                                                       sparsityPattern );
 
 
   } );
@@ -133,102 +131,102 @@ void SolidMechanicsPenaltyContact::assembleContact( DomainPartition & domain,
                                                     arrayView1d< real64 > const & localRhs )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & )
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    FaceManager const & faceManager = mesh.getFaceManager();
+    NodeManager & nodeManager = mesh.getNodeManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    solidMechanics::arrayViewConst2dLayoutTotalDisplacement const u =
+      nodeManager.getField< solidMechanics::totalDisplacement >();
+    arrayView2d< real64 > const fc = nodeManager.getField< solidMechanics::contactForce >();
+    fc.zero();
+
+    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+
+    string const dofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    arrayView1d< globalIndex > const nodeDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    // TODO: this bound may need to change
+    constexpr localIndex maxNodexPerFace = 4;
+    constexpr localIndex maxDofPerElem = maxNodexPerFace * 3 * 2;
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      FaceManager const & faceManager = mesh.getFaceManager();
-      NodeManager & nodeManager = mesh.getNodeManager();
-      ElementRegionManager & elemManager = mesh.getElemManager();
+      real64 const contactStiffness = m_contactPenaltyStiffness;
 
-      solidMechanics::arrayViewConst2dLayoutTotalDisplacement const u =
-        nodeManager.getField< solidMechanics::totalDisplacement >();
-      arrayView2d< real64 > const fc = nodeManager.getField< solidMechanics::contactForce >();
-      fc.zero();
+      arrayView1d< real64 > const area = subRegion.getElementArea();
+      ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
-      arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
-      ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-
-      string const dofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-      arrayView1d< globalIndex > const nodeDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-      globalIndex const rankOffset = dofManager.rankOffset();
-
-      // TODO: this bound may need to change
-      constexpr localIndex maxNodexPerFace = 4;
-      constexpr localIndex maxDofPerElem = maxNodexPerFace * 3 * 2;
-
-      elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      // TODO: use parallel policy?
+      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        real64 const contactStiffness = m_contactPenaltyStiffness;
+        localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
+        real64 Nbar[ 3 ] = { faceNormal[kf0][0] - faceNormal[kf1][0],
+                             faceNormal[kf0][1] - faceNormal[kf1][1],
+                             faceNormal[kf0][2] - faceNormal[kf1][2] };
 
-        arrayView1d< real64 > const area = subRegion.getElementArea();
-        ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+        LvArray::tensorOps::normalize< 3 >( Nbar );
 
-        // TODO: use parallel policy?
-        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        localIndex const numNodesPerFace=facesToNodes.sizeOfArray( kf0 );
+        real64 const Ja = area[kfe] / numNodesPerFace;
+
+        stackArray1d< globalIndex, maxDofPerElem > rowDOF( numNodesPerFace*3*2 );
+        stackArray1d< real64, maxDofPerElem > nodeRHS( numNodesPerFace*3*2 );
+        stackArray2d< real64, maxDofPerElem *maxDofPerElem > dRdP( numNodesPerFace*3*2, numNodesPerFace*3*2 );
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
-          real64 Nbar[ 3 ] = { faceNormal[kf0][0] - faceNormal[kf1][0],
-                               faceNormal[kf0][1] - faceNormal[kf1][1],
-                               faceNormal[kf0][2] - faceNormal[kf1][2] };
+          real64 penaltyForce[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
+          localIndex const node0 = facesToNodes[kf0][a];
+          localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
+          real64 gap[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
+          LvArray::tensorOps::subtract< 3 >( gap, u[node0] );
+          real64 const gapNormal = LvArray::tensorOps::AiBi< 3 >( gap, Nbar );
 
-          LvArray::tensorOps::normalize< 3 >( Nbar );
-
-          localIndex const numNodesPerFace=facesToNodes.sizeOfArray( kf0 );
-          real64 const Ja = area[kfe] / numNodesPerFace;
-
-          stackArray1d< globalIndex, maxDofPerElem > rowDOF( numNodesPerFace*3*2 );
-          stackArray1d< real64, maxDofPerElem > nodeRHS( numNodesPerFace*3*2 );
-          stackArray2d< real64, maxDofPerElem *maxDofPerElem > dRdP( numNodesPerFace*3*2, numNodesPerFace*3*2 );
-
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( int i=0; i<3; ++i )
           {
-            real64 penaltyForce[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
-            localIndex const node0 = facesToNodes[kf0][a];
-            localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
-            real64 gap[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
-            LvArray::tensorOps::subtract< 3 >( gap, u[node0] );
-            real64 const gapNormal = LvArray::tensorOps::AiBi< 3 >( gap, Nbar );
+            rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
+            rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
+          }
 
+          if( gapNormal < 0 )
+          {
+            LvArray::tensorOps::scale< 3 >( penaltyForce, -contactStiffness * gapNormal * Ja );
             for( int i=0; i<3; ++i )
             {
-              rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
-              rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
-            }
+              LvArray::tensorOps::subtract< 3 >( fc[node0], penaltyForce );
+              LvArray::tensorOps::add< 3 >( fc[node1], penaltyForce );
+              nodeRHS[3*a+i]                     -= penaltyForce[i];
+              nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
 
-            if( gapNormal < 0 )
-            {
-              LvArray::tensorOps::scale< 3 >( penaltyForce, -contactStiffness * gapNormal * Ja );
-              for( int i=0; i<3; ++i )
-              {
-                LvArray::tensorOps::subtract< 3 >( fc[node0], penaltyForce );
-                LvArray::tensorOps::add< 3 >( fc[node1], penaltyForce );
-                nodeRHS[3*a+i]                     -= penaltyForce[i];
-                nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
-
-                dRdP( 3*a+i, 3*a+i )                                         -= contactStiffness * Ja * Nbar[i] * Nbar[i];
-                dRdP( 3*a+i, 3*(numNodesPerFace + a)+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
-                dRdP( 3*(numNodesPerFace + a)+i, 3*a+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
-                dRdP( 3*(numNodesPerFace + a)+i, 3*(numNodesPerFace + a)+i ) -= contactStiffness * Ja * Nbar[i] * Nbar[i];
-              }
+              dRdP( 3*a+i, 3*a+i )                                         -= contactStiffness * Ja * Nbar[i] * Nbar[i];
+              dRdP( 3*a+i, 3*(numNodesPerFace + a)+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
+              dRdP( 3*(numNodesPerFace + a)+i, 3*a+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
+              dRdP( 3*(numNodesPerFace + a)+i, 3*(numNodesPerFace + a)+i ) -= contactStiffness * Ja * Nbar[i] * Nbar[i];
             }
           }
+        }
 
-          for( localIndex idof = 0; idof < numNodesPerFace*3*2; ++idof )
+        for( localIndex idof = 0; idof < numNodesPerFace*3*2; ++idof )
+        {
+          localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
-            localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
-
-            if( localRow >= 0 && localRow < localMatrix.numRows() )
-            {
-              localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                        rowDOF.data(),
-                                                                        dRdP[idof].dataIfContiguous(),
-                                                                        numNodesPerFace*3*2 );
-              RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow], nodeRHS[idof] );
-            }
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
+                                                                      rowDOF.data(),
+                                                                      dRdP[idof].dataIfContiguous(),
+                                                                      numNodesPerFace*3*2 );
+            RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow], nodeRHS[idof] );
           }
-        } );
+        }
       } );
     } );
+  } );
 }
 
 

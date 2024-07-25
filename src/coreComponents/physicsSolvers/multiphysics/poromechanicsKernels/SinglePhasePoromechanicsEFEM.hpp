@@ -353,8 +353,8 @@ struct StateUpdateKernel
 
       real64 dHydraulicAperture_dNormalJump = 0.0;
       real64 dHydraulicAperture_dNormalTraction = 0.0;
-      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k], 
-                                                                      fractureTraction[k][0], 
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
+                                                                      fractureTraction[k][0],
                                                                       dHydraulicAperture_dNormalJump,
                                                                       dHydraulicAperture_dNormalTraction );
 

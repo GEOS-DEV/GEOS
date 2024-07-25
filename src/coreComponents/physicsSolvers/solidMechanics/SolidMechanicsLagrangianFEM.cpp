@@ -119,7 +119,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   registerWrapper( viewKeyStruct::contactPenaltyStiffnessString(), &m_contactPenaltyStiffness ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.0 ).
-    setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );  
+    setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
     setInputFlag( InputFlags::FALSE ).

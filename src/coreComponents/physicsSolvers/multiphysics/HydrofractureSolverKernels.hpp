@@ -85,7 +85,7 @@ struct DeformationUpdateKernel
       aperture[kfe] = normalJump;
       minAperture.min( aperture[kfe] );
       maxAperture.max( aperture[kfe] );
-      
+
       real64 normalTraction = 0.0; /// TODO: must be changed to use actual traction
       real64 dHydraulicAperture_dNormalTraction = 0.0;
       real64 dHydraulicAperture_dNormalJump = 0.0;
@@ -152,7 +152,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
     real64 dHydraulicAperture_dNormalJump = 0.0;
     real64 dHydraulicAperture_dTraction = 0.0;
     real64 fractureTraction = 0.0;
-    real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture, 
+    real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture,
                                                                                         fractureTraction,
                                                                                         dHydraulicAperture_dNormalJump,
                                                                                         dHydraulicAperture_dTraction );

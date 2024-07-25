@@ -68,11 +68,11 @@ public:
   GEOS_HOST_DEVICE
   inline
   virtual void computeShearTraction( localIndex const k,
-                                arraySlice1d< real64 const > const & oldDispJump,
-                                arraySlice1d< real64 const > const & dispJump,
-                                integer const & fractureState,
-                                arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const
+                                     arraySlice1d< real64 const > const & oldDispJump,
+                                     arraySlice1d< real64 const > const & dispJump,
+                                     integer const & fractureState,
+                                     arraySlice1d< real64 > const & tractionVector,
+                                     arraySlice2d< real64 > const & dTractionVector_dJump ) const
   {GEOS_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, fractureState );}
 
   /**

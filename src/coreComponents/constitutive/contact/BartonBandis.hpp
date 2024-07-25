@@ -40,7 +40,7 @@ public:
   BartonBandisUpdates( real64 const referenceNormalStress,
                        real64 const aperture0 )
     : m_referenceNormalStress( referenceNormalStress ),
-      m_aperture0( aperture0 )
+    m_aperture0( aperture0 )
   {}
 
   /// Default copy constructor
@@ -72,8 +72,8 @@ public:
 
 private:
   real64 m_referenceNormalStress;
-  
-  real64 m_aperture0;                                    
+
+  real64 m_aperture0;
 };
 
 
@@ -112,8 +112,8 @@ public:
   KernelWrapper createKernelWrapper() const;
 
 private:
-  
-   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     /// string/key for aperture under zero normal stress
     static constexpr char const * apertureZeroString() { return "apertureZero"; }
@@ -124,7 +124,7 @@ private:
   /// Reference normal stress
   real64 m_referenceNormalStress;
   /// Hydraulic aperture under zero normal stress
-  real64 m_aperture0;                                
+  real64 m_aperture0;
 
 };
 

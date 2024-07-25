@@ -88,7 +88,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="FractureSubRegion"
-      materialList="{ water, fractureFilling, fractureContact, rock}"
+      materialList="{ water, fractureFilling, fractureContact, rock, hApertureModel}"
       defaultAperture="1e-3"/>
   </ElementRegions>
 

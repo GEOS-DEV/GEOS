@@ -27,7 +27,7 @@ namespace constitutive
 {
 
 HydraulicApertureBase::HydraulicApertureBase( string const & name,
-                                                Group * const parent ):
+                                              Group * const parent ):
   ConstitutiveBase( name, parent )
 {}
 

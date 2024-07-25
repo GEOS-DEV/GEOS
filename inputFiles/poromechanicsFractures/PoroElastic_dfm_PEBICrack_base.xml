@@ -11,7 +11,7 @@
     <SurfaceElementRegion
       name="Fault"
       faceBlock="fracture"
-      materialList="{ water, faultFilling, fractureContact }"
+      materialList="{ water, faultFilling, fractureContact, hApertureModel }"
       defaultAperture="1e-3"/>
   </ElementRegions> 
 

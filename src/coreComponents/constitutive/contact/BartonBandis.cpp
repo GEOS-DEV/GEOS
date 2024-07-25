@@ -30,8 +30,8 @@ using namespace dataRepository;
 
 BartonBandis::BartonBandis( string const & name, Group * const parent ):
   HydraulicApertureBase( name, parent ),
-  m_referenceNormalStress(0.0),
-  m_aperture0(0.0)
+  m_referenceNormalStress( 0.0 ),
+  m_aperture0( 0.0 )
 {
   registerWrapper( viewKeyStruct::referenceNormalStressString(), &m_referenceNormalStress ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -40,12 +40,12 @@ BartonBandis::BartonBandis( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::apertureZeroString(), &m_aperture0 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Hydraulic aperture under zero normal stress." );
-}  
+}
 
 BartonBandis::~BartonBandis()
 {}
 
-BartonBandisUpdates BartonBandis::createKernelWrapper() const 
+BartonBandisUpdates BartonBandis::createKernelWrapper() const
 {
   return KernelWrapper( m_referenceNormalStress, m_aperture0 );
 }

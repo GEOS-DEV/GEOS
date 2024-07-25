@@ -246,7 +246,7 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
     string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
     frictionLawName = SolverBase::getConstitutiveName< FrictionBase >( subRegion );
     GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
-                                                          getDataContext(), subRegion.getDataContext() ) );
+                                                      getDataContext(), subRegion.getDataContext() ) );
   }
 }
 

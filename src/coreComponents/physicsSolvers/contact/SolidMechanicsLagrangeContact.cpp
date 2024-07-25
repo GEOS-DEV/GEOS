@@ -1473,7 +1473,7 @@ void SolidMechanicsLagrangeContact::
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
-    constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw)
+    constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
     {
       using FrictionType = TYPEOFREF( castedFrictionLaw );
       typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelWrapper();
@@ -1578,7 +1578,7 @@ void SolidMechanicsLagrangeContact::
 
                 real64 dLimitTau_dNormalTraction = 0;
                 real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
-                                                                                           dLimitTau_dNormalTraction );
+                                                                                            dLimitTau_dNormalTraction );
 
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
@@ -2283,7 +2283,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
                 frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
-                                                                   dLimitTangentialTractionNorm_dTraction );
+                                                                    dLimitTangentialTractionNorm_dTraction );
 
               if( originalFractureState == FractureState::Stick && currentTau >= limitTau )
               {

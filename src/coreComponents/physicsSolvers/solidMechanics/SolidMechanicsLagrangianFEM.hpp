@@ -252,7 +252,7 @@ public:
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
 
-    static constexpr  char const * contactPenaltyStiffnessString() { return "contactPenaltyStiffness"; }
+    static constexpr char const * contactPenaltyStiffnessString() { return "contactPenaltyStiffness"; }
 
   };
 

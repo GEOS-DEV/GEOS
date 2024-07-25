@@ -33,7 +33,7 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( FrictionBase const & contact,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< FrictionlessContact, 
+  ConstitutivePassThruHandler< FrictionlessContact,
                                CoulombFriction >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -41,7 +41,7 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( FrictionBase & contact,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< FrictionlessContact, 
+  ConstitutivePassThruHandler< FrictionlessContact,
                                CoulombFriction >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 

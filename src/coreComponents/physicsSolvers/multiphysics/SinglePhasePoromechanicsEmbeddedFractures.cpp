@@ -505,29 +505,29 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &hydraulicApertureModel] ( auto & castedPorousSolid )
       {
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
-      
-      constitutiveUpdatePassThru( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
-      {
 
-        using ContactType = TYPEOFREF( castedHydraulicApertureModel );
-        typename ContactType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
+        constitutiveUpdatePassThru( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
+        {
 
-        poromechanicsEFEMKernels::StateUpdateKernel::
-          launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            hydraulicApertureModelWrapper,
-                                            porousMaterialWrapper,
-                                            dispJump,
-                                            pressure,
-                                            area,
-                                            volume,
-                                            deltaVolume,
-                                            aperture,
-                                            oldHydraulicAperture,
-                                            hydraulicAperture,
-                                            fractureTraction,
-                                            dTdpf );
+          using ContactType = TYPEOFREF( castedHydraulicApertureModel );
+          typename ContactType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
 
-      } );
+          poromechanicsEFEMKernels::StateUpdateKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              hydraulicApertureModelWrapper,
+                                              porousMaterialWrapper,
+                                              dispJump,
+                                              pressure,
+                                              area,
+                                              volume,
+                                              deltaVolume,
+                                              aperture,
+                                              oldHydraulicAperture,
+                                              hydraulicAperture,
+                                              fractureTraction,
+                                              dTdpf );
+
+        } );
       } );
 
       // update the stencil weights using the updated hydraulic aperture

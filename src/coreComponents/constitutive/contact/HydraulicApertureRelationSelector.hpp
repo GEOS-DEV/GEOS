@@ -33,7 +33,7 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( HydraulicApertureBase const & contact,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< HydraulicApertureTable, 
+  ConstitutivePassThruHandler< HydraulicApertureTable,
                                BartonBandis >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 

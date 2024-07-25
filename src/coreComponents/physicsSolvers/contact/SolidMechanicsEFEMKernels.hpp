@@ -302,7 +302,7 @@ struct StateUpdateKernel
   static void
   launch( localIndex const size,
           FRICTION_WRAPPER const & frictionWrapper,
-          real64 const contactPenaltyStiffness, 
+          real64 const contactPenaltyStiffness,
           arrayView2d< real64 const > const & oldJump,
           arrayView2d< real64 const > const & jump,
           arrayView2d< real64 > const & fractureTraction,

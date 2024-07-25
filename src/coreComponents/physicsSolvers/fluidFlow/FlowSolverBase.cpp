@@ -350,7 +350,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
     string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
     hydraulicApertureModelName = SolverBase::getConstitutiveName< HydraulicApertureBase >( subRegion );
     GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
-                                                          getDataContext(), subRegion.getDataContext() ) );
+                                                                 getDataContext(), subRegion.getDataContext() ) );
   }
 }
 

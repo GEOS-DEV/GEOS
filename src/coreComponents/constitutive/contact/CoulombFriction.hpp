@@ -77,11 +77,11 @@ public:
   GEOS_HOST_DEVICE
   inline
   virtual void computeShearTraction( localIndex const k,
-                                arraySlice1d< real64 const > const & oldDispJump,
-                                arraySlice1d< real64 const > const & dispJump,
-                                integer const & fractureState,
-                                arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
+                                     arraySlice1d< real64 const > const & oldDispJump,
+                                     arraySlice1d< real64 const > const & dispJump,
+                                     integer const & fractureState,
+                                     arraySlice1d< real64 > const & tractionVector,
+                                     arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
 
   GEOS_HOST_DEVICE
   inline
@@ -180,6 +180,7 @@ private:
  */
   struct viewKeyStruct : public FrictionBase::viewKeyStruct
   {
+    /// string/key for shear stiffness
     static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
 
     /// string/key for cohesion

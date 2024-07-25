@@ -104,7 +104,7 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
   /**@}*/
-  
+
 private:
 
   static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face

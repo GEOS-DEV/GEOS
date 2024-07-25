@@ -193,7 +193,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, fractureContact }"
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
