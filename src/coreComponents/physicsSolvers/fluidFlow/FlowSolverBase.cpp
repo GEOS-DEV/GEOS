@@ -387,8 +387,8 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          CellElementSubRegion const & subRegion )
+    mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
+                                                                                          ElementSubRegionBase const & subRegion )
     {
 
       string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );

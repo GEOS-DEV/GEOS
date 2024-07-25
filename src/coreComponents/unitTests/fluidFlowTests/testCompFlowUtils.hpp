@@ -36,6 +36,7 @@ namespace testing
 using namespace geos::constitutive;
 using namespace geos::constitutive::multifluid;
 
+inline
 void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             arrayView1d< real64 const > const & residualOrig,
                             globalIndex const dofIndex,
@@ -52,6 +53,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
   } );
 }
 
+inline
 void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;
@@ -91,6 +93,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   problemManager.applyInitialConditions();
 }
 
+inline
 void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                                           DomainPartition & domain,
                                           real64 const perturbParameter,
@@ -171,6 +174,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   } );
 }
 
+inline
 void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                                                   DomainPartition & domain,
                                                   bool const isThermal,
@@ -335,6 +339,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
   } );
 }
 
+inline
 void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                                             DomainPartition & domain,
                                             bool const isThermal,
@@ -500,16 +505,17 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   } );
 }
 
+
 template< typename COMPOSITIONAL_SOLVER, typename LAMBDA >
-void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
-                                        DomainPartition & domain,
-                                        bool const isThermal,
-                                        real64 const perturbParameter,
-                                        arrayView1d< real64 > residual,
-                                        arrayView1d< real64 > residualOrig,
-                                        CRSMatrixView< real64, globalIndex > jacobian,
-                                        CRSMatrixView< real64, globalIndex > jacobianFD,
-                                        LAMBDA assembleFunction )
+inline void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
+                                               DomainPartition & domain,
+                                               bool const isThermal,
+                                               real64 const perturbParameter,
+                                               arrayView1d< real64 > residual,
+                                               arrayView1d< real64 > residualOrig,
+                                               CRSMatrixView< real64, globalIndex > jacobian,
+                                               CRSMatrixView< real64, globalIndex > jacobianFD,
+                                               LAMBDA assembleFunction )
 {
   integer const numComp = solver.numFluidComponents();
 
