@@ -102,6 +102,9 @@ public:
                    arrayView2d< real32 > const yCompRcv,
                    arrayView2d< real32 > const zCompRcv );
 
+  virtual real64 computeTimeStep( real64 & dtOut ) override;
+
+
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
@@ -196,8 +199,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
-
-  virtual real64 computeTimeStep( real64 & dtOut ) override;
 
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;

@@ -95,6 +95,11 @@ public:
    */
   virtual void initializePML() override;
 
+  /**
+   */
+  virtual real64 computeTimeStep( real64 & dtOut ) override;
+
+
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
@@ -165,11 +170,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
-
-
-  /**
-   */
-  virtual real64 computeTimeStep( real64 & dtOut ) override;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
