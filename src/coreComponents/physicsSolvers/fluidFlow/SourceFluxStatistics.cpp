@@ -19,8 +19,8 @@
 
 #include "SourceFluxStatistics.hpp"
 
-#include "SourceFluxBoundaryCondition.hpp"
-#include "FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
