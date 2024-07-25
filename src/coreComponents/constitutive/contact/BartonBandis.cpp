@@ -45,7 +45,10 @@ BartonBandis::BartonBandis( string const & name, Group * const parent ):
 BartonBandis::~BartonBandis()
 {}
 
-
+BartonBandisUpdates BartonBandis::createKernelWrapper() const 
+{
+  return KernelWrapper( m_referenceNormalStress, m_aperture0 );
+}
 
 } /* namespace constitutive */
 

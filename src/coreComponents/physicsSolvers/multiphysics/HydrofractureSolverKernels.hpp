@@ -91,9 +91,9 @@ struct DeformationUpdateKernel
       real64 dHydraulicAperture_dNormalJump = 0.0;
       real64 const newHydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture[kfe],
                                                                                              normalTraction,
-                                                                                             dHydraulicAperture_dNormalJump
+                                                                                             dHydraulicAperture_dNormalJump,
                                                                                              dHydraulicAperture_dNormalTraction );
-                                                                                             
+
       maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
       real64 const oldHydraulicAperture = hydraulicAperture[kfe];
       hydraulicAperture[kfe] = newHydraulicAperture;
@@ -151,7 +151,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
   {
     real64 dHydraulicAperture_dNormalJump = 0.0;
     real64 dHydraulicAperture_dTraction = 0.0;
-    real64 fractureTraction = 0.0
+    real64 fractureTraction = 0.0;
     real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture, 
                                                                                         fractureTraction,
                                                                                         dHydraulicAperture_dNormalJump,
