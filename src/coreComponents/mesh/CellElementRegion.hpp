@@ -96,7 +96,7 @@ public:
    * @brief Select cellBlocks by their names for generateMesh().
    * @param cellBlockNames array of string containing the cell block region names.
    */
-  template<typename StringContainerType>
+  template< typename StringContainerType >
   void addCellBlockNames( StringContainerType const & cellBlockNames )
   {
     for( auto const & name: cellBlockNames )
@@ -128,7 +128,7 @@ public:
    * @brief register every cellBlocks that is requested in the cellBlockNames list.
    * @note Assume that the cellBlockNames list is filled valid `cellBlocks` children names
    *       (CellElementRegionSelector verify & fill this list after the user-requests).
-   * @param cellBlockSelector the selector for this problem cell element regions.
+   * @param cellBlocks Cell blocks from where the mesh is extracted.
    */
   virtual void generateMesh( Group const & cellBlocks ) override;
 
