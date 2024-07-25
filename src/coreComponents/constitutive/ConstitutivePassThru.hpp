@@ -331,7 +331,7 @@ struct ConstitutivePassThru< ThermoPoroMechanicsBase >
                                  ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
-                                                                                       std::forward< LAMBDA >( lambda ) );
+                                                                                                                               std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -351,7 +351,7 @@ struct ConstitutivePassThru< ThermoPoroMechanicsBase >
                                  ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
-                                                                                       std::forward< LAMBDA >( lambda ) );
+                                                                                                                               std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -486,7 +486,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > >,
-ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< ModifiedCamClay, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DelftEgg, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DruckerPrager, SinglePhaseThermalConductivity >,
@@ -500,7 +500,7 @@ ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
-                                                                                       std::forward< LAMBDA >( lambda ) );
+                                                                                                                               std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -548,7 +548,7 @@ ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
                                  ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
-                                                                                       std::forward< LAMBDA >( lambda ) );
+                                                                                                                               std::forward< LAMBDA >( lambda ) );
   }
 };
 

@@ -50,9 +50,9 @@ public:
    * @brief Constructor
    */
   ThermoPoroMechanicsUpdates( SOLID_TYPE const & solidModel,
-                      BiotPorosity const & porosityModel,
-                      ConstantPermeability const & permModel,
-                      THERMAL_COND_TYPE const & condModel ):
+                              BiotPorosity const & porosityModel,
+                              ConstantPermeability const & permModel,
+                              THERMAL_COND_TYPE const & condModel ):
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel ),
     m_condUpdate( condModel.createKernelWrapper() )
   {}
