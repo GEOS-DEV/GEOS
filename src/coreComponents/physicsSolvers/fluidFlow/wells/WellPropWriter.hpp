@@ -406,18 +406,18 @@ public:
     }
     m_propWriterVec.push_back(new typed_f3d_prop_writer(prop,m_numPhase,m_numComponent));
   }
-  void write(integer timeStep, integer newtonIter, integer numTimeStepCuts)
+  void write(real64 time, real64 dt, integer cycle, integer subevent, integer timeStep, integer newtonIter, integer numTimeStepCuts)
   {
     if ( m_initialized == 0 ) 
     {
-      m_outputFile << "TimeStep,NewtonIteration,TimeStepCuts,Element";
+      m_outputFile << "Time,Dt,Cycle,SubEvent,TimeStep,NewtonIteration,TimeStepCuts,Element";
       for (auto i :m_header)
       {
         m_outputFile << "," << i;
       }
       m_outputFile << std::endl;
       // for perf data
-      m_perfOutputFile << "TimeStep,NewtonIteration,TimeStepCuts,ResElement,WellElement";
+      m_perfOutputFile << "Time,Dt,Cycle,SubEvent,TimeStep,NewtonIteration,TimeStepCuts,ResElement,WellElement";
       for (auto i :m_perfHeader)
       {
         m_perfOutputFile << "," << i;
@@ -430,7 +430,7 @@ public:
     {
       if ( m_elemGhostRank[j] < 0 )
       {
-        m_outputFile << timeStep << "," << newtonIter << "," << numTimeStepCuts<<","<<m_globalWellElementIndex[j];
+        m_outputFile <<   time << "," <<  dt << "," <<  cycle << "," <<  subevent << "," << timeStep << "," << newtonIter << "," << numTimeStepCuts<<","<<m_globalWellElementIndex[j];
         for (auto i : m_propWriterVec)
         {
           i->write_prop(j,m_outputFile);
@@ -447,7 +447,7 @@ public:
       localIndex const esr = m_resElementSubRegion[j];
       localIndex const ei  = m_resElementIndex[j]; 
       localIndex const iwelem = m_perfWellElemIndex[j];
-      m_perfOutputFile << timeStep << "," << newtonIter << "," << numTimeStepCuts<<","<<m_perfResElemGlobalIndex[j] << "," << m_globalWellElementIndex[iwelem];
+      m_perfOutputFile << time << "," <<  dt << "," <<  cycle << "," <<  subevent << "," << timeStep << "," << newtonIter << "," << numTimeStepCuts<<","<<m_perfResElemGlobalIndex[j] << "," << m_globalWellElementIndex[iwelem];
       for (auto i : m_perfPropWriterVec)
       {
         i->write_prop(er,esr,ei,m_perfOutputFile);

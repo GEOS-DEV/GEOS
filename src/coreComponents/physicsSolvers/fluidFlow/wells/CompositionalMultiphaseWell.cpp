@@ -43,6 +43,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "events/EventManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
@@ -541,10 +542,13 @@ void CompositionalMultiphaseWell::outputWellDebug( DomainPartition & domain,
     {
       if( m_writeSegDebug > 0 ) //&& subRegion.isLocallyOwned() )
       {
+        ////CompositionalMultiphaseReservoirAndWells<CompositionalMultiphaseBase> const& cmr=  getParent().getParent().getGroup<CompositionalMultiphaseReservoir>();
         string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
         WellControls & wellControls = getWellControls( subRegion );
         CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+ 
+        std::string coupled_solver_name = getParent().getSubGroupsNames()[0];
 
         MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
         PerforationData & perforationData = *subRegion.getPerforationData();
@@ -573,18 +577,25 @@ void CompositionalMultiphaseWell::outputWellDebug( DomainPartition & domain,
                                  fields::relperm::phaseRelPerm,
                                  fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
          */
+
         GeosxState & gs = getGlobalState();
-        // string const &  coupled_solve_name =  gs.getProblemManager().getPhysicsSolverManager().getGroup<
-        // geos::CompositionalMultiphaseReservoirAndWells< geos::CompositionalMultiphaseBase > >().getName();
+        //string const &  coupled_solve_name =  gs.getProblemManager().getPhysicsSolverManager().getGroup<
+        // geos::ag< geos::CompositionalMultiphaseBase > >.getName();
 
         CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > * solver =
-          &(gs.getProblemManager().getPhysicsSolverManager().getGroup< geos::CompositionalMultiphaseReservoirAndWells< geos::CompositionalMultiphaseBase > >( "coupledFlowAndWells" ));
+          &(gs.getProblemManager().getPhysicsSolverManager().getGroup< geos::CompositionalMultiphaseReservoirAndWells< geos::CompositionalMultiphaseBase > >( coupled_solver_name));
         //CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > * solver =  &(gs.getProblemManager().getGroupByPath<
         // CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >(
         // "/Problem/Solvers/CompositionalMultiphaseReservoirAndWells"));
         SolverStatistics & solver_stat = solver->getSolverStatistics();
 
         string const srn = subRegion.getName();
+        EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+        real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
+        real64 const & dt = event.getReference< real64 >( EventManager::viewKeyStruct::dtString() );
+        integer const & cycle = event.getReference< integer >( EventManager::viewKeyStruct::cycleString() );
+        integer const & subevent = event.getReference< integer >( EventManager::viewKeyStruct::currentSubEventString() );
+
         integer num_timesteps = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepsString());
         integer current_newton_iteration = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numCurrentNonlinearIterationsString());
         integer num_timestep_cuts = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepCutsString());
@@ -636,9 +647,8 @@ void CompositionalMultiphaseWell::outputWellDebug( DomainPartition & domain,
         m_wellPropWriter[srn].registerPerfPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
         m_wellPropWriter[srn].registerPerfPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
 
-
         //string const srn = subRegion.getName();
-        m_wellPropWriter[srn].write( num_timesteps,
+        m_wellPropWriter[srn].write( ctime,dt,cycle,subevent, num_timesteps,
                                      current_newton_iteration,
                                      num_timestep_cuts );
       }
