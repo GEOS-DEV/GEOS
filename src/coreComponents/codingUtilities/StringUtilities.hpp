@@ -87,7 +87,7 @@ string join( CONTAINER const & container, S const & delim = S() )
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S = char, typename LAMBDA >
-string joinLamda( LAMBDA iteratorFormatter, IT first, IT last, S const & delim = S() )
+string joinLamda( IT first, IT last, S const & delim, LAMBDA iteratorFormatter )
 {
   if( first == last )
   {
@@ -113,7 +113,7 @@ string joinLamda( LAMBDA iteratorFormatter, IT first, IT last, S const & delim =
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename CONTAINER, typename S = char, typename LAMBDA >
-string joinLamda( LAMBDA iteratorFormatter, CONTAINER const & container, S const & delim = S() )
+string joinLamda( CONTAINER const & container, S const & delim, LAMBDA iteratorFormatter )
 {
   return joinLamda( iteratorFormatter, std::begin( container ), std::end( container ), delim );
 }

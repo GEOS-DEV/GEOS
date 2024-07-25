@@ -196,7 +196,7 @@ CellElementRegionSelector::buildRegionCellBlocksSelection( CellElementRegion con
 void CellElementRegionSelector::checkSelectionConsistency() const
 {
   auto const getRegionStr = []( auto regionPtrIterator ) -> string {
-    return GEOS_FMT( "- {}\n", (*regionPtrIterator)->getDataContext() );
+    return GEOS_FMT( "- {}", (*regionPtrIterator)->getDataContext() );
   };
 
   // Search of never or multiple selected attribute values
@@ -213,7 +213,7 @@ void CellElementRegionSelector::checkSelectionConsistency() const
       multipleRefsErrors.push_back(
         GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n{}",
                   attributeValueStr, CellElementRegion::catalogName(),
-                  stringutilities::joinLamda( getRegionStr, owningRegions ) ) );
+                  stringutilities::joinLamda( owningRegions, '\n', getRegionStr ) ) );
     }
   }
   GEOS_THROW_IF( !multipleRefsErrors.empty(), stringutilities::join( multipleRefsErrors ), InputError );
@@ -231,10 +231,10 @@ void CellElementRegionSelector::checkSelectionConsistency() const
       multipleRefsErrors.push_back(
         GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n{}",
                   cellBlockName, CellElementRegion::catalogName(),
-                  stringutilities::joinLamda( getRegionStr, owningRegions ) ) );
+                  stringutilities::joinLamda( owningRegions, '\n', getRegionStr ) ) );
     }
   }
-  GEOS_THROW_IF( multipleRefsErrors.size() > 1, stringutilities::join( multipleRefsErrors ), InputError );
+  GEOS_THROW_IF( !multipleRefsErrors.empty(), stringutilities::join( multipleRefsErrors ), InputError );
 
   if( !orphanCellBlockNames.empty() )
   {
