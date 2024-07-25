@@ -18,7 +18,6 @@ set( constitutive_headers
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
      contact/BartonBandis.hpp
-     contact/Contact.hpp
      contact/CoulombFriction.hpp
      contact/FrictionSelector.hpp
      contact/FrictionBase.hpp
