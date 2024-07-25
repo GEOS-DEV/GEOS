@@ -58,6 +58,20 @@ public:
   static constexpr integer MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
 
   /**
+   * @brief Minimum supported number of fluid components (species) for dispatch
+   * @note This is the mininum number of components that can be used for dispatch in a kernel launch specific for
+   *       this fluid type.
+   */
+  static constexpr integer min_n_components = 2;
+
+  /**
+   * @brief Maximum supported number of fluid components (species) for dispatch
+   * @note This is the maxinum number of components that can be used for dispatch in a kernel launch specific for
+   *       this fluid type.
+   */
+  static constexpr integer max_n_components = 5;
+
+  /**
    * @return number of fluid components (species) in the model
    */
   integer numFluidComponents() const { return LvArray::integerConversion< integer >( m_componentNames.size() ); }
