@@ -338,7 +338,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   bool const isClone = this->isClone();
   PVTFunctionBase::TableOutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+    !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
   };
 
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",
@@ -374,7 +374,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           {
             FlashModelBase::TableOutputOptions const flashOutputOpts = {
               !isClone && m_writeCSV,// writeCSV
-              !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+              !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
             };
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                                  strs,
