@@ -143,7 +143,7 @@ endif()
 
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
-                    DEPENDS_ON ${extraComponentsLinkList}
+                    DEPENDS_ON ${extraComponentsLinkList} linearAlgebra
                                ${externalComponentsLinkList} fmt::fmt-header-only HDF5::HDF5 )
 
 # blt_print_target_properties(TARGET               geosx

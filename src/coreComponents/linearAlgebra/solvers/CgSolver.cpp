@@ -375,7 +375,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
     // compute alpha
     real64 const pAp = dot2( p, Ap );
-    //GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
+    //GEOS_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
     real64 const alpha = tau / pAp;
 
     // Keep the old value of tau
@@ -421,7 +421,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 // Explicit Instantiations
 // -----------------------
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class UnprecCgSolver< HypreInterface::ParallelVector >;
 #endif
 

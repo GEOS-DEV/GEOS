@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_LINEAROPERATORWITHBC_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_LINEAROPERATORWITHBC_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_LINEAROPERATORWITHBC_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_LINEAROPERATORWITHBC_HPP_
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 
@@ -406,4 +406,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOSX_LINEARALGEBRA_INTERFACES_LINEAROPERATORWITHBC_HPP_ */
+#endif /* GEOS_LINEARALGEBRA_INTERFACES_LINEAROPERATORWITHBC_HPP_ */

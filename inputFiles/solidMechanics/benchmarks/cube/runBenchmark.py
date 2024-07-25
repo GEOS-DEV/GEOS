@@ -106,12 +106,16 @@ def femKernelTime_nsys( executable, inputFile, numRuns ):
     profile_cmd = launchCommand + ['nsys', 'profile', '-o', report_fname, '-f', 'true', executable, '-i', inputFile]
     stats_cmd = ['nsys', 'stats', '--force-overwrite', 'true', '--force-export', 'true', '--timeunit', 'nsec', '--report', reportScript, '--format', 'column:nohdr:nolimit', report_fname]
 
+    # print(profile_cmd)
+    # print(stats_cmd)
+
     subprocess.run(profile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).check_returncode()
     proc1 = subprocess.Popen(stats_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(1.0)
     proc2 = subprocess.Popen(['grep', 'SmallStrainResidual'], stdin=proc1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.
     out, _ = proc2.communicate()
+    # print(out)
     stringValue = out.decode('utf-8').split()[5];
     value = float( stringValue.replace(',','') ) * 1.0e-9
     kernelTime.append( value )

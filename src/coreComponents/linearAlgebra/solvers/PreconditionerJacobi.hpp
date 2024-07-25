@@ -54,7 +54,7 @@ public:
 
   virtual void  setup( Vector const & inputVec ) override
   {
-    GEOSX_LAI_ASSERT( inputVec.ready() );
+    GEOS_LAI_ASSERT( inputVec.ready() );
     m_diagInv.createWithLocalSize( inputVec.numLocalRows(), inputVec.comm() );
   }
 

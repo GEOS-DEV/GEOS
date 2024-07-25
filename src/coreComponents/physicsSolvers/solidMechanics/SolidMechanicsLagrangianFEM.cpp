@@ -374,7 +374,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
+        finiteElement::FiniteElementDispatchHandler< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >::dispatch3D( fe,
                                                                                  [&] ( auto const finiteElement )
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
