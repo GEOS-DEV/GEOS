@@ -340,18 +340,6 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
                              getDataContext(), subRegion.getName() ),
                    InputError );
   }
-  if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
-  {
-    subRegion.registerWrapper< string >( viewKeyStruct::hydraulicApertureRelationNameString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
-
-    string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
-    hydraulicApertureModelName = SolverBase::getConstitutiveName< HydraulicApertureBase >( subRegion );
-    GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
-                                                                 getDataContext(), subRegion.getDataContext() ) );
-  }
 }
 
 void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const

@@ -17,7 +17,6 @@
  * @file HydrofractureSolver.cpp
  */
 
-
 #include "HydrofractureSolver.hpp"
 
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
