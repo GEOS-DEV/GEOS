@@ -29,7 +29,6 @@
 #include "BufferAllocator.hpp"
 #include "DataLayouts.hpp"
 #include "Tensor.hpp"
-#include "Logger.hpp" // TODO F.C.Cu refactor: remove from here as it is not static type related and call it from higher level files
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -70,40 +69,6 @@
  */
 namespace geos
 {
-
-/**
- * @brief Perform a type cast of base to derived pointer.
- * @tparam NEW_TYPE      derived pointer type
- * @tparam EXISTING_TYPE base type
- * @param val            base pointer to cast
- * @return               pointer cast to derived type or @p nullptr
- */
-template< typename NEW_TYPE, typename EXISTING_TYPE >
-NEW_TYPE dynamicCast( EXISTING_TYPE * const val )  // TODO F.C.Cu refactor: try to move that in RTTypes.hpp
-{
-  static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
-  return dynamic_cast< NEW_TYPE >( val );
-}
-
-/**
- * @brief Perform a type cast of base to derived reference.
- * @tparam NEW_TYPE      derived reference type
- * @tparam EXISTING_TYPE base type
- * @param val            base reference to cast
- * @return               reference cast to derived type or @p nullptr
- */
-template< typename NEW_TYPE, typename EXISTING_TYPE >
-NEW_TYPE dynamicCast( EXISTING_TYPE & val )  // TODO F.C.Cu refactor: try to move that in RTTypes.hpp
-{
-  static_assert( std::is_reference< NEW_TYPE >::value, "NEW_TYPE must be a reference." );
-
-  using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
-  POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOS_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::system::demangleType( val ) << " to " <<
-                 LvArray::system::demangleType< NEW_TYPE >() << " failed." );
-
-  return *ptr;
-}
 
 /**
  * @name Basic data types used in GEOSX.

@@ -20,8 +20,8 @@
 #ifndef GEOS_COMMON_SPAN_HPP
 #define GEOS_COMMON_SPAN_HPP
 
-#include "codingUtilities/traits.hpp" // TODO F.C.Cu refactor: why? what can we do about it? can we just ignore it for now?
-#include "common/Logger.hpp"
+#include "codingUtilities/traits.hpp"
+#include "common/logger/Logger.hpp"
 
 #include <memory>
 #include <iterator>

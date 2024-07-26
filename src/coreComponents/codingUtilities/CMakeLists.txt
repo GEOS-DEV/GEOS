@@ -9,7 +9,6 @@ set( codingUtilities_headers
      UnitTestUtilities.hpp
      Utilities.hpp
      traits.hpp
-     # TODO F.C.Cu refactor: add xmlWrapper.hpp
    )
 
 #
@@ -18,7 +17,6 @@ set( codingUtilities_headers
 set( codingUtilities_sources
      Parsing.cpp
      RTTypes.cpp
-     # TODO F.C.Cu refactor: add xmlWrapper.cpp
    )
 
 set( dependencyList ${parallelDeps} common fast_float )

@@ -28,7 +28,7 @@
 #include "common/format/StringUtilities.hpp"
 #include "codingUtilities/RTTypes.hpp"
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/format/Format.hpp"
 
 #include <iostream>

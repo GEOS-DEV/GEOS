@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVEPASSTHRUHANDLER_HPP
 
 #include "codingUtilities/traits.hpp"
+#include "codingUtilities/RTTypes.hpp"
 #include "common/DataTypes.hpp"
 
 namespace geos

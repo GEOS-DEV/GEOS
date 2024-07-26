@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {

@@ -19,7 +19,7 @@
 
 // Source includes
 #include "Logger.hpp"
-#include "Path.hpp"
+#include "common/Path.hpp"
 #include "common/format/StringUtilities.hpp"
 
 namespace geos

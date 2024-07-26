@@ -21,6 +21,7 @@
 #define GEOS_CODINGUTILITIES_UTILITIES_H_
 
 #include "common/format/StringUtilities.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"

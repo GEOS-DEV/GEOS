@@ -14,7 +14,7 @@
  */
 
 #include "NonlinearSolverParameters.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos

@@ -3,12 +3,12 @@
 #
 set( common_headers
      ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
-     Logger.hpp # TODO F.C.Cu refactor: logger/Logger.hpp
      format/table/TableLayout.hpp
      format/table/TableFormatter.hpp
      format/table/TableData.hpp
      format/Format.hpp
      format/StringUtilities.hpp
+     logger/Logger.hpp
      BufferAllocator.hpp
      DataLayouts.hpp
      DataTypes.hpp
@@ -43,11 +43,11 @@ endif( )
 # Specify all sources
 #
 set( common_sources
-     Logger.cpp # TODO F.C.Cu refactor: logger/Logger.cpp
      format/table/TableLayout.cpp
      format/table/TableFormatter.cpp
      format/table/TableData.cpp
      format/StringUtilities.cpp
+     logger/Logger.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp
@@ -102,9 +102,6 @@ if( ENABLE_CALIPER )
   endif()
 endif()
 
- # TODO F.C.Cu refactor: remove codingUtilities
- #  - move Logger.xpp in basicIO/logger/*
- #  - move hdf5Interface in basicIO/*
 set( dependencyList ${dependencyList} )
 
 blt_add_library( NAME       common
