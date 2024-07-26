@@ -23,7 +23,7 @@
 // Source incldes
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes

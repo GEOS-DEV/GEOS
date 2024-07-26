@@ -21,7 +21,7 @@
 #define GEOS_COMMON_TableData_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
