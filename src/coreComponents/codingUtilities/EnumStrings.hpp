@@ -26,6 +26,7 @@
 #define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
 
 #include "codingUtilities/StringUtilities.hpp"
+#include "codingUtilities/RTTypes.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "common/Format.hpp"

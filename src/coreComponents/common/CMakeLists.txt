@@ -40,7 +40,6 @@ endif( )
 #
 set( common_sources
      BufferAllocator.cpp
-     DataTypes.cpp
      MemoryInfos.cpp
      Logger.cpp
      MpiWrapper.cpp

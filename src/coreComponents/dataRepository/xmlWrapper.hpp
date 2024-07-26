@@ -27,6 +27,7 @@
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "codingUtilities/RTTypes.hpp"
 
 // TPL includes
 #include <pugixml.hpp>

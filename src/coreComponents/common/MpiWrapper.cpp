@@ -32,6 +32,12 @@
 namespace geos
 {
 
+#ifdef GEOS_USE_MPI
+MPI_Comm MPI_COMM_GEOSX;
+#else
+int MPI_COMM_GEOSX = 0;
+#endif
+
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI

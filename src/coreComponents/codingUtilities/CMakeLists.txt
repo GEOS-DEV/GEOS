@@ -3,6 +3,7 @@
 #
 set( codingUtilities_headers
      EnumStrings.hpp
+     RTTypes.hpp
      Parsing.hpp
      SFINAE_Macros.hpp
      StringUtilities.hpp
@@ -16,8 +17,9 @@ set( codingUtilities_headers
 #
 set( codingUtilities_sources
      Parsing.cpp
+     RTTypes.cpp
      StringUtilities.cpp
-     )
+   )
 
 set( dependencyList ${parallelDeps} common fast_float )
 

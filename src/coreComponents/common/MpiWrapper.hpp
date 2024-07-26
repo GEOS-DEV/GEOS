@@ -98,6 +98,13 @@ struct MPI_Status
 namespace geos
 {
 
+/// Global MPI communicator used by GEOSX.
+#ifdef GEOS_USE_MPI
+extern MPI_Comm MPI_COMM_GEOSX;
+#else
+extern int MPI_COMM_GEOSX;
+#endif
+
 /**
  * @struct MpiWrapper
  * This struct is a wrapper for all mpi.h functions that are used in GEOSX, and provides a collection of
