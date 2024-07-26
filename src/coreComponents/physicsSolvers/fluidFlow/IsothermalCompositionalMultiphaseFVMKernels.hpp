@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -2124,36 +2125,33 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    constitutive::constitutiveComponentUpdatePassThru( fluidBase, numComps, [&]( auto & fluid, auto NC )
     {
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-      {
-        integer constexpr NUM_COMP = NC();
-        integer constexpr NUM_DOF = NC() + 1;
+      integer constexpr NUM_COMP = NC();
+      integer constexpr NUM_DOF = NC() + 1;
 
-        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        // for now, we neglect capillary pressure in the kernel
-        BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
-        if( useTotalMassEquation )
-          kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
+      // for now, we neglect capillary pressure in the kernel
+      BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
+      if( useTotalMassEquation )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-        using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-        kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                           dt, localMatrix, localRhs, kernelFlags );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      } );
+      kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
+                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                         dt, localMatrix, localRhs, kernelFlags );
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
 };
