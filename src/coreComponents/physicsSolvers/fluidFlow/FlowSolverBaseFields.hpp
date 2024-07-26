@@ -273,6 +273,14 @@ DECLARE_FIELD( energy_n,
                WRITE_AND_READ,
                "Energy at the previous converged time step" );
 
+DECLARE_FIELD( massCreated,
+               "massCreated",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "The amount of remaining mass that was introduced when the SurfaceElement was created." );
+
 }
 
 }
