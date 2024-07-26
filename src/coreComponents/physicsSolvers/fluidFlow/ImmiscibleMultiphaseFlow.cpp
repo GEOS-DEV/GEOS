@@ -238,16 +238,16 @@ void ImmiscibleMultiphaseFlow::updateRelPermModel( ObjectManagerBase & dataGroup
   string const & relPermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase & relPerm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relPermName );
 
-  constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
-  {
-    typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
+  // constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
+  // {
+  //   typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
 
-    isothermalImmiscibleMultiphaseFlowKernels::
-      RelativePermeabilityUpdateKernel::
-      launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                        relPermWrapper,
-                                        phaseVolFrac );
-  } );
+  //   isothermalImmiscibleMultiphaseFlowKernels::
+  //     RelativePermeabilityUpdateKernel::
+  //     launch< parallelDevicePolicy<> >( dataGroup.size(),
+  //                                       relPermWrapper,
+  //                                       phaseVolFrac );
+  // } );
 }
 
 void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataGroup ) const
@@ -564,6 +564,13 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
     } );
   } );
 }
+
+void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const
+{}
 
 void ImmiscibleMultiphaseFlow::applyBoundaryConditions( real64 const time_n,
                                                            real64 const dt,

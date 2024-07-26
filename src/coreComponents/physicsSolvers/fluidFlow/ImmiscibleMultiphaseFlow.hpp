@@ -63,8 +63,15 @@ public:
    * @brief default destructor
    */
   virtual ~ImmiscibleMultiphaseFlow() override = default;
-
-//START_SPHINX_INCLUDE_01
+  /**
+   * @brief name of the solver in the object catalog
+   * @return string that contains the catalog name to generate a new object through the object catalog.
+   */
+  static string catalogName() { return "ImmiscibleMultiphaseFlow"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }  
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -105,12 +112,6 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param dataGroup the group storing the required fields
-   */
-  real64 updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
-
-  /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
@@ -129,8 +130,6 @@ public:
   void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
 
 
-
-
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param dataGroup the group storing the required field
@@ -141,7 +140,6 @@ public:
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -161,7 +159,7 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  void assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
+  void assembleAccumulationTerm( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const;
@@ -180,7 +178,7 @@ public:
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) const = 0;
+                     arrayView1d< real64 > const & localRhs ) const override final;
   /**
    * @brief Initialize all variables from initial conditions
    * @param domain the domain containing the mesh and fields
@@ -190,11 +188,6 @@ public:
    * and any applicable hydrostatic equilibration of the domain
    */
   void initializeFluidState( MeshLevel & mesh, DomainPartition & domain, arrayView1d< string const > const & regionNames );
-
-  /**
-   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
-   */
-  void computeHydrostaticEquilibrium();
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -227,53 +220,6 @@ public:
                           DomainPartition & domain,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
-
-  /**
-   * @brief Apply aquifer boundary conditions to the system
-   * @param time current time
-   * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain the domain
-   * @param localMatrix local system matrix
-   * @param localRhs local system right-hand side vector
-   */
-  virtual void applyAquiferBC( real64 const time,
-                               real64 const dt,
-                               DofManager const & dofManager,
-                               DomainPartition & domain,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) const = 0;
-
-  /**
-   * @brief Function to fix the initial state during the initialization step in coupled problems
-   * @param[in] time current time
-   * @param[in] dt time step
-   * @param[in] dofManager degree-of-freedom manager associated with the linear system
-   * @param[in] domain the domain
-   * @param[in] localMatrix local system matrix
-   * @param[in] localRhs local system right-hand side vector
-   * @detail This function is meant to be called when the flag m_keepFlowVariablesConstantDuringInitStep is on
-   *         The main use case is the initialization step in coupled problems during which we solve an elastic problem for a fixed pressure
-   */
-  void keepFlowVariablesConstantDuringInitStep( real64 const time,
-                                                real64 const dt,
-                                                DofManager const & dofManager,
-                                                DomainPartition & domain,
-                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                arrayView1d< real64 > const & localRhs ) const;
-
-
-  /**
-   * @brief Sets all the negative component densities (if any) to zero.
-   * @param domain the physical domain object
-   */
-  void chopNegativeDensities( DomainPartition & domain );
-
-  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
-                                              DomainPartition & domain ) override;
-
-  void computeCFLNumbers( DomainPartition & domain, real64 const & dt, real64 & maxPhaseCFL, real64 & maxCompCFL );
-
   /**
    * @brief function to set the next time step size
    * @param[in] currentDt the current time step size
@@ -283,37 +229,13 @@ public:
   real64 setNextDt( real64 const & currentDt,
                     DomainPartition & domain ) override;
 
-  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
-                                      DomainPartition & domain ) override;
-
   virtual void initializePostInitialConditionsPreSubGroups() override;
-
-  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
-
-  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
-
-  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
 protected:
 
   virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
-
-
-  /**
-   * @brief Utility function that checks the consistency of the constitutive models
-   * @param[in] domain the domain partition
-   * This function will produce an error if one of the constitutive models
-   * (fluid, relperm) is incompatible with the reference fluid model.
-   */
-  void validateConstitutiveModels( DomainPartition const & domain ) const;
-
-  /**
-   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
@@ -337,9 +259,6 @@ protected:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
-
-  /// the targeted CFL for timestep
-  real64 m_targetFlowCFL;
 
 private:
 
