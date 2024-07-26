@@ -8,22 +8,76 @@ from math import sin,cos,tan,exp,atan,asin
 import csv
 
 
+def getHydromechanicalParametersFromXML(xmlFilePath):
+	tree = ElementTree.parse(xmlFilePath)
+
+	param1 = tree.find('Constitutive/ElasticIsotropic')
+	param2 = tree.find('Constitutive/BiotPorosity')
+	param3 = tree.find('Constitutive/CompressibleSinglePhaseFluid')
+
+	hydromechanicalParameters = dict.fromkeys([
+            "bulkModulus", "shearModulus", "youngModulus", "poissonRatio", "rockDensity", "poissonRatio", "biotCoefficient", "porosity", "fluidDensity", "traction"])
+
+	hydromechanicalParameters["rockDensity"] = float(param1.get("defaultDensity"))
+	hydromechanicalParameters["poissonRatio"] = float(param1.get("defaultPoissonRatio"))
+	hydromechanicalParameters["youngModulus"] = float(param1.get("defaultYoungModulus"))
+
+	E = hydromechanicalParameters["youngModulus"] 
+	nu = hydromechanicalParameters["poissonRatio"]
+	K = E / (3 * (1 - 2 * nu))
+	G = E / (2 * (1 + nu))
+
+	hydromechanicalParameters["poissonRatio"] = nu
+	hydromechanicalParameters["bulkModulus"] = K
+	hydromechanicalParameters["shearModulus"] = G
+
+	Ks = float(param2.get("defaultGrainBulkModulus"))
+	hydromechanicalParameters["biotCoefficient"] = 1.0 - K / Ks
+
+	hydromechanicalParameters["porosity"] = float(param2.get("defaultReferencePorosity"))
+
+	hydromechanicalParameters["fluidDensity"] = float(param3.get("defaultDensity"))
+
+	param4 = tree.findall('FieldSpecifications/Traction')
+	found_stress = False
+	for elem in param4:
+		if elem.get("name") == "tractionTop" and elem.get("tractionType") == "normal":
+			traction = float(elem.get("scale")) * (-1)
+			found_stress = True
+		if found_stress: break 
+
+	return hydromechanicalParameters
+
+
 def main():
-	poisson_ratio = 0.25 #calculated from shear and bulk modulus
-	grainModulus = 1e27
-	young_modulus = 100e6
-	bulk_modulus = young_modulus / (3 * (1 - 2 * poisson_ratio))
-	BiotCoefficient = 1- (bulk_modulus/grainModulus)
+	# File path
+	xmlFile1Path = "gravityInducedStress_initialization_base.xml"
+	xmlFile2Path = "gravityInducedStress_initialization_benchmark.xml"
 
+	hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
 
+	BiotCoefficient = hydromechanicalParameters["biotCoefficient"]
+	nu = hydromechanicalParameters["poissonRatio"]
+	rhoF = hydromechanicalParameters["fluidDensity"]
+	rhoR = hydromechanicalParameters["rockDensity"]
+	phi = hydromechanicalParameters["porosity"]
+	rhoB = (1-phi)*rhoR + phi*rhoF
+	
+	traction = hydromechanicalParameters["traction"]
+	gravity = 9.8 
+	
 	file = open("simulation_result_0.csv")
 	csvreader = csv.reader(file)
 	header = next(csvreader)
-	#print(header)
+
 	rows = []
 	for row in csvreader:
 		rows.append(row)
 	file.close() 
+
+
+	
+	z_analytical= np.linspace(0, 1000, 100)
 
 	rows = np.array(rows)
 	zloc_0 = np.empty(len(rows[:,23]))
@@ -39,20 +93,13 @@ def main():
 		tszz_0[i]=-(float(rows[i,24])-BiotCoefficient*pressure_0[i])/1.0e6
 
 
-	fluid_density = 1000
-	solid_density = 2500
-	porosity = 0.375
-	bulk_density = (1-porosity)*solid_density + porosity*fluid_density
-	gravity = 9.81
-	poisson_ratio = 0.25 #calculated from shear and bulk modulus
-	z_analytical= np.linspace(0, 1000, 100)
-	#pp_analytical= 10.2*z_analytical/1000
-	pp_analytical= fluid_density*gravity*z_analytical/1.0e6
-	#szz_analtyical= 2405.5*9.8*(z_analytical-zloc_0[0])/1000000+18
-	szz_analtyical= bulk_density*gravity*(z_analytical-zloc_0[0])/1.0e6
 
-	#sxx_analtyical=0.15/(1-0.15)*(szz_analtyical-BiotCoefficient*pp_analytical)+BiotCoefficient*pp_analytical
-	sxx_analtyical=poisson_ratio/(1-poisson_ratio)*(szz_analtyical-BiotCoefficient*pp_analytical)+BiotCoefficient*pp_analytical
+
+	z_analytical= np.linspace(0, 1000, 100)
+	pp_analytical= rhoF*gravity*z_analytical/1.0e6
+	szz_analtyical= rhoB*gravity*(z_analytical-zloc_0[0])/1.0e6
+
+	sxx_analtyical=nu/(1-nu)*(szz_analtyical-BiotCoefficient*pp_analytical)+BiotCoefficient*pp_analytical
 
 	fsize = 20
 	msize = 12
@@ -65,7 +112,7 @@ def main():
 	fig = plt.figure(figsize=(10,8))
 	cmap = plt.get_cmap("tab10")
 
-        
+		
 	plt.plot(tsxx_0[::N1], zloc_0[::N1], 'o', color=cmap(0), markersize=msize, alpha=malpha, mec=cmap(0), fillstyle='none', mew=mew, label= 'Sxx_Total_GEOS')
 	plt.plot(sxx_analtyical, z_analytical, lw=lw, alpha=0.8, color='orange', linestyle= ':', label='Sxx_Total_Analytical')
 	plt.plot(tsyy_0[::N1], zloc_0[::N1], 's', color=cmap(1), markersize=msize, alpha=malpha, mec=cmap(1), fillstyle='none', mew=mew, label= 'Syy_Total_GEOS')
@@ -73,8 +120,6 @@ def main():
 	plt.plot(szz_analtyical, z_analytical, lw=lw, alpha=0.8, color='g', linestyle= ':', label='Szz_Total_Analytical')
 	plt.plot(pressure_0[::N1]/1.0e6, zloc_0[::N1], 'x', color=cmap(3), markersize=msize, alpha=malpha, mec=cmap(3), fillstyle='none', mew=mew, label= 'Pore Pressure_GEOS')
 	plt.plot(pp_analytical, z_analytical, lw=lw, alpha=0.8, color='r', linestyle= ':', label='Pore Pressure_Analytical')
-	#plt.set_xlim(-1000, 1000)
-	#plt.set_ylim(8000, 1000)
 	plt.xlabel('Total Stresses [MPa]', size=fsize, weight="bold")
 	plt.ylabel('Depth [m]', size=fsize, weight="bold")
 	plt.legend(loc='upper right',fontsize=fsize*0.5)
@@ -88,7 +133,11 @@ def main():
 
 
 if __name__ == "__main__":
-        main()
+		main()
 
+
+
+
+		
 
 
