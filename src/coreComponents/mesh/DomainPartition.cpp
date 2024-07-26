@@ -334,7 +334,7 @@ void DomainPartition::outputPartitionInformation() const
 
   forMeshBodies( [&]( MeshBody const & meshBody )
   {
-    meshBody.getMeshLevels().forSubGroupsIndex<MeshLevel>( [&]( int const level, MeshLevel const & meshLevel )
+    meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
     {
       if( level!=0 )
       {
@@ -386,41 +386,41 @@ void DomainPartition::outputPartitionInformation() const
         GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
         GEOS_LOG_RANK_0( "  |                |             Nodes             |             Edges             |             Faces             |             Elems             |" );
         GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
-        GEOS_LOG_RANK_0( GEOS_FMT("  |min(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ", 
-                                  minNodeRatio,
-                                  minEdgeRatio,
-                                  minFaceRatio,
-                                  minElemRatio ) );
-        GEOS_LOG_RANK_0( GEOS_FMT("  |max(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ", 
-                                  maxNodeRatio,
-                                  maxEdgeRatio,
-                                  maxFaceRatio,
-                                  maxElemRatio ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "  |min(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ",
+                                   minNodeRatio,
+                                   minEdgeRatio,
+                                   minFaceRatio,
+                                   minElemRatio ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "  |max(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ",
+                                   maxNodeRatio,
+                                   maxEdgeRatio,
+                                   maxFaceRatio,
+                                   maxElemRatio ) );
         GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
-        GEOS_LOG_RANK_0( "  |      Rank      |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |" ); 
+        GEOS_LOG_RANK_0( "  |      Rank      |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |" );
         GEOS_LOG_RANK_0( "  |----------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|" );
 
 
-        std::locale::global(std::locale("en_US.UTF-8"));
-        GEOS_LOG_RANK_0( GEOS_FMT("  |            min | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ", 
-                                  minNumLocalNodes,
-                                  minNumGhostNodes,
-                                  minNumLocalEdges,
-                                  minNumGhostEdges,
-                                  minNumLocalFaces,
-                                  minNumGhostFaces,
-                                  minNumLocalElems,
-                                  minNumGhostElems ) );
+        std::locale::global( std::locale( "en_US.UTF-8" ));
+        GEOS_LOG_RANK_0( GEOS_FMT( "  |            min | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+                                   minNumLocalNodes,
+                                   minNumGhostNodes,
+                                   minNumLocalEdges,
+                                   minNumGhostEdges,
+                                   minNumLocalFaces,
+                                   minNumGhostFaces,
+                                   minNumLocalElems,
+                                   minNumGhostElems ) );
 
-        GEOS_LOG_RANK_0( GEOS_FMT("  |            max | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ", 
-                                  maxNumLocalNodes,
-                                  maxNumGhostNodes,
-                                  maxNumLocalEdges,
-                                  maxNumGhostEdges,
-                                  maxNumLocalFaces,
-                                  maxNumGhostFaces,
-                                  maxNumLocalElems,
-                                  maxNumGhostElems ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "  |            max | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+                                   maxNumLocalNodes,
+                                   maxNumGhostNodes,
+                                   maxNumLocalEdges,
+                                   maxNumGhostEdges,
+                                   maxNumLocalFaces,
+                                   maxNumGhostFaces,
+                                   maxNumLocalElems,
+                                   maxNumGhostElems ) );
 
         GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
 
@@ -431,16 +431,16 @@ void DomainPartition::outputPartitionInformation() const
           if( rank == thisRank )
           {
             GEOS_LOG( GEOS_FMT(
-            "  | {:14L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
-            rank,
-            numLocalNodes,
-            numGhostNodes,
-            numLocalEdges,
-            numGhostEdges,
-            numLocalFaces,
-            numGhostFaces,
-            numLocalElems,
-            numGhostElems ) );
+                        "  | {:14L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+                        rank,
+                        numLocalNodes,
+                        numGhostNodes,
+                        numLocalEdges,
+                        numGhostEdges,
+                        numLocalFaces,
+                        numGhostFaces,
+                        numLocalElems,
+                        numGhostElems ) );
           }
           MpiWrapper::barrier();
         }
@@ -449,7 +449,7 @@ void DomainPartition::outputPartitionInformation() const
     } );
   }
 
-  );
+                 );
 
 }
 
