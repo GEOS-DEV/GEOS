@@ -37,10 +37,10 @@ class BartonBandisUpdates
 {
 public:
 
-  BartonBandisUpdates( real64 const referenceNormalStress,
-                       real64 const aperture0 )
-    : m_referenceNormalStress( referenceNormalStress ),
-    m_aperture0( aperture0 )
+  BartonBandisUpdates( real64 const aperture0,
+                       real64 const referenceNormalStress )
+    : m_aperture0( aperture0 ),
+    m_referenceNormalStress( referenceNormalStress )
   {}
 
   /// Default copy constructor
@@ -71,9 +71,9 @@ public:
                                    real64 & dHydraulicAperture_dNormalStress ) const;
 
 private:
-  real64 m_referenceNormalStress;
-
   real64 m_aperture0;
+
+  real64 m_referenceNormalStress;
 };
 
 
@@ -113,19 +113,13 @@ public:
 
 private:
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
   {
-    /// string/key for aperture under zero normal stress
-    static constexpr char const * apertureZeroString() { return "apertureZero"; }
-
     /// string/key for reference normal stress
     static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
   };
   /// Reference normal stress
   real64 m_referenceNormalStress;
-  /// Hydraulic aperture under zero normal stress
-  real64 m_aperture0;
-
 };
 
 GEOS_HOST_DEVICE

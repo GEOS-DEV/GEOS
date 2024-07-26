@@ -28,8 +28,15 @@ namespace constitutive
 
 HydraulicApertureBase::HydraulicApertureBase( string const & name,
                                               Group * const parent ):
-  ConstitutiveBase( name, parent )
-{}
+  ConstitutiveBase( name, parent ),
+  m_aperture0( 0.0 )
+{
+  /// TODO: must become a required parameter.
+  registerWrapper( viewKeyStruct::apertureZeroString(), &m_aperture0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1e-6 ).
+    setDescription( "Reference hydraulic aperture. It is the aperture at zero normal stress." );
+}
 
 HydraulicApertureBase::~HydraulicApertureBase()
 {}

@@ -54,6 +54,16 @@ public:
    */
   virtual ~HydraulicApertureBase() override;
 
+private:
+
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  {
+    /// string/key for aperture under zero normal stress
+    static constexpr char const * apertureZeroString() { return "referenceAperture"; }
+  };
+
+  /// Reference hydraulic aperture. Aperture at zero normal stress
+  real64 m_aperture0;  /// TODO: this will replace what is currently called defaultAperture.
 };
 
 } /* namespace constitutive */

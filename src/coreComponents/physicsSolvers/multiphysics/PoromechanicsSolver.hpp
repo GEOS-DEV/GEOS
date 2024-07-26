@@ -329,6 +329,10 @@ public:
 
     /// Multiplier on stabilization strength
     constexpr static const char * stabilizationMultiplierString() {return "stabilizationMultiplier"; }
+    
+    /// Name of the hydraulicApertureRelationName
+    static constexpr char const * hydraulicApertureRelationNameString() {return "hydraulicApertureRelationName"; }
+
   };
 
   void updateStabilizationParameters( DomainPartition & domain ) const
