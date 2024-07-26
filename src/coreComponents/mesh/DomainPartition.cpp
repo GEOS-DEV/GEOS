@@ -26,6 +26,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
+#include <locale>
 
 
 namespace geos
@@ -401,8 +402,8 @@ void DomainPartition::outputPartitionInformation() const
         GEOS_LOG_RANK_0( "  |----------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|" );
 
 
-        std::locale::global( std::locale( "en_US.UTF-8" ));
-        GEOS_LOG_RANK_0( GEOS_FMT( "  |            min | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+        GEOS_LOG_RANK_0( GEOS_FMT( std::locale( "en_US.UTF-8" ),
+                                   "  |            min | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
                                    minNumLocalNodes,
                                    minNumGhostNodes,
                                    minNumLocalEdges,
@@ -412,7 +413,8 @@ void DomainPartition::outputPartitionInformation() const
                                    minNumLocalElems,
                                    minNumGhostElems ) );
 
-        GEOS_LOG_RANK_0( GEOS_FMT( "  |            max | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+        GEOS_LOG_RANK_0( GEOS_FMT( std::locale( "en_US.UTF-8" ),
+                                   "  |            max | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
                                    maxNumLocalNodes,
                                    maxNumGhostNodes,
                                    maxNumLocalEdges,
@@ -430,17 +432,17 @@ void DomainPartition::outputPartitionInformation() const
         {
           if( rank == thisRank )
           {
-            GEOS_LOG( GEOS_FMT(
-                        "  | {:14L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
-                        rank,
-                        numLocalNodes,
-                        numGhostNodes,
-                        numLocalEdges,
-                        numGhostEdges,
-                        numLocalFaces,
-                        numGhostFaces,
-                        numLocalElems,
-                        numGhostElems ) );
+            GEOS_LOG( GEOS_FMT( std::locale( "en_US.UTF-8" ),
+                                "  | {:14L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+                                rank,
+                                numLocalNodes,
+                                numGhostNodes,
+                                numLocalEdges,
+                                numGhostEdges,
+                                numLocalFaces,
+                                numGhostFaces,
+                                numLocalElems,
+                                numGhostElems ) );
           }
           MpiWrapper::barrier();
         }
