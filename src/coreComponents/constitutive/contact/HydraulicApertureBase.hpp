@@ -54,7 +54,7 @@ public:
    */
   virtual ~HydraulicApertureBase() override;
 
-private:
+protected:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
