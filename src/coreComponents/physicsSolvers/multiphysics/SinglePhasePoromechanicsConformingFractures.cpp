@@ -406,13 +406,13 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
           for( localIndex kf = 0; kf < 2; ++kf )
           {
             // Set row DOF index
-            globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
+            localIndex const rowIndex = presDofNumber[sei[iconn][kf]] - rankOffset;
 
             if( rowIndex > 0 && rowIndex < pattern.numRows() )
             {
 
               // Get fracture, face and region/subregion/element indices (for elements on both sides)
-              localIndex fractureIndex = sei[iconn][kf];
+              localIndex const fractureIndex = sei[iconn][kf];
 
               // Get the number of nodes
               localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[fractureIndex][0] );
