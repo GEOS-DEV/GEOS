@@ -867,14 +867,40 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 if(DEFINED GRPC_DIR)
     message(STATUS "GRPC_DIR = ${GRPC_DIR}")
 
-    find_and_register(NAME grpc
-                      INCLUDE_DIRECTORIES ${GRPC_DIR}/include/
-                      LIBRARY_DIRECTORIES ${GRPC_DIR}/lib ${GRPC_DIR}/lib64
-                      HEADER grpcpp/grpcpp.h
-                      LIBRARIES grpc++ grpc++_reflection absl_log_internal_check_op absl_log_internal_message protobuf)
+    #find_and_register(NAME grpc
+    #                  INCLUDE_DIRECTORIES ${GRPC_DIR}/include/
+    #                  LIBRARY_DIRECTORIES ${GRPC_DIR}/lib ${GRPC_DIR}/lib64
+    #                  HEADER grpcpp/grpcpp.h
+    #                  LIBRARIES grpc++ grpc++_reflection absl_log_internal_check_op absl_log_internal_message protobuf)
+    
+    # gRPC always requires Thread support.
+    find_package(Threads REQUIRED)
+    find_package(absl CONFIG REQUIRED
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+    find_package(utf8_range REQUIRED
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+    find_package(protobuf REQUIRED
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+    find_package(gRPC CONFIG REQUIRED
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+
+    message( " ----> gRPC_VERSION=${gRPC_VERSION}")
+    message( " ----> protobuf_VERSION=${protobuf_VERSION}")
+
+    get_target_property(includeDirs
+                        gRPC::grpc
+                        INTERFACE_INCLUDE_DIRECTORIES)
+
+    set_property(TARGET gRPC::grpc
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${includeDirs})
 
     set(ENABLE_GRPC ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} grpc)
+    set(thirdPartyLibs ${thirdPartyLibs} gRPC::grpc)
 else()
     if(ENABLE_GRPC)
         message(WARNING "ENABLE_GRPC is ON but GRPC_DIR isn't defined.")
