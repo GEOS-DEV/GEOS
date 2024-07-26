@@ -183,6 +183,12 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
     {
       for( localIndex const & face: elem2dToFaces[ei] )
       {
+        if (m_toElements.m_toElementRegion(face, 0) == -1)
+	{
+		std::cout << "the face is " << face << std::endl;
+		std::cout << "m_toElements.m_toElementRegion = " << m_toElements.m_toElementRegion(face, 0) << ",\t"<< m_toElements.m_toElementRegion(face, 1) << std::endl;
+	}
+
         GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( face, 0 ), -1, GEOS_FMT( err, face ) );
         GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( face, 0 ), -1, GEOS_FMT( err, face ) );
         GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( face, 0 ), -1, GEOS_FMT( err, face ) );
