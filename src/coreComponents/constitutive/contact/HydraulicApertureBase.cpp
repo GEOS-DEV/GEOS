@@ -33,7 +33,7 @@ HydraulicApertureBase::HydraulicApertureBase( string const & name,
 {
   /// TODO: must become a required parameter.
   registerWrapper( viewKeyStruct::apertureZeroString(), &m_aperture0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Reference hydraulic aperture. It is the aperture at zero normal stress." );
 }
