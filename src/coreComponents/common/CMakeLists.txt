@@ -94,9 +94,12 @@ if( ENABLE_CALIPER )
   endif()
 endif()
 
- # TODO: remove codingUtilities (move StringUtilities in common)
- # remove fileIO (move "Table/*" into a "format/table/*" package)
- # add basicIO/* and put Logger in it
+ # TODO F.C.Cu refactor: remove codingUtilities
+ #  - move StringUtilities in common/format/*
+ # remove fileIO/*
+ #  - move "Table/*" in common/format/table
+ #  - move Logger.xpp in basicIO/logger/*
+ #  - move hdf5Interface in basicIO/*
 set( dependencyList ${dependencyList} fileIO codingUtilities )
 
 blt_add_library( NAME       common

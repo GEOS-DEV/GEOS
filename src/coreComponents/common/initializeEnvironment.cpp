@@ -18,9 +18,9 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-#include "fileIO/Table/TableLayout.hpp" // TODO: -> basicIO/
-#include "fileIO/Table/TableData.hpp" // TODO: -> basicIO/
-#include "fileIO/Table/TableFormatter.hpp" // TODO: -> basicIO/
+#include "fileIO/Table/TableLayout.hpp" // TODO F.C.Cu refactor: -> basicIO/
+#include "fileIO/Table/TableData.hpp" // TODO F.C.Cu refactor: -> basicIO/
+#include "fileIO/Table/TableFormatter.hpp" // TODO F.C.Cu refactor: -> basicIO/
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
 #include <umpire/TypedAllocator.hpp>

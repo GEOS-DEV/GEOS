@@ -20,7 +20,7 @@
 #ifndef GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP
 #define GEOS_COMMON_FIELDSPECIFICATIONOPS_HPP
 
-#include "codingUtilities/traits.hpp" // why? what can we do about it? can we just ignore it for now?
+#include "codingUtilities/traits.hpp" // TODO F.C.Cu refactor: why? what can we do about it? can we just ignore it for now?
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 

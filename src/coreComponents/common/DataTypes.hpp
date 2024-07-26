@@ -29,7 +29,6 @@
 #include "BufferAllocator.hpp"
 #include "DataLayouts.hpp"
 #include "Tensor.hpp"
-#include "Logger.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"

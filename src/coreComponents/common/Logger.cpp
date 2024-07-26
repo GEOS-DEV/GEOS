@@ -20,7 +20,7 @@
 // Source includes
 #include "Logger.hpp"
 #include "Path.hpp"
-#include "codingUtilities/StringUtilities.hpp" // TODO: -> format/
+#include "codingUtilities/StringUtilities.hpp" // TODO F.C.Cu refactor: -> format/
 
 namespace geos
 {
