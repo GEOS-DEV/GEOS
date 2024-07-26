@@ -34,7 +34,7 @@ def getDataFromXML(xmlFilePathPrefix):
 	defaultShearModulus = float( tree.find('Constitutive/ElasticIsotropic').get('defaultShearModulus') )
 	defaultDrainedLinearTEC = float( tree.find('Constitutive/ElasticIsotropic').get('defaultDrainedLinearTEC') )
 	defaultReferencePorosity = float( tree.find('Constitutive/BiotPorosity').get('defaultReferencePorosity') )		
-	grainBulkModulus = float( tree.find('Constitutive/BiotPorosity').get('grainBulkModulus') )		
+	grainBulkModulus = float( tree.find('Constitutive/BiotPorosity').get('defaultGrainBulkModulus') )		
 	fluidCompressibility = float( tree.find('Constitutive/ThermalCompressibleSinglePhaseFluid').get('compressibility') )
 	fluidViscosity = float( tree.find('Constitutive/ThermalCompressibleSinglePhaseFluid').get('defaultViscosity') )
 	fluidThermalExpansionCoefficient = float( tree.find('Constitutive/ThermalCompressibleSinglePhaseFluid').get('thermalExpansionCoeff') )
