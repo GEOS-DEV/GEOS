@@ -1115,17 +1115,16 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 
         ArrayOfArraysView< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
-      string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+        string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-      arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
-      arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 > const fluidTemperature_n = subRegion.getField< fields::flow::temperature_n >();
-      arrayView1d< real64 > const fluidTemperature = subRegion.getField< fields::flow::temperature >();
-      arrayView2d< real64 > const fluidInternalEnergy_n = subRegion.getReference< array2d< real64 > >( fluidName + "_internalEnergy_n" );
-      string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
-      SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-      real64 const defaultDensity = fluid.defaultDensity();
-      arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
+        arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
+        arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
+        arrayView1d< real64 > const fluidTemperature_n = subRegion.getField< fields::flow::temperature_n >();
+        arrayView1d< real64 > const fluidTemperature = subRegion.getField< fields::flow::temperature >();
+        arrayView2d< real64 > const fluidInternalEnergy_n = subRegion.getReference< array2d< real64 > >( fluidName + "_internalEnergy_n" );
+        SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
+        real64 const defaultDensity = fluid.defaultDensity();
+        arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
 
 
         arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
