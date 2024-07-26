@@ -26,8 +26,6 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
-#include <locale>
-
 
 namespace geos
 {
@@ -330,6 +328,21 @@ void DomainPartition::outputPartitionInformation() const
     return std::make_pair( objectManager.getNumberOfLocalIndices(), objectManager.getNumberOfGhosts() );
   };
 
+  auto addCommaSeparators = []( localIndex const num )
+  {
+    std::string const numStr = std::to_string( num );
+    std::string result;
+    for( std::size_t i = 0; i < numStr.size(); ++i )
+    {
+      result += numStr[i];
+      if( ( numStr.size() - i - 1 ) % 3 == 0 && i != numStr.size() - 1 )
+      {
+        result += ",";
+      }
+    }
+    return result;
+  };
+
   GEOS_LOG_RANK_0( "MPI Partition information:" );
 
 
@@ -402,27 +415,25 @@ void DomainPartition::outputPartitionInformation() const
         GEOS_LOG_RANK_0( "  |----------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|" );
 
 
-        GEOS_LOG_RANK_0( GEOS_FMT( std::locale("en_US"),
-                                   "  |            min | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
-                                   minNumLocalNodes,
-                                   minNumGhostNodes,
-                                   minNumLocalEdges,
-                                   minNumGhostEdges,
-                                   minNumLocalFaces,
-                                   minNumGhostFaces,
-                                   minNumLocalElems,
-                                   minNumGhostElems ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "  |            min | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} |",
+                                   addCommaSeparators( minNumLocalNodes ),
+                                   addCommaSeparators( minNumGhostNodes ),
+                                   addCommaSeparators( minNumLocalEdges ),
+                                   addCommaSeparators( minNumGhostEdges ),
+                                   addCommaSeparators( minNumLocalFaces ),
+                                   addCommaSeparators( minNumGhostFaces ),
+                                   addCommaSeparators( minNumLocalElems ),
+                                   addCommaSeparators( minNumGhostElems ) ) );
 
-        GEOS_LOG_RANK_0( GEOS_FMT( std::locale("en_US"),
-                                   "  |            max | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
-                                   maxNumLocalNodes,
-                                   maxNumGhostNodes,
-                                   maxNumLocalEdges,
-                                   maxNumGhostEdges,
-                                   maxNumLocalFaces,
-                                   maxNumGhostFaces,
-                                   maxNumLocalElems,
-                                   maxNumGhostElems ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "  |            max | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} |",
+                                   addCommaSeparators( maxNumLocalNodes ),
+                                   addCommaSeparators( maxNumGhostNodes ),
+                                   addCommaSeparators( maxNumLocalEdges ),
+                                   addCommaSeparators( maxNumGhostEdges ),
+                                   addCommaSeparators( maxNumLocalFaces ),
+                                   addCommaSeparators( maxNumGhostFaces ),
+                                   addCommaSeparators( maxNumLocalElems ),
+                                   addCommaSeparators( maxNumGhostElems ) ) );
 
         GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
 
@@ -432,17 +443,16 @@ void DomainPartition::outputPartitionInformation() const
         {
           if( rank == thisRank )
           {
-            GEOS_LOG( GEOS_FMT( std::locale("en_US"),
-                                "  | {:14L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+            GEOS_LOG( GEOS_FMT( "  | {:14} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | ",
                                 rank,
-                                numLocalNodes,
-                                numGhostNodes,
-                                numLocalEdges,
-                                numGhostEdges,
-                                numLocalFaces,
-                                numGhostFaces,
-                                numLocalElems,
-                                numGhostElems ) );
+                                addCommaSeparators( numLocalNodes ),
+                                addCommaSeparators( numGhostNodes ),
+                                addCommaSeparators( numLocalEdges ),
+                                addCommaSeparators( numGhostEdges ),
+                                addCommaSeparators( numLocalFaces ),
+                                addCommaSeparators( numGhostFaces ),
+                                addCommaSeparators( numLocalElems ),
+                                addCommaSeparators( numGhostElems ) ) );
           }
           MpiWrapper::barrier();
         }
