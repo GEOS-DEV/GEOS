@@ -34,11 +34,13 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm" />
 
+    <!-- SPHINX_Modify_Density -->
     <ElasticIsotropic
       name="rockSolid"
-      defaultDensity="2500"
+      defaultDensity="3302.752294"
       defaultPoissonRatio="0.25"
       defaultYoungModulus="100.0e6" />
+    <!-- SPHINX_Modify_Density_END -->
 
     <BiotPorosity
       name="rockPorosity"
@@ -49,15 +51,18 @@
       name="rockPerm"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }" />
 
+    <!-- SPHINX_Modify_FluidDensity -->    
     <CompressibleSinglePhaseFluid
       name="water"
-      defaultDensity="1000"
+      defaultDensity="1019.36799"
       defaultViscosity="0.001"
       referencePressure="0.000"
       referenceDensity="1000"
       compressibility="4.4e-10"
       referenceViscosity="0.001"
       viscosibility="0.0" />
+    <!-- SPHINX_Modify_FluidDensity_END -->
+
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
 
@@ -94,9 +99,50 @@
       scale="0.0"
       setNames="{ zneg }" />
 
+    <!-- SPHINX_USER_TABLES -->
+    <FieldSpecification component="0" fieldName="rockSolid_stress" functionName="sigma_xx"
+      initialCondition="1" name="init_sigma_xx" objectPath="ElementRegions/Domain" scale="1.0"
+      setNames="{ all }" />
+
+
+    <FieldSpecification component="1" fieldName="rockSolid_stress" functionName="sigma_yy"
+      initialCondition="1" name="init_sigma_yy" objectPath="ElementRegions/Domain" scale="1.0"
+      setNames="{ all }" />
+
+    <FieldSpecification component="2" fieldName="rockSolid_stress" functionName="sigma_zz"
+      initialCondition="1" name="init_sigma_zz" objectPath="ElementRegions/Domain" scale="1.0"
+      setNames="{ all }" />
+
+    <FieldSpecification fieldName="pressure" functionName="init_pressure" initialCondition="1"
+      name="init_pressure" objectPath="ElementRegions/Domain" scale="1.0" setNames="{ all }" />
+    <!-- SPHINX_USER_TABLES_END -->
+
   </FieldSpecifications>
   <!-- SPHINX_BC_END -->
   
+  <!-- SPHINX_FUNCTIONS -->
+  <Functions>
+
+    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
+      inputVarNames="{elementCenter}" interpolation="linear" name="sigma_xx"
+      voxelFile="effectiveSigma_xx.csv" />
+
+    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
+      inputVarNames="{elementCenter}" interpolation="linear" name="sigma_yy"
+      voxelFile="effectiveSigma_yy.csv" />
+
+    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
+      inputVarNames="{elementCenter}" interpolation="linear" name="sigma_zz"
+      voxelFile="effectiveSigma_zz.csv" />
+
+    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
+      inputVarNames="{elementCenter}" interpolation="linear" name="init_pressure"
+      voxelFile="porePressure.csv" />
+
+
+  </Functions>
+  <!-- SPHINX_FUNCTIONS_END -->
+
 
   <!-- SPHINX_TASKS -->
   <Tasks>
