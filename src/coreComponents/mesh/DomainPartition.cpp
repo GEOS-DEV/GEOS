@@ -321,4 +321,136 @@ void DomainPartition::addNeighbors( const unsigned int idim,
   }
 }
 
+void DomainPartition::outputPartitionInformation() const
+{
+
+  auto numberOfEntities = []( ObjectManagerBase const & objectManager )
+  {
+    return std::make_pair( objectManager.getNumberOfLocalIndices(), objectManager.getNumberOfGhosts() );
+  };
+
+  GEOS_LOG_RANK_0( "MPI Partition information:" );
+
+
+  forMeshBodies( [&]( MeshBody const & meshBody )
+  {
+    meshBody.getMeshLevels().forSubGroupsIndex<MeshLevel>( [&]( int const level, MeshLevel const & meshLevel )
+    {
+      if( level!=0 )
+      {
+
+        // get the number of local and ghost entities for each type
+        auto const [ numLocalNodes, numGhostNodes ] = numberOfEntities( meshLevel.getNodeManager() );
+        real64 const nodeRatio = ( numLocalNodes + numGhostNodes ) > 0 ? real64( numLocalNodes ) / real64( numLocalNodes + numGhostNodes ) : -1.0;
+        auto const [ numLocalEdges, numGhostEdges ] = numberOfEntities( meshLevel.getEdgeManager() );
+        real64 const edgeRatio = ( numLocalEdges + numGhostEdges ) > 0 ? real64( numLocalEdges ) / real64( numLocalEdges + numGhostEdges ) : -1.0;
+        auto const [ numLocalFaces, numGhostFaces ] = numberOfEntities( meshLevel.getFaceManager() );
+        real64 const faceRatio = ( numLocalFaces + numGhostFaces ) > 0 ? real64( numLocalFaces ) / real64( numLocalFaces + numGhostFaces ) : -1.0;
+
+        localIndex numLocalElems = 0;
+        localIndex numGhostElems = 0;
+        meshLevel.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+        {
+          auto [ numLocalElemsInSubRegion, numGhostElemsInSubRegion ] = numberOfEntities( subRegion );
+          numLocalElems += numLocalElemsInSubRegion;
+          numGhostElems += numGhostElemsInSubRegion;
+        } );
+        real64 const elemRatio = ( numLocalElems + numGhostElems ) > 0 ? real64( numLocalElems ) / real64( numLocalElems + numGhostElems ) : -1.0;
+
+        localIndex const minNumLocalNodes = MpiWrapper::min( numLocalNodes );
+        localIndex const maxNumLocalNodes = MpiWrapper::max( numLocalNodes );
+        localIndex const minNumGhostNodes = MpiWrapper::min( numGhostNodes );
+        localIndex const maxNumGhostNodes = MpiWrapper::max( numGhostNodes );
+        localIndex const minNumLocalEdges = MpiWrapper::min( numLocalEdges );
+        localIndex const maxNumLocalEdges = MpiWrapper::max( numLocalEdges );
+        localIndex const minNumGhostEdges = MpiWrapper::min( numGhostEdges );
+        localIndex const maxNumGhostEdges = MpiWrapper::max( numGhostEdges );
+        localIndex const minNumLocalFaces = MpiWrapper::min( numLocalFaces );
+        localIndex const maxNumLocalFaces = MpiWrapper::max( numLocalFaces );
+        localIndex const minNumGhostFaces = MpiWrapper::min( numGhostFaces );
+        localIndex const maxNumGhostFaces = MpiWrapper::max( numGhostFaces );
+        localIndex const minNumLocalElems = MpiWrapper::min( numLocalElems );
+        localIndex const maxNumLocalElems = MpiWrapper::max( numLocalElems );
+        localIndex const minNumGhostElems = MpiWrapper::min( numGhostElems );
+        localIndex const maxNumGhostElems = MpiWrapper::max( numGhostElems );
+        real64 const minNodeRatio = MpiWrapper::min( nodeRatio );
+        real64 const maxNodeRatio = MpiWrapper::max( nodeRatio );
+        real64 const minEdgeRatio = MpiWrapper::min( edgeRatio );
+        real64 const maxEdgeRatio = MpiWrapper::max( edgeRatio );
+        real64 const minFaceRatio = MpiWrapper::min( faceRatio );
+        real64 const maxFaceRatio = MpiWrapper::max( faceRatio );
+        real64 const minElemRatio = MpiWrapper::min( elemRatio );
+        real64 const maxElemRatio = MpiWrapper::max( elemRatio );
+
+        GEOS_LOG_RANK_0( "  MeshBody: " + meshBody.getName() + " MeshLevel: " + meshLevel.getName() + "\n" );
+        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
+        GEOS_LOG_RANK_0( "  |                |             Nodes             |             Edges             |             Faces             |             Elems             |" );
+        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
+        GEOS_LOG_RANK_0( GEOS_FMT("  |min(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ", 
+                                  minNodeRatio,
+                                  minEdgeRatio,
+                                  minFaceRatio,
+                                  minElemRatio ) );
+        GEOS_LOG_RANK_0( GEOS_FMT("  |max(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ", 
+                                  maxNodeRatio,
+                                  maxEdgeRatio,
+                                  maxFaceRatio,
+                                  maxElemRatio ) );
+        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
+        GEOS_LOG_RANK_0( "  |      Rank      |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |" ); 
+        GEOS_LOG_RANK_0( "  |----------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|" );
+
+
+        std::locale::global(std::locale("en_US.UTF-8"));
+        GEOS_LOG_RANK_0( GEOS_FMT("  |            min | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ", 
+                                  minNumLocalNodes,
+                                  minNumGhostNodes,
+                                  minNumLocalEdges,
+                                  minNumGhostEdges,
+                                  minNumLocalFaces,
+                                  minNumGhostFaces,
+                                  minNumLocalElems,
+                                  minNumGhostElems ) );
+
+        GEOS_LOG_RANK_0( GEOS_FMT("  |            max | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ", 
+                                  maxNumLocalNodes,
+                                  maxNumGhostNodes,
+                                  maxNumLocalEdges,
+                                  maxNumGhostEdges,
+                                  maxNumLocalFaces,
+                                  maxNumGhostFaces,
+                                  maxNumLocalElems,
+                                  maxNumGhostElems ) );
+
+        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
+
+        // output in rank order
+        int const thisRank = MpiWrapper::commRank();
+        for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+        {
+          if( rank == thisRank )
+          {
+            GEOS_LOG( GEOS_FMT(
+            "  | {:14L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
+            rank,
+            numLocalNodes,
+            numGhostNodes,
+            numLocalEdges,
+            numGhostEdges,
+            numLocalFaces,
+            numGhostFaces,
+            numLocalElems,
+            numGhostElems ) );
+          }
+          MpiWrapper::barrier();
+        }
+        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
+      }
+    } );
+  }
+
+  );
+
+}
+
 } /* namespace geos */
