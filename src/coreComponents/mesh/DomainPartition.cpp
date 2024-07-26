@@ -402,7 +402,7 @@ void DomainPartition::outputPartitionInformation() const
         GEOS_LOG_RANK_0( "  |----------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|" );
 
 
-        GEOS_LOG_RANK_0( GEOS_FMT( std::locale( "en_US.UTF-8" ),
+        GEOS_LOG_RANK_0( GEOS_FMT( std::locale("en_US"),
                                    "  |            min | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
                                    minNumLocalNodes,
                                    minNumGhostNodes,
@@ -413,7 +413,7 @@ void DomainPartition::outputPartitionInformation() const
                                    minNumLocalElems,
                                    minNumGhostElems ) );
 
-        GEOS_LOG_RANK_0( GEOS_FMT( std::locale( "en_US.UTF-8" ),
+        GEOS_LOG_RANK_0( GEOS_FMT( std::locale("en_US"),
                                    "  |            max | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
                                    maxNumLocalNodes,
                                    maxNumGhostNodes,
@@ -432,7 +432,7 @@ void DomainPartition::outputPartitionInformation() const
         {
           if( rank == thisRank )
           {
-            GEOS_LOG( GEOS_FMT( std::locale( "en_US.UTF-8" ),
+            GEOS_LOG( GEOS_FMT( std::locale("en_US"),
                                 "  | {:14L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | {:13L} | ",
                                 rank,
                                 numLocalNodes,
