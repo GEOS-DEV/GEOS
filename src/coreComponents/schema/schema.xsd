@@ -5321,7 +5321,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--pressureDependenceConstants => Pressure dependence coefficients for each permeability component.-->
 		<xsd:attribute name="pressureDependenceConstants" type="R1Tensor" use="required" />
 		<!--pressureModelType => Type of the pressure dependence model. -->
-		<xsd:attribute name="pressureModelType" type="geos_constitutive_PressureModelType" default="Hyperbolic" />
+		<xsd:attribute name="pressureModelType" type="geos_constitutive_PressureModelType" default="Exponential" />
 		<!--referencePermeabilityComponents => Reference xx, yy and zz components of a diagonal permeability tensor.-->
 		<xsd:attribute name="referencePermeabilityComponents" type="R1Tensor" use="required" />
 		<!--referencePressure => Reference pressure for the pressure permeability model-->

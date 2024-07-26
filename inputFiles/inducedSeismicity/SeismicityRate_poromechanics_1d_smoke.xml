@@ -146,9 +146,11 @@
       defaultGrainBulkModulus="4.5e4"
       defaultReferencePorosity="0.3"/>
 
-    <ConstantPermeability
+    <PressurePermeability
       name="skeletonPerm"
-      permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
+      referencePermeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"
+      pressureDependenceConstants="{ 0, 0, 0 }"
+      referencePressure="0.0"/>
   </Constitutive>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
