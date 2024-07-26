@@ -29,6 +29,7 @@
 #include "BufferAllocator.hpp"
 #include "DataLayouts.hpp"
 #include "Tensor.hpp"
+#include "Logger.hpp" // TODO F.C.Cu refactor: remove from here as it is not static type related and call it from higher level files
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -78,7 +79,7 @@ namespace geos
  * @return               pointer cast to derived type or @p nullptr
  */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
-NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
+NEW_TYPE dynamicCast( EXISTING_TYPE * const val )  // TODO F.C.Cu refactor: try to move that in RTTypes.hpp
 {
   static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
   return dynamic_cast< NEW_TYPE >( val );
@@ -92,7 +93,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
  * @return               reference cast to derived type or @p nullptr
  */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
-NEW_TYPE dynamicCast( EXISTING_TYPE & val )
+NEW_TYPE dynamicCast( EXISTING_TYPE & val )  // TODO F.C.Cu refactor: try to move that in RTTypes.hpp
 {
   static_assert( std::is_reference< NEW_TYPE >::value, "NEW_TYPE must be a reference." );
 
