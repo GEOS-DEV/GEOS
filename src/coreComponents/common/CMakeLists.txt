@@ -4,10 +4,11 @@
 set( common_headers
      ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
      Logger.hpp # TODO F.C.Cu refactor: logger/Logger.hpp
-     format/Format.hpp
      format/table/TableLayout.hpp
      format/table/TableFormatter.hpp
      format/table/TableData.hpp
+     format/Format.hpp
+     format/StringUtilities.hpp
      BufferAllocator.hpp
      DataLayouts.hpp
      DataTypes.hpp
@@ -46,6 +47,7 @@ set( common_sources
      format/table/TableLayout.cpp
      format/table/TableFormatter.cpp
      format/table/TableData.cpp
+     format/StringUtilities.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp
@@ -101,11 +103,9 @@ if( ENABLE_CALIPER )
 endif()
 
  # TODO F.C.Cu refactor: remove codingUtilities
- #  - move StringUtilities in common/format/*
- # remove fileIO/*
  #  - move Logger.xpp in basicIO/logger/*
  #  - move hdf5Interface in basicIO/*
-set( dependencyList ${dependencyList} codingUtilities )
+set( dependencyList ${dependencyList} )
 
 blt_add_library( NAME       common
                  SOURCES    ${common_sources}
@@ -120,4 +120,5 @@ target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
   add_subdirectory( format/table/unitTests )
+  add_subdirectory( format/unitTests )
 endif()

@@ -1,10 +1,8 @@
 # Specify list of tests
 set( testSources
-     testGeosxTraits.cpp
-     testParsing.cpp
-     testUtilities.cpp )
+     testStringUtilities.cpp )
 
-set( dependencyList gtest codingUtilities ${parallelDeps} )
+set( dependencyList gtest common ${parallelDeps} )
 
 # Add gtest C++ based tests
 foreach( test ${testSources} )

@@ -6,7 +6,6 @@ set( codingUtilities_headers
      RTTypes.hpp
      Parsing.hpp
      SFINAE_Macros.hpp
-     StringUtilities.hpp
      UnitTestUtilities.hpp
      Utilities.hpp
      traits.hpp
@@ -19,7 +18,6 @@ set( codingUtilities_headers
 set( codingUtilities_sources
      Parsing.cpp
      RTTypes.cpp
-     StringUtilities.cpp
      # TODO F.C.Cu refactor: add xmlWrapper.cpp
    )
 

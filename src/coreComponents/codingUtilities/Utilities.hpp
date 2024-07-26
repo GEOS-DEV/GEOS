@@ -20,7 +20,7 @@
 #ifndef GEOS_CODINGUTILITIES_UTILITIES_H_
 #define GEOS_CODINGUTILITIES_UTILITIES_H_
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"

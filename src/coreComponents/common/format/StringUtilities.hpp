@@ -17,8 +17,8 @@
  * @file StringUtilities.hpp
  */
 
-#ifndef GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
-#define GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#ifndef GEOS_COMMON_FORMAT_STRINGUTILITIES_HPP_
+#define GEOS_COMMON_FORMAT_STRINGUTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -280,4 +280,4 @@ std::ostream & operator<<( std::ostream & os, std::optional< T > const & optValu
 } // namespace stringutilities
 } // namespace geos
 
-#endif /* GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_ */
+#endif /* GEOS_COMMON_FORMAT_STRINGUTILITIES_HPP_ */

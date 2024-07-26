@@ -20,7 +20,7 @@
 
 #include "RTTypes.hpp"
 #include "LvArray/src/system.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
