@@ -27,7 +27,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageUtils.hpp"
 #include "physicsPackages/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 #include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticTimeSchemeSEMKernel.hpp"
 #include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp"
@@ -42,7 +42,7 @@ using namespace fields;
 ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
                                                 Group * const parent ):
 
-  WaveSolverBase( name,
+  WavePackageBase( name,
                   parent )
 {
   registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstantsx ).
@@ -110,9 +110,9 @@ ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
 void ElasticWaveEquationSEM::initializePreSubGroups()
 {
 
-  WaveSolverBase::initializePreSubGroups();
+  WavePackageBase::initializePreSubGroups();
 
-  localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
+  localIndex const numNodesPerElem = WavePackageBase::getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceConstantsx.resize( numSourcesGlobal, numNodesPerElem );
@@ -120,7 +120,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
   m_sourceConstantsz.resize( numSourcesGlobal, numNodesPerElem );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  integer nsamples = m_useDAS == WaveSolverUtils::DASType::none ? 1 : m_linearDASSamples;
+  integer nsamples = m_useDAS == WavePackageUtils::DASType::none ? 1 : m_linearDASSamples;
   m_receiverConstants.resize( numReceiversGlobal, nsamples * numNodesPerElem );
   m_receiverNodeIds.resize( numReceiversGlobal, nsamples * numNodesPerElem );
 }
@@ -128,7 +128,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 
 void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  WaveSolverBase::registerDataOnMesh( meshBodies );
+  WavePackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -157,7 +157,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                elasticfields::StiffnessVectorz,
                                elasticfields::ElasticFreeSurfaceNodeIndicator >( getName() );
 
-    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    if( m_attenuationType == WavePackageUtils::AttenuationType::sls )
     {
       integer l = m_slsReferenceAngularFrequencies.size( 0 );
       nodeManager.registerField< elasticfields::DivPsix,
@@ -181,7 +181,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< elasticfields::ElasticVelocityVp >( getName() );
       subRegion.registerField< elasticfields::ElasticVelocityVs >( getName() );
       subRegion.registerField< elasticfields::ElasticDensity >( getName() );
-      if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+      if( m_attenuationType == WavePackageUtils::AttenuationType::sls )
       {
         subRegion.registerField< elasticfields::ElasticQualityFactorP >( getName() );
         subRegion.registerField< elasticfields::ElasticQualityFactorS >( getName() );
@@ -202,9 +202,9 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void ElasticWaveEquationSEM::postInputInitialization()
 {
-  WaveSolverBase::postInputInitialization();
+  WavePackageBase::postInputInitialization();
 
-  if( m_useDAS == WaveSolverUtils::DASType::none )
+  if( m_useDAS == WavePackageUtils::DASType::none )
   {
     localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
     m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
@@ -357,7 +357,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
 void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 
-  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  WavePackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -436,7 +436,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
 
     // check anelasticity coefficient and/or compute it if needed
-    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    if( m_attenuationType == WavePackageUtils::AttenuationType::sls )
     {
       real32 minQVal = computeGlobalMinQFactor();
       if( m_slsAnelasticityCoefficients.size( 0 ) == 1 && m_slsAnelasticityCoefficients[ 0 ] < 0 )
@@ -454,8 +454,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   } );
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
-  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  WavePackageUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WavePackageUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
 }
 
 real32 ElasticWaveEquationSEM::computeGlobalMinQFactor()
@@ -511,7 +511,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
 
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                   WaveSolverBase::viewKeyStruct::freeSurfaceString(),
+                   WavePackageBase::viewKeyStruct::freeSurfaceString(),
                    [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
@@ -635,7 +635,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                                             kernelFactory );
   }
 
-  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  if( m_attenuationType == WavePackageUtils::AttenuationType::sls )
   {
     auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticAttenuativeSEMFactory( dt );
     finiteElement::
@@ -656,7 +656,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   addSourceToRightHandSide( cycleForSource, rhsx, rhsy, rhsz );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
-  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  if( m_attenuationType == WavePackageUtils::AttenuationType::sls )
   {
     arrayView1d< real32 > const stiffnessVectorAx = nodeManager.getField< elasticfields::StiffnessVectorAx >();
     arrayView1d< real32 > const stiffnessVectorAy = nodeManager.getField< elasticfields::StiffnessVectorAy >();
@@ -713,7 +713,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                 true );
 
   // compute the seismic traces since last step.
-  if( m_useDAS == WaveSolverUtils::DASType::none )
+  if( m_useDAS == WavePackageUtils::DASType::none )
   {
     arrayView2d< real32 > const uXReceivers = m_displacementXNp1AtReceivers.toView();
     arrayView2d< real32 > const uYReceivers = m_displacementYNp1AtReceivers.toView();
@@ -770,7 +770,7 @@ void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
     stiffnessVectorx[a] = stiffnessVectory[a] = stiffnessVectorz[a] = 0.0;
     rhsx[a] = rhsy[a] = rhsz[a] = 0.0;
   } );
-  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  if( m_attenuationType == WavePackageUtils::AttenuationType::sls )
   {
     arrayView1d< real32 > const stiffnessVectorAx = nodeManager.getField< elasticfields::StiffnessVectorAx >();
     arrayView1d< real32 > const stiffnessVectorAy = nodeManager.getField< elasticfields::StiffnessVectorAy >();
@@ -827,7 +827,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView1d< real32 const > const uz_n   = nodeManager.getField< elasticfields::Displacementz_n >();
     arrayView1d< real32 const > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
-    if( m_useDAS == WaveSolverUtils::DASType::none )
+    if( m_useDAS == WavePackageUtils::DASType::none )
     {
       arrayView2d< real32 > const uXReceivers  = m_displacementXNp1AtReceivers.toView();
       arrayView2d< real32 > const uYReceivers  = m_displacementYNp1AtReceivers.toView();
@@ -835,7 +835,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
       computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_n, uXReceivers );
       computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, uYReceivers );
       computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, uZReceivers );
-      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+      WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                                m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers, uYReceivers, uZReceivers );
     }
     else
@@ -850,7 +850,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                              m_linearDASGeometry.size( 0 ),
                              MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                              MPI_COMM_GEOSX );
-      WaveSolverUtils::writeSeismoTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ),
+      WavePackageUtils::writeSeismoTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ),
                                          m_receiverIsLocal, m_nsamplesSeismoTrace, dasReceivers );
     }
   } );

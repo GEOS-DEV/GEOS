@@ -23,13 +23,13 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageBase.hpp"
 
 
 namespace geos
 {
 
-class ElasticFirstOrderWaveEquationSEM : public WaveSolverBase
+class ElasticFirstOrderWaveEquationSEM : public WavePackageBase
 {
 public:
 

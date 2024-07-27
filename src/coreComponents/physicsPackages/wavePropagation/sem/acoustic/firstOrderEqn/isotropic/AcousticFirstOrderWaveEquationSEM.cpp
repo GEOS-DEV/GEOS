@@ -39,7 +39,7 @@ using namespace fields;
 
 AcousticFirstOrderWaveEquationSEM::AcousticFirstOrderWaveEquationSEM( const std::string & name,
                                                                       Group * const parent ):
-  WaveSolverBase( name,
+  WavePackageBase( name,
                   parent )
 {
 
@@ -81,7 +81,7 @@ AcousticFirstOrderWaveEquationSEM::~AcousticFirstOrderWaveEquationSEM()
 
 void AcousticFirstOrderWaveEquationSEM::initializePreSubGroups()
 {
-  WaveSolverBase::initializePreSubGroups();
+  WavePackageBase::initializePreSubGroups();
 
 
 }
@@ -89,7 +89,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePreSubGroups()
 
 void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  WaveSolverBase::registerDataOnMesh( meshBodies );
+  WavePackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -139,7 +139,7 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticFirstOrderWaveEquationSEM::postInputInitialization()
 {
-  WaveSolverBase::postInputInitialization();
+  WavePackageBase::postInputInitialization();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
@@ -252,7 +252,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
 void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
-  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  WavePackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -323,7 +323,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     } );
   } );
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WavePackageUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 
@@ -351,7 +351,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  WaveSolverBase::viewKeyStruct::freeSurfaceString(),
+                                  WavePackageBase::viewKeyStruct::freeSurfaceString(),
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
@@ -552,13 +552,13 @@ void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer co
       compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, velocity_y, velocity_y, uyReceivers );
       compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, velocity_z, velocity_z, uzReceivers );
 
-      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+      WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                                m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
 
     } );
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_np1, pReceivers );
-    WaveSolverUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+    WavePackageUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                        m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
 
   } );

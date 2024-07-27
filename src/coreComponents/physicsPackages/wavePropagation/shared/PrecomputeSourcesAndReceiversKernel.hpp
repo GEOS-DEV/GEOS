@@ -59,7 +59,7 @@ struct PreComputeSourcesAndReceivers
   static void
   Compute1DSourceAndReceiverConstants( localIndex const size,
                                        localIndex const numFacesPerElem,
-                                       arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                       arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                        arrayView1d< integer const > const elemGhostRank,
                                        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                        arrayView2d< localIndex const > const elemsToFaces,
@@ -100,7 +100,7 @@ struct PreComputeSourcesAndReceivers
                                      sourceCoordinates[isrc][2] };
 
           bool const sourceFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -111,7 +111,7 @@ struct PreComputeSourcesAndReceivers
             real64 coordsOnRefElem[3]{};
 
 
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -128,7 +128,7 @@ struct PreComputeSourcesAndReceivers
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              sourceValue[cycle][isrc] = WavePackageUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
           }
         }
@@ -148,7 +148,7 @@ struct PreComputeSourcesAndReceivers
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -157,7 +157,7 @@ struct PreComputeSourcesAndReceivers
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -216,7 +216,7 @@ struct PreComputeSourcesAndReceivers
   Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage( localIndex const size,
                                                                    localIndex const regionIndex,
                                                                    localIndex const numFacesPerElem,
-                                                                   arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                                                   arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                                                    arrayView1d< integer const > const elemGhostRank,
                                                                    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                                                    arrayView2d< localIndex const > const elemsToFaces,
@@ -261,7 +261,7 @@ struct PreComputeSourcesAndReceivers
                                      sourceCoordinates[isrc][2] };
 
           bool const sourceFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -272,7 +272,7 @@ struct PreComputeSourcesAndReceivers
           {
             real64 coordsOnRefElem[3]{};
 
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -291,7 +291,7 @@ struct PreComputeSourcesAndReceivers
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              sourceValue[cycle][isrc] = WavePackageUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
           }
         }
@@ -311,7 +311,7 @@ struct PreComputeSourcesAndReceivers
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -320,7 +320,7 @@ struct PreComputeSourcesAndReceivers
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -386,7 +386,7 @@ struct PreComputeSourcesAndReceivers
   static void
   Compute3DSourceAndReceiverConstantsWithDAS( localIndex const size,
                                               localIndex const numFacesPerElem,
-                                              arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                              arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                               arrayView1d< integer const > const elemGhostRank,
                                               arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                               arrayView2d< localIndex const > const elemsToFaces,
@@ -408,14 +408,14 @@ struct PreComputeSourcesAndReceivers
                                               real32 const timeSourceFrequency,
                                               real32 const timeSourceDelay,
                                               localIndex const rickerOrder,
-                                              WaveSolverUtils::DASType useDAS,
+                                              WavePackageUtils::DASType useDAS,
                                               integer linearDASSamples,
                                               arrayView2d< real64 const > const linearDASGeometry,
                                               R1Tensor const sourceForce,
                                               R2SymTensor const sourceMoment )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-    integer nSamples = useDAS == WaveSolverUtils::DASType::none ? 1 : linearDASSamples;
+    integer nSamples = useDAS == WavePackageUtils::DASType::none ? 1 : linearDASSamples;
     array1d< real64 > const samplePointLocationsA( nSamples );
     arrayView1d< real64 > const samplePointLocations = samplePointLocationsA.toView();
     array1d< real64 > const sampleIntegrationConstantsA( nSamples );
@@ -450,7 +450,7 @@ struct PreComputeSourcesAndReceivers
 
 
           bool const sourceFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -462,7 +462,7 @@ struct PreComputeSourcesAndReceivers
             real64 coordsOnRefElem[3]{};
 
 
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -489,7 +489,7 @@ struct PreComputeSourcesAndReceivers
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              sourceValue[cycle][isrc] = WavePackageUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
 
           }
@@ -516,7 +516,7 @@ struct PreComputeSourcesAndReceivers
 
       /// compute integration constants of samples
       /// for displacement difference (dipole) DAS, take the discrete derivative of the pair of geophones
-      if( useDAS == WaveSolverUtils::DASType::dipole )
+      if( useDAS == WavePackageUtils::DASType::dipole )
       {
         sampleIntegrationConstants[ 0 ] = -1.0;
         sampleIntegrationConstants[ 1 ] = 1.0;
@@ -539,15 +539,15 @@ struct PreComputeSourcesAndReceivers
       {
         R1Tensor receiverCenter = { receiverCoordinates[ ircv ][ 0 ], receiverCoordinates[ ircv ][ 1 ], receiverCoordinates[ ircv ][ 2 ] };
         R1Tensor receiverVector;
-        if( useDAS == WaveSolverUtils::DASType::none )
+        if( useDAS == WavePackageUtils::DASType::none )
         {
           receiverVector = { 0, 0, 0 };
         }
         else
         {
-          receiverVector =  WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
+          receiverVector =  WavePackageUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
         }
-        real64 receiverLength = useDAS == WaveSolverUtils::DASType::none ? 0 : linearDASGeometry[ ircv ][ 2 ];
+        real64 receiverLength = useDAS == WavePackageUtils::DASType::none ? 0 : linearDASGeometry[ ircv ][ 2 ];
         /// loop over samples
         for( integer iSample = 0; iSample < nSamples; ++iSample )
         {
@@ -556,7 +556,7 @@ struct PreComputeSourcesAndReceivers
                                      receiverCenter[ 1 ] + receiverVector[ 1 ] * receiverLength * samplePointLocations[ iSample ],
                                      receiverCenter[ 2 ] + receiverVector[ 2 ] * receiverLength * samplePointLocations[ iSample ] };
           bool const sampleFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -575,7 +575,7 @@ struct PreComputeSourcesAndReceivers
               }
             }
 
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -587,7 +587,7 @@ struct PreComputeSourcesAndReceivers
             {
               receiverNodeIds[ircv][iSample * numNodesPerElem + a] = elemsToNodes( k,
                                                                                    a );
-              if( useDAS == WaveSolverUtils::DASType::strainIntegration )
+              if( useDAS == WavePackageUtils::DASType::strainIntegration )
               {
                 receiverConstants[ircv][iSample * numNodesPerElem + a] += ( gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2] ) *
                                                                           sampleIntegrationConstants[ iSample ];
@@ -603,7 +603,7 @@ struct PreComputeSourcesAndReceivers
         // determine if the current rank is the owner of this receiver
         real64 const coords[3] = { receiverCenter[ 0 ], receiverCenter[ 1 ], receiverCenter[ 2 ] };
         bool const receiverFound =
-          WaveSolverUtils::locateSourceElement( numFacesPerElem,
+          WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                 center,
                                                 faceNormal,
                                                 faceCenter,

@@ -15,11 +15,11 @@
 
 
 /**
- * @file WaveSolverBase.hpp
+ * @file WavePackageBase.hpp
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
-#define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WavePackageBASE_HPP_
+#define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WavePackageBASE_HPP_
 
 
 #include "mesh/MeshFields.hpp"
@@ -28,7 +28,7 @@
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
-#include "WaveSolverUtils.hpp"
+#include "WavePackageUtils.hpp"
 
 #if !defined( GEOS_USE_HIP )
 #define SEM_FE_TYPES \
@@ -46,25 +46,25 @@
 namespace geos
 {
 
-class WaveSolverBase : public PhysicsPackageBase
+class WavePackageBase : public PhysicsPackageBase
 {
 public:
 
-  static constexpr real64 epsilonLoc = WaveSolverUtils::epsilonLoc;
-  using EXEC_POLICY = WaveSolverUtils::EXEC_POLICY;
-  using wsCoordType = WaveSolverUtils::wsCoordType;
+  static constexpr real64 epsilonLoc = WavePackageUtils::epsilonLoc;
+  using EXEC_POLICY = WavePackageUtils::EXEC_POLICY;
+  using wsCoordType = WavePackageUtils::wsCoordType;
 
-  WaveSolverBase( const std::string & name,
+  WavePackageBase( const std::string & name,
                   Group * const parent );
 
-  virtual ~WaveSolverBase() override;
+  virtual ~WavePackageBase() override;
 
-  WaveSolverBase() = delete;
-  WaveSolverBase( WaveSolverBase const & ) = delete;
-  WaveSolverBase( WaveSolverBase && ) = default;
+  WavePackageBase() = delete;
+  WavePackageBase( WavePackageBase const & ) = delete;
+  WavePackageBase( WavePackageBase && ) = default;
 
-  WaveSolverBase & operator=( WaveSolverBase const & ) = delete;
-  WaveSolverBase & operator=( WaveSolverBase && ) = delete;
+  WavePackageBase & operator=( WavePackageBase const & ) = delete;
+  WavePackageBase & operator=( WavePackageBase && ) = delete;
 
   virtual void initializePreSubGroups() override;
 
@@ -276,7 +276,7 @@ protected:
   localIndex m_nsamplesSeismoTrace;
 
   /// Flag to indicate which DAS type will be modeled
-  WaveSolverUtils::DASType m_useDAS;
+  WavePackageUtils::DASType m_useDAS;
 
   /// Number of points used for strain integration for dipole DAS
   integer m_linearDASSamples;
@@ -294,7 +294,7 @@ protected:
   array1d< real32 > m_linearDASVectorZ;
 
   /// Flag to indicate which attenuation type will be modeled
-  WaveSolverUtils::AttenuationType m_attenuationType;
+  WavePackageUtils::AttenuationType m_attenuationType;
 
   /// Vector containing the reference frequencies for the standard-linear-solid (SLS) anelasticity model.
   array1d< real32 > m_slsReferenceAngularFrequencies;
@@ -380,7 +380,7 @@ protected:
 
 namespace fields
 {
-using reference32Type = array2d< WaveSolverUtils::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
+using reference32Type = array2d< WavePackageUtils::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
 DECLARE_FIELD( referencePosition32,
                "referencePosition32",
                reference32Type,
@@ -391,4 +391,4 @@ DECLARE_FIELD( referencePosition32,
 }
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WavePackageBASE_HPP_ */

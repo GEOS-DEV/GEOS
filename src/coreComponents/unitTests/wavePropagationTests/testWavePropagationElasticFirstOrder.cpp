@@ -22,7 +22,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsPackages/PhysicsPackageManager.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageBase.hpp"
 #include "physicsPackages/wavePropagation/sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>

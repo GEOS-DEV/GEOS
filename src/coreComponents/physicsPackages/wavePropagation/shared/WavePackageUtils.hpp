@@ -15,11 +15,11 @@
 
 
 /**
- * @file WaveSolverUtils.hpp
+ * @file WavePackageUtils.hpp
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
-#define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WavePackageUTILS_HPP_
+#define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WavePackageUTILS_HPP_
 
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
@@ -28,7 +28,7 @@
 namespace geos
 {
 
-struct WaveSolverUtils
+struct WavePackageUtils
 {
   static constexpr real64 epsilonLoc = 1e-8;
 
@@ -417,15 +417,15 @@ struct WaveSolverUtils
 };
 
 /// Declare strings associated with enumeration values.
-ENUM_STRINGS( WaveSolverUtils::DASType,
+ENUM_STRINGS( WavePackageUtils::DASType,
               "none",
               "dipole",
               "strainIntegration" );
 
-ENUM_STRINGS( WaveSolverUtils::AttenuationType,
+ENUM_STRINGS( WavePackageUtils::AttenuationType,
               "none",
               "sls" );
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_ */
+#endif /* GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_WavePackageUTILS_HPP_ */

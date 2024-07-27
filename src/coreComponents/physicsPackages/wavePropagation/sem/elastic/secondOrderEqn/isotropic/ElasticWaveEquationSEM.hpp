@@ -21,7 +21,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 
-#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsPackages/PhysicsPackageBase.hpp"
 #include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
@@ -29,7 +29,7 @@
 namespace geos
 {
 
-class ElasticWaveEquationSEM : public WaveSolverBase
+class ElasticWaveEquationSEM : public WavePackageBase
 {
 public:
 
@@ -91,7 +91,7 @@ public:
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
   /**
-   * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
+   * TODO: move implementation into WavePackageBase once 'm_receiverIsLocal' is also moved
    * @brief Compute DAS data as a difference of the field at two points, from the appropriate three-component receiver pairs, when the DAS
    * type is set to 2
    * @param xCompRcv the array holding the x-component of pairs of receivers
@@ -111,7 +111,7 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
+  struct viewKeyStruct : WavePackageBase::viewKeyStruct
   {
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }

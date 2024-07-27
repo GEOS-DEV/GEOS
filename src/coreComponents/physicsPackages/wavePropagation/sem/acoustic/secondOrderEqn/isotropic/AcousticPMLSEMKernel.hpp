@@ -121,7 +121,7 @@ struct AcousticPMLSEM
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
     launch( SortedArrayView< localIndex const > const targetSet,
-            arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+            arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
             traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodes,
             arrayView1d< real32 const > const velocity,
             arrayView1d< real32 const > const p_n,
@@ -269,7 +269,7 @@ struct AcousticPMLSEM
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
     launch( SortedArrayView< localIndex const > const targetSet,
-            arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+            arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
             traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodes,
             arrayView1d< real32 const > const velocity,
             real32 const (&xMin)[3],

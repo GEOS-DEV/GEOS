@@ -23,12 +23,12 @@
 
 #include "mesh/MeshFields.hpp"
 #include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageBase.hpp"
 
 namespace geos
 {
 
-class AcousticFirstOrderWaveEquationSEM : public WaveSolverBase
+class AcousticFirstOrderWaveEquationSEM : public WavePackageBase
 {
 public:
 
@@ -81,7 +81,7 @@ public:
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
 
 
-  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
+  struct viewKeyStruct : WavePackageBase::viewKeyStruct
   {
 
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }

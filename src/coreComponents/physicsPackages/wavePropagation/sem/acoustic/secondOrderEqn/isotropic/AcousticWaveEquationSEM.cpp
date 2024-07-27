@@ -27,7 +27,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageUtils.hpp"
 #include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp"
 #include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
 #include "events/EventManager.hpp"
@@ -42,7 +42,7 @@ using namespace fields;
 
 AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
                                                   Group * const parent ):
-  WaveSolverBase( name,
+  WavePackageBase( name,
                   parent )
 {
 
@@ -60,13 +60,13 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 
 void AcousticWaveEquationSEM::initializePreSubGroups()
 {
-  WaveSolverBase::initializePreSubGroups();
+  WavePackageBase::initializePreSubGroups();
 }
 
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  WaveSolverBase::registerDataOnMesh( meshBodies );
+  WavePackageBase::registerDataOnMesh( meshBodies );
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & )
@@ -113,7 +113,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticWaveEquationSEM::postInputInitialization()
 {
-  WaveSolverBase::postInputInitialization();
+  WavePackageBase::postInputInitialization();
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
@@ -238,8 +238,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
   {
-    GEOS_MARK_SCOPE( WaveSolverBase::initializePostInitialConditionsPreSubGroups );
-    WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+    GEOS_MARK_SCOPE( WavePackageBase::initializePostInitialConditionsPreSubGroups );
+    WavePackageBase::initializePostInitialConditionsPreSubGroups();
   }
   if( m_usePML )
   {
@@ -324,7 +324,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WavePackageUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 
@@ -1122,7 +1122,7 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
 
-    WaveSolverUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+    WavePackageUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                        m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
   } );
 }

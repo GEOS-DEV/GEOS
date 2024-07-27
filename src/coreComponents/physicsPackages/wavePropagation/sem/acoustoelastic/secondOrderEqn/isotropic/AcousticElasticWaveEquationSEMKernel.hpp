@@ -61,7 +61,7 @@ struct CouplingKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const,
+          arrayView2d< WavePackageBase::wsCoordType const,
                        nodes::REFERENCE_POSITION_USD > const nodeCoords,
           localIndex const fluidRegionIndex,
           localIndex const fluidSubRegionIndex,

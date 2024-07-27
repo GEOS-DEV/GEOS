@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageUtils.hpp"
 #include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
 
 namespace geos
@@ -224,7 +224,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
+  arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal displacement array in x direction.
   arrayView1d< real32 > const m_ux_n;

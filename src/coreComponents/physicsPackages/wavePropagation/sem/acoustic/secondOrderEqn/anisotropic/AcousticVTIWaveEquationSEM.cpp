@@ -27,7 +27,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageUtils.hpp"
 #include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp"
 #include "events/EventManager.hpp"
 
@@ -39,7 +39,7 @@ using namespace fields;
 
 AcousticVTIWaveEquationSEM::AcousticVTIWaveEquationSEM( const std::string & name,
                                                         Group * const parent ):
-  WaveSolverBase( name,
+  WavePackageBase( name,
                   parent )
 {
 
@@ -51,13 +51,13 @@ AcousticVTIWaveEquationSEM::AcousticVTIWaveEquationSEM( const std::string & name
 
 void AcousticVTIWaveEquationSEM::initializePreSubGroups()
 {
-  WaveSolverBase::initializePreSubGroups();
+  WavePackageBase::initializePreSubGroups();
 
 }
 
 void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  WaveSolverBase::registerDataOnMesh( meshBodies );
+  WavePackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -105,7 +105,7 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void AcousticVTIWaveEquationSEM::postInputInitialization()
 {
 
-  WaveSolverBase::postInputInitialization();
+  WavePackageBase::postInputInitialization();
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
 
@@ -226,7 +226,7 @@ void AcousticVTIWaveEquationSEM::addSourceToRightHandSide( integer const & cycle
 void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 
-  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  WavePackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -315,7 +315,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WavePackageUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
@@ -432,7 +432,7 @@ void AcousticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartitio
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  WaveSolverBase::viewKeyStruct::freeSurfaceString(),
+                                  WavePackageBase::viewKeyStruct::freeSurfaceString(),
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
@@ -647,7 +647,7 @@ void AcousticVTIWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
 
-    WaveSolverUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+    WavePackageUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                        m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
   } );
 }

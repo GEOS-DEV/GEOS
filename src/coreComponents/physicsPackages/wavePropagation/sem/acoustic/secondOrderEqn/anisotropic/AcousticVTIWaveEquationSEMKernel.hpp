@@ -22,7 +22,7 @@
 
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageUtils.hpp"
 #include "AcousticVTIFields.hpp"
 
 namespace geos
@@ -65,7 +65,7 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           localIndex const numFacesPerElem,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -106,7 +106,7 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][2] };
 
           bool const sourceFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -117,7 +117,7 @@ struct PrecomputeSourceAndReceiverKernel
             real64 coordsOnRefElem[3]{};
 
 
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -134,7 +134,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              sourceValue[cycle][isrc] = WavePackageUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
           }
         }
@@ -154,7 +154,7 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
-            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+            WavePackageUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
@@ -163,7 +163,7 @@ struct PrecomputeSourceAndReceiverKernel
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
-            WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+            WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
@@ -208,7 +208,7 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const mass )
@@ -276,7 +276,7 @@ struct DampingMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
@@ -541,7 +541,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
+  arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;

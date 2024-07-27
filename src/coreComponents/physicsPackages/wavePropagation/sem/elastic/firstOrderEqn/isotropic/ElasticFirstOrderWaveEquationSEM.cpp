@@ -39,7 +39,7 @@ using namespace fields;
 ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::string & name,
                                                                     Group * const parent ):
 
-  WaveSolverBase( name,
+  WavePackageBase( name,
                   parent )
 {
 
@@ -106,13 +106,13 @@ ElasticFirstOrderWaveEquationSEM::~ElasticFirstOrderWaveEquationSEM()
 
 void ElasticFirstOrderWaveEquationSEM::initializePreSubGroups()
 {
-  WaveSolverBase::initializePreSubGroups();
+  WavePackageBase::initializePreSubGroups();
 }
 
 
 void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  WaveSolverBase::registerDataOnMesh( meshBodies );
+  WavePackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -179,7 +179,7 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void ElasticFirstOrderWaveEquationSEM::postInputInitialization()
 {
 
-  WaveSolverBase::postInputInitialization();
+  WavePackageBase::postInputInitialization();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceElem.resize( numSourcesGlobal );
@@ -303,7 +303,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 
-  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  WavePackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -414,7 +414,7 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
 
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                   WaveSolverBase::viewKeyStruct::freeSurfaceString(),
+                   WavePackageBase::viewKeyStruct::freeSurfaceString(),
                    [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
@@ -681,9 +681,9 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
       compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressxz, stressxz, sigmaxzReceivers );
       compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressyz, stressyz, sigmayzReceivers );
 
-      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+      WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                                m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxxReceivers, sigmayyReceivers, sigmazzReceivers );
-      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+      WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                                m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxyReceivers, sigmaxzReceivers, sigmayzReceivers );
 
     } );
@@ -700,7 +700,7 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
     computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_np1, uyReceivers );
     computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_np1, uzReceivers );
 
-    WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+    WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                              m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
   } );
 }

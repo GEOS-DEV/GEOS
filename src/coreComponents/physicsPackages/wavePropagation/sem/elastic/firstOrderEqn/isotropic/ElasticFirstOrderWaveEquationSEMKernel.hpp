@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WavePackageUtils.hpp"
 
 
 namespace geos
@@ -73,7 +73,7 @@ struct StressComputation
   void
   launch( localIndex const size,
           localIndex const regionIndex,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const ux_np1,
           arrayView1d< real32 const > const uy_np1,
@@ -269,7 +269,7 @@ struct VelocityComputation
   void
   launch( localIndex const size,
           localIndex const size_node,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< WavePackageBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView2d< real32 const > const stressxx,
           arrayView2d< real32 const > const stressyy,

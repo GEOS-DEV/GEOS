@@ -31,17 +31,17 @@ namespace geos
 {
 
 template< typename ... SOLVERS >
-class CoupledWaveSolver : public PhysicsPackageBase
+class CoupledWavePackage : public PhysicsPackageBase
 {
 
 public:
 
   /**
-   * @brief main constructor for CoupledWaveSolver Objects
-   * @param name the name of this instantiation of CoupledWaveSolver in the repository
-   * @param parent the parent group of this instantiation of CoupledWaveSolver
+   * @brief main constructor for CoupledWavePackage Objects
+   * @param name the name of this instantiation of CoupledWavePackage in the repository
+   * @param parent the parent group of this instantiation of CoupledWavePackage
    */
-  CoupledWaveSolver( const string & name,
+  CoupledWavePackage( const string & name,
                      Group * const parent )
     : PhysicsPackageBase( name, parent )
   {
@@ -57,16 +57,16 @@ public:
   }
 
   /// deleted copy constructor
-  CoupledWaveSolver( CoupledWaveSolver const & ) = delete;
+  CoupledWavePackage( CoupledWavePackage const & ) = delete;
 
   /// default move constructor
-  CoupledWaveSolver( CoupledWaveSolver && ) = default;
+  CoupledWavePackage( CoupledWavePackage && ) = default;
 
   /// deleted assignment operator
-  CoupledWaveSolver & operator=( CoupledWaveSolver const & ) = delete;
+  CoupledWavePackage & operator=( CoupledWavePackage const & ) = delete;
 
   /// deleted move operator
-  CoupledWaveSolver & operator=( CoupledWaveSolver && ) = delete;
+  CoupledWavePackage & operator=( CoupledWavePackage && ) = delete;
 
   virtual void
   postInputInitialization() override final
@@ -95,10 +95,10 @@ protected:
 };
 
 
-class AcousticElasticWaveEquationSEM : public CoupledWaveSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >
+class AcousticElasticWaveEquationSEM : public CoupledWavePackage< AcousticWaveEquationSEM, ElasticWaveEquationSEM >
 {
 public:
-  using Base = CoupledWaveSolver< AcousticWaveEquationSEM, ElasticWaveEquationSEM >;
+  using Base = CoupledWavePackage< AcousticWaveEquationSEM, ElasticWaveEquationSEM >;
   using Base::m_solvers;
   using wsCoordType = AcousticWaveEquationSEM::wsCoordType;
 
@@ -108,7 +108,7 @@ public:
     ElasticWaveEquationSEM = 1
   };
 
-  /// String used to form the solverName used to register solvers in CoupledWaveSolver
+  /// String used to form the solverName used to register solvers in CoupledWavePackage
   static string coupledSolverAttributePrefix() { return "acousticelastic"; }
 
   using EXEC_POLICY = parallelDevicePolicy<  >;

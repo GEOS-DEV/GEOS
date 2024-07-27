@@ -15,10 +15,10 @@
 
 
 /**
- * @file WaveSolverBase.cpp
+ * @file WavePackageBase.cpp
  */
 
-#include "WaveSolverBase.hpp"
+#include "WavePackageBase.hpp"
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -27,7 +27,7 @@
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "WaveSolverUtils.hpp"
+#include "WavePackageUtils.hpp"
 #include "events/EventManager.hpp"
 
 #include <limits>
@@ -37,7 +37,7 @@ namespace geos
 
 using namespace dataRepository;
 
-WaveSolverBase::WaveSolverBase( const std::string & name,
+WavePackageBase::WavePackageBase( const std::string & name,
                                 Group * const parent ):
   PhysicsPackageBase( name,
               parent )
@@ -131,7 +131,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::useDASString(), &m_useDAS ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( WaveSolverUtils::DASType::none ).
+    setApplyDefaultValue( WavePackageUtils::DASType::none ).
     setDescription(
     "Flag to indicate if DAS data will be modeled, and which DAS type to use: \"none\" to deactivate DAS, \"strainIntegration\" for strain integration, \"dipole\" for displacement difference" );
 
@@ -216,24 +216,24 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::attenuationTypeString(), &m_attenuationType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( WaveSolverUtils::AttenuationType::none ).
+    setApplyDefaultValue( WavePackageUtils::AttenuationType::none ).
     setDescription( "Flag to indicate which attenuation model to use: \"none\" for no attenuation, \"sls\\" " for the standard-linear-solid (SLS) model (Fichtner, 2014)." );
 
 }
 
-WaveSolverBase::~WaveSolverBase()
+WavePackageBase::~WavePackageBase()
 {
   // TODO Auto-generated destructor stub
 }
 
-void WaveSolverBase::reinit()
+void WavePackageBase::reinit()
 {
   initializePreSubGroups();
   postInputInitialization();
   initializePostInitialConditionsPreSubGroups();
 }
 
-void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
+void WavePackageBase::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -256,11 +256,11 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void WaveSolverBase::initializePreSubGroups()
+void WavePackageBase::initializePreSubGroups()
 {
   PhysicsPackageBase::initializePreSubGroups();
 
-  localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
+  localIndex const numNodesPerElem = WavePackageBase::getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
@@ -274,7 +274,7 @@ void WaveSolverBase::initializePreSubGroups()
 
 }
 
-void WaveSolverBase::postInputInitialization()
+void WavePackageBase::postInputInitialization()
 {
   PhysicsPackageBase::postInputInitialization();
 
@@ -292,21 +292,21 @@ void WaveSolverBase::postInputInitialization()
 
   m_usePML = counter;
 
-  if( m_useDAS == WaveSolverUtils::DASType::none && m_linearDASGeometry.size( 0 ) > 0 )
+  if( m_useDAS == WavePackageUtils::DASType::none && m_linearDASGeometry.size( 0 ) > 0 )
   {
-    m_useDAS = WaveSolverUtils::DASType::strainIntegration;
+    m_useDAS = WavePackageUtils::DASType::strainIntegration;
     m_linearDASSamples = 5;
   }
 
-  if( m_useDAS == WaveSolverUtils::DASType::dipole )
+  if( m_useDAS == WavePackageUtils::DASType::dipole )
   {
     m_linearDASSamples = 2;
   }
 
-  if( m_useDAS != WaveSolverUtils::DASType::none )
+  if( m_useDAS != WavePackageUtils::DASType::none )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == WavePackageUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
@@ -319,11 +319,11 @@ void WaveSolverBase::postInputInitialization()
     m_linearDASVectorZ.resize( m_linearDASGeometry.size( 0 ) );
     for( int ircv = 0; ircv < m_linearDASGeometry.size( 0 ); ircv++ )
     {
-      R1Tensor dasVector = WaveSolverUtils::computeDASVector( m_linearDASGeometry[ ircv ][ 0 ], m_linearDASGeometry[ ircv ][ 1 ] );
+      R1Tensor dasVector = WavePackageUtils::computeDASVector( m_linearDASGeometry[ ircv ][ 0 ], m_linearDASGeometry[ ircv ][ 1 ] );
       m_linearDASVectorX( ircv ) = dasVector[ 0 ];
       m_linearDASVectorY( ircv ) = dasVector[ 1 ];
       m_linearDASVectorZ( ircv ) = dasVector[ 2 ];
-      if( m_useDAS == WaveSolverUtils::DASType::dipole )
+      if( m_useDAS == WavePackageUtils::DASType::dipole )
       {
         m_linearDASVectorX( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
         m_linearDASVectorY( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
@@ -332,7 +332,7 @@ void WaveSolverBase::postInputInitialization()
     }
   }
 
-  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  if( m_attenuationType == WavePackageUtils::AttenuationType::sls )
   {
     GEOS_THROW_IF( m_slsReferenceAngularFrequencies.size( 0 ) != m_slsAnelasticityCoefficients.size( 0 ),
                    "The number of attenuation anelasticity coefficients for the SLS model must be equal to the number of reference angular frequencies",
@@ -386,7 +386,7 @@ void WaveSolverBase::postInputInitialization()
 
 }
 
-real64 WaveSolverBase::solverStep( real64 const & time_n,
+real64 WavePackageBase::solverStep( real64 const & time_n,
                                    real64 const & dt,
                                    integer const cycleNumber,
                                    DomainPartition & domain )
@@ -394,7 +394,7 @@ real64 WaveSolverBase::solverStep( real64 const & time_n,
   return explicitStep( time_n, dt, cycleNumber, domain );
 }
 
-real64 WaveSolverBase::explicitStep( real64 const & time_n,
+real64 WavePackageBase::explicitStep( real64 const & time_n,
                                      real64 const & dt,
                                      integer const cycleNumber,
                                      DomainPartition & domain )
@@ -409,7 +409,7 @@ real64 WaveSolverBase::explicitStep( real64 const & time_n,
   }
 }
 
-localIndex WaveSolverBase::getNumNodesPerElem()
+localIndex WavePackageBase::getNumNodesPerElem()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -452,7 +452,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   return numNodesPerElem;
 }
 
-void WaveSolverBase::computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+void WavePackageBase::computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                            localIndex const subRegionSize,
                                            localIndex const numQuadraturePointsPerElem )
 {
@@ -470,7 +470,7 @@ void WaveSolverBase::computeTargetNodeSet( arrayView2d< localIndex const, cells:
   m_solverTargetNodesSet.insert( scratch.begin(), scratch.begin() + numUniqueValues );
 }
 
-void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n )
+void WavePackageBase::incrementIndexSeismoTrace( real64 const time_n )
 {
   while( (m_dtSeismoTrace * m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
   {
@@ -478,7 +478,7 @@ void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n )
   }
 }
 
-void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
+void WavePackageBase::computeAllSeismoTraces( real64 const time_n,
                                              real64 const dt,
                                              arrayView1d< real32 const > const var_np1,
                                              arrayView1d< real32 const > const var_n,
@@ -508,12 +508,12 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
     if( dir * timeSeismo > dir * (time_n + epsilonLoc) )
       break;
-    WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
+    WavePackageUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
                                          m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );
   }
 }
 
-void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
+void WavePackageBase::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
                                                        real64 const time_n,
                                                        real64 const dt,
                                                        arrayView2d< real32 const > const var_np1,
@@ -528,12 +528,12 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
     if( dir * timeSeismo > dir * (time_n + epsilonLoc))
       break;
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_receiverElem,
+    WavePackageUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_receiverElem,
                                                    m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
   }
 }
 
-bool WaveSolverBase::directoryExists( std::string const & directoryName )
+bool WavePackageBase::directoryExists( std::string const & directoryName )
 {
   struct stat buffer;
   return stat( directoryName.c_str(), &buffer ) == 0;
