@@ -114,12 +114,12 @@ Furthermore, the following functions are inherited from the base class.
 Eventually, ``applyDirichletBCImplicit()`` is the working specialized member functions called
 when ``applyBoundaryConditions()`` is called in this particular class override.
 
-Browsing the base class ``SolverBase``, it can be noted that most of the solver interface functions are called during
-either ``SolverBase::linearImplicitStep()`` or ``SolverBase::nonlinearImplicitStep()`` depending on the solver strategy chosen.
+Browsing the base class ``PhysicsPackageBase``, it can be noted that most of the solver interface functions are called during
+either ``PhysicsPackageBase::linearImplicitStep()`` or ``PhysicsPackageBase::nonlinearImplicitStep()`` depending on the solver strategy chosen.
 
 Switching to protected members, ``postProcessInput()`` is a central member function and
 will be called by ``Group`` object after input is read from XML entry file.
-It will set and dispatch solver variables from the base class ``SolverBase`` to the most derived class.
+It will set and dispatch solver variables from the base class ``PhysicsPackageBase`` to the most derived class.
 For ``LaplaceFEM``, it will allow us to set the right time integration scheme based on the XML value
 as will be further explored in the next :ref:`Implementation` section.
 
