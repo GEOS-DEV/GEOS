@@ -14,12 +14,12 @@
  */
 
 /*
- *  @file ContactSolverBase.hpp
+ *  @file ContactPackageBase.hpp
  *
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_CONTACT_CONTACTSOLVERBASE_HPP_
-#define GEOS_PHYSICSPACKAGES_CONTACT_CONTACTSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_CONTACT_CONTACTPACKAGEBASE_HPP_
+#define GEOS_PHYSICSPACKAGES_CONTACT_CONTACTPACKAGEBASE_HPP_
 
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsPackages/contact/ContactFields.hpp"
@@ -27,13 +27,13 @@
 namespace geos
 {
 
-class ContactSolverBase : public SolidMechanicsLagrangianFEM
+class ContactPackageBase : public SolidMechanicsLagrangianFEM
 {
 public:
-  ContactSolverBase( const string & name,
+  ContactPackageBase( const string & name,
                      Group * const parent );
 
-  ~ContactSolverBase() override = default;
+  ~ContactPackageBase() override = default;
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
 
@@ -122,4 +122,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSPACKAGES_CONTACT_CONTACTSOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSPACKAGES_CONTACT_CONTACTPACKAGEBASE_HPP_ */

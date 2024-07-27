@@ -59,7 +59,7 @@ const localIndex geos::SolidMechanicsLagrangeContact::m_maxFaceNodes = 11;
 
 SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & name,
                                                               Group * const parent ):
-  ContactSolverBase( name, parent )
+  ContactPackageBase( name, parent )
 {
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -80,7 +80,7 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
 
 void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
 {
-  ContactSolverBase::registerDataOnMesh( meshBodies );
+  ContactPackageBase::registerDataOnMesh( meshBodies );
 
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
@@ -139,7 +139,7 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
 
 void SolidMechanicsLagrangeContact::initializePreSubGroups()
 {
-  ContactSolverBase::initializePreSubGroups();
+  ContactPackageBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 

@@ -21,13 +21,13 @@
 #ifndef GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 #define GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
-#include "physicsPackages/contact/ContactSolverBase.hpp"
+#include "physicsPackages/contact/ContactPackageBase.hpp"
 
 namespace geos
 {
 using namespace constitutive;
 
-class SolidMechanicsEmbeddedFractures : public ContactSolverBase
+class SolidMechanicsEmbeddedFractures : public ContactPackageBase
 {
 public:
   SolidMechanicsEmbeddedFractures( const string & name,
@@ -115,7 +115,7 @@ public:
 
   bool useStaticCondensation() const { return m_useStaticCondensation; }
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  struct viewKeyStruct : ContactPackageBase::viewKeyStruct
   {
     constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
   };

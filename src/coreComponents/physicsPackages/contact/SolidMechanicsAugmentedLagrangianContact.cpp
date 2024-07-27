@@ -33,7 +33,7 @@ using namespace fields;
 
 SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianContact( const string & name,
                                                                                     Group * const parent ):
-  ContactSolverBase( name, parent )
+  ContactPackageBase( name, parent )
 {
 
   m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
@@ -54,7 +54,7 @@ SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianCont
 void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
 
-  ContactSolverBase::registerDataOnMesh( meshBodies );
+  ContactPackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,

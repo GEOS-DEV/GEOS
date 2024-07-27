@@ -21,12 +21,12 @@
 #ifndef GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 #define GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 
-#include "physicsPackages/contact/ContactSolverBase.hpp"
+#include "physicsPackages/contact/ContactPackageBase.hpp"
 
 namespace geos
 {
 
-class SolidMechanicsAugmentedLagrangianContact : public ContactSolverBase
+class SolidMechanicsAugmentedLagrangianContact : public ContactPackageBase
 {
 public:
   SolidMechanicsAugmentedLagrangianContact( const string & name,
@@ -158,7 +158,7 @@ private:
   /// Finite element type to finite element object map
   std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  struct viewKeyStruct : ContactPackageBase::viewKeyStruct
   {
 
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }

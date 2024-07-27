@@ -45,7 +45,7 @@ using namespace fields;
 
 SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
-  ContactSolverBase( name, parent )
+  ContactPackageBase( name, parent )
 {
   registerWrapper( viewKeyStruct::useStaticCondensationString(), &m_useStaticCondensation ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -78,7 +78,7 @@ void SolidMechanicsEmbeddedFractures::postInputInitialization()
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  ContactSolverBase::registerDataOnMesh( meshBodies );
+  ContactPackageBase::registerDataOnMesh( meshBodies );
 
   using namespace fields::contact;
 

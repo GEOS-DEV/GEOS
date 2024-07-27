@@ -14,10 +14,10 @@
  */
 
 /*
- * ContactSolverBase.cpp
+ * ContactPackageBase.cpp
  */
 
-#include "ContactSolverBase.hpp"
+#include "ContactPackageBase.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -39,7 +39,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields::contact;
 
-ContactSolverBase::ContactSolverBase( const string & name,
+ContactPackageBase::ContactPackageBase( const string & name,
                                       Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
@@ -50,7 +50,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( dataRepository::InputFlags::FALSE );
 }
 
-void ContactSolverBase::postInputInitialization()
+void ContactPackageBase::postInputInitialization()
 {
   SolidMechanicsLagrangianFEM::postInputInitialization();
 
@@ -62,7 +62,7 @@ void ContactSolverBase::postInputInitialization()
                  InputError );
 }
 
-void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
+void ContactPackageBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   SolidMechanicsLagrangianFEM::registerDataOnMesh( meshBodies );
 
@@ -102,7 +102,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
   } );
 }
 
-void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBodies )
+void ContactPackageBase::setFractureRegions( dataRepository::Group const & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel const & mesh,
@@ -121,7 +121,7 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
                  InputError );
 }
 
-void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
+void ContactPackageBase::computeFractureStateStatistics( MeshLevel const & mesh,
                                                         globalIndex & numStick,
                                                         globalIndex & numNewSlip,
                                                         globalIndex & numSlip,
@@ -187,7 +187,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
   numOpen     = totalCounter[3];
 }
 
-void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & domain ) const
+void ContactPackageBase::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
   if( getLogLevel() >=1 )
   {
@@ -209,7 +209,7 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
   }
 }
 
-real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
+real64 ContactPackageBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                         real64 const & dt,
                                         const int GEOS_UNUSED_PARAM( cycleNumber ),
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
@@ -219,7 +219,7 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
   return dt;
 }
 
-void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
+void ContactPackageBase::synchronizeFractureState( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -236,7 +236,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   } );
 }
 
-void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+void ContactPackageBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
   if( dynamic_cast< CellElementSubRegion * >( &subRegion ) )
   {

@@ -21,14 +21,14 @@
 #ifndef GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_
 #define GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_
 
-#include "physicsPackages/contact/ContactSolverBase.hpp"
+#include "physicsPackages/contact/ContactPackageBase.hpp"
 
 namespace geos
 {
 
 class NumericalMethodsManager;
 
-class SolidMechanicsLagrangeContact : public ContactSolverBase
+class SolidMechanicsLagrangeContact : public ContactPackageBase
 {
 public:
 
@@ -192,7 +192,7 @@ private:
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  struct viewKeyStruct : ContactPackageBase::viewKeyStruct
   {
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
 

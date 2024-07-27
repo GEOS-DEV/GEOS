@@ -1,7 +1,7 @@
 # Specify solver headers
 set( physicsPackages_headers
      ${physicsPackages_headers}
-     contact/ContactSolverBase.hpp
+     contact/ContactPackageBase.hpp
      contact/ContactFields.hpp
      contact/SolidMechanicsEFEMKernelsBase.hpp
      contact/SolidMechanicsEFEMKernels.hpp
@@ -21,7 +21,7 @@ set( physicsPackages_headers
 # Specify solver sources
 set( physicsPackages_sources
      ${physicsPackages_sources}
-     contact/ContactSolverBase.cpp
+     contact/ContactPackageBase.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp
      contact/SolidMechanicsAugmentedLagrangianContact.cpp

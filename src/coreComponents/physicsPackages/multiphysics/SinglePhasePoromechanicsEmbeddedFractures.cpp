@@ -496,7 +496,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< fields::flow::pressure >();
 
-      string const & contactRelationName = subRegion.template getReference< string >( ContactSolverBase::viewKeyStruct::contactRelationNameString() );
+      string const & contactRelationName = subRegion.template getReference< string >( ContactPackageBase::viewKeyStruct::contactRelationNameString() );
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
