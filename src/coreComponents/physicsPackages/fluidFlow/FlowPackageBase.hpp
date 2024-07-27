@@ -14,11 +14,11 @@
  */
 
 /**
- * @file FlowSolverBase.hpp
+ * @file FlowPackageBase.hpp
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_FINITEVOLUME_FLOWSOLVERBASE_HPP_
-#define GEOS_PHYSICSPACKAGES_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWPACKAGEBASE_HPP_
+#define GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWPACKAGEBASE_HPP_
 
 #include "physicsPackages/PhysicsPackageBase.hpp"
 #include "common/Units.hpp"
@@ -27,12 +27,12 @@ namespace geos
 {
 
 /**
- * @class FlowSolverBase
+ * @class FlowPackageBase
  *
  * Base class for finite volume fluid flow solvers.
  * Provides some common features
  */
-class FlowSolverBase : public PhysicsPackageBase
+class FlowPackageBase : public PhysicsPackageBase
 {
 public:
 
@@ -44,24 +44,24 @@ public:
  * @param name the name of this instantiation of Group in the repository
  * @param parent the parent group of this instantiation of Group
  */
-  FlowSolverBase( const string & name,
+  FlowPackageBase( const string & name,
                   Group * const parent );
 
 
   /// deleted default constructor
-  FlowSolverBase() = delete;
+  FlowPackageBase() = delete;
 
   /// deleted copy constructor
-  FlowSolverBase( FlowSolverBase const & ) = delete;
+  FlowPackageBase( FlowPackageBase const & ) = delete;
 
   /// default move constructor
-  FlowSolverBase( FlowSolverBase && ) = default;
+  FlowPackageBase( FlowPackageBase && ) = default;
 
   /// deleted assignment operator
-  FlowSolverBase & operator=( FlowSolverBase const & ) = delete;
+  FlowPackageBase & operator=( FlowPackageBase const & ) = delete;
 
   /// deleted move operator
-  FlowSolverBase & operator=( FlowSolverBase && ) = delete;
+  FlowPackageBase & operator=( FlowPackageBase && ) = delete;
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
@@ -239,4 +239,4 @@ private:
 
 }
 
-#endif //GEOS_PHYSICSPACKAGES_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#endif //GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWPACKAGEBASE_HPP_

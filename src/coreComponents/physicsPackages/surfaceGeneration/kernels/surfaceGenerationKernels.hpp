@@ -24,7 +24,7 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "surfaceGenerationKernelsHelpers.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 
 namespace geos
 {

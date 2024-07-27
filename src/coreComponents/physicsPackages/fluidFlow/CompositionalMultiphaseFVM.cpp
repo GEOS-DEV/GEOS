@@ -33,7 +33,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/StabilizedCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsPackages/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"

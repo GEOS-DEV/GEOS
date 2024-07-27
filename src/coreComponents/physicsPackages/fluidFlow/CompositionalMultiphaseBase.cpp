@@ -40,7 +40,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsPackages/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
@@ -58,7 +58,7 @@ using namespace constitutive;
 CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
                                                           Group * const parent )
   :
-  FlowSolverBase( name, parent ),
+  FlowPackageBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_hasCapPressure( 0 ),
@@ -175,7 +175,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
 
 void CompositionalMultiphaseBase::postInputInitialization()
 {
-  FlowSolverBase::postInputInitialization();
+  FlowPackageBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
@@ -229,7 +229,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 {
   using namespace fields::flow;
 
-  FlowSolverBase::registerDataOnMesh( meshBodies );
+  FlowPackageBase::registerDataOnMesh( meshBodies );
 
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
@@ -534,7 +534,7 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
 
 void CompositionalMultiphaseBase::initializePreSubGroups()
 {
-  FlowSolverBase::initializePreSubGroups();
+  FlowPackageBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
@@ -1261,7 +1261,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  FlowSolverBase::initializePostInitialConditionsPreSubGroups();
+  FlowPackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -2515,7 +2515,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
 void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
-  FlowSolverBase::saveConvergedState( subRegion );
+  FlowPackageBase::saveConvergedState( subRegion );
 
   arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
     subRegion.template getField< fields::flow::globalCompDensity >();
@@ -2539,7 +2539,7 @@ void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & sub
 
 void CompositionalMultiphaseBase::saveSequentialIterationState( DomainPartition & domain )
 {
-  FlowSolverBase::saveSequentialIterationState( domain );
+  FlowPackageBase::saveSequentialIterationState( domain );
 
   integer const numComp = m_numComponents;
 
@@ -2616,7 +2616,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 
 bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainPartition & domain ) const
 {
-  bool isConverged = FlowSolverBase::checkSequentialSolutionIncrements( domain );
+  bool isConverged = FlowPackageBase::checkSequentialSolutionIncrements( domain );
 
   string const unit = m_useMass ? "kg/m3" : "mol/m3";
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max component density change during outer iteration: {} {}",

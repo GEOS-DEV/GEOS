@@ -23,7 +23,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 #include "physicsPackages/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 #include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
@@ -155,7 +155,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
                                                                                                     this->flowSolver()->numFluidPhases(),
                                                                                                     this->flowSolver()->useTotalMassEquation(),
                                                                                                     this->m_performStressInitialization,
-                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                                                                                    FlowPackageBase::viewKeyStruct::fluidNamesString() );
     }
     else
     {
@@ -174,7 +174,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
                                                                                       this->flowSolver()->useSimpleAccumulation(),
                                                                                       this->flowSolver()->useTotalMassEquation(),
                                                                                       this->m_performStressInitialization,
-                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                                                                      FlowPackageBase::viewKeyStruct::fluidNamesString() );
     }
   } );
 
@@ -286,7 +286,7 @@ template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
 {
   // get the fluid model (to access fluid density)
-  string const fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+  string const fluidName = subRegion.getReference< string >( FlowPackageBase::viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = this->template getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
   // get the solid model (to access porosity and solid density)

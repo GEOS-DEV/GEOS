@@ -59,7 +59,7 @@ public:
   using BASE::m_linearSolverParameters;
   using BASE::m_nonlinearSolverParameters;
 
-  // Aliasing public/protected members/methods of FlowSolverBase so we don't
+  // Aliasing public/protected members/methods of FlowPackageBase so we don't
   // have to use this->member etc.
   using BASE::m_numDofPerCell;
   using BASE::m_isThermal;

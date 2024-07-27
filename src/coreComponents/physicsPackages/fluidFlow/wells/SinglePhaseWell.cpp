@@ -30,7 +30,7 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWellKernels.hpp"

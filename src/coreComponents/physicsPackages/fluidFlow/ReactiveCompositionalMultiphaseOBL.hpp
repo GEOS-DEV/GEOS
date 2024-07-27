@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_
 
-#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBase.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 
 namespace geos
@@ -43,7 +43,7 @@ namespace geos
  * - Does not use any fluid model, and solid models are only needed to get initial porosity
  */
 //START_SPHINX_INCLUDE_00
-class ReactiveCompositionalMultiphaseOBL : public FlowSolverBase
+class ReactiveCompositionalMultiphaseOBL : public FlowPackageBase
 {
 //END_SPHINX_INCLUDE_00
 public:
@@ -225,7 +225,7 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const;
 
-  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
+  struct viewKeyStruct : FlowPackageBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "compositionalMolarVariables"; }
 

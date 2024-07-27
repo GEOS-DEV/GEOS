@@ -33,7 +33,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsPackages/fluidFlow/proppantTransport/ProppantTransportKernels.hpp"
 #include "mesh/MeshFields.hpp"
@@ -51,7 +51,7 @@ using namespace proppantTransportKernels;
 
 ProppantTransport::ProppantTransport( const string & name,
                                       Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowPackageBase( name, parent )
 {
   registerWrapper( viewKeyStruct::bridgingFactorString(), &m_bridgingFactor ).setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -85,14 +85,14 @@ ProppantTransport::ProppantTransport( const string & name,
 
 void ProppantTransport::postInputInitialization()
 {
-  FlowSolverBase::postInputInitialization();
+  FlowPackageBase::postInputInitialization();
 }
 
 void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 {
   using namespace fields::proppant;
 
-  FlowSolverBase::registerDataOnMesh( meshBodies );
+  FlowPackageBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
@@ -162,7 +162,7 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
 
 void ProppantTransport::initializePreSubGroups()
 {
-  FlowSolverBase::initializePreSubGroups();
+  FlowPackageBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager & cm = domain.getConstitutiveManager();
@@ -314,7 +314,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  FlowSolverBase::initializePostInitialConditionsPreSubGroups();
+  FlowPackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -367,7 +367,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
                                                                arrayView1d< string const > const & regionNames )
   {
 
-    FlowSolverBase::precomputeData( mesh, regionNames );
+    FlowPackageBase::precomputeData( mesh, regionNames );
 
     if( time <= 0 )
     {

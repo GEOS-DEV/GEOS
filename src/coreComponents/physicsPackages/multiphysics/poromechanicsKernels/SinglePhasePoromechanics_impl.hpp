@@ -23,7 +23,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 

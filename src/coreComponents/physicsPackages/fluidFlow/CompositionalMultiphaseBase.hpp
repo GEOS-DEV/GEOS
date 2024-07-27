@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
-#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
@@ -32,7 +32,7 @@ namespace geos
  *
  * A compositional multiphase solver
  */
-class CompositionalMultiphaseBase : public FlowSolverBase
+class CompositionalMultiphaseBase : public FlowPackageBase
 {
 public:
 
@@ -236,7 +236,7 @@ public:
                                arrayView1d< real64 > const & localRhs ) const = 0;
   /**@}*/
 
-  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
+  struct viewKeyStruct : FlowPackageBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
 

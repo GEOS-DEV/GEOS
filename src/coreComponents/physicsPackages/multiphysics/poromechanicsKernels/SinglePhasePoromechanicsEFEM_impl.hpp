@@ -22,7 +22,7 @@
 
 #include "physicsPackages/contact/ContactFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"

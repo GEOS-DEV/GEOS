@@ -30,7 +30,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp"
 
 
@@ -64,7 +64,7 @@ MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOper
 ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const string & name,
                                                                         Group * const parent )
   :
-  FlowSolverBase( name, parent ),
+  FlowPackageBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_maxCompFracChange( 1.0 ),
@@ -122,7 +122,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
 
 void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
 {
-  FlowSolverBase::initializePreSubGroups();
+  FlowPackageBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -188,7 +188,7 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
 
 void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
 {
-  // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
+  // need to override to skip the check for fluidModel, which is enabled in FlowPackageBase
   PhysicsPackageBase::postInputInitialization();
 
   GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
@@ -230,7 +230,7 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
 {
   using namespace fields::flow;
   // 1. Call base class method
-  FlowSolverBase::registerDataOnMesh( meshBodies );
+  FlowPackageBase::registerDataOnMesh( meshBodies );
 
   // 2. Register and resize all fields as necessary
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
@@ -562,7 +562,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 {
   GEOS_MARK_FUNCTION;
 
-  FlowSolverBase::initializePostInitialConditionsPreSubGroups();
+  FlowPackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 

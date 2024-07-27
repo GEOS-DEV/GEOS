@@ -21,7 +21,7 @@
 #include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "unitTests/fluidFlowTests/testSingleFlowUtils.hpp"
 
 using namespace geos;

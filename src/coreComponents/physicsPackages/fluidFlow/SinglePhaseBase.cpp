@@ -38,7 +38,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsPackages/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
@@ -53,7 +53,7 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowPackageBase( name, parent )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
@@ -73,7 +73,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 {
   using namespace fields::flow;
 
-  FlowSolverBase::registerDataOnMesh( meshBodies );
+  FlowPackageBase::registerDataOnMesh( meshBodies );
 
   m_numDofPerCell = m_isThermal ? 2 : 1;
 
@@ -124,7 +124,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
 void SinglePhaseBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
-  FlowSolverBase::setConstitutiveNamesCallSuper( subRegion );
+  FlowPackageBase::setConstitutiveNamesCallSuper( subRegion );
 }
 
 void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
@@ -219,7 +219,7 @@ SinglePhaseBase::ThermalFluidPropViews SinglePhaseBase::getThermalFluidPropertie
 
 void SinglePhaseBase::initializePreSubGroups()
 {
-  FlowSolverBase::initializePreSubGroups();
+  FlowPackageBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -400,7 +400,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  FlowSolverBase::initializePostInitialConditionsPreSubGroups();
+  FlowPackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -1394,7 +1394,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
 
 void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
-  FlowSolverBase::saveConvergedState( subRegion );
+  FlowPackageBase::saveConvergedState( subRegion );
 
   arrayView1d< real64 const > const mass = subRegion.template getField< fields::flow::mass >();
   arrayView1d< real64 > const mass_n = subRegion.template getField< fields::flow::mass_n >();

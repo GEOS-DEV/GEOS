@@ -28,7 +28,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsPackages/PhysicsPackageBase.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBase.hpp"
 
 #include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 

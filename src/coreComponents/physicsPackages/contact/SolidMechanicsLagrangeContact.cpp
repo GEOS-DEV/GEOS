@@ -32,7 +32,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsPackages/contact/ContactFields.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"

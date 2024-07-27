@@ -24,7 +24,7 @@
 #include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 
 namespace geos
 {
@@ -138,7 +138,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
     arrayView2d< real64 const > const porosity = solid.getPorosity();
 
-    string const & fluidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    string const & fluidName = subRegion.template getReference< string >( FlowPackageBase::viewKeyStruct::fluidNamesString() );
     SingleFluidBase const & fluid = constitutiveModels.getGroup< SingleFluidBase >( fluidName );
     arrayView2d< real64 const > const densities = fluid.density();
 

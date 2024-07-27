@@ -24,7 +24,7 @@
 #include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "testFlowUtils.hpp"
 
 namespace geos

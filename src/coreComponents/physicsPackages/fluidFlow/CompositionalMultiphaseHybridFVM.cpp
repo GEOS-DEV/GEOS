@@ -29,7 +29,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 
@@ -160,7 +160,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
 void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
-  FlowSolverBase::precomputeData( mesh, regionNames );
+  FlowPackageBase::precomputeData( mesh, regionNames );
 
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager & faceManager = mesh.getFaceManager();

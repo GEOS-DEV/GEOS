@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 
-#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBase.hpp"
 #include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
 
@@ -40,7 +40,7 @@ class DomainPartition;
  *
  * class to perform a proppant finite volume solve.
  */
-class ProppantTransport : public FlowSolverBase
+class ProppantTransport : public FlowPackageBase
 {
 public:
 
@@ -183,7 +183,7 @@ public:
 
   void resizeFractureFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
-  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
+  struct viewKeyStruct : FlowPackageBase::viewKeyStruct
   {
     static constexpr char const * proppantNamesString() { return "proppantNames"; }
 

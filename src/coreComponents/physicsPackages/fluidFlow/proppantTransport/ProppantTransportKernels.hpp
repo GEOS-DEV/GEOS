@@ -30,7 +30,7 @@
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 #include "physicsPackages/PhysicsPackageBaseKernels.hpp"

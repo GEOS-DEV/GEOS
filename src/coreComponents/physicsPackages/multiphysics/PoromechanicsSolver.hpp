@@ -21,7 +21,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/multiphysics/CoupledSolver.hpp"
 #include "physicsPackages/multiphysics/PoromechanicsFields.hpp"
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -119,7 +119,7 @@ public:
 
     GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
                    GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` must be set to 1 since the poromechanics solver is thermal",
-                             this->getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ),
+                             this->getCatalogName(), this->getName(), FlowPackageBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ),
                    InputError );
   }
 

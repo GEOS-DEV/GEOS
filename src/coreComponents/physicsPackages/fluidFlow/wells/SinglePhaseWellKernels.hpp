@@ -25,7 +25,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 #include "physicsPackages/fluidFlow/wells/WellControls.hpp"
 #include "physicsPackages/PhysicsPackageBaseKernels.hpp"

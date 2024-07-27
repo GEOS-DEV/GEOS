@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
-#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBase.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsPackages/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
@@ -42,7 +42,7 @@ class ConstitutiveBase;
  *
  * base class to perform a single phase finite volume solve.
  */
-class SinglePhaseBase : public FlowSolverBase
+class SinglePhaseBase : public FlowPackageBase
 {
 public:
   /**
@@ -224,7 +224,7 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
 
-  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
+  struct viewKeyStruct : FlowPackageBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "singlePhaseVariables"; }
   };

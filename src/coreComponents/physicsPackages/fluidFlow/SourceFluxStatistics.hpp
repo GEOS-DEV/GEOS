@@ -21,7 +21,7 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_
 
 #include "../FieldStatisticsBase.hpp"
-#include "FlowSolverBase.hpp"
+#include "FlowPackageBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
 
@@ -33,7 +33,7 @@ namespace geos
  *
  * Task class allowing for the computation of aggregate statistics of SourceFluxBoundaryCondition
  */
-class SourceFluxStatsAggregator final : public FieldStatisticsBase< FlowSolverBase >
+class SourceFluxStatsAggregator final : public FieldStatisticsBase< FlowPackageBase >
 {
 public:
 
@@ -307,7 +307,7 @@ private:
 
 
 private:
-  using Base = FieldStatisticsBase< FlowSolverBase >;
+  using Base = FieldStatisticsBase< FlowPackageBase >;
 
   /// the names of the SourceFlux(s) for which we want the statistics
   string_array m_fluxNames;

@@ -18,7 +18,7 @@
 #include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 

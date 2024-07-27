@@ -29,7 +29,7 @@
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 

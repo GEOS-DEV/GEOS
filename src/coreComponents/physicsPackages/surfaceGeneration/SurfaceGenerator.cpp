@@ -32,7 +32,7 @@
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsPackages/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsPackages/surfaceGeneration/SurfaceGeneratorFields.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
 
 

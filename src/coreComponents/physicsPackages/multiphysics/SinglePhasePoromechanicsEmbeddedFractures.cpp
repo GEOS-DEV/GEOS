@@ -501,7 +501,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
       ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
 
-      string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      string const porousSolidName = subRegion.template getReference< string >( FlowPackageBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )

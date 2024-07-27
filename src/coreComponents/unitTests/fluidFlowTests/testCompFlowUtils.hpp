@@ -24,7 +24,7 @@
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "testFlowUtils.hpp"
 
 namespace geos

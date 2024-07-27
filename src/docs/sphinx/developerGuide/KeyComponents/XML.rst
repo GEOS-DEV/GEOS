@@ -66,7 +66,7 @@ You can have several objects of the same class and hence the same ``catalogName`
 
 **How can I add my new externally-accessible class to the ObjectCatalog?**
 
-Let us consider a flow solver class derived from ``FlowSolverBase``, that itself is derived from ``PhysicsPackageBase``.
+Let us consider a flow solver class derived from ``FlowPackageBase``, that itself is derived from ``PhysicsPackageBase``.
 To instantiate and use this solver, the developer needs to make the derived flow solver class reachable from the XML file, via an XML tag.
 Internally, this requires adding the derived class information to ``ObjectCatalog``, which is achieved with two main ingredients: 1) a ``CatalogName()`` method in the class that lets GEOS know *what* to search for in the internal ``ObjectCatalog`` to instantiate an object of this class, 2) a macro that specifies *where* to search in the ``ObjectCatalog``.
 
@@ -127,7 +127,7 @@ Let's look at this process in more details.
 Creating a new object and giving it a Catalog name
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Consider again that we are registering a flow solver deriving from ``FlowSolverBase``, and assume that this solver is called ``CppNameOfMySolver``.
+Consider again that we are registering a flow solver deriving from ``FlowPackageBase``, and assume that this solver is called ``CppNameOfMySolver``.
 This choice of name is not recommended (we want names that reflect what the solver does!), but for this particular example, we just need to know that this name is the class name inside the C++ code.
 
 To specify parameters of this new solver from an XML file, we need to be sure that the XML tag and the ``catalogName`` of the class are identical.

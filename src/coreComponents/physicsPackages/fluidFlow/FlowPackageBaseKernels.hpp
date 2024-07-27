@@ -14,7 +14,7 @@
  */
 
 /**
- * @file FlowSolverBaseKernels.hpp
+ * @file FlowPackageBaseKernels.hpp
  */
 
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_FLOWPHYSICSPACKAGEBASEKERNELS_HPP

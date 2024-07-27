@@ -14,10 +14,10 @@
  */
 
 /**
- * @file FlowSolverBase.cpp
+ * @file FlowPackageBase.cpp
  */
 
-#include "FlowSolverBase.hpp"
+#include "FlowPackageBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
@@ -31,8 +31,8 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsPackages/fluidFlow/FluxKernelsHelper.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseKernels.hpp"
 
 namespace geos
 {
@@ -85,7 +85,7 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
   } );
 }
 
-FlowSolverBase::FlowSolverBase( string const & name,
+FlowPackageBase::FlowPackageBase( string const & name,
                                 Group * const parent ):
   PhysicsPackageBase( name, parent ),
   m_numDofPerCell( 0 ),
@@ -127,7 +127,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   getNonlinearSolverParameters().getWrapper< PhysicsPackageBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
 
-void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
+void FlowPackageBase::registerDataOnMesh( Group & meshBodies )
 {
   PhysicsPackageBase::registerDataOnMesh( meshBodies );
 
@@ -214,7 +214,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
   }
 }
 
-void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
+void FlowPackageBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
   arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
   arrayView1d< real64 > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
@@ -240,7 +240,7 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   }
 }
 
-void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
+void FlowPackageBase::saveSequentialIterationState( DomainPartition & domain )
 {
   GEOS_ASSERT( m_isFixedStressPoromechanicsUpdate );
 
@@ -285,17 +285,17 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
   m_sequentialTempChange = m_isThermal ? MpiWrapper::max( maxTempChange ) : 0.0;
 }
 
-void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
+void FlowPackageBase::enableFixedStressPoromechanicsUpdate()
 {
   m_isFixedStressPoromechanicsUpdate = true;
 }
 
-void FlowSolverBase::enableJumpStabilization()
+void FlowPackageBase::enableJumpStabilization()
 {
   m_isJumpStabilized = true;
 }
 
-void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+void FlowPackageBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
   PhysicsPackageBase::setConstitutiveNamesCallSuper( subRegion );
 
@@ -341,12 +341,12 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
   }
 }
 
-void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+void FlowPackageBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
   GEOS_UNUSED_VAR( subRegion );
 }
 
-void FlowSolverBase::initializePreSubGroups()
+void FlowPackageBase::initializePreSubGroups()
 {
   PhysicsPackageBase::initializePreSubGroups();
 
@@ -376,7 +376,7 @@ void FlowSolverBase::initializePreSubGroups()
   }
 }
 
-void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
+void FlowPackageBase::validatePoreVolumes( DomainPartition const & domain ) const
 {
   real64 minPoreVolume = LvArray::NumericLimits< real64 >::max;
   real64 maxPorosity = -LvArray::NumericLimits< real64 >::max;
@@ -443,7 +443,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
                                 numElemsAbovePorosityThreshold, maxPorosity ) );
 }
 
-void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
+void FlowPackageBase::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsPackageBase::initializePostInitialConditionsPreSubGroups();
 
@@ -457,7 +457,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-void FlowSolverBase::precomputeData( MeshLevel & mesh,
+void FlowPackageBase::precomputeData( MeshLevel & mesh,
                                      arrayView1d< string const > const & regionNames )
 {
   FaceManager & faceManager = mesh.getFaceManager();
@@ -490,7 +490,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
   }
 }
 
-void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+void FlowPackageBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -519,7 +519,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   } );
 }
 
-void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
+void FlowPackageBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -541,7 +541,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 }
 
 
-void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
+void FlowPackageBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
                                                              std::map< string, localIndex > const & equilNameToEquilId,
                                                              arrayView1d< real64 > const & maxElevation,
                                                              arrayView1d< real64 > const & minElevation ) const
@@ -568,7 +568,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
-    // TODO: move to FlowSolverBaseKernels to make this function "protected"
+    // TODO: move to FlowPackageBaseKernels to make this function "protected"
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
@@ -594,7 +594,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
                          MPI_COMM_GEOSX );
 }
 
-void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
+void FlowPackageBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                          real64 const & dt,
                                                          DomainPartition & domain, // cannot be const...
                                                          std::map< string, localIndex > const & bcNameToBcId,
@@ -618,7 +618,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
     {
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-      // TODO: move to FlowSolverBaseKernels to make this function "protected"
+      // TODO: move to FlowPackageBaseKernels to make this function "protected"
       // loop over all the elements of this target set
       RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > localSetSize( 0 );
       forAll< parallelDevicePolicy<> >( targetSet.size(),
@@ -644,7 +644,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                          MPI_COMM_GEOSX );
 }
 
-void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
+void FlowPackageBase::saveAquiferConvergedState( real64 const & time,
                                                 real64 const & dt,
                                                 DomainPartition & domain )
 {
@@ -743,7 +743,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   } );
 }
 
-void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
+void FlowPackageBase::prepareStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -768,7 +768,7 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
   } );
 }
 
-void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
+void FlowPackageBase::updateStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -791,7 +791,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
   } );
 }
 
-bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+bool FlowPackageBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
 {
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",

@@ -26,14 +26,14 @@ namespace geos
 {
 
 class ProppantTransport;
-class FlowSolverBase;
+class FlowPackageBase;
 
 class FlowProppantTransportSolver : public CoupledSolver< ProppantTransport,
-                                                          FlowSolverBase >
+                                                          FlowPackageBase >
 {
 public:
 
-  using Base = CoupledSolver< ProppantTransport, FlowSolverBase >;
+  using Base = CoupledSolver< ProppantTransport, FlowPackageBase >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -80,7 +80,7 @@ public:
    * @brief accessor for the pointer to the flow solver
    * @return a pointer to the flow solver
    */
-  FlowSolverBase * flowSolver() const
+  FlowPackageBase * flowSolver() const
   {
     return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
   }

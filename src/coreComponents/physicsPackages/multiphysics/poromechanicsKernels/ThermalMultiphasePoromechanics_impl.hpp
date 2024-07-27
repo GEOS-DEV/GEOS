@@ -22,7 +22,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsPackages/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 

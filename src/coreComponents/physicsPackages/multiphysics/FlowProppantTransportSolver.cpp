@@ -21,7 +21,7 @@
 
 #include "mesh/DomainPartition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBase.hpp"
 #include "physicsPackages/fluidFlow/proppantTransport/ProppantTransport.hpp"
 
 namespace geos
