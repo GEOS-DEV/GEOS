@@ -28,7 +28,7 @@
 #include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
-#include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 
 using namespace geos;
 using namespace geos::dataRepository;

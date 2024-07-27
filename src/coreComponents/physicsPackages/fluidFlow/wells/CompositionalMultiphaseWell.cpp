@@ -40,7 +40,7 @@
 #include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWellKernels.hpp"
-#include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/wells/WellControls.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -57,7 +57,7 @@ using namespace compositionalMultiphaseWellKernels;
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
                                                           Group * const parent )
   :
-  WellSolverBase( name, parent ),
+  WellPackageBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_useMass( false ),
@@ -112,7 +112,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
 
 void CompositionalMultiphaseWell::postInputInitialization()
 {
-  WellSolverBase::postInputInitialization();
+  WellPackageBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
@@ -128,7 +128,7 @@ void CompositionalMultiphaseWell::postInputInitialization()
 
 void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 {
-  WellSolverBase::registerDataOnMesh( meshBodies );
+  WellPackageBase::registerDataOnMesh( meshBodies );
 
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
@@ -493,7 +493,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
 
 void CompositionalMultiphaseWell::initializePostSubGroups()
 {
-  WellSolverBase::initializePostSubGroups();
+  WellPackageBase::initializePostSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -520,7 +520,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 
 void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 {
-  WellSolverBase::initializePostInitialConditionsPreSubGroups();
+  WellPackageBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1782,7 +1782,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
                                                      DomainPartition & domain )
 {
-  WellSolverBase::implicitStepSetup( time_n, dt, domain );
+  WellPackageBase::implicitStepSetup( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1835,7 +1835,7 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
                                                         real64 const & dt,
                                                         DomainPartition & domain )
 {
-  WellSolverBase::implicitStepComplete( time_n, dt, domain );
+  WellPackageBase::implicitStepComplete( time_n, dt, domain );
 
   if( getLogLevel() > 0 )
   {

@@ -49,8 +49,8 @@ set( physicsPackages_headers
      fluidFlow/wells/SinglePhaseWellKernels.hpp
      fluidFlow/wells/WellConstants.hpp
      fluidFlow/wells/WellControls.hpp
-     fluidFlow/wells/WellSolverBase.hpp
-     fluidFlow/wells/WellSolverBaseFields.hpp
+     fluidFlow/wells/WellPackageBase.hpp
+     fluidFlow/wells/WellPackageBaseFields.hpp
      PARENT_SCOPE )
 
 # Specify solver sources
@@ -78,7 +78,7 @@ set( physicsPackages_sources
      fluidFlow/wells/SinglePhaseWell.cpp
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
-     fluidFlow/wells/WellSolverBase.cpp 
+     fluidFlow/wells/WellPackageBase.cpp 
      PARENT_SCOPE )
 
 

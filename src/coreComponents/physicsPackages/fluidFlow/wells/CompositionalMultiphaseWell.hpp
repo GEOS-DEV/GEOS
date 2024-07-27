@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
-#include "physicsPackages/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBase.hpp"
 #include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geos
@@ -37,7 +37,7 @@ class MultiFluidBase;
  *
  * A compositional multiphase well solver
  */
-class CompositionalMultiphaseWell : public WellSolverBase
+class CompositionalMultiphaseWell : public WellPackageBase
 {
 public:
 
@@ -269,7 +269,7 @@ public:
 
   arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
 
-  struct viewKeyStruct : WellSolverBase::viewKeyStruct
+  struct viewKeyStruct : WellPackageBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "compositionalWellVars"; }
 

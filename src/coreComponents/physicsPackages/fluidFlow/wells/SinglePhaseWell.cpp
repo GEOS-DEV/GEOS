@@ -31,7 +31,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
-#include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsPackages/fluidFlow/wells/WellControls.hpp"
@@ -45,7 +45,7 @@ using namespace singlePhaseWellKernels;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
-  WellSolverBase( name, parent )
+  WellPackageBase( name, parent )
 {
   m_numDofPerWellElement = 2;
   m_numDofPerResElement = 1;
@@ -53,7 +53,7 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 {
-  WellSolverBase::registerDataOnMesh( meshBodies );
+  WellPackageBase::registerDataOnMesh( meshBodies );
 
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -944,7 +944,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
                                          real64 const & dt,
                                          DomainPartition & domain )
 {
-  WellSolverBase::implicitStepSetup( time, dt, domain );
+  WellPackageBase::implicitStepSetup( time, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -980,7 +980,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
                                             real64 const & dt,
                                             DomainPartition & domain )
 {
-  WellSolverBase::implicitStepComplete( time_n, dt, domain );
+  WellPackageBase::implicitStepComplete( time_n, dt, domain );
 
   if( getLogLevel() > 0 )
   {

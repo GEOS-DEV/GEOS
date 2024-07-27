@@ -29,7 +29,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsPackages/fluidFlow/wells/WellControls.hpp"
-#include "physicsPackages/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBase.hpp"
 
 namespace geos
 {
@@ -65,7 +65,7 @@ addCouplingNumNonzeros( PhysicsPackageBase const * const solver,
  * @param domain the physical domain object
  */
 bool validateWellPerforations( PhysicsPackageBase const * const reservoirSolver,
-                               WellSolverBase const * const wellSolver,
+                               WellPackageBase const * const wellSolver,
                                DomainPartition const & domain );
 
 }

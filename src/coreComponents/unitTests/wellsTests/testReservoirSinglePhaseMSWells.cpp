@@ -29,7 +29,7 @@
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWell.hpp"
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsPackages/fluidFlow/wells/SinglePhaseWellFields.hpp"
-#include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 
 #include "tests/meshDirName.hpp"
 

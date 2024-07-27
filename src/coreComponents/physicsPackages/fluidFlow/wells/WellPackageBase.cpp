@@ -14,10 +14,10 @@
  */
 
 /**
- * @file WellSolverBase.cpp
+ * @file WellPackageBase.cpp
  */
 
-#include "WellSolverBase.hpp"
+#include "WellPackageBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
 #include "mesh/PerforationFields.hpp"
@@ -26,7 +26,7 @@
 #include "physicsPackages/fluidFlow/FlowPackageBase.hpp"
 #include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "physicsPackages/fluidFlow/wells/WellControls.hpp"
-#include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geos
@@ -35,7 +35,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-WellSolverBase::WellSolverBase( string const & name,
+WellPackageBase::WellPackageBase( string const & name,
                                 Group * const parent )
   : PhysicsPackageBase( name, parent ),
   m_numDofPerWellElement( 0 ),
@@ -51,7 +51,7 @@ WellSolverBase::WellSolverBase( string const & name,
     setDescription( "Write rates into a CSV file" );
 }
 
-Group * WellSolverBase::createChild( string const & childKey, string const & childName )
+Group * WellPackageBase::createChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
 
@@ -66,15 +66,15 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
   return rval;
 }
 
-void WellSolverBase::expandObjectCatalogs()
+void WellPackageBase::expandObjectCatalogs()
 {
   createChild( keys::wellControls, keys::wellControls );
 }
 
 
-WellSolverBase::~WellSolverBase() = default;
+WellPackageBase::~WellPackageBase() = default;
 
-void WellSolverBase::postInputInitialization()
+void WellPackageBase::postInputInitialization()
 {
   PhysicsPackageBase::postInputInitialization();
 
@@ -90,7 +90,7 @@ void WellSolverBase::postInputInitialization()
   }
 }
 
-void WellSolverBase::registerDataOnMesh( Group & meshBodies )
+void WellPackageBase::registerDataOnMesh( Group & meshBodies )
 {
   PhysicsPackageBase::registerDataOnMesh( meshBodies );
 
@@ -124,7 +124,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void WellSolverBase::initializePostSubGroups()
+void WellPackageBase::initializePostSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -141,7 +141,7 @@ void WellSolverBase::initializePostSubGroups()
   } );
 }
 
-void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+void WellPackageBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
   PhysicsPackageBase::setConstitutiveNamesCallSuper( subRegion );
   subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
@@ -150,7 +150,7 @@ void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
     setSizedFromParent( 0 );
 }
 
-void WellSolverBase::setupDofs( DomainPartition const & domain,
+void WellPackageBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
   map< std::pair< string, string >, array1d< string > > meshTargets;
@@ -180,7 +180,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Node );
 }
 
-void WellSolverBase::implicitStepSetup( real64 const & time_n,
+void WellPackageBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & domain )
 {
@@ -191,7 +191,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   }
 }
 
-void WellSolverBase::assembleSystem( real64 const time,
+void WellPackageBase::assembleSystem( real64 const time,
                                      real64 const dt,
                                      DomainPartition & domain,
                                      DofManager const & dofManager,
@@ -217,7 +217,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
 }
 
-void WellSolverBase::updateState( DomainPartition & domain )
+void WellPackageBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -233,7 +233,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
   } );
 }
 
-void WellSolverBase::initializePostInitialConditionsPreSubGroups()
+void WellPackageBase::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsPackageBase::initializePostInitialConditionsPreSubGroups();
 
@@ -255,7 +255,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
   precomputeData( domain );
 }
 
-void WellSolverBase::precomputeData( DomainPartition & domain )
+void WellPackageBase::precomputeData( DomainPartition & domain )
 {
   R1Tensor const gravVector = gravityVector();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -294,10 +294,10 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
   } );
 }
 
-WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion )
+WellControls & WellPackageBase::getWellControls( WellElementSubRegion const & subRegion )
 { return this->getGroup< WellControls >( subRegion.getWellControlsName() ); }
 
-WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion ) const
+WellControls const & WellPackageBase::getWellControls( WellElementSubRegion const & subRegion ) const
 { return this->getGroup< WellControls >( subRegion.getWellControlsName() ); }
 
 } // namespace geos

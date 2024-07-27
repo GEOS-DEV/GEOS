@@ -14,11 +14,11 @@
  */
 
 /**
- * @file WellSolverBase.hpp
+ * @file WellPackageBase.hpp
  */
 
-#ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
-#define GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLPACKAGEBASE_HPP_
+#define GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLPACKAGEBASE_HPP_
 
 #include "physicsPackages/PhysicsPackageBase.hpp"
 
@@ -30,12 +30,12 @@ class WellControls;
 class WellElementSubRegion;
 
 /**
- * @class WellSolverBase
+ * @class WellPackageBase
  *
  * Base class for well solvers.
  * Provides some common features
  */
-class WellSolverBase : public PhysicsPackageBase
+class WellPackageBase : public PhysicsPackageBase
 {
 public:
 
@@ -47,26 +47,26 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  WellSolverBase( const string & name,
+  WellPackageBase( const string & name,
                   Group * const parent );
 
   /// default destructor
-  virtual ~WellSolverBase() override;
+  virtual ~WellPackageBase() override;
 
   /// deleted default constructor
-  WellSolverBase() = delete;
+  WellPackageBase() = delete;
 
   /// deleted copy constructor
-  WellSolverBase( WellSolverBase const & ) = delete;
+  WellPackageBase( WellPackageBase const & ) = delete;
 
   /// default move constructor
-  WellSolverBase( WellSolverBase && ) = default;
+  WellPackageBase( WellPackageBase && ) = default;
 
   /// deleted assignment operator
-  WellSolverBase & operator=( WellSolverBase const & ) = delete;
+  WellPackageBase & operator=( WellPackageBase const & ) = delete;
 
   /// deleted move operator
-  WellSolverBase & operator=( WellSolverBase && ) = delete;
+  WellPackageBase & operator=( WellPackageBase && ) = delete;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
@@ -332,4 +332,4 @@ protected:
 
 }
 
-#endif //GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
+#endif //GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLPACKAGEBASE_HPP_

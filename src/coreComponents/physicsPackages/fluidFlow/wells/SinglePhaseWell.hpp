@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_
 
-#include "WellSolverBase.hpp"
+#include "WellPackageBase.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 
@@ -43,7 +43,7 @@ class WellElementSubRegion;
  *
  * A single-phase well solver
  */
-class SinglePhaseWell : public WellSolverBase
+class SinglePhaseWell : public WellPackageBase
 {
 public:
 
@@ -240,7 +240,7 @@ public:
                              arrayView1d< real64 > const & localRhs ) override;
 
 
-  struct viewKeyStruct : WellSolverBase::viewKeyStruct
+  struct viewKeyStruct : WellPackageBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 

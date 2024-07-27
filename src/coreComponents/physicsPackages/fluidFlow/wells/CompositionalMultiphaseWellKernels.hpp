@@ -35,7 +35,7 @@
 #include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 #include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsPackages/fluidFlow/wells/WellControls.hpp"
-#include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 
 namespace geos
 {
