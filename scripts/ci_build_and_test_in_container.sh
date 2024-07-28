@@ -221,6 +221,7 @@ or_die python3 scripts/config-build.py \
                -bt ${CMAKE_BUILD_TYPE} \
                -bp ${GEOS_BUILD_DIR} \
                -ip ${GEOS_DIR} \
+               --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
@@ -244,7 +245,7 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die make -j $NPROC geosx
+  or_die ninja -j $NPROC geosx
 else
   or_die ninja -j $NPROC
   or_die ninja install
