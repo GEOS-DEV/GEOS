@@ -42,7 +42,7 @@ public:
    * @param parent the parent group of this instantiation of CoupledWavePackage
    */
   CoupledWavePackage( const string & name,
-                     Group * const parent )
+                      Group * const parent )
     : PhysicsPackageBase( name, parent )
   {
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )

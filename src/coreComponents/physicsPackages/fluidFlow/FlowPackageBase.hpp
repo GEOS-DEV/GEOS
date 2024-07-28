@@ -45,7 +45,7 @@ public:
  * @param parent the parent group of this instantiation of Group
  */
   FlowPackageBase( const string & name,
-                  Group * const parent );
+                   Group * const parent );
 
 
   /// deleted default constructor

@@ -86,7 +86,7 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
 }
 
 FlowPackageBase::FlowPackageBase( string const & name,
-                                Group * const parent ):
+                                  Group * const parent ):
   PhysicsPackageBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
@@ -458,7 +458,7 @@ void FlowPackageBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void FlowPackageBase::precomputeData( MeshLevel & mesh,
-                                     arrayView1d< string const > const & regionNames )
+                                      arrayView1d< string const > const & regionNames )
 {
   FaceManager & faceManager = mesh.getFaceManager();
   real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
@@ -542,9 +542,9 @@ void FlowPackageBase::updatePorosityAndPermeability( SurfaceElementSubRegion & s
 
 
 void FlowPackageBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                                             std::map< string, localIndex > const & equilNameToEquilId,
-                                                             arrayView1d< real64 > const & maxElevation,
-                                                             arrayView1d< real64 > const & minElevation ) const
+                                                              std::map< string, localIndex > const & equilNameToEquilId,
+                                                              arrayView1d< real64 > const & maxElevation,
+                                                              arrayView1d< real64 > const & minElevation ) const
 {
   array1d< real64 > localMaxElevation( equilNameToEquilId.size() );
   array1d< real64 > localMinElevation( equilNameToEquilId.size() );
@@ -595,10 +595,10 @@ void FlowPackageBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & 
 }
 
 void FlowPackageBase::computeSourceFluxSizeScalingFactor( real64 const & time,
-                                                         real64 const & dt,
-                                                         DomainPartition & domain, // cannot be const...
-                                                         std::map< string, localIndex > const & bcNameToBcId,
-                                                         arrayView1d< globalIndex > const & bcAllSetsSize ) const
+                                                          real64 const & dt,
+                                                          DomainPartition & domain, // cannot be const...
+                                                          std::map< string, localIndex > const & bcNameToBcId,
+                                                          arrayView1d< globalIndex > const & bcAllSetsSize ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -645,8 +645,8 @@ void FlowPackageBase::computeSourceFluxSizeScalingFactor( real64 const & time,
 }
 
 void FlowPackageBase::saveAquiferConvergedState( real64 const & time,
-                                                real64 const & dt,
-                                                DomainPartition & domain )
+                                                 real64 const & dt,
+                                                 DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 

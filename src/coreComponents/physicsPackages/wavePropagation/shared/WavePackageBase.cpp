@@ -38,9 +38,9 @@ namespace geos
 using namespace dataRepository;
 
 WavePackageBase::WavePackageBase( const std::string & name,
-                                Group * const parent ):
+                                  Group * const parent ):
   PhysicsPackageBase( name,
-              parent )
+                      parent )
 {
 
   registerWrapper( viewKeyStruct::sourceCoordinatesString(), &m_sourceCoordinates ).
@@ -387,17 +387,17 @@ void WavePackageBase::postInputInitialization()
 }
 
 real64 WavePackageBase::solverStep( real64 const & time_n,
-                                   real64 const & dt,
-                                   integer const cycleNumber,
-                                   DomainPartition & domain )
+                                    real64 const & dt,
+                                    integer const cycleNumber,
+                                    DomainPartition & domain )
 {
   return explicitStep( time_n, dt, cycleNumber, domain );
 }
 
 real64 WavePackageBase::explicitStep( real64 const & time_n,
-                                     real64 const & dt,
-                                     integer const cycleNumber,
-                                     DomainPartition & domain )
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      DomainPartition & domain )
 {
   if( m_forward )
   {
@@ -453,8 +453,8 @@ localIndex WavePackageBase::getNumNodesPerElem()
 }
 
 void WavePackageBase::computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-                                           localIndex const subRegionSize,
-                                           localIndex const numQuadraturePointsPerElem )
+                                            localIndex const subRegionSize,
+                                            localIndex const numQuadraturePointsPerElem )
 {
   array1d< localIndex > scratch( subRegionSize * numQuadraturePointsPerElem );
   localIndex i = 0;
@@ -479,12 +479,12 @@ void WavePackageBase::incrementIndexSeismoTrace( real64 const time_n )
 }
 
 void WavePackageBase::computeAllSeismoTraces( real64 const time_n,
-                                             real64 const dt,
-                                             arrayView1d< real32 const > const var_np1,
-                                             arrayView1d< real32 const > const var_n,
-                                             arrayView2d< real32 > varAtReceivers,
-                                             arrayView1d< real32 > coeffs,
-                                             bool add )
+                                              real64 const dt,
+                                              arrayView1d< real32 const > const var_np1,
+                                              arrayView1d< real32 const > const var_n,
+                                              arrayView2d< real32 > varAtReceivers,
+                                              arrayView1d< real32 > coeffs,
+                                              bool add )
 {
   /*
    * In forward case we compute seismo if time_n + dt is the first time
@@ -509,16 +509,16 @@ void WavePackageBase::computeAllSeismoTraces( real64 const time_n,
     if( dir * timeSeismo > dir * (time_n + epsilonLoc) )
       break;
     WavePackageUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
-                                         m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );
+                                          m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );
   }
 }
 
 void WavePackageBase::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
-                                                       real64 const time_n,
-                                                       real64 const dt,
-                                                       arrayView2d< real32 const > const var_np1,
-                                                       arrayView2d< real32 const > const var_n,
-                                                       arrayView2d< real32 > varAtReceivers )
+                                                        real64 const time_n,
+                                                        real64 const dt,
+                                                        arrayView2d< real32 const > const var_np1,
+                                                        arrayView2d< real32 const > const var_n,
+                                                        arrayView2d< real32 > varAtReceivers )
 {
   if( m_nsamplesSeismoTrace == 0 )
     return;
@@ -529,7 +529,7 @@ void WavePackageBase::compute2dVariableAllSeismoTraces( localIndex const regionI
     if( dir * timeSeismo > dir * (time_n + epsilonLoc))
       break;
     WavePackageUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_receiverElem,
-                                                   m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
+                                                    m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
   }
 }
 

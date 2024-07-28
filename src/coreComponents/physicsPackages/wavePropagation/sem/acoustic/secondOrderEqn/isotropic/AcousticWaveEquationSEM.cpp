@@ -43,7 +43,7 @@ using namespace fields;
 AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
                                                   Group * const parent ):
   WavePackageBase( name,
-                  parent )
+                   parent )
 {
 
   registerWrapper( viewKeyStruct::pressureNp1AtReceiversString(), &m_pressureNp1AtReceivers ).
@@ -1123,7 +1123,7 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
 
     WavePackageUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                       m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
+                                        m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
   } );
 }
 

@@ -43,7 +43,7 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
                                                 Group * const parent ):
 
   WavePackageBase( name,
-                  parent )
+                   parent )
 {
   registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstantsx ).
     setInputFlag( InputFlags::FALSE ).
@@ -836,7 +836,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
       computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, uYReceivers );
       computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, uZReceivers );
       WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                               m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers, uYReceivers, uZReceivers );
+                                                m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers, uYReceivers, uZReceivers );
     }
     else
     {
@@ -851,7 +851,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                              MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                              MPI_COMM_GEOSX );
       WavePackageUtils::writeSeismoTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ),
-                                         m_receiverIsLocal, m_nsamplesSeismoTrace, dasReceivers );
+                                          m_receiverIsLocal, m_nsamplesSeismoTrace, dasReceivers );
     }
   } );
 }

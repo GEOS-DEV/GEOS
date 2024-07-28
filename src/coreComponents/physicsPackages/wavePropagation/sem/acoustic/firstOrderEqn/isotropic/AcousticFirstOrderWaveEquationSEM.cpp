@@ -40,7 +40,7 @@ using namespace fields;
 AcousticFirstOrderWaveEquationSEM::AcousticFirstOrderWaveEquationSEM( const std::string & name,
                                                                       Group * const parent ):
   WavePackageBase( name,
-                  parent )
+                   parent )
 {
 
   registerWrapper( viewKeyStruct::pressureNp1AtReceiversString(), &m_pressureNp1AtReceivers ).
@@ -553,13 +553,13 @@ void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer co
       compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, velocity_z, velocity_z, uzReceivers );
 
       WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                               m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
+                                                m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
 
     } );
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_np1, pReceivers );
     WavePackageUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                       m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
+                                        m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
 
   } );
 }

@@ -31,7 +31,7 @@ class PhysicsPackageManager : public dataRepository::Group
 {
 public:
   PhysicsPackageManager( string const & name,
-                        Group * const parent );
+                         Group * const parent );
 
   virtual ~PhysicsPackageManager() override;
 

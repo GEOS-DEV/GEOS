@@ -48,7 +48,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   WellPackageBase( const string & name,
-                  Group * const parent );
+                   Group * const parent );
 
   /// default destructor
   virtual ~WellPackageBase() override;

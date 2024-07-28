@@ -185,8 +185,8 @@ public:
     }
 
     PhysicsPackageBase::forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                          MeshLevel & mesh,
+                                                                          arrayView1d< string const > const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -384,8 +384,8 @@ protected:
   {
     averageMeanTotalStressIncrement.resize( 0 );
     PhysicsPackageBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                             MeshLevel & mesh,
-                                                                             arrayView1d< string const > const & regionNames ) {
+                                                                                     MeshLevel & mesh,
+                                                                                     arrayView1d< string const > const & regionNames ) {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)
@@ -407,8 +407,8 @@ protected:
   {
     integer i = 0;
     PhysicsPackageBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                             MeshLevel & mesh,
-                                                                             arrayView1d< string const > const & regionNames ) {
+                                                                                     MeshLevel & mesh,
+                                                                                     arrayView1d< string const > const & regionNames ) {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)

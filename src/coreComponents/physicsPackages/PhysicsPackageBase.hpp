@@ -39,7 +39,7 @@ class PhysicsPackageBase : public ExecutableGroup
 public:
 
   explicit PhysicsPackageBase( string const & name,
-                       Group * const parent );
+                               Group * const parent );
 
   PhysicsPackageBase( PhysicsPackageBase && ) = default;
 

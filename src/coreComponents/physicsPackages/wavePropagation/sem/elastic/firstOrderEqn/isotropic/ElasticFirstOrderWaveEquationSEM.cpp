@@ -40,7 +40,7 @@ ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::s
                                                                     Group * const parent ):
 
   WavePackageBase( name,
-                  parent )
+                   parent )
 {
 
   registerWrapper( viewKeyStruct::displacementxNp1AtReceiversString(), &m_displacementxNp1AtReceivers ).
@@ -682,9 +682,9 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
       compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressyz, stressyz, sigmayzReceivers );
 
       WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                               m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxxReceivers, sigmayyReceivers, sigmazzReceivers );
+                                                m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxxReceivers, sigmayyReceivers, sigmazzReceivers );
       WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                               m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxyReceivers, sigmaxzReceivers, sigmayzReceivers );
+                                                m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxyReceivers, sigmaxzReceivers, sigmayzReceivers );
 
     } );
     arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticfields::Displacementx_np1 >();
@@ -701,7 +701,7 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
     computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_np1, uzReceivers );
 
     WavePackageUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                             m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
+                                              m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
   } );
 }
 

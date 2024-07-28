@@ -55,7 +55,7 @@ public:
   using wsCoordType = WavePackageUtils::wsCoordType;
 
   WavePackageBase( const std::string & name,
-                  Group * const parent );
+                   Group * const parent );
 
   virtual ~WavePackageBase() override;
 

@@ -101,20 +101,20 @@ struct PreComputeSourcesAndReceivers
 
           bool const sourceFound =
             WavePackageUtils::locateSourceElement( numFacesPerElem,
-                                                  center,
-                                                  faceNormal,
-                                                  faceCenter,
-                                                  elemsToFaces[k],
-                                                  coords );
+                                                   center,
+                                                   faceNormal,
+                                                   faceCenter,
+                                                   elemsToFaces[k],
+                                                   coords );
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
 
 
             WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
-                                                                              coordsOnRefElem );
+                                                                               elemsToNodes[k],
+                                                                               nodeCoords,
+                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;
             real64 Ntest[numNodesPerElem];
@@ -149,18 +149,18 @@ struct PreComputeSourcesAndReceivers
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
             WavePackageUtils::locateSourceElement( numFacesPerElem,
-                                                  center,
-                                                  faceNormal,
-                                                  faceCenter,
-                                                  elemsToFaces[k],
-                                                  coords );
+                                                   center,
+                                                   faceNormal,
+                                                   faceCenter,
+                                                   elemsToFaces[k],
+                                                   coords );
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
-                                                                              coordsOnRefElem );
+                                                                               elemsToNodes[k],
+                                                                               nodeCoords,
+                                                                               coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
 
@@ -262,20 +262,20 @@ struct PreComputeSourcesAndReceivers
 
           bool const sourceFound =
             WavePackageUtils::locateSourceElement( numFacesPerElem,
-                                                  center,
-                                                  faceNormal,
-                                                  faceCenter,
-                                                  elemsToFaces[k],
-                                                  coords );
+                                                   center,
+                                                   faceNormal,
+                                                   faceCenter,
+                                                   elemsToFaces[k],
+                                                   coords );
 
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
 
             WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
-                                                                              coordsOnRefElem );
+                                                                               elemsToNodes[k],
+                                                                               nodeCoords,
+                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
@@ -312,18 +312,18 @@ struct PreComputeSourcesAndReceivers
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
             WavePackageUtils::locateSourceElement( numFacesPerElem,
-                                                  center,
-                                                  faceNormal,
-                                                  faceCenter,
-                                                  elemsToFaces[k],
-                                                  coords );
+                                                   center,
+                                                   faceNormal,
+                                                   faceCenter,
+                                                   elemsToFaces[k],
+                                                   coords );
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
-                                                                              coordsOnRefElem );
+                                                                               elemsToNodes[k],
+                                                                               nodeCoords,
+                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
             receiverElem[ircv] = k;
             receiverRegion[ircv] = regionIndex;
@@ -451,11 +451,11 @@ struct PreComputeSourcesAndReceivers
 
           bool const sourceFound =
             WavePackageUtils::locateSourceElement( numFacesPerElem,
-                                                  center,
-                                                  faceNormal,
-                                                  faceCenter,
-                                                  elemsToFaces[k],
-                                                  coords );
+                                                   center,
+                                                   faceNormal,
+                                                   faceCenter,
+                                                   elemsToFaces[k],
+                                                   coords );
 
           if( sourceFound )
           {
@@ -463,9 +463,9 @@ struct PreComputeSourcesAndReceivers
 
 
             WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
-                                                                              coordsOnRefElem );
+                                                                               elemsToNodes[k],
+                                                                               nodeCoords,
+                                                                               coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
 
             real64 N[numNodesPerElem];
@@ -557,11 +557,11 @@ struct PreComputeSourcesAndReceivers
                                      receiverCenter[ 2 ] + receiverVector[ 2 ] * receiverLength * samplePointLocations[ iSample ] };
           bool const sampleFound =
             WavePackageUtils::locateSourceElement( numFacesPerElem,
-                                                  center,
-                                                  faceNormal,
-                                                  faceCenter,
-                                                  elemsToFaces[k],
-                                                  coords );
+                                                   center,
+                                                   faceNormal,
+                                                   faceCenter,
+                                                   elemsToFaces[k],
+                                                   coords );
           if( sampleFound && elemGhostRank[k] < 0 )
           {
             real64 coordsOnRefElem[3]{};
@@ -576,9 +576,9 @@ struct PreComputeSourcesAndReceivers
             }
 
             WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
-                                                                              coordsOnRefElem );
+                                                                               elemsToNodes[k],
+                                                                               nodeCoords,
+                                                                               coordsOnRefElem );
             real64 N[numNodesPerElem];
             real64 gradN[numNodesPerElem][3];
             FE_TYPE::calcN( coordsOnRefElem, N );
@@ -604,11 +604,11 @@ struct PreComputeSourcesAndReceivers
         real64 const coords[3] = { receiverCenter[ 0 ], receiverCenter[ 1 ], receiverCenter[ 2 ] };
         bool const receiverFound =
           WavePackageUtils::locateSourceElement( numFacesPerElem,
-                                                center,
-                                                faceNormal,
-                                                faceCenter,
-                                                elemsToFaces[k],
-                                                coords );
+                                                 center,
+                                                 faceNormal,
+                                                 faceCenter,
+                                                 elemsToFaces[k],
+                                                 coords );
         if( receiverFound && elemGhostRank[k] < 0 )
         {
           receiverIsLocal[ ircv ] = 1;

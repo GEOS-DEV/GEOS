@@ -40,7 +40,7 @@ using namespace constitutive;
 using namespace fields::contact;
 
 ContactPackageBase::ContactPackageBase( const string & name,
-                                      Group * const parent ):
+                                        Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
   this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
@@ -122,10 +122,10 @@ void ContactPackageBase::setFractureRegions( dataRepository::Group const & meshB
 }
 
 void ContactPackageBase::computeFractureStateStatistics( MeshLevel const & mesh,
-                                                        globalIndex & numStick,
-                                                        globalIndex & numNewSlip,
-                                                        globalIndex & numSlip,
-                                                        globalIndex & numOpen ) const
+                                                         globalIndex & numStick,
+                                                         globalIndex & numNewSlip,
+                                                         globalIndex & numSlip,
+                                                         globalIndex & numOpen ) const
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -210,9 +210,9 @@ void ContactPackageBase::outputConfigurationStatistics( DomainPartition const & 
 }
 
 real64 ContactPackageBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                        real64 const & dt,
-                                        const int GEOS_UNUSED_PARAM( cycleNumber ),
-                                        DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+                                         real64 const & dt,
+                                         const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_MARK_FUNCTION;
   GEOS_ERROR( getDataContext() << ": ExplicitStep non available for contact solvers." );

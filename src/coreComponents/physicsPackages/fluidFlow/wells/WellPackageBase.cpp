@@ -36,7 +36,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 WellPackageBase::WellPackageBase( string const & name,
-                                Group * const parent )
+                                  Group * const parent )
   : PhysicsPackageBase( name, parent ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
@@ -151,7 +151,7 @@ void WellPackageBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subR
 }
 
 void WellPackageBase::setupDofs( DomainPartition const & domain,
-                                DofManager & dofManager ) const
+                                 DofManager & dofManager ) const
 {
   map< std::pair< string, string >, array1d< string > > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
@@ -181,8 +181,8 @@ void WellPackageBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellPackageBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOS_UNUSED_PARAM( dt ),
-                                        DomainPartition & domain )
+                                         real64 const & GEOS_UNUSED_PARAM( dt ),
+                                         DomainPartition & domain )
 {
   // Initialize the primary and secondary variables for the first time step
   if( time_n <= 0.0 )
@@ -192,11 +192,11 @@ void WellPackageBase::implicitStepSetup( real64 const & time_n,
 }
 
 void WellPackageBase::assembleSystem( real64 const time,
-                                     real64 const dt,
-                                     DomainPartition & domain,
-                                     DofManager const & dofManager,
-                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                     arrayView1d< real64 > const & localRhs )
+                                      real64 const dt,
+                                      DomainPartition & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs )
 {
   // assemble the accumulation term in the mass balance equations
   assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );

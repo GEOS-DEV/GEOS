@@ -31,7 +31,7 @@ class ContactPackageBase : public SolidMechanicsLagrangianFEM
 {
 public:
   ContactPackageBase( const string & name,
-                     Group * const parent );
+                      Group * const parent );
 
   ~ContactPackageBase() override = default;
 
