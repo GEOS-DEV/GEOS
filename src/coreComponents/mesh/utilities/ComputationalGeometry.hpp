@@ -708,7 +708,7 @@ bool computeWindingNumber( localIndex element,
 {
   arraySlice1d< localIndex const > const & faceIndices = elementsToFaces[ element ];
   localIndex const numFaces = faceIndices.size();
-  int omega = -1;
+  int omega = 0;
   for( localIndex kf = 0; kf < numFaces; ++kf )
   {
     // triangulate the face. The triangulation must be done in a consistent way across ranks.
