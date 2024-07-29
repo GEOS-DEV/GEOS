@@ -64,7 +64,7 @@
     <CellElementRegion
       name="rock"
       cellBlocks="{ rock }"
-      materialList="{ fluid, rock, rockThermalCond}"/>
+      materialList="{ fluid, rock, rockThermalCond }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -144,9 +144,7 @@
     <!-- SPHINX_ThermalProperties -->
     <SinglePhaseThermalConductivity
       name="casingThermalCond"
-      defaultThermalConductivityComponents="{ 15, 15, 15 }"
-      thermalConductivityGradientComponents="{ 0, 0, 0 }"
-      referenceTemperature="0"/>
+      defaultThermalConductivityComponents="{ 15, 15, 15 }"/>
 
     <SinglePhaseThermalConductivity
       name="cementThermalCond"

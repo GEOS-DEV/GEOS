@@ -78,7 +78,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="faceElementSubRegion"
-      materialList="{ fluid, fractureFilling, fractureContact, contactThermalCond}"
+      materialList="{ fluid, fractureFilling, fractureContact, contactThermalCond }"
       defaultAperture="5.0e-4"/>
     <!-- SPHINX_SurfaceElementRegionEnd -->  
 
@@ -215,9 +215,7 @@
     <!-- SPHINX_ContactThermalProperties -->
     <SinglePhaseThermalConductivity
       name="contactThermalCond"
-      defaultThermalConductivityComponents="{ 1.0, 1.0, 1.0 }"
-      thermalConductivityGradientComponents="{ 0, 0, 0 }"
-      referenceTemperature="0"/>
+      defaultThermalConductivityComponents="{ 1.0, 1.0, 1.0 }"/>
     <!-- SPHINX_ContactThermalPropertiesEnd -->
 
     <!-- SPHINX_FluidProperties -->
