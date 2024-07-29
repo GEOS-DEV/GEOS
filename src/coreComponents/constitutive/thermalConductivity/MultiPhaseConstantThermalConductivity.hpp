@@ -53,14 +53,6 @@ public:
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   { GEOS_UNUSED_VAR( k, q, laggedPorosity, phaseVolFraction ); }
 
-  GEOS_HOST_DEVICE
-  virtual void updateFromTemperature( localIndex const k,
-                                      localIndex const q,
-                                      real64 const & temperature ) const
-  {
-    // TODO to modify when implementing temperature dependent MultiPhase Thermal Conducitivity
-    GEOS_UNUSED_VAR( k, q, temperature );
-  }
 };
 
 /**

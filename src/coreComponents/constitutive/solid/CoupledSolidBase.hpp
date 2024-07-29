@@ -26,7 +26,6 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
-#include "constitutive/thermalConductivity/SinglePhaseThermalConductivity.hpp"
 
 namespace geos
 {
@@ -54,7 +53,6 @@ public:
     static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
     static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
     static constexpr char const * solidInternalEnergyModelNameString() { return "solidInternalEnergyModelName"; }
-    static constexpr char const * thermalConductivityModelNameString() { return "thermalConductivityModelName"; }
   };
 
   virtual std::vector< string > getSubRelationNames() const override final
@@ -66,11 +64,6 @@ public:
     if( !m_solidInternalEnergyModelName.empty() )
     {
       subRelationNames.push_back( m_solidInternalEnergyModelName );
-    }
-
-    if( !m_thermalConductivityModelName.empty() )
-    {
-      subRelationNames.push_back( m_thermalConductivityModelName );
     }
 
     return subRelationNames;
@@ -219,7 +212,6 @@ public:
   virtual void saveConvergedState() const override final
   {
     getBasePorosityModel().saveConvergedState();
-
     if( !m_solidInternalEnergyModelName.empty() )
     {
       /// If the name is provided it has to be saved as well.
@@ -269,9 +261,6 @@ protected:
 
   /// the name of the solid internal energy model
   string m_solidInternalEnergyModelName;
-
-  /// the name of the single phase thermal conductivity model
-  string m_thermalConductivityModelName;
 
 private:
 

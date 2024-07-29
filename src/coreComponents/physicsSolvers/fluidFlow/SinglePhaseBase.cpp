@@ -341,6 +341,9 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   SinglePhaseThermalConductivityBase const & conductivityMaterial =
     getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
   conductivityMaterial.update( porosity );
+
+  arrayView1d< real64 const > const & temp = subRegion.template getField< fields::flow::temperature >();
+  conductivityMaterial.updateFromTemperature( temp );
 }
 
 real64 SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const

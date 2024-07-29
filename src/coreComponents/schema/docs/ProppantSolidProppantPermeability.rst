@@ -8,7 +8,6 @@ permeabilityModelName        groupNameRef required Name of the permeability mode
 porosityModelName            groupNameRef required Name of the porosity model.                 
 solidInternalEnergyModelName groupNameRef          Name of the solid internal energy model.    
 solidModelName               groupNameRef required Name of the solid model.                    
-thermalConductivityModelName groupNameRef          Name of the thermal conductivity model.     
 ============================ ============ ======== =========================================== 
 
 

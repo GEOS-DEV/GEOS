@@ -40,15 +40,9 @@ public:
    * the subregion
    */
   SinglePhaseThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
-                                        arrayView3d< real64 > const & dEffectiveConductivity_dT,
-                                        R1Tensor const defaultThermalConductivityComponents,
-                                        R1Tensor const thermalConductivityGradientComponents,
-                                        real64 const referenceTemperature )
+                                        arrayView3d< real64 > const & dEffectiveConductivity_dT )
     : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity,
-                                                dEffectiveConductivity_dT ),
-    m_defaultThermalConductivityComponents( defaultThermalConductivityComponents ),
-    m_thermalConductivityGradientComponents( thermalConductivityGradientComponents ),
-    m_referenceTemperature( referenceTemperature )
+                                                dEffectiveConductivity_dT )
   {}
 
   GEOS_HOST_DEVICE
@@ -56,41 +50,6 @@ public:
                        localIndex const q,
                        real64 const & laggedPorosity ) const override
   { GEOS_UNUSED_VAR( k, q, laggedPorosity ); }
-
-  GEOS_HOST_DEVICE
-  virtual void updateFromTemperature( localIndex const k,
-                                      localIndex const q,
-                                      real64 const & temperature ) const
-  {
-    real64 const deltaTemperature = temperature - m_referenceTemperature;
-
-    m_effectiveConductivity[k][q][0] = m_defaultThermalConductivityComponents[0] + m_thermalConductivityGradientComponents[0] * deltaTemperature;
-    m_effectiveConductivity[k][q][1] = m_defaultThermalConductivityComponents[1] + m_thermalConductivityGradientComponents[1] * deltaTemperature;
-    m_effectiveConductivity[k][q][2] = m_defaultThermalConductivityComponents[2] + m_thermalConductivityGradientComponents[2] * deltaTemperature;
-
-    for( localIndex i=0; i<=2; i++ )
-    {
-      if( m_effectiveConductivity[k][q][i] <1e-2 )
-      {
-        m_effectiveConductivity[k][q][i] = 1e-2; // W/m/K To avoid negative conductivity
-      }
-    }
-
-    m_dEffectiveConductivity_dT[k][q][0] = m_thermalConductivityGradientComponents[0];
-    m_dEffectiveConductivity_dT[k][q][1] = m_thermalConductivityGradientComponents[1];
-    m_dEffectiveConductivity_dT[k][q][2] = m_thermalConductivityGradientComponents[2];
-  }
-
-private:
-
-  /// Default thermal conductivity components in the subRegion
-  R1Tensor m_defaultThermalConductivityComponents;
-
-  /// Thermal conductivity gradient components in the subRegion
-  R1Tensor m_thermalConductivityGradientComponents;
-
-  /// Reference temperature
-  real64 m_referenceTemperature;
 
 };
 
@@ -118,6 +77,11 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const override final;
+
+  virtual void update( arrayView2d< real64 const > const & porosity ) const override final;
+
+  virtual void updateFromTemperature( arrayView1d< real64 const > const & temperature ) const override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SinglePhaseThermalConductivityUpdate;
@@ -129,10 +93,7 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_effectiveConductivity,
-                          m_dEffectiveConductivity_dT,
-                          m_defaultThermalConductivityComponents,
-                          m_thermalConductivityGradientComponents,
-                          m_referenceTemperature );
+                          m_dEffectiveConductivity_dT );
   }
 
   struct viewKeyStruct : public SinglePhaseThermalConductivityBase::viewKeyStruct

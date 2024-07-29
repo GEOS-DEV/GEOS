@@ -25,6 +25,7 @@
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivity.hpp"
 
 namespace geos
 {
@@ -36,10 +37,9 @@ namespace constitutive
  *
  *
  * @tparam SOLID_TYPE type of the porosity model
- * @tparam THERMAL_COND_TYPE type of the thermal conductivity model
+ * @tparam SinglePhaseThermalConductivity type of the thermal conductivity model
  */
-template< typename SOLID_TYPE,
-          typename THERMAL_COND_TYPE >
+template< typename SOLID_TYPE >
 class ThermoPoroMechanicsUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >
 {
 public:
@@ -52,7 +52,7 @@ public:
   ThermoPoroMechanicsUpdates( SOLID_TYPE const & solidModel,
                               BiotPorosity const & porosityModel,
                               ConstantPermeability const & permModel,
-                              THERMAL_COND_TYPE const & condModel ):
+                              SinglePhaseThermalConductivity const & condModel ):
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel ),
     m_condUpdate( condModel.createKernelWrapper() )
   {}
@@ -74,7 +74,7 @@ public:
                                         temperature, temperature_k, temperature_n );
 
     // update thermal conductivity of the solid phase w.r.t. temperature change
-    m_condUpdate.updateFromTemperature( k, q, temperature );
+    //m_condUpdate.updateFromTemperature( k, q, temperature );
   }
 
   GEOS_HOST_DEVICE
@@ -321,7 +321,7 @@ private:
   }
 
 protected:
-  typename THERMAL_COND_TYPE::KernelWrapper const m_condUpdate;
+  SinglePhaseThermalConductivity::KernelWrapper const m_condUpdate;
 };
 
 /**
@@ -335,16 +335,15 @@ class ThermoPoroMechanicsBase
  * It is used as an interface to access all constitutive models relative to the properties of a porous material.
  *
  * @tparam SOLID_TYPE type of solid model
- * @tparam THERMAL_COND_TYPE type of the thermal conductivity model
+ * @tparam SinglePhaseThermalConductivity type of the thermal conductivity model
  */
-template< typename SOLID_TYPE,
-          typename THERMAL_COND_TYPE >
+template< typename SOLID_TYPE >
 class ThermoPoroMechanics : public CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >
 {
 public:
 
   /// Alias for ElasticIsotropicUpdates
-  using KernelWrapper = ThermoPoroMechanicsUpdates< SOLID_TYPE, THERMAL_COND_TYPE >;
+  using KernelWrapper = ThermoPoroMechanicsUpdates< SOLID_TYPE >;
 
   /**
    * @brief Constructor
@@ -430,9 +429,9 @@ private:
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_thermalConductivityModelName;
 
 protected:
-  THERMAL_COND_TYPE const & getCondModel() const
+  SinglePhaseThermalConductivity const & getCondModel() const
   {
-    return this->getParent().template getGroup< THERMAL_COND_TYPE >( m_thermalConductivityModelName );
+    return this->getParent().template getGroup< SinglePhaseThermalConductivity >( m_thermalConductivityModelName );
   }
 };
 

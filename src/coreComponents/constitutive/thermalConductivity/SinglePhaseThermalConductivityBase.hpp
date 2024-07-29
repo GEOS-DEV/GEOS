@@ -128,6 +128,13 @@ public:
   { GEOS_UNUSED_VAR( porosity ); }
 
   /**
+   * @brief Update the thermal conductivity state
+   * @param[in] temperature the  temperature field
+   */
+  virtual void updateFromTemperature( arrayView1d< real64 const > const & temperature ) const
+  { GEOS_UNUSED_VAR( temperature ); }
+
+  /**
    * @brief Getter for the effective conductivities in the subRegion
    * @return an arrayView of effective conductivities
    */

@@ -128,7 +128,6 @@ set( constitutive_headers
      relativePermeability/layouts.hpp
      relativePermeability/RelativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
-     solid/ThermalCompressibleSolid.hpp
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
@@ -148,7 +147,6 @@ set( constitutive_headers
      solid/InvariantDecompositions.hpp
      solid/PerfectlyPlastic.hpp     
      solid/PorousSolid.hpp
-     solid/ThermoPoroMechanics.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidUtilities.hpp
@@ -272,7 +270,6 @@ set( constitutive_sources
      relativePermeability/RelpermDriverTableRelativeRunTest.cpp
      relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      solid/CompressibleSolid.cpp
-     solid/ThermalCompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
      solid/ProppantSolid.cpp
      solid/DuvautLionsSolid.cpp
@@ -289,7 +286,6 @@ set( constitutive_sources
      solid/ElasticOrthotropic.cpp
      solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp
-     solid/ThermoPoroMechanics.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
      solid/CeramicDamage.cpp

@@ -40,37 +40,34 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-template< typename SOLID_TYPE,
-          typename THERMAL_COND_TYPE >
-ThermoPoroMechanics< SOLID_TYPE, THERMAL_COND_TYPE >::ThermoPoroMechanics( string const & name, Group * const parent ):
+template< typename SOLID_TYPE >
+ThermoPoroMechanics< SOLID_TYPE >::ThermoPoroMechanics( string const & name, Group * const parent ):
   CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >( name, parent )
 {}
 
-template< typename SOLID_TYPE,
-          typename THERMAL_COND_TYPE >
-ThermoPoroMechanics< SOLID_TYPE, THERMAL_COND_TYPE >::~ThermoPoroMechanics() = default;
+template< typename SOLID_TYPE >
+ThermoPoroMechanics< SOLID_TYPE >::~ThermoPoroMechanics() = default;
 
-template< typename SOLID_TYPE,
-          typename THERMAL_COND_TYPE >
-void ThermoPoroMechanics< SOLID_TYPE, THERMAL_COND_TYPE >::initializeState() const
+template< typename SOLID_TYPE >
+void ThermoPoroMechanics< SOLID_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::initializeState();
 }
 
 // Register all ThermoPoroMechanics model types.
-typedef ThermoPoroMechanics< ElasticIsotropic, SinglePhaseThermalConductivity > ThermoPoroElasticIsotropic;
-typedef ThermoPoroMechanics< ElasticTransverseIsotropic, SinglePhaseThermalConductivity > ThermoPoroElasticTransverseIsotropic;
-typedef ThermoPoroMechanics< ElasticOrthotropic, SinglePhaseThermalConductivity > ThermoPoroElasticOrthotropic;
-typedef ThermoPoroMechanics< DelftEgg, SinglePhaseThermalConductivity > ThermoPoroDelftEgg;
-typedef ThermoPoroMechanics< DruckerPrager, SinglePhaseThermalConductivity > ThermoPoroDruckerPrager;
-typedef ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity > ThermoPoroDruckerPragerExtended;
-typedef ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > ThermoPoroDamageElasticIsotropic;
-typedef ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity > ThermoPoroDamageSpectralElasticIsotropic;
-typedef ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity > ThermoPoroDamageVolDevElasticIsotropic;
-typedef ThermoPoroMechanics< DuvautLionsSolid< DruckerPrager >, SinglePhaseThermalConductivity > ThermoPoroViscoDruckerPrager;
-typedef ThermoPoroMechanics< DuvautLionsSolid< DruckerPragerExtended >, SinglePhaseThermalConductivity > ThermoPoroViscoDruckerPragerExtended;
-typedef ThermoPoroMechanics< DuvautLionsSolid< ModifiedCamClay >, SinglePhaseThermalConductivity > ThermoPoroViscoModifiedCamClay;
-typedef ThermoPoroMechanics< ModifiedCamClay, SinglePhaseThermalConductivity > ThermoPoroModifiedCamClay;
+typedef ThermoPoroMechanics< ElasticIsotropic > ThermoPoroElasticIsotropic;
+typedef ThermoPoroMechanics< ElasticTransverseIsotropic > ThermoPoroElasticTransverseIsotropic;
+typedef ThermoPoroMechanics< ElasticOrthotropic > ThermoPoroElasticOrthotropic;
+typedef ThermoPoroMechanics< DelftEgg > ThermoPoroDelftEgg;
+typedef ThermoPoroMechanics< DruckerPrager > ThermoPoroDruckerPrager;
+typedef ThermoPoroMechanics< DruckerPragerExtended > ThermoPoroDruckerPragerExtended;
+typedef ThermoPoroMechanics< Damage< ElasticIsotropic > > ThermoPoroDamageElasticIsotropic;
+typedef ThermoPoroMechanics< DamageSpectral< ElasticIsotropic > > ThermoPoroDamageSpectralElasticIsotropic;
+typedef ThermoPoroMechanics< DamageVolDev< ElasticIsotropic > > ThermoPoroDamageVolDevElasticIsotropic;
+typedef ThermoPoroMechanics< DuvautLionsSolid< DruckerPrager > > ThermoPoroViscoDruckerPrager;
+typedef ThermoPoroMechanics< DuvautLionsSolid< DruckerPragerExtended > > ThermoPoroViscoDruckerPragerExtended;
+typedef ThermoPoroMechanics< DuvautLionsSolid< ModifiedCamClay > > ThermoPoroViscoModifiedCamClay;
+typedef ThermoPoroMechanics< ModifiedCamClay > ThermoPoroModifiedCamClay;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ThermoPoroElasticIsotropic, string const &, Group * const )

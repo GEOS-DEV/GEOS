@@ -845,86 +845,6 @@
 					<xsd:selector xpath="ThermalCompressibleSinglePhaseFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermalCompressibleSolidCarmanKozenyPermeabilityUniqueName">
-					<xsd:selector xpath="ThermalCompressibleSolidCarmanKozenyPermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermalCompressibleSolidConstantPermeabilityUniqueName">
-					<xsd:selector xpath="ThermalCompressibleSolidConstantPermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermalCompressibleSolidExponentialDecayPermeabilityUniqueName">
-					<xsd:selector xpath="ThermalCompressibleSolidExponentialDecayPermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermalCompressibleSolidParallelPlatesPermeabilityUniqueName">
-					<xsd:selector xpath="ThermalCompressibleSolidParallelPlatesPermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermalCompressibleSolidPressurePermeabilityUniqueName">
-					<xsd:selector xpath="ThermalCompressibleSolidPressurePermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermalCompressibleSolidSlipDependentPermeabilityUniqueName">
-					<xsd:selector xpath="ThermalCompressibleSolidSlipDependentPermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermalCompressibleSolidWillisRichardsPermeabilityUniqueName">
-					<xsd:selector xpath="ThermalCompressibleSolidWillisRichardsPermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroDamageElasticIsotropicUniqueName">
-					<xsd:selector xpath="ThermoPoroDamageElasticIsotropic" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroDamageSpectralElasticIsotropicUniqueName">
-					<xsd:selector xpath="ThermoPoroDamageSpectralElasticIsotropic" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroDamageVolDevElasticIsotropicUniqueName">
-					<xsd:selector xpath="ThermoPoroDamageVolDevElasticIsotropic" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroDelftEggUniqueName">
-					<xsd:selector xpath="ThermoPoroDelftEgg" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroDruckerPragerUniqueName">
-					<xsd:selector xpath="ThermoPoroDruckerPrager" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroElasticIsotropicUniqueName">
-					<xsd:selector xpath="ThermoPoroElasticIsotropic" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroElasticOrthotropicUniqueName">
-					<xsd:selector xpath="ThermoPoroElasticOrthotropic" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroElasticTransverseIsotropicUniqueName">
-					<xsd:selector xpath="ThermoPoroElasticTransverseIsotropic" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroExtendedDruckerPragerUniqueName">
-					<xsd:selector xpath="ThermoPoroExtendedDruckerPrager" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroModifiedCamClayUniqueName">
-					<xsd:selector xpath="ThermoPoroModifiedCamClay" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroViscoDruckerPragerUniqueName">
-					<xsd:selector xpath="ThermoPoroViscoDruckerPrager" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroViscoExtendedDruckerPragerUniqueName">
-					<xsd:selector xpath="ThermoPoroViscoExtendedDruckerPrager" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveThermoPoroViscoModifiedCamClayUniqueName">
-					<xsd:selector xpath="ThermoPoroViscoModifiedCamClay" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="domainConstitutiveVanGenuchtenBakerRelativePermeabilityUniqueName">
 					<xsd:selector xpath="VanGenuchtenBakerRelativePermeability" />
 					<xsd:field xpath="@name" />
@@ -4282,26 +4202,6 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
-			<xsd:element name="ThermalCompressibleSolidCarmanKozenyPermeability" type="ThermalCompressibleSolidCarmanKozenyPermeabilityType" />
-			<xsd:element name="ThermalCompressibleSolidConstantPermeability" type="ThermalCompressibleSolidConstantPermeabilityType" />
-			<xsd:element name="ThermalCompressibleSolidExponentialDecayPermeability" type="ThermalCompressibleSolidExponentialDecayPermeabilityType" />
-			<xsd:element name="ThermalCompressibleSolidParallelPlatesPermeability" type="ThermalCompressibleSolidParallelPlatesPermeabilityType" />
-			<xsd:element name="ThermalCompressibleSolidPressurePermeability" type="ThermalCompressibleSolidPressurePermeabilityType" />
-			<xsd:element name="ThermalCompressibleSolidSlipDependentPermeability" type="ThermalCompressibleSolidSlipDependentPermeabilityType" />
-			<xsd:element name="ThermalCompressibleSolidWillisRichardsPermeability" type="ThermalCompressibleSolidWillisRichardsPermeabilityType" />
-			<xsd:element name="ThermoPoroDamageElasticIsotropic" type="ThermoPoroDamageElasticIsotropicType" />
-			<xsd:element name="ThermoPoroDamageSpectralElasticIsotropic" type="ThermoPoroDamageSpectralElasticIsotropicType" />
-			<xsd:element name="ThermoPoroDamageVolDevElasticIsotropic" type="ThermoPoroDamageVolDevElasticIsotropicType" />
-			<xsd:element name="ThermoPoroDelftEgg" type="ThermoPoroDelftEggType" />
-			<xsd:element name="ThermoPoroDruckerPrager" type="ThermoPoroDruckerPragerType" />
-			<xsd:element name="ThermoPoroElasticIsotropic" type="ThermoPoroElasticIsotropicType" />
-			<xsd:element name="ThermoPoroElasticOrthotropic" type="ThermoPoroElasticOrthotropicType" />
-			<xsd:element name="ThermoPoroElasticTransverseIsotropic" type="ThermoPoroElasticTransverseIsotropicType" />
-			<xsd:element name="ThermoPoroExtendedDruckerPrager" type="ThermoPoroExtendedDruckerPragerType" />
-			<xsd:element name="ThermoPoroModifiedCamClay" type="ThermoPoroModifiedCamClayType" />
-			<xsd:element name="ThermoPoroViscoDruckerPrager" type="ThermoPoroViscoDruckerPragerType" />
-			<xsd:element name="ThermoPoroViscoExtendedDruckerPrager" type="ThermoPoroViscoExtendedDruckerPragerType" />
-			<xsd:element name="ThermoPoroViscoModifiedCamClay" type="ThermoPoroViscoModifiedCamClayType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="VanGenuchtenStone2RelativePermeability" type="VanGenuchtenStone2RelativePermeabilityType" />
@@ -4664,8 +4564,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4678,8 +4576,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4692,8 +4588,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4706,8 +4600,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4720,8 +4612,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4734,8 +4624,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4748,8 +4636,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5282,8 +5168,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5296,8 +5180,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5310,8 +5192,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5324,8 +5204,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5338,8 +5216,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5352,8 +5228,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5366,8 +5240,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5380,8 +5252,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5394,8 +5264,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5408,8 +5276,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5422,8 +5288,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5436,8 +5300,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5450,8 +5312,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5537,8 +5397,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5725,286 +5583,6 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * linear
 * quadratic-->
 		<xsd:attribute name="viscosityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermalCompressibleSolidCarmanKozenyPermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermalCompressibleSolidConstantPermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermalCompressibleSolidExponentialDecayPermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermalCompressibleSolidParallelPlatesPermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermalCompressibleSolidPressurePermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermalCompressibleSolidSlipDependentPermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermalCompressibleSolidWillisRichardsPermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroDamageElasticIsotropicType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroDamageSpectralElasticIsotropicType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroDamageVolDevElasticIsotropicType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroDelftEggType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroDruckerPragerType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroElasticIsotropicType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroElasticOrthotropicType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroElasticTransverseIsotropicType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroExtendedDruckerPragerType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroModifiedCamClayType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroViscoDruckerPragerType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroViscoExtendedDruckerPragerType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ThermoPoroViscoModifiedCamClayType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--thermalConductivityModelName => Name of the thermal conductivity model.-->
-		<xsd:attribute name="thermalConductivityModelName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

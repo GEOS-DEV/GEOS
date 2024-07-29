@@ -52,6 +52,75 @@ SinglePhaseThermalConductivity::deliverClone( string const & name,
   return SinglePhaseThermalConductivityBase::deliverClone( name, parent );
 }
 
+void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const
+{
+  for( localIndex ei = 0; ei < initialPorosity.size( 0 ); ++ei )
+  {
+    // NOTE: enforcing 1 quadrature point
+    for( localIndex q = 0; q < 1; ++q )
+    {
+      m_effectiveConductivity[ei][q][0] = m_defaultThermalConductivityComponents[0];
+      m_effectiveConductivity[ei][q][1] = m_defaultThermalConductivityComponents[1];
+      m_effectiveConductivity[ei][q][2] = m_defaultThermalConductivityComponents[2];
+
+      m_dEffectiveConductivity_dT[ei][q][0] = m_thermalConductivityGradientComponents[0];
+      m_dEffectiveConductivity_dT[ei][q][1] = m_thermalConductivityGradientComponents[1];
+      m_dEffectiveConductivity_dT[ei][q][2] = m_thermalConductivityGradientComponents[2];
+    }
+  }
+}
+
+void SinglePhaseThermalConductivity::update( arrayView2d< real64 const > const & initialPorosity ) const
+{
+  real64 thermalConductivityComponents[3];
+  for( int i = 0; i<3; ++i )
+  {
+    thermalConductivityComponents[i] = m_defaultThermalConductivityComponents[i];
+  }
+  arrayView3d< real64 > const effectiveConductivity = m_effectiveConductivity;
+
+  forAll< parallelDevicePolicy<> >( initialPorosity.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    // NOTE: enforcing 1 quadrature point
+    for( localIndex q = 0; q < 1; ++q )
+    {
+      effectiveConductivity[ei][q][0] = thermalConductivityComponents[0];
+      effectiveConductivity[ei][q][1] = thermalConductivityComponents[1];
+      effectiveConductivity[ei][q][2] = thermalConductivityComponents[2];
+    }
+  } );
+}
+
+
+void SinglePhaseThermalConductivity::updateFromTemperature( arrayView1d< real64 const > const & temperature ) const
+{
+  for( localIndex ei = 0; ei < temperature.size( 0 ); ++ei )
+  {
+    // NOTE: enforcing 1 quadrature point
+    for( localIndex q = 0; q < 1; ++q )
+    {
+
+      real64 const deltaTemperature = temperature[ei] - m_referenceTemperature;
+
+      m_effectiveConductivity[ei][q][0] = m_defaultThermalConductivityComponents[0] + m_thermalConductivityGradientComponents[0] * deltaTemperature;
+      m_effectiveConductivity[ei][q][1] = m_defaultThermalConductivityComponents[1] + m_thermalConductivityGradientComponents[1] * deltaTemperature;
+      m_effectiveConductivity[ei][q][2] = m_defaultThermalConductivityComponents[2] + m_thermalConductivityGradientComponents[2] * deltaTemperature;
+
+      for( localIndex i=0; i<=2; i++ )
+      {
+        if( m_effectiveConductivity[ei][q][i] <1e-2 )
+        {
+          m_effectiveConductivity[ei][q][i] = 1e-2; // W/m/K To avoid negative conductivity
+        }
+      }
+
+      m_dEffectiveConductivity_dT[ei][q][0] = m_thermalConductivityGradientComponents[0];
+      m_dEffectiveConductivity_dT[ei][q][1] = m_thermalConductivityGradientComponents[1];
+      m_dEffectiveConductivity_dT[ei][q][2] = m_thermalConductivityGradientComponents[2];
+    }
+  }
+}
+
 void SinglePhaseThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
                                                                localIndex const numConstitutivePointsPerParentIndex )
 {
