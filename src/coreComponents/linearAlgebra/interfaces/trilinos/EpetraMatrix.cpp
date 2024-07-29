@@ -19,9 +19,9 @@
 
 #include "EpetraMatrix.hpp"
 
+#include "codingUtilities/RTTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraUtils.hpp"
-#include "RTTypes.hpp"
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
