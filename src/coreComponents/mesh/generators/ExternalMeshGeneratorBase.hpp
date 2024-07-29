@@ -49,9 +49,9 @@ protected:
     constexpr static char const * scaleString() { return "scale"; }
     constexpr static char const * translateString() { return "translate"; }
     constexpr static char const * volumetricFieldsToImportString() { return "fieldsToImport"; }
-    constexpr static char const * volumetricFieldsInGEOSXString() { return "fieldNamesInGEOS"; }
+    constexpr static char const * volumetricFieldsInGEOSString() { return "fieldNamesInGEOS"; }
     constexpr static char const * surfacicFieldsToImportString() { return "surfacicFieldsToImport"; }
-    constexpr static char const * surfacicFieldsInGEOSXString() { return "surfacicFieldsInGEOS"; }
+    constexpr static char const * surfacicFieldsInGEOSString() { return "surfacicFieldsInGEOS"; }
   };
   /// @endcond
 
