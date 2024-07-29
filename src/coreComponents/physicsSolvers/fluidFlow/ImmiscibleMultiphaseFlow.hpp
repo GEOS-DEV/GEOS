@@ -73,14 +73,7 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }  
 
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
-
-  /**
-   * @defgroup Solver Interface Functions
-   *
-   * These functions provide the primary interface that is required for derived classes
-   */
-  /**@{*/
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -134,15 +127,13 @@ public:
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param dataGroup the group storing the required field
    */
-  virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
+  void updatePhaseMobility( ObjectManagerBase & dataGroup ) const;
 
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-
   virtual void updateState( DomainPartition & domain ) override final;
-
 
   /**
    * @brief Getter for the number of fluid phases

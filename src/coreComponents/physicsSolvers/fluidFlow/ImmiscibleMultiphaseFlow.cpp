@@ -19,6 +19,8 @@
 
 #include "ImmiscibleMultiphaseFlow.hpp"
 
+
+#include "ImmiscibleMultiphaseFlowFields.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
@@ -33,6 +35,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields:flow:immiscibleFlow;
 
 ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
                                                           Group * const parent )
@@ -106,15 +109,14 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
                        InputError );
       }
 
-    
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
       subRegion.registerField< phaseVolumeFraction >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
         reference().resizeDimension< 1 >( m_numPhases );
+      
+      subRegion.registerField< phaseVolumeFraction_n >( getName() ).
+        reference().resizeDimension< 1 >( m_numPhases );  
 
       subRegion.registerField< phaseMobility >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
@@ -123,29 +125,17 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< dPhaseMobility >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numPhases ); // dP, dT, dC
 
-      subRegion.registerField< phaseVolumeFraction_n >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
       faceManager.registerField< totalMassFlux >( getName() );
-      // TODO: add conditional registration later, this is only needed when there is a face-based Dirichlet BC
-      faceManager.registerField< facePressure >( getName() );
-      faceManager.registerField< faceTemperature >( getName() );
     }
   } );
 }
 
 void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-  GEOS_THROW_IF( fluidName.empty(),
-                 GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                           getDataContext(), subRegion.getDataContext() ),
-                 InputError );
-
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
                            setPlotLevel( PlotLevel::NOPLOT ).
                            setRestartFlags( RestartFlags::NO_WRITE ).
@@ -192,7 +182,6 @@ void ImmiscibleMultiphaseFlow::validateConstitutiveModels( DomainPartition const
   GEOS_MARK_FUNCTION;
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
-  MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -203,16 +192,9 @@ void ImmiscibleMultiphaseFlow::validateConstitutiveModels( DomainPartition const
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      compareMultiphaseModels( fluid, referenceFluid );
-      compareMulticomponentModels( fluid, referenceFluid );
-
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
       compareMultiphaseModels( relPerm, referenceFluid );
-
     } );
   } );
 }
@@ -223,9 +205,6 @@ void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup )
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
-
-  string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
-  MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 }
 
 void ImmiscibleMultiphaseFlow::updateRelPermModel( ObjectManagerBase & dataGroup ) const
@@ -301,24 +280,6 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     // Initialize constitutive state to get fluid density.
     updateFluidModel( subRegion );
 
-    // 3. Back-calculate global component densities from fractions and total fluid density
-    // in order to initialize the primary solution variables
-    string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
-
-    arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-      subRegion.getField< fields::flow::globalCompFraction >();
-    arrayView2d< real64, compflow::USD_COMP > const compDens =
-      subRegion.getField< fields::flow::globalCompDensity >();
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
-      }
-    } );
   } );
 
   // with initial component densities defined - check if they need to be corrected to avoid zero diags etc
@@ -378,10 +339,6 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
     relPermMaterial.saveConvergedState(); // this needs to happen after calling updateRelPermModel
-
-    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase & fluidMaterial = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    fluidMaterial.initializeState();
 
     // 4.4 Then, we initialize/update the capillary pressure model
     //
@@ -451,11 +408,6 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
                                                                                                  [&]( localIndex const,
                                                                                                       auto & subRegion )
     {
-      // set mass fraction flag on fluid models
-      string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      fluid.setMassFlag( m_useMass );
-
       saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
       updatePorosityAndPermeability( subRegion );
 
@@ -559,8 +511,6 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
     } );
   } );
 }
@@ -765,222 +715,6 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
   } );
 }
 
-bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
-                                                       real64 const time ) const
-{
-  constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  bool bcConsistent = true;
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
-  {
-    // map: regionName -> subRegionName -> setName -> numComps to check pressure/comp are present consistent
-    map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap;
-    // map: regionName -> subRegionName -> setName check to that temperature is present/consistent
-    map< string, map< string, set< string > > > bcTempStatusMap;
-
-    // 1. Check pressure Dirichlet BCs
-    fsManager.apply< ElementSubRegionBase >( time,
-                                             mesh,
-                                             fields::flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const &,
-                                                  string const & setName,
-                                                  SortedArrayView< localIndex const > const &,
-                                                  ElementSubRegionBase & subRegion,
-                                                  string const & )
-    {
-      // Check whether pressure has already been applied to this set
-      string const & subRegionName = subRegion.getName();
-      string const & regionName = subRegion.getParent().getParent().getName();
-
-      auto & subRegionSetMap = bcPresCompStatusMap[regionName][subRegionName];
-      if( subRegionSetMap.count( setName ) > 0 )
-      {
-        bcConsistent = false;
-        GEOS_WARNING( GEOS_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
-      }
-      subRegionSetMap[setName].setNumComp( m_numComponents );
-    } );
-  } );
-  return bcConsistent;
-}
-
-void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
-                                                    real64 const dt,
-                                                    DofManager const & dofManager,
-                                                    DomainPartition & domain,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                    arrayView1d< real64 > const & localRhs ) const
-{
-  GEOS_MARK_FUNCTION;
-
-  // Only validate BC at the beginning of Newton loop
-  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-  {
-    bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "ImmiscibleMultiphaseFlow {}: inconsistent boundary conditions", getDataContext() ) );
-  }
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
-  {
-
-    // 1. Apply pressure Dirichlet BCs, store in a separate field
-    applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-                                             fields::flow::pressure::key(), fields::flow::bcPressure::key() );
-    // 2. Apply composition BC (global component fraction) and store them for constitutive call
-    applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-                                             fields::flow::globalCompFraction::key(), fields::flow::globalCompFraction::key() );
-    // 3. Apply temperature Dirichlet BCs, store in a separate field
-    if( m_isThermal )
-    {
-      applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-                                               fields::flow::temperature::key(), fields::flow::bcTemperature::key() );
-    }
-
-    globalIndex const rankOffset = dofManager.rankOffset();
-    string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-    // 4. Call constitutive update, back-calculate target global component densities and apply to the system
-    fsManager.apply< ElementSubRegionBase >( time_n + dt,
-                                             mesh,
-                                             fields::flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
-                                                   string const &,
-                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                   ElementSubRegionBase & subRegion,
-                                                   string const & )
-    {
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-
-      // in the isothermal case, we use the reservoir temperature to enforce the boundary condition
-      // in the thermal case, the validation function guarantees that temperature has been provided
-      string const temperatureKey = m_isThermal ? fields::flow::bcTemperature::key() : fields::flow::temperature::key();
-
-      arrayView1d< real64 const > const bcPres =
-        subRegion.getReference< array1d< real64 > >( fields::flow::bcPressure::key() );
-      arrayView1d< real64 const > const bcTemp =
-        subRegion.getReference< array1d< real64 > >( temperatureKey );
-      arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompFraction::key() );
-
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        using FluidType = TYPEOFREF( castedFluid );
-        using ExecPolicy = typename FluidType::exec_policy;
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-        thermalImmiscibleMultiphaseFlowKernels::
-          FluidUpdateKernel::
-          launch< ExecPolicy >( targetSet,
-                                fluidWrapper,
-                                bcPres,
-                                bcTemp,
-                                compFrac );
-      } );
-
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-      arrayView1d< globalIndex const > const dofNumber =
-        subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< real64 const > const pres =
-        subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
-      arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompDensity::key() );
-      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
-
-      integer const numComp = m_numComponents;
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-        localIndex const ei = targetSet[a];
-        if( ghostRank[ei] >= 0 )
-        {
-          return;
-        }
-
-        globalIndex const dofIndex = dofNumber[ei];
-        localIndex const localRow = dofIndex - rankOffset;
-        real64 rhsValue;
-
-        // 4.1. Apply pressure value to the matrix/rhs
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-                                                    rankOffset,
-                                                    localMatrix,
-                                                    rhsValue,
-                                                    bcPres[ei],
-                                                    pres[ei] );
-        localRhs[localRow] = rhsValue;
-
-        // 4.2. For each component, apply target global density value
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
-                                                      rankOffset,
-                                                      localMatrix,
-                                                      rhsValue,
-                                                      totalDens[ei][0] * compFrac[ei][ic],
-                                                      compDens[ei][ic] );
-          localRhs[localRow + ic + 1] = rhsValue;
-        }
-      } );
-    } );
-
-    // 5. Apply temperature to the system
-    if( m_isThermal )
-    {
-      fsManager.apply< ElementSubRegionBase >( time_n + dt,
-                                               mesh,
-                                               fields::flow::temperature::key(),
-                                               [&] ( FieldSpecificationBase const &,
-                                                     string const &,
-                                                     SortedArrayView< localIndex const > const & targetSet,
-                                                     ElementSubRegionBase & subRegion,
-                                                     string const & )
-      {
-        arrayView1d< integer const > const ghostRank =
-          subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-        arrayView1d< globalIndex const > const dofNumber =
-          subRegion.getReference< array1d< globalIndex > >( dofKey );
-        arrayView1d< real64 const > const bcTemp =
-          subRegion.getReference< array1d< real64 > >( fields::flow::bcTemperature::key() );
-        arrayView1d< real64 const > const temp =
-          subRegion.getReference< array1d< real64 > >( fields::flow::temperature::key() );
-
-        integer const numComp = m_numComponents;
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-        {
-          localIndex const ei = targetSet[a];
-          if( ghostRank[ei] >= 0 )
-          {
-            return;
-          }
-
-          globalIndex const dofIndex = dofNumber[ei];
-          localIndex const localRow = dofIndex - rankOffset;
-          real64 rhsValue;
-
-          // 4.2. Apply temperature value to the matrix/rhs
-          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + numComp + 1,
-                                                      rankOffset,
-                                                      localMatrix,
-                                                      rhsValue,
-                                                      bcTemp[ei],
-                                                      temp[ei] );
-          localRhs[localRow + numComp + 1] = rhsValue;
-        } );
-      } );
-    }
-  } );
-}
-
-
 
 void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & domain )
 {
@@ -1048,11 +782,6 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
       isothermalImmiscibleMultiphaseFlowKernels::StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
-      // Step 2: save the converged fluid state
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluidMaterial = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      fluidMaterial.saveConvergedState();
-
       // Step 3: save the converged solid state
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
@@ -1097,24 +826,12 @@ void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subReg
 {
   FlowSolverBase::saveConvergedState( subRegion );
 
-  arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-    subRegion.template getField< fields::flow::globalCompDensity >();
-  arrayView2d< real64, compflow::USD_COMP > const & compDens_n =
-    subRegion.template getField< fields::flow::globalCompDensity_n >();
-  compDens_n.setValues< parallelDevicePolicy<> >( compDens );
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.getField< fields::flow::phaseVolumeFraction >();
+   arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac_n =
+        subRegion.getField< fields::flow::phaseVolumeFraction_n >();
+  phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
 
-  arrayView2d< real64 const, compflow::USD_COMP > const & compAmount =
-    subRegion.template getField< fields::flow::compAmount >();
-  arrayView2d< real64, compflow::USD_COMP > const & compAmount_n =
-    subRegion.template getField< fields::flow::compAmount_n >();
-  compAmount_n.setValues< parallelDevicePolicy<> >( compAmount );
-
-  if( m_isFixedStressPoromechanicsUpdate )
-  {
-    arrayView2d< real64, compflow::USD_COMP > const & compDens_k =
-      subRegion.template getField< fields::flow::globalCompDensity_k >();
-    compDens_k.setValues< parallelDevicePolicy<> >( compDens );
-  }
 }
 
 void ImmiscibleMultiphaseFlow::updateState( DomainPartition & domain )

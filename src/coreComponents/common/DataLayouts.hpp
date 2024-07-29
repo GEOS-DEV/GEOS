@@ -205,6 +205,35 @@ static constexpr int STIFFNESS_USD = LvArray::typeManipulation::getStrideOneDime
 
 } // namespace solid
 
+
+namespace immiscibleFlow
+{
+#if defined( GEOS_USE_DEVICE )
+
+/// Phase property array layout
+using LAYOUT_PHASE = RAJA::PERM_JI;
+
+/// Phase property array layout
+using LAYOUT_PHASE_DS = RAJA::PERM_JKI;
+
+#else
+
+/// Phase property array layout
+using LAYOUT_PHASE = RAJA::PERM_IJ;
+
+/// Phase property array layout
+using LAYOUT_PHASE_DS = RAJA::PERM_IJK;
+
+#endif
+
+/// Phase property unit stride dimension
+static constexpr int USD_PHASE = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE{} );
+
+/// Phase property compositional derivative unit stride dimension
+static constexpr int USD_PHASE_DS = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_DS{} );
+
+} // namespace immiscibleFlow
+
 namespace compflow
 {
 
