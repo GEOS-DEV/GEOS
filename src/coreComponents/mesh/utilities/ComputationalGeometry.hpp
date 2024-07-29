@@ -640,46 +640,6 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
   return minElement;
 }
 
-
-
-/**
- * @brief Check if a point is inside a convex polyhedron (3D polygon), using a robust method
- *  to avoid ambiguity when the point lies on an interface.
- *  This method is based on the following method:
- *  - the winding number omega of the point with respect to the cell is used to determine if the point is inside (omega=1) or not (omega=0)
- *  - corner cases (point lying on a face, edge or vertex of the cell) are detected using a robust method based on lexicographical
- * comparisons
- *  - these comparisons are made consistent across MPI ranks by consistently arranging items based on global indices (GIDs). In particular:
- *    - Faces are triangulated using the vertex with the smallest GID as root;
- *    - Edges and faces are described by vertices in increasing GID order
- *  - Finally, if the point lies on a (vertex, edge, face), it is assigned to the first shared element with the least global index
- * @tparam POINT_TYPE type of @p point
- * @param[in] element the element to be checked
- * @param[in] nodeCoordinates a global array of nodal coordinates
- * @param[in] elementsToFaces map from elements to faces
- * @param[in] facesToNodes map from faces to nodes
- * @param[in] nodesToElements map from nodes to elements
- * @param[in] nodeLocalToGlobal global indices of nodes
- * @param[in] elementLocalToGlobal global indices of elements
- * @param[in] elemCenter coordinates of the element centroid
- * @param[in] point coordinates of the query point
- * @return whether the point is inside
- */
-template< typename COORD_TYPE, typename POINT_TYPE >
-GEOS_HOST_DEVICE
-bool isPointInsideConvexPolyhedronRobust( localIndex element,
-                                          arrayView2d< COORD_TYPE const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
-                                          arrayView2d< localIndex const > const & elementsToFaces,
-                                          ArrayOfArraysView< localIndex const > const & facesToNodes,
-                                          ArrayOfArraysView< localIndex const > const & nodesToElements,
-                                          arrayView1d< globalIndex const > const & nodeLocalToGlobal,
-                                          arrayView1d< globalIndex const > const & elementLocalToGlobal,
-                                          POINT_TYPE const & elemCenter,
-                                          POINT_TYPE const & point )
-{
-  return computeWindingNumber( element, nodeCoordinates, elementsToFaces, facesToNodes, nodesToElements, nodeLocalToGlobal, elementLocalToGlobal, elemCenter, point ) > 0;
-}
-
 /**
  * @brief Computes the winding number of a point with respecto to a mesh element.
  * @tparam POINT_TYPE type of @p point
@@ -830,6 +790,44 @@ bool computeWindingNumber( localIndex element,
   }
 
   return omega;
+}
+
+/**
+ * @brief Check if a point is inside a convex polyhedron (3D polygon), using a robust method
+ *  to avoid ambiguity when the point lies on an interface.
+ *  This method is based on the following method:
+ *  - the winding number omega of the point with respect to the cell is used to determine if the point is inside (omega=1) or not (omega=0)
+ *  - corner cases (point lying on a face, edge or vertex of the cell) are detected using a robust method based on lexicographical
+ * comparisons
+ *  - these comparisons are made consistent across MPI ranks by consistently arranging items based on global indices (GIDs). In particular:
+ *    - Faces are triangulated using the vertex with the smallest GID as root;
+ *    - Edges and faces are described by vertices in increasing GID order
+ *  - Finally, if the point lies on a (vertex, edge, face), it is assigned to the first shared element with the least global index
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] element the element to be checked
+ * @param[in] nodeCoordinates a global array of nodal coordinates
+ * @param[in] elementsToFaces map from elements to faces
+ * @param[in] facesToNodes map from faces to nodes
+ * @param[in] nodesToElements map from nodes to elements
+ * @param[in] nodeLocalToGlobal global indices of nodes
+ * @param[in] elementLocalToGlobal global indices of elements
+ * @param[in] elemCenter coordinates of the element centroid
+ * @param[in] point coordinates of the query point
+ * @return whether the point is inside
+ */
+template< typename COORD_TYPE, typename POINT_TYPE >
+GEOS_HOST_DEVICE
+bool isPointInsideConvexPolyhedronRobust( localIndex element,
+                                          arrayView2d< COORD_TYPE const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                                          arrayView2d< localIndex const > const & elementsToFaces,
+                                          ArrayOfArraysView< localIndex const > const & facesToNodes,
+                                          ArrayOfArraysView< localIndex const > const & nodesToElements,
+                                          arrayView1d< globalIndex const > const & nodeLocalToGlobal,
+                                          arrayView1d< globalIndex const > const & elementLocalToGlobal,
+                                          POINT_TYPE const & elemCenter,
+                                          POINT_TYPE const & point )
+{
+  return computeWindingNumber( element, nodeCoordinates, elementsToFaces, facesToNodes, nodesToElements, nodeLocalToGlobal, elementLocalToGlobal, elemCenter, point ) > 0;
 }
 
 /**
