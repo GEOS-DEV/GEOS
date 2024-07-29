@@ -113,7 +113,7 @@ private:
   };
   /// @endcond
 
-  void importVolumetricFieldOnArray( string const & cellBlockName,
+  void importVolumicFieldOnArray( string const & cellBlockName,
                                   string const & meshFieldName,
                                   bool isMaterialField,
                                   dataRepository::WrapperBase & wrapper ) const;

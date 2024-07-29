@@ -177,7 +177,7 @@ void MeshManager::importFields( DomainPartition & domain )
              ElementRegionBase const & region,
              CellElementSubRegion & subRegion )
       {
-        importFields( region, subRegion, MeshGeneratorBase::Block::VOLUMETRIC, generator.getVolumetricFieldsMapping(), fieldsToBeSync );
+        importFields( region, subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping(), fieldsToBeSync );
       } );
       meshLevel.getElemManager().forElementSubRegionsComplete< FaceElementSubRegion >(
         [&]( localIndex,
