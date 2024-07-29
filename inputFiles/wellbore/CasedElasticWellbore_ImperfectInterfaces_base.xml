@@ -48,7 +48,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="faceElementSubRegion"
-      defaultAperture="0"
+      defaultAperture="1e-6"
       materialList="{ fractureContact }"/>
   <!-- SPHINX_SurfaceElementRegionEnd -->   
  
