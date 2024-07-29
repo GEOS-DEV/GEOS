@@ -33,5 +33,5 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   ${INTEL_ROOT}/compiler/lib/intel64_lin/libiomp5.so
                   CACHE STRING "")
 
-set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
+set(GEOSX_TPL_DIR "/shared/data1/Users/l1132676/Jtest/thirdPartyLibs/install-pecan-CPU-debug/" CACHE PATH "" FORCE)
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

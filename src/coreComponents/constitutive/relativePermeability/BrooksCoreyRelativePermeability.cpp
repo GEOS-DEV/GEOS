@@ -119,7 +119,7 @@ void BrooksCoreyRelativePermeability::postInputInitialization()
                           InputError );
   }
 
-};
+}
 
 BrooksCoreyRelativePermeability::KernelWrapper
 BrooksCoreyRelativePermeability::createKernelWrapper()

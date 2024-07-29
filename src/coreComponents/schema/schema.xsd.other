@@ -58,6 +58,11 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*]*\s*,\s*)*[a-zA-Z0-9.\-_/*]*\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="groupNameRef_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([a-zA-Z0-9.\-_/*]*\s*,\s*)*[a-zA-Z0-9.\-_/*]*\s*)?\}\s*,\s*)*\{\s*(([a-zA-Z0-9.\-_/*]*\s*,\s*)*[a-zA-Z0-9.\-_/*]*\s*)?\}\s*\}\s*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="integer">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
@@ -1332,7 +1337,6 @@
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
-			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
 			<xsd:element name="SinglePhasePoromechanicsConformingFracturesInitialization" type="SinglePhasePoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFracturesInitialization" type="SinglePhasePoromechanicsEmbeddedFracturesInitializationType" />
 			<xsd:element name="SinglePhasePoromechanicsInitialization" type="SinglePhasePoromechanicsInitializationType" />
@@ -1351,7 +1355,6 @@
 	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="ReactiveFluidDriverType" />
-	<xsd:complexType name="RelpermDriverType" />
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsInitializationType" />
@@ -1473,7 +1476,6 @@
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
-			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
@@ -1572,19 +1574,19 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm" type="real64_array4d" />
 		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
-		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array4d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
-		<xsd:attribute name="volFracScale" type="real64" />
+		<xsd:attribute name="volFracScale" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => Derivative of phase capillary pressure with respect to phase volume fraction-->
@@ -1600,35 +1602,35 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm" type="real64_array4d" />
 		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
-		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array4d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase relative permeability, defined as: one minus the sum of the phase minimum volume fractions.-->
-		<xsd:attribute name="volFracScale" type="real64" />
+		<xsd:attribute name="volFracScale" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyStone2RelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm" type="real64_array4d" />
 		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
-		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array4d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
-		<xsd:attribute name="volFracScale" type="real64" />
+		<xsd:attribute name="volFracScale" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2683,61 +2685,21 @@
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseMinVolumeFraction => (no description available)-->
-		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" />
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array2d" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm" type="real64_array4d" />
 		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
-		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array4d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--relPermWrappers => (no description available)-->
-		<xsd:attribute name="relPermWrappers" type="LvArray_Array_lt_geos_TableFunction_KernelWrapper_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
-		<!--waterOilMaxRelPerm => (no description available)-->
-		<xsd:attribute name="waterOilMaxRelPerm" type="real64" />
-	</xsd:complexType>
-	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
-		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
-		<!--drainagePhaseMaxVolumeFraction => (no description available)-->
-		<xsd:attribute name="drainagePhaseMaxVolumeFraction" type="real64_array" />
-		<!--drainagePhaseMinVolumeFraction => (no description available)-->
-		<xsd:attribute name="drainagePhaseMinVolumeFraction" type="real64_array" />
-		<!--drainagePhaseRelPermEndPoint => (no description available)-->
-		<xsd:attribute name="drainagePhaseRelPermEndPoint" type="real64_array" />
-		<!--drainageRelPermWrappers => (no description available)-->
-		<xsd:attribute name="drainageRelPermWrappers" type="LvArray_Array_lt_geos_TableFunction_KernelWrapper_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
-		<!--imbibitionPhaseMaxVolumeFraction => (no description available)-->
-		<xsd:attribute name="imbibitionPhaseMaxVolumeFraction" type="real64_array" />
-		<!--imbibitionPhaseMinVolumeFraction => (no description available)-->
-		<xsd:attribute name="imbibitionPhaseMinVolumeFraction" type="real64_array" />
-		<!--imbibitionPhaseRelPermEndPoint => (no description available)-->
-		<xsd:attribute name="imbibitionPhaseRelPermEndPoint" type="real64_array" />
-		<!--imbibitionRelPermWrappers => (no description available)-->
-		<xsd:attribute name="imbibitionRelPermWrappers" type="LvArray_Array_lt_geos_TableFunction_KernelWrapper_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
-		<!--landParameter => (no description available)-->
-		<xsd:attribute name="landParameter" type="real64_array" />
-		<!--phaseHasHysteresis => (no description available)-->
-		<xsd:attribute name="phaseHasHysteresis" type="integer_array" />
-		<!--phaseMaxHistoricalVolFraction => Phase max historical phase volume fraction-->
-		<xsd:attribute name="phaseMaxHistoricalVolFraction" type="real64_array2d" />
-		<!--phaseMinHistoricalVolFraction => Phase min historical phase volume fraction-->
-		<xsd:attribute name="phaseMinHistoricalVolFraction" type="real64_array2d" />
-		<!--phaseOrder => (no description available)-->
-		<xsd:attribute name="phaseOrder" type="integer_array" />
-		<!--phaseRelPerm => Phase relative permeability-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
-		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
-		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
-		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
-		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
-		<!--phaseTypes => (no description available)-->
-		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<xsd:attribute name="relPermWrappers" type="LvArray_Array_lt_geos_TableFunction_KernelWrapper_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--waterOilMaxRelPerm => (no description available)-->
 		<xsd:attribute name="waterOilMaxRelPerm" type="real64" />
 	</xsd:complexType>
@@ -2773,19 +2735,19 @@
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm" type="real64_array4d" />
 		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
-		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array4d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
-		<xsd:attribute name="volFracScale" type="real64" />
+		<xsd:attribute name="volFracScale" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => Derivative of phase capillary pressure with respect to phase volume fraction-->
@@ -2801,19 +2763,19 @@
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenStone2RelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => Phase relative permeability-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm" type="real64_array4d" />
 		<!--phaseRelPerm_n => Phase relative permeability at previous time-->
-		<xsd:attribute name="phaseRelPerm_n" type="real64_array3d" />
+		<xsd:attribute name="phaseRelPerm_n" type="real64_array4d" />
 		<!--phaseTrappedVolFraction => Phase trapped volume fraction-->
 		<xsd:attribute name="phaseTrappedVolFraction" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
-		<xsd:attribute name="volFracScale" type="real64" />
+		<xsd:attribute name="volFracScale" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoDruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->

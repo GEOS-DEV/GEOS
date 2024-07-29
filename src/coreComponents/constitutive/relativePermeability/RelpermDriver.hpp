@@ -57,7 +57,7 @@ public:
            const arrayView2d< real64, 1 > & table );
 
   /**
-   * @brief Ouput table to file for easy plotting
+   * @brief Output table to file for easy plotting
    */
   void outputResults();
 
