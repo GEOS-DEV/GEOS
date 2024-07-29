@@ -540,7 +540,7 @@ int lexicographicalCompareTriangle( POINT_TYPE const ax, POINT_TYPE const ay, PO
 }
 /**
  * @brief Method to find the reference element touching a vertex. The element with the lowest global ID is chosen
- * list.
+ * from the list.
  * @param[in] nodeElements the list of elements adjacent to the vertex
  * @param[in] elementGlobalIndex the global IDs for elements
  * @return element touching the vertex with the least global index
@@ -566,7 +566,7 @@ int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements,
 
 /**
  * @brief Method to find the reference element for an edge. The element with the lowest global ID is chosen
- * list.
+ * from the list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] elementGlobalIndex the global IDs for elements
@@ -600,8 +600,8 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1,
 }
 
 /**
- * @brief Method to find the reference element for a triangle. The element with the lowest global ID is chosen.
- * list.
+ * @brief Method to find the reference element for a triangle. The element with the lowest global ID is chosen
+ * from the list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] nodeElements3 the list of elements adjacent to the third node
@@ -677,9 +677,38 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                           POINT_TYPE const & elemCenter,
                                           POINT_TYPE const & point )
 {
+  return computeWindingNumber( element, nodeCoordinates, elementsToFaces, facesToNodes, nodesToElements, nodeLocalToGlobal, elementLocalToGlobal, elemCenter, point ) > 0;
+}
+
+/**
+ * @brief Computes the winding number of a point with respecto to a mesh element.
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] element the element to be checked
+ * @param[in] nodeCoordinates a global array of nodal coordinates
+ * @param[in] elementsToFaces map from elements to faces
+ * @param[in] facesToNodes map from faces to nodes
+ * @param[in] nodesToElements map from nodes to elements
+ * @param[in] nodeLocalToGlobal global indices of nodes
+ * @param[in] elementLocalToGlobal global indices of elements
+ * @param[in] elemCenter coordinates of the element centroid
+ * @param[in] point coordinates of the query point
+ * @return the signed winding number, which is positive if and only if the point is inside the mesh element.
+ */
+template< typename COORD_TYPE, typename POINT_TYPE >
+GEOS_HOST_DEVICE
+bool computeWindingNumber( localIndex element,
+                           arrayView2d< COORD_TYPE const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                           arrayView2d< localIndex const > const & elementsToFaces,
+                           ArrayOfArraysView< localIndex const > const & facesToNodes,
+                           ArrayOfArraysView< localIndex const > const & nodesToElements,
+                           arrayView1d< globalIndex const > const & nodeLocalToGlobal,
+                           arrayView1d< globalIndex const > const & elementLocalToGlobal,
+                           POINT_TYPE const & elemCenter,
+                           POINT_TYPE const & point )
+{
   arraySlice1d< localIndex const > const & faceIndices = elementsToFaces[ element ];
   localIndex const numFaces = faceIndices.size();
-  int omega = 0;
+  int omega = -1;
   for( localIndex kf = 0; kf < numFaces; ++kf )
   {
     // triangulate the face. The triangulation must be done in a consistent way across ranks.
@@ -800,7 +829,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
     }
   }
 
-  return omega > 0;
+  return omega;
 }
 
 /**
