@@ -53,6 +53,22 @@ DECLARE_FIELD( phaseVolumeFraction_n,
                WRITE_AND_READ,
                "Phase volume fraction at the previous converged time step" );
 
+DECLARE_FIELD( phaseMass,
+               "phaseMass",
+               array2dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Phase mass" );
+
+DECLARE_FIELD( phaseMass_n,
+               "phaseMass_n",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase mass at the previous converged time step" );               
+
 DECLARE_FIELD( phaseMobility,
                "phaseMobility",
                array2dLayoutPhase,

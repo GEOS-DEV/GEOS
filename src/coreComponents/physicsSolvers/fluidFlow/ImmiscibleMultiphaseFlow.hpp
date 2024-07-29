@@ -105,7 +105,7 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Update all relevant fluid models using current values of pressure and phase volume fraction
    * @param dataGroup the group storing the required fields
    */
   void updateFluidModel( ObjectManagerBase & dataGroup ) const;

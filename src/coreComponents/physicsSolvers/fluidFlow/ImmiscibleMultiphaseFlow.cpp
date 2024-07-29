@@ -123,14 +123,14 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1 >( m_numPhases );
 
       subRegion.registerField< dPhaseMobility >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numPhases ); // dP, dT, dC
+        reference().resizeDimension< 1, 2 >( m_numPhases, m_numPhases ); // dP, dS
 
     } );
 
-    FaceManager & faceManager = mesh.getFaceManager();
-    {
-      faceManager.registerField< totalMassFlux >( getName() );
-    }
+    // FaceManager & faceManager = mesh.getFaceManager();
+    // {
+    //   faceManager.registerField< totalMassFlux >( getName() );
+    // }
   } );
 }
 
@@ -203,30 +203,31 @@ void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup )
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  // arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
+  // arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  GEOS_UNUSED_VAR(dataGroup);
 }
 
 void ImmiscibleMultiphaseFlow::updateRelPermModel( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-    dataGroup.getField< fields::flow::phaseVolumeFraction >();
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+    dataGroup.getField< fields::flow::immiscibleFlow::phaseVolumeFraction >();
 
   string const & relPermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase & relPerm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relPermName );
 
-  // constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
-  // {
-  //   typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
+  constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
+  {
+    typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
 
-  //   isothermalImmiscibleMultiphaseFlowKernels::
-  //     RelativePermeabilityUpdateKernel::
-  //     launch< parallelDevicePolicy<> >( dataGroup.size(),
-  //                                       relPermWrapper,
-  //                                       phaseVolFrac );
-  // } );
+    // isothermalImmiscibleMultiphaseFlowKernels::
+    //   RelativePermeabilityUpdateKernel::
+    //   launch< parallelDevicePolicy<> >( dataGroup.size(),
+    //                                     relPermWrapper,
+    //                                     phaseVolFrac );
+  } );
 }
 
 void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataGroup ) const
@@ -235,8 +236,8 @@ void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataG
 
   if( m_hasCapPressure )
   {
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      dataGroup.getField< fields::flow::phaseVolumeFraction >();
+    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+      dataGroup.getField< fields::flow::immiscibleFlow::phaseVolumeFraction >();
 
     string const & cappresName = dataGroup.getReference< string >( viewKeyStruct::capPressureNamesString() );
     CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( dataGroup, cappresName );
@@ -281,9 +282,6 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     updateFluidModel( subRegion );
 
   } );
-
-  // with initial component densities defined - check if they need to be corrected to avoid zero diags etc
-  chopNegativeDensities( domain );
 
   // for some reason CUDA does not want the host_device lambda to be defined inside the generic lambda
   // I need the exact type of the subRegion for updateSolidflowProperties to work well.
@@ -330,8 +328,8 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     // - This step depends on phaseVolFraction
 
     // initialized phase volume fraction
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.template getField< fields::flow::phaseVolumeFraction >();
+    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+      subRegion.template getField< fields::flow::immiscibleFlow::phaseVolumeFraction >();
 
     string const & relpermName = subRegion.template getReference< string >( viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase & relPermMaterial =
@@ -460,12 +458,19 @@ ImmiscibleMultiphaseFlow::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( t
       updateFluidState( subRegion );
 
       // after the update, save the new saturation
-      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.template getField< fields::flow::phaseVolumeFraction >();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+        subRegion.template getField< fields::flow::immiscibleFlow::phaseVolumeFraction >();
 
-      arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac_n =
-        subRegion.template getField< fields::flow::phaseVolumeFraction_n >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVolFrac_n =
+        subRegion.template getField< fields::flow::immiscibleFlow::phaseVolumeFraction_n >();
       phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
+
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const & phaseMass =
+       subRegion.template getField< fields::flow::immiscibleFlow::phaseMass >();
+      
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const & phaseMass_n =
+       subRegion.template getField< fields::flow::immiscibleFlow::phaseMass_n >();
+      phaseMass_n.setValues< parallelDevicePolicy<> >( phaseMass );
 
     } );
   } );
@@ -481,16 +486,16 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
   GEOS_MARK_FUNCTION;
 
   assembleAccumulationTerm( domain,
-                                             dofManager,
-                                             localMatrix,
-                                             localRhs );
+                            dofManager,
+                            localMatrix,
+                            localRhs );
 
  
   assembleFluxTerms( dt,
-                       domain,
-                       dofManager,
-                       localMatrix,
-                       localRhs );
+                     domain,
+                     dofManager,
+                     localMatrix,
+                     localRhs );
 }
 
 void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domain,
@@ -509,7 +514,6 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
                                                      ElementSubRegionBase const & subRegion )
     {
       string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
     } );
   } );
@@ -735,11 +739,20 @@ void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & do
         subRegion.template getField< fields::flow::pressure_n >();
       pres.setValues< parallelDevicePolicy<> >( pres_n );
 
-      arrayView2d< real64, compflow::USD_COMP > const & compDens =
-        subRegion.template getField< fields::flow::globalCompDensity >();
-      arrayView2d< real64 const, compflow::USD_COMP > const & compDens_n =
-        subRegion.template getField< fields::flow::globalCompDensity_n >();
-      compDens.setValues< parallelDevicePolicy<> >( compDens_n );
+      // after the update, save the new saturation
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac_n =
+        subRegion.template getField< fields::flow::immiscibleFlow::phaseVolumeFraction_n >();
+
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+        subRegion.template getField< fields::flow::immiscibleFlow::phaseVolumeFraction >();
+      phaseVolFrac.setValues< parallelDevicePolicy<> >( phaseVolFrac );
+
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const & phaseMass_n =
+       subRegion.template getField< fields::flow::immiscibleFlow::phaseMass_n >();
+      
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const & phaseMass =
+       subRegion.template getField< fields::flow::immiscibleFlow::phaseMass >();
+      phaseMass.setValues< parallelDevicePolicy<> >( phaseMass_n );
 
       if( m_isThermal )
       {
@@ -795,8 +808,8 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
       }
 
       // Step 4: save converged state for the relperm model to handle hysteresis
-      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getField< fields::flow::phaseVolumeFraction >();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+        subRegion.getField< fields::flow::immiscibleFlow::phaseVolumeFraction >();
       string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPermMaterial =
         getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
@@ -826,11 +839,13 @@ void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subReg
 {
   FlowSolverBase::saveConvergedState( subRegion );
 
-  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getField< fields::flow::phaseVolumeFraction >();
-   arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac_n =
-        subRegion.getField< fields::flow::phaseVolumeFraction_n >();
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+        subRegion.getField< fields::flow::immiscibleFlow::phaseVolumeFraction >();
+   arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVolFrac_n =
+        subRegion.getField< fields::flow::immiscibleFlow::phaseVolumeFraction_n >();
   phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
+
+
 
 }
 
