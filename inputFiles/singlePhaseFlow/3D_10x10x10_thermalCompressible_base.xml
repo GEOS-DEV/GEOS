@@ -45,13 +45,12 @@
 
   <Constitutive>
 
-    <ThermalCompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"
-      thermalConductivityModelName="thermalCond"/>
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <NullModel
       name="nullSolid"/>
@@ -86,9 +85,7 @@
 
     <SinglePhaseThermalConductivity
       name="thermalCond"
-      defaultThermalConductivityComponents="{ 3.5, 3.5, 3.5 }"
-      thermalConductivityGradientComponents="{ 0, 0, 0 }"
-      referenceTemperature="0"/>
+      thermalConductivityComponents="{ 3.5, 3.5, 3.5 }"/>
     
   </Constitutive>
 

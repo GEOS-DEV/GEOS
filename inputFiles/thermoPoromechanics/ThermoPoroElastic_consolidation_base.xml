@@ -18,17 +18,16 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ rock, water }"/>
+      materialList="{ rock, water, thermalCond }"/>
   </ElementRegions>
 
   <Constitutive>
-    <ThermoPoroElasticIsotropic
+    <PorousElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"
-      thermalConductivityModelName="thermalCond"/>
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <!-- SPHINX_SOLID -->
     <ElasticIsotropic
@@ -76,9 +75,7 @@
     
     <SinglePhaseThermalConductivity
       name="thermalCond"
-      defaultThermalConductivityComponents="{ 836, 836, 836 }"
-      thermalConductivityGradientComponents="{ 0, 0, 0 }"
-      referenceTemperature="0"/>
+      defaultThermalConductivityComponents="{ 836, 836, 836 }"/>
     <!-- SPHINX_PERMEABILITY_CONDUCTIVITY_END -->
     
   </Constitutive>

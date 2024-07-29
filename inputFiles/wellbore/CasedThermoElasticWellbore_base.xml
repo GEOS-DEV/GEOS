@@ -54,44 +54,41 @@
     <CellElementRegion
       name="casing"
       cellBlocks="{ casing }"
-      materialList="{ fluid, casing }"/>
+      materialList="{ fluid, casing, casingThermalCond }"/>
 
     <CellElementRegion
       name="cement"
       cellBlocks="{ cement }"
-      materialList="{ fluid, cement }"/>
+      materialList="{ fluid, cement, cementThermalCond }"/>
 
     <CellElementRegion
       name="rock"
       cellBlocks="{ rock }"
-      materialList="{ fluid, rock }"/>
+      materialList="{ fluid, rock, rockThermalCond}"/>
   </ElementRegions>
 
   <Constitutive>
 
-    <ThermoPoroElasticIsotropic
+    <PorousElasticIsotropic
       name="casing"
       solidModelName="casingSolid"
       porosityModelName="casingPorosity"
       permeabilityModelName="casingPerm"
-      solidInternalEnergyModelName="casingInternalEnergy"
-      thermalConductivityModelName="casingThermalCond"/>
+      solidInternalEnergyModelName="casingInternalEnergy"/>
 
-    <ThermoPoroElasticIsotropic
+    <PorousElasticIsotropic
       name="cement"
       solidModelName="cementSolid"
       porosityModelName="cementPorosity"
       permeabilityModelName="cementPerm"
-      solidInternalEnergyModelName="cementInternalEnergy"
-      thermalConductivityModelName="cementThermalCond"/>
+      solidInternalEnergyModelName="cementInternalEnergy"/>
 
-    <ThermoPoroElasticIsotropic
+    <PorousElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"
-      thermalConductivityModelName="rockThermalCond"/>
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <!-- SPHINX_PoroElasticProperties -->
     <BiotPorosity
@@ -153,15 +150,11 @@
 
     <SinglePhaseThermalConductivity
       name="cementThermalCond"
-      defaultThermalConductivityComponents="{ 1.0, 1.0, 1.0 }"
-      thermalConductivityGradientComponents="{ 0, 0, 0 }"
-      referenceTemperature="0"/>
+      defaultThermalConductivityComponents="{ 1.0, 1.0, 1.0 }"/>
 
     <SinglePhaseThermalConductivity
       name="rockThermalCond"
-      defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"
-      thermalConductivityGradientComponents="{ 0, 0, 0 }"
-      referenceTemperature="0"/>
+      defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
     <!-- SPHINX_ThermalPropertiesEnd -->
 
     <!-- SPHINX_FluidProperties -->

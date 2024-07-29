@@ -31,24 +31,14 @@
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy_linear"
-      thermalConductivityModelName="thermalCond_linear"/>
-
-    <ThermalCompressibleSolidConstantPermeability
-      name="rock_temperatureDependentSinglePhaseThermalConductivity"
-      solidModelName="nullSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy_linear"
-      thermalConductivityModelName="thermalCond_nonLinear"/>
+      solidInternalEnergyModelName="rockInternalEnergy_linear"/>
 
     <ThermalCompressibleSolidConstantPermeability
       name="rock_temperatureDependentVolumetricHeatCapacity"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy_nonLinear"
-      thermalConductivityModelName="thermalCond_linear"/>
+      solidInternalEnergyModelName="rockInternalEnergy_nonLinear"/>
 
     <NullModel
       name="nullSolid"/>
