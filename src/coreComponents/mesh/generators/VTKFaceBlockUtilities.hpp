@@ -30,7 +30,7 @@ namespace geos::vtk
  * @brief Attach the face block information to the cell block manager.
  * @param faceBlockName[in] The name of the face block.
  * @param faceMesh[in] The vtk mesh for the face block.
- * @param mesh[in] The vtk volumic mesh.
+ * @param mesh[in] The vtk volumetric mesh.
  * @param cellBlockManager[inout] The cell block manager that will receive the face block information.
  */
 void importFractureNetwork( string const & faceBlockName,

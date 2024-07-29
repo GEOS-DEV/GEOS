@@ -576,7 +576,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
 /**
  * @brief Computes the local to global mappings for the 2d elements of the face mesh.
  * @param faceMeshCellGlobalIds The cell global ids for the face mesh.
- * @param meshCellGlobalIds The cell global ids for the volumic mesh.
+ * @param meshCellGlobalIds The cell global ids for the volumetric mesh.
  * @return The mapping as an array.
  * @details The vtk global ids of the elements of the @p faceMesh are used,
  * but they are shifted by the maximum element global id of the @p mesh,

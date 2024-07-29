@@ -246,7 +246,7 @@ vtkSmartPointer< vtkCellArray > getCellArray( vtkSmartPointer< vtkDataSet > mesh
  * @brief Build the element to nodes mappings for all the @p meshes.
  * @tparam INDEX_TYPE The indexing type that will be used by the toolbox that will perfomrn the parallel split.
  * @tparam POLICY The computational policy (parallel/serial)
- * @param meshes All the meshes involved (volumic and surfacic (for fractures))
+ * @param meshes All the meshes involved (volumetric and surfacic (for fractures))
  * @param cells The vtk cell array.
  * @return The mapping.
  */
@@ -331,7 +331,7 @@ buildElemToNodesImpl( AllMeshes & meshes,
 /**
  * @brief Build the element to nodes mappings for all the @p meshes.
  * @tparam INDEX_TYPE The indexing type that will be used by the toolbox that will perfomrn the parallel split.
- * @param meshes All the meshes involved (volumic and surfacic (for fractures))l
+ * @param meshes All the meshes involved (volumetric and surfacic (for fractures))l
  * @return The mapping.
  */
 template< typename INDEX_TYPE >

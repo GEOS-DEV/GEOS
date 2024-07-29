@@ -269,7 +269,7 @@ TEST_F( TestFractureImport, fracture )
       return MpiWrapper::sum( i );
     };
 
-    // Volumic mesh validations
+    // Volumetric mesh validations
     ASSERT_EQ( sum( cellBlockManager.numNodes() ), 16 );
     ASSERT_EQ( sum( cellBlockManager.numEdges() ), 24 );
     ASSERT_EQ( sum( cellBlockManager.numFaces() ), 12 );

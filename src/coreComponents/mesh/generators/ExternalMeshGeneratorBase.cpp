@@ -41,25 +41,25 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
     setApplyDefaultValue( { 1.0, 1.0, 1.0 } ).
     setDescription( "Scale the coordinates of the vertices by given scale factors (after translation)" );
 
-  registerWrapper( viewKeyStruct::volumicFieldsToImportString(), &m_volumicFieldsToImport ).
+  registerWrapper( viewKeyStruct::volumetricFieldsToImportString(), &m_volumetricFieldsToImport ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Volumic fields to be imported from the external mesh file" );
 
-  registerWrapper( viewKeyStruct::volumicFieldsInGEOSXString(), &m_volumicFieldsInGEOSX ).
+  registerWrapper( viewKeyStruct::volumetricFieldsInGEOSString(), &m_volumetricFieldsInGEOS ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of the volumic fields in GEOSX to import into" );
+    setDescription( "Names of the volumetric fields in GEOS to import into" );
 
   registerWrapper( viewKeyStruct::surfacicFieldsToImportString(), &m_surfacicFieldsToImport ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Surfacic fields to be imported from the external mesh file" );
 
-  registerWrapper( viewKeyStruct::surfacicFieldsInGEOSXString(), &m_surfacicFieldsInGEOSX ).
+  registerWrapper( viewKeyStruct::surfacicFieldsInGEOSString(), &m_surfacicFieldsInGEOS ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of the surfacic fields in GEOSX to import into" );
+    setDescription( "Names of the surfacic fields in GEOS to import into" );
 }
 
 void ExternalMeshGeneratorBase::postInputInitialization()
@@ -73,8 +73,8 @@ void ExternalMeshGeneratorBase::postInputInitialization()
                           " must contain the same number of values.",
                           InputError );
   };
-  checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
-  checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
+  checkSizes( m_volumetricFieldsToImport, m_volumetricFieldsInGEOS, viewKeyStruct::volumetricFieldsToImportString(), viewKeyStruct::volumetricFieldsInGEOSString() );
+  checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSString() );
 
   auto const checkDuplicates = [this]( arrayView1d< string const > v, string const & key )
   {
@@ -86,8 +86,8 @@ void ExternalMeshGeneratorBase::postInputInitialization()
                    "' already present in list of fields to import.",
                    InputError );
   };
-  checkDuplicates( m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsInGEOSXString() );
-  checkDuplicates( m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsInGEOSXString() );
+  checkDuplicates( m_volumetricFieldsInGEOS, viewKeyStruct::volumetricFieldsInGEOSString() );
+  checkDuplicates( m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsInGEOSString() );
 
   // Building the fields mapping from the two separated input/output vectors.
   auto const buildMapping = [&]( arrayView1d< string const > from,
@@ -101,8 +101,8 @@ void ExternalMeshGeneratorBase::postInputInitialization()
     return mapping;
   };
 
-  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport.toViewConst(), m_volumicFieldsInGEOSX.toViewConst() );
-  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOSX.toViewConst() );
+  MeshGeneratorBase::m_volumetricFields = buildMapping( m_volumetricFieldsToImport.toViewConst(), m_volumetricFieldsInGEOS.toViewConst() );
+  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOS.toViewConst() );
 }
 
 } // namespace geos

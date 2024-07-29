@@ -27,7 +27,7 @@ namespace geos
  * @brief Block of 2d elements (geometrical surfaces in 3d).
  *
  * @details The @p FaceBlockABC represents a zone of 2d (@e i.e. surfacic) elements.
- * Unlike its volumic equivalent @p CellBlockABC, @p FaceBlockABC is @e not @e homogeneous
+ * Unlike its volumetric equivalent @p CellBlockABC, @p FaceBlockABC is @e not @e homogeneous
  * and may hold 2d elements of multiple types (triangles, quadrangles...).
  * @details In this class, we'll use the term @e 2d @e element for the elements of the @p FaceBlockABC,
  * which are geometrical surfaces (in 3d).
@@ -93,7 +93,7 @@ public:
   virtual ArrayOfArrays< localIndex > get2dElemToEdges() const = 0;
 
   /**
-   * @brief Get the 3d faces (of the volumic mesh) that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
+   * @brief Get the 3d faces (of the volumetric mesh) that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
    * @return A mapping of size @p num2dFaces * 2 (each 2d element matches two 3d faces).
    * Element numbering is local to the @p FaceBlockABC. Faces numbering is local to the rank.
    *
@@ -143,7 +143,7 @@ public:
    * 3d edge numbering is local to the rank.
    *
    * @details The current @p FaceBlockABC has its own 2d faces (which are segments in terms of 3d geometry).
-   * Those segments are edges in the volumic mesh.
+   * Those segments are edges in the volumetric mesh.
    * The returned mapping tells which 3d edge is the geometrical equivalent of the 2d face of the @p FaceBlockABC.
    * There can be two collocated 3d edges (because for faults and fractures situations, nodes are duplicated).
    * But the returned mapping only refers to one unique 3d edge; the other is simply not provided.

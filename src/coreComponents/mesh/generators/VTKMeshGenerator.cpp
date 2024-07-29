@@ -128,7 +128,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, comm );
 }
 
-void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
+void VTKMeshGenerator::importVolumetricFieldOnArray( string const & cellBlockName,
                                                   string const & meshFieldName,
                                                   bool isMaterialField,
                                                   dataRepository::WrapperBase & wrapper ) const
@@ -200,8 +200,8 @@ void VTKMeshGenerator::importFieldOnArray( Block block,
 
   switch( block )
   {
-    case MeshGeneratorBase::Block::VOLUMIC:
-      return importVolumicFieldOnArray( blockName, meshFieldName, isMaterialField, wrapper );
+    case MeshGeneratorBase::Block::VOLUMETRIC:
+      return importVolumetricFieldOnArray( blockName, meshFieldName, isMaterialField, wrapper );
     case MeshGeneratorBase::Block::SURFACIC:
     case MeshGeneratorBase::Block::LINEIC:
       return importSurfacicFieldOnArray( blockName, meshFieldName, wrapper );

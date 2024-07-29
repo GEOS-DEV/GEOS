@@ -86,7 +86,7 @@ public:
    */
   enum struct Block
   {
-    VOLUMIC,
+    VOLUMETRIC,
     SURFACIC,
     LINEIC
   };
@@ -114,22 +114,22 @@ public:
   virtual void freeResources() {}
 
   /**
-   * @brief Get the name mapping between mesh volumic field names and internal GEOSX volumic field names.
+   * @brief Get the name mapping between mesh volumetric field names and internal GEOS volumetric field names.
    * @return The string to string mapping of field names.
    */
-  std::map< string, string > const & getVolumicFieldsMapping() const { return m_volumicFields; }
+  std::map< string, string > const & getVolumetricFieldsMapping() const { return m_volumetricFields; }
 
   /**
-   * @brief Get the name mapping between mesh surfacic field names and internal GEOSX surfacic field names.
+   * @brief Get the name mapping between mesh surfacic field names and internal GEOS surfacic field names.
    * @return The string to string mapping of field names.
    */
   std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
 protected:
-  /// Mapping from volumic field source to GEOSX field.
-  std::map< string, string > m_volumicFields;
+  /// Mapping from volumic field source to GEOS field.
+  std::map< string, string > m_volumetricFields;
 
-  /// Mapping from surfacic field source to GEOSX field.
+  /// Mapping from surfacic field source to GEOS field.
   std::map< string, string > m_surfacicFields;
 
 private:
