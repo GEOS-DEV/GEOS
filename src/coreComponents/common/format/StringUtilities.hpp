@@ -216,7 +216,7 @@ template< typename T >
 string toMetricPrefixString( T const & value );
 
 /**
- * @brief Compute the length of a constant string at compile-time.
+ * @return The length of a constant string computed at compile-time.
  * @param str The null-character terminated constant string
  * @todo c++17: this function is to remove in favor of std::string_view
  */
