@@ -467,6 +467,7 @@ void DomainPartition::outputPartitionInformation() const
           }
           MpiWrapper::barrier();
         }
+        MpiWrapper::barrier();
         GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
       }
     } );
