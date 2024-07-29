@@ -332,8 +332,8 @@ jobs:
             ENABLE_TRILINOS: OFF
             HOST_ARCH: ppc64le
             RUNS_ON: streak2-32core
-            NPROC: 20
-            DOCKER_RUN_ARGS: "--cpus=20 --memory=384g -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+            NPROC: 1
+            DOCKER_RUN_ARGS: "--cpus=24 --memory=384g -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
             DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
 
