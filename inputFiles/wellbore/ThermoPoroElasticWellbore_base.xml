@@ -51,17 +51,16 @@
     <CellElementRegion
       name="rock"
       cellBlocks="{ rock }"
-      materialList="{ fluid, rock }"/>
+      materialList="{ fluid, rock, rockThermalCond }"/>
   </ElementRegions>
 
   <Constitutive>
-    <ThermoPoroElasticIsotropic
+    <PorousElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"
-      thermalConductivityModelName="rockThermalCond"/>
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <!-- SPHINX_PoroElasticProperties -->
     <BiotPorosity
@@ -88,9 +87,7 @@
     <!-- SPHINX_ThermalProperties -->
     <SinglePhaseThermalConductivity
       name="rockThermalCond"
-      defaultThermalConductivityComponents="{ 6.6, 6.6, 6.6 }"
-      thermalConductivityGradientComponents="{ 0, 0, 0 }"
-      referenceTemperature="0"/>
+      defaultThermalConductivityComponents="{ 6.6, 6.6, 6.6 }"/>
     <!-- SPHINX_ThermalPropertiesEnd -->
 
     <!-- SPHINX_FluidProperties -->

@@ -26,14 +26,14 @@
 
   <Constitutive>
 
-    <ThermalCompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock_linear"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy_linear"/>
 
-    <ThermalCompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock_temperatureDependentVolumetricHeatCapacity"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"

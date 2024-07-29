@@ -85,7 +85,7 @@
 
     <SinglePhaseThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 3.5, 3.5, 3.5 }"/>
+      defaultThermalConductivityComponents="{ 3.5, 3.5, 3.5 }"/>
     
   </Constitutive>
 
