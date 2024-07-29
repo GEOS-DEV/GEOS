@@ -75,7 +75,7 @@ protected:
   /// Names of the surfacic fields to be copied from an external reader into GEOSX data structure
   array1d< string > m_surfacicFieldsToImport;
 
-  /// String array of the GEOS user declared surfacic fields
+  /// String array of the GEOSX user declared surfacic fields
   array1d< string > m_surfacicFieldsInGEOS;
 };
 
