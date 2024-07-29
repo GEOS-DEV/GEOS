@@ -1641,7 +1641,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion & subRegion )
     {
-
+      PerforationData * const perforationData = subRegion.getPerforationData();
       WellControls const & wellControls = getWellControls( subRegion );
       if( wellControls.isWellOpen( time_n+ dt ) )
       {
@@ -1651,9 +1651,6 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         bool isThermal = fluid.isThermal();
-
-
-        PerforationData * const perforationData = subRegion.getPerforationData();
 
         if( isThermal )
         {
@@ -1681,7 +1678,18 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
                                                        disableReservoirToWellFlow );
         }
       }
-
+      else
+      {
+        // Zero completion flow rate
+        arrayView2d< real64 > const compPerfRate = perforationData->getField< fields::well::compPerforationRate >();
+        for( integer iperf=0; iperf<perforationData->size(); iperf++ )
+        {
+          for( integer ic = 0; ic < m_numComponents; ++ic )
+          {
+            compPerfRate[iperf][ic] = 0.0;
+          }
+        }
+      }
     } );
 
   } );
