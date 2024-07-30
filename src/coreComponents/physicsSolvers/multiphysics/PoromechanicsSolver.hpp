@@ -50,7 +50,6 @@ ENUM_STRINGS( StabilizationType,
 }
 
 using namespace stabilization;
-using namespace fields;
 ;
 
 
