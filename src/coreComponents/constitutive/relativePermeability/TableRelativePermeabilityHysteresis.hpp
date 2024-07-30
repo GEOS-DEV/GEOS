@@ -818,7 +818,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                       m_drainagePhaseRelPermEndPoint[ipWetting],
                                       m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
                                       phaseTrappedVolFrac[ipWetting],
-                                      phaseRelPerm[dir][ipWetting],
+                                      phaseRelPerm[ipWetting][dir],
                                       dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting][dir] );
     }
   }
@@ -845,7 +845,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       // then compute the non-wetting phase relperm on the drainage curve
       computeDrainageRelPerm( m_drainageRelPermKernelWrappers[dir][TPT::NONWETTING],
                               phaseVolFraction[ipNonWetting],
-                              phaseRelPerm[dir][ipNonWetting],
+                              phaseRelPerm[ipNonWetting][dir],
                               dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting][dir] );
     }
     else
@@ -862,7 +862,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                           m_drainagePhaseMaxVolFraction[ipNonWetting],
                                           m_drainagePhaseRelPermEndPoint[ipNonWetting],
                                           phaseTrappedVolFrac[ipNonWetting],
-                                          phaseRelPerm[dir][ipNonWetting],
+                                          phaseRelPerm[ipNonWetting][dir],
                                           dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting][dir] );
     }
   }
@@ -918,7 +918,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                       m_drainagePhaseRelPermEndPoint[ipWetting],
                                       m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
                                       phaseTrappedVolFrac[ipWetting],
-                                      phaseRelPerm[dir][ipWetting],
+                                      phaseRelPerm[ipWetting][dir],
                                       dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting][dir] );
     }
   
@@ -927,7 +927,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       m_drainageRelPermKernelWrappers[dir][TPT::INTERMEDIATE_WETTING].compute( &( phaseVolFraction )[ipInter],
                                                                           &dInterRelPerm_wi_dInterVolFrac );
   }
-  for (int dir=0; dir<1; ++dir) {
+  for (int dir=0; dir<3; ++dir) {
     // 2) Non-wetting and intermediate phase relative permeabilities using two-phase non-wetting-intermediate data
 
     // ---------- non-wetting rel perm
@@ -951,7 +951,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       // 2.b) then compute the non-wetting phase relperm on the drainage curve
       computeDrainageRelPerm( m_drainageRelPermKernelWrappers[dir][TPT::NONWETTING],
                               phaseVolFraction[ipNonWetting],
-                              phaseRelPerm[dir][ipNonWetting],
+                              phaseRelPerm[ipNonWetting][dir],
                               dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting][dir] );
     }
     else
@@ -968,7 +968,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                           m_drainagePhaseMaxVolFraction[ipNonWetting],
                                           m_drainagePhaseRelPermEndPoint[ipNonWetting],
                                           phaseTrappedVolFrac[ipNonWetting],
-                                          phaseRelPerm[dir][ipNonWetting],
+                                          phaseRelPerm[ipNonWetting][dir],
                                           dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting][dir] );
     }
 
@@ -977,7 +977,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       m_drainageRelPermKernelWrappers[dir][TPT::INTERMEDIATE_NONWETTING].compute( &( phaseVolFraction )[ipInter],
                                                                             &dInterRelPerm_nwi_dInterVolFrac );
   }
-  for (int dir=0; dir<1; ++dir) {
+  for (int dir=0; dir<3; ++dir) {
     // 3) Compute the "three-phase" oil relperm
 
     // use saturation-weighted interpolation
@@ -992,7 +992,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                             dInterRelPerm_wi_dInterVolFrac,
                                             interRelPerm_nwi,
                                             dInterRelPerm_nwi_dInterVolFrac,
-                                            phaseRelPerm[dir][ipInter],
+                                            phaseRelPerm[ipInter][dir],
                                             dPhaseRelPerm_dPhaseVolFrac[ipInter][dir] );
 
     }
@@ -1006,9 +1006,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                             dInterRelPerm_wi_dInterVolFrac,
                                             interRelPerm_nwi,
                                             dInterRelPerm_nwi_dInterVolFrac,
-                                            phaseRelPerm[dir][ipWetting],
+                                            phaseRelPerm[ipWetting][dir],
                                             dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting][dir],
-                                            phaseRelPerm[dir][ipNonWetting],
+                                            phaseRelPerm[ipNonWetting][dir],
                                             dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting][dir],
                                             phaseRelPerm[ipInter][dir],
                                             dPhaseRelPerm_dPhaseVolFrac[ipInter][dir] );
