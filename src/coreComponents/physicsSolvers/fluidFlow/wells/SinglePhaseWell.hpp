@@ -179,11 +179,11 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void assembleFluxTerms( real64 const & time_n,
-                          real64 const & dt,
-                          DomainPartition & domain,
-                          DofManager const & dofManager,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                          arrayView1d< real64 > const & localRhs ) override;
+                                  real64 const & dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the accumulation term for all the well elements
@@ -193,10 +193,10 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void assembleAccumulationTerms( real64 const & time_n,
-                                  real64 const & dt, DomainPartition & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) override;
+                                          real64 const & dt, DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -206,9 +206,9 @@ public:
    * @param rhs the system right-hand side vector
    */
   void assembleVolumeBalanceTerms( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs )  ;
+                                   DofManager const & dofManager,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
