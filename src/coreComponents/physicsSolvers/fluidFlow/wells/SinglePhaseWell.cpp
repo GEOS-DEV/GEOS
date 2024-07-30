@@ -330,7 +330,8 @@ real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
@@ -418,7 +419,8 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
                                          arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
 
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -681,7 +683,8 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
                                                real64 const & dt, DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
