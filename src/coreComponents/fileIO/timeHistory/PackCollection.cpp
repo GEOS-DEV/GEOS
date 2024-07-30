@@ -17,6 +17,9 @@
 
 namespace geos
 {
+
+using namespace dataRepository;
+
 PackCollection::PackCollection ( string const & name, Group * parent )
   : HistoryCollectionBase( name, parent )
   , m_setsIndices( )

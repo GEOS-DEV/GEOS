@@ -23,6 +23,8 @@
 
 namespace geos
 {
+using namespace dataRepository;
+
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),

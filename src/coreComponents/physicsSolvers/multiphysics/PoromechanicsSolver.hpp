@@ -52,7 +52,7 @@ ENUM_STRINGS( StabilizationType,
 using namespace stabilization;
 using namespace fields;
 using namespace constitutive;
-using namespace dataRepository;
+
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
