@@ -181,7 +181,7 @@ for (int dir=0; dir<3; ++dir) {
     if( numPhases == 2 )
     {
       m_drainageWettingNonWettingRelPermTableNames.resize(3,numPhases);
-      // m_drainageWettingNonWettingRelPermTableNames.resize(3,numPhases);
+      m_drainageWettingNonWettingRelPermTableNames.resize(3,numPhases);
       GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames[dir][0].empty() || m_drainageWettingNonWettingRelPermTableNames[dir][1].empty(),
                     GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the relative permeability tables "
                               "for the pair (wetting phase, non-wetting phase)",
@@ -387,65 +387,67 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateImbibitionRel
   }
 
   // Step 2.a: validate wetting-phase imbibition relative permeability table
+  for (int dir=0; dir<3; ++dir) {
+    if( m_phaseHasHysteresis[IPT::WETTING] )
+   
+    {
 
-  if( m_phaseHasHysteresis[IPT::WETTING] )
-  {
+      checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName[dir], // input
+                                            m_imbibitionPhaseMinVolFraction[dir][IPT::WETTING], // output
+                                            m_imbibitionPhaseMaxVolFraction[IPT::WETTING],
+                                            m_imbibitionPhaseRelPermEndPoint[IPT::WETTING] );
 
-    checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName[0], // input
-                                           m_imbibitionPhaseMinVolFraction[0][IPT::WETTING], // output
-                                           m_imbibitionPhaseMaxVolFraction[IPT::WETTING],
-                                           m_imbibitionPhaseRelPermEndPoint[IPT::WETTING] );
+      GEOS_THROW_IF( !isZero( m_imbibitionPhaseMinVolFraction[dir][IPT::WETTING] - m_drainagePhaseMinVolFraction[dir][ipWetting] ),
+                    GEOS_FMT( "{}: the critical wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n"
+                              "However, we found that the drainage critical wetting-phase volume fraction is {}, "
+                              "whereas the imbibition critical wetting-phase volume fraction is {}",
+                              getFullName(),
+                              m_drainagePhaseMinVolFraction[dir][ipWetting], m_imbibitionPhaseMinVolFraction[dir][IPT::WETTING] ),
+                    InputError );
 
-    GEOS_THROW_IF( !isZero( m_imbibitionPhaseMinVolFraction[0][IPT::WETTING] - m_drainagePhaseMinVolFraction[0][ipWetting] ),
-                   GEOS_FMT( "{}: the critical wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n"
-                             "However, we found that the drainage critical wetting-phase volume fraction is {}, "
-                             "whereas the imbibition critical wetting-phase volume fraction is {}",
-                             getFullName(),
-                             m_drainagePhaseMinVolFraction[0][ipWetting], m_imbibitionPhaseMinVolFraction[0][IPT::WETTING] ),
-                   InputError );
-
-    GEOS_THROW_IF( m_imbibitionPhaseMaxVolFraction[IPT::WETTING] > m_drainagePhaseMaxVolFraction[ipWetting],
-                   GEOS_FMT( "{}: the maximum wetting-phase volume fraction (saturation) must be smaller in imbibition (compared to the drainage value).\n"
-                             "However, we found that the drainage maximum wetting-phase volume fraction is {}, "
-                             "whereas the imbibition maximum wetting-phase volume fraction is {}",
-                             getFullName(),
-                             m_drainagePhaseMaxVolFraction[ipWetting], m_imbibitionPhaseMaxVolFraction[IPT::WETTING] ),
-                   InputError );
+      GEOS_THROW_IF( m_imbibitionPhaseMaxVolFraction[IPT::WETTING] > m_drainagePhaseMaxVolFraction[ipWetting],
+                    GEOS_FMT( "{}: the maximum wetting-phase volume fraction (saturation) must be smaller in imbibition (compared to the drainage value).\n"
+                              "However, we found that the drainage maximum wetting-phase volume fraction is {}, "
+                              "whereas the imbibition maximum wetting-phase volume fraction is {}",
+                              getFullName(),
+                              m_drainagePhaseMaxVolFraction[ipWetting], m_imbibitionPhaseMaxVolFraction[IPT::WETTING] ),
+                    InputError );
+    }
   }
+    // Step 2.b: validate non-wetting-phase imbibition relative permeability table
+  for (int dir=0; dir<3; ++dir) {
+    if( m_phaseHasHysteresis[IPT::NONWETTING] )
+    {
 
-  // Step 2.b: validate non-wetting-phase imbibition relative permeability table
+      checkExistenceAndValidateRelPermTable( m_imbibitionNonWettingRelPermTableName[dir], // input
+                                            m_imbibitionPhaseMinVolFraction[dir][IPT::NONWETTING], // output
+                                            m_imbibitionPhaseMaxVolFraction[IPT::NONWETTING],
+                                            m_imbibitionPhaseRelPermEndPoint[IPT::NONWETTING] );
 
-  if( m_phaseHasHysteresis[IPT::NONWETTING] )
-  {
+      GEOS_THROW_IF( !isZero ( m_imbibitionPhaseMaxVolFraction[IPT::NONWETTING] - m_drainagePhaseMaxVolFraction[ipNonWetting] ),
+                    GEOS_FMT( string( "{}: the maximum non-wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n" )
+                              + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
+                              + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
+                              getFullName(),
+                              m_drainagePhaseMaxVolFraction[ipNonWetting], m_imbibitionPhaseMaxVolFraction[IPT::NONWETTING] ),
+                    InputError );
 
-    checkExistenceAndValidateRelPermTable( m_imbibitionNonWettingRelPermTableName[0], // input
-                                           m_imbibitionPhaseMinVolFraction[0][IPT::NONWETTING], // output
-                                           m_imbibitionPhaseMaxVolFraction[IPT::NONWETTING],
-                                           m_imbibitionPhaseRelPermEndPoint[IPT::NONWETTING] );
+      GEOS_THROW_IF( !isZero ( m_imbibitionPhaseRelPermEndPoint[IPT::NONWETTING] - m_drainagePhaseRelPermEndPoint[ipNonWetting] ),
+                    GEOS_FMT( string( "{}: the non-wetting-phase relperm endpoint must be the same in drainage and imbibition.\n" )
+                              + string( "However, we found that the drainage endpoint wetting-phase relperm is {}, " )
+                              + string( "whereas the imbibition endpoint wetting-phase relperm is {}" ),
+                              getFullName(),
+                              m_drainagePhaseRelPermEndPoint[ipNonWetting], m_imbibitionPhaseRelPermEndPoint[IPT::NONWETTING] ),
+                    InputError );
 
-    GEOS_THROW_IF( !isZero ( m_imbibitionPhaseMaxVolFraction[IPT::NONWETTING] - m_drainagePhaseMaxVolFraction[ipNonWetting] ),
-                   GEOS_FMT( string( "{}: the maximum non-wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n" )
-                             + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
-                             + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
-                             getFullName(),
-                             m_drainagePhaseMaxVolFraction[ipNonWetting], m_imbibitionPhaseMaxVolFraction[IPT::NONWETTING] ),
-                   InputError );
-
-    GEOS_THROW_IF( !isZero ( m_imbibitionPhaseRelPermEndPoint[IPT::NONWETTING] - m_drainagePhaseRelPermEndPoint[ipNonWetting] ),
-                   GEOS_FMT( string( "{}: the non-wetting-phase relperm endpoint must be the same in drainage and imbibition.\n" )
-                             + string( "However, we found that the drainage endpoint wetting-phase relperm is {}, " )
-                             + string( "whereas the imbibition endpoint wetting-phase relperm is {}" ),
-                             getFullName(),
-                             m_drainagePhaseRelPermEndPoint[ipNonWetting], m_imbibitionPhaseRelPermEndPoint[IPT::NONWETTING] ),
-                   InputError );
-
-    GEOS_THROW_IF( m_imbibitionPhaseMinVolFraction[0][IPT::NONWETTING] < m_drainagePhaseMinVolFraction[0][ipNonWetting],
-                   GEOS_FMT( string( "{}: the critical wetting-phase volume fraction (saturation) must be larger in imbibition (compared to the drainage value).\n" )
-                             + string( "However, we found that the drainage critical wetting-phase volume fraction is {}, " )
-                             + string( "whereas the imbibition critical wetting-phase volume fraction is {}" ),
-                             getFullName(),
-                             m_drainagePhaseMinVolFraction[0][ipNonWetting], m_imbibitionPhaseMinVolFraction[0][IPT::NONWETTING] ),
-                   InputError );
+      GEOS_THROW_IF( m_imbibitionPhaseMinVolFraction[dir][IPT::NONWETTING] < m_drainagePhaseMinVolFraction[dir][ipNonWetting],
+                    GEOS_FMT( string( "{}: the critical wetting-phase volume fraction (saturation) must be larger in imbibition (compared to the drainage value).\n" )
+                              + string( "However, we found that the drainage critical wetting-phase volume fraction is {}, " )
+                              + string( "whereas the imbibition critical wetting-phase volume fraction is {}" ),
+                              getFullName(),
+                              m_drainagePhaseMinVolFraction[dir][ipNonWetting], m_imbibitionPhaseMinVolFraction[dir][IPT::NONWETTING] ),
+                    InputError );
+    }
   }
 }
 // Do these need changes?
@@ -499,38 +501,39 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   // Step 3a: Land parameter for the wetting phase
 
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
+  for (int dir=0; dir<3; ++dir) {
+    {
+      real64 const Scrd = m_drainagePhaseMinVolFraction[dir][ipWetting];
+      real64 const Smxd = m_drainagePhaseMaxVolFraction[ipWetting];
+      real64 const Smxi = m_imbibitionPhaseMaxVolFraction[IPT::WETTING];
+      real64 const Swc = Scrd;
+      GEOS_THROW_IF(  (Smxi - Smxd) > 0,
+                      GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
+                                "Crossing relative permeability curves.\n",
+                                getFullName(),
+                                Smxi,
+                                Smxd ),
+                      InputError );
 
-  {
-    real64 const Scrd = m_drainagePhaseMinVolFraction[0][ipWetting];
-    real64 const Smxd = m_drainagePhaseMaxVolFraction[ipWetting];
-    real64 const Smxi = m_imbibitionPhaseMaxVolFraction[IPT::WETTING];
-    real64 const Swc = Scrd;
-    GEOS_THROW_IF(  (Smxi - Smxd) > 0,
-                    GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
+      m_landParam[IPT::WETTING] = ( Smxd - Swc ) / LvArray::math::max( KernelWrapper::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
+    }
+
+    // Step 3b: Land parameter for the non-wetting phase
+
+    {
+      real64 const Scrd = m_drainagePhaseMinVolFraction[dir][ipNonWetting];
+      real64 const Scri = m_imbibitionPhaseMinVolFraction[dir][IPT::NONWETTING];
+      real64 const Smx = m_drainagePhaseMaxVolFraction[ipNonWetting];
+      GEOS_THROW_IF( (Scrd - Scri) > 0,
+                    GEOS_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
                               "Crossing relative permeability curves.\n",
                               getFullName(),
-                              Smxi,
-                              Smxd ),
+                              Scrd,
+                              Scri ),
                     InputError );
 
-    m_landParam[IPT::WETTING] = ( Smxd - Swc ) / LvArray::math::max( KernelWrapper::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
-  }
-
-  // Step 3b: Land parameter for the non-wetting phase
-
-  {
-    real64 const Scrd = m_drainagePhaseMinVolFraction[0][ipNonWetting];
-    real64 const Scri = m_imbibitionPhaseMinVolFraction[0][IPT::NONWETTING];
-    real64 const Smx = m_drainagePhaseMaxVolFraction[ipNonWetting];
-    GEOS_THROW_IF( (Scrd - Scri) > 0,
-                   GEOS_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
-                             "Crossing relative permeability curves.\n",
-                             getFullName(),
-                             Scrd,
-                             Scri ),
-                   InputError );
-
-    m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / LvArray::math::max( KernelWrapper::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
+      m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / LvArray::math::max( KernelWrapper::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
+    }
   }
 }
 
@@ -551,7 +554,7 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
     if( numPhases == 2 )
     {
       m_drainageRelPermKernelWrappers.resize(3,numPhases);
-      m_imbibitionRelPermKernelWrappers.resize(3, numPhases);
+      m_imbibitionRelPermKernelWrappers.resize(3, 2);
       for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames[dir].size(); ++ip )
       {
         TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[dir][ip] );
@@ -566,13 +569,13 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
       TableFunction const & imbibitionNonWettingRelPermTable = m_phaseHasHysteresis[IPT::NONWETTING]
         ? functionManager.getGroup< TableFunction >( m_imbibitionNonWettingRelPermTableName[dir] )
         : functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[dir][1] );
-      m_imbibitionRelPermKernelWrappers[dir][0] = imbibitionNonWettingRelPermTable.createKernelWrapper();
+      m_imbibitionRelPermKernelWrappers[dir][1] = imbibitionNonWettingRelPermTable.createKernelWrapper();
 
     }
     else if( numPhases == 3 )
     {
       m_drainageRelPermKernelWrappers.resize(3,4);
-      m_imbibitionRelPermKernelWrappers.resize(3,4);
+      m_imbibitionRelPermKernelWrappers.resize(3,2);
       for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames[dir].size(); ++ip )
       {
         TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[dir][ip] );
@@ -592,7 +595,7 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
       TableFunction const & imbibitionNonWettingRelPermTable = m_phaseHasHysteresis[IPT::NONWETTING]
         ? functionManager.getGroup< TableFunction >( m_imbibitionNonWettingRelPermTableName[dir] )
         : functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[dir][0] );
-      m_imbibitionRelPermKernelWrappers[dir][0] = imbibitionNonWettingRelPermTable.createKernelWrapper();
+      m_imbibitionRelPermKernelWrappers[dir][1] = imbibitionNonWettingRelPermTable.createKernelWrapper();
     }
   }
 }
