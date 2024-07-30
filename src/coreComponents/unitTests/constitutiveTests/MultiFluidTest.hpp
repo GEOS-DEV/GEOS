@@ -25,7 +25,6 @@
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
-using namespace geos::dataRepository;
 using namespace geos::constitutive;
 using namespace geos::constitutive::multifluid;
 
@@ -118,14 +117,14 @@ public:
 
   MultiFluidBase & getFluid() const { return *m_model; }
 
-  Group & getParent() { return m_parent; }
+  dataRepository::Group & getParent() { return m_parent; }
 
   void testValuesAgainstPreviousImplementation( typename FLUID_TYPE::KernelWrapper const & wrapper,
                                                 MultiFluidTestData< NUM_PHASE, NUM_COMP > const & testData,
                                                 real64 const relTol ) const;
 
   void testNumericalDerivatives( MultiFluidBase & fluid,
-                                 Group * parent,
+                                 dataRepository::Group * parent,
                                  MultiFluidTestData< NUM_PHASE, NUM_COMP > const & testData,
                                  real64 const perturbParameter,
                                  real64 const relTol,
@@ -156,7 +155,7 @@ protected:
 template< typename FLUID_TYPE, integer NUM_PHASE, integer NUM_COMP >
 void MultiFluidTest< FLUID_TYPE, NUM_PHASE, NUM_COMP >::
 testNumericalDerivatives( MultiFluidBase & fluid,
-                          Group * parent,
+                          dataRepository::Group * parent,
                           MultiFluidTestData< NUM_PHASE, NUM_COMP > const & testData,
                           real64 const perturbParameter,
                           real64 const relTol,
