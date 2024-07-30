@@ -42,7 +42,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   ImmiscibleMultiphaseFlow( const string & name,
-                               Group * const parent );
+                            Group * const parent );
 
   /// deleted default constructor
   ImmiscibleMultiphaseFlow() = delete;
@@ -71,7 +71,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }  
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
@@ -104,32 +104,7 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
-  /**
-   * @brief Update all relevant fluid models using current values of pressure and phase volume fraction
-   * @param dataGroup the group storing the required fields
-   */
-  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
-
-  /**
-   * @brief Update all relevant relperm models using current values of phase volume fraction
-   * @param dataGroup the group storing the required fields
-   */
-  void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
-
-  /**
-   * @brief Update all relevant capillary pressure models using current values of phase volume fraction
-   * @param dataGroup the group storing the required fields
-   */
-  void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
-
-
-  /**
-   * @brief Recompute phase mobility from constitutive and primary variables
-   * @param dataGroup the group storing the required field
-   */
-  void updatePhaseMobility( ObjectManagerBase & dataGroup ) const;
-
-  real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
+  void updateFluidState( ElementSubRegionBase & subRegion ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
@@ -151,9 +126,9 @@ public:
    * @param localRhs the system right-hand side vector
    */
   void assembleAccumulationTerm( DomainPartition & domain,
-                                                  DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs ) const;
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -169,7 +144,7 @@ public:
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) const override final;
+                     arrayView1d< real64 > const & localRhs ) const;
   /**
    * @brief Initialize all variables from initial conditions
    * @param domain the domain containing the mesh and fields
@@ -197,21 +172,6 @@ public:
                          arrayView1d< real64 > const & localRhs ) const;
 
   /**
-   * @brief Apply source flux boundary conditions to the system
-   * @param time current time
-   * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain the domain
-   * @param localMatrix local system matrix
-   * @param localRhs local system right-hand side vector
-   */
-  void applySourceFluxBC( real64 const time,
-                          real64 const dt,
-                          DofManager const & dofManager,
-                          DomainPartition & domain,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                          arrayView1d< real64 > const & localRhs ) const;
-  /**
    * @brief function to set the next time step size
    * @param[in] currentDt the current time step size
    * @param[in] domain the domain object
@@ -222,11 +182,35 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-protected:
+private:
 
   virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
+
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and phase volume fraction
+   * @param dataGroup the group storing the required fields
+   */
+  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update all relevant relperm models using current values of phase volume fraction
+   * @param dataGroup the group storing the required fields
+   */
+  void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update all relevant capillary pressure models using current values of phase volume fraction
+   * @param dataGroup the group storing the required fields
+   */
+  void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Recompute phase mobility from constitutive and primary variables
+   * @param dataGroup the group storing the required field
+   */
+  void updatePhaseMobility( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
@@ -251,6 +235,13 @@ protected:
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
+  struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
+  {
+    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
+    static constexpr char const * relPermNamesString() { return "relPermNames"; }
+    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+  };
+
 private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
@@ -259,11 +250,11 @@ private:
 
 template< typename OBJECT_TYPE >
 void ImmiscibleMultiphaseFlow::applyFieldValue( real64 const & time_n,
-                                                   real64 const & dt,
-                                                   MeshLevel & mesh,
-                                                   char const logMessage[],
-                                                   string const fieldKey,
-                                                   string const boundaryFieldKey ) const
+                                                real64 const & dt,
+                                                MeshLevel & mesh,
+                                                char const logMessage[],
+                                                string const fieldKey,
+                                                string const boundaryFieldKey ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 

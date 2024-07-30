@@ -8,6 +8,7 @@ set( physicsSolvers_headers
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
      fluidFlow/ImmiscibleMultiphaseFlow.hpp
+     fluidFlow/ImmiscibleMultiphaseFlowFields.hpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp

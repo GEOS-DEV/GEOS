@@ -17,8 +17,8 @@
  * @file CompositionalMultiphaseBaseFields.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASEFLOWFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASEFLOWFIELDS_HPP_
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
@@ -67,7 +67,7 @@ DECLARE_FIELD( phaseMass_n,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Phase mass at the previous converged time step" );               
+               "Phase mass at the previous converged time step" );
 
 DECLARE_FIELD( phaseMobility,
                "phaseMobility",
@@ -106,4 +106,4 @@ DECLARE_FIELD( phaseCFLNumber,
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASEFLOWFIELDS_HPP_
