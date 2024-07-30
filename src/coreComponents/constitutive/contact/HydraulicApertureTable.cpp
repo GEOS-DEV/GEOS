@@ -152,6 +152,8 @@ HydraulicApertureTableUpdates HydraulicApertureTable::createKernelWrapper() cons
   return HydraulicApertureTableUpdates( *m_apertureTable );
 }
 
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, HydraulicApertureTable, string const &, Group * const )
+
 } /* end namespace constitutive */
 
 } /* end namespace geos */
