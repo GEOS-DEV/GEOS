@@ -408,6 +408,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
 
+  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+  {
+    addCollocatedFractureNodes( subRegion );
+  } );
+
   for( integer d = 0; d < depth; ++d )
   {
     for( localIndex const nodeIndex: nodeAdjacencySet )
