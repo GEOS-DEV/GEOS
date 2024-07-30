@@ -32,9 +32,6 @@ namespace geos
 
 namespace constitutive
 {
-
-using namespace multifluid;
-
 namespace compositional
 {
 
