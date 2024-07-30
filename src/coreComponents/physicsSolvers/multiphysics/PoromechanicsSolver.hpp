@@ -27,6 +27,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -123,7 +124,7 @@ public:
                    InputError );
   }
 
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
   {
     if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
     {
@@ -135,11 +136,10 @@ public:
       string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
       hydraulicApertureModelName = SolverBase::getConstitutiveName< HydraulicApertureBase >( subRegion );
       GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
-                                                                   getDataContext(), subRegion.getDataContext() ) );
+                                                                   this->getDataContext(), subRegion.getDataContext() ) );
     }
 
   }
-
 
   virtual void initializePreSubGroups() override
   {
@@ -329,7 +329,7 @@ public:
 
     /// Multiplier on stabilization strength
     constexpr static const char * stabilizationMultiplierString() {return "stabilizationMultiplier"; }
-    
+
     /// Name of the hydraulicApertureRelationName
     static constexpr char const * hydraulicApertureRelationNameString() {return "hydraulicApertureRelationName"; }
 

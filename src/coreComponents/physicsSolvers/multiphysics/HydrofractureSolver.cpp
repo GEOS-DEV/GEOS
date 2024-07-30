@@ -216,7 +216,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
                            &globallyFractured,
                            1,
                            MPI_MAX,
-                           MPI_COMM_GEOS );
+                           MPI_COMM_GEOSX );
 
     if( globallyFractured == 0 )
     {
@@ -281,7 +281,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
 
-    string const & hydraulicApertureRelationName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::hydraulicApertureRelationNameString()  );
+    string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
     HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
@@ -464,10 +464,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupSystem( DomainPartition &
   localMatrix.setName( this->getName() + "/matrix" );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( numLocalRows, MPI_COMM_GEOS );
+  rhs.create( numLocalRows, MPI_COMM_GEOSX );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( numLocalRows, MPI_COMM_GEOS );
+  solution.create( numLocalRows, MPI_COMM_GEOSX );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
@@ -803,7 +803,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion const & subRegion )
     {
-      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::hydraulicApertureRelationNameString()  );
+      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
       HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
       string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
