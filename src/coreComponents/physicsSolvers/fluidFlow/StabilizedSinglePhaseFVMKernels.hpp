@@ -28,7 +28,7 @@ namespace geos
 namespace stabilizedSinglePhaseFVMKernels
 {
 
-using namespace constitutive;
+;
 
 
 /******************************** FaceBasedAssemblyKernel ********************************/
@@ -59,7 +59,7 @@ public:
                       fields::flow::pressure_n >;
 
   using StabSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::density_n >;
 
   using AbstractBase::m_dt;

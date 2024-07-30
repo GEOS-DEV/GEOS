@@ -51,7 +51,7 @@ ENUM_STRINGS( StabilizationType,
 
 using namespace stabilization;
 using namespace fields;
-using namespace constitutive;
+;
 
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >

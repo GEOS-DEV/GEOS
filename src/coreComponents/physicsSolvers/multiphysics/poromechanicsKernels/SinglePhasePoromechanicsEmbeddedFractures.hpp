@@ -30,7 +30,7 @@ namespace singlePhasePoromechanicsEmbeddedFracturesKernels
 {
 
 using namespace fluxKernelsHelper;
-using namespace constitutive;
+;
 
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
@@ -51,7 +51,7 @@ public:
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::SlurryFluidBase,
                                                                   fields::permeability::dPerm_dDispJump >;
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;

@@ -30,7 +30,7 @@ namespace geos
 
 namespace thermalSinglePhaseFVMKernels
 {
-using namespace constitutive;
+;
 
 /******************************** FaceBasedAssemblyKernel ********************************/
 
@@ -83,14 +83,14 @@ public:
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::dDensity_dTemperature,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy_dPressure,
                               fields::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
+    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
   /**
@@ -533,14 +533,14 @@ public:
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::dDensity_dTemperature,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy_dPressure,
                               fields::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
+    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
   /**
@@ -778,7 +778,7 @@ public:
                    FaceManager const & faceManager,
                    ElementRegionManager const & elemManager,
                    BoundaryStencilWrapper const & stencilWrapper,
-                   SingleFluidBase & fluidBase,
+                   constitutive::SingleFluidBase & fluidBase,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )

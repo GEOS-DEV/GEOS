@@ -29,7 +29,7 @@ namespace thermalSinglePhasePoromechanicsEmbeddedFracturesKernels
 {
 
 using namespace fluxKernelsHelper;
-using namespace constitutive;
+;
 
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >
@@ -50,7 +50,7 @@ public:
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = SinglePhaseFVMAbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::SlurryFluidBase,
                                                                   fields::permeability::dPerm_dDispJump >;
   using SinglePhaseFVMAbstractBase::m_dt;
   using SinglePhaseFVMAbstractBase::m_rankOffset;
@@ -78,14 +78,14 @@ public:
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::dDensity_dTemperature,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy_dPressure,
                               fields::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
+    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
 
