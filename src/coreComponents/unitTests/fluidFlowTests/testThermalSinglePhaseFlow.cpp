@@ -84,7 +84,7 @@ char const * xmlInput =
                          materialList="{ water, rock, thermalCond }" />
     </ElementRegions>
     <Constitutive>
-      <ThermalCompressibleSolidConstantPermeability name="rock"
+      <CompressibleSolidConstantPermeability name="rock"
                                              solidModelName="nullSolid"
                                              porosityModelName="rockPorosity"
                                              permeabilityModelName="rockPerm"
