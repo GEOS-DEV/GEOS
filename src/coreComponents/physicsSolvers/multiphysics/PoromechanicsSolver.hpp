@@ -49,7 +49,7 @@ ENUM_STRINGS( StabilizationType,
               "Local" );
 }
 
-using namespace stabilization;
+//using namespace stabilization;
 ;
 
 
@@ -97,9 +97,9 @@ public:
     this->registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setDescription( "StabilizationType. Options are:\n" +
-                      toString( StabilizationType::None ) + "- Add no stabilization to mass equation \n" +
-                      toString( StabilizationType::Global ) + "- Add jump stabilization to all faces \n" +
-                      toString( StabilizationType::Local ) + "- Add jump stabilization on interior of macro elements" );
+                      toString( stabilization::StabilizationType::None ) + "- Add no stabilization to mass equation \n" +
+                      toString( stabilization::StabilizationType::Global ) + "- Add jump stabilization to all faces \n" +
+                      toString( stabilization::StabilizationType::Local ) + "- Add jump stabilization on interior of macro elements" );
 
     this->registerWrapper( viewKeyStruct::stabilizationRegionNamesString(), &m_stabilizationRegionNames ).
       setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
@@ -126,7 +126,7 @@ public:
   {
     Base::initializePreSubGroups();
 
-    GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,
+    GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
                    this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                    ": Local stabilization has been temporarily disabled",
                    InputError );
@@ -178,7 +178,7 @@ public:
       flowSolver()->enableFixedStressPoromechanicsUpdate();
     }
 
-    if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
+    if( m_stabilizationType == stabilization::StabilizationType::Global || m_stabilizationType == stabilization::StabilizationType::Local )
     {
       flowSolver()->enableJumpStabilization();
     }
@@ -211,7 +211,7 @@ public:
           subRegion.registerField< fields::poromechanics::bulkDensity >( this->getName() );
         }
 
-        if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
+        if( m_stabilizationType == stabilization::StabilizationType::Global || m_stabilizationType == stabilization::StabilizationType::Local )
         {
           subRegion.registerField< fields::flow::macroElementIndex >( this->getName());
           subRegion.registerField< fields::flow::elementStabConstant >( this->getName());
@@ -226,7 +226,7 @@ public:
   {
     flowSolver()->setKeepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
-    if( this->m_stabilizationType == StabilizationType::Global || this->m_stabilizationType == StabilizationType::Local )
+    if( this->m_stabilizationType == stabilization::StabilizationType::Global || this->m_stabilizationType == stabilization::StabilizationType::Local )
     {
       this->updateStabilizationParameters( domain );
     }
