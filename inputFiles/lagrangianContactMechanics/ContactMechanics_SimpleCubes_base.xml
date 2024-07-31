@@ -50,7 +50,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="0.0"
+      defaultAperture="1e-6"
       materialList="{ fractureMaterial }"/>
   </ElementRegions>
 
