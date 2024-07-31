@@ -21,10 +21,8 @@
 
 #include "common/LogMsg.hpp"
 
-
 namespace geos
 {
-
 
 /**
  * @brief Interface (implementation contract) of any class that can send log messages (GeneralLogger, Group)
@@ -41,15 +39,15 @@ class LoggingObject
 
   virtual void logRank0( LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
 
-  // TODO not exactly sure how to implement that (avoid formating if cond is false, keeping condition as metadata).
+  // TODO not exactly sure how to implement that (avoid formating if cond is false, keeping condition as metadata). Should we drop this in favor of classic compact if() expressions?
   // virtual void logRank0If( bool cond, LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
 
   virtual void log( LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
 
-  // TODO not exactly sure how to implement that (avoid formating if cond is false, keeping condition as metadata).
+  // TODO not exactly sure how to implement that (avoid formating if cond is false, keeping condition as metadata). Should we drop this in favor of classic compact if() expressions?
   // virtual void logIf( bool cond, LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
 
-  //TODO : logDevice has been excluded as ... document why commented and should not exist (bad perfs, workaround)
+  //TODO : analyze how we could support this in an non-intrusive way (about performances / CUDA cache usage) or as a developer limited feature
   // logDevice( SrcCodeLoc loc, INPUTS ... inputs )
 
 protected:
@@ -59,7 +57,11 @@ protected:
   CONTEXT_T getLoggingContext() const =0;
 
 };
-LogMsg::
+
+/**
+ * @brief LoggingObject implementations
+ */
+///@{
 
 class GeneralLogger final : public LoggingObject<LogMsg::Context::General>
 {
@@ -131,6 +133,7 @@ private:
 
 };
 
+///@}
 
 } // namespace geos
 

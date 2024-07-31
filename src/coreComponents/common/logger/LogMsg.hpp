@@ -62,7 +62,6 @@ struct LogMsgType
   Error,
 };
 
-
 struct LogMsgCallParams
 {
   SourceCodeLocation m_location;
@@ -111,8 +110,8 @@ struct LogMsgTargetContext {
 struct LogMsgContext
 {
   LogMsgParams m_params;
-  LogMsgGeneralContext m_generalContext
-  LogMsgTargetContext m_targetContext
+  LogMsgGeneralContext m_generalContext;
+  LogMsgTargetContext m_targetContext;
 };
 
 

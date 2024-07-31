@@ -21,10 +21,8 @@
 
 #include "common/LogMsg.hpp"
 
-
 namespace geos
 { // TODO document
-
 
 class LogOutput {
 public:
@@ -39,6 +37,10 @@ public:
 
 };
 
+/**
+ * @brief LogOutput implementations
+ */
+///@{
 
 class LogHDF5Output final : public LogOutput {
 public:
@@ -83,6 +85,7 @@ private:
   
 };
 
+///@}
 
 };
 
