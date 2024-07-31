@@ -65,7 +65,10 @@ You will get a warning you can ignore
   cd build-macOS_arm-release
   make
 
-  You will get an error at the end, ignore
+You will get an error at the end...you can ignore it.
+
+.. code-block::
+
   [100%] Linking CXX executable ../../../tests/blt_mpi_smoke
   ld: warning: -commons use_dylibs is no longer supported, using error treatment instead
   ld: file not found: @rpath/libquadmath.0.dylib for architecture arm64
@@ -75,7 +78,7 @@ You will get a warning you can ignore
   make: *** [all] Error 2
 
 
-build GEOS
+Build GEOS
 ----------
 
 .. code-block::
