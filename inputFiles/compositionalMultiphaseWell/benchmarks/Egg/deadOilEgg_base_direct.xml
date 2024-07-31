@@ -208,6 +208,11 @@
       timeFrequency="7.5e6"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent
+      name="periodicStats"
+      timeFrequency="1e6"
+      target="/Tasks/testStats"/>
     
   </Events>
 
@@ -379,6 +384,18 @@
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
   <Tasks>
+    <!-- specificFields TODO
+          LOGLEVEL TODO : sortie génrique qui affiche tout les champs dans le log -->
+    <StatOutputController name="testStats" >
+      <CompositionalMultiphaseStatistics
+        name="compflowStatistics"
+        flowSolverName="compflow"
+        logLevel="1"
+        computeCFLNumbers="1"
+        computeRegionStatistics="1"
+      />
+    </StatOutputController>
+
     <PackCollection
       name="wellRateCollection1"
       objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"

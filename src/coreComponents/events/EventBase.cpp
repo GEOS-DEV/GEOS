@@ -136,6 +136,7 @@ void EventBase::expandObjectCatalogs()
   {
     for( auto & catalogIter: EventBase::getCatalog())
     {
+      std::cout << " expandObjectCatalogs " << catalogIter.first << std::endl;
       createChild( catalogIter.first, catalogIter.first );
     }
   }
