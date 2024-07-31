@@ -116,7 +116,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords, 4 );
+                                                                        coords );
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
@@ -168,7 +168,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords, 4 );
+                                                                        coords );
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
