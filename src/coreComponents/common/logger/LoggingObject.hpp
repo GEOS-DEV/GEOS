@@ -37,12 +37,16 @@ class LoggingObject
   void setLogLevel( LogLevel value );
 
 
-  virtual void logRank0( LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
+  virtual void logRank0( LogMsg::CallParams loc, INPUTS ... msgs ) const = 0;
+  virtual void logRank0( LogMsg::CallParams loc, LogRouter router, INPUTS ... msg ) const = 0;
+  virtual void logRank0Fmt( LogMsg::CallParams loc, LogRouter router, string_view msg, INPUTS ... parameters ) const = 0;
+
+  virtual void log( LogMsg::CallParams loc, INPUTS ... msgs ) const = 0;
+  virtual void log( LogMsg::CallParams loc, LogRouter router, INPUTS ... msg ) const = 0;
+  virtual void logFmt( LogMsg::CallParams loc, LogRouter router, string_view msg, INPUTS ... parameters ) const = 0;
 
   // TODO not exactly sure how to implement that (avoid formating if cond is false, keeping condition as metadata). Should we drop this in favor of classic compact if() expressions?
   // virtual void logRank0If( bool cond, LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
-
-  virtual void log( LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
 
   // TODO not exactly sure how to implement that (avoid formating if cond is false, keeping condition as metadata). Should we drop this in favor of classic compact if() expressions?
   // virtual void logIf( bool cond, LogMsg::CallParams loc, string_view msg, LogRouter router = LogRouter::m_main ) const = 0;
