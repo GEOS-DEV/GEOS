@@ -233,16 +233,12 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   applyFreeSurfaceBC( 0.0, domain );
   precomputeSurfaceFieldIndicator( domain );
 
-  for( auto const & target: getMeshTargets() )
-  {
-    MeshLevel & baseMeshLevel = domain.getMeshBodies().getGroup< MeshBody >( target.first.first ).getBaseDiscretization();
-    precomputeSourceAndReceiverTerm( baseMeshLevel, target.second.toViewConst() );
-  }
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    precomputeSourceAndReceiverTerm( mesh.getBaseDiscretization(), regionNames );
+
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
