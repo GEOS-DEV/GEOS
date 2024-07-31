@@ -652,11 +652,12 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
  * @param[in] elementLocalToGlobal global indices of elements
  * @param[in] elemCenter coordinates of the element centroid
  * @param[in] point coordinates of the query point
+ * @param[in] maxFaceNodes the max number of nodes per face. Can be used to avoid high-order in higher mesh levels.
  * @return the signed winding number, which is positive if and only if the point is inside the mesh element.
  */
 template< typename COORD_TYPE, typename POINT_TYPE >
 GEOS_HOST_DEVICE
-bool computeWindingNumber( localIndex element,
+bool computeWindingNumber( localIndex const element,
                            arrayView2d< COORD_TYPE const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
                            arrayView2d< localIndex const > const & elementsToFaces,
                            ArrayOfArraysView< localIndex const > const & facesToNodes,
@@ -664,7 +665,8 @@ bool computeWindingNumber( localIndex element,
                            arrayView1d< globalIndex const > const & nodeLocalToGlobal,
                            arrayView1d< globalIndex const > const & elementLocalToGlobal,
                            POINT_TYPE const & elemCenter,
-                           POINT_TYPE const & point )
+                           POINT_TYPE const & point,
+                           int const maxFaceNodes = std::numeric_limits< int >::max() )
 {
   arraySlice1d< localIndex const > const & faceIndices = elementsToFaces[ element ];
   localIndex const numFaces = faceIndices.size();
@@ -676,7 +678,7 @@ bool computeWindingNumber( localIndex element,
     localIndex const faceIndex = faceIndices[kf];
     globalIndex minGlobalId = std::numeric_limits< globalIndex >::max();
     localIndex minVertex = -1;
-    localIndex numFaceVertices = facesToNodes[faceIndex].size();
+    localIndex numFaceVertices = std::min( facesToNodes[faceIndex].size(), maxFaceNodes );
     for( localIndex v = 0; v < numFaceVertices; v++ )
     {
       localIndex vIndex = facesToNodes( faceIndex, v );
@@ -813,11 +815,12 @@ bool computeWindingNumber( localIndex element,
  * @param[in] elementLocalToGlobal global indices of elements
  * @param[in] elemCenter coordinates of the element centroid
  * @param[in] point coordinates of the query point
+ * @param[in] maxFaceNodes the max number of nodes per face. Can be used to avoid high-order in higher mesh levels.
  * @return whether the point is inside
  */
 template< typename COORD_TYPE, typename POINT_TYPE >
 GEOS_HOST_DEVICE
-bool isPointInsideConvexPolyhedronRobust( localIndex element,
+bool isPointInsideConvexPolyhedronRobust( localIndex const element,
                                           arrayView2d< COORD_TYPE const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
                                           arrayView2d< localIndex const > const & elementsToFaces,
                                           ArrayOfArraysView< localIndex const > const & facesToNodes,
@@ -825,9 +828,10 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                           arrayView1d< globalIndex const > const & nodeLocalToGlobal,
                                           arrayView1d< globalIndex const > const & elementLocalToGlobal,
                                           POINT_TYPE const & elemCenter,
-                                          POINT_TYPE const & point )
+                                          POINT_TYPE const & point,
+                                          int const maxFaceNodes = std::numeric_limits< int >::max() )
 {
-  return computeWindingNumber( element, nodeCoordinates, elementsToFaces, facesToNodes, nodesToElements, nodeLocalToGlobal, elementLocalToGlobal, elemCenter, point ) > 0;
+  return computeWindingNumber( element, nodeCoordinates, elementsToFaces, facesToNodes, nodesToElements, nodeLocalToGlobal, elementLocalToGlobal, elemCenter, point, maxFaceNodes ) > 0;
 }
 
 /**

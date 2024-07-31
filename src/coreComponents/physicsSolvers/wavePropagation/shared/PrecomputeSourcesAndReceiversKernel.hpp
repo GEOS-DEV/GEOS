@@ -108,7 +108,7 @@ struct PreComputeSourcesAndReceivers
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords );
+                                                                        coords, 4 );
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
@@ -159,7 +159,7 @@ struct PreComputeSourcesAndReceivers
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords );
+                                                                        coords, 4 );
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
@@ -276,7 +276,7 @@ struct PreComputeSourcesAndReceivers
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords );
+                                                                        coords, 4 );
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
@@ -328,7 +328,7 @@ struct PreComputeSourcesAndReceivers
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords );
+                                                                        coords, 4 );
 
           if( receiverFound && elemGhostRank[k] < 0 )
           {
@@ -471,7 +471,7 @@ struct PreComputeSourcesAndReceivers
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords );
+                                                                        coords, 4 );
 
           if( sourceFound )
           {
@@ -580,7 +580,7 @@ struct PreComputeSourcesAndReceivers
                                                                         nodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
-                                                                        coords );
+                                                                        coords, 4 );
           if( sampleFound && elemGhostRank[k] < 0 )
           {
             real64 coordsOnRefElem[3]{};
@@ -630,7 +630,7 @@ struct PreComputeSourcesAndReceivers
                                                                       nodeLocalToGlobal,
                                                                       elementLocalToGlobal,
                                                                       center,
-                                                                      coords );
+                                                                      coords, 4 );
         if( receiverFound && elemGhostRank[k] < 0 )
         {
           receiverIsLocal[ ircv ] = 1;
