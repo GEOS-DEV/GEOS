@@ -666,6 +666,7 @@ void ProblemManager::generateMesh()
   }
 
   domain.setupCommunications( useNonblockingMPI );
+  domain.outputPartitionInformation();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {

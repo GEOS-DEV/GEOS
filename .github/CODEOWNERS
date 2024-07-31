@@ -12,8 +12,8 @@
 /BASELINE_NOTES.md
 /inputFiles/                                          @CusiniM @cssherman @jhuang2601 @rrsettgast
 /src/coreComponents/LvArray                           @rrsettgast @wrtobin @corbett5 @CusiniM 
-/src/coreComponents/codingUtilities                   @rrsettgast @untereiner @corbett5
-/src/coreComponents/common                            @rrsettgast @MelReyCG @corbett5
+/src/coreComponents/codingUtilities                   @rrsettgast @untereiner @corbett5 @wrtobin
+/src/coreComponents/common                            @rrsettgast @MelReyCG @corbett5 @wrtobin
 /src/coreComponents/constitutive                      @rrsettgast @CusiniM @dkachuma @paveltomin @joshua-white
 /src/coreComponents/dataRepository                    @rrsettgast @wrtobin @corbett5
 /src/coreComponents/denseLinearAlgebra                @rrsettgast @CusiniM @castelletto1 
