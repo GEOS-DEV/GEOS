@@ -631,6 +631,16 @@ struct PPUICPhaseFlux
     // Some of the helpers below might also be useful, looks like whoever implemented IHU used them 
     //
     // A good step 1 would be to make sure all the constitutive info we are gonna need is here, if not we can pass more by using accessors in FaceBasedAssemblyKernel (Ryan will help)
+    //
+
+
+
+    // Step 1: convert from density to component fraction
+    //
+    // step 2: loval solver
+    //
+    // step 3: global solver fluix and jacobian
+
   }
 };
 
