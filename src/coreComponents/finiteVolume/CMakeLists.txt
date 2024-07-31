@@ -46,7 +46,7 @@ blt_add_library( NAME       finiteVolume
                  SOURCES    ${finiteVolume_sources}
                  HEADERS    ${finiteVolume_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

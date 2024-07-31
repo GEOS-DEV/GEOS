@@ -10,7 +10,6 @@ set( fieldSpecification_headers
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
      PerfectlyMatchedLayer.hpp
-     SourceFluxStatistics.hpp
    )
 
 #
@@ -25,7 +24,6 @@ set( fieldSpecification_sources
      TractionBoundaryCondition.cpp
      AquiferBoundaryCondition.cpp
      PerfectlyMatchedLayer.cpp
-     SourceFluxStatistics.cpp
    )
 
 set( dependencyList ${parallelDeps} functions linearAlgebra )
@@ -34,7 +32,7 @@ blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}
                  HEADERS    ${fieldSpecification_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( fieldSpecification PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
