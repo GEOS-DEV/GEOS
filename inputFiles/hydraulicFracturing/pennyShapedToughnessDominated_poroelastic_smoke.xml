@@ -16,7 +16,6 @@
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
       isMatrixPoroelastic="1"
-      contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">
       <NonlinearSolverParameters

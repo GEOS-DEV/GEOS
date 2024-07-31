@@ -66,8 +66,7 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      apertureTableName="apertureTable"/>
+      name="fractureContact"/>
 
     <HydraulicApertureTable
       name="hApertureModel"

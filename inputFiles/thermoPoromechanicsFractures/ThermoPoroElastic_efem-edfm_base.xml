@@ -29,7 +29,8 @@
       name="fractureMechSolver"
       targetRegions="{ RockMatrix, Fracture }"
       timeIntegrationOption="QuasiStatic"
-      discretization="FE1"/>
+      discretization="FE1"
+      contactPenaltyStiffness="1e12"/>
 
     <SinglePhaseFVM
       name="flowSolver"

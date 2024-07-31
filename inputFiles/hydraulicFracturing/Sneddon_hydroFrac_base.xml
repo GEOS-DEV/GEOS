@@ -11,9 +11,7 @@
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
       targetRegions="{ Fracture }"
-      contactRelationName="fractureContact"
-      maxNumResolves="2"
-      contactPenaltyStiffness="1.0e0">
+      maxNumResolves="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="20"

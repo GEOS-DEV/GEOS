@@ -9,8 +9,7 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      targetRegions="{ Fracture }"
-      contactRelationName="fractureContact">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="50"

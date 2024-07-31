@@ -12,7 +12,6 @@
       logLevel="1"
       initialDt="0.1"
       targetRegions="{ Fracture }"
-      contactRelationName="fractureContact"
       maxNumResolves="2">
     <!-- Sphinx_Solvers_Hydrofracture_End -->
 
