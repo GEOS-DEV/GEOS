@@ -22,5 +22,5 @@ jobs:
     name: Build step
     uses: ./.github/workflows/builds.yml
     with:
-        DOCKER_IMAGE_TAG: ${{ run_compliance_checks.outputs.DOCKER_IMAGE_TAG }}
+        DOCKER_IMAGE_TAG: ${{ needs.run_compliance_checks.outputs.DOCKER_IMAGE_TAG }}
     secrets: inherit
