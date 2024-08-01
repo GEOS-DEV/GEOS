@@ -60,6 +60,8 @@ You will get a warning you can ignore
     'GEOS_TPL_DIR' does not exist.
 
 
+Continue with the build
+
 .. code-block::
 
   cd build-macOS_arm-release
