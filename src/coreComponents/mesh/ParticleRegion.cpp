@@ -49,7 +49,7 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
     subRegion.copyFromParticleBlock( source );
 
     // Set the rank of particles on each subregion
-    int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOS );
     subRegion.setParticleRank( mpiRank );
 
     // Set the number of vertices of the particles on each subregion

@@ -271,7 +271,7 @@ public:
                            globalResidualNorm.data(),
                            localResidualNorm.size(),
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-                           MPI_COMM_GEOSX );
+                           MPI_COMM_GEOS );
   }
 };
 
@@ -313,12 +313,12 @@ public:
                            sumLocalResidualNorm.data(),
                            localResidualNorm.size(),
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                           MPI_COMM_GEOSX );
+                           MPI_COMM_GEOS );
     MpiWrapper::allReduce( localResidualNormalizer.data(),
                            sumLocalResidualNormalizer.data(),
                            localResidualNormalizer.size(),
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                           MPI_COMM_GEOSX );
+                           MPI_COMM_GEOS );
     for( integer i = 0; i < localResidualNorm.size(); ++i )
     {
       globalResidualNorm[i] = sqrt( sumLocalResidualNorm[i] ) / sqrt( sumLocalResidualNormalizer[i] );

@@ -124,9 +124,9 @@ bool SiloOutput::execute( real64 const time_n,
 
   SiloFile silo;
 
-  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
+  int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  MpiWrapper::barrier( MPI_COMM_GEOS );
 
   integer const numFiles = parallelThreads() == 0 ? size : parallelThreads();
 

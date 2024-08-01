@@ -338,8 +338,8 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
                                                  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
 {
   // Add new globalIndices
-  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
 
   localIndex_array numberOfSurfaceElemsPerRank( commSize );
   localIndex_array globalIndexOffset( commSize );

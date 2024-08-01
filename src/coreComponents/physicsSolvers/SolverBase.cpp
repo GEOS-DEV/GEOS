@@ -461,7 +461,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
       Timer timer_create( m_timers["linear solver create"] );
 
       // Compose parallel LA matrix out of local matrix
-      m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+      m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
     }
 
     // Output the linear system matrix/rhs for debugging purposes
@@ -1001,7 +1001,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         //
-        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
       }
 
       // Output the linear system matrix/rhs for debugging purposes
@@ -1097,10 +1097,10 @@ void SolverBase::setupSystem( DomainPartition & domain,
   localMatrix.setName( this->getName() + "/matrix" );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 }
 
 void SolverBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),

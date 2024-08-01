@@ -1790,7 +1790,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 
 void DofManager::printFieldInfo( std::ostream & os ) const
 {
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     localIndex const numFields = LvArray::integerConversion< localIndex >( m_fields.size() );
 

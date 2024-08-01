@@ -33,7 +33,7 @@ void PetscInterface::initialize()
 {
   PetscOptionsSetValue( nullptr, "-no_signal_handler", "" );
   PetscOptionsSetValue( nullptr, "-on_error_abort", "" );
-  PETSC_COMM_WORLD = MPI_COMM_GEOSX;
+  PETSC_COMM_WORLD = MPI_COMM_GEOS;
   PetscInitializeNoArguments();
 }
 

@@ -4568,7 +4568,7 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
                          &globalMaxRuptureRate,
                          1,
                          MPI_MAX,
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 
   return globalMaxRuptureRate;
 }

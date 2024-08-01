@@ -179,7 +179,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
                          totalCounter.data(),
                          4,
                          MPI_SUM,
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 
   numStick    = totalCounter[0];
   numNewSlip  = totalCounter[1];

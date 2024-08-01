@@ -30,7 +30,7 @@ inline int CommTag( int const GEOS_UNUSED_PARAM( senderRank ),
                     int const comm )
 {
 //  int m_size;
-//  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
+//  MPI_Comm_size( MPI_COMM_GEOS, &m_size );
 //  return senderRank * m_size + receiverRank + m_size * m_size * comm;
   return comm;
 }
