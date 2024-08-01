@@ -332,6 +332,13 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
+  // different functionality than for compositional
+  // compositional has better treatment of well initialization in cases where well starts later in sim
+  // logic will be incorporated into single phase in different push
+  if( time_n > 0 )
+  {
+    return;
+  }
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
