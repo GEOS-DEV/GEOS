@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -66,12 +67,10 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::well::pressure_n >( getName() );
-      subRegion.registerField< fields::well::pressure >( getName() ).
-        setRestartFlags( RestartFlags::WRITE_AND_READ );
-
-      subRegion.registerField< fields::well::temperature_n >( getName() );
-      subRegion.registerField< fields::well::temperature >( getName() );
+      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
+      GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                                                  getDataContext(), subRegion.getName() ) );
 
       subRegion.registerField< fields::well::connectionRate_n >( getName() );
       subRegion.registerField< fields::well::connectionRate >( getName() );
@@ -89,30 +88,18 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dPresString() );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dRateString() );
 
-      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                                                  getDataContext(), subRegion.getName() ) );
-
-    } );
-  } );
-}
-
-void SinglePhaseWell::initializePostSubGroups()
-{
-
-  WellSolverBase::initializePostSubGroups();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   WellElementSubRegion & subRegion )
-    {
-      validateWellConstraints( 0, 0, subRegion );
+      // write rates output header
+      if( m_writeCSV > 0 && subRegion.isLocallyOwned())
+      {
+        string const wellControlsName = wellControls.getName();
+        integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+        string const unitKey = useSurfaceConditions ? "s" : "r";
+        // format: time,bhp,total_rate,total_vol_rate
+        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
+        outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
+        outputFile.close();
+      }
     } );
   } );
 }
@@ -124,7 +111,7 @@ string SinglePhaseWell::resElementDofName() const
 
 void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                                                real64 const & dt,
-                                               WellElementSubRegion const & subRegion ) const
+                                               WellElementSubRegion const & subRegion )
 {
   WellControls const & wellControls = getWellControls( subRegion );
   WellControls::Control const currentControl = wellControls.getControl();
@@ -299,7 +286,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
                                  "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
                                  wellControlsName, dens[iwelemRef][0],
-                                 currentVolRate, currentVolRate ) );
+                                 connRate[iwelemRef], currentVolRate ) );
       }
     } );
   } );
@@ -420,8 +407,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                         real64 const dt,
+void SinglePhaseWell::assembleFluxTerms( real64 const dt,
                                          DomainPartition const & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -808,6 +794,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                                                    wellControls,
                                                    time_n + dt,
                                                    dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm );
 
       // step 2: reduction across meshBodies/regions/subRegions
@@ -827,7 +814,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
   }
   return residualNorm;
 }
@@ -995,6 +982,16 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 {
   WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
+  if( getLogLevel() > 0 )
+  {
+    printRates( time_n, dt, domain );
+  }
+}
+
+void SinglePhaseWell::printRates( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain )
+{
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -1025,13 +1022,23 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
       WellControls const & wellControls = getWellControls( subRegion );
       string const wellControlsName = wellControls.getName();
 
-      if( wellControls.getLogLevel() == 0 )
+      // format: time,total_rate,total_vol_rate
+      std::ofstream outputFile;
+      if( m_writeCSV > 0 )
       {
-        return;
+        outputFile.open( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+        outputFile << time_n + dt;
       }
+
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
+        if( outputFile.is_open())
+        {
+          // print all zeros in the rates file
+          outputFile << ",0.0,0.0,0.0" << std::endl;
+          outputFile.close();
+        }
         return;
       }
 
@@ -1048,7 +1055,8 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
                                   connRate,
                                   &currentTotalVolRate,
                                   &iwelemRef,
-                                  &wellControlsName] ( localIndex const )
+                                  &wellControlsName,
+                                  &outputFile] ( localIndex const )
       {
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
@@ -1058,11 +1066,16 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
                             wellControlsName, currentBHP ) );
         GEOS_LOG( GEOS_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
                             wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
+        if( outputFile.is_open())
+        {
+          outputFile << "," << currentBHP;
+          outputFile << "," << currentTotalRate << "," << currentTotalVolRate << std::endl;
+          outputFile.close();
+        }
       } );
     } );
   } );
 }
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseWell, string const &, Group * const )
 }// namespace geos

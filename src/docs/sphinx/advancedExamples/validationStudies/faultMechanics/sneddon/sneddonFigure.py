@@ -96,13 +96,13 @@ def main():
     loc_HydroFrac = x[0, :, 1]
 
     #-------- Extract info from XML
-    xmlFilePath = "../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_base.xml"
+    xmlFilePath = "../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac"
 
-    mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath)
-    appliedPressure = getFracturePressureFromXML(xmlFilePath)
+    mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath+"_base.xml")
+    appliedPressure = getFracturePressureFromXML(xmlFilePath+"_base.xml")
 
     # Get length of the fracture
-    length, origin = getFractureLengthFromXML(xmlFilePath)
+    length, origin = getFractureLengthFromXML(xmlFilePath+"_verification.xml")
 
     # Initialize Sneddon's analytical solution
     sneddonAnalyticalSolution = Sneddon(mechanicalParameters, length, appliedPressure)

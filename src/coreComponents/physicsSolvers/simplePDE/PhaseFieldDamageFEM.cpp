@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -58,11 +59,12 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   m_fieldName( "primaryField" )
 {
 
-  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
+  registerWrapper< TimeIntegrationOption >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "option for default time integration method" );
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.fieldVarName.key(), &m_fieldName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "name of field variable" );
 
@@ -123,34 +125,9 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void PhaseFieldDamageFEM::postProcessInput()
+void PhaseFieldDamageFEM::postInputInitialization()
 {
-  SolverBase::postProcessInput();
-
-  string tiOption = this->getReference< string >(
-    PhaseFieldDamageFEMViewKeys.timeIntegrationOption );
-
-  if( tiOption == "SteadyState" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::SteadyState;
-  }
-  else if( tiOption == "ImplicitTransient" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ImplicitTransient;
-  }
-  else if( tiOption == "ExplicitTransient" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ExplicitTransient;
-  }
-  else
-  {
-    GEOS_ERROR( getDataContext() << ": invalid time integration option" );
-  }
-
-  if( m_localDissipationOption != "Linear" && m_localDissipationOption != "Quadratic" )
-  {
-    GEOS_ERROR( getDataContext() << ": invalid local dissipation option - must be Linear or Quadratic" );
-  }
+  SolverBase::postInputInitialization();
 
   // Set basic parameters for solver
   // m_linearSolverParameters.logLevel = 0;
@@ -170,13 +147,12 @@ real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
-  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
+  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
   {
     dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_timeIntegrationOption ==
-           timeIntegrationOption::ImplicitTransient ||
-           m_timeIntegrationOption == timeIntegrationOption::SteadyState )
+  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
+           m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
   {
     this->setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, false );
 
@@ -237,13 +213,17 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
     localMatrix.zero();
     localRhs.zero();
 
+    auto const localDissipation = m_localDissipationOption == LocalDissipation::Linear ?
+                                  PhaseFieldDamageKernelLocalDissipation::Linear :
+                                  PhaseFieldDamageKernelLocalDissipation::Quadratic;
+
     PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
                                                  dofManager.rankOffset(),
                                                  localMatrix,
                                                  localRhs,
                                                  dt,
                                                  m_fieldName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                 localDissipation );
 
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy<>,
@@ -319,7 +299,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                 real64 const strainEnergyDensity = constitutiveUpdate.calculateStrainEnergyDensity( k, q );
                 real64 D = 0;                                                                 //max between threshold and
                                                                                               // Elastic energy
-                if( m_localDissipationOption == "Linear" )
+                if( m_localDissipationOption == LocalDissipation::Linear )
                 {
                   D = std::max( threshold, strainEnergyDensity );
                   //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
@@ -345,7 +325,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                   //real64 diffusion = 1.0;
                   real64 Na = finiteElement->value( a, q );
                   //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
-                  if( m_localDissipationOption == "Linear" )
+                  if( m_localDissipationOption == LocalDissipation::Linear )
                   {
                     // element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
                     //                                   0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] )
@@ -372,7 +352,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                   for( localIndex b = 0; b < numNodesPerElement; ++b )
                   {
                     real64 Nb = finiteElement->value( b, q );
-                    if( m_localDissipationOption == "Linear" )
+                    if( m_localDissipationOption == LocalDissipation::Linear )
                     {
                       // element_matrix( a, b ) -= detJ[k][q] *
                       //                           (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
@@ -569,7 +549,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual );
   }
 
   return residual;
@@ -666,6 +646,10 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
   } );
 }
 
+void PhaseFieldDamageFEM::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+{
+  // nothing to save yet
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )

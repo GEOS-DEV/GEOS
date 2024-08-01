@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,6 +27,7 @@
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "mesh/PerforationFields.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
@@ -87,6 +89,9 @@ public:
     Well = 1
   };
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "reservoirAndWells"; }
+
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
@@ -123,7 +128,8 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    GEOS_UNUSED_VAR( setSparsity );
+    // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
+    reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
     dofManager.setDomain( domain );
 
@@ -216,6 +222,43 @@ public:
       m_isWellTransmissibilityComputed = true;
     }
   }
+
+  void
+  assembleFluxTerms( real64 const dt,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const
+  { reservoirSolver()->assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
+
+  void
+  assembleStabilizedFluxTerms( real64 const dt,
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) const
+  { reservoirSolver()->assembleStabilizedFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
+
+  real64 updateFluidState( ElementSubRegionBase & subRegion ) const
+  { return reservoirSolver()->updateFluidState( subRegion ); }
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+  { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
+  { reservoirSolver()->updateSolidInternalEnergyModel( dataGroup ); }
+
+  integer & isThermal() { return reservoirSolver()->isThermal(); }
+
+  void enableJumpStabilization()
+  { reservoirSolver()->enableJumpStabilization(); }
+
+  void enableFixedStressPoromechanicsUpdate()
+  { reservoirSolver()->enableFixedStressPoromechanicsUpdate(); }
+
+  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { reservoirSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override
+  { reservoirSolver()->saveSequentialIterationState( domain ); }
 
 protected:
 

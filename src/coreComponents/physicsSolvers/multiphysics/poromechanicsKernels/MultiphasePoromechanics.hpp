@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -100,6 +101,9 @@ public:
                            string const inputFlowDofKey,
                            localIndex const numComponents,
                            localIndex const numPhases,
+                           integer const useSimpleAccumulation,
+                           integer const useTotalMassEquation,
+                           integer const performStressInitialization,
                            string const fluidModelKey );
 
   //*****************************************************************************
@@ -337,12 +341,23 @@ protected:
   /// Views on derivatives of global comp fraction wrt global comp density
   arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dGlobalCompFraction_dGlobalCompDensity;
 
+  // Views on component densities
+  arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
+  arrayView2d< real64 const, compflow::USD_COMP > m_compDens_n;
+
   /// Number of components
   localIndex const m_numComponents;
 
   /// Number of phases
   localIndex const m_numPhases;
 
+  /// Use simple accumulation term form
+  integer const m_useSimpleAccumulation;
+
+  /// Use total mass equation flag
+  integer const m_useTotalMassEquation;
+
+  integer const m_performStressInitialization;
 };
 
 using MultiphasePoromechanicsKernelFactory =
@@ -356,6 +371,9 @@ using MultiphasePoromechanicsKernelFactory =
                                 string const,
                                 localIndex const,
                                 localIndex const,
+                                integer const,
+                                integer const,
+                                integer const,
                                 string const >;
 
 /**

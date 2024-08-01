@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -68,20 +69,18 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 
   registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjectsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "List of geometric objects that will be used to initialized the embedded surfaces/fractures." );
-
-  // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-  // setInputFlag( InputFlags::FALSE );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable MPI consistent communication ordering" );
-
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()

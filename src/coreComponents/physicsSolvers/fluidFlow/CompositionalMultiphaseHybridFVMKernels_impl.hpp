@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -616,6 +617,7 @@ AssemblerKernelHelper::
                           arrayView1d< real64 const > const & mimFaceGravCoef,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
+                          integer const useTotalMassEquation,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -765,11 +767,14 @@ AssemblerKernelHelper::
 
   }
 
-  // Apply equation/variable change transformation(s)
-  real64 work[NDOF*(NF+1)];
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
-  shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
+  if( useTotalMassEquation > 0 )
+  {
+    // Apply equation/variable change transformation(s)
+    real64 work[NDOF * ( NF + 1 )];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
+  }
 
   // we are ready to assemble the local flux and its derivatives
   // no need for atomic adds - each row is assembled by a single thread
@@ -1039,6 +1044,7 @@ AssemblerKernel::
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & elemGravCoef,
+           integer const useTotalMassEquation,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -1112,6 +1118,7 @@ AssemblerKernel::
                                                                  mimFaceGravCoef,
                                                                  elemToFaces,
                                                                  elemGravCoef,
+                                                                 useTotalMassEquation,
                                                                  phaseDens,
                                                                  dPhaseDens,
                                                                  phaseMassDens,
@@ -1180,6 +1187,7 @@ FluxKernel::
           globalIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
+          integer const useTotalMassEquation,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -1257,6 +1265,7 @@ FluxKernel::
                                                                                      elemToFaces[ei],
                                                                                      elemPres[ei],
                                                                                      elemGravCoef[ei],
+                                                                                     useTotalMassEquation,
                                                                                      phaseDens,
                                                                                      dPhaseDens,
                                                                                      phaseMassDens,

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -92,6 +93,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
     setDescription( "Angle subtended by the aquifer boundary from the center of the reservoir [degress]" );
 
   registerWrapper( viewKeyStruct::pressureInfluenceFunctionNameString(), &m_pressureInfluenceFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the table describing the pressure influence function\n. "
                     "If not provided, we use a default pressure influence function" );
@@ -112,7 +114,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 
 }
 
-void AquiferBoundaryCondition::postProcessInput()
+void AquiferBoundaryCondition::postInputInitialization()
 {
   GEOS_THROW_IF_LE_MSG( m_permeability, 0.0,
                         getCatalogName() << " " << getDataContext() <<
@@ -260,8 +262,8 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
   m_pressureInfluenceFunctionName = getName() + "_pressureInfluence_table";
   TableFunction * const pressureInfluenceTable =
     dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), m_pressureInfluenceFunctionName ) );
-  pressureInfluenceTable->setTableCoordinates( dimensionlessTime );
-  pressureInfluenceTable->setTableValues( pressureInfluence );
+  pressureInfluenceTable->setTableCoordinates( dimensionlessTime, { units::Dimensionless } );
+  pressureInfluenceTable->setTableValues( pressureInfluence, units::Dimensionless );
   pressureInfluenceTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
 }

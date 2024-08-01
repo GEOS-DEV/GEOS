@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,14 +21,12 @@
 #define GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 
-#include <vtkSmartPointer.h>
 #include <vtkDataSet.h>
 #include <vtkMultiProcessController.h>
+#include <vtkSmartPointer.h>
 
 #include <numeric>
 #include <unordered_set>
@@ -150,6 +149,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
 
 /**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
+ * @param[in] logLevel the log level
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
@@ -159,7 +159,8 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @return the vtk grid redistributed
  */
 AllMeshes
-redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
+redistributeMeshes( integer const logLevel,
+                    vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
                     PartitionMethod const method,

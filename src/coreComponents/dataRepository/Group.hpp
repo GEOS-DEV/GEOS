@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -158,7 +159,7 @@ public:
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
    */
-  void printDataHierarchy( integer indent = 0 );
+  void printDataHierarchy( integer indent = 0 ) const;
 
   /**
    * @brief @return a table formatted string containing all input options.
@@ -762,17 +763,27 @@ public:
    * @brief Recursively read values using ProcessInputFile() from the input
    * file and put them into the wrapped values for this group.
    * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
-   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] xmlDocument the XML document that contains the targetNode.
    * @param[in] targetNode the XML node that to extract input values from.
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode );
+  /**
+   * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
+   * but allow to reuse an existing xmlNodePos.
+   * @param[in] xmlDocument the XML document that contains the targetNode.
+   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   */
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode,
+                                  xmlWrapper::xmlNodePos const & nodePos );
 
   /**
-   * @brief Recursively call postProcessInput() to apply post processing after
+   * @brief Recursively call postInputInitialization() to apply post processing after
    * reading input values.
    */
-  void postProcessInputRecursive();
+  void postInputInitializationRecursive();
 
   ///@}
 
@@ -1049,6 +1060,7 @@ public:
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
+   * @param[in] op           the operation to perform while unpacking
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -1061,7 +1073,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events );
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE );
 
   ///@}
 
@@ -1402,6 +1415,15 @@ public:
    */
   void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
 
+  /**
+   * @brief Structure to hold scoped key names
+   */
+  struct viewKeyStruct
+  {
+    /// @return String for the logLevel wrapper
+    static constexpr char const * logLevelString() { return "logLevel"; }
+  };
+
   ///@}
 
   /**
@@ -1451,6 +1473,12 @@ public:
   /// Enable verbosity input for object
   void enableLogLevelInput();
 
+  /**
+   * @brief Set verbosity level
+   * @param logLevel new verbosity level value
+   */
+  void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
+
   /// @return The verbosity level
   integer getLogLevel() const { return m_logLevel; }
   ///@}
@@ -1464,7 +1492,7 @@ public:
    * @brief Return PyGroup type.
    * @return Return PyGroup type.
    */
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const;
 #endif
 
@@ -1482,7 +1510,7 @@ protected:
    * This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void postProcessInput() {}
+  virtual void postInputInitialization() {}
 
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.
@@ -1522,10 +1550,12 @@ private:
   /**
    * @brief Read values from the input file and put them into the
    *   wrapped values for this group.
-   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] targetNode the XML node that to extract input values from
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition()
    */
-  virtual void processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
-                                 xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 

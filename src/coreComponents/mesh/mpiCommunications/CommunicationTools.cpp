@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -1012,7 +1013,8 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       MPI_iCommData & icomm,
                                       bool onDevice,
-                                      parallelDeviceEvents & events )
+                                      parallelDeviceEvents & events,
+                                      MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1028,7 +1030,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
   {
     NeighborCommunicator & neighbor = neighbors[ neighborIndices[ recvIdx ] ];
-    neighbor.unpackBufferForSync( icomm.getFieldsToBeSync(), mesh, icomm.commID(), onDevice, events );
+    neighbor.unpackBufferForSync( icomm.getFieldsToBeSync(), mesh, icomm.commID(), onDevice, events, op );
   }
 
   // we don't want to check if the request has completed,
@@ -1053,12 +1055,13 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          std::vector< NeighborCommunicator > & neighbors,
                                          MPI_iCommData & icomm,
                                          bool onDevice,
-                                         parallelDeviceEvents & events )
+                                         parallelDeviceEvents & events,
+                                         MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op ) );
   if( onDevice )
   {
     waitAllDeviceEvents( events );

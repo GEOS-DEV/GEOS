@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -28,6 +29,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
+#include "CellElementRegion.hpp"
 
 namespace geos
 {
@@ -269,7 +271,12 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOS_ERROR( "Face " << faceIndex << " is not connected to an element." );
+      GEOS_ERROR( getDataContext() << ": Face " << faceIndex <<
+                  " is not connected to any cell.\n"
+                  "You might have:\n"
+                  "- an invalid mesh,\n"
+                  "- not enough CellElementRegions to describe your input mesh (all regions, simulated or not, must be listed),\n"
+                  "- forgotten one cell type in an existing \"" << CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() << "\'." );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.
@@ -281,10 +288,17 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
     if( er < 0 || esr < 0 || ei < 0 )
     {
-      GEOS_ERROR( GEOS_FMT( "Face {} is connected to an invalid element ({}/{}/{}).", faceIndex, er, esr, ei ) );
+      GEOS_ERROR( GEOS_FMT( "{0}: Face {1} is connected to an invalid element ({2}/{3}/{4}).",
+                            getDataContext().toString(), faceIndex, er, esr, ei ) );
     }
 
-    sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );
+    try
+    {
+      sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );
+    } catch( std::runtime_error const & e )
+    {
+      throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
+    }
   } );
 }
 
@@ -293,7 +307,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
                                  Span< localIndex > const faceNodes )
 {
   localIndex const numFaceNodes = LvArray::integerConversion< localIndex >( faceNodes.size() );
-  GEOS_ERROR_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES, "Node per face limit exceeded" );
+  GEOS_THROW_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES, "The number of maximum nodes allocated per cell face has been reached.", std::runtime_error );
 
   localIndex const firstNodeIndex = faceNodes[0];
 

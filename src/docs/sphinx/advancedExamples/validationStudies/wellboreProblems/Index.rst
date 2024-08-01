@@ -33,5 +33,9 @@ Wellbore Problems
 
    casedContactElasticWellbore/Example
 
+   casedContactThermoElasticWellbore/Example
+
+   nonLinearThermalDiffusion/Example
+
 
 

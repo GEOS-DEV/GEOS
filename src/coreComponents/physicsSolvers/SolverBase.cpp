@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,13 +17,12 @@
 #include "PhysicsSolverManager.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
 #endif
 
@@ -64,6 +64,7 @@ SolverBase::SolverBase( string const & name,
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "
@@ -71,6 +72,7 @@ SolverBase::SolverBase( string const & name,
                     "discretization should be specified." );
 
   registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
@@ -87,6 +89,12 @@ SolverBase::SolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
+
+  registerWrapper( viewKeyStruct::writeLinearSystemString(), &m_writeLinearSystem ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -266,12 +274,27 @@ bool SolverBase::execute( real64 const time_n,
     if( dtRemaining > 0.0 )
     {
       nextDt = setNextDt( dtAccepted, domain );
-      nextDt = std::min( nextDt, dtRemaining );
+      if( nextDt < dtRemaining )
+      {
+        // better to do two equal steps than one big and one small (even potentially tiny)
+        if( nextDt * 2 > dtRemaining )
+        {
+          nextDt = dtRemaining / 2;
+          if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+            GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to cover remaining time {} in two steps", getName(), nextDt, dtRemaining ));
+        }
+      }
+      else
+      {
+        nextDt = dtRemaining;
+        if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to match remaining time", getName(), nextDt ));
+      }
     }
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
 
@@ -288,34 +311,46 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
                               DomainPartition & domain )
 {
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on Newton iterations = {}", getName(), nextDtNewton ));
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
 
-  if( nextDtNewton < nextDtStateChange ) // time step size decided based on convergence
+  if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
   {
-    integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
-    integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
     if( nextDtNewton > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
-                                          getName(), iterIncreaseLimit ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be increased based on number of iterations.",
+                                          getName() ) );
     }
     else if( nextDtNewton < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
-                                          getName(), iterDecreaseLimit ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be decreased based on number of iterations.",
+                                          getName() ) );
+    }
+    else
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be kept the same based on number of iterations.",
+                                          getName() ) );
     }
   }
-  else // time step size decided based on state change
+  else         // time step size decided based on state change
   {
     if( nextDtStateChange > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
-                                          getName() ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be increased based on state change.",
+                                          getName()));
     }
     else if( nextDtStateChange < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
-                                          getName() ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be decreased based on state change.",
+                                          getName()));
+    }
+    else
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be kept the same based on state change.",
+                                          getName()));
     }
   }
 
@@ -340,18 +375,33 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
   {
     // Easy convergence, let's increase the time-step.
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepIncreaseFactor();
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is less than {}, next time step = {} (increase)", getName(), newtonIter, iterIncreaseLimit, nextDt ));
   }
   else if( newtonIter > iterDecreaseLimit )
   {
     // Tough convergence let us make the time-step smaller!
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepDecreaseFactor();
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is more than {}, next time step = {} (decrease)", getName(), newtonIter, iterDecreaseLimit, nextDt ));
   }
   else
   {
     nextDt = currentDt;
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is between {} and {}, next time step = {} (no change)", getName(), newtonIter, iterIncreaseLimit, iterDecreaseLimit, nextDt ));
   }
   return nextDt;
 }
+
+
+real64 SolverBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::DomainPartition & domain )
+{
+  GEOS_UNUSED_VAR( currentDt, domain );
+  return LvArray::NumericLimits< real64 >::max;       // i.e., not implemented
+}
+
+
 
 real64 SolverBase::linearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
@@ -460,6 +510,8 @@ bool SolverBase::lineSearch( real64 const & time_n,
                              real64 const scaleFactor,
                              real64 & lastResidual )
 {
+  Timer timer( m_timers["line search"] );
+
   integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
   real64 const lineSearchCutFactor = m_nonlinearSolverParameters.m_lineSearchCutFactor;
 
@@ -477,59 +529,39 @@ bool SolverBase::lineSearch( real64 const & time_n,
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
+    // cut the scale factor by half. This means that the scale factors will
+    // have values of -0.5, -0.25, -0.125, ...
+    localScaleFactor *= lineSearchCutFactor;
+    cumulativeScale += localScaleFactor;
+
+    if( !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
     {
-      Timer timer( m_timers["apply solution"] );
-
-      // cut the scale factor by half. This means that the scale factors will
-      // have values of -0.5, -0.25, -0.125, ...
-      localScaleFactor *= lineSearchCutFactor;
-      cumulativeScale += localScaleFactor;
-
-      if( !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
-      {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
-        continue;
-      }
-
-      applySystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
+      continue;
     }
 
-    {
-      Timer timer( m_timers["update state"] );
+    applySystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain );
 
-      // update non-primary variables (constitutive models)
-      updateState( domain );
-    }
+    // update non-primary variables (constitutive models)
+    updateState( domain );
 
-    {
-      Timer timer( m_timers["assemble"] );
+    // re-assemble system
+    localMatrix.zero();
+    rhs.zero();
 
-      // re-assemble system
-      localMatrix.zero();
-      rhs.zero();
-
-      arrayView1d< real64 > const localRhs = rhs.open();
-      assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      rhs.close();
-    }
+    arrayView1d< real64 > const localRhs = rhs.open();
+    assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    rhs.close();
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
-    {
-      Timer timer( m_timers["convergence check"] );
-
-      // get residual norm
-      residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    }
-
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
-    {
-      std::cout << std::endl;
-    }
+    // get residual norm
+    residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
 
     // if the residual norm is less than the last residual, we can proceed to the
     // solution step
@@ -556,6 +588,8 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
                                                        real64 & lastResidual,
                                                        real64 & residualNormT )
 {
+  Timer timer( m_timers["line search"] );
+
   bool lineSearchSuccess = true;
 
   integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
@@ -577,69 +611,55 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
   while( residualNormT >= (1.0 - alpha*localScaleFactor)*residualNorm0 )
   {
+    real64 const previousLocalScaleFactor = localScaleFactor;
+    // Apply the three point parabolic model
+    if( lineSearchIteration == 0 )
     {
-      Timer timer( m_timers["apply solution"] );
-
-      real64 const previousLocalScaleFactor = localScaleFactor;
-      // Apply the three point parabolic model
-      if( lineSearchIteration == 0 )
-      {
-        localScaleFactor *= sigma1;
-      }
-      else
-      {
-        localScaleFactor = interpolation::parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
-      }
-
-      // Update x; keep the books on lambda
-      real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
-      cumulativeScale += deltaLocalScaleFactor;
-
-      if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
-      {
-        GEOS_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
-        continue;
-      }
-
-      applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, dt, domain );
+      localScaleFactor *= sigma1;
+    }
+    else
+    {
+      localScaleFactor = interpolation::parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
     }
 
-    {
-      Timer timer( m_timers["update state"] );
+    // Update x; keep the books on lambda
+    real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
+    cumulativeScale += deltaLocalScaleFactor;
 
-      updateState( domain );
+    if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
+      continue;
     }
+
+    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, dt, domain );
+
+    updateState( domain );
 
     lamm = lamc;
     lamc = localScaleFactor;
 
     // Keep the books on the function norms
 
-    {
-      Timer timer( m_timers["assemble"] );
+    // re-assemble system
+    // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
+    localMatrix.zero();
+    rhs.zero();
 
-      // re-assemble system
-      // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
-      localMatrix.zero();
-      rhs.zero();
-
-      arrayView1d< real64 > const localRhs = rhs.open();
-      assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      rhs.close();
-    }
+    arrayView1d< real64 > const localRhs = rhs.open();
+    assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    rhs.close();
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
-    {
-      Timer timer( m_timers["convergence check"] );
+    // get residual norm
+    residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
 
-      // get residual norm
-      residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    }
     ffm = ffT;
     ffT = residualNormT*residualNormT;
     lineSearchIteration += 1;
@@ -764,9 +784,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
           // increment the solver statistics for reporting purposes
           m_solverStatistics.logOuterLoopIteration();
 
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
           GEOS_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
         }
       }
       else if( !attemptedSimplestConfiguration )
@@ -812,7 +830,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
 
@@ -844,6 +862,11 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     {
       Timer timer( m_timers["assemble"] );
+
+      // We sync the nonlinear convergence history. The coupled solver parameters are the one being
+      // used. We want to propagate the info to subsolvers. It can be important for solvers that
+      // have special treatment for specific iterations.
+      synchronizeNonlinearSolverParameters();
 
       // zero out matrix/rhs before assembly
       m_localMatrix.zero();
@@ -884,14 +907,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
-    }
-
-    if( newtonIter > 0 )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
-                                          m_linearSolverResult.numIterations,
-                                          m_linearSolverResult.residualReduction ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -916,7 +932,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // do line search in case residual has increased
     if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
-        && residualNorm > lastResidual )
+        && residualNorm > lastResidual * m_nonlinearSolverParameters.m_lineSearchResidualFactor
+        && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
     {
       bool lineSearchSuccess = false;
       if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
@@ -992,13 +1009,13 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // Solve the linear system
       solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+
+      // Increment the solver statistics for reporting purposes
+      m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+
+      // Output the linear system solution for debugging purposes
+      debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
     }
-
-    // Increment the solver statistics for reporting purposes
-    m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
-
-    // Output the linear system solution for debugging purposes
-    debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
     {
       Timer timer( m_timers["apply solution"] );
@@ -1008,7 +1025,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       if( getLogLevel() >= 1 )
       {
-        GEOS_LOG_RANK_0( getName() + ": Global solution scaling factor = " << scaleFactor );
+        GEOS_LOG_RANK_0( GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
       }
 
       if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
@@ -1140,7 +1157,7 @@ void debugOutputLAObject( T const & obj,
   if( toFile )
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
-    obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
+    obj.write( filename, LAIOutputFormat::NATIVE_ASCII );
     GEOS_LOG_RANK_0( screenName << " written to " << filename );
   }
 }
@@ -1153,14 +1170,18 @@ void SolverBase::debugOutputSystem( real64 const & time,
                                     ParallelMatrix const & matrix,
                                     ParallelVector const & rhs ) const
 {
+  // special case when flag value > 2
+  if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
+    return;
+
   debugOutputLAObject( matrix,
                        time,
                        cycleNumber,
                        nonlinearIteration,
                        getName() + "_mat",
                        "System matrix",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 
   debugOutputLAObject( rhs,
                        time,
@@ -1168,8 +1189,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_rhs",
                        "System right-hand side",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 void SolverBase::debugOutputSolution( real64 const & time,
@@ -1177,14 +1198,18 @@ void SolverBase::debugOutputSolution( real64 const & time,
                                       integer const nonlinearIteration,
                                       ParallelVector const & solution ) const
 {
+  // special case when flag value > 2
+  if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
+    return;
+
   debugOutputLAObject( solution,
                        time,
                        cycleNumber,
                        nonlinearIteration,
                        getName() + "_sol",
                        "System solution",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 real64
@@ -1237,6 +1262,10 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
     }
     m_linearSolverResult = solver->result();
   }
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
+                                      m_linearSolverResult.numIterations,
+                                      m_linearSolverResult.residualReduction ) );
 
   if( params.stopIfError )
   {
@@ -1362,7 +1391,19 @@ R1Tensor const SolverBase::gravityVector() const
   return rval;
 }
 
-#if defined(GEOSX_USE_PYGEOSX)
+bool SolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+{
+  // default behavior - assume converged
+  return true;
+}
+
+void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+{
+  // up to specific solver to save what is needed
+  GEOS_ERROR( "Call to SolverBase::saveSequentialIterationState. Method should be overloaded by the solver" );
+}
+
+#if defined(GEOS_USE_PYGEOSX)
 PyTypeObject * SolverBase::getPythonType() const
 { return python::getPySolverType(); }
 #endif

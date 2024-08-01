@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -21,12 +22,10 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-
 
 #include <limits>
 
@@ -51,7 +50,10 @@ public:
   SolverBase & operator=( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase && ) = delete;
 
-  static string catalogName() { return "SolverBase"; }
+  /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const = 0;
 
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
@@ -148,7 +150,7 @@ public:
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -158,6 +160,17 @@ public:
    */
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain );
+
+  /**
+   * @brief function to set the next dt based on state change
+   * @param [in]  currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain );
+
+
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -572,7 +585,7 @@ public:
     static constexpr char const * discretizationString() { return "discretization"; }
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
     static constexpr char const * meshTargetsString() { return "meshTargets"; }
-
+    static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
   };
 
   struct groupKeyStruct
@@ -611,6 +624,10 @@ public:
    */
   R1Tensor const gravityVector() const;
 
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const;
+
+  virtual void saveSequentialIterationState( DomainPartition & domain );
+
   /**
    * @brief accessor for the linear solver parameters.
    * @return the linear solver parameter list
@@ -646,6 +663,10 @@ public:
   {
     return m_nonlinearSolverParameters;
   }
+
+  virtual void
+  synchronizeNonlinearSolverParameters()
+  { /* empty here, overriden in CoupledSolver */ }
 
   /**
    * @brief Get position of a given region within solver's target region list
@@ -714,12 +735,13 @@ public:
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
   SolverStatistics & getSolverStatistics() { return m_solverStatistics; }
+  SolverStatistics const & getSolverStatistics() const { return m_solverStatistics; }
 
   /**
    * @brief Return PySolver type.
    * @return Return PySolver type.
    */
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
@@ -742,6 +764,9 @@ protected:
    */
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ElementSubRegionBase const & subRegion );
+
+  template< typename CONSTITUTIVE_BASE_TYPE >
+  static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
 
   /**
    * @brief This function sets constitutive name fields on an
@@ -777,6 +802,9 @@ protected:
 
   /// Custom preconditioner for the "native" iterative solver
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
+
+  /// flag for debug output of matrix, rhs, and solution
+  integer m_writeLinearSystem;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
@@ -821,6 +849,20 @@ private:
 
 template< typename CONSTITUTIVE_BASE_TYPE >
 string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
+{
+  string validName;
+  dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
+
+  constitutiveModels.forSubGroups< CONSTITUTIVE_BASE_TYPE >( [&]( dataRepository::Group const & model )
+  {
+    GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
+    validName = model.getName();
+  } );
+  return validName;
+}
+
+template< typename CONSTITUTIVE_BASE_TYPE >
+string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion ) // particle overload
 {
   string validName;
   dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
