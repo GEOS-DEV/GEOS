@@ -7,7 +7,8 @@
       name="FlowSolver"
       discretization="TPFA"
       targetRegions="{ Domain }"
-      logLevel="1">
+      logLevel="1"
+      temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -51,7 +52,7 @@
     <PeriodicEvent
       name="solverApplications"
       forceDt="1e2"
-      target="/Solvers/SinglePhaseFlow"/>
+      target="/Solvers/FlowSolver"/>
 
     <PeriodicEvent
       name="restarts"
@@ -71,7 +72,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -101,6 +102,15 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+
+    <!-- should probably double check that the phases are defined in the correct order -->
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.0, 0.0 }"
+      phaseRelPermExponent="{ 1.5, 1.5 }"
+      phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
+      
   </Constitutive>
 
   <FieldSpecifications>
