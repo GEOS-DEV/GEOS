@@ -23,6 +23,8 @@
 
 namespace geos
 { // TODO document
+namespace logging
+{
 
 class LogOutput {
 public:
@@ -87,7 +89,8 @@ private:
 
 ///@}
 
-};
+} /* namespace logging */
+} /* namespace geos */
 
 
 #endif /* GEOS_COMMON_LOGGINGOUTPUT_HPP */

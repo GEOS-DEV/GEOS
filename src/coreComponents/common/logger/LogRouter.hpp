@@ -22,10 +22,10 @@
 #include "common/LogOutput.hpp"
 #include "common/LogErrorHistory.hpp"
 
-
 namespace geos
 { // TODO document
-
+namespace logging
+{
 
 class LogRouter {
 public:
@@ -57,7 +57,7 @@ private:
 
 }
 
-
-} // namespace geos
+} /* namespace logging */
+} /* namespace geos */
 
 #endif /* GEOS_COMMON_LOGROUTER_HPP */

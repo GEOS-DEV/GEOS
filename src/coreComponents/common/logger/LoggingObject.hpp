@@ -24,12 +24,15 @@
 namespace geos
 {
 
+namespace logging
+{
+
 /**
  * @brief Interface (implementation contract) of any class that can send log messages (GeneralLogger, Group)
+ * @todo adapt the new call convention everywhere
+ * @todo Group class should implement it to log contextualized messages (implement logMsg() as private)
+ * @todo check / add documentation
  */
-// TODO : adapt the new call convention everywhere
-// TODO : Group class should implement it to log contextualized messages (implement logMsg() as private)
-// TODO : check / add documentation
 template< typename CONTEXT_T >
 class LoggingObject
 {
@@ -67,6 +70,9 @@ protected:
  */
 ///@{
 
+/**
+ * @todo docs
+ */
 class GeneralLogger final : public LoggingObject<LogMsg::Context::General>
 {
 public:
@@ -106,9 +112,10 @@ private:
   LogMsg::Context::General getLoggingContext() const override;
 
 };
-extern GeneralLogger g_logger;
 
-
+/**
+ * @todo docs
+ */
 class TargetedLogger final : public LoggingObject<LogMsg::Context::Target>
 {
 public:
@@ -139,6 +146,13 @@ private:
 
 ///@}
 
-} // namespace geos
+} /* namespace logging */
+
+/**
+ * @brief Global logger for general messages
+ */
+extern GeneralLogger g_logger;
+
+} /* namespace geos */
 
 #endif /* GEOS_COMMON_LOGGINGOBJECT_HPP */

@@ -29,9 +29,10 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "codingUtilities/SourceCodeLocation.hpp"
 
-
 namespace geos
-{ // TODO : document
+{ // TODO document
+namespace logging
+{
 
 
 /// @brief Enumerate the logging levels from the most importants messages to the one that contain the more details.
@@ -121,7 +122,7 @@ struct LogMsg
   LogMsgContext m_context;
 };
 
-
-}
+} /* namespace logging */
+} /* namespace geos */
 
 #endif /* GEOS_COMMON_LOGMESSAGE_HPP */
