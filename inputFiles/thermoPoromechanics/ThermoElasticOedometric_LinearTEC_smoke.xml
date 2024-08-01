@@ -18,6 +18,13 @@
       cellBlockNames="{ rock }"/>
   </Mesh>
 
+  <ElementRegions>
+    <CellElementRegion
+      name="rock"
+      cellBlocks="{ rock }"
+      materialList="{ fluid, rock_linearTEC, rockThermalCond }"/>
+  </ElementRegions>
+
   <Events
     maxTime="1e4">
 
