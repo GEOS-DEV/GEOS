@@ -1306,7 +1306,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   {
     makeDirsForPath( stepSubDirFull );
   }
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOS );
 
   // loop over all mesh levels and mesh bodies
   domain.forMeshBodies( [&]( MeshBody const & meshBody )
