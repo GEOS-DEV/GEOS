@@ -46,7 +46,7 @@ auto const parallelHostMemorySpace = hostMemorySpace;
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 using parallelHostReduce = RAJA::omp_reduce;
-using parallelHostAtomic = RAJA::omp_atomic;
+using parallelHostAtomic = RAJA::builtin_atomic;
 
 // issues with Raja::resources::Omp on lassen
 using parallelHostStream = serialStream;
