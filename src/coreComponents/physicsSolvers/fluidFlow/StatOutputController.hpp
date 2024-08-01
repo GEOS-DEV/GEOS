@@ -15,6 +15,8 @@
 
 #ifndef GEOS_PHYSICSSOLVERS_STATOUTPUTCONTROLLER_HPP_
 #define GEOS_PHYSICSSOLVERS_STATOUTPUTCONTROLLER_HPP_
+#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 #include "dataRepository/BufferOpsDevice.hpp"
 #include "dataRepository/HistoryDataSpec.hpp"
@@ -22,6 +24,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
+#include "fileIO/timeHistory/PackCollection.hpp"
 #include "events/PeriodicEvent.hpp"
 
 #include <functional>
@@ -79,18 +82,11 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  /**@}*/
-
-  ///@cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
-  {
-    constexpr static char const * perforationString() { return "Perforation"; }
-  };
-  /// @endcond
-
 private:
 
   void postInputInitialization() override;
+
+  void registerDataOnMesh( Group & meshBodies ) override;
 
   TimeHistoryOutput * m_timeHistory;
   std::vector< PeriodicEvent * >  m_periodicEvents;

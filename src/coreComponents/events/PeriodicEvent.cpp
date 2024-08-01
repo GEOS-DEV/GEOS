@@ -82,7 +82,7 @@ PeriodicEvent::PeriodicEvent( const string & name,
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "If the optional function is used, the event will execute if the value returned by the function exceeds this threshold." );
-
+    
 }
 
 PeriodicEvent::~PeriodicEvent()

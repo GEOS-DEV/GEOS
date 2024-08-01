@@ -80,6 +80,11 @@ public:
 
   /**@}*/
 
+  SOLVER * getSolver() const
+  {
+    return m_solver;
+  }
+
 protected:
 
   void postInputInitialization() override

@@ -377,12 +377,15 @@
       objectPath="ElementRegions/leakyWell/aquitard11"
       fieldName="componentOutflux"/>
       
-    <CompositionalMultiphaseStatistics
-      name="compflowStatistics"
-      flowSolverName="compflow"
-      logLevel="1"
-      computeCFLNumbers="1"
-      computeRegionStatistics="1"/>
+    <StatOutputController name="testStats" >
+      <CompositionalMultiphaseStatistics
+        name="compflowStatistics"
+        flowSolverName="compflow"
+        logLevel="1"
+        computeCFLNumbers="1"
+        computeRegionStatistics="1"
+      />
+    </StatOutputController>
 
      <PackCollection
       name="averagePressurePackCollection"

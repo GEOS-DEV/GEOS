@@ -60,6 +60,8 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
     setApplyDefaultValue( 1e-6 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2" );
+
+std::cout << "region2 " << this->getPath() << std::endl;
 }
 
 void CompositionalMultiphaseStatistics::postInputInitialization()
