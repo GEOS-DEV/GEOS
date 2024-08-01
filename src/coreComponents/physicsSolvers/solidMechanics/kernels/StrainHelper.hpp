@@ -102,7 +102,7 @@ public:
       }
     }
 
-    for( int icomp = 0; icomp < 6; ++icomp )
+    for( int icomp = 0; icomp < 6; ++icomp ):wq
     {
       m_avgStrain[k][icomp] = 0.0;
     }
@@ -212,6 +212,182 @@ public:
   }
 };
 
+
+
+
+
+
+/**
+ * @class AverageStressOverQuadraturePoints
+ * @tparam SUBREGION_TYPE the subRegion type
+ * @tparam FE_TYPE the finite element type
+ */
+template< typename SUBREGION_TYPE,
+          typename FE_TYPE >
+class AverageStressOverQuadraturePoints :
+  public AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+                                          FE_TYPE >
+{
+public:
+
+  /// Alias for the base class;
+  using Base = AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+                                                FE_TYPE >;
+
+  using Base::m_elementVolume;
+  using Base::m_elemsToNodes;
+  using Base::m_finiteElementSpace;
+
+  /**
+   * @brief Constructor for the class
+   * @param nodeManager the node manager
+   * @param edgeManager the edge manager
+   * @param faceManager the face manager
+   * @param elementSubRegion the element subRegion
+   * @param finiteElementSpace the finite element space
+   * @param stress the stress solution field
+   * @param avgStress the stress averaged over quadrature points
+   */
+  AverageStressOverQuadraturePoints( NodeManager & nodeManager,
+                                     EdgeManager const & edgeManager,
+                                     FaceManager const & faceManager,
+                                     SUBREGION_TYPE const & elementSubRegion,
+                                     FE_TYPE const & finiteElementSpace,
+                                     arrayView3d< real64 const, constitutive::solid::STRESS_USD > const stress,
+                                     fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress ):
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
+          elementSubRegion,
+          finiteElementSpace ),
+    m_stress( stress ),
+    m_avgStress( avgStress )
+  {}
+
+  /**
+   * @copydoc finiteElement::KernelBase::StackVariables
+   */
+  struct StackVariables : Base::StackVariables
+  {  };
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param k The element index.
+   * @param stack The StackVariable object that hold the stack variables.
+   */
+  GEOS_HOST_DEVICE
+  void setup( localIndex const k,
+              StackVariables & stack ) const
+  {
+    Base::setup( k, stack );
+
+    for( int icomp = 0; icomp < 6; ++icomp )
+    {
+      m_avgStress[k][icomp] = 0.0;
+    }
+  }
+
+  /**
+   * @brief Increment the average property with the contribution of the property at this quadrature point
+   * @param k The element index
+   * @param q The quadrature point index
+   * @param stack The StackVariables object that hold the stack variables.
+   */
+  GEOS_HOST_DEVICE
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    //real64 const weight = FE_TYPE::transformedQuadratureWeight( q, stack.xLocal, stack.feStack ) / m_elementVolume[k];
+
+    real64 dNdX[ FE_TYPE::maxSupportPoints ][3];
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
+
+    for( int icomp = 0; icomp < 6; ++icomp )
+    {
+      m_avgStress[k][icomp] += detJxW*m_stress[k][icomp]/m_elementVolume[k];
+    }
+  }
+
+  /**
+   * @brief Launch the kernel over the elements in the subRegion
+   * @tparam POLICY the kernel policy
+   * @tparam KERNEL_TYPE the type of kernel
+   * @param numElems the number of elements in the subRegion
+   * @param kernelComponent the kernel component
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static void
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    forAll< POLICY >( numElems,
+                      [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( k, stack );
+      for( integer q = 0; q < FE_TYPE::numQuadraturePoints; ++q )
+      {
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+    } );
+  }
+
+protected:
+
+  /// The stress solution
+  arrayView3d< real64 const, constitutive::solid::STRESS_USD > const m_stress;
+
+  /// The average stress
+  fields::solidMechanics::arrayView2dLayoutAvgStress const m_avgStress;
+
+};
+
+
+
+/**
+ * @class AverageStressOverQuadraturePointsKernelFactory
+ * @brief Class to create and launch the kernel
+ */
+class AverageStressOverQuadraturePointsKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam SUBREGION_TYPE the subRegion type
+   * @tparam FE_TYPE the finite element type
+   * @tparam POLICY the kernel policy
+   * @param nodeManager the node manager
+   * @param edgeManager the edge manager
+   * @param faceManager the face manager
+   * @param elementSubRegion the element subRegion
+   * @param finiteElementSpace the finite element space
+   * @param property the property at quadrature points
+   * @param averageProperty the property averaged over quadrature points
+   */
+  template< typename SUBREGION_TYPE,
+            typename FE_TYPE,
+            typename POLICY >
+  static void
+  createAndLaunch( NodeManager & nodeManager,
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   SUBREGION_TYPE const & elementSubRegion,
+                   FE_TYPE const & finiteElementSpace,
+                   arrayView3d< real64 const, constitutive::solid::STRESS_USD > const  stress,
+                   fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress )
+  {
+    AverageStressOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >
+    kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
+            stress, avgStress );
+
+    AverageStressOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >::template
+    kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
+  }
+};
 
 
 }
