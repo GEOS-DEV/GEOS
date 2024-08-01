@@ -627,22 +627,99 @@ struct PPUICPhaseFlux
   {
     // Interface condition solver goes here
     // Can use PPU phaseflux for reference
+
+
     // TODO Ryan- put in checks to ensure using correct constitutive law (maybe on kernel launch?)
     // Some of the helpers below might also be useful, looks like whoever implemented IHU used them 
     //
     // A good step 1 would be to make sure all the constitutive info we are gonna need is here, if not we can pass more by using accessors in FaceBasedAssemblyKernel (Ryan will help)
     //
-
-
-
     // Step 1: convert from density to component fraction
-    //
+    // Ammar suggest to use the provided derivative 1/dCompFrac_dCompDens since the algebraic expansions show that this is equal to dCompDens_dCompFrac
+
     // step 2: loval solver
+
+    // First we calculate the total flux using PPU flux:
+
+    real64 dPresGrad_dP[numFluxSupportPoints]{};
+    real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
+    real64 dGravHead_dP[numFluxSupportPoints]{};
+    real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
+    PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
+                                                       gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
+                                                       phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
+                                                       dPresGrad_dC, dGravHead_dP, dGravHead_dC );
+
+    // *** upwinding ***
+
+    // choose upstream cell
+    k_up = (potGrad >= 0) ? 0 : 1;
+
+    localIndex const er_up  = seri[k_up];
+    localIndex const esr_up = sesri[k_up];
+    localIndex const ei_up  = sei[k_up];
+
+    real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
+
+    //loop over all phases to form total velocity
+    real64 totFlux{};
+    real64 dTotFlux_dP[numFluxSupportPoints]{};
+    real64 dTotFlux_dC[numFluxSupportPoints][numComp]{};
+
+    //store totMob upwinded by PPU for later schemes
+    real64 totMob{};
+    real64 dTotMob_dP[numFluxSupportPoints]{};
+    real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
+    localIndex k_up_ppu = -1;
+
+    //unelegant but need dummy when forming PPU total velocity
+    real64 dummy[numComp];
+    real64 dDummy_dP[numFluxSupportPoints][numComp];
+    real64 dDummy_dC[numFluxSupportPoints][numComp][numComp];
+
+
+    for( integer jp = 0; jp < numPhase; ++jp )
+    {
+      PPUPhaseFlux::compute( numPhase, jp, hasCapPressure,
+                             seri, sesri, sei,
+                             trans, dTrans_dPres,
+                             pres, gravCoef,
+                             phaseMob, dPhaseMob,
+                             dPhaseVolFrac,
+                             phaseCompFrac, dPhaseCompFrac,
+                             dCompFrac_dCompDens,
+                             phaseMassDens, dPhaseMassDens,
+                             phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
+                             k_up_ppu, potGrad,
+                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
+                             dummy, dDummy_dP, dDummy_dC );
+
+      totFlux += phaseFlux;
+
+      phaseFlux = 0.;
+      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+        dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
+        totMob += phaseMob[seri[ke]][sesri[ke]][sei[ke]][jp];
+        dTotMob_dP[ke] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dP];
+        dPhaseFlux_dP[ke] = 0.;
+
+        for( localIndex jc = 0; jc < numComp; ++jc )
+        {
+          dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
+          dTotMob_dC[ke][jc] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dC + jc];
+          dPhaseFlux_dC[ke][jc] = 0.;
+        }
+      }
+
+
+    }
+
+
     //
-    // step 3: global solver fluix and jacobian
+    // step 3: global solver flux and jacobian
     //
-    // Another change for tutorial
-    //
+  
 
   }
 };
