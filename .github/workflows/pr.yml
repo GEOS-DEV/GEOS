@@ -16,7 +16,7 @@ jobs:
     secrets: inherit
 
   run_builds:
-    if: opened, synchronize, or reopened, ready_for_review
+    # if: opened, synchronize, or reopened, ready_for_review
     needs:
       - run_compliance_checks
     name: Build step
