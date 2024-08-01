@@ -292,7 +292,7 @@ private:
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
                            real64 ( & dTotalStress_dTemperature )[6],
-                           
+
                            DiscretizationOps & stiffness ) const
   {
     updateBiotCoefficientAndAssignModuli( k );
@@ -333,18 +333,18 @@ private:
 
     // Thermal stress increment
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-    real64 const thermalStressIncrement = - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperatureFromLastStep;
+    real64 const thermalStressIncrement = -3 * thermalExpansionCoefficient * bulkModulus * deltaTemperatureFromLastStep;
 
     // Update rock stress with tempeature change.
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, thermalStressIncrement );
 
     // Save rock stress including the contribution of temperature change.
-    m_solidUpdate.saveStress( k, q, totalStress ); 
+    m_solidUpdate.saveStress( k, q, totalStress );
 
     // Compute total stress: add pore pressure contribution to rock stress.
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure );
-   
+
     // Compute derivatives of total stress
     real64 const dDiagonalStressComponent_dTemperature = -3 * thermalExpansionCoefficient * bulkModulus;
 
