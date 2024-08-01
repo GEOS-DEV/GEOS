@@ -1,8 +1,3 @@
-import os
-import sys
-sys.path.append("/data/PLI/sytuan/Libs")
-sys.path.append("/data/PLI/sytuan/Libs/matplotlib")
-
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -44,24 +39,32 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
     param1 = tree.find('Constitutive/ElasticIsotropic')
    
     hydromechanicalParameters = dict.fromkeys([
-        "bulkModulus", "drainedLinearTEC"
+        "bulkModulus", "shearModulus", "defaultDrainedTEC", "dDrainedTEC_dT", "referenceTemperature"
     ])
 
     hydromechanicalParameters["bulkModulus"] = float(param1.get("defaultBulkModulus"))
-    hydromechanicalParameters["drainedLinearTEC"] = float(param1.get("defaultDrainedLinearTEC"))
+    hydromechanicalParameters["shearModulus"] = float(param1.get("defaultShearModulus"))   
+    hydromechanicalParameters["defaultDrainedTEC"] = float(param1.get("defaultDrainedTEC"))
+    hydromechanicalParameters["dDrainedTEC_dT"] = float(param1.get("dDrainedTEC_dT"))
+    hydromechanicalParameters["referenceTemperature"] = float(param1.get("referenceTemperature"))
 
     return hydromechanicalParameters
 
 def main():
 	# File path
-	xmlFilePath = "ThermoElasticOedometric_base.xml"
+	xmlFilePath = "../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticOedometric_base.xml"
 
 	# Extract info from XML
 	hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFilePath)
 
 	bulkModulus = hydromechanicalParameters["bulkModulus"]
-	defaultThermalExpansionCoefficient = hydromechanicalParameters["drainedLinearTEC"]
-	   
+	shearModulus = hydromechanicalParameters["shearModulus"]
+	poissonRatio = (3.0*bulkModulus - 2.0*shearModulus) / (6.0*bulkModulus + 2.0*shearModulus)
+	youngModulus = 3.0 * bulkModulus * (1.0 - 2.0*poissonRatio)
+
+	defaultDrainedTEC = hydromechanicalParameters["defaultDrainedTEC"]
+	dDrainedTEC_dT = hydromechanicalParameters["dDrainedTEC_dT"]
+	referenceTemperature = hydromechanicalParameters["referenceTemperature"]
 
 	# Extract stress
 	hf_stress = h5py.File('stressHistory_rock.hdf5', 'r')
@@ -76,35 +79,38 @@ def main():
 	nTimes = time.shape[0]   
 
 	element_idx = 0
+	temp = temperature[:,element_idx]
 
-	# Compute total stress: 
-	# With the actual version of GEOS, the output stress need to be combined with the temperature contribution to obtain the total tress as follows:
-	dThermalExpansionCoefficient_dT = 0.0082e-5
-	referenceTemperature = 0.0
-	thermalExpansionCoefficient = defaultThermalExpansionCoefficient +  dThermalExpansionCoefficient_dT*(temperature[:,element_idx] - referenceTemperature)
-
-	stress_xx_total = stress[:,element_idx,0] - 3.0 * bulkModulus * thermalExpansionCoefficient * temperature[:,element_idx]
-	stress_yy_total = stress[:,element_idx,1] - 3.0 * bulkModulus * thermalExpansionCoefficient * temperature[:,element_idx]
-	stress_zz_total = stress[:,element_idx,2] - 3.0 * bulkModulus * thermalExpansionCoefficient * temperature[:,element_idx]
+	# Get stress: the contribution of temperature to stress is already computed within this GEOS version.
+	stress_xx_total = stress[:,element_idx,0] 
+	stress_yy_total = stress[:,element_idx,1]
+	stress_zz_total = stress[:,element_idx,2] 
 	stress_yz_total = stress[:,element_idx,3]
 	stress_xz_total = stress[:,element_idx,4]
 	stress_xy_total = stress[:,element_idx,5]
 
 	# Lab data
-	T_lab, pconf_lab = getLabData()
-			
+	temp_lab, pconf_lab = getLabData()
+
+	# Analytical results
+	drainedTEC = defaultDrainedTEC +  dDrainedTEC_dT*(temp - referenceTemperature)
+	pconf_anal = youngModulus/(1.0-poissonRatio) * (defaultDrainedTEC + drainedTEC)/2.0 * (temp - referenceTemperature)
+
 	# Plot 
-	plt.plot( temperature[:,element_idx],
+	plt.plot( temp,
 			  -stress_xx_total * 1e-5, # convert to bar    
 			  'k+',
 			  label=f'GEOS with linear TEC')
-	plt.plot( T_lab,
+	plt.plot( temp_lab,
 			  pconf_lab,  
 			  'ro',
 			  label='Lab data')
-	
-	
 
+	plt.plot( temp,
+			  pconf_anal * 1e-5, # convert to bar  
+			  'b-',
+			  label='Analytical results')
+	
 	plt.grid()
 	plt.ylabel('Pconf [Bar]')
 	plt.xlabel('Temperature [C]')
@@ -112,11 +118,7 @@ def main():
 	plt.ylim(0.0, 200.0)   
 
 	plt.legend(loc='lower right')
-
-
-	plt.savefig('stress.png')
-
-	os.system('xdg-open stress.png')  
+	plt.show()
 	
 if __name__ == "__main__":
 	main()
