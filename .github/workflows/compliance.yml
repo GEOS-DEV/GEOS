@@ -1,28 +1,21 @@
 name: Compliance Checks
 
 on:
-  pull_request:
-      types: [opened, synchronize, reopened, edited]
-  workflow_dispatch:
+  workflow_call:
+    # inputs:
+    #   config-path:
+    #     required: true
+    #     type: string
+    # Map the workflow outputs to job outputs
+    # outputs:
+    #   valid:
+    #     description: "Returns true if all compliance tests are validated, false otherwise"
+    #     value: ${{ jobs.example_job.outputs.output1 }}
+    # secrets:
+    #   GITHUB_TOKEN:
+    #     required: true
 
-# Cancels in-progress workflows for a PR when updated
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-  
-  # workflow_call:
-  #   inputs:
-  #     config-path:
-  #       required: true
-  #       type: string
-  #   # Map the workflow outputs to job outputs
-  #   outputs:
-  #     valid:
-  #       description: "Returns true if all compliance tests are validated, false otherwise"
-  #       value: ${{ jobs.example_job.outputs.output1 }}
-  #   secrets:
-  #     GITHUB_TOKEN:
-  #       required: true
+
 
 jobs:
   # Checks if PR title follows conventional semantics
@@ -35,7 +28,6 @@ jobs:
     
     steps:
       - name: Check if the PR name has conventional semantics
-        if: github.event_name == 'pull_request'
         uses: amannn/action-semantic-pull-request@v5.5.3
         id: lint_pr_title
         env:
@@ -44,11 +36,6 @@ jobs:
           wip: true
           # Configure that a scope doesn't need to be provided.
           requireScope: false
-    
-      - name: Skip the check on develop branch
-        if:  github.ref_name == 'develop'
-        run: |
-          echo "This in't a Pull-Request, skipping"
 
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
@@ -145,53 +132,53 @@ jobs:
       RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false
 
-  code_coverage:
-    needs:
-      - is_not_draft_pull_request
-    uses: ./.github/workflows/build_and_test.yml
-    secrets: inherit
-    with:
-      BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
-      CMAKE_BUILD_TYPE: Debug
-      CODE_COVERAGE: true
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-      ENABLE_HYPRE: ON
-      ENABLE_TRILINOS: OFF
-      GCP_BUCKET: geosx/ubuntu22.04-gcc11
-      RUNS_ON: Runner_4core_16GB
+  # code_coverage:
+  #   needs:
+  #     - is_not_draft_pull_request
+  #   uses: ./.github/workflows/build_and_test.yml
+  #   secrets: inherit
+  #   with:
+  #     BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+  #     CMAKE_BUILD_TYPE: Debug
+  #     CODE_COVERAGE: true
+  #     DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+  #     DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+  #     ENABLE_HYPRE: ON
+  #     ENABLE_TRILINOS: OFF
+  #     GCP_BUCKET: geosx/ubuntu22.04-gcc11
+  #     RUNS_ON: Runner_4core_16GB
 
  # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
-  check_that_all_jobs_succeeded:
-    name: Generate output
-    runs-on: ubuntu-22.04
-    needs:
-    - if_not_unassigned_pull_request
-    - are_submodules_in_sync
-    - check_code_style_and_documentation
-    - cpu_builds
-    - cuda_builds
-    - run_integrated_tests
-    # Map the job outputs to step outputs
-    outputs:
-      output1: ${{ steps.step2.outputs.firstword }}
-    steps:
-      - id: step1
-        run: |
-          echo "if_not_unassigned_pull_request: ${{needs.if_not_unassigned_pull_request.result}}"
-          echo "are_submodules_in_sync: ${{needs.are_submodules_in_sync.result}}"
-          echo "check_code_style_and_documentation: ${{needs.check_code_style_and_documentation.result}}"
-          echo "cpu_builds: ${{needs.cpu_builds.result}}"
-          echo "cuda_builds: ${{needs.cuda_builds.result}}"
-          echo "run_integrated_tests: ${{needs.run_integrated_tests.result}} "
-      - id: step2
-        run: |
-          ${{
-            needs.if_not_unassigned_pull_request.result == 'success' &&
-            needs.are_submodules_in_sync.result == 'success' &&
-            needs.check_code_style_and_documentation.result == 'success' &&
-            needs.cpu_builds.result == 'success' &&
-            needs.cuda_builds.result == 'success' && 
-            needs.run_integrated_tests.result == 'success'
-          }}
-          echo "firstword=hello" >> $GITHUB_OUTPUT
+  # check_that_all_jobs_succeeded:
+  #   name: Generate output
+  #   runs-on: ubuntu-22.04
+  #   needs:
+  #   - if_not_unassigned_pull_request
+  #   - are_submodules_in_sync
+  #   - check_code_style_and_documentation
+  #   # - cpu_builds
+  #   # - cuda_builds
+  #   - run_integrated_tests
+  #   # Map the job outputs to step outputs
+  #   outputs:
+  #     output1: ${{ steps.step2.outputs.firstword }}
+  #   steps:
+  #     - id: step1
+  #       run: |
+  #         echo "if_not_unassigned_pull_request: ${{needs.if_not_unassigned_pull_request.result}}"
+  #         echo "are_submodules_in_sync: ${{needs.are_submodules_in_sync.result}}"
+  #         echo "check_code_style_and_documentation: ${{needs.check_code_style_and_documentation.result}}"
+  #         echo "cpu_builds: ${{needs.cpu_builds.result}}"
+  #         echo "cuda_builds: ${{needs.cuda_builds.result}}"
+  #         echo "run_integrated_tests: ${{needs.run_integrated_tests.result}} "
+  #     - id: step2
+  #       run: |
+  #         ${{
+  #           needs.if_not_unassigned_pull_request.result == 'success' &&
+  #           needs.are_submodules_in_sync.result == 'success' &&
+  #           needs.check_code_style_and_documentation.result == 'success' &&
+  #           needs.cpu_builds.result == 'success' &&
+  #           needs.cuda_builds.result == 'success' && 
+  #           needs.run_integrated_tests.result == 'success'
+  #         }}
+  #         echo "firstword=hello" >> $GITHUB_OUTPUT
