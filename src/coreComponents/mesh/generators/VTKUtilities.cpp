@@ -629,11 +629,11 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
                    "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
 
-    logger.rank0Log( "Using global Ids defined in VTK mesh" );
+    GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
   else
   {
-    logger.rank0Log( "Generating global Ids from VTK mesh" );
+    GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
     output = generateGlobalIDs( mesh );
   }
 
@@ -1683,18 +1683,18 @@ void printMeshStatistics( vtkDataSet & mesh,
   if( rank == 0 )
   {
     int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    logger.stdLog( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    logger.stdLog( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
+    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
+    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
     for( auto const & typeCount: elemCounts )
     {
-      logger.stdLog( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
+      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
     }
 
     int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    logger.stdLog( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                             "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                             widthLocal, "min", "avg", "max",
-                             minLocalElems, avgLocalElems, maxLocalElems ) );
+    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
+                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
+                        widthLocal, "min", "avg", "max",
+                        minLocalElems, avgLocalElems, maxLocalElems ) );
   }
 }
 
@@ -1780,7 +1780,7 @@ void importNodesets( integer const logLevel,
 
   for( int i=0; i < nodesetNames.size(); ++i )
   {
-    logger.rank0LogIf( logLevel >= 2, "    ", nodesetNames[i] );
+    GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
     GEOS_THROW_IF( curArray == nullptr,
@@ -1883,7 +1883,7 @@ void writeCells( integer const logLevel,
       std::vector< vtkIdType > const & cellIds = regionCells.second;
 
       string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
-      logger.rank0LogIf( logLevel >= 1, "Importing cell block ", cellBlockName );
+      GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
 
       // Create and resize the cell block.
       CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
@@ -1911,7 +1911,7 @@ void writeSurfaces( integer const logLevel,
     int const surfaceId = surfaceCells.first;
     std::vector< vtkIdType > const & cellIds = surfaceCells.second;
     string const surfaceName = std::to_string( surfaceId );
-    logger.rank0LogIf( logLevel >= 1, "Importing surface ", surfaceName );
+    GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
 
     // Get or create all surfaces (even those which are empty in this rank)
     SortedArray< localIndex > & curNodeSet = nodeSets[ surfaceName ];

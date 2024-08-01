@@ -42,71 +42,78 @@ namespace geos
 /**
  * @brief Log a message on screen.
  * @details The expression to log must evaluate something that can be stream inserted.
+ * @deprecated #3134
+ * @todo if we're keeping the macros, remove LvArray dependency here and use the logger?
  */
-//proposal B// #define GEOS_LOG( ... ) logger.log( GEOS_SRCLOC(), __VA_ARGS__ )
-//deprecated// #define GEOS_LOG( ... ) LVARRAY_LOG( __VA_ARGS__ )
+#if !defined(GEOS_DEVICE_COMPILE)
+#define GEOS_LOG( ... ) LVARRAY_LOG( __VA_ARGS__ )
+#else
+#define GEOS_LOG( ... )
+#endif
 
 /**
  * @brief Log an expression and its value on screen.
  * @details The expression to log must evaluate something that can be stream inserted.
+ * @deprecated #3134
  */
-// TODO deprecate
-#define GEOS_LOG_VAR( ... ) logger.stdLog( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )
+#define GEOS_LOG_VAR( ... ) GEOS_LOG( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
+ * @deprecated PR #3134
  */
-//proposal B// #define GEOS_LOG_RANK_0_IF( EXP, ... ) logger.logRank0If( EXP, GEOS_SRCLOC(), __VA_ARGS__ )
-//deprecated// #define GEOS_LOG_RANK_0_IF( EXP, msg ) \/
-// do { \/
-//   if( ::geos::logger.rank == 0 && EXP ) \/
-//   { \/
-//     std::ostringstream oss; \/
-//     oss << msg; \/
-//     std::cout << oss.str() << std::endl; \/
-//   } \/
-// } while( false )
+#if !defined(GEOS_DEVICE_COMPILE)
+#define GEOS_LOG_RANK_0_IF( EXP, ... ) \
+  do { \
+    if( ::geos::logger.rank == 0 && EXP ) \
+    { \
+      GEOS_LOG( __VA_ARGS__ ); \
+    } \
+  } while( false )
+#else 
+#define GEOS_LOG_RANK_0_IF( EXP, ... )
+#endif
 
 /**
  * @brief Log a message on screen on rank 0.
  * @param msg a message to log (any expression that can be stream inserted)
+ * @deprecated PR #3134
  */
-//proposal B// #define GEOS_LOG_RANK_0( ... ) logger.logRank0( GEOS_SRCLOC(), __VA_ARGS__ )
-//deprecated// #define GEOS_LOG_RANK_0( msg ) GEOS_LOG_RANK_0_IF( true, msg )
+#define GEOS_LOG_RANK_0( ... ) GEOS_LOG_RANK_0_IF( true, __VA_ARGS__ )
 
 /**
  * @brief Conditionally log a message to the rank output stream.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
+ * @deprecated PR #3134
  */
-// #if defined(GEOS_DEVICE_COMPILE)
-// //deprecated// #define GEOS_LOG_RANK_IF( EXP, msg )
-// #else
-// //deprecated// #define GEOS_LOG_RANK_IF( EXP, msg ) \/
-// do { \/
-//   if( EXP ) \/
-//   { \/
-//     std::ostringstream oss; \/
-//     oss << ::geos::logger.rankMsgPrefix << msg; \/
-//     *logger.outStream << oss.str() << std::endl; \/
-//   } \/
-// } while( false )
-// #endif
+#if !defined(GEOS_DEVICE_COMPILE)
+#define GEOS_LOG_RANK_IF( EXP, msg ) \
+  do { \
+    if( EXP ) \
+    { \
+      GEOS_LOG( ::geos::logger.rankMsgPrefix, msg ); \
+    } \
+  } while( false )
+#else
+#define GEOS_LOG_RANK_IF( EXP, msg )
+#endif
 
 /**
  * @brief Log a message to the rank output stream.
  * @param msg a message to log (any expression that can be stream inserted)
+ * @deprecated PR #3134
  */
-//deprecated// #define GEOS_LOG_RANK( msg ) GEOS_LOG_RANK_IF( true, msg )
+#define GEOS_LOG_RANK( msg ) GEOS_LOG_RANK_IF( true, msg )
 
 /**
  * @brief Log a variable/expression name and value on screen to the rank output stream.
  * @param var a variable or expression accessible from current scope that can be stream inserted
+ * @deprecated PR #3134
  */
-// TODO deprecate
-#define GEOS_LOG_RANK_VAR( ... ) logger.rankLog( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )//GEOS_LOG_RANK( #var " = " << var )
+#define GEOS_LOG_RANK_VAR( ... ) GEOS_LOG( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -158,35 +165,35 @@ namespace geos
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-// TODO deprecate
 #define GEOS_WARNING_IF( EXP, msg ) LVARRAY_WARNING_IF( EXP, msg )
 
 /**
  * @brief Report a warning.
  * @param msg a message to log (any expression that can be stream inserted)
+ * @deprecated PR #3134
  */
-// TODO deprecate
 #define GEOS_WARNING( msg ) LVARRAY_WARNING( msg )
 
 /**
  * @brief Conditionally log an info message.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
+ * @deprecated PR #3134
  */
-//deprecated// #define GEOS_INFO_IF( EXP, msg ) LVARRAY_INFO_IF( EXP, msg )
+#define GEOS_INFO_IF( EXP, msg ) LVARRAY_INFO_IF( EXP, msg )
 
 /**
  * @brief Log an info message.
  * @param msg a message to log (any expression that can be stream inserted)
+ * @deprecated PR #3134
  */
-//deprecated// #define GEOS_INFO( msg ) LVARRAY_INFO( msg )
+#define GEOS_INFO( msg ) LVARRAY_INFO( msg )
 
 /**
  * @brief Raise a hard error if two values are equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_EQ_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -196,7 +203,6 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_EQ_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
 
@@ -204,7 +210,6 @@ namespace geos
  * @brief Raise a hard error if two values are equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_EQ( lhs, rhs ) GEOS_ERROR_IF_EQ_MSG( lhs, rhs, "" )
 
@@ -213,7 +218,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_EQ( lhs, rhs, TYPE ) GEOS_THROW_IF_EQ_MSG( lhs, rhs, "", TYPE )
 
@@ -222,7 +226,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_NE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_NE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -232,7 +235,6 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_NE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
 
@@ -240,7 +242,6 @@ namespace geos
  * @brief Raise a hard error if two values are not equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_NE( lhs, rhs ) GEOS_ERROR_IF_NE_MSG( lhs, rhs, "" )
 
@@ -249,7 +250,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_NE( lhs, rhs, TYPE ) GEOS_THROW_IF_NE_MSG( lhs, rhs, "", TYPE )
 
@@ -258,7 +258,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_GT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -268,7 +267,6 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
 
@@ -276,7 +274,6 @@ namespace geos
  * @brief Raise a hard error if one value compares greater than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_GT( lhs, rhs ) GEOS_ERROR_IF_GT_MSG( lhs, rhs, "" )
 
@@ -285,7 +282,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_GT( lhs, rhs, TYPE ) GEOS_ERROR_IF_GT_MSG( lhs, rhs, "", TYPE )
 
@@ -294,7 +290,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_GE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -304,7 +299,6 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
 
@@ -312,7 +306,6 @@ namespace geos
  * @brief Raise a hard error if one value compares greater than or equal to the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_GE( lhs, rhs ) GEOS_ERROR_IF_GE_MSG( lhs, rhs, "" )
 
@@ -321,7 +314,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_GE( lhs, rhs, TYPE ) GEOS_ERROR_IF_GE_MSG( lhs, rhs, "", TYPE )
 
@@ -330,7 +322,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_LT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -340,7 +331,6 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
 
@@ -348,7 +338,6 @@ namespace geos
  * @brief Raise a hard error if one value compares less than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_LT( lhs, rhs ) GEOS_ERROR_IF_LT_MSG( lhs, rhs, "" )
 
@@ -357,7 +346,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_LT( lhs, rhs, TYPE ) GEOS_ERROR_IF_LT_MSG( lhs, rhs, "", TYPE )
 
@@ -366,7 +354,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_LE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -376,7 +363,6 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
 
@@ -384,7 +370,6 @@ namespace geos
  * @brief Raise a hard error if one value compares less than or equal to the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ERROR_IF_LE( lhs, rhs ) GEOS_ERROR_IF_LE_MSG( lhs, rhs, "" )
 
@@ -393,7 +378,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_THROW_IF_LE( lhs, rhs, TYPE ) GEOS_ERROR_IF_LE_MSG( lhs, rhs, "", TYPE )
 
@@ -402,7 +386,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ASSERT_EQ_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_EQ_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -410,7 +393,6 @@ namespace geos
  * @brief Assert that two values compare equal in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ASSERT_EQ( lhs, rhs ) GEOS_ASSERT_EQ_MSG( lhs, rhs, "" )
 
@@ -419,7 +401,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ASSERT_NE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_NE_MSG( lhs, rhs, msg )
 
@@ -427,7 +408,6 @@ namespace geos
  * @brief Assert that two values compare not equal in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ASSERT_NE( lhs, rhs ) LVARRAY_ASSERT_NE( lhs, rhs )
 
@@ -436,7 +416,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ASSERT_GT_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -444,7 +423,6 @@ namespace geos
  * @brief Assert that one value compares greater than the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */ 
 #define GEOS_ASSERT_GT( lhs, rhs ) GEOS_ASSERT_GT_MSG( lhs, rhs, "" )
 
@@ -453,7 +431,6 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ASSERT_GE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
 
@@ -461,7 +438,6 @@ namespace geos
  * @brief Assert that one value compares greater than or equal to the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @todo deprecate when adding the error manager?
  */
 #define GEOS_ASSERT_GE( lhs, rhs ) GEOS_ASSERT_GE_MSG( lhs, rhs, "" )
 
@@ -469,43 +445,36 @@ namespace geos
  * @brief Macro used to turn on/off a function based on the log level.
  * @param[in] minLevel Minimum log level
  * @param[in] fn Function to filter
+ * @deprecated PR #3134
  */
-// //deprecated// #define GEOS_LOG_LEVEL_FN( minLevel, fn )                                      \/
-//   do {                                                                         \/
-//     if( this->getLogLevel() >= minLevel )                                      \/
-//     {                                                                          \/
-//       fn;                                                                      \/
-//     }                                                                          \/
-//   } while( false )
+#define GEOS_LOG_LEVEL_FN( minLevel, fn )                                      \
+  do {                                                                         \
+    if( this->getLogLevel() >= minLevel )                                      \
+    {                                                                          \
+      fn;                                                                      \
+    }                                                                          \
+  } while( false )
 
 /**
  * @brief Output messages based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-//deprecated// #define GEOS_LOG_LEVEL( minLevel, ... ) logger.stdLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__ )//GEOS_INFO_IF(
-// this->getLogLevel()
-// >= minLevel, msg );
+#define GEOS_LOG_LEVEL( minLevel, ... ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, __VA_ARGS__ );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-//deprecated// #define GEOS_LOG_LEVEL_RANK_0( minLevel, ... ) logger.rank0LogIf( this->getLogLevel() >= minLevel, __VA_ARGS__
-// )//GEOS_LOG_RANK_0_IF(
-// this->getLogLevel() >=
-// minLevel, msg )
+#define GEOS_LOG_LEVEL_RANK_0( minLevel, ... ) GEOS_LOG_RANK_0_IF( this->getLogLevel() >= minLevel, __VA_ARGS__ );
 
 /**
  * @brief Output messages (with one line per rank) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-//deprecated// #define GEOS_LOG_LEVEL_BY_RANK( minLevel, ... ) logger.rankLogIf( this->getLogLevel() >= minLevel, __VA_ARGS__
-// )//GEOS_LOG_RANK_IF(
-// this->getLogLevel() >=
-// minLevel, msg )
+#define GEOS_LOG_LEVEL_BY_RANK( minLevel, ... ) GEOS_LOG_RANK_IF( this->getLogLevel() >= minLevel, __VA_ARGS__ );
 
 
 /**

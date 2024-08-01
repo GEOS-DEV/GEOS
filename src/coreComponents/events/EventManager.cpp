@@ -90,7 +90,7 @@ EventManager::~EventManager()
 
 Group * EventManager::createChild( string const & childKey, string const & childName )
 {
-  logger.rank0Log( "Adding Event: ", childKey, ", ", childName );
+  GEOS_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
   return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
@@ -130,7 +130,7 @@ bool EventManager::run( DomainPartition & domain )
   // Inform user if it appears this is a mid-loop restart
   if( m_currentSubEvent > 0 )
   {
-    logger.rank0Log( "Resuming from step ", m_currentSubEvent, " of the event loop." );
+    GEOS_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
   }
   else if( !isZero( m_minTime ) )
   {
@@ -180,8 +180,8 @@ bool EventManager::run( DomainPartition & domain )
 
       // Print debug information for logLevel >= 1
       GEOS_LOG_LEVEL_RANK_0( 1,
-                             "     Event: ", m_currentSubEvent, " (", subEvent->getName(), "), dt_request=",
-                             subEvent->getCurrentEventDtRequest(), ", forecast=", subEvent->getForecast() );
+                             "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
+                             subEvent->getForecast() );
 
       // Execute, signal events
       bool earlyReturn = false;
@@ -213,7 +213,7 @@ bool EventManager::run( DomainPartition & domain )
   }
 
   // Cleanup
-  logger.rank0Log( "Cleaning up events" );
+  GEOS_LOG_RANK_0( "Cleaning up events" );
 
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
@@ -233,31 +233,31 @@ void EventManager::outputTime() const
     integer const minutesOut =  (m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR) / MINUTE;
     integer const secondsOut =   m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR - minutesOut * MINUTE;
 
-    logger.rank0Log( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} min, {} s, dt: {} s, Cycle: {}", yearsOut, daysOut, hoursOut, minutesOut, secondsOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} min, {} s, dt: {} s, Cycle: {}", yearsOut, daysOut, hoursOut, minutesOut, secondsOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::years )
   {
     real64 const yearsOut = m_time / YEAR;
-    logger.rank0Log( GEOS_FMT( "Time: {:.2f} years, dt: {} s, Cycle: {}", yearsOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} years, dt: {} s, Cycle: {}", yearsOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::days )
   {
     real64 const daysOut = m_time / DAY;
-    logger.rank0Log( GEOS_FMT( "Time: {:.2f} days, dt: {} s, Cycle: {}", daysOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} days, dt: {} s, Cycle: {}", daysOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::hours )
   {
     real64 const hoursOut = m_time / HOUR;
-    logger.rank0Log( GEOS_FMT( "Time: {:.2f} hrs, dt: {} s, Cycle: {}", hoursOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} hrs, dt: {} s, Cycle: {}", hoursOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::minutes )
   {
     real64 const minutesOut = m_time / MINUTE;
-    logger.rank0Log( GEOS_FMT( "Time: {:.2f} min, dt: {} s, Cycle: {}", minutesOut, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} min, dt: {} s, Cycle: {}", minutesOut, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat == TimeOutputFormat::seconds )
   {
-    logger.rank0Log( GEOS_FMT( "Time: {:4.2e} s, dt: {} s, Cycle: {}", m_time, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.2e} s, dt: {} s, Cycle: {}", m_time, m_dt, m_cycle ) );
   }
   else
   {

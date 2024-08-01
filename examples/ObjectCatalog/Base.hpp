@@ -26,14 +26,14 @@ public:
   Parameter( Parameter const & source ):
     member( source.member )
   {
-    logger.stdLog( "called copy constructor for Parameter" );
+    GEOS_LOG( "called copy constructor for Parameter" );
   }
 
 #if ( __cplusplus >= 201103L )
   Parameter( Parameter && source ):
     member( std::move( source.member ))
   {
-    logger.stdLog( "called move constructor for Parameter" );
+    GEOS_LOG( "called move constructor for Parameter" );
   }
 #endif
 
@@ -47,12 +47,12 @@ class Base
 public:
   Base( int junk, double const & junk2, Parameter& pbv )
   {
-    logger.stdLog( "calling Base constructor with arguments (", junk, " ", junk2, ")" );
+    GEOS_LOG( "calling Base constructor with arguments (" << junk << " " << junk2 << ")" );
   }
 
   ~Base()
   {
-    logger.stdLog( "calling Base destructor" );
+    GEOS_LOG( "calling Base destructor" );
   }
 
   using CatalogInterface = dataRepository::CatalogInterface< Base, int, double const &, Parameter& >;

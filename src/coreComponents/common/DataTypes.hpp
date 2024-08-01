@@ -28,6 +28,7 @@
 #include "BufferAllocator.hpp"
 #include "DataLayouts.hpp"
 #include "Tensor.hpp"
+#include "Logger.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -757,10 +758,6 @@ struct TypeName
 
 }
 
-
-// We need to include this file at the end of the header because it needs the DataTypes used in this file
-// (should we rather explicitely include it in every file that need the Logger?)
-#include "Logger.hpp"
 
 
 #endif /* GEOS_COMMON_DATATYPES_HPP */
