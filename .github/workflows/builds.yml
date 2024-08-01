@@ -1,7 +1,11 @@
 name: Builds  
 
 on: 
-  pull_request:
+  workflow_run:
+    workflows:
+      - Compliance
+    types:
+      - completed
   push:
     branches:
       - develop
