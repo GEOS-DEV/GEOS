@@ -2,6 +2,10 @@ name: Builds
 
 on:
   workflow_call:
+    inputs:
+      DOCKER_IMAGE_TAG:
+        required: true
+        type: string
   # push:
   #   branches:
   #     - develop
@@ -14,29 +18,29 @@ on:
 jobs:
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
-  get_docker_image_tag:
-    # if: ${{ always() }}
-    # needs: [semantic_pull_request]
-    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
-    # to ensure maximum support of google cloud's sdk.
-    runs-on: ubuntu-22.04
-    outputs:
-      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
-    steps:
-    # The TPL tag is contained in the codespaces configuration to avoid duplications.
-    - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v4.1.7
-      with:
-        sparse-checkout: |
-          .devcontainer/devcontainer.json
-        sparse-checkout-cone-mode: false
-        submodules: false
-        lfs: false
-        fetch-depth: 1
-    - name: Extract docker image tag
-      id: extract_docker_image_tag
-      run: |
-        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
+  # get_docker_image_tag:
+  #   # if: ${{ always() }}
+  #   # needs: [semantic_pull_request]
+  #   # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
+  #   # to ensure maximum support of google cloud's sdk.
+  #   runs-on: ubuntu-22.04
+  #   outputs:
+  #     DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
+  #   steps:
+  #   # The TPL tag is contained in the codespaces configuration to avoid duplications.
+  #   - name: Checkout .devcontainer/devcontainer.json
+  #     uses: actions/checkout@v4.1.7
+  #     with:
+  #       sparse-checkout: |
+  #         .devcontainer/devcontainer.json
+  #       sparse-checkout-cone-mode: false
+  #       submodules: false
+  #       lfs: false
+  #       fetch-depth: 1
+  #   - name: Extract docker image tag
+  #     id: extract_docker_image_tag
+  #     run: |
+  #       echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
 
   # Matrix containing all the CPU build.
@@ -91,7 +95,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     with:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_IMAGE_TAG: ${{ inputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
@@ -112,7 +116,7 @@ jobs:
       BUILD_AND_TEST_CLI_ARGS: --build-exe-only
       BUILD_TYPE: integrated_tests
       CMAKE_BUILD_TYPE: Release
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_IMAGE_TAG: ${{ inputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
@@ -223,7 +227,7 @@ jobs:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       DOCKER_CERTS_DIR: ${{ matrix.DOCKER_CERTS_DIR }}
       DOCKER_CERTS_UPDATE_COMMAND: ${{ matrix.DOCKER_CERTS_UPDATE_COMMAND }}
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_IMAGE_TAG: ${{ inputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}

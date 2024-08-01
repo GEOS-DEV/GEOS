@@ -7,10 +7,10 @@ on:
     #     required: true
     #     type: string
     # Map the workflow outputs to job outputs
-    # outputs:
-    #   valid:
-    #     description: "Returns true if all compliance tests are validated, false otherwise"
-    #     value: ${{ jobs.example_job.outputs.output1 }}
+    outputs:
+      DOCKER_IMAGE_TAG:
+        description: "Returns true if all compliance tests are validated, false otherwise"
+        value: ${{ jobs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
     # secrets:
     #   GITHUB_TOKEN:
     #     required: true
