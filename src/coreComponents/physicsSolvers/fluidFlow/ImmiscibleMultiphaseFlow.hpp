@@ -89,6 +89,10 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
+  setupDofs( DomainPartition const & domain,
+             DofManager & dofManager ) const override;
+
+  virtual void
   applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,

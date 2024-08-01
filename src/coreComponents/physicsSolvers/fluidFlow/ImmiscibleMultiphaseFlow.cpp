@@ -533,6 +533,34 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
   GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
 }
 
+// Ryan: Looks like this will need to be overwritten as well...
+// I have left the CompositionalMultiphaseFVM implementation for reference
+void ImmiscibleMultiphaseFlow::setupDofs( DomainPartition const & domain,
+                                            DofManager & dofManager ) const
+{
+  GEOS_UNUSED_VAR(domain, dofManager);
+  //// add a field for the cell-centered degrees of freedom
+  //dofManager.addField( viewKeyStruct::elemDofFieldString(),
+  //                     FieldLocation::Elem,
+  //                     m_numDofPerCell,
+  //                     getMeshTargets() );
+
+  //// this call with instruct GEOS to reorder the dof numbers
+  //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
+  //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
+
+  //// for the volume balance equation, disable global coupling
+  //// this equation is purely local (not coupled to neighbors or other physics)
+  //dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
+  //                                             m_numComponents );
+
+
+  //NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  //FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  //FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  //dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), fluxApprox );
+}
+
 void ImmiscibleMultiphaseFlow::applyBoundaryConditions( real64 const time_n,
                                                         real64 const dt,
                                                         DomainPartition & domain,
