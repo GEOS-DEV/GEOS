@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included name="primary_includes">
+  <Included>
     <File name="./class09_pb3_drainageOnly_iterative_base.xml"/>
   </Included>
     <!-- <File name="./class09_pb3_hystRelperm_iterative_base.xml"/> -->

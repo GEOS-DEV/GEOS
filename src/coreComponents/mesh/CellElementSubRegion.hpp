@@ -162,7 +162,6 @@ public:
   template< typename LAMBDA >
   void forMaterials( LAMBDA lambda )
   {
-
     for( auto & constitutiveGroup : m_constitutiveGrouping )
     {
       lambda( constitutiveGroup );

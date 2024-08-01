@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included name="primary_includes">
+  <Included>
     <File name="./acous3D_Q5_small_base.xml"/>
   </Included>
 

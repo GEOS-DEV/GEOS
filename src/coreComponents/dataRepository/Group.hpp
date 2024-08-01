@@ -1487,7 +1487,7 @@ public:
   virtual void reinit() {}
 
   using callback_coordinator = typename inputExtension::InputExtender< >::super;
-  virtual std::vector< inputExtension::Rule< > > getInputExtensionRules( callback_coordinator & callbackCoordinator ) const { return std::vector< inputExtension::Rule< > >(); };
+  virtual std::vector< inputExtension::Rule< > > getInputExtensionRules( callback_coordinator & GEOS_UNUSED_PARAM( callbackCoordinator ) ) const { return std::vector< inputExtension::Rule< > >(); };
 
   void registerDataContext( std::unique_ptr< DataContext > context )
   {

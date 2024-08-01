@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included name="primary_includes">
+  <Included>
     <File name="./ContactMechanics_slippingFault_base.xml"/>
   </Included>
 

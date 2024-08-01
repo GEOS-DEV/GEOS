@@ -43,7 +43,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
     setApplyDefaultValue( mpiSize );
 
   // Locate mergable Groups
-  // problemManager->generateDataStructureSkeleton( 0 );
+  problemManager->generateDataStructureSkeleton( 0 );
   std::vector< dataRepository::Group const * > containerGroups;
   problemManager->discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
   std::set< string > mergableNodes;
@@ -51,13 +51,12 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   {
     mergableNodes.insert( group->getCatalogName() );
   }
-  // problemManager->deregisterAllRecursive( );
-
+  problemManager->deregisterAllRecursive( );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
   dataRepository::inputProcessing::AllProcessingPhases processor( xmlDocument, mergableNodes );
   processor.execute( *problemManager, xmlProblemNode );
-  problemManager->applyStaticExtensions( xmlDocument, processor );
+  problemManager->processSchemaDeviations( xmlDocument, mergableNodes );
 
   problemManager->problemSetup();
   problemManager->applyInitialConditions();

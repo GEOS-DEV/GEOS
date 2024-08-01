@@ -2,7 +2,7 @@
 
 
 <Problem>
-  <Included name="primary_includes">
+  <Included>
     <File name="./KirschProblem_base.xml"/>
   </Included>
 

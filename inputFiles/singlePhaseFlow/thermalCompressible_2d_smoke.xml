@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included name="primary_includes">
+  <Included>
     <File name="./thermalCompressible_2d_base.xml" />
   </Included>
 

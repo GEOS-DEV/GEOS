@@ -2,7 +2,7 @@
 
 <Problem>
   <!-- SPHINX_HYDROFRACTURE_INCLUDED_PARAMETERS -->
-  <Included name="primary_includes">
+  <Included>
     <File
       name="../../hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml"/>
   </Included>

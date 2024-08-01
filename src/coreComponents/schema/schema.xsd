@@ -168,14 +168,10 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:element name="Problem" type="ProblemType">
-		<xsd:unique name="IncludedUniqueName">
-			<xsd:selector xpath="Included" />
-			<xsd:field xpath="@name" />
-		</xsd:unique>
-	</xsd:element>
+	<xsd:element name="Problem" type="ProblemType" />
 	<xsd:complexType name="ProblemType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="Events" type="EventsType" minOccurs="1" maxOccurs="1">
 				<xsd:unique name="EventsHaltEventUniqueName">
 					<xsd:selector xpath="HaltEvent" />
@@ -264,12 +260,6 @@
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
-			<xsd:element name="Included" type="IncludedType">
-				<xsd:unique name="IncludedFileUniqueName">
-					<xsd:selector xpath="File" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-			</xsd:element>
 			<xsd:element name="Mesh" type="MeshType" minOccurs="1" maxOccurs="1">
 				<xsd:unique name="MeshInternalMeshUniqueName">
 					<xsd:selector xpath="InternalMesh" />
@@ -319,6 +309,7 @@
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="ParticleRegions" type="ParticleRegionsType" maxOccurs="1" />
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1">
 				<xsd:unique name="SolversAcousticElasticSEMUniqueName">
 					<xsd:selector xpath="AcousticElasticSEM" />
@@ -885,8 +876,12 @@
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
-			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
-			<xsd:element name="ParticleRegions" type="ParticleRegionsType" maxOccurs="1" />
+			<xsd:element name="Included" type="IncludedType" maxOccurs="1">
+				<xsd:unique name="IncludedFileUniqueName">
+					<xsd:selector xpath="File" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 			<xsd:element name="Parameters" type="ParametersType" maxOccurs="1">
 				<xsd:unique name="ParametersParameterUniqueName">
 					<xsd:selector xpath="Parameter" />
@@ -895,6 +890,55 @@
 			</xsd:element>
 			<xsd:element name="Benchmarks" type="BenchmarksType" maxOccurs="1" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ElementRegionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
+			<xsd:element name="SurfaceElementRegion" type="SurfaceElementRegionType" />
+			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CellElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--cellBlocks => (no description available)-->
+		<xsd:attribute name="cellBlocks" type="groupNameRef_array" use="required" />
+		<!--coarseningRatio => (no description available)-->
+		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
+		<!--materialList => List of materials present in this region-->
+		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
+		<!--meshBody => Mesh body that contains this region-->
+		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SurfaceElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--defaultAperture => The default aperture of newly formed surface elements.-->
+		<xsd:attribute name="defaultAperture" type="real64" use="required" />
+		<!--faceBlock => The name of the face block in the mesh, or the embedded surface.-->
+		<xsd:attribute name="faceBlock" type="groupNameRef" default="FractureSubRegion" />
+		<!--materialList => List of materials present in this region-->
+		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
+		<!--meshBody => Mesh body that contains this region-->
+		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
+		<!--subRegionType => Type of surface element subregion. Valid options: {faceElement, embeddedElement}.-->
+		<xsd:attribute name="subRegionType" type="geos_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_SurfaceElementRegion_SurfaceSubRegionType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|faceElement|embeddedElement" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="WellElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--materialList => List of materials present in this region-->
+		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
+		<!--meshBody => Mesh body that contains this region-->
+		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="EventsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1467,17 +1511,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="thickness" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="IncludedType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="File" type="FileType" />
-		</xsd:choice>
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="FileType">
-		<!--name => The relative file path.-->
-		<xsd:attribute name="name" type="path" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2158,6 +2191,22 @@ the relative residual norm satisfies:
 			<xsd:pattern value=".*[\[\]`$].*|cell|well|surface|particle|all" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="ParticleRegionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ParticleRegion" type="ParticleRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ParticleRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--materialList => List of materials present in this region-->
+		<xsd:attribute name="materialList" type="string_array" use="required" />
+		<!--meshBody => Mesh body that contains this region-->
+		<xsd:attribute name="meshBody" type="string" default="" />
+		<!--particleBlocks => (no description available)-->
+		<xsd:attribute name="particleBlocks" type="string_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="AcousticElasticSEM" type="AcousticElasticSEMType" />
@@ -5740,70 +5789,14 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="ElementRegionsType">
+	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
-			<xsd:element name="SurfaceElementRegion" type="SurfaceElementRegionType" />
-			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
+			<xsd:element name="File" type="FileType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CellElementRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-		<!--cellBlocks => (no description available)-->
-		<xsd:attribute name="cellBlocks" type="groupNameRef_array" use="required" />
-		<!--coarseningRatio => (no description available)-->
-		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
-		<!--materialList => List of materials present in this region-->
-		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
-		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SurfaceElementRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-		<!--defaultAperture => The default aperture of newly formed surface elements.-->
-		<xsd:attribute name="defaultAperture" type="real64" use="required" />
-		<!--faceBlock => The name of the face block in the mesh, or the embedded surface.-->
-		<xsd:attribute name="faceBlock" type="groupNameRef" default="FractureSubRegion" />
-		<!--materialList => List of materials present in this region-->
-		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
-		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
-		<!--subRegionType => Type of surface element subregion. Valid options: {faceElement, embeddedElement}.-->
-		<xsd:attribute name="subRegionType" type="geos_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:simpleType name="geos_SurfaceElementRegion_SurfaceSubRegionType">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|faceElement|embeddedElement" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:complexType name="WellElementRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-		<!--materialList => List of materials present in this region-->
-		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
-		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ParticleRegionsType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="ParticleRegion" type="ParticleRegionType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="ParticleRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-		<!--materialList => List of materials present in this region-->
-		<xsd:attribute name="materialList" type="string_array" use="required" />
-		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="string" default="" />
-		<!--particleBlocks => (no description available)-->
-		<xsd:attribute name="particleBlocks" type="string_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
+	<xsd:complexType name="FileType">
+		<!--name => The relative file path.-->
+		<xsd:attribute name="name" type="path" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

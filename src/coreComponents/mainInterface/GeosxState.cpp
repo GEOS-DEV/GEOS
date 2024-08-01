@@ -178,60 +178,52 @@ void GeosxState::parseInputFiles()
   auto & problemManager = getProblemManager();
 
   // Locate mergable Groups
+  GEOS_LOG_RANK_0( " -- generating skeleton" );
   problemManager.generateDataStructureSkeleton( 0 );
+  GEOS_LOG_RANK_0( " -- skeleton generated" );
   std::vector< dataRepository::Group const * > containerGroups;
   problemManager.discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
-  problemManager.deregisterAllRecursive( );
+  GEOS_LOG_RANK_0( " -- containers identified" );
   std::set< string > mergableNodes;
   for( dataRepository::Group const * group : containerGroups )
   {
     mergableNodes.insert( group->getCatalogName() );
   }
+  containerGroups.clear( );
+  GEOS_LOG_RANK_0( " -- names stored" );
+  // problemManager.deregisterAllRecursive( );
+  GEOS_LOG_RANK_0( " -- skeleton destroyed" );
+
+  std::set< string > allowedDeviations = { DomainPartition::groupKeysStruct::constitutiveManagerString(), MeshLevel::groupStructKeys::elemManagerString(), MeshLevel::groupStructKeys::particleManagerString() };
 
   // we get the input file name from the problem manager instead of the m_commandLineOptions because we have merged multiple -i options into a single file at this point
   string const & inputFileName = problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine ).getReference< string >( problemManager.viewKeys.inputFileName );
-  map<string, string> argMap =
-  {
-    { "problemTag", dataRepository::keys::ProblemManager },
-    { "includedTag", xmlWrapper::includedFileTag },
-    { "fileTag", xmlWrapper::includedFileTag },
-    { "fileName", inputFileName },
-    { "filePathAttribute", inputParsing::filePathString }
-  };
-
-  string includeBootstrap = GEOS_FMT(
-    "<{problemTag}>\n"
-    "  <Include>\n"
-    "    <{fileTag} name=\"{fileName}\" {filePathAttribute}=\"__internal__\">\n"
-    "  </Include>\n"
-    "</{problemTag}>",
-    argMap
-  );
   document_type inputDocument;
-  typename document_type::read_result_type readResult = inputDocument.loadString( includeBootstrap, true );
-  GEOS_THROW_IF( !readResult, GEOS_FMT( "Errors found while parsing bootstrap string\nDescription: {}\nOffset: {}",
+  typename document_type::read_result_type readResult = inputDocument.loadFile( inputFileName, true );
+  GEOS_THROW_IF( !readResult, GEOS_FMT( "Errors found while parsing input file\nDescription: {}\nOffset: {}",
                                        readResult.description(), readResult.offset ), InputError );
 
   // Extract the problem node and begin processing the user inputs
   typename document_type::node_type docRoot = inputDocument.getFirstChild();
+  inputDocument.processIncludes( docRoot, 0 );
   if( m_commandLineOptions->preprocessOnly )
   {
     // by performing Declaration and TerseSyntax expansion we allow preprocessing to capture e.g. the application of Deprecations
-    PreprocessOnly processor( inputDocument, mergableNodes );
+    PreprocessOnly processor( inputDocument, mergableNodes, allowedDeviations );
     processor.execute( problemManager, docRoot );
     // Remove all the created Groups from preprocessing phases (only Declaration actually creates Groups)
     problemManager.deregisterAllRecursive( );
     if ( MpiWrapper::commRank() == 0 )
     {
       string const & outputDirectory = m_commandLineOptions->outputDirectory;
-      dataRepository::reconstructIncludesAndSave< document_type >( inputDocument, outputDirectory );
+      inputDocument.saveFile( outputDirectory + "/" + inputFileName );
     }
   }
   else
   {
-    AllProcessingPhases processor( inputDocument, mergableNodes );
+    AllProcessingPhases processor( inputDocument, mergableNodes, allowedDeviations );
     processor.execute( problemManager, docRoot );
-    // problemManager.applyStaticExtensions( inputDocument, processor ); // TODO (wrt) : port these extensions to use InputExtensions
+    problemManager.processSchemaDeviations( inputDocument, mergableNodes );
   }
 }
 

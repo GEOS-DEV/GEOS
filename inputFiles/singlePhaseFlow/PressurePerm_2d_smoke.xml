@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included name="primary_includes">
+  <Included>
     <File name="./PressurePerm_2d_base.xml"/>
   </Included>
 

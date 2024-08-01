@@ -157,7 +157,6 @@ ProblemManager::~ProblemManager()
 Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 { return nullptr; }
 
-
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
@@ -213,7 +212,7 @@ void ProblemManager::parseCommandLineInput()
   problemName = opts.problemName;
   OutputBase::setFileNameRoot( problemName );
 
-  if( schemaName.empty())
+  if( schemaName.empty() )
   {
     inputFileName = getAbsolutePath( inputFileName );
     Path::setPathPrefix( splitPath( inputFileName ).first );
@@ -332,8 +331,21 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   particleManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( particleManager, schemaRoot, targetChoiceNode, documentationType );
 
+  // Add entries that are only used in the pre-processor
+  Group & IncludedList = this->registerGroup< Group >( xmlWrapper::includedListTag );
+  IncludedList.setInputFlags( InputFlags::OPTIONAL );
 
-  // TODO (wrt) : are these schema deviations needed? They don't seeme to be *used* anywhere
+  Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag );
+  includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  // the name of includedFile is actually a Path.
+  includedFile.registerWrapper< string >( "name" ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
+    setDescription( "The relative file path." );
+
+  schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
+
   Group & parameterList = this->registerGroup< Group >( "Parameters" );
   parameterList.setInputFlags( InputFlags::OPTIONAL );
 
@@ -390,12 +402,67 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   schemaUtilities::SchemaConstruction( benchmarks, schemaRoot, targetChoiceNode, documentationType );
 }
 
+void ProblemManager::processSchemaDeviations( xmlWrapper::xmlDocument & document, std::set< string > & mergable )
+{
+  std::set< string > null;
+  inputProcessing::Definition< xmlWrapper::xmlDocument, Group, WrapperBase > define( document, mergable, null );
+
+  // The objects in domain are handled separately for now
+  xmlWrapper::xmlNode xmlProblemNode = document.getChild( this->getName().c_str() );
+  DomainPartition & domain = getDomainPartition();
+  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
+  define.execute( constitutiveManager, topLevelNode );
+
+  // Open mesh levels
+  MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+  meshManager.generateMeshLevels( domain );
+  Group & meshBodies = domain.getMeshBodies();
+
+  // Parse element regions
+  xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
+
+  for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
+  {
+    string const regionName = regionNode.attribute( "name" ).value();
+    try
+    {
+      string const regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies, regionNode.attribute( "meshBody" ).value() );
+      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+      {
+        ElementRegionManager & elementManager = meshLevel.getElemManager();
+        Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+        define.execute( *newRegion, regionNode );
+      } );
+    }
+    catch( InputError const & e )
+    {
+      string const nodePosString = document.getNodePosition( regionNode ).toString();
+      throw InputError( e, "Error while parsing region " + regionName + " (" + nodePosString + "):\n" );
+    }
+  }
+
+  // Parse particle regions
+  xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::particleManagerString() );
+
+  for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
+  {
+    string const regionName = regionNode.attribute( "name" ).value();
+    string const regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies, regionNode.attribute( "meshBody" ).value() );
+    MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+    meshBody.setHasParticles( true );
+    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+    {
+      ParticleManager & particleManager = meshLevel.getParticleManager();
+      Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
+      define.execute( *newRegion, regionNode );
+    } );
+  }
+}
+
 void ProblemManager::postInputInitialization()
 {
-  // relies on depth-first recursion, otherwise these would be used *after* they are deregistered/deleted
-  deregisterGroup( MeshLevel::groupStructKeys::elemManagerString() );
-  deregisterGroup( MeshLevel::groupStructKeys::particleManagerString() );
-
   DomainPartition & domain = getDomainPartition();
 
   Group const & commandLine = getGroup< Group >( groupKeys.commandLine );
@@ -517,7 +584,7 @@ void ProblemManager::generateMesh()
   domain.setupBaseLevelMeshGlobalInfo();
 
   // setup the MeshLevel associated with the discretizations
-  for( auto const & discretizationPair: discretizations )
+  for( auto const & discretizationPair : discretizations )
   {
     string const & meshBodyName = discretizationPair.first.first;
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
@@ -1017,16 +1084,6 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 bool ProblemManager::runSimulation()
 {
   return m_eventManager->run( getDomainPartition() );
-}
-
-DomainPartition & ProblemManager::getDomainPartition()
-{
-  return getGroup< DomainPartition >( groupKeys.domain );
-}
-
-DomainPartition const & ProblemManager::getDomainPartition() const
-{
-  return getGroup< DomainPartition >( groupKeys.domain );
 }
 
 void ProblemManager::applyInitialConditions()

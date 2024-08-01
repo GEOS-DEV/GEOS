@@ -33,7 +33,7 @@
       elasticSolverName="elasticSolver"/>
   </Solvers>
 
-  <Included name="primary_includes">
+  <Included>
     <File name="./acouselas3D_komatitsch_base.xml"/>
   </Included>
 </Problem>

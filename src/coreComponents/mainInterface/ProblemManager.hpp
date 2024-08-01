@@ -77,6 +77,8 @@ public:
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
+  void processSchemaDeviations( xmlWrapper::xmlDocument & document, std::set< string > & mergable );
+
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
    * @param childKey The name of the new object type's key in the
@@ -109,9 +111,6 @@ public:
    * through the database, generating the xml schema.
    */
   void generateDocumentation();
-
-  template < typename T >
-  void applyStaticExtensions( inputParsing::input_document_type &, T &);
 
   /**
    * @brief Generates numerical meshes used throughout the code
@@ -157,16 +156,18 @@ public:
   void applyInitialConditions();
 
   /**
-   * @brief Returns a pointer to the DomainPartition
-   * @return Pointer to the DomainPartition
+   * @brief Returns a reference to the DomainPartition
+   * @return reference to the DomainPartition
    */
-  DomainPartition & getDomainPartition();
+  DomainPartition & getDomainPartition()
+  { return getGroup< DomainPartition >( groupKeys.domain ); }
 
   /**
-   * @brief Returns a pointer to the DomainPartition
-   * @return Const pointer to the DomainPartition
+   * @brief Returns a reference to the DomainPartition
+   * @return Const reference to the DomainPartition
    */
-  DomainPartition const & getDomainPartition() const;
+  DomainPartition const & getDomainPartition() const
+  { return getGroup< DomainPartition >( groupKeys.domain ); }
 
   /**
    * @brief Returns the problem name

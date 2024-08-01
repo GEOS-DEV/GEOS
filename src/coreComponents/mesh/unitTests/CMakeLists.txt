@@ -4,7 +4,7 @@ set( mesh_tests
      testComputationalGeometry.cpp
      testGeometricObjects.cpp )
 
-set( dependencyList blas lapack gtest gmock mesh ${parallelDeps} )
+set( dependencyList blas lapack gtest gmock mesh mainInterface ${parallelDeps} )
 
 # Add gtest C++ based tests
 foreach(test ${mesh_tests})

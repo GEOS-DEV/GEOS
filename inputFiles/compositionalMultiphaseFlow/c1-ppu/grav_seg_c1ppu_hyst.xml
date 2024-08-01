@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included name="primary_includes">
+  <Included>
     <File name="grav_seg_c1ppu_base.xml"/>
   </Included>
 

@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included name="primary_includes">
+  <Included>
     <File name="./ContactMechanics_SingleFracCompression_base.xml"/>
   </Included>
 

@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included name="primary_includes">
+  <Included>
     <File name="./PoroElastic_hybridHexPrism_co2_base.xml" />
   </Included>
 

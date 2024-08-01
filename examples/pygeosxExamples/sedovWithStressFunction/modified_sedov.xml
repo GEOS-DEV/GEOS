@@ -2,7 +2,7 @@
 
 <Problem>
   <!-- SPHINX_SEDOV_INCLUDED -->
-  <Included name="primary_includes">
+  <Included>
     <File
       name="../../../inputFiles/solidMechanics/sedov.xml"/>
   </Included>

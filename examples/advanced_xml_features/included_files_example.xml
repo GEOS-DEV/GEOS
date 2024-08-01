@@ -16,7 +16,7 @@ using the following rules:
       Any preexisting attributes are overwritten by the donor
     Otherwise insert the target into the xml structure as-is
 -->
-  <Included name="primary_includes">
+  <Included>
     <File
       name="./included/included_a.xml"/>
 

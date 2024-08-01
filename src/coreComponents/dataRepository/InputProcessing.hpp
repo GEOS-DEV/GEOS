@@ -57,9 +57,10 @@ public:
   using document_node_pos = typename document_type::node_pos_type;
   using document_attribute = typename document_type::attribute_type;
 
-  InputProcessingPhase( document_type & document, std::set< string > & mergableNodes )
+  InputProcessingPhase( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations )
   : m_document( document ),
-    m_inputExtender( mergableNodes )
+    m_inputExtender( mergableNodes ),
+    m_allowedDeviations( allowedDeviations )
   {}
 
   virtual string const name() const = 0;
@@ -83,6 +84,11 @@ public:
 
       if ( docNode != docRoot )
       {
+        if ( m_allowedDeviations.find( docNode.name() ) != m_allowedDeviations.end() )
+        {
+          std::cout << "deviation node " << docNode.name() << " ecountered, skipping" << std::endl;
+          return;
+        }
         std::cout << "looking for known ancestor of " << docNode.name() << std::endl;
 
         document_node currentDocNode = docNode.parent();
@@ -97,6 +103,11 @@ public:
             name = currentDocNode.name();
           }
           std::cout << "  unmapped: " << name << std::endl;
+          if ( m_allowedDeviations.find( name ) != m_allowedDeviations.end() )
+          {
+            std::cout << "  deviation found while searching for known ancestor, skipping " << docNode.name() << std::endl;
+            return;
+          }
           pathToKnownAncestor.push_back( name );
           currentDocNode = currentDocNode.parent();
         }
@@ -116,7 +127,7 @@ public:
 
         // process the current node
         validateUniqueChildren( *dataParent, docNode, dataNodeName, childNamesMap );
-        dataNode = &this->retrieveOrCreateDataNode( dataParent, dataNodeName, docNode.name() );
+        dataNode = this->retrieveOrCreateDataNode( dataParent, dataNodeName, docNode.name() );
         if ( dataNode != dataParent ) // this is a bit hacky, don't really like it
         {
           doc2data[ docNode ] = dataNode;
@@ -135,7 +146,7 @@ public:
 
 protected:
   virtual void processNode( data_node *, document_node & ) = 0;
-  virtual data_node & retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & docNodeName ) = 0;
+  virtual data_node * retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & docNodeName ) = 0;
 
   void validateUniqueChildren( data_node & dataParent, document_node & docNode, string const & dataNodeName, std::map< string, std::set< string > > & childNamesMap )
   {
@@ -181,6 +192,7 @@ protected:
 
   document_type & m_document;
   inputExtension::InputExtender< document_node > m_inputExtender;
+  std::set< string > const m_allowedDeviations;
 };
 
 template < typename DocumentType, typename DataNode, typename... Phases >
@@ -194,8 +206,8 @@ public:
   static_assert((std::is_base_of< InputProcessingPhase< document_type, data_node >, Phases >::value && ...),
                 "All Phases must be subclasses of InputProcessingPhase< DocumentType, DataNode >");
 
-  explicit InputProcessor( document_type & document, std::set< string > & mergableNodes )
-    : m_phases( makePhases( document, mergableNodes, std::index_sequence_for<Phases...>{} ) )
+  explicit InputProcessor( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations )
+    : m_phases( makePhases( document, mergableNodes, allowedDeviations, std::index_sequence_for<Phases...>{} ) )
   { }
 
   void execute( data_node & dataRoot, document_node & documentRoot )
@@ -203,7 +215,7 @@ public:
     compileTime::static_for< 0, getNumberOfPhases() >( [this, &dataRoot, &documentRoot] ( auto ii )
     {
       auto constexpr idx = decltype(ii)::value;
-      executePhase< idx >( dataRoot, documentRoot );
+      this->template executePhase< idx >( dataRoot, documentRoot );
     } );
   }
 
@@ -225,9 +237,9 @@ public:
 
 private:
   template<std::size_t... Is>
-  static std::tuple< Phases... > makePhases( document_type & document, std::set<std::string> & mergableNodes, std::index_sequence<Is...> )
+  static std::tuple< Phases... > makePhases( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations, std::index_sequence<Is...> )
   {
-    return std::make_tuple( Phases( document, mergableNodes )... );
+    return std::make_tuple( Phases( document, mergableNodes, allowedDeviations )... );
   }
 
   std::tuple< Phases... > m_phases;
@@ -250,14 +262,14 @@ public:
 protected:
   using super::m_inputExtender;
 
-  virtual data_node & retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & docNodeName ) override
+  virtual data_node * retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & docNodeName ) override
   {
-    auto child = parent->getGroupPointer( dataNodeName );
+    decltype(auto) child = parent->getGroupPointer( dataNodeName );
     if( child == nullptr )
     {
       child = parent->createChild( docNodeName, dataNodeName );
     }
-    return *child;
+    return child;
   }
 
   // this does traverse the internal node structure as we create the nodes as we encounter them
@@ -278,8 +290,8 @@ public:
   using typename super::data_node;
   using typename super::document_node;
 
-  TerseSyntax( document_type & document, std::set< string > & mergableNodes )
-    : super( document, mergableNodes ),
+  explicit TerseSyntax( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations )
+    : super( document, mergableNodes, allowedDeviations ),
       m_terseExtensionRules( )
   {
     m_terseExtensionRules = inputExtension::TerseInputRegistry< document_node >::getInputExtensionRules();
@@ -290,9 +302,9 @@ public:
 protected:
   using super::m_inputExtender;
 
-  virtual data_node & retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & GEOS_UNUSED_PARAM( _ ) )
+  virtual data_node * retrieveOrCreateDataNode( data_node * parent, string const & GEOS_UNUSED_PARAM( dataNodeName ), string const & GEOS_UNUSED_PARAM( docNodeName ) ) override
   {
-    return *parent;
+    return parent;
   }
 
   virtual void processNode( data_node * GEOS_UNUSED_PARAM( _ ), document_node & docNode ) override
@@ -320,8 +332,8 @@ public:
   using document_attribute = typename document_type::attribute_type;
   using document_attribute_pos = typename document_type::attribute_pos_type;
 
-  explicit Definition( document_type & document, std::set< string > & mergableNodes )
-    : super( document, mergableNodes ),
+  explicit Definition( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations )
+    : super( document, mergableNodes, allowedDeviations ),
       m_document(document)
   {}
 
@@ -329,17 +341,17 @@ public:
 
 protected:
 
-  virtual data_node & retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & docNodeName ) override
+  virtual data_node * retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & docNodeName ) override
   {
     // Doing this is a "hack" to allow the TerseSyntax phase taking place after the Declaration phase to not instantiate any groups
     // and just focus on input expansion / modification of the input document structure, there are other solutions, but this
     // is probably more performant.
-    auto child = parent->getGroupPointer( dataNodeName );
+    decltype(auto) child = parent->getGroupPointer( dataNodeName );
     if( child == nullptr )
     {
       child = parent->createChild( docNodeName, dataNodeName );
     }
-    return *child;
+    return child;
   }
 
   virtual void processNode( data_node * dataNode, document_node & docNode ) override

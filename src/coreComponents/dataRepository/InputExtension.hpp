@@ -64,7 +64,7 @@ struct SingleNodePolicy
       GEOS_ERROR("SingleNodePolicy expects exactly one node.");
     }
   }
-  DocNode & getNode( int index )
+  DocNode & getNode( int GEOS_UNUSED_PARAM( index ) )
   {
     return m_container;
   }
@@ -244,7 +244,7 @@ namespace mapAttribute
   {
     Attribute< DocNode, FlagType > attribute;
     attribute.destination = newName;
-    attribute.transform = [newValue](string const & oldValue) { return newValue; };
+    attribute.transform = [newValue](string const & GEOS_UNUSED_PARAM( oldValue ) ) { return newValue; };
     return attribute;
   }
 
@@ -275,83 +275,31 @@ namespace mapAttribute
   }
 }
 
-namespace isValidAttribute
-{
+// template < typename RuleFor, typename LAMBDA, typename DocNode = default_document_node >
+// std::vector< RuleFor > forEachInAttributeList( const string & listAttribute, LAMBDA && lambda )
+// {
+//   using static_parsing_context = StaticParsingContext< DocNode >;
 
-template<typename T, typename DocNode = default_document_node >
-std::function< bool(const DocNode&) > createAttributeCheck( const string & attributeName, std::function< bool (const T&) > valueCheck )
-{
-  return [attributeName, valueCheck](const DocNode& node) -> bool
-  {
-    auto attribute = node.attribute(attributeName.c_str());
-    if (!attribute)
-    {
-        return false; // Attribute not found
-    }
-    T attributeValue;
-    if (convert(attribute.value(), attributeValue)) // Assuming a conversion function exists
-    {
-        return valueCheck(attributeValue);
-    }
-    return false; // Conversion failed
-  };
-}
-
-
-
-template<typename T, typename DocNode = default_document_node >
-std::function< bool ( const DocNode & ) > when( const string & attributeName, T expectedValue )
-{
-  return createAttributeCheck< T >( attributeName, [expectedValue]( const T & val ) { return val == expectedValue; } );
-}
-
-template<typename T, typename DocNode = default_document_node >
-std::function< bool ( const DocNode & ) > unless( const string & attributeName, T forbiddenValue )
-{
-  return createAttributeCheck< T >( attributeName, [forbiddenValue]( const T & val ) { return val != forbiddenValue; } );
-}
-
-template<typename T, typename DocNode = default_document_node >
-std::function< bool ( const DocNode & )> whenGreaterThan( const string & attributeName, T threshold )
-{
-  return createAttributeCheck< T >( attributeName, [threshold]( const T & val ) { return val > threshold; } );
-}
-
-} // namespace isValidAttribute
-
-namespace isApplicableRule
-{
-  static auto always = []( auto const & ) { return true; };
-  static auto never = []( auto const & ) { return false; };
-  template < typename CatalogType, typename ParsingContext >
-  static bool whenTagIs( ParsingContext & context ) { return context.getNode( 0 ).name() == CatalogType::CatalogName(); };
-} // namespace isApplicableRule
-
-template < typename RuleFor, typename LAMBDA, typename DocNode = default_document_node >
-std::vector< RuleFor > forEachInAttributeList( const string & listAttribute, LAMBDA && lambda )
-{
-  using static_parsing_context = StaticParsingContext< DocNode >;
-
-  return [&]( static_parsing_context const & context )
-  {
-    GEOS_ERROR_IF( ! singletonParsingContext::isValid< DocNode >()( context ), "This dynamic attribute generator generator is intended for use in unitary parsing contexts!" );
-    DocNode contextNode = context.getNode( 0 );
-    std::vector< RuleFor > rulesFor;
-    auto attribute = contextNode.attribute( listAttribute.c_str() );
-    if ( ! attribute )
-    {
-      return rulesFor;
-    }
-    // TODO (wrt) : use our actual parsing mechanisms for arrays to deal with e.g. nested lists
-    std::vector< string > items{};
-    for ( const auto & item : items )
-    {
-      stringutilities::trimSpaces( item );
-      rulesFor.push_back( lambda( item ) );
-    }
-    return rulesFor;
-  };
-}
+//   return [&]( static_parsing_context const & context )
+//   {
+//     GEOS_ERROR_IF( ! singletonParsingContext::isValid< DocNode >()( context ), "This dynamic attribute generator generator is intended for use in unitary parsing contexts!" );
+//     DocNode contextNode = context.getNode( 0 );
+//     std::vector< RuleFor > rulesFor;
+//     auto attribute = contextNode.attribute( listAttribute.c_str() );
+//     if ( ! attribute )
+//     {
+//       return rulesFor;
+//     }
+//     // TODO (wrt) : use our actual parsing mechanisms for arrays to deal with e.g. nested lists
+//     std::vector< string > items{};
+//     for ( const auto & item : items )
+//     {
+//       stringutilities::trimSpaces( item );
+//       rulesFor.push_back( lambda( item ) );
+//     }
+//     return rulesFor;
+//   };
+// }
 
 template < typename DocNode = default_document_node, typename FlagType = int >
 class InputExtender : public FlagCallbackCoordinator< FlagType,
@@ -443,50 +391,50 @@ private:
   std::set< string > const m_mergable;
 };
 
-namespace internal
-{
+// namespace internal
+// {
 
-template < typename DocNode = default_document_node, typename FlagType = int >
-class InputRemover : public FlagCallbackCoordinator< FlagType,
-                                                     std::tuple< Rule< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
-                                                     std::tuple< Node< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
-                                                     std::tuple< Attribute< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & > >
-{
-public:
-  using super = FlagCallbackCoordinator< FlagType,
-                                         std::tuple< Rule< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
-                                         std::tuple< Node< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
-                                         std::tuple< Attribute< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & > >;
-  void applyRemovals(StaticParsingContext<DocNode> & staticParsingContext, const std::vector< Rule< DocNode, FlagType > > & removalRules )
-  {
-    for (const auto & rule : removalRules)
-    {
-      if ( rule.appliesWhen( staticParsingContext ) )
-      {
-        DocNode extensionRoot = rule.determineRoot( staticParsingContext );
-        removeNodes( extensionRoot, staticParsingContext, rule.subTrees );
-        this->executeCallbacks( rule.flags, rule, staticParsingContext, extensionRoot );
-      }
-    }
-  }
+// template < typename DocNode = default_document_node, typename FlagType = int >
+// class InputRemover : public FlagCallbackCoordinator< FlagType,
+//                                                      std::tuple< Rule< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
+//                                                      std::tuple< Node< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
+//                                                      std::tuple< Attribute< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & > >
+// {
+// public:
+//   using super = FlagCallbackCoordinator< FlagType,
+//                                          std::tuple< Rule< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
+//                                          std::tuple< Node< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & >,
+//                                          std::tuple< Attribute< DocNode, FlagType > &, StaticParsingContext< DocNode > &, DocNode & > >;
+//   void applyRemovals(StaticParsingContext<DocNode> & staticParsingContext, const std::vector< Rule< DocNode, FlagType > > & removalRules )
+//   {
+//     for (const auto & rule : removalRules)
+//     {
+//       if ( rule.appliesWhen( staticParsingContext ) )
+//       {
+//         DocNode extensionRoot = rule.determineRoot( staticParsingContext );
+//         removeNodes( extensionRoot, staticParsingContext, rule.subTrees );
+//         this->executeCallbacks( rule.flags, rule, staticParsingContext, extensionRoot );
+//       }
+//     }
+//   }
 
-protected:
-  void removeNodes(DocNode & extensionNode, StaticParsingContext< DocNode > & staticParsingContext, const std::vector< Node< DocNode > > & nodes)
-  {
-    DocNode & parent = extensionNode;
-    for (const auto & node : nodes)
-    {
-      removeNodes( node, staticParsingContext, node.subNodes );
-      DocNode childNode = parent.find_child(node.identifier.c_str());
-      if ( childNode )
-      {
-        parent.remove_child(childNode);
-      }
-    }
-  }
-};
+// protected:
+//   void removeNodes(DocNode & extensionNode, StaticParsingContext< DocNode > & staticParsingContext, const std::vector< Node< DocNode > > & nodes)
+//   {
+//     DocNode & parent = extensionNode;
+//     for (const auto & node : nodes)
+//     {
+//       removeNodes( node, staticParsingContext, node.subNodes );
+//       DocNode childNode = parent.find_child(node.identifier.c_str());
+//       if ( childNode )
+//       {
+//         parent.remove_child(childNode);
+//       }
+//     }
+//   }
+// };
 
-} // namespace internal
+// } // namespace internal
 
 } // namespace inputExtension
 

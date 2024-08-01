@@ -15,7 +15,7 @@
   </Tasks>
   <!-- SPHINX_TASK_END -->
 
-  <Included name="primary_includes">
+  <Included>
     <File name="./triaxialDriver_base.xml"/>
   </Included>
 </Problem>

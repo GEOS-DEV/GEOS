@@ -53,28 +53,28 @@ public:
 
   virtual std::vector< inputExtension::Rule<> > inputExtensionRules( callback_coordinator & ) const = 0;
 };
-namespace internal
-{
-template < typename Base, typename DocNode = inputExtension::default_document_node >
-class InputRemovalGroup : public Base
-{
-public:
-  using super = Base;
-  using document_node = DocNode;
-  using remove_callback_coordinator = typename inputExtension::internal::InputRemover< document_node >::super;
+// namespace internal
+// {
+// template < typename Base, typename DocNode = inputExtension::default_document_node >
+// class InputRemovalGroup : public Base
+// {
+// public:
+//   using super = Base;
+//   using document_node = DocNode;
+//   using remove_callback_coordinator = typename inputExtension::internal::InputRemover< document_node >::super;
 
-  static_assert((std::is_base_of<Group, Base>::value), "Base must be a subclass of Group.");
-  using super::super;
+//   static_assert((std::is_base_of<Group, Base>::value), "Base must be a subclass of Group.");
+//   using super::super;
 
-  std::vector< inputExtension::Rule< > > getInputRemovalRules( remove_callback_coordinator & callbackCoordinator )
-  {
-    return inputRemovalRules( callbackCoordinator );
-  }
+//   std::vector< inputExtension::Rule< > > getInputRemovalRules( remove_callback_coordinator & callbackCoordinator )
+//   {
+//     return inputRemovalRules( callbackCoordinator );
+//   }
 
-  virtual std::vector< inputExtension::Rule<> > inputRemovalRules( remove_callback_coordinator & ) const = 0;
-};
+//   virtual std::vector< inputExtension::Rule<> > inputRemovalRules( remove_callback_coordinator & ) const = 0;
+// };
 
-} // namespace internal
+// } // namespace internal
 
 template < typename Base, typename... StubWrapperInfos >
 class DeprecatedGroup : public StubGroup< InputExtensionGroup< Base >, StubWrapperInfos... >
@@ -178,7 +178,7 @@ public:
   virtual std::vector< inputExtension::Rule< > > const & getInputExtensionRules( callback_coordinator & callbackCoordinator ) const override
   {
     // Register a callback for handling executable nodes
-    callbackCoordinator.registerCallback( Flags::Executable, [this]( inputExtension::Node< > & extensionNode, parsing_context const & parsingContext, document_node & node )
+    callbackCoordinator.registerCallback( Flags::Executable, [this]( inputExtension::Node< > & GEOS_UNUSED_PARAM( extensionNode ), parsing_context const & GEOS_UNUSED_PARAM( parsingContext ), document_node & node )
     {
       std::string dataRepoPath = xmlPathToDataRepoPath(node);
       m_pathsForExecution.push_back(dataRepoPath);
@@ -240,7 +240,7 @@ public:
     super( name, parent, ws... )
   { }
 
-  virtual void getInputExtensionRules( callback_coordinator & callbackCoordinator ) override final
+  virtual void getInputExtensionRules( callback_coordinator & GEOS_UNUSED_PARAM( callbackCoordinator ) ) override final
   {
     std::ostringstream notification;
     // Generate error notification for the presence of an obsolete group in the input XML.
@@ -252,79 +252,6 @@ public:
     GEOS_THROW( notification.str(), InputError );
   }
 };
-
-template < typename Document >
-void reconstructIncludesAndSave( Document & document, const std::string & outputDirectory )
-{
-  using doc_node = typename Document::node_type;
-
-  std::map< std::string, std::vector< doc_node > > documentMap;
-
-  // Traverse the document and distribute nodes into separate documentPaths
-  doc_node root = document.getFirstChild();
-  StaticTreeIteration< >::processTree( root, [&]( doc_node & node )
-  {
-    std::string filepath = node.attribute( inputParsing::filePathString ).value();
-    documentMap[ filepath ].push_back( node );
-  } );
-
-  // Function to strip attributes
-  auto stripAttributes = [] ( doc_node & node )
-  {
-    node.remove_attribute( inputParsing::filePathString );
-    node.remove_attribute( inputParsing::charOffsetString );
-  };
-
-  // Helper function to create or get the corresponding node in the new document
-  auto getOrCreateNode = []( doc_node & parent, const std::string & name ) -> doc_node
-  {
-    for ( doc_node & child : parent.children() )
-    {
-      if ( child.name() == name )
-      {
-        return child;
-      }
-    }
-    return parent.append_child( name.c_str() );
-  };
-
-  // Now reconstruct the files and reintroduce Include elements
-  for ( const auto & entry : documentMap )
-  {
-    const std::string & filepath = entry.first;
-    const std::vector< doc_node > & nodes = entry.second;
-
-    // Create a new document for each original file
-    Document doc;
-    doc_node newRoot = doc.appendChild( geos::dataRepository::keys::ProblemManager );
-
-    for (const doc_node & node : nodes)
-    {
-      // potentially recreate the full tree structure for each node in the new document
-      std::vector< std::string > nodePath;
-      for (doc_node n = node; n != root; n = n.parent())
-      {
-        nodePath.push_back(n.name());
-      }
-      std::reverse(nodePath.begin(), nodePath.end());
-
-      doc_node current = newRoot;
-      for (const std::string & name : nodePath)
-      {
-        current = getOrCreateNode(current, name);
-      }
-
-      doc_node newChild = current.append_copy(node);
-      stripAttributes(newChild);
-    }
-
-    // TODO (wrt) : add -preprocessed suffix
-
-    // Save the file
-    std::string fullpath = joinPath( outputDirectory, filepath );
-    doc.saveFile(fullpath.c_str());
-  }
-}
 
 }
 

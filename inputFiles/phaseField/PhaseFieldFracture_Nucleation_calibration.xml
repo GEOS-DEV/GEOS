@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included name="primary_includes">
+  <Included>
     <File name="./PhaseFieldFracture_Nucleation_base.xml"/>
   </Included>
 

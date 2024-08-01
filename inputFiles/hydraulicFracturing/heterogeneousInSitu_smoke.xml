@@ -244,7 +244,7 @@
       values="{ 1.0e-6, 1.0e-4 }"/>
   </Functions>
 
-  <!--<Included name="primary_includes"><File name="./heterogeneousInSitu_base.xml"/></Included>-->
+  <!--<Included/></Included>-->
   <!--<Parameters><Parameter name="Nperf" value="5"/><Parameter name="Nswarm" value="5"/><Parameter name="mu_init" value="0.001"/><Parameter name="K_init" value="1e6"/><Parameter name="mu_upscaled" value="2.5e-2"/><Parameter name="K_upscaled" value="2.236068e6"/><Parameter name="ContactStiffness" value="1e10"/><Parameter name="pump_start" value="6e1"/><Parameter name="pump_ramp" value="5"/><Parameter name="pump_ramp_dt_limit" value="2e-1"/><Parameter name="dt_max" value="3e1"/><Parameter name="t_max" value="1.2e3"/><Parameter name="table_root" value="./tables"/><Parameter name="t_allocation" value="1.68e3"/></Parameters>-->
   <FieldSpecifications>
     <FieldSpecification

@@ -108,6 +108,7 @@ protected:
     ASSERT_TRUE( xmlResult );
 
     ProblemManager & problemManager = getGlobalState().getProblemManager();
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getFirstChild();
     dataRepository::testing::setupProblemFromXML( &problemManager, inputStream.c_str() );
     // problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
@@ -118,7 +119,7 @@ protected:
 
     ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-    elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
+    // elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
     elementManager.postInputInitializationRecursive();
 
     problemManager.problemSetup();

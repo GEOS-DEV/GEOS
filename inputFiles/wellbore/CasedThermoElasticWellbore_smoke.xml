@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included name="primary_includes">
+  <Included>
     <File name="./CasedThermoElasticWellbore_base.xml" />
   </Included>
 

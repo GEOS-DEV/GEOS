@@ -58,7 +58,7 @@ void processIncludes( Document & document, int level = 0 )
 {
   if constexpr( std::is_same_v< Document, xmlWrapper::xmlDocument > )
   {
-    document.processIncludes( document.getFirstChild(), 0 );
+    document.processIncludes( document.getFirstChild(), level );
   }
 }
 

@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included name="primary_includes">
+  <Included>
     <File
       name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>

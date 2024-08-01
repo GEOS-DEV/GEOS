@@ -147,6 +147,67 @@ void addNodeFileInfo( xmlNode targetNode, string const & filePath )
 bool xmlDocument::hasNodeFileInfo() const
 { return !getFirstChild().attribute( inputParsing::filePathString ).empty(); }
 
+void xmlDocument::processIncludes( xmlNode & targetNode, int const level )
+{
+  GEOS_THROW_IF( level > 100, "XML include level limit reached, please check input for include loops", InputError );
+
+  string const currentFilePath = targetNode.attribute( inputParsing::filePathString ).value();
+
+  // Schema currently allows a single unique <Included>, but a non-validating file may include multiple
+  for( xmlNode includedNode : targetNode.children( includedListTag ) )
+  {
+    for( xmlNode fileNode : includedNode.children() )
+    {
+      // Extract the file name and construct full includedDirPath
+      string const includedFilePath = [&]()
+      {
+        GEOS_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
+                              GEOS_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
+                              InputError );
+        xmlAttribute const nameAttr = fileNode.attribute( "name" );
+        string const fileName = nameAttr.value();
+        GEOS_THROW_IF( !nameAttr || fileName.empty(),
+                       GEOS_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
+                       InputError );
+        return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
+      }();
+
+      GEOS_LOG_RANK_0( "Included additionnal XML file: " << getAbsolutePath( includedFilePath ) );
+
+      xmlDocument includedXmlDocument;
+      xmlResult const result = includedXmlDocument.loadFile( includedFilePath, hasNodeFileInfo() );
+      GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\n"
+                                        "Description: {}\nOffset: {}",
+                                        includedFilePath, result.description(), result.offset ),
+                     InputError );
+
+
+      // All included files must contain a root node that must match the target node.
+      // Currently, schema only allows <Included> tags at the top level (inside <Problem>).
+      // We then proceed to merge each nested node from included file with the one in main.
+
+      xmlNode includedRootNode = includedXmlDocument.getFirstChild();
+      GEOS_THROW_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
+                            "Included document root does not match the including XML node", InputError );
+
+      // Process potential includes in the included file to allow nesting
+      processIncludes( includedRootNode, level + 1 );
+
+      // Add each top level tag of imported document to current
+      // This may result in repeated XML blocks, which will be implicitly merged when processed
+      for( xmlNode importedNode : includedRootNode.children() )
+      {
+        targetNode.append_copy( importedNode );
+      }
+
+      m_originalBuffers[includedXmlDocument.getFilePath()] = includedXmlDocument.getOriginalBuffer();
+    }
+  }
+
+  // Just in case, remove <Included> tags that have been processed
+  while( targetNode.remove_child( includedListTag ) )
+  {}
+}
 
 string mergeInputDocuments( string_array const & inputFileList, string const & outputDir )
 {
