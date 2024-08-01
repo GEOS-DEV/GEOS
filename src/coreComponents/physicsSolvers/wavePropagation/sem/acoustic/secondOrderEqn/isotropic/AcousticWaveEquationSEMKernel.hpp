@@ -91,6 +91,7 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param baseMesh the level-0 mesh
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
@@ -101,11 +102,12 @@ public:
                        SUBREGION_TYPE const & elementSubRegion,
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
+                       MeshLevel & baseMesh,
                        real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
+    m_nodeCoords( baseMesh.getNodeManager().referencePosition().toViewConst() ),
     m_p_n( nodeManager.getField< acousticfields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< acousticfields::StiffnessVector >() ),
     m_density( elementSubRegion.template getField< acousticfields::AcousticDensity >() ),
@@ -200,7 +202,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
@@ -221,7 +223,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
-                                                                 real64 >;
+                                                                 MeshLevel &, real64 >;
 
 
 } // namespace acousticWaveEquationSEMKernels

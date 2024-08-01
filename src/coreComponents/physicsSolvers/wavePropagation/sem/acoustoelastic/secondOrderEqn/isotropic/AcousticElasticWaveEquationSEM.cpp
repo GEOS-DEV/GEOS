@@ -139,7 +139,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
   SortedArrayView< localIndex const > const interfaceNodesSet = m_interfaceNodesSet.toViewConst();
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
   {
@@ -167,14 +167,14 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
-    elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
+    elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, meshBodyName, m_elasRegions );
 
     AcoustoElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, uy_np1, uz_np1, p_n, elasticMass, atoex, atoey, atoez,
                                            elasticFSNodeIndicator, interfaceNodesSet );
 
     elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
-    acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
+    acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, meshBodyName, m_acousRegions );
 
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const in )
     {

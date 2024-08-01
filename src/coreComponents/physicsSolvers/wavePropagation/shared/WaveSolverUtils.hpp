@@ -373,14 +373,14 @@ struct WaveSolverUtils
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
     // only the eight corners of the mesh cell are needed to compute the Jacobian
     real64 xLocal[8][3]{};
     for( localIndex a = 0; a < 8; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ a ] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};

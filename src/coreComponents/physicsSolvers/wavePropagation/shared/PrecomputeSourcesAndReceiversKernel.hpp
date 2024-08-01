@@ -59,7 +59,7 @@ struct PreComputeSourcesAndReceivers
   static void
   Compute1DSourceAndReceiverConstants( localIndex const size,
                                        ArrayOfArraysView< localIndex const > const facesToNodes,
-                                       arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                        arrayView1d< globalIndex const > const nodeLocalToGlobal,
                                        arrayView1d< globalIndex const > const elementLocalToGlobal,
                                        ArrayOfArraysView< localIndex const > const nodesToElements,
@@ -222,7 +222,7 @@ struct PreComputeSourcesAndReceivers
   Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage( localIndex const size,
                                                                    localIndex const regionIndex,
                                                                    ArrayOfArraysView< localIndex const > const facesToNodes,
-                                                                   arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                                                    arrayView1d< globalIndex const > const nodeLocalToGlobal,
                                                                    arrayView1d< globalIndex const > const elementLocalToGlobal,
                                                                    ArrayOfArraysView< localIndex const > const nodesToElements,
@@ -398,7 +398,7 @@ struct PreComputeSourcesAndReceivers
   static void
   Compute3DSourceAndReceiverConstantsWithDAS( localIndex const size,
                                               ArrayOfArraysView< localIndex const > const facesToNodes,
-                                              arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                               arrayView1d< globalIndex const > const nodeLocalToGlobal,
                                               arrayView1d< globalIndex const > const elementLocalToGlobal,
                                               ArrayOfArraysView< localIndex const > const nodesToElements,

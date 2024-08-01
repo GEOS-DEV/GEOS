@@ -86,6 +86,7 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param baseMesh the level-0 mesh
    * @param dt The time interval for the step.
    */
   ExplicitElasticSEMBase( NodeManager & nodeManager,
@@ -95,11 +96,12 @@ public:
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE & inputConstitutiveType,
+                          MeshLevel & baseMesh,
                           real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
+    m_nodeCoords( baseMesh.getNodeManager().referencePosition().toViewConst() ),
     m_ux_n( nodeManager.getField< elasticfields::Displacementx_n >() ),
     m_uy_n( nodeManager.getField< elasticfields::Displacementy_n >() ),
     m_uz_n( nodeManager.getField< elasticfields::Displacementz_n >() ),
@@ -224,7 +226,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal displacement array in x direction.
   arrayView1d< real32 > const m_ux_n;
@@ -265,7 +267,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 using ExplicitElasticSEM = ExplicitElasticSEMBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 using ExplicitElasticSEMFactory = finiteElement::KernelFactory< ExplicitElasticSEM,
-                                                                real64 >;
+                                                                MeshLevel &, real64 >;
 /// Specialization for attenuation kernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -304,6 +306,7 @@ public:
                                  SUBREGION_TYPE const & elementSubRegion,
                                  FE_TYPE const & finiteElementSpace,
                                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                 MeshLevel & baseMesh,
                                  real64 const dt ):
     Base( nodeManager,
           edgeManager,
@@ -312,6 +315,7 @@ public:
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
+          baseMesh,
           dt ),
     m_qualityFactorP( elementSubRegion.template getField< elasticfields::ElasticQualityFactorP >() ),
     m_qualityFactorS( elementSubRegion.template getField< elasticfields::ElasticQualityFactorS >() )
@@ -344,7 +348,7 @@ protected:
 };
 
 using ExplicitElasticAttenuativeSEMFactory = finiteElement::KernelFactory< ExplicitElasticAttenuativeSEM,
-                                                                           real64 >;
+                                                                           MeshLevel &, real64 >;
 
 } // namespace ElasticWaveEquationSEMKernels
 

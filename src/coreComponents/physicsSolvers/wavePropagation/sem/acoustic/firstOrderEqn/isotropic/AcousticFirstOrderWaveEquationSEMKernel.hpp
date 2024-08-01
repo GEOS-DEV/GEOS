@@ -54,7 +54,7 @@ struct VelocityComputation
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const p_np1,
           arrayView1d< real32 const > const density,
@@ -172,7 +172,7 @@ struct PressureComputation
   launch( localIndex const size,
           localIndex const regionIndex,
           localIndex const size_node,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView2d< real32 const > const velocity_x,
           arrayView2d< real32 const > const velocity_y,

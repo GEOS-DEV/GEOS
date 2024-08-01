@@ -223,16 +223,15 @@ void ElasticWaveEquationSEM::postInputInitialization()
 }
 
 
-void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X =
-    nodeManager.getField< fields::referencePosition32 >().toViewConst();
-  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap().toViewConst();
-  ArrayOfArraysView< localIndex const > const nodesToElements = nodeManager.elementList().toViewConst();
-  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
+  ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodes = baseMesh.getFaceManager().nodeList().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -293,7 +292,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
       < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         facesToNodes,
-        X,
+        nodeCoords,
         nodeLocalToGlobal,
         elemLocalToGlobal,
         nodesToElements,
@@ -365,17 +364,18 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   applyFreeSurfaceBC( 0.0, domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    precomputeSourceAndReceiverTerm( mesh.getBaseDiscretization(), regionNames );
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition().toViewConst();
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< elasticfields::ElasticMassVector >();
@@ -584,8 +584,9 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                               real64 const & dt,
                                               integer const cycleNumber,
-                                              DomainPartition &,
+                                              DomainPartition & domain,
                                               MeshLevel & mesh,
+                                              string const & meshBodyName,
                                               arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
@@ -612,9 +613,11 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
 
+  MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+
   if( m_useVTI )
   {
-    auto kernelFactory = elasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( dt );
+    auto kernelFactory = elasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( baseMesh, dt );
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
                                     constitutive::NullModel,
@@ -626,7 +629,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   }
   else
   {
-    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( baseMesh, dt );
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
                                     constitutive::NullModel,
@@ -639,7 +642,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 
   if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
   {
-    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticAttenuativeSEMFactory( dt );
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticAttenuativeSEMFactory( baseMesh, dt );
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
                                     constitutive::NullModel,
@@ -795,11 +798,11 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, meshBodyName, regionNames );
     synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
     prepareNextTimestep( mesh );
   } );

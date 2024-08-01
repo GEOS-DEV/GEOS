@@ -118,19 +118,17 @@ void AcousticWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
-void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
+void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
   GEOS_MARK_FUNCTION;
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
-  nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-  arrayView1d< globalIndex const > const nodeLocalToGlobalMap = nodeManager.localToGlobalMap().toViewConst();
-  ArrayOfArraysView< localIndex const > const nodesToElements = nodeManager.elementList().toViewConst();
-
-  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+  arrayView1d< globalIndex const > const nodeLocalToGlobalMap = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
+  ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodes = baseMesh.getFaceManager().nodeList().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -186,7 +184,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         < EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
           facesToNodes,
-          nodeCoords32,
+          nodeCoords,
           nodeLocalToGlobalMap,
           elemLocalToGlobalMap,
           nodesToElements,
@@ -251,11 +249,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   applyFreeSurfaceBC( 0.0, domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    precomputeSourceAndReceiverTerm( mesh.getBaseDiscretization(), regionNames );
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -263,7 +262,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition().toViewConst();
 
     /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
@@ -431,7 +430,7 @@ void AcousticWaveEquationSEM::initializePML()
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
     arrayView1d< real32 > const indicatorPML = nodeManager.getField< acousticfields::AuxiliaryVar4PML >();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
     indicatorPML.zero();
 
     real32 xInteriorMin[3]{};
@@ -932,6 +931,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                integer cycleNumber,
                                                DomainPartition & domain,
                                                MeshLevel & mesh,
+                                               string const & meshBodyName,
                                                arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
@@ -947,7 +947,8 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
 
-  auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
+  MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+  auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( baseMesh, dt );
 
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
@@ -1092,11 +1093,11 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, meshBodyName, regionNames );
     synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
   } );
 

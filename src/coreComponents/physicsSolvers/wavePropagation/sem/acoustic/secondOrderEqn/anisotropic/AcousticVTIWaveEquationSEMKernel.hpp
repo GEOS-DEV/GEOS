@@ -66,7 +66,7 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           ArrayOfArraysView< localIndex const > const facesToNodes,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< globalIndex const > const nodeLocalToGlobal,
           arrayView1d< globalIndex const > const elementLocalToGlobal,
           ArrayOfArraysView< localIndex const > const nodesToElements,
@@ -216,7 +216,7 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const mass )
@@ -284,7 +284,7 @@ struct DampingMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
@@ -424,6 +424,7 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param baseMesh the level-0 mesh
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
@@ -434,11 +435,12 @@ public:
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE & inputConstitutiveType,
+                          MeshLevel & baseMesh,
                           real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
+    m_nodeCoords( baseMesh.getNodeManager().referencePosition().toViewConst() ),
     m_p_n( nodeManager.getField< acousticvtifields::Pressure_p_n >() ),
     m_q_n( nodeManager.getField< acousticvtifields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< acousticvtifields::StiffnessVector_p >() ),
@@ -549,7 +551,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
@@ -582,7 +584,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticVTISEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTISEM,
-                                                                    real64 >;
+                                                                    MeshLevel &, real64 >;
 
 } // namespace acousticVTIWaveEquationSEMKernels
 

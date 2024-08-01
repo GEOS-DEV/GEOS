@@ -112,18 +112,16 @@ void AcousticVTIWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 }
 
-void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
+void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                                   arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 =
-    nodeManager.getField< fields::referencePosition32 >().toViewConst();
-  arrayView1d< globalIndex const > const nodeLocalToGlobalMap = nodeManager.localToGlobalMap().toViewConst();
-  ArrayOfArraysView< localIndex const > const nodesToElements = nodeManager.elementList().toViewConst();
-  ArrayOfArraysView< localIndex const > const facesToNodesMap = faceManager.nodeList().toViewConst();
-
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
+  ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodes = baseMesh.getFaceManager().nodeList().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition().toViewConst();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -164,7 +162,7 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & me
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
-    arrayView1d< globalIndex const > const elemLocalToGlobalMap = elementSubRegion.localToGlobalMap().toViewConst();
+    arrayView1d< globalIndex const > const elemLocalToGlobal = elementSubRegion.localToGlobalMap().toViewConst();
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -176,10 +174,10 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & me
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
-        facesToNodesMap,
-        nodeCoords32,
-        nodeLocalToGlobalMap,
-        elemLocalToGlobalMap,
+        facesToNodes,
+        nodeCoords,
+        nodeLocalToGlobal,
+        elemLocalToGlobal,
         nodesToElements,
         elemGhostRank,
         elemsToNodes,
@@ -233,19 +231,19 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   applyFreeSurfaceBC( 0.0, domain );
   precomputeSurfaceFieldIndicator( domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    precomputeSourceAndReceiverTerm( mesh.getBaseDiscretization(), regionNames );
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords =
-      nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition().toViewConst();
 
     /// get face to node map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
@@ -548,7 +546,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&] ( string const &,
+                                  [&] ( string const & meshBodyName,
                                         MeshLevel & mesh,
                                         arrayView1d< string const > const & regionNames )
   {
@@ -575,7 +573,8 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< acousticvtifields::StiffnessVector_q >();
     arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
 
-    auto kernelFactory = acousticVTIWaveEquationSEMKernels::ExplicitAcousticVTISEMFactory( dt );
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    auto kernelFactory = acousticVTIWaveEquationSEMKernels::ExplicitAcousticVTISEMFactory( baseMesh, dt );
 
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,

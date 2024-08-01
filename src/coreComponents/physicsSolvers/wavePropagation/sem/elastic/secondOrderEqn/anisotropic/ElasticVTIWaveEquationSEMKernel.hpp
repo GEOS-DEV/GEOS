@@ -86,6 +86,7 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param baseMesh the level-0 mesh
    * @param dt The time interval for the step.
    */
   ExplicitElasticVTISEM( NodeManager & nodeManager,
@@ -95,11 +96,12 @@ public:
                          SUBREGION_TYPE const & elementSubRegion,
                          FE_TYPE const & finiteElementSpace,
                          CONSTITUTIVE_TYPE & inputConstitutiveType,
+                         MeshLevel & baseMesh,
                          real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
+    m_nodeCoords( baseMesh.getNodeManager().referencePosition().toViewConst() ),
     m_ux_n( nodeManager.getField< elasticfields::Displacementx_n >() ),
     m_uy_n( nodeManager.getField< elasticfields::Displacementy_n >() ),
     m_uz_n( nodeManager.getField< elasticfields::Displacementz_n >() ),
@@ -238,7 +240,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal displacement array in x direction.
   arrayView1d< real32 > const m_ux_n;
@@ -285,7 +287,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitElasticVTISEMFactory = finiteElement::KernelFactory< ExplicitElasticVTISEM,
-                                                                   real64 >;
+                                                                   MeshLevel &, real64 >;
 
 } // namespace elasticVTIWaveEquationSEMKernels
 

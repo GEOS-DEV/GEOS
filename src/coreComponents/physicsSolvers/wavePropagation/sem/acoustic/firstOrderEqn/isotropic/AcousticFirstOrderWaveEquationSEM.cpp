@@ -153,16 +153,15 @@ void AcousticFirstOrderWaveEquationSEM::postInputInitialization()
   m_receiverRegion.resize( numReceiversGlobal );
 }
 
-void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
-  X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap().toViewConst();
-  ArrayOfArraysView< localIndex const > const nodesToElements = nodeManager.elementList().toViewConst();
-  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
+  ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodes = baseMesh.getFaceManager().nodeList().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -221,7 +220,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         ( elementSubRegion.size(),
         regionIndex,
         facesToNodes,
-        X,
+        nodeCoords,
         nodeLocalToGlobal,
         elemLocalToGlobal,
         nodesToElements,
@@ -259,18 +258,19 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
   applyFreeSurfaceBC( 0.0, domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    precomputeSourceAndReceiverTerm( mesh.getBaseDiscretization(), regionNames );
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition().toViewConst();
 
     /// get table containing face to nodes map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
@@ -430,13 +430,14 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&] ( string const &,
+                                  [&] ( string const & meshBodyName,
                                         MeshLevel & mesh,
                                         arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
     arrayView1d< real32 const > const damping = nodeManager.getField< acousticfields::DampingVector >();
@@ -469,7 +470,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           VelocityComputation< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
-          X,
+          nodeCoords,
           elemsToNodes,
           p_np1,
           density,
@@ -483,7 +484,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           ( elementSubRegion.size(),
           regionIndex,
           nodeManager.size(),
-          X,
+          nodeCoords,
           elemsToNodes,
           velocity_x,
           velocity_y,
