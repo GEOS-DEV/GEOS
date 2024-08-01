@@ -103,6 +103,7 @@ public:
                         timeIncrement,
                         pressure,
                         temperature,
+                        deltaTemperatureFromLastStep,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -152,12 +153,14 @@ public:
     real64 dTotalStress_dPressure[6]{};
     real64 dTotalStress_dTemperature[6]{};
 
+    real64 const deltaTemperatureFromLastStep = temperature - temperature_n;
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,
                         timeIncrement,
                         pressure,
                         temperature,
+                        deltaTemperatureFromLastStep,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure, // To pass something here
@@ -284,10 +287,12 @@ private:
                            real64 const & timeIncrement,
                            real64 const & pressure,
                            real64 const & temperature,
+                           real64 const & deltaTemperatureFromLastStep,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
                            real64 ( & dTotalStress_dTemperature )[6],
+                           
                            DiscretizationOps & stiffness ) const
   {
     updateBiotCoefficientAndAssignModuli( k );
@@ -297,12 +302,10 @@ private:
                                      q,
                                      timeIncrement,
                                      strainIncrement,
-                                     totalStress, // first effective stress increment accumulated
+                                     totalStress, // Rock stress updated with small strain
                                      stiffness );
 
-    // Add the contributions of pressure and temperature to the total stress
-    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-
+    // Add the contributions of temperature increment to the rock stress (effective stress).
     string const drainedTECTableName = m_solidUpdate.getDrainedTECTableName();
     real64 dThermalExpansionCoefficient_dTemperature;
     real64 thermalExpansionCoefficient;
@@ -328,15 +331,22 @@ private:
       dThermalExpansionCoefficient_dTemperature = dTEC_dT[0];
     }
 
+    // Thermal stress increment
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-    real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
+    real64 const thermalStressIncrement = - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperatureFromLastStep;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * temperature );
+    // Update rock stress with tempeature change.
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, thermalStressIncrement );
 
+    // Save rock stress including the contribution of temperature change.
+    m_solidUpdate.saveStress( k, q, totalStress ); 
+
+    // Compute total stress: add pore pressure contribution to rock stress.
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure );
+   
     // Compute derivatives of total stress
-    real64 const dThermalExpansionCoefficient_dTemperatureTimesBulkModulus = dThermalExpansionCoefficient_dTemperature * bulkModulus;
-
-    real64 const dDiagonalStressComponent_dTemperature = -3 * thermalExpansionCoefficientTimesBulkModulus - 3 * dThermalExpansionCoefficient_dTemperatureTimesBulkModulus * temperature;
+    real64 const dDiagonalStressComponent_dTemperature = -3 * thermalExpansionCoefficient * bulkModulus;
 
     dTotalStress_dPressure[0] = -biotCoefficient;
     dTotalStress_dPressure[1] = -biotCoefficient;
@@ -353,6 +363,7 @@ private:
     dTotalStress_dTemperature[5] = 0;
 
   }
+
 };
 
 /**
