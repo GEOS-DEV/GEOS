@@ -136,7 +136,7 @@ def main():
 	ax.xaxis.set_tick_params(labelsize=fsize)
 	ax.yaxis.set_tick_params(labelsize=fsize)
 	ax.invert_yaxis()
-	plt.savefig('Profile.png')
+
 	plt.show() 
 
 if __name__ == "__main__":
