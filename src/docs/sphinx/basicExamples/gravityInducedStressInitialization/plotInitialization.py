@@ -51,8 +51,8 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
 
 def main():
 	# File path
-	xmlFile1Path = "gravityInducedStress_initialization_base.xml"
-	xmlFile2Path = "gravityInducedStress_initialization_benchmark.xml"
+	xmlFile1Path = "../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml"
+	xmlFile2Path = "../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml"
 
 	hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
 
@@ -128,7 +128,7 @@ def main():
 	ax.xaxis.set_tick_params(labelsize=fsize)
 	ax.yaxis.set_tick_params(labelsize=fsize)
 	ax.invert_yaxis()
-	plt.savefig('Profile.png')
+	
 	plt.show() 
 
 
