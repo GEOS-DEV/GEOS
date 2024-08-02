@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron 
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,7 +27,7 @@ namespace geos
 
 /**
  * @brief Insert an exception message in another one.
- * @param originalMsg original exception message (i.e. thrown from LVARRAY_THROW or GEOSX_THROW)
+ * @param originalMsg original exception message (i.e. thrown from LVARRAY_THROW or GEOS_THROW)
  * @param msgToInsert message to insert at the top of the originalMsg
  */
 std::string InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
@@ -55,90 +56,79 @@ InputError::InputError( std::exception const & subException, std::string const &
   std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
 {}
 
-
-Logger logger;
-
-Logger::Logger():
-  rank( 0 ),
-  ranksCount( 1 ),
-  rankMsgPrefix( "" )
+namespace logger
 {
-  reset();
-}
-void Logger::reset()
-{
-  globalLogLevel = defaultProblemLogLevel;
-  minLogLevel = defaultMinLogLevel;
-  maxLogLevel = defaultMaxLogLevel;
 
-  setRankOutputToStream( std::cout );
-}
-void Logger::initMpi( MPI_Comm mpiComm )
+namespace internal
 {
-#ifdef GEOSX_USE_MPI
-  comm = mpiComm;
-  MPI_Comm_rank( mpiComm, &rank );
-  MPI_Comm_size( mpiComm, &ranksCount );
 
-  if( ranksCount > 0 )
+int rank = 0;
+std::string rankString = "0";
+
+int n_ranks = 1;
+
+std::ostream * rankStream = nullptr;
+
+#ifdef GEOS_USE_MPI
+MPI_Comm comm;
+#endif
+
+} // namespace internal
+
+#ifdef GEOS_USE_MPI
+
+void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
+{
+  internal::comm = mpi_comm;
+  MPI_Comm_rank( mpi_comm, &internal::rank );
+  MPI_Comm_size( mpi_comm, &internal::n_ranks );
+
+  internal::rankString = std::to_string( internal::rank );
+
+  if( rankOutputDir != "" )
   {
-    // we want the message prefix to be as long as it is on the highest rank by aligning the rank number at the right.
-    int const rankMaxNumberCount = (int)log10( m_ranksCount - 1 );
-    string const rankMsgPrefixFmt = GEOS_FMT( "Rank \\{: >{}\\}: ", rankMaxNumberCount ) : "";
-    rankMsgPrefix = GEOS_FMT( "Rank {: <}: ", rank ) : "";
+    if( internal::rank == 0 )
+    {
+      makeDirsForPath( rankOutputDir );
+    }
+
+    MPI_Barrier( mpi_comm );
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
+    internal::rankStream = new std::ofstream( outputFilePath );
   }
   else
   {
-    rankMsgPrefix = "";
+    internal::rankStream = &std::cout;
   }
-#else
-  GEOS_ERROR( "Trying to initialize MPI in serial build." );
-#endif
 }
 
-void Logger::setRankOutputToRankFile( const std::string & rankOutputDir )
-{
-#ifdef GEOSX_USE_MPI
-  MPI_Barrier( comm );
 #endif
-  std::string outputFolder;
+
+void InitializeLogger( const std::string & rankOutputDir )
+{
   if( rankOutputDir != "" )
   {
     makeDirsForPath( rankOutputDir );
-    outputFolder = rankOutputDir + '/';
-  }
 
-  fileOutStream = std::make_unique< std::ofstream >( GEOS_FMT( "{}rank_{}.out", outputFolder, rank ) );
-  outStream = fileOutStream.get();
-}
-void Logger::setRankOutputToStream( std::ostream & stream )
-{
-#ifdef GEOSX_USE_MPI
-  if( ranksCount > 1 )
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
+    internal::rankStream = new std::ofstream( outputFilePath );
+  }
+  else
   {
-    MPI_Barrier( comm );
+    internal::rankStream = &std::cout;
   }
-#endif
-
-  fileOutStream = nullptr;
-  outStream = &stream;
 }
 
-void Logger::setGlobalLogLevel( PrioritizedLogLevel const & param )
+void FinalizeLogger()
 {
-  if( globalLogLevel.m_priorityLevel <= param.m_priorityLevel )
-    globalLogLevel = param;
-}
-void Logger::setMinLogLevel( PrioritizedLogLevel const & param )
-{
-  if( minLogLevel.m_priorityLevel <= param.m_priorityLevel )
-    minLogLevel = param;
-}
-void Logger::setMaxLogLevel( PrioritizedLogLevel const & param )
-{
-  if( maxLogLevel.m_priorityLevel <= param.m_priorityLevel )
-    maxLogLevel = param;
+  if( internal::rankStream != &std::cout )
+  {
+    delete internal::rankStream;
+  }
+
+  internal::rankStream = nullptr;
 }
 
+} // namespace logger
 
 } // namespace geos

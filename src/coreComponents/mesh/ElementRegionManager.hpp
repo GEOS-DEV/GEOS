@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -1303,17 +1304,17 @@ ElementRegionManager::
 
 template< typename VIEWTYPE >
 ElementRegionManager::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
-ElementRegionManager::
-  constructReferenceAccessor( string const & viewName, string const & neighborName )
+ElementRegionManager::constructReferenceAccessor( string const & viewName,
+                                                  string const & neighborName )
 {
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ElementRegionBase & elemRegion = getRegion( kReg );
     viewAccessor[kReg].resize( elemRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
     {
       Group * group = &elemRegion.getSubRegion( kSubReg );
 
@@ -1447,7 +1448,10 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews,
+                         subRegion.getDataContext() <<
+                         ": Material " << constitutiveRelation.getDataContext() <<
+                         " does not contain " << viewName );
         }
       } );
     }
@@ -1494,7 +1498,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
+          GEOS_ERROR_IF( !allowMissingViews, region.getDataContext() << ": Material " << materialName
+                                                                     << " does not contain " << viewName );
         }
       } );
     }

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -35,7 +36,9 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 {
   m_elementType = ElementType::Line;
 
-  registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
+  registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef );
+
   registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::nextWellElementIndexString(), &m_nextWellElementIndex );
   registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString(), &m_nextWellElementIndexGlobal );
@@ -368,7 +371,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
   GEOS_THROW_IF( sharedElems.size() > 0,
-                 "Well " << lineBlock.getName() << " contains shared well elements",
+                 "Well " << lineBlock.getDataContext() << " contains shared well elements",
                  InputError );
 
   // In Steps 1 and 2 we determine the local objects on this rank (elems and nodes)
@@ -519,7 +522,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
       GEOS_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                     "The structure of well " << lineBlock.getName() << " is invalid. " <<
+                     "The structure of well " << lineBlock.getDataContext() << " is invalid. " <<
                      " The main reason for this error is that there may be no perforation" <<
                      " in the bottom well element of the well, which is required to have" <<
                      " a well-posed problem.",
@@ -542,7 +545,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
 
       for( globalIndex iownerRank : rankSetsByStatus[WellElemStatus::LOCAL] )
       {
-        if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != iownerRank )
+        if( MpiWrapper::commRank( MPI_COMM_GEOS ) != iownerRank )
         {
           elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
         }
@@ -560,7 +563,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
         if( rankCount == 0 )
         {
           // update the elemStatusGlobal array for all ranks
-          if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != iownerRank )
+          if( MpiWrapper::commRank( MPI_COMM_GEOS ) != iownerRank )
           {
             elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
           }
@@ -568,7 +571,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
         else // (rankCount > 0)
         {
           // remove the duplicate elements
-          if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == iownerRank )
+          if( MpiWrapper::commRank( MPI_COMM_GEOS ) == iownerRank )
           {
             localElems.remove( iwelemGlobal );
           }
@@ -755,6 +758,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 {
   arrayView2d< real64 const > const perfCoordsGlobal = lineBlock.getPerfCoords();
   arrayView1d< real64 const > const perfWellTransmissibilityGlobal = lineBlock.getPerfTransmissibility();
+  arrayView1d< real64 const > const perfWellSkinFactorGlobal = lineBlock.getPerfSkinFactor();
 
   m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
@@ -801,6 +805,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 
       // construct the local wellTransmissibility and location maps
       m_perforationData.getWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
+      m_perforationData.getWellSkinFactor()[iperfLocal] = perfWellSkinFactorGlobal[iperfGlobal];
       LvArray::tensorOps::copy< 3 >( perfLocation[iperfLocal], location );
 
       // increment the local to global map
@@ -841,7 +846,7 @@ void WellElementSubRegion::reconstructLocalConnectivity()
 
 bool WellElementSubRegion::isLocallyOwned() const
 {
-  return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOSX );
+  return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOS );
 }
 
 

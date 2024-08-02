@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron 
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -23,97 +24,78 @@
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Format.hpp"
-#include "common/LogMsg.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes
 #include <stdexcept>
-#include <memory>
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
   #include <mpi.h>
 #endif
-
-
-namespace geos
-{
-
 
 /**
  * @brief Log a message on screen.
  * @details The expression to log must evaluate something that can be stream inserted.
- * @deprecated #3134
- * @todo if we're keeping the macros, remove LvArray dependency here and use the logger?
  */
-#if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_LOG( ... ) LVARRAY_LOG( __VA_ARGS__ )
-#else
-#define GEOS_LOG( ... )
-#endif
 
 /**
  * @brief Log an expression and its value on screen.
  * @details The expression to log must evaluate something that can be stream inserted.
- * @deprecated #3134
  */
-#define GEOS_LOG_VAR( ... ) GEOS_LOG( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )
+#define GEOS_LOG_VAR( ... ) LVARRAY_LOG_VAR( __VA_ARGS__ )
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
- * @deprecated PR #3134
  */
-#if !defined(GEOS_DEVICE_COMPILE)
-#define GEOS_LOG_RANK_0_IF( EXP, ... ) \
+#define GEOS_LOG_RANK_0_IF( EXP, msg ) \
   do { \
-    if( ::geos::logger.rank == 0 && EXP ) \
+    if( ::geos::logger::internal::rank == 0 && EXP ) \
     { \
-      GEOS_LOG( __VA_ARGS__ ); \
+      std::ostringstream oss; \
+      oss << msg; \
+      std::cout << oss.str() << std::endl; \
     } \
   } while( false )
-#else 
-#define GEOS_LOG_RANK_0_IF( EXP, ... )
-#endif
 
 /**
  * @brief Log a message on screen on rank 0.
  * @param msg a message to log (any expression that can be stream inserted)
- * @deprecated PR #3134
  */
-#define GEOS_LOG_RANK_0( ... ) GEOS_LOG_RANK_0_IF( true, __VA_ARGS__ )
+#define GEOS_LOG_RANK_0( msg ) GEOS_LOG_RANK_0_IF( true, msg )
 
 /**
  * @brief Conditionally log a message to the rank output stream.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
- * @deprecated PR #3134
  */
-#if !defined(GEOS_DEVICE_COMPILE)
+#if defined(GEOS_DEVICE_COMPILE)
+#define GEOS_LOG_RANK_IF( EXP, msg )
+#else
 #define GEOS_LOG_RANK_IF( EXP, msg ) \
   do { \
     if( EXP ) \
     { \
-      GEOS_LOG( ::geos::logger.rankMsgPrefix, msg ); \
+      std::ostringstream oss; \
+      oss << "Rank " << ::geos::logger::internal::rankString << ": " << msg; \
+      *logger::internal::rankStream << oss.str() << std::endl; \
     } \
   } while( false )
-#else
-#define GEOS_LOG_RANK_IF( EXP, msg )
 #endif
 
 /**
  * @brief Log a message to the rank output stream.
  * @param msg a message to log (any expression that can be stream inserted)
- * @deprecated PR #3134
  */
 #define GEOS_LOG_RANK( msg ) GEOS_LOG_RANK_IF( true, msg )
 
 /**
  * @brief Log a variable/expression name and value on screen to the rank output stream.
  * @param var a variable or expression accessible from current scope that can be stream inserted
- * @deprecated PR #3134
  */
-#define GEOS_LOG_RANK_VAR( ... ) GEOS_LOG( STRINGIZE( __VA_ARGS__ ) " = ", __VA_ARGS__ )
+#define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -123,7 +105,7 @@ namespace geos
 #if defined(GEOS_DEVICE_COMPILE)
 #define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, msg )
 #else
-#define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 #endif
 
 /**
@@ -132,7 +114,7 @@ namespace geos
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF( EXP, msg, TYPE ) LVARRAY_THROW_IF( EXP, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
+#define GEOS_THROW_IF( EXP, msg, TYPE ) LVARRAY_THROW_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error and terminate the program.
@@ -152,7 +134,7 @@ namespace geos
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_MSG( EXP, msg ) LVARRAY_ASSERT_MSG( EXP, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ASSERT_MSG( EXP, msg ) LVARRAY_ASSERT_MSG( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert a condition in debug builds.
@@ -170,7 +152,6 @@ namespace geos
 /**
  * @brief Report a warning.
  * @param msg a message to log (any expression that can be stream inserted)
- * @deprecated PR #3134
  */
 #define GEOS_WARNING( msg ) LVARRAY_WARNING( msg )
 
@@ -178,14 +159,12 @@ namespace geos
  * @brief Conditionally log an info message.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
- * @deprecated PR #3134
  */
 #define GEOS_INFO_IF( EXP, msg ) LVARRAY_INFO_IF( EXP, msg )
 
 /**
  * @brief Log an info message.
  * @param msg a message to log (any expression that can be stream inserted)
- * @deprecated PR #3134
  */
 #define GEOS_INFO( msg ) LVARRAY_INFO( msg )
 
@@ -195,7 +174,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_EQ_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -204,7 +183,7 @@ namespace geos
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_EQ_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
+#define GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -227,7 +206,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_NE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_NE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ERROR_IF_NE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if two values are not equal.
@@ -236,7 +215,7 @@ namespace geos
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_NE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
+#define GEOS_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if two values are not equal.
@@ -259,7 +238,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_GT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ERROR_IF_GT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares greater than the other.
@@ -268,7 +247,7 @@ namespace geos
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
+#define GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares greater than the other.
@@ -291,7 +270,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_GE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ERROR_IF_GE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares greater than or equal to the other.
@@ -300,7 +279,7 @@ namespace geos
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
+#define GEOS_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares greater than or equal to the other.
@@ -323,7 +302,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_LT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ERROR_IF_LT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares less than the other.
@@ -332,7 +311,7 @@ namespace geos
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
+#define GEOS_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares less than the other.
@@ -355,7 +334,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_LE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ERROR_IF_LE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares less than or equal to the other.
@@ -364,7 +343,7 @@ namespace geos
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg, TYPE )
+#define GEOS_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares less than or equal to the other.
@@ -387,7 +366,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_EQ_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_EQ_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ASSERT_EQ_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that two values compare equal in debug builds.
@@ -417,13 +396,13 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_GT_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GT_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ASSERT_GT_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that one value compares greater than the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- */ 
+ */
 #define GEOS_ASSERT_GT( lhs, rhs ) GEOS_ASSERT_GT_MSG( lhs, rhs, "" )
 
 /**
@@ -432,7 +411,7 @@ namespace geos
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_GE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GE_MSG( lhs, rhs, "***** " << ::geos::logger.rankMsgPrefix << msg )
+#define GEOS_ASSERT_GE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that one value compares greater than or equal to the other in debug builds.
@@ -445,7 +424,6 @@ namespace geos
  * @brief Macro used to turn on/off a function based on the log level.
  * @param[in] minLevel Minimum log level
  * @param[in] fn Function to filter
- * @deprecated PR #3134
  */
 #define GEOS_LOG_LEVEL_FN( minLevel, fn )                                      \
   do {                                                                         \
@@ -460,26 +438,28 @@ namespace geos
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL( minLevel, ... ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, __VA_ARGS__ );
+#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_RANK_0( minLevel, ... ) GEOS_LOG_RANK_0_IF( this->getLogLevel() >= minLevel, __VA_ARGS__ );
+#define GEOS_LOG_LEVEL_RANK_0( minLevel, msg ) GEOS_LOG_RANK_0_IF( this->getLogLevel() >= minLevel, msg )
 
 /**
  * @brief Output messages (with one line per rank) based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_BY_RANK( minLevel, ... ) GEOS_LOG_RANK_IF( this->getLogLevel() >= minLevel, __VA_ARGS__ );
+#define GEOS_LOG_LEVEL_BY_RANK( minLevel, msg ) GEOS_LOG_RANK_IF( this->getLogLevel() >= minLevel, msg )
 
+
+namespace geos
+{
 
 /**
  * @brief Exception class used to report errors in user input.
- * @todo Errors should go in a dedicated hpp.
  */
 struct InputError : public std::runtime_error
 {
@@ -509,281 +489,50 @@ struct InputError : public std::runtime_error
 
 /**
  * @brief Exception class used for special control flow.
- * @todo Errors should go in a dedicated hpp.
  */
 class NotAnError : public std::exception
 {};
 
-// TODO : WIP, methods old version to adapt
-////////////////////////////////////////////////////
-// 
-// /**
-//  * @brief Interface (impl contract) of any class that can send log messages (Logger, Group)
-//  */
-// // TODO : adapt the new call convention everywhere
-// // TODO : Group class should implement it to log contextualized messages (implement logMsg() as private)
-// class LoggingObject
-// {
-//   /**
-//    * @brief log one or more inputs, only from the rank 0, to the standard output (and to
-//    * the rank 0 file stream if used).
-//    * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
-//    * the message. As an exemple: "Rank 0: Hello World!"
-//    * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-//    * is strictly higher than the current globalLogLevel value.
-//    * @param inputs the inputs to log.
-//    * @tparam INPUTS types of the inputs.
-//    */
-//   template< typename ... INPUTS >
-//   virtual void logRank0( LogMsgParams loc, INPUTS ... inputs ) = 0;
-// 
-//   template< typename ... INPUTS >
-//   virtual void logRank0If( bool cond, LogMsgParams loc, INPUTS ... inputs ) = 0;
-// 
-// 
-//   /**
-//    * @brief log one or more inputs to the rank file stream if used, or to the standard
-//    * output (the message is streamed repeatedly if it comes from multiple ranks).
-//    * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
-//    * the message. As an exemple: "Rank 54: Hello World!"
-//    * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-//    * is strictly higher than the current globalLogLevel value.
-//    * @param input the inputs to log.
-//    * @tparam INPUTS types of the inputs.
-//    */
-//   template< typename ... INPUTS >
-//   virtual void log( LogMsgParams loc, INPUTS ... inputs ) = 0;
-// 
-//   template< typename ... INPUTS >
-//   virtual void logIf( bool cond, LogMsgParams loc, INPUTS ... inputs ) = 0;
-// 
-// 
-//   // mergedLog has been excluded as the Logger should not do any MPI Barrier
-//   // /**
-//   //  * @brief Log a message to the rank file stream if used, or log it to the std::cout only once per
-//   //  * form (and therefore does a MPI barrier).
-//   //  * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
-//   //  * the message. As an exemple, for a message that can be "Hello World!" or "Hello Folks!":
-//   //  * Rank 0->54, 56, 60, 67->127: Hello World!
-//   //  * Rank 55, 57->59, 61->66: Hello Folks!
-//   //  * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-//   //  * is strictly higher than the current globalLogLevel value.
-//   //  * @param input the inputs to log.
-//   //  * @tparam INPUTS types of the inputs.
-//   //  */
-//   // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
-//   // void mergedLog( SrcCodeLoc loc, INPUTS ... inputs );
-//   //
-//   // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
-//   // void mergedLogIf( bool cond, SrcCodeLoc loc, INPUTS ... inputs );
-// 
-// 
-//   //TODO : document why commented and should not exist (bad perfs, workaround)
-//   // logDevice( SrcCodeLoc loc, INPUTS ... inputs )
-// 
-// private:
-// 
-//   template< typename ... INPUT >
-//   virtual void logMsg( std::ostream & stream, INPUT input ) = 0;
-// 
-// };
-////////////////////////////////////////////////////
-// /**
-//  * @brief Class used to log messages in the standard output and rank log files.
-//  * A "logger" extern global is available for general use, but other instances can be created where
-//  * a specialized logger is needed.
-//  * Doesn't have any GPU logging capacities for now.
-//  */
-// // TODO: adapt implementation
-// class Logger : public LoggingObject
-// {
-// public:
-// 
-//   /// @brief The default message log level when logging directly with the Logger
-//   static constexpr LogLevel defaultMsgLogLevel = LogLevel::Debug;
-//   // TODO :
-//   static constexpr LogLevel defaultProblemLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
-//   // TODO :
-//   static constexpr LogLevel defaultGroupLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
-// 
-// 
-//   /**
-//    * @brief Construct the logger. Default output is the standard one.
-//    */
-//   Logger();
-//   /**
-//    * @brief Re-initialize the logger configuration. Close the potential file streams.
-//    */
-//   void reset();
-//   /**
-//    * @brief Initialize the logger in a parallel build. Must be called at least once, after the
-//    * MPI_Init() call. Must not be called in a serial build.
-//    * @param mpiComm global MPI communicator
-//    */
-//   void initMpi( MPI_Comm mpiComm );
-// 
-//   /**
-//    * @brief Change the logger output to the specified stream.
-//    * Also close the potential previously opened file output stream.
-//    * @param stream the stream to use when calling rankLog()
-//    */
-//   void setRankOutputToStream( std::ostream & stream );
-//   /**
-//    * @brief Change the logger output to a automatically created file in the specified folder.
-//    * The file name is based on the rank number. The file extension is a ".out".
-//    * @param output_dir optional output directory for rank log files to stream to when calling rankLog()
-//    */
-//   void setRankOutputToFile( const std::string & output_dir = "" );
-// 
-//   /**
-//    * @param param set the log level for global messages (ie. applied to simulation progress messages).
-//    */
-//   void setProblemLogLevel( LogLevel param );
-//   /**
-//    * @param param value to override all groups LogLevel and the problem LogLevel.
-//    */
-//   void enableLogLevelOverride( LogLevel param );
-//   /**
-//    * @param param set the maximal log level allowed for all messages. With a value of 2, all
-//    * messages from level 3 and more will not be output. With a value of -1, the logger become silent.
-//    * This value is prioritized over setMinLogLevel.
-//    */
-//   void disableLogLevelOverride();
-// 
-// 
-// public://todo: private
-// 
-//   /// @see setProblemLogLevel( LogLevel param )
-//   LogLevel m_problemLogLevel;
-//   /// @see enableLogLevelOverride( LogLevel param ) and disableLogLevelOverride()
-//   std::optional< LogLevel > m_overrideLogLevel;
-// 
-//   /// @brief MPI communicator
-//   MPI_Comm m_comm;
-//   /// @brief MPI rank id
-//   int m_rank;
-//   /// @brief MPI total ranks count
-//   int m_ranksCount;
-//   /// @brief prefix to add before a message that is specific to a rank. Empty in a serial build.
-//   std::string m_rankMsgPrefix;
-// 
-//   /// @brief Pointer to the rank output stream
-//   std::ostream * m_outStream;
-//   /// @brief Smart pointer to the active file output stream. Equals to nullptr if not outputing to a file.
-//   std::unique_ptr< std::ostream > m_fileOutStream;
-// 
-//   // TODO : expose it (only to) to LoggingObject ?
-//   template< typename INPUT >
-//   static void streamLog( std::ostream & stream, INPUT input );
-//   // TODO : expose it (only to) to LoggingObject ?
-//   template< typename INPUT, typename ... MORE_INPUTS >
-//   static void streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... moreInputs );
-// 
-//   // TODO : implement logMsg() as private with the adding ot contextual info
-// 
-// };
-// /// main Logger instance for general purpose logging
-// extern Logger logger;
-////////////////////////////////////////////////////
-// template< typename INPUT >
-// void Logger::streamLog( std::ostream & stream, INPUT input )
-// {
-//   stream << input << std::endl;
-// }
-// 
-// template< typename INPUT, typename ... MORE_INPUTS >
-// void Logger::streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... moreInputs )
-// {
-//   stream << input;
-//   streamLog( stream, moreInputs ... );
-// }
-// 
-// 
-// //WIP section...
-// template< LogLevel MSG_LEVEL, typename ... INPUTS >
-// void Logger::rankLog( INPUTS ... inputs )
-// {
-//   if( MSG_LEVEL <= m_problemLogLevel )
-//   {
-//     streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
-//   }
-// }
-// 
-// template< LogLevel MSG_LEVEL, typename ... INPUTS >
-// void Logger::log( INPUTS ... inputs )
-// {
-//   if( MSG_LEVEL <= m_problemLogLevel )
-//   {
-//     if( m_outStream != &std::cout )
-//     {
-//       streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
-//     }
-//     else
-//     {
-//       std::ostringstream oss;
-//       streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
-// 
-//     }
-//   }
-// }
-// 
-// template< LogLevel MSG_LEVEL, typename ... INPUTS >
-// void Logger::rank0Log( INPUTS ... inputs )
-// {
-//   if( m_rank == 0 && MSG_LEVEL <= m_problemLogLevel )
-//   {
-//     streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
-//   }
-// }
-// 
-// 
-// template< LogLevel MSG_LEVEL, typename ... INPUTS >
-// void Logger::stdLogIf( bool condition, INPUTS ... inputs )
-// {
-//   if( condition )
-//   {
-//     stdLog< MSG_LEVEL >( inputs ... );
-//   }
-// }
-// 
-// // template< LogLevel MSG_LEVEL, typename ... INPUTS >
-// // void Logger::mergedLogIf( bool condition, INPUTS ... inputs )
-// // {
-// //   if( condition )
-// //   {
-// //     rankLog< MSG_LEVEL >( inputs ... );
-// //   }
-// // }
-// 
-// template< LogLevel MSG_LEVEL, typename ... INPUTS >
-// void Logger::rank0LogIf( bool condition, INPUTS ... inputs )
-// {
-//   if( condition )
-//   {
-//     rank0Log< MSG_LEVEL >( inputs ... );
-//   }
-// }
-// 
-// // TODO Logger: decide to use this version or not (streams on std output + rank 0 file stream)
-// // template< typename ... INPUTS >
-// // void Logger::rank0log( INPUTS ... inputs )
-// // {
-// //   if( rank == 0 )
-// //   {
-// //     if( fileOutStream!=nullptr )
-// //     {
-// //       streamLog( &std::cout, rankMsgPrefix, inputs ... );
-// //     }
-// //     else
-// //     {
-// //       std::ostringstream oss;
-// //       streamLog( oss, rankMsgPrefix, inputs ... );
-// //       string const str( oss.str() );
-// //       std::cout << str;
-// //       fileOutStream << str;
-// //     }
-// //   }
-// // }
+namespace logger
+{
+
+namespace internal
+{
+
+extern int rank;
+
+extern std::string rankString;
+
+extern int n_ranks;
+
+extern std::ostream * rankStream;
+
+#if defined(GEOS_USE_MPI)
+extern MPI_Comm comm;
+#endif
+} // namespace internal
+
+#if defined(GEOS_USE_MPI)
+/**
+ * @brief Initialize the logger in a parallel build.
+ * @param comm global MPI communicator
+ * @param rank_output_dir output directory for rank log files
+ */
+void InitializeLogger( MPI_Comm comm, const std::string & rank_output_dir="" );
+#endif
+
+/**
+ * @brief Initialize the logger in a serial build.
+ * @param rank_output_dir output directory for rank log files
+ */
+void InitializeLogger( const std::string & rank_output_dir="" );
+
+/**
+ * @brief Finalize the logger and close the rank streams.
+ */
+void FinalizeLogger();
+
+} // namespace logger
 
 } // namespace geos
 

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -103,6 +104,17 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
+  virtual real64
+  scalingForSystemSolution( DomainPartition & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
+  virtual bool
+  checkSystemSolution( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor ) override;
+
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
@@ -152,12 +164,27 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  assembleFluxTerms( real64 const time_n,
-                     real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) = 0;
+
+  /**
+   * @brief assembles the flux terms for all cells including jump stabilization
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   */
+  virtual void
+  assembleStabilizedFluxTerms( real64 const dt,
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief assembles the flux terms for all cells for the poroelastic case
@@ -199,11 +226,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr char const * elemDofFieldString() { return "primaryVariables"; }
-
-    // inputs
-    static constexpr char const * inputTemperatureString() { return "temperature"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+    static constexpr char const * elemDofFieldString() { return "singlePhaseVariables"; }
   };
 
   /**
@@ -262,10 +285,10 @@ public:
 
   /**
    * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
+   * @param subRegion subregion that contains the fields
    */
-  void
-  updateFluidState( ObjectManagerBase & subRegion ) const;
+  real64
+  updateFluidState( ElementSubRegionBase & subRegion ) const;
 
 
   /**
@@ -274,6 +297,20 @@ public:
    */
   virtual void
   updateFluidModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateMass( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Function to update energy
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateEnergy( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Update all relevant solid internal energy models using current values of temperature
@@ -304,12 +341,12 @@ public:
   void computeHydrostaticEquilibrium();
 
   /**
-   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
-   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
+   * @brief Update the cell-wise pressure gradient
    */
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
+  virtual void updatePressureGradient( DomainPartition & domain )
+  {
+    GEOS_UNUSED_VAR( domain );
+  }
 
   /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
@@ -344,6 +381,11 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
+  /**
+   * @brief Utility function to save the converged state
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
@@ -380,12 +422,6 @@ protected:
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
   virtual ThermalFluidPropViews getThermalFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
-
-  /// the input temperature
-  real64 m_inputTemperature;
-
-  /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepFlowVariablesConstantDuringInitStep;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
