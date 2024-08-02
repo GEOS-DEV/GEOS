@@ -545,7 +545,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
 
       for( globalIndex iownerRank : rankSetsByStatus[WellElemStatus::LOCAL] )
       {
-        if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != iownerRank )
+        if( MpiWrapper::commRank( MPI_COMM_GEOS ) != iownerRank )
         {
           elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
         }
@@ -563,7 +563,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
         if( rankCount == 0 )
         {
           // update the elemStatusGlobal array for all ranks
-          if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != iownerRank )
+          if( MpiWrapper::commRank( MPI_COMM_GEOS ) != iownerRank )
           {
             elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
           }
@@ -571,7 +571,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
         else // (rankCount > 0)
         {
           // remove the duplicate elements
-          if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == iownerRank )
+          if( MpiWrapper::commRank( MPI_COMM_GEOS ) == iownerRank )
           {
             localElems.remove( iwelemGlobal );
           }
@@ -846,7 +846,7 @@ void WellElementSubRegion::reconstructLocalConnectivity()
 
 bool WellElementSubRegion::isLocallyOwned() const
 {
-  return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOSX );
+  return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOS );
 }
 
 
