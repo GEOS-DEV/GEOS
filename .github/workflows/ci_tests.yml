@@ -185,6 +185,14 @@ jobs:
             GCP_BUCKET: geosx/Sherlock-CPU
             HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
 
+          - name: Pangea4 (redhat 8, gcc 12.1.0, hpcx 2.17.1, mkl 2023.2.0)
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/pangea4-gcc12.1-hpcxompi2.17.1-onemkl2023.2.0
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GCP_BUCKET: geosx/Pangea4
+            HOST_CONFIG: host-configs/TOTAL/pangea4-gcc12.1-hpcxompi2.17.1-onemkl2023.2.0.cmake
+
     uses: ./.github/workflows/build_and_test.yml
     with:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
