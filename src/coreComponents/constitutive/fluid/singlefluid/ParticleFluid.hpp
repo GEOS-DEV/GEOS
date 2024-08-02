@@ -20,7 +20,7 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_PARTICLEFLUID_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_PARTICLEFLUID_HPP_
 
-#include "common/format/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
 
 namespace geos

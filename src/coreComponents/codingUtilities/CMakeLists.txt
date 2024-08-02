@@ -2,6 +2,7 @@
 # Specify all headers
 #
 set( codingUtilities_headers
+     EnumStrings.hpp
      RTTypes.hpp
      Parsing.hpp
      SFINAE_Macros.hpp

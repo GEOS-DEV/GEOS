@@ -16,7 +16,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
 #define GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
 
-#include "common/format/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
+#include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 

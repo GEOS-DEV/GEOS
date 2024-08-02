@@ -20,7 +20,7 @@
 #ifndef GEOS_MESH_PARTICLETYPE_HPP
 #define GEOS_MESH_PARTICLETYPE_HPP
 
-#include "common/format/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {

@@ -20,7 +20,7 @@
 #ifndef GEOS_FINITEELEMENT_PDEUTILITIES_HPP_
 #define GEOS_FINITEELEMENT_PDEUTILITIES_HPP_
 
-#include "common/format/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {

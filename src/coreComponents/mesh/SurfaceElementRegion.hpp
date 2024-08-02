@@ -22,7 +22,7 @@
 #define GEOS_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
-#include "common/format/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {

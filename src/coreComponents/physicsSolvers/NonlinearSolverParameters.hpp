@@ -16,7 +16,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 #define GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 
-#include "common/format/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 

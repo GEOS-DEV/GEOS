@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "common/format/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {

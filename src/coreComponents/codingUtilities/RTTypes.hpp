@@ -24,7 +24,6 @@
 #define GEOS_CODINGUTILITIES_RTTYPES_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/format/EnumStrings.hpp"
 #include "common/format/Format.hpp"
 #include "common/logger/Logger.hpp"
 
@@ -232,30 +231,6 @@ struct TypeName
     return ( pos == string::npos ) ? full_name : full_name.substr( pos );
   }
 };
-
-/**
- * @brief Base types TypeRegex specializations
- */
-///@{
-
-/**
- * @brief Specialization of TypeRegex for enumeration types with strings attached (pun intended).
- * @tparam ENUM the type of enumeration
- */
-template< typename ENUM >
-struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
-{
-  /**
-   * @brief @return Regex for validating enumeration inputs for @p ENUM type.
-   */
-  static Regex get()
-  {
-    return Regex( EnumStrings< ENUM >::concat( "|" ),
-                  "Input value must be one of { " + EnumStrings< ENUM >::concat( ", " ) + "}." );
-  }
-};
-
-///@}
 
 }
 

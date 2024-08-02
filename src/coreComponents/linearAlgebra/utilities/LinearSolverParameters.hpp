@@ -20,7 +20,7 @@
 #ifndef GEOS_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 #define GEOS_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
-#include "common/format/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {
