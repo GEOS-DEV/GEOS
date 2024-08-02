@@ -66,11 +66,7 @@ void ConvertDocumentationToSchema( string const & fname,
 
   // Write the schema to file
   logger.rank0Log( "  Saving file" );
-  schemaTree.save_file( fname.c_str());
-=======
-  GEOS_LOG_RANK_0( "  Saving file" );
-  schemaTree.saveFile( fname );
->>>>>>> origin/develop
+  schemaTree.saveFile( fname.c_str() );
 
   logger.rank0Log( "  Done!" );
 }
