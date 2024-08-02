@@ -23,7 +23,7 @@
 // Source incldes
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes
@@ -44,6 +44,25 @@
  * @details The expression to log must evaluate something that can be stream inserted.
  */
 #define GEOS_LOG_VAR( ... ) LVARRAY_LOG_VAR( __VA_ARGS__ )
+
+
+/**
+ * @brief Conditionally log a message.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#if defined(GEOS_DEVICE_COMPILE)
+#define GEOS_LOG_IF( EXP, msg )
+#else
+#define GEOS_LOG_IF( EXP, msg ) \
+  do { \
+    if( EXP ) \
+    { \
+      std::cout<< msg << std::endl; \
+    } \
+  } while( false )
+#endif
+
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
@@ -438,7 +457,7 @@
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, msg );
+#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_LOG_IF( this->getLogLevel() >= minLevel, msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.

@@ -82,7 +82,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 
-  MPI_Comm const comm = MPI_COMM_GEOSX;
+  MPI_Comm const comm = MPI_COMM_GEOS;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
 
