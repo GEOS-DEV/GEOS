@@ -22,7 +22,7 @@
       targetRegions="{ Domain, Fracture }"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      contactPenaltyStiffness="1e12"/>
+      contactPenaltyStiffness="0.0e8"/>
 
     <SinglePhaseFVM
       name="flowSolver"

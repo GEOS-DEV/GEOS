@@ -28,7 +28,7 @@
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      contactPenaltyStiffness="1e12">
+      contactPenaltyStiffness="0.0e8">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
         newtonTol="1e-03"
