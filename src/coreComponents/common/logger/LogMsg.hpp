@@ -29,7 +29,7 @@
 // TODO : is it considered as a circular dependency?
 #include "common/format/EnumBimap.hpp"
 #include "common/format/EnumStrings.hpp"
-#include "codingUtilities/SourceCodeLocation.hpp"
+#include "common/SourceCodeLocation.hpp"
 
 namespace geos
 { // TODO document
