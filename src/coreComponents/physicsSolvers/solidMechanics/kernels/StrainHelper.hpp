@@ -102,7 +102,7 @@ public:
       }
     }
 
-    for( int icomp = 0; icomp < 6; ++icomp ):wq
+    for( int icomp = 0; icomp < 6; ++icomp )
     {
       m_avgStrain[k][icomp] = 0.0;
     }
@@ -253,7 +253,7 @@ public:
                                      FaceManager const & faceManager,
                                      SUBREGION_TYPE const & elementSubRegion,
                                      FE_TYPE const & finiteElementSpace,
-                                     arrayView3d< real64 const, constitutive::solid::STRESS_USD > const stress,
+                                     arrayView3d< real64 const, solid::STRESS_USD > const stress,
                                      fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress ):
     Base( nodeManager,
           edgeManager,
@@ -305,7 +305,7 @@ public:
 
     for( int icomp = 0; icomp < 6; ++icomp )
     {
-      m_avgStress[k][icomp] += detJxW*m_stress[k][icomp]/m_elementVolume[k];
+      m_avgStress[k][icomp] += detJxW*m_stress[k][q][icomp]/m_elementVolume[k];
     }
   }
 
@@ -338,7 +338,7 @@ public:
 protected:
 
   /// The stress solution
-  arrayView3d< real64 const, constitutive::solid::STRESS_USD > const m_stress;
+  arrayView3d< real64 const, solid::STRESS_USD > const m_stress;
 
   /// The average stress
   fields::solidMechanics::arrayView2dLayoutAvgStress const m_avgStress;
@@ -377,7 +377,7 @@ public:
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
-                   arrayView3d< real64 const, constitutive::solid::STRESS_USD > const  stress,
+                   arrayView3d< real64 const, solid::STRESS_USD > const  stress,
                    fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress )
   {
     AverageStressOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >
