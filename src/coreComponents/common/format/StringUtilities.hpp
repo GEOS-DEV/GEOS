@@ -66,7 +66,7 @@ string join( IT first, IT last, S const & delim = S() )
  * @brief Join strings or other printable objects with a delimiter.
  * @tparam CONTAINER type of container to join
  * @tparam S the type of delimiter, usually char, char const * or string
- * @param cont the container to join
+ * @param container the container to join
  * @param delim delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
