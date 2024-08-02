@@ -20,7 +20,7 @@
 #include "GeosxState.hpp"
 #include "initialization.hpp"
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/Path.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -526,7 +526,7 @@ void ProblemManager::postInputInitialization()
   if( repartition )
   {
     partition.setPartitions( xpar, ypar, zpar );
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
     // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
@@ -669,6 +669,7 @@ void ProblemManager::generateMesh()
   }
 
   domain.setupCommunications( useNonblockingMPI );
+  domain.outputPartitionInformation();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {

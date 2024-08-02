@@ -2,7 +2,7 @@
 set( gtest_geosx_tests
      testTable.cpp )
 
-set( dependencyList gtest fileIO ${parallelDeps} )
+set( dependencyList gtest common ${parallelDeps} )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})

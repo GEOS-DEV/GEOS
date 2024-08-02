@@ -26,7 +26,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
+#include "common/format/table/TableFormatter.hpp"
 
 namespace geos
 {
