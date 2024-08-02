@@ -509,8 +509,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
         constitutiveUpdatePassThru( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
         {
 
-          using ContactType = TYPEOFREF( castedHydraulicApertureModel );
-          typename ContactType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
+          using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
+          typename HydraulicApertureModelType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
 
           poromechanicsEFEMKernels::StateUpdateKernel::
             launch< parallelDevicePolicy<> >( subRegion.size(),
