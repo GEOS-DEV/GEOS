@@ -19,6 +19,9 @@
 
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELUTILITIES_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELUTILITIES_HPP_
+#define Pe_max 5000000.0
+#define Pe_min 4000000.0
+#define eps2 0.05
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
@@ -32,6 +35,136 @@ namespace geos
 
 namespace isothermalCompositionalMultiphaseFVMKernelUtilities
 {
+
+real64 computePCalpha ( real64 S ) {
+  real64 Pe = Pe_max;
+  return (Pe * (1.0 - S));
+}
+
+real64 computePCalphaInv ( real64 Pc ) {
+  real64 Pe = Pe_max;
+  return  (1.0 - Pc / Pe);
+}
+
+real64 computePCalpha_tilde ( real64 S ) {
+  real64 Pe = Pe_max;
+  real64 Pc_tilde = Pe * (1.0 - S);
+    if (S < (1.0 - Pe_min / Pe_max) ) {
+     Pc_tilde = Pe_min;
+  }
+  return Pc_tilde;
+}
+
+real64 computePCbeta ( real64 S ) {
+  real64 Pe = Pe_min;
+  return (Pe * (1.0 - S));
+}
+
+real64 computePCbetaInv ( real64 Pc ) {
+  real64 Pe = Pe_min;
+  return  (1.0 - Pc / Pe);
+}
+
+real64 computeMobilityL ( real64 S ) {
+  real64 mu = 0.0004;
+  return (S*S / mu);
+}
+
+real64 computeMobilityV ( real64 S ) {
+  real64 mu = 0.00002;
+  return (std::pow((1.0 - S),2) / mu);
+}
+
+real64 computedPCdSalpha ( real64 S ) {
+  GEOS_UNUSED_VAR(S);
+  real64 Pe = Pe_max;
+  return (Pe * (- 1.0));
+}
+
+real64 computedPCdSalpha_tilde ( real64 S ) {
+  real64 Pe = Pe_max;
+  real64 dPcdS_tilde = Pe * (- 1.0);
+  if (S < (1.0 - Pe_min / Pe_max)) {
+     dPcdS_tilde = 0.0;
+  }
+  return dPcdS_tilde;
+}
+
+real64 computedPCdSbeta ( real64 S ) {
+  GEOS_UNUSED_VAR(S);
+  real64 Pe = Pe_min;
+  return (Pe * (- 1.0));
+}
+
+real64 computedPCbetaInv ( real64 Pc ) {
+  GEOS_UNUSED_VAR(Pc);
+  real64 Pe = Pe_min;
+  return  (- 1.0 / Pe);
+}
+
+real64 computedMobilitydSL ( real64 S ) {
+ // GEOS_UNUSED_VAR(S);
+  real64 mu = 0.0004;
+  return (2.0 * S / mu);
+}
+
+real64 computedMobilitydSV ( real64 S ) {
+ // GEOS_UNUSED_VAR(S);
+  real64 mu = 0.00002;
+  return (- 2.0 * (1.0 - S) / mu);
+}
+
+real64 computeVli ( real64 Z ) {
+  real64 Vli = -0.4291 * std::pow(Z,3) + 1.4209 * Z * Z - 1.9911 * Z + 1;
+  return Vli;
+}
+
+real64 computedVlidZ ( real64 Z ) {
+  real64 dVli = -0.4291 * 3.0 * std::pow(Z,2) + 1.4209 * 2.0 * Z - 1.9911;
+  return dVli;
+}
+
+real64 computeVlj ( real64 Z ) {
+  real64 Vlj = -0.4541 * std::pow(Z,3) + 1.4637 * Z * Z - 2.0092 * Z + 1;
+  return Vlj;
+}
+
+real64 computedVljdZ ( real64 Z ) {
+  real64 dVlj = -0.4541 * 3.0 * std::pow(Z,2) + 1.4637 * 2.0 * Z - 2.0092;
+  return dVlj;
+}
+
+real64 computerhoTi ( real64 Z ) {
+  real64 rhoTi = -359.23 * std::pow(Z,3) + 921.51 * Z * Z - 911.94 * Z + 1017;
+  return rhoTi;
+}
+
+real64 computedrhoTidZ ( real64 Z ) {
+  real64 drhoTi = -359.23 * 3.0 * std::pow(Z,2) + 921.51 * 2.0 * Z - 911.94;
+  return drhoTi;
+}
+
+real64 computerhoTj ( real64 Z ) {
+  real64 rhoTj = -711.67 * std::pow(Z,3) + 1657.1 * Z * Z - 1419.5 * Z + 1009.6;
+  return rhoTj;
+}
+
+real64 computedrhoTjdZ ( real64 Z ) {
+  real64 drhoTj = -711.67 * 3.0 * std::pow(Z,2) + 1657.1 * 2.0 * Z - 1419.5;
+  return drhoTj;
+}
+
+real64 safeUpdate ( real64 S1, real64 S0) {
+real64 S_kink1 = 1.0; real64 S_kink2 = 0.0;
+if ( S0 < S_kink1 && S1 > (S_kink1 + eps2)) {
+  S1 = S_kink1 - eps2;
+}
+if ( S0 > (S_kink2 + eps2) && S1 < (S_kink2 + eps2)) {
+  S1 = S_kink2 + eps2;
+}
+return S1;
+}
+
 
 // TODO make input parameter
 static constexpr real64 epsC1PPU = 5000;
@@ -635,9 +768,9 @@ struct PPUICPhaseFlux
     // A good step 1 would be to make sure all the constitutive info we are gonna need is here, if not we can pass more by using accessors in FaceBasedAssemblyKernel (Ryan will help)
     //
     // Step 1: convert from density to component fraction
-    // Ammar suggest to use the provided derivative 1/dCompFrac_dCompDens since the algebraic expansions show that this is equal to dCompDens_dCompFrac
+    // Ammar- suggest to use the provided derivative to multiply by 1/dCompFrac_dCompDens since the algebraic expansions show that this is equal to dCompDens_dCompFrac
 
-    // step 2: loval solver
+    // step 2: local solver
 
     // First we calculate the total flux using PPU flux:
 
@@ -666,12 +799,6 @@ struct PPUICPhaseFlux
     real64 dTotFlux_dP[numFluxSupportPoints]{};
     real64 dTotFlux_dC[numFluxSupportPoints][numComp]{};
 
-    //store totMob upwinded by PPU for later schemes
-    real64 totMob{};
-    real64 dTotMob_dP[numFluxSupportPoints]{};
-    real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
-    localIndex k_up_ppu = -1;
-
     //unelegant but need dummy when forming PPU total velocity
     real64 dummy[numComp];
     real64 dDummy_dP[numFluxSupportPoints][numComp];
@@ -690,7 +817,7 @@ struct PPUICPhaseFlux
                              dCompFrac_dCompDens,
                              phaseMassDens, dPhaseMassDens,
                              phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                             k_up_ppu, potGrad,
+                             k_up, potGrad,
                              phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
                              dummy, dDummy_dP, dDummy_dC );
 
@@ -700,14 +827,11 @@ struct PPUICPhaseFlux
       for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
-        totMob += phaseMob[seri[ke]][sesri[ke]][sei[ke]][jp];
-        dTotMob_dP[ke] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dP];
         dPhaseFlux_dP[ke] = 0.;
 
         for( localIndex jc = 0; jc < numComp; ++jc )
         {
           dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
-          dTotMob_dC[ke][jc] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dC + jc];
           dPhaseFlux_dC[ke][jc] = 0.;
         }
       }
@@ -715,6 +839,73 @@ struct PPUICPhaseFlux
 
     }
 
+        ////////////
+
+   // calculate quantities on primary connected cells
+      int i = 0;
+      localIndex const er_i  = seri[i];
+      localIndex const esr_i = sesri[i];
+      localIndex const ei_i  = sei[i];
+
+      localIndex const er_j  = seri[i+1];
+      localIndex const esr_j = sesri[i+1];
+      localIndex const ei_j  = sei[i+1];
+
+      // density
+      real64 const rho_l_i  = phaseMassDens[er_i][esr_i][ei_i][0][ip];
+      real64 const rho_l_j  = phaseMassDens[er_j][esr_j][ei_j][0][ip];
+
+      real64 const pi = pres[er_i][esr_i][ei_i];
+      real64 const pj = pres[er_j][esr_j][ei_j];
+    
+      real64 const Ti = trans[i];
+      real64 const Tj = trans[i+1];
+
+    // Newton Loop
+    // missing Zi and Zj, now hard-coded:
+    real64 const Zi = 0.1; real64 const Zj = 0.5;
+    // first guess for Z^alpha
+    real64 Z_alpha = (Zi + Zj) / 2.0;
+
+    if (Zi > 1.0 - eps2) {
+      Z_alpha = 1.0 - eps2;
+    }
+    if (Zj > 1.0 - eps2) {
+      Z_alpha = 1.0 - eps2;
+    }
+
+    real64 rho_t_i = computerhoTi ( Zi );
+    real64 v_l_i = computeVli ( Zi );
+
+    real64 Si = v_l_i * rho_t_i / rho_l_i;
+                if (Si < 0.0) {
+                  Si = 0.0;
+                }
+                if (Si > 1.0) {
+                  Si = 1.0;
+                }
+    real64 pc_i = computePCalpha (Si);
+    real64 dpcdSi = computedPCdSalpha (Si);
+
+    real64 rho_t_j = computerhoTj ( Zj );
+    real64 v_l_j = computeVlj ( Zj );
+    real64 Sj = v_l_j * rho_t_j / rho_l_j;
+                if (Sj < 0.0) {
+                  Sj = 0.0;
+                }
+                if (Sj > 1.0) {
+                  Sj = 1.0;
+                }
+    real64 pc_j = computePCbeta (Sj);
+    real64 dpcdSj = computedPCdSbeta (Sj);
+    
+    real64 Ut = totFlux; 
+
+    real64 tol = 1e-8; int max_iter = 50;
+
+// Just a test:
+
+  phaseFlux = Z_alpha * 2.0;
 
     //
     // step 3: global solver flux and jacobian
