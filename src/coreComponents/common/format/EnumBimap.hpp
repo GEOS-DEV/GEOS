@@ -25,7 +25,7 @@
 #ifndef GEOS_CODINGUTILITIES_ENUMBIMAP_HPP
 #define GEOS_CODINGUTILITIES_ENUMBIMAP_HPP
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Format.hpp"
 

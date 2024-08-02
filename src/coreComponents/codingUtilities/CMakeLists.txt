@@ -3,7 +3,6 @@
 #
 set( codingUtilities_headers
      RTTypes.hpp
-     EnumBimap.hpp
      Parsing.hpp
      SFINAE_Macros.hpp
      UnitTestUtilities.hpp

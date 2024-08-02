@@ -27,8 +27,8 @@
 
 #include "common/DataTypes.hpp"
 // TODO : is it considered as a circular dependency?
-#include "codingUtilities/EnumBimap.hpp"
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumBimap.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "codingUtilities/SourceCodeLocation.hpp"
 
 namespace geos
