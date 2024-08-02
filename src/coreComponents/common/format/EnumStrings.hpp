@@ -166,23 +166,6 @@ namespace internal
 IS_VALID_EXPRESSION( HasEnumStrings, ENUM, getEnumStrings( std::declval< ENUM >() ) );
 }
 
-/**
- * @brief Specialization of TypeRegex for enumeration types with strings attached (pun intended).
- * @tparam ENUM the type of enumeration
- */
-template< typename ENUM >
-struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
-{
-  /**
-   * @brief @return Regex for validating enumeration inputs for @p ENUM type.
-   */
-  static Regex get()
-  {
-    return Regex( EnumStrings< ENUM >::concat( "|" ),
-                  "Input value must be one of { " + EnumStrings< ENUM >::concat( ", " ) + "}." );
-  }
-};
-
 } // namespace geos
 
 // Formatter specialization for enums
