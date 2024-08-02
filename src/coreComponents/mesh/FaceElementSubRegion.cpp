@@ -862,6 +862,18 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   arrayView1d< globalIndex const > const nl2g = nodeManager.localToGlobalMap();
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
+  if (commRank == 21 || commRank == 28)
+  {
+    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
+                                                                         localIndex const esr,
+                                                                         ElementRegionBase const & GEOS_UNUSED_PARAM( region ),
+                                                                         CellElementSubRegion const & subRegion )
+		    {
+		          auto l2g = subRegion.localToGlobalMap();
+			  for (int i = 0; i < l2g.size(); ++i) {GEOS_LOG_RANK( "Entry " << i << " of l2g = " << l2g(i));}
+		    } );
+  }
+
   // First let's create the reference mappings for both nodes and edges.
   std::map< globalIndex, globalIndex > const referenceCollocatedNodes = buildReferenceCollocatedNodes( m_2dElemToCollocatedNodesBuckets );
 
@@ -869,10 +881,10 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
 
   GEOS_LOG_RANK_IF(commRank == 28 , "Rank 28, lid 3 number of nodes is " << m_toNodesRelation.sizeOfArray(3) << " with gids:" );
   if(commRank == 28) {for (int i = 0; i < m_toNodesRelation.sizeOfArray(3); ++i )
-  {GEOS_LOG_RANK_IF(commRank == 28, nl2g(m_toNodesRelation[3][i]));}}
+  {GEOS_LOG_RANK_IF(commRank == 28, "node gid = " << nl2g(m_toNodesRelation[3][i]));}}
   GEOS_LOG_RANK_IF( commRank == 21 , "Rank 21, lid 1 number of nodes is " << m_toNodesRelation.sizeOfArray(1) << " with gids:" );
   if(commRank == 21) {for (int i = 0; i < m_toNodesRelation.sizeOfArray(1); ++i )
-  {GEOS_LOG_RANK_IF(commRank == 21, nl2g(m_toNodesRelation[1][i]));}}
+  {GEOS_LOG_RANK_IF(commRank == 21, "node gid = " << nl2g(m_toNodesRelation[1][i]));}}
 
   std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const collocatedEdgeBuckets = buildCollocatedEdgeBuckets( referenceCollocatedNodes, nl2g, edgeManager.nodeList() );
   std::map< localIndex, localIndex > const referenceCollocatedEdges = buildReferenceCollocatedEdges( collocatedEdgeBuckets, edgeManager.ghostRank() );

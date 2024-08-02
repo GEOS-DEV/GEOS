@@ -408,10 +408,26 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
 
-  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
-  {
-    addCollocatedFractureNodes( subRegion );
-  } );
+  int const commRank = MpiWrapper::commRank();
+  GEOS_LOG_RANK_IF(commRank == 23, "before adding collocated nodes, the size of nodeaSjacencySet is " << nodeAdjacencySet.size());
+  
+  //elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+  //{
+  //  addCollocatedFractureNodes( subRegion );
+  //} );
+
+    for( localIndex er = 0; er < elemManager.numRegions(); ++er )
+    {
+      ElementRegionBase const & elemRegion = elemManager.getRegion( er );
+      elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
+                                                                         FaceElementSubRegion const & subRegion )
+      {
+        addFractureSupport( er, esr, subRegion );
+        addCollocatedFractureNodes( subRegion );
+      } );
+    }
+
+  GEOS_LOG_RANK_IF(commRank == 23, "after adding collocated nodes, the size of nodeAdjacencySet is " << nodeAdjacencySet.size());
 
   for( integer d = 0; d < depth; ++d )
   {
@@ -435,12 +451,14 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       {
         addVolumicSupport( er, esr, subRegion );
       } );
+      //GEOS_LOG_RANK_IF(commRank == 28, "Before adding collocated nodes, the size of nodeAdjacencySet is " << nodeAdjacencySet.size());
       elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
                                                                          FaceElementSubRegion const & subRegion )
       {
         addFractureSupport( er, esr, subRegion );
         addCollocatedFractureNodes( subRegion );
       } );
+      //GEOS_LOG_RANK_IF(commRank == 28, "After adding collocated nodes, the size of nodeAdjacencySet is " << nodeAdjacencySet.size());
       elemRegion.forElementSubRegionsIndex< WellElementSubRegion >( [&]( localIndex const esr,
                                                                          WellElementSubRegion const & subRegion )
       {
