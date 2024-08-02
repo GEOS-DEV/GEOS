@@ -122,10 +122,10 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( Do
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( numLocalRows, MPI_COMM_GEOSX );
+  rhs.create( numLocalRows, MPI_COMM_GEOS );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( numLocalRows, MPI_COMM_GEOSX );
+  solution.create( numLocalRows, MPI_COMM_GEOS );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 

@@ -241,10 +241,10 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
     localMatrix.setName( this->getName() + "/localMatrix" );
 
     rhs.setName( this->getName() + "/rhs" );
-    rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
     solution.setName( this->getName() + "/solution" );
-    solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
   }
   else
   {
@@ -592,8 +592,8 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
 
     real64 const localResidualNorm[2] = { localSum.get(), SolidMechanicsLagrangianFEM::getMaxForce() };
 
-    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOS );
+    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
     array1d< real64 > globalValues( numRanks * 2 );
 
     // Everything is done on rank 0
@@ -602,7 +602,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
                         globalValues.data(),
                         2,
                         0,
-                        MPI_COMM_GEOSX );
+                        MPI_COMM_GEOS );
 
     if( rank==0 )
     {
@@ -614,7 +614,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
       }
     }
 
-    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
+    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOS );
   } );
 
   real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
@@ -803,7 +803,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
                          &hasConfigurationConvergedGlobally,
                          1,
                          MPI_LAND,
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 
   // for this solver it makes sense to reset the state.
   // if( !hasConfigurationConvergedGlobally )

@@ -622,7 +622,7 @@ protected:
 
   virtual void validateNonlinearAcceleration() override
   {
-    if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 )
+    if( MpiWrapper::commSize( MPI_COMM_GEOS ) > 1 )
     {
       GEOS_ERROR( "Nonlinear acceleration is not implemented for MPI runs" );
     }

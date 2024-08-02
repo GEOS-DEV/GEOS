@@ -734,7 +734,7 @@ void PetscMatrix::separateComponentFilter( PetscMatrix & dst,
     GEOS_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, nullptr, &vals ) );
   }
 
-  dst.create( tempMatView.toViewConst(), numLocalCols(), MPI_COMM_GEOSX );
+  dst.create( tempMatView.toViewConst(), numLocalCols(), MPI_COMM_GEOS );
   dst.setDofManager( dofManager() );
 }
 
