@@ -79,7 +79,7 @@ void OutputBase::setupDirectoryStructure()
 {
   string childDirectory = m_childDirectory;
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   if( rank == 0 )
   {
     if( !childDirectory.empty())
