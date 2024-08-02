@@ -30,14 +30,14 @@ The major distinction between this "user-defined" initialization and the "gravit
 
 This is shown in the following tags under the ``FieldSpecifications`` section below
 
-.. literalinclude:: ../../../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_USER_TABLES -->
     :end-before: <!-- SPHINX_USER_TABLES_END -->
 
 The tables for ``sigma_xx``, ``sigma_yy``, ``sigma_zz`` and ``init_pressure`` are listed under the ``Functions`` section as shown below.
 
-.. literalinclude:: ../../../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FUNCTIONS -->
     :end-before: <!-- SPHINX_FUNCTIONS_END -->
@@ -52,12 +52,12 @@ A Python script to generate these files is provided:
 
 In addition to generating the files listed above, the script prints out the resultant fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags, respectively, as shown below:
 
-.. literalinclude:: ../../../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_Modify_Density -->
     :end-before: <!-- SPHINX_Modify_Density_END -->
 
-.. literalinclude:: ../../../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_Modify_FluidDensity -->
     :end-before: <!-- SPHINX_Modify_FluidDensity_END -->
@@ -81,7 +81,7 @@ The following figure shows the final gradient of pressure after initialization i
 
 The figure below shows the comparisons between the numerical predictions (marks) and the corresponding user-provided stress gradients.
 
-.. plot:: docs/sphinx/basicExamples/initialization/plotInitialization_usertable.py
+.. plot:: docs/sphinx/basicExamples/userTableStressInitialization/plotInitialization_usertable.py
 
 
 ------------------------------------------------------------------
