@@ -57,36 +57,67 @@ double co2_viscosity(double P)
 double co2_dviscosity(double P)
 {
   P = P / 1000000; // check whether GEOS uses Pa or MPa
-  return ( -4.6788 * pow(10, -10) * pow(P, 2) + 3.89142 * pow(10, -8) * P + 6.77304 * pow(10, -8));
+  return ( -4.6788 * pow(10, -10) * pow(P, 2) + 3.89142 * pow(10, -8) * P + 6.77304 * pow(10, -8)); // [Pa.s/MPa]
 }
 
 double co2_density(double P)
 {
   P = P / 1000000; // check whether GEOS uses Pa or MPa
-  return ( -0.0000126691 * pow(P, 3) - 0.118131 * pow(P, 2) + 19.6211 * P - 52.0635 );
+  return ( -0.0000126691 * pow(P, 3) - 0.118131 * pow(P, 2) + 19.6211 * P - 52.0635 ); // [kg/m3]
 }
 
 double co2_ddensity(double P)
 {
   P = P / 1000000; // check whether GEOS uses Pa or MPa
-  return ( -0.0000380073 * pow(P, 2) - 0.236262 * P + 19.6211 );
+  return ( -0.0000380073 * pow(P, 2) - 0.236262 * P + 19.6211 ); // [kg/m3.MPa]
 }
 
 double water_viscosity(double P) {
-  return ( 0.000164 ); 
+  return ( 0.000164 ); // [Pa.s]
 }
 
 double water_dviscosity(double P) {
-  return ( 0.0 ); 
+  return ( 0.0 ); // [Pa.s/MPa]
 }
 
 double water_density(double P) {
   P = P / 1000000; // check whether GEOS uses Pa or MPa
-  return ( 0.55125 * P + 893.06044); 
+  return ( 0.55125 * P + 893.06044); // [kg/m3]
 }
 
 double water_ddensity(double P) {  
-  return ( 0.55125 ); 
+  return ( 0.55125 ); // [kg/m3.MPa]
+}
+
+// Rock-Fluid model
+double co2_relperm(double S)
+{
+  return ( pow(1 - S, 2) ); // [-]
+}
+
+double co2_drelperm(double S)
+{
+  return ( 2 * (1 - S) ); // [-]
+}
+
+double water_relperm(double S)
+{
+  return ( pow(S, 6) ); // [-]
+}
+
+double water_drelperm(double S)
+{
+  return ( 6 * pow(S, 5) ); // [-]
+}
+
+double co2_cappress(double S) 
+{
+  return ( 0.00049309 * pow(S, -2.34806) ); // [MPa] check whether GEOS uses Pa or MPa
+}
+
+double co2_dcappress(double S) 
+{
+  return ( -0.00021 * pow(S, -1.34806) ); // [MPa] check whether GEOS uses Pa or MPa
 }
 
 ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
