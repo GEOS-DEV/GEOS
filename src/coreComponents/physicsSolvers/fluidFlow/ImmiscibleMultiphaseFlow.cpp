@@ -34,6 +34,8 @@
 
 #include "constitutive/ConstitutivePassThru.hpp"
 
+#include <cmath>
+
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
 #endif
@@ -44,6 +46,48 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields::immiscibleMultiphaseFlow;
+
+// Fluid model for isothermal T = 175 oC
+double co2_viscosity(double P) 
+{
+  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  return ( -1.5596 * pow(10, -10) * pow(P, 3) + 1.94571 * pow(10, -8) * pow(P, 2) + 6.77304 * pow(10, -8) * P + 0.0000214166); // [Pa.s]
+}
+
+double co2_dviscosity(double P)
+{
+  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  return ( -4.6788 * pow(10, -10) * pow(P, 2) + 3.89142 * pow(10, -8) * P + 6.77304 * pow(10, -8));
+}
+
+double co2_density(double P)
+{
+  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  return ( -0.0000126691 * pow(P, 3) - 0.118131 * pow(P, 2) + 19.6211 * P - 52.0635 );
+}
+
+double co2_ddensity(double P)
+{
+  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  return ( -0.0000380073 * pow(P, 2) - 0.236262 * P + 19.6211 );
+}
+
+double water_viscosity(double P) {
+  return ( 0.000164 ); 
+}
+
+double water_dviscosity(double P) {
+  return ( 0.0 ); 
+}
+
+double water_density(double P) {
+  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  return ( 0.55125 * P + 893.06044); 
+}
+
+double water_ddensity(double P) {  
+  return ( 0.55125 ); 
+}
 
 ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
                                                     Group * const parent )
