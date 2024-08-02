@@ -2,11 +2,10 @@
 # Specify all headers
 #
 set( codingUtilities_headers
-     EnumStrings.hpp
+     RTTypes.hpp
      EnumBimap.hpp
      Parsing.hpp
      SFINAE_Macros.hpp
-     StringUtilities.hpp
      UnitTestUtilities.hpp
      Utilities.hpp
      traits.hpp
@@ -17,8 +16,8 @@ set( codingUtilities_headers
 #
 set( codingUtilities_sources
      Parsing.cpp
-     StringUtilities.cpp
-     )
+     RTTypes.cpp
+   )
 
 set( dependencyList ${parallelDeps} common fast_float )
 

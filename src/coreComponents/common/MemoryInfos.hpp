@@ -17,7 +17,7 @@
 #define GEOS_COMMON_MemoryInfos_HPP_
 
 #include "umpire/util/MemoryResourceTraits.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include <unistd.h>
 #include <iostream>
 #if defined( GEOS_USE_CUDA )

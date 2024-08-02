@@ -18,7 +18,7 @@
  */
 
 #include <numeric>
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "TableFormatter.hpp"
 namespace geos
 {
