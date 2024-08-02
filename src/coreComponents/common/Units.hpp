@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/PhysicsConstants.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
