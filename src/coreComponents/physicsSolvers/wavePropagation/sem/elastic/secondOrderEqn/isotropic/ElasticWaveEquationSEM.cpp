@@ -849,7 +849,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
                              dasReceivers.data(),
                              m_linearDASGeometry.size( 0 ),
                              MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                             MPI_COMM_GEOSX );
+                             MPI_COMM_GEOS );
       WaveSolverUtils::writeSeismoTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ),
                                          m_receiverIsLocal, m_nsamplesSeismoTrace, dasReceivers );
     }

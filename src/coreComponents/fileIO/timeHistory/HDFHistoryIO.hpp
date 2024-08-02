@@ -54,7 +54,7 @@ public:
                 localIndex writeHead = 0,
                 localIndex initAlloc = 1,
                 localIndex overallocMultiple = 2,
-                MPI_Comm comm = MPI_COMM_GEOSX );
+                MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Constructor
@@ -70,7 +70,7 @@ public:
                 localIndex writeHead = 0,
                 localIndex initAlloc = 1,
                 localIndex overallocMultiple = 2,
-                MPI_Comm comm = MPI_COMM_GEOSX ):
+                MPI_Comm comm = MPI_COMM_GEOS ):
     HDFHistoryIO( filename,
                   spec.getRank(),
                   spec.getDims(),

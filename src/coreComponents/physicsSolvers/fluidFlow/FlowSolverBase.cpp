@@ -586,12 +586,12 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
                          maxElevation.data(),
                          localMaxElevation.size(),
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
   MpiWrapper::allReduce( localMinElevation.data(),
                          minElevation.data(),
                          localMinElevation.size(),
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 }
 
 void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
@@ -641,7 +641,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                          bcAllSetsSize.data(),
                          bcAllSetsSize.size(),
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 }
 
 void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
@@ -725,7 +725,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
                          globalSumFluxes.data(),
                          localSumFluxes.size(),
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 
   // Step 3: we are ready to save the summed fluxes for each individual aquifer
 

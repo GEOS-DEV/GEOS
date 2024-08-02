@@ -456,7 +456,7 @@ void WellGeneratorBase::checkPerforationLocationsValidity()
   // merge perforations to make sure that no well element is shared between two MPI domains
   // TODO: instead of merging perforations, split the well elements and do not change the physical location of the
   // perforation
-  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
   if( mpiSize > 1 )
   {
     mergePerforations( elemToPerfMap );
