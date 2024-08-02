@@ -22,11 +22,11 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
-#define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#ifndef GEOS_COMMON_FORMAT_ENUMSTRINGS_HPP
+#define GEOS_COMMON_FORMAT_ENUMSTRINGS_HPP
 
 #include "common/format/StringUtilities.hpp"
-#include "codingUtilities/RTTypes.hpp"
+// #include "codingUtilities/RTTypes.hpp"
 #include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/Format.hpp"
@@ -209,4 +209,4 @@ struct GEOS_FMT_NS::formatter< Enum, std::enable_if_t< std::is_enum< Enum >::val
   }
 };
 
-#endif //GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#endif //GEOS_COMMON_FORMAT_ENUMSTRINGS_HPP
