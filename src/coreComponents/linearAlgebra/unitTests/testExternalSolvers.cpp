@@ -48,7 +48,7 @@ LinearSolverParameters params_GMRES_ILU()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
-  parameters.ifact.fill = 1;
+  parameters.ifact.fill = 0;
   return parameters;
 }
 
