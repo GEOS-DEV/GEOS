@@ -66,6 +66,16 @@ constexpr int countArgs( ARGS ... )
  * may be used to get access to strings at runtime. While not strictly necessary,
  * it is recommended that macro call immediately follows the enum definition
  * (or the class definition, if enum is defined inside a class).
+ * 
+ * @example
+ * enum struct VTKOutputMode
+ * {
+ *   BINARY,
+ *   ASCII
+ * };
+ * ENUM_STRINGS( VTKOutputMode,
+ *               "binary",
+ *               "ascii" );
  */
 #define ENUM_STRINGS( ENUM, ... )                                     \
   inline auto const & getEnumStrings( ENUM const )                    \
