@@ -67,7 +67,7 @@ public:
   GEOS_HOST_DEVICE
   real64 computeHydraulicAperture( real64 const aperture,
                                    real64 const normalTraction,
-                                   real64 & dHydraulicAperture_aperture,
+                                   real64 & dHydraulicAperture_daperture,
                                    real64 & dHydraulicAperture_dNormalStress ) const;
 
 protected:
