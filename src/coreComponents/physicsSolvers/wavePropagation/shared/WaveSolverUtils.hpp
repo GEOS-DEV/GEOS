@@ -364,8 +364,8 @@ struct WaveSolverUtils
    * @brief Convert a mesh element point coordinate into a coordinate on the reference element
    * @tparam FE_TYPE finite element type
    * @param[in] coords coordinate of the point
-   * @param[in] elemsToNodes map to obtaint global nodes from element index
-   * @param[in] nodeCoords array of mesh nodes coordinates
+   * @param[in] elemsToNodes element to node map for the base mesh
+   * @param[in] nodeCoords array of base mesh nodes coordinates
    * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
    */
   template< typename FE_TYPE >
@@ -381,7 +381,6 @@ struct WaveSolverUtils
     for( localIndex a = 0; a < 8; ++a )
     {
       LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ a ] ] );
-      printf("computing local ref crds: point %i, elem id %i, coords %f, %f, %f\n", a, elemsToNodes[ a ], xLocal[a][0],xLocal[a][1],xLocal[a][2]);
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};

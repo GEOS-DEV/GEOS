@@ -121,7 +121,7 @@ struct PreComputeSourcesAndReceivers
                                                                               baseElemsToNodes[k],
                                                                               baseNodeCoords,
                                                                               coordsOnRefElem );
-            
+
             sourceIsAccessible[isrc] = 1;
             real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );

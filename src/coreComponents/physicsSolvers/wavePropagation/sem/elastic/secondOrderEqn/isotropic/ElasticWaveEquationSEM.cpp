@@ -589,7 +589,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                               real64 const & dt,
                                               integer const cycleNumber,
-                                              DomainPartition & domain,
+                                              DomainPartition &,
                                               MeshLevel & mesh,
                                               arrayView1d< string const > const & regionNames )
 {
@@ -616,7 +616,6 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsx = nodeManager.getField< elasticfields::ForcingRHSx >();
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
-
 
   if( m_useVTI )
   {
@@ -801,7 +800,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
