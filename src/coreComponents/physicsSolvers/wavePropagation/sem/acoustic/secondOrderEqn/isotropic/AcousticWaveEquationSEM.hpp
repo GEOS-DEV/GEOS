@@ -126,7 +126,6 @@ public:
                         integer const cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
-                        string const & meshBodyName,
                         arrayView1d< string const > const & regionNames );
 
   void synchronizeUnknowns( real64 const & time_n,

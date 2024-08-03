@@ -2,11 +2,10 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
- * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
- * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -40,36 +39,39 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] facesToNodes face to node map
-   * @param[in] nodeCoords coordinates of the nodes
-   * @param[in] nodeLocalToGlobal local to global map for nodes
-   * @param[in] elementLocalToGlobal local to global map for elements
-   * @param[in] elemGhostRank the ghost ranks
+   * @param[in] baseFacesToNodes face to node map
+   * @param[in] baseNodeCoords coordinates of the nodes
+   * @param[in] baseNodeLocalToGlobal local to global index map for nodes
+   * @param[in] elementLocalToGlobal local to global index map for elements
+   * @param[in] baseNodesToElements node to element map for the base mesh
+   * @param[in] baseElemsToNodes element to node map for the base mesh
+   * @param[in] elemGhostRank rank of the ghost element
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
    * @param[in] elemCenter coordinates of the element centers
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceNodeConstants constant part of the source terms
+   * @param[out] sourceConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverNodeConstants constant part of the receiver term
-   * @param[out] sourceValue the value of the source
-   * @param[in] dt the time step size
-   * @param[in] timeSourceFrequency the time frequency of the source
+   * @param[out] receiverConstants constant part of the receiver term
+   * @param[out] sourceValue value of the temporal source (eg. Ricker)
+   * @param[in] dt time-step
+   * @param[in] timeSourceFrequency the central frequency of the source
    * @param[in] timeSourceDelay the time delay of the source
-   * @param[in] rickerOrder the order of the ricker
+   * @param[in] rickerOrder order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          ArrayOfArraysView< localIndex const > const facesToNodes,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-          arrayView1d< globalIndex const > const nodeLocalToGlobal,
+          ArrayOfArraysView< localIndex const > const baseFacesToNodes,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const baseNodeCoords,
+          arrayView1d< globalIndex const > const baseNodeLocalToGlobal,
           arrayView1d< globalIndex const > const elementLocalToGlobal,
-          ArrayOfArraysView< localIndex const > const nodesToElements,
+          ArrayOfArraysView< localIndex const > const baseNodesToElements,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -107,13 +109,13 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][1],
                                      sourceCoordinates[isrc][2] };
 
-          bool const sourceFound =
+          bool const sourceFound = 
             computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
-                                                                        nodeCoords,
+                                                                        baseNodeCoords,
                                                                         elemsToFaces,
-                                                                        facesToNodes,
-                                                                        nodesToElements,
-                                                                        nodeLocalToGlobal,
+                                                                        baseFacesToNodes,
+                                                                        baseNodesToElements,
+                                                                        baseNodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
                                                                         coords );
@@ -123,8 +125,8 @@ struct PrecomputeSourceAndReceiverKernel
 
 
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
+                                                                              baseElemsToNodes[k],
+                                                                              baseNodeCoords,
                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;
@@ -159,21 +161,21 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
 
-          bool const receiverFound =
+          bool const receiverFound = 
             computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
-                                                                        nodeCoords,
+                                                                        baseNodeCoords,
                                                                         elemsToFaces,
-                                                                        facesToNodes,
-                                                                        nodesToElements,
-                                                                        nodeLocalToGlobal,
+                                                                        baseFacesToNodes,
+                                                                        baseNodesToElements,
+                                                                        baseNodeLocalToGlobal,
                                                                         elementLocalToGlobal,
                                                                         center,
                                                                         coords );
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              elemsToNodes[k],
-                                                                              nodeCoords,
+                                                                              baseElemsToNodes[k],
+                                                                              baseNodeCoords,
                                                                               coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
@@ -216,7 +218,7 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const mass )
@@ -284,7 +286,7 @@ struct DampingMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
@@ -424,7 +426,6 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param targetRegionIndex Index of the region the subregion belongs to.
-   * @param baseMesh the level-0 mesh
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
@@ -435,12 +436,11 @@ public:
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE & inputConstitutiveType,
-                          MeshLevel & baseMesh,
                           real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_nodeCoords( baseMesh.getNodeManager().referencePosition().toViewConst() ),
+    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< acousticvtifields::Pressure_p_n >() ),
     m_q_n( nodeManager.getField< acousticvtifields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< acousticvtifields::StiffnessVector_p >() ),
@@ -551,7 +551,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
@@ -584,7 +584,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticVTISEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTISEM,
-                                                                    MeshLevel &, real64 >;
+                                                                    real64 >;
 
 } // namespace acousticVTIWaveEquationSEMKernels
 

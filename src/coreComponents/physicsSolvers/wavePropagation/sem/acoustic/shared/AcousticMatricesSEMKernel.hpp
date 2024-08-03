@@ -50,7 +50,7 @@ struct AcousticMatricesSEM
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
     computeMassMatrix( localIndex const size,
-                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                       arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
                        arrayView1d< real32 const > const velocity,
                        arrayView1d< real32 const > const density,
@@ -108,7 +108,7 @@ struct AcousticMatricesSEM
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
     computeDampingMatrix( localIndex const size,
-                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                           arrayView2d< localIndex const > const elemsToFaces,
                           ArrayOfArraysView< localIndex const > const facesToNodes,
                           arrayView1d< integer const > const facesDomainBoundaryIndicator,
