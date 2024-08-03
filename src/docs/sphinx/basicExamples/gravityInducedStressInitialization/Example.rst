@@ -92,15 +92,13 @@ The flow solver for this problem (see :ref:`SinglePhaseFVM`) called ``SinglePhas
 
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
     :language: xml
-  :language: xml
-  :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
-  :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
+    :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
+    :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
-  :language: xml
-  :start-after: <!-- SPHINX_NUMERICAL -->
-  :end-before: <!-- SPHINX_NUMERICAL_END -->
+    :start-after: <!-- SPHINX_NUMERICAL -->
+    :end-before: <!-- SPHINX_NUMERICAL_END -->
 
 
 ------------------------------
@@ -109,7 +107,7 @@ Constitutive laws
 
 A homogeneous domain with one solid material is assumed, and its mechanical and fluid properties are specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -135,7 +133,7 @@ In the ``Tasks`` section, ``SinglePhasePoromechanicsInitialization`` tasks is de
     
 The initialization is triggered into action using the ``Event`` management section whereby the ``soloEvent`` function calls the task at the target time (in this case -1e10s).
  
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_EVENTS -->
     :end-before: <!-- SPHINX_EVENTS_END -->

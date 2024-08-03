@@ -52,12 +52,12 @@ A Python script to generate these files is provided:
 
 In addition to generating the files listed above, the script prints out the resultant fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags, respectively, as shown below:
 
-.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_Modify_Density -->
     :end-before: <!-- SPHINX_Modify_Density_END -->
 
-.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_Modify_FluidDensity -->
     :end-before: <!-- SPHINX_Modify_FluidDensity_END -->
