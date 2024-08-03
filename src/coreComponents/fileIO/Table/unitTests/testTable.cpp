@@ -127,11 +127,19 @@ TEST( testTable, tableHiddenColumn )
     TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center, false},
   }, "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
 
+  std::cout<<"breakpoint 1"<<std::endl;
+
   TableData tableData;
   tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
+  std::cout<<"breakpoint 2"<<std::endl;
   TableTextFormatter const tableText( tableLayout );
+  std::cout<<"breakpoint 3"<<std::endl;
+
+  string const tableString = tableText.toString( tableData );
+  std::cout<<"breakpoint 4"<<std::endl;
+
   EXPECT_EQ( tableText.toString( tableData ),
              "\n----------------------------------------------------------------------------------------------------------------\n"
              "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis   |\n"
