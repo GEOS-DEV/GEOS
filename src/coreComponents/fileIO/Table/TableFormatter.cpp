@@ -103,18 +103,21 @@ void formatColumnsFromLayout( std::vector< TableLayout::Column > & columns,
                               std::vector< std::vector< string > > & tableDataRows )
 {
   integer idxColumn = 0;
-  for( auto iterColumn = columns.begin(); iterColumn!=columns.end(); ++iterColumn )
+  for( auto iterColumn = columns.begin(); iterColumn!=columns.end();  )
   {
-    TableLayout::Column & column = *iterColumn;
-    if( !column.m_parameter.enabled )
+    if( !iterColumn->m_parameter.enabled )
     {
-      columns.erase( columns.begin() + idxColumn );
+      iterColumn = columns.erase( iterColumn );
       for( auto & row : tableDataRows )
       {
         row.erase( row.begin() + idxColumn );
       }
     }
-    ++idxColumn;
+    else
+    {
+      ++iterColumn;
+      ++idxColumn;
+    }
   }
 }
 
@@ -154,30 +157,19 @@ string TableTextFormatter::layoutToString() const
 
 string TableTextFormatter::toString( TableData const & tableData ) const
 {
-  std::cout<<"breakpoint 3.1"<<std::endl;
   std::ostringstream tableOutput;
   string sectionSeparatingLine;
   std::vector< TableLayout::Column > columns         = m_tableLayout.getColumns();
-  std::cout<<"breakpoint 3.2"<<std::endl;
   std::vector< std::vector< string > > tableDataRows = tableData.getTableDataRows();
-  std::cout<<"breakpoint 3.3"<<std::endl;
   std::vector< string > const & msgTableError        = tableData.getErrorMsgs();
-  std::cout<<"breakpoint 3.4"<<std::endl;
   integer const nbValuesRows                         = tableDataRows.size();
-  std::cout<<"breakpoint 3.5"<<std::endl;
-
 
   formatColumnsFromLayout( columns, tableDataRows );
-  std::cout<<"breakpoint 3.6"<<std::endl;
   fillTableColumnsFromRows( columns, tableDataRows );
-  std::cout<<"breakpoint 3.7"<<std::endl;
 
   outputLayout( tableOutput, columns, msgTableError, sectionSeparatingLine );
-  std::cout<<"breakpoint 3.8"<<std::endl;
-
   outputSectionRows( columns, sectionSeparatingLine, tableOutput, nbValuesRows, TableLayout::Section::values );
   tableOutput << '\n';
-  std::cout<<"breakpoint 3.9"<<std::endl;
 
   return tableOutput.str();
 }
@@ -389,7 +381,6 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
       auto const & columnContent = section == TableLayout::Section::header ?
                                    columns[idxColumn].m_parameter.splitColumnNameLines :
                                    columns[idxColumn].m_columnValues;
-      std::cout<<"columnContent.size() = "<<columnContent.size()<<std::endl;
       string cell = columnContent.at(idxRow);
       integer const cellSize = currentColumn.m_maxStringSize.length();
 
