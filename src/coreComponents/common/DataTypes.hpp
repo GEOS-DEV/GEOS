@@ -107,9 +107,9 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
 /// Global MPI communicator used by GEOSX.
 #ifdef GEOS_USE_MPI
-extern MPI_Comm MPI_COMM_GEOSX;
+extern MPI_Comm MPI_COMM_GEOS;
 #else
-extern int MPI_COMM_GEOSX;
+extern int MPI_COMM_GEOS;
 #endif
 
 /**
