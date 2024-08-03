@@ -775,7 +775,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       {
         if( !m_lifo )
         {
-          int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+          int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
           std::string lifoPrefix = GEOS_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
           m_lifo = std::make_unique< LifoStorage< real32, localIndex > >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize );
         }
@@ -797,7 +797,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       {
         GEOS_MARK_SCOPE ( DirectWrite );
         p_dt2.move( MemorySpace::host, false );
-        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         int lastDirSeparator = fileName.find_last_of( "/\\" );
         std::string dirName = fileName.substr( 0, lastDirSeparator );
@@ -866,7 +866,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       {
         GEOS_MARK_SCOPE ( DirectRead );
 
-        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
         GEOS_THROW_IF( !wf,

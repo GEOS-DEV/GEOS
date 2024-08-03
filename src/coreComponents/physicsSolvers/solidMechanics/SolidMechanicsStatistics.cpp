@@ -144,13 +144,13 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
                          nodeStatistics.maxDisplacement.data(),
                          3,
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 
   MpiWrapper::allReduce( nodeStatistics.minDisplacement.data(),
                          nodeStatistics.minDisplacement.data(),
                          3,
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
-                         MPI_COMM_GEOSX );
+                         MPI_COMM_GEOS );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{} (time {} s): Min displacement (X, Y, Z): {}, {}, {} m",
                                       getName(), time, nodeStatistics.minDisplacement[0],
