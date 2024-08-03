@@ -323,7 +323,8 @@ struct StateUpdateKernel
       {
         // normal component of the traction
         fractureTraction[k][0] = contactPenaltyStiffness * jump[k][0];
-        // derivative of the normal component w.r.t. to the nomral dispJump
+
+        // derivative of the normal component w.r.t. to the normal dispJump
         dFractureTraction_dJump[k][0][0] = contactPenaltyStiffness;
 
         frictionWrapper.computeShearTraction( k, oldJump[k], jump[k],

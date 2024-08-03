@@ -137,7 +137,8 @@ private:
   /// decide whether to use static condensation or not
   integer m_useStaticCondensation;
 
-  real64 m_contactPenaltyStiffness;
+  // TODO: activate when solidMechanicsPenalty contact is used and this is removed from base solver.
+  // real64 m_contactPenaltyStiffness;
 
 };
 

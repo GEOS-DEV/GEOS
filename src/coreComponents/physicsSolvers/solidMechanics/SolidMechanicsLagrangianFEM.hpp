@@ -300,15 +300,14 @@ protected:
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
+  real64 m_contactPenaltyStiffness;
+
 private:
 
   string m_contactRelationName;
 
   SolverBase * m_surfaceGenerator;
   string m_surfaceGeneratorName;
-
-  real64 m_contactPenaltyStiffness;
-
 };
 
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
