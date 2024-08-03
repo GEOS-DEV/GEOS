@@ -252,7 +252,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
                            &globallyFractured,
                            1,
                            MPI_MAX,
-                           MPI_COMM_GEOSX );
+                           MPI_COMM_GEOS );
 
     if( globallyFractured == 0 )
     {
@@ -503,10 +503,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupSystem( DomainPartition &
   localMatrix.setName( this->getName() + "/matrix" );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( numLocalRows, MPI_COMM_GEOSX );
+  rhs.create( numLocalRows, MPI_COMM_GEOS );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( numLocalRows, MPI_COMM_GEOSX );
+  solution.create( numLocalRows, MPI_COMM_GEOS );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
