@@ -103,7 +103,7 @@ void formatColumnsFromLayout( std::vector< TableLayout::Column > & columns,
                               std::vector< std::vector< string > > & tableDataRows )
 {
   integer idxColumn = 0;
-  for( auto iterColumn = columns.begin(); iterColumn!=columns.end();  )
+  for( auto iterColumn = columns.begin(); iterColumn!=columns.end(); )
   {
     if( !iterColumn->m_parameter.enabled )
     {
@@ -381,7 +381,7 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
       auto const & columnContent = section == TableLayout::Section::header ?
                                    columns[idxColumn].m_parameter.splitColumnNameLines :
                                    columns[idxColumn].m_columnValues;
-      string cell = columnContent.at(idxRow);
+      string cell = columnContent.at( idxRow );
       integer const cellSize = currentColumn.m_maxStringSize.length();
 
       tableOutput << buildCell( currentColumn.m_parameter.alignment, cell, cellSize );
