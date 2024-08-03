@@ -17,7 +17,7 @@
       discretization="FE1"
       logLevel="1"
       useStaticCondensation="1"
-      contactPenaltyStiffness="1.0e8">
+      contactPenaltyStiffness="0.0e8">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="2"
