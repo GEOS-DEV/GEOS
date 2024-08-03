@@ -64,7 +64,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, fractureFilling, fractureContact }"/>
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -121,7 +121,7 @@
 
     <HydraulicApertureTable
       name="hApertureModel"
-      apertureTableName="apertureTable"/>  
+      apertureTableName="aperTable"/>  
   </Constitutive>
 
   <FieldSpecifications>

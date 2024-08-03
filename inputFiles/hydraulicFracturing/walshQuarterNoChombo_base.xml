@@ -78,7 +78,7 @@
 
     <HydraulicApertureTable
       name="hApertureModel"
-      apertureTableName="apertureTable"/>  
+      apertureTableName="aperTable"/>  
   </Constitutive>
 
   <Outputs>
