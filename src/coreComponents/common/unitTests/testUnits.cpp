@@ -40,11 +40,9 @@ TEST( Units, SystemDurationFormatTest )
   using namespace std::chrono;
 
   std::vector< DurationCase > durationCases = {
-#if !defined(__APPLE__) // Apple silicon seems to truncate below microseconds
     DurationCase(
       "00h00m00s (1.11e-07 s)",
       nanoseconds( 111 ) ),
-#endif
     DurationCase(
       "00h00m00s (0.000111 s)",
       microseconds( 111 ) ),

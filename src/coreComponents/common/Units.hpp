@@ -181,7 +181,7 @@ inline string formatValue( real64 value, Unit unit )
 
 
 /// Clock in use in GEOS to manipulate system times.
-using SystemClock = std::chrono::system_clock;
+using SystemClock = std::chrono::high_resolution_clock;
 
 /// One year = 365.2425 days (= 146097 / 400) following the Gregorian calendar and the C++ convention.
 using YearDaysRatio = std::ratio< 146097, 400 >;
