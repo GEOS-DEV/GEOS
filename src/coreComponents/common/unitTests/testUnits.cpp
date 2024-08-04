@@ -40,9 +40,11 @@ TEST( Units, SystemDurationFormatTest )
   using namespace std::chrono;
 
   std::vector< DurationCase > durationCases = {
+
     DurationCase(
       "00h00m00s (1.11e-07 s)",
       nanoseconds( 111 ) ),
+
     DurationCase(
       "00h00m00s (0.000111 s)",
       microseconds( 111 ) ),
