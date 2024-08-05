@@ -132,6 +132,7 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
+   * @param meshBodyName the name of the mesh body
    * @param domain the domain object
    * @return return the timestep that was achieved during the step.
    */
@@ -173,10 +174,11 @@ private:
   /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
+   * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    * @param regionNames the names of the region you loop on
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
