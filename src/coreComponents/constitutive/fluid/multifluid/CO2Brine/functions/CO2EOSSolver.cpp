@@ -20,6 +20,7 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 
 #include "common/Units.hpp"
+#include "common/logger/Logger.hpp"
 
 
 namespace geos

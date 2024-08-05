@@ -13,12 +13,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
-#define GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
-
 /**
  * @file RestartFlags.hpp
  */
+
+#ifndef GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
+#define GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
+
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {

@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_CUBICEOSPHASEMODEL_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/logger/Logger.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
