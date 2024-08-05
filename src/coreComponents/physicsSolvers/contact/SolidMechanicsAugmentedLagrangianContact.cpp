@@ -988,13 +988,15 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                      (std::abs(dispJump[kfe][0]) > 0.25 * std::abs(dispJumpUpdPenalty[kfe][0])))
                   {
                     penalty[kfe][0] *= 10.0;
-
+                    /*
                     real64 const eps_N_lim = normalTractionTolerance[kfe]/normalDisplacementTolerance[kfe];
                     if (penalty[kfe][0] > eps_N_lim )
                     {
                       penalty[kfe][0] = eps_N_lim;
                     }
-                    //std::cout << "Upd penalty_N: " << kfe << " " << penalty[kfe][0] << " " << eps_N_lim << std::endl;
+                    */
+                    //std::cout << "Upd penalty_N: " << kfe << " " << penalty[kfe][0] << " ";// << eps_N_lim 
+                    //std::cout << std::endl;
                   }
        
                   real64 currentTau = sqrt( pow(traction_new_v[kfe][1], 2 ) +
@@ -1054,11 +1056,13 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                     {
                       penalty[kfe][1] *= 10.0; 
 
+                      /*
                       real64 const eps_T_lim = normalTractionTolerance[kfe]/(slidingTolerance[kfe]*10);
                       if (penalty[kfe][1] > eps_T_lim )
                       {
                         penalty[kfe][1] = eps_T_lim;
                       }
+                      */
                       //std::cout << "Upd penalty T: " << kfe << " " << deltaDisp <<  " " << slidingTolerance[kfe] << " " << penalty[kfe][1]<< std::endl;
                     }
                     
@@ -1357,7 +1361,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       forAll< parallelDevicePolicy<> >( nBubElems, [ bubbleElemsList_v, keys_v ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         bubbleElemsList_v[k] = keys_v[k];
-        //std::cout << bubbleElemsList_v[k] << std::endl;
       } );
       cellElementSubRegion.setBubbleElementsList( bubbleElemsList.toViewConst());
 
@@ -1784,9 +1787,9 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
             // Finally, compute tolerances for the given fracture element
-            normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
+            normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+8;
             slidingTolerance[kfe] = sqrt( rotatedInvStiffApprox[ 1 ][ 1 ] * rotatedInvStiffApprox[ 1 ][ 1 ] +
-                                          rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+7;
+                                          rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+8;
             normalTractionTolerance[kfe] = 1.0 / 2.0 * averageConstrainedModulus / averageBoxSize0 * normalDisplacementTolerance[kfe];
           }
         } );

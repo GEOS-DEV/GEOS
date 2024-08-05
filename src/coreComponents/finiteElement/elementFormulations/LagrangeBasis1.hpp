@@ -175,8 +175,7 @@ public:
   GEOS_FORCE_INLINE
   constexpr static real64 gradientBubble( const real64 xi )
   {
-    GEOS_UNUSED_VAR( xi );
-    return -0.5*xi;
+    return -2.0*xi;
   }
 
   /**
