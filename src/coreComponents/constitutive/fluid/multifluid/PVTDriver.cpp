@@ -27,7 +27,7 @@
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 
 #include <fstream>
 

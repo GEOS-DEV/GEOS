@@ -21,7 +21,7 @@
 #define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_SIMPLEGEOMETRICOBJECTBASE_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
 
 class Function;

@@ -21,7 +21,8 @@
 #define GEOS_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
 
 #include "common/DataTypes.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {

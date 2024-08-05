@@ -22,6 +22,7 @@
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
+#include "common/logger/Logger.hpp"
 #include "LvArray/src/Array.hpp"
 
 namespace geos

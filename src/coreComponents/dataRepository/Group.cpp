@@ -16,7 +16,7 @@
 // Source includes
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "GroupContext.hpp"

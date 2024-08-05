@@ -17,8 +17,8 @@
  * @file TableLayout.hpp
  */
 
-#ifndef GEOS_COMMON_TABLELAYOUT_HPP
-#define GEOS_COMMON_TABLELAYOUT_HPP
+#ifndef GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP
+#define GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -154,4 +154,4 @@ private:
 };
 }
 
-#endif
+#endif /* GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP */

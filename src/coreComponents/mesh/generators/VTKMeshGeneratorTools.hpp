@@ -27,7 +27,7 @@
 #include <mpi.h>
 
 // NOTE: do NOT include anything from GEOS here.
-// In particular, nothing that directly or transitively includes "common/Format.hpp".
+// In particular, nothing that directly or transitively includes "common/format/Format.hpp".
 // The reason is "diy2" library includes an older version of {fmt} than the one used by GEOS.
 // Collision of includes leads to all kinds of impossible to fix compilation errors.
 // Thankfully, no link errors, owing to namespace versioning employed by {fmt}.

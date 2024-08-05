@@ -17,11 +17,11 @@
  * @file TableData.hpp
  */
 
-#ifndef GEOS_COMMON_TableData_HPP
-#define GEOS_COMMON_TableData_HPP
+#ifndef GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
+#define GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
@@ -144,4 +144,4 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
 }
 
 }
-#endif
+#endif /* GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP */

@@ -18,6 +18,7 @@
  */
 
 #include "StringUtilities.hpp"
+#include "common/logger/Logger.hpp"
 #include "limits.h"
 
 #include <algorithm>

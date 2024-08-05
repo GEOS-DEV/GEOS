@@ -19,6 +19,7 @@
 #define GEOS_DATAREPOSITORY_BUFFEROPS_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/logger/Logger.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"

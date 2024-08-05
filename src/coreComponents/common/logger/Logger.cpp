@@ -19,8 +19,8 @@
 
 // Source includes
 #include "Logger.hpp"
-#include "Path.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/Path.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {

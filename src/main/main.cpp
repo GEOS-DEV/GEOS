@@ -15,7 +15,7 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
 #include "mainInterface/initialization.hpp"

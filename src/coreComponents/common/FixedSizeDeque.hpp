@@ -19,7 +19,7 @@
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/memcpy.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 
 /// Get the positive value of a module b
 #define POSITIVE_MODULO( a, b ) ( ( ( a ) % ( b ) ) + b ) % ( b )

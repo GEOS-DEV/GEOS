@@ -21,7 +21,7 @@
 #define GEOS_DATAREPOSITORY_INPUTFLAGS_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {

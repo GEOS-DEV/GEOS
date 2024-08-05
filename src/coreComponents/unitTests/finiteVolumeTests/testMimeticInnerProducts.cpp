@@ -15,7 +15,7 @@
 
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"

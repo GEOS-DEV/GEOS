@@ -17,8 +17,8 @@
  * @file StringUtilities.hpp
  */
 
-#ifndef GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
-#define GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#ifndef GEOS_COMMON_FORMAT_STRINGUTILITIES_HPP_
+#define GEOS_COMMON_FORMAT_STRINGUTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -65,8 +65,8 @@ string join( IT first, IT last, S const & delim = S() )
 /**
  * @brief Join strings or other printable objects with a delimiter.
  * @tparam CONTAINER type of container to join
- * @tparam S    type of delimiter, usually char, char const * or string
- * @param container container to join
+ * @tparam S the type of delimiter, usually char, char const * or string
+ * @param cont the container to join
  * @param delim delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
@@ -216,9 +216,10 @@ template< typename T >
 string toMetricPrefixString( T const & value );
 
 /**
- * @brief Compute the length of a constant string at compile-time.
+ * @return The length of a constant string computed at compile-time.
+ * @param str The null-character terminated constant string
+ * @todo c++17: this function is to remove in favor of std::string_view
  */
-// TODO c++17: this function is to remove in favor of std::string_view
 constexpr size_t cstrlen( char const * const str )
 {
   if( str )
@@ -280,4 +281,4 @@ std::ostream & operator<<( std::ostream & os, std::optional< T > const & optValu
 } // namespace stringutilities
 } // namespace geos
 
-#endif /* GEOS_CODINGUTILITIES_STRINGUTILITIES_HPP_ */
+#endif /* GEOS_COMMON_FORMAT_STRINGUTILITIES_HPP_ */

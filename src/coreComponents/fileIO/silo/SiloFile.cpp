@@ -25,7 +25,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"

@@ -20,7 +20,7 @@
 #include "FaceManager.hpp"
 
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/TimingMacros.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/BufferOps.hpp"
