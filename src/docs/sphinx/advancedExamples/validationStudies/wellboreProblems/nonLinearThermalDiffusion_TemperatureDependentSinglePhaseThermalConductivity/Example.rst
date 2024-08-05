@@ -9,7 +9,7 @@ Non-Linear Thermal Diffusion Around a Wellbore: The Case with Temperature Depend
 Problem description
 ------------------------------------------------------------------
 
-This example is an extension of the linear thermal diffusion problem presented in :ref:`AdvancedExamplePureThermalDiffusionWellbore`. It uses the thermal single-phase flow solver to model a non-linear thermal diffusion problem around a wellbore where the single phase thermal conductivity of the porous rock depends linearly on the temperature.
+This example is an extension of the linear thermal diffusion problem presented in :ref:`AdvancedExamplePureThermalDiffusionWellbore` to model wellbore cooling upon CO2 injection. It uses the thermal single-phase flow solver to model a non-linear thermal diffusion problem around a wellbore where the single phase thermal conductivity of the porous rock depends linearly on the temperature.
 
 
 **Input file**
@@ -34,7 +34,7 @@ In this example, we focus on the ``Constitutive`` tag.
 Constitutive
 -----------------------------------------------------------
 
-The reference value of the single phase thermal conductivity of the porous medium around the wellbore and its derivative with respect to temperature are defined in the ``SolidInternalEnergy`` XML block:  
+The reference value of the single phase thermal conductivity of the porous medium around the wellbore and its derivative with respect to temperature are defined in the ``SinglePhaseThermalConductivity`` XML block:  
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
@@ -46,10 +46,10 @@ The reference value of the single phase thermal conductivity of the porous mediu
 Results and benchmark
 ---------------------------------
 
-A good agreement between the results obtained using GEOS and the analytical results is shown in the figure below:
+A good agreement between the results obtained using GEOS and the reference results that are obtained by the classical finite difference method is shown in the figure below:
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/nonLinearThermalDiffusion_TemperatureDependentSinglePhaseThermalConductivity/plot.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/nonLinearThermalDiffusion_TemperatureDependentSinglePhaseThermalConductivity/temperatureDependentSinglePhaseThermalConductivity_plot.py
 
 
 ------------------------------------------------------------------
