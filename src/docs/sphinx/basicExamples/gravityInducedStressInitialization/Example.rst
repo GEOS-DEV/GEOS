@@ -8,7 +8,7 @@
 
 **Context**
 
-In this example, we perform a gravity-only stress initialization for a reservoir with an hydrostatic in-situ pressure. The problem is solved by using a singlephase poromechanics solver (see :ref:`PoroelasticSolver`) in Geos to predict the initial state of stress with depth in the reservoir subject to the reservoir rock properties and the prevailing hydrostatic pressure condition. We verify the numerical results obtained by Geos against an anlaytical Eaton's equation. 
+In this example, we perform a gravity-only stress initialization for a reservoir with an hydrostatic in-situ pressure. The problem is solved using a single-phase poromechanics solver (see :ref:`PoroelasticSolver`) in GEOS to predict the initial state of stress with depth in the reservoir, subject to the reservoir rock properties and the prevailing hydrostatic pressure condition. We verify numerical results obtained by GEOS against an analytical equation (Eaton's equation).
 
 
 **Input file**
@@ -29,10 +29,10 @@ A Python script for post-processing the simulation results is provided:
 
 
 ------------------------------------------------------------------
-Description of the case
+Description of the Case
 ------------------------------------------------------------------
 
-We model the insitu state of stress of a subsurface reservoir subject to a gravity-only induced stress and hydrostatic insitu pressure condition. The domain is homogenous, isotropic and isothermal. The domain is also subject to roller boundaray conditions on both lateral surfaces and at the base of the model, while the top surface of the model is a free surface.
+We model the in-situ state of stress of a subsurface reservoir subject to a gravity-only induced stress and hydrostatic in-situ pressure condition. The domain is homogenous, isotropic and isothermal. The domain is subject to roller boundary conditions on lateral surfaces and at the base of the model, while the top of the model is a free surface.
 
 .. _problemSketch1InitializationTest:
 .. figure:: sketch_of_problem.png
@@ -69,7 +69,7 @@ The following figure shows the mesh used for solving this mechanical problem:
 The mesh was created with the internal mesh generator and parametrized in the ``InternalMesh`` XML tag. 
 It contains 20x20x40 eight-node brick elements in the x, y, and z directions respectively. 
 Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and their collection forms a mesh
-with one group of cell blocks named here ``cellBlockNames``. 
+with one group of cell blocks named here ``cellBlockNames``.
 
 
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
@@ -79,15 +79,15 @@ with one group of cell blocks named here ``cellBlockNames``.
 
 
 ------------------------
-Poro Mechanics solver
+Poro-Mechanics Solver
 ------------------------
 
-For the initialization test, a hydrostatic pore pressure is imposed on the system. This is done using the Hydrostatic Equilibrium tag under Field Specifications. We then define a poro mechanics solver called here poroSolve. 
+For the initialization test, a hydrostatic pore pressure is imposed on the system. This is done using the Hydrostatic Equilibrium tag under Field Specifications. We then define a poro-mechanics solver called here poroSolve. 
 This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM`) called ``lagSolve`` is based on the Lagrangian finite element formulation. 
 The problem is run as ``QuasiStatic`` without considering inertial effects. 
 The computational domain is discretized by ``FE1``, defined in the ``NumericalMethods`` section.
 We use the ``targetRegions`` attribute to define the regions where the solid mechanics solver is applied.
-Here, since we only have one cellBlockName type called ``Domain``, the solid mechanics solver is applied to every element of the model. 
+Since we only have one cellBlockName type called ``Domain``, the solid mechanics solver is applied to every element of the model. 
 The flow solver for this problem (see :ref:`SinglePhaseFlow`) called ``SinglePhaseFlow`` is discretized by ``fluidTPFA``, defined in the ``NumericalMethods`` section by using the same cellBlockName type called ``Domain`` that was applied for the solid mechanics solver. 
 
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
@@ -102,7 +102,7 @@ The flow solver for this problem (see :ref:`SinglePhaseFlow`) called ``SinglePha
 
 
 ------------------------------
-Constitutive laws
+Constitutive Laws
 ------------------------------
 
 A homogeneous domain with one solid material is assumed, and its mechanical and fluid properties are specified in the ``Constitutive`` section: 
@@ -114,43 +114,43 @@ A homogeneous domain with one solid material is assumed, and its mechanical and 
 
 
 As shown above, in the ``CellElementRegion`` section, 
-``rock`` is designated as the solid material in the computational domain and ``water`` is the fluid. 
+``rock`` is the solid material in the computational domain and ``water`` is the fluid material. 
 Here, Porous Elastic Isotropic model ``PorousElasticIsotropic`` is used to simulate the elastic behavior of ``rock``.
-As for the solid material parameters, ``defaultDensity``, ``defaultPoissonRatio``, ``defaultYoungModulus``, ``grainBulkModulus``, ``defaultReferencePorosity``, and ``permeabilityComponents`` denote the rock's density, poisson ratio, young modulus, grain bulk modulus, porosity, and permeability components respectively. In additon, the fluid's (``water``) property of density, viscosity, compressibility and viscosibility are specified with ``defaultDensity``, ``defaultViscosity``, ``compressibility``, and ``viscosibility``. 
+As for the solid material parameters, ``defaultDensity``, ``defaultPoissonRatio``, ``defaultYoungModulus``, ``grainBulkModulus``, ``defaultReferencePorosity``, and ``permeabilityComponents`` denote the rock density, Poisson ratio, Young modulus, grain bulk modulus, porosity, and permeability components respectively. In additon, the fluid property (``water``) of density, viscosity, compressibility and viscosibility are specified with ``defaultDensity``, ``defaultViscosity``, ``compressibility``, and ``viscosibility``. 
 All properties are specified in the International System of Units.
 
 
 ------------------------------
-Stress Initialization function
+Stress Initialization Function
 ------------------------------
 
-In the ``Tasks`` section, ``SinglePhasePoromechanicsInitialization`` tasks is defined to initialize the model by calling the poro mechanics solver ``poroSolve``. 
+In the ``Tasks`` section, ``SinglePhasePoromechanicsInitialization`` tasks are defined to initialize the model by calling the poro-mechanics solver ``poroSolve``. 
 
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
     
-The initialization is triggered into action using the ``Event`` management section whereby the ``soloEvent`` function calls the task at the target time (in this case -1e10s).
+The initialization is triggered into action using the ``Event`` management section, where the ``soloEvent`` function calls the task at the target time (in this case -1e10s).
  
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_EVENTS -->
     :end-before: <!-- SPHINX_EVENTS_END -->
 
-The ``PeriodicEvent`` function is used here to define recurring tasks that progress for a stipulated time during the simuation. We also use it in this example to save the vtkOuput results for analysis purposes.
+The ``PeriodicEvent`` function is used here to define recurring tasks that progress for a stipulated time during the simuation. We also use it in this example to save the vtkOuput results.
 
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_OUTPUT -->
     :end-before: <!-- SPHINX_OUTPUT_END -->
 
-We use Paraview to extract the data from the vtkOutput files at the initialization time, and then use a Python script to read and plot the stress and pressure gradients for verification and visualization. 
+We use Paraview to extract the data from the vtkOutput files at the initialization time, and then use a Python script to read and plot the stress and pressure gradients for verification and visualization.
 
 
 
 -----------------------------------
-Initial and boundary conditions
+Initial and Boundary Conditions
 -----------------------------------
 
 The next step is to specify fields, including:
@@ -158,7 +158,7 @@ The next step is to specify fields, including:
   - The initial value (hydrostatic equilibrium),
   - The boundary conditions (the displacement control of the outer boundaries have to be set).
 
-In this problem, all outer boundaries of the domain are subjected to roller constraints except the top of the model which is left as a free surface.  
+In this problem, all outer boundaries of the domain are subject to roller constraints except the top of the model, left as a free surface.  
 
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -194,7 +194,7 @@ The parameters used in the simulation are summarized in the following table.
 
 
 ---------------------------------
-Inspecting results
+Inspecting Results
 ---------------------------------
 
 In the example, we request vtk output files for time-series (time history). We use Python scripts to visualize the outcome at the time 0s.
@@ -209,7 +209,7 @@ The following figure shows the final gradient of the principal stress components
    Simulation result of pressure
 
 
-The figure below shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (lines) with respect to the computed principal stresses.
+The figure below shows the comparisons between GEOS numerical predictions (marks) and the corresponding analytical solutions (lines) with respect to the computed principal stresses.
 
 .. plot:: docs/sphinx/basicExamples/gravityInducedStressInitialization/plotInitialization.py
 
