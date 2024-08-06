@@ -34,7 +34,7 @@ namespace geos
  *
  * Developer note: This class exposes LAI solver settings to external users.
  * As a general philosophy, only a subset of frequently tuned parameters should
- * be exposed.  Many advanced parameters can be set by the PhysicsSolver itself
+ * be exposed.  Many advanced parameters can be set by the PhysicsPackage itself
  * since it has knowledge of the underlying problem (e.g. isSymmetric = true,
  * dofsPerNode = 3, etc.).  While we want to enable power users to tune the
  * solvers, most users prefer a short list of options with good default settings

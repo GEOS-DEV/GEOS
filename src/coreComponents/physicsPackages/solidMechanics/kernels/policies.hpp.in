@@ -13,8 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
-#define GEOS_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
+#ifndef GEOS_CORECOMPONENTS_PHYSICSPACKAGESE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
+#define GEOS_CORECOMPONENTS_PHYSICSPACKAGESE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
 
 using ExplicitSmallStrainPolicy = @ExplicitSmallStrainPolicy@;
 using ExplicitFiniteStrainPolicy = @ExplicitFiniteStrainPolicy@;
@@ -23,4 +23,4 @@ using ImplicitSmallStrainNewmarkPolicy = @ImplicitSmallStrainNewmarkPolicy@;
 using ImplicitSmallStrainQuasiStaticPolicy = @ImplicitSmallStrainQuasiStaticPolicy@;
 
 
-#endif /* GEOS_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP */
+#endif /* GEOS_CORECOMPONENTS_PHYSICSPACKAGESE_SOLIDMECHANICS_KERNELS_CONFIG_HPP */

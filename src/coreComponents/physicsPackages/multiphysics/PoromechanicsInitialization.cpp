@@ -69,16 +69,16 @@ PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 postInputInitialization()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsPackageManager & physicsSolverManager = problemManager.getPhysicsPackageManager();
+  PhysicsPackageManager & physicsPackageManager = problemManager.getPhysicsPackageManager();
 
-  GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
+  GEOS_THROW_IF( !physicsPackageManager.hasGroup( m_poromechanicsSolverName ),
                  GEOS_FMT( "{}: {} solver named {} not found",
                            getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
                            POROMECHANICS_SOLVER::catalogName(),
                            m_poromechanicsSolverName ),
                  InputError );
 
-  m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
+  m_poromechanicsSolver = &physicsPackageManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
 
   if( !m_solidMechanicsStatisticsName.empty())
   {

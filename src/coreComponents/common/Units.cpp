@@ -91,6 +91,7 @@ TimeFormatInfo TimeFormatInfo::fromDuration( DURATION const value )
 }
 // available specializations
 template TimeFormatInfo TimeFormatInfo::fromDuration< SystemClock::duration >( SystemClock::duration duration );
+template TimeFormatInfo TimeFormatInfo::fromDuration< std::chrono::system_clock::duration >( std::chrono::system_clock::duration duration );
 
 TimeFormatInfo TimeFormatInfo::fromSeconds( double const seconds )
 {

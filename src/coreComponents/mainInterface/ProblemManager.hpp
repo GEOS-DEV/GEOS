@@ -249,7 +249,7 @@ public:
     dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
     dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
     dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
+    dataRepository::GroupKey physicsPackageManager = { "Solvers" };                        ///< Solvers key
     dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
   } groupKeys; ///< Child group viewKeys
 
@@ -259,7 +259,7 @@ public:
    */
   PhysicsPackageManager & getPhysicsPackageManager()
   {
-    return *m_physicsSolverManager;
+    return *m_physicsPackageManager;
   }
 
   /**
@@ -268,7 +268,7 @@ public:
    */
   PhysicsPackageManager const & getPhysicsPackageManager() const
   {
-    return *m_physicsSolverManager;
+    return *m_physicsPackageManager;
   }
 
   /**
@@ -371,7 +371,7 @@ private:
                             map< std::tuple< string, string, string, string >, localIndex > const & regionQuadrature );
 
   /// The PhysicsPackageManager
-  PhysicsPackageManager * m_physicsSolverManager;
+  PhysicsPackageManager * m_physicsPackageManager;
 
   /// The EventManager
   EventManager * m_eventManager;

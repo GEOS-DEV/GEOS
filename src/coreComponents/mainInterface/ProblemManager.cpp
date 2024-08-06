@@ -20,7 +20,7 @@
 #include "GeosxState.hpp"
 #include "initialization.hpp"
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/Path.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -60,7 +60,7 @@ using namespace constitutive;
 
 ProblemManager::ProblemManager( conduit::Node & root ):
   dataRepository::Group( dataRepository::keys::ProblemManager, root ),
-  m_physicsSolverManager( nullptr ),
+  m_physicsPackageManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
   m_fieldSpecificationManager( nullptr )
@@ -79,7 +79,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   registerGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
-  m_physicsSolverManager = &registerGroup< PhysicsPackageManager >( groupKeys.physicsSolverManager );
+  m_physicsPackageManager = &registerGroup< PhysicsPackageManager >( groupKeys.physicsPackageManager );
   m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
@@ -526,7 +526,7 @@ void ProblemManager::postInputInitialization()
   if( repartition )
   {
     partition.setPartitions( xpar, ypar, zpar );
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
     // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
@@ -541,22 +541,22 @@ void ProblemManager::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
 
+  // first, numerical methods
+  order.emplace_back( groupKeys.numericalMethodsManager.key() );
+  usedNames.insert( groupKeys.numericalMethodsManager.key() );
 
-  {
-    order.emplace_back( groupKeys.numericalMethodsManager.key() );
-    usedNames.insert( groupKeys.numericalMethodsManager.key() );
-  }
+  // next, domain
+  order.emplace_back( groupKeys.domain.key() );
+  usedNames.insert( groupKeys.domain.key() );
 
-  {
-    order.emplace_back( groupKeys.domain.key() );
-    usedNames.insert( groupKeys.domain.key() );
-  }
+  // next, events
+  order.emplace_back( groupKeys.eventManager.key() );
+  usedNames.insert( groupKeys.eventManager.key() );
 
-  {
-    order.emplace_back( groupKeys.eventManager.key() );
-    usedNames.insert( groupKeys.eventManager.key() );
-  }
+  // (keeping outputs for the end)
+  usedNames.insert( groupKeys.outputManager.key() );
 
+  // next, everything...
   for( auto const & subGroup : this->getSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
@@ -564,6 +564,9 @@ void ProblemManager::initializationOrder( string_array & order )
       order.emplace_back( subGroup.first );
     }
   }
+
+  // end with outputs (in order to define the chunk sizes after any data source)
+  order.emplace_back( groupKeys.outputManager.key() );
 }
 
 
@@ -666,6 +669,7 @@ void ProblemManager::generateMesh()
   }
 
   domain.setupCommunications( useNonblockingMPI );
+  domain.outputPartitionInformation();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -751,7 +755,7 @@ ProblemManager::getDiscretizations() const
   DomainPartition const & domain  = getDomainPartition();
   Group const & meshBodies = domain.getMeshBodies();
 
-  m_physicsSolverManager->forSubGroups< PhysicsPackageBase >( [&]( PhysicsPackageBase & solver )
+  m_physicsPackageManager->forSubGroups< PhysicsPackageBase >( [&]( PhysicsPackageBase & solver )
   {
 
     solver.generateMeshTargetsFromTargetRegions( meshBodies );
@@ -885,9 +889,9 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
   map< std::tuple< string, string, string, string >, localIndex > regionQuadrature;
 
-  for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
+  for( localIndex solverIndex=0; solverIndex<m_physicsPackageManager->numSubGroups(); ++solverIndex )
   {
-    PhysicsPackageBase const * const solver = m_physicsSolverManager->getGroupPointer< PhysicsPackageBase >( solverIndex );
+    PhysicsPackageBase const * const solver = m_physicsPackageManager->getGroupPointer< PhysicsPackageBase >( solverIndex );
 
     if( solver != nullptr )
     {

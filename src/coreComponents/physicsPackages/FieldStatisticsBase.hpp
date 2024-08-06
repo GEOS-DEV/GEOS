@@ -17,8 +17,8 @@
  * @file FieldStatisticsBase.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSPACKAGES_FIELDSTATISTICSBASE_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSPACKAGES_FIELDSTATISTICSBASE_HPP_
 
 #include "events/tasks/TaskBase.hpp"
 #include "physicsPackages/PhysicsPackageManager.hpp"
@@ -85,9 +85,9 @@ protected:
   void postInputInitialization() override
   {
     ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-    PhysicsPackageManager & physicsSolverManager = problemManager.getPhysicsPackageManager();
+    PhysicsPackageManager & physicsPackageManager = problemManager.getPhysicsPackageManager();
 
-    m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
+    m_solver = physicsPackageManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
                    GEOS_FMT( "{}: Could not find solver '{}' of type {}",
                              getDataContext(),
@@ -130,4 +130,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSPACKAGES_FIELDSTATISTICSBASE_HPP_ */

@@ -60,14 +60,14 @@ SolidMechanicsStateReset::~SolidMechanicsStateReset()
 void SolidMechanicsStateReset::postInputInitialization()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsPackageManager & physicsSolverManager = problemManager.getPhysicsPackageManager();
+  PhysicsPackageManager & physicsPackageManager = problemManager.getPhysicsPackageManager();
 
-  GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
+  GEOS_THROW_IF( !physicsPackageManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "Task {}: physics solver named {} not found",
                            getDataContext(), m_solidSolverName ),
                  InputError );
 
-  m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_solidSolver = &physicsPackageManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 }
 
 bool SolidMechanicsStateReset::execute( real64 const time_n,

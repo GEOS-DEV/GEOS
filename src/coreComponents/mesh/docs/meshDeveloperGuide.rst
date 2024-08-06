@@ -101,7 +101,7 @@ classes.
 ElementRegion
 ^^^^^^^^^^^^^
 Conceptually the ``ElementRegion`` are used to defined regions of the problem domain where a
-``PhysicsSolver`` will be applied.
+``PhysicsPackage`` will be applied.
 
 - The ``CellElementRegion`` is related to all the polyhedra
 - The ``FaceElementRegion`` is related to all the faces that have physical meaning in the

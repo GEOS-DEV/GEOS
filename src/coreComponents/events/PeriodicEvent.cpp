@@ -19,7 +19,7 @@
 
 #include "PeriodicEvent.hpp"
 
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geos
