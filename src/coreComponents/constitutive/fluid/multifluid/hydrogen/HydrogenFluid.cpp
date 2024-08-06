@@ -85,11 +85,11 @@ void HydrogenFluid::postInputInitialization()
   GEOS_THROW_IF_NE_MSG( numPhases, 2,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_LT_MSG( numPhases, min_n_components,
+  GEOS_THROW_IF_LT_MSG( numComps, min_n_components,
                         GEOS_FMT( "{}: invalid number of components. Should be between {}  and {}.",
                                   min_n_components, max_n_components, getFullName() ),
                         InputError );
-  GEOS_THROW_IF_GT_MSG( numPhases, max_n_components,
+  GEOS_THROW_IF_GT_MSG( numComps, max_n_components,
                         GEOS_FMT( "{}: invalid number of components. Should be between {}  and {}.",
                                   min_n_components, max_n_components, getFullName() ),
                         InputError );
@@ -141,6 +141,8 @@ void HydrogenFluid::postInputInitialization()
   GEOS_THROW_IF_LT_MSG( m_h2oComponentIndex, 0,
                         GEOS_FMT( "{}: Water component not found. There should be a component named H2O.", getFullName() ),
                         InputError );
+
+  createModels();
 }
 
 void HydrogenFluid::checkTablesParameters( real64 pressure, real64 temperature ) const
@@ -160,8 +162,7 @@ void HydrogenFluid::createModels()
                                                getLogLevel() > 0 && logger::internal::rank==0 );
 }
 
-typename HydrogenFluid::KernelWrapper
-HydrogenFluid::createKernelWrapper()
+typename HydrogenFluid::KernelWrapper HydrogenFluid::createKernelWrapper()
 {
   return KernelWrapper( *m_flash,
                         m_componentMolarWeight.toViewConst(),

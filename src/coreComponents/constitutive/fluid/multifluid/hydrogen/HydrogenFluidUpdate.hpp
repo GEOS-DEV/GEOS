@@ -94,17 +94,18 @@ void HydrogenFluidUpdate::compute( real64 const pressure,
                                    PhaseComp::SliceType const phaseCompFraction,
                                    FluidProp::SliceType const totalDensity ) const
 {
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( phaseFraction );
   GEOS_UNUSED_VAR( phaseDensity );
   GEOS_UNUSED_VAR( phaseMassDensity );
   GEOS_UNUSED_VAR( phaseViscosity );
   GEOS_UNUSED_VAR( phaseEnthalpy );
   GEOS_UNUSED_VAR( phaseInternalEnergy );
-  GEOS_UNUSED_VAR( phaseCompFraction );
   GEOS_UNUSED_VAR( totalDensity );
+
+  m_flash.compute( pressure,
+                   temperature,
+                   composition.toSliceConst(),
+                   phaseFraction,
+                   phaseCompFraction );
 }
 
 GEOS_HOST_DEVICE

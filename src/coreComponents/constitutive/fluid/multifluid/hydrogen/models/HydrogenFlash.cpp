@@ -29,6 +29,7 @@ HydrogenFlashUpdate::HydrogenFlashUpdate( arrayView1d< real64 const > const & co
                                           integer const h2oComponentIndex,
                                           integer const gasPhaseIndex,
                                           integer const watPhaseIndex ):
+  m_numComps( componentMolarWeight.size() ),
   m_h2Index( h2ComponentIndex ),
   m_h2oIndex( h2oComponentIndex ),
   m_gasPhaseIndex( gasPhaseIndex ),

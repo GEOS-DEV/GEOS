@@ -52,6 +52,9 @@ public:
   void move( LvArray::MemorySpace const space, bool const touch );
 
 protected:
+  /// Number of components
+  integer m_numComps{0};
+
   /// Index of the H2 component index
   integer m_h2Index{-1};
 
@@ -114,7 +117,7 @@ void HydrogenFlashUpdate::compute( real64 const & pressure,
   GEOS_UNUSED_VAR( temperature );
 
   // Zero out everything to start
-  auto setZero = []( real64 & val ){ val = 0.0; };
+  auto const setZero = []( real64 & val ){ val = 0.0; };
   LvArray::forValuesInSlice( phaseFraction.value, setZero );
   LvArray::forValuesInSlice( phaseCompFraction.value, setZero );
   LvArray::forValuesInSlice( phaseFraction.derivs, setZero );
@@ -126,9 +129,11 @@ void HydrogenFlashUpdate::compute( real64 const & pressure,
   phaseFraction.value[m_watPhaseIndex] = 0.5;
 
   // 2) Compute phase component fractions
-  // Setup default values which will be overridden for the active phase
-  phaseCompFraction.value[m_gasPhaseIndex][m_h2Index] = 1.0;
-  phaseCompFraction.value[m_watPhaseIndex][m_h2oIndex] = 1.0;
+  for( integer ic = 0; ic < m_numComps; ++ic )
+  {
+    phaseCompFraction.value[m_gasPhaseIndex][ic] = compFraction[ic];
+    phaseCompFraction.value[m_watPhaseIndex][ic] = compFraction[ic];
+  }
 }
 
 } // end namespace constitutive

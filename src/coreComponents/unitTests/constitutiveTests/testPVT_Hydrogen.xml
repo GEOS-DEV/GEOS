@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <PVTDriver
+      name="testHydrogenMixture"
+      fluid="hydrogenMixture"
+      feedComposition="{ 0.35, 0.45, 0.05, 0.15 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="49"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      output="testPVT_hydrogenMixture.txt"
+      logLevel="1"/>
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="eventHydrogenMixture"
+      target="/Tasks/testHydrogenMixture"/>
+  </Events>
+
+  <Constitutive>
+    <HydrogenFluid
+      name="hydrogenMixture"
+      phaseNames="{ gas, water }"
+      componentNames="{ H2, C1, C10, H2O }"
+      componentMolarWeight="{ 28e-3, 16e-3, 134e-3, 18e-3 }" />
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 1e6, 50e6 }"/>
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 350, 350 }"/>
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+</Problem>
