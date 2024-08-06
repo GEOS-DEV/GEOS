@@ -11,7 +11,7 @@
       steps="49"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      output="testPVT_hydrogenMixture.txt"
+      output="testPVT_Hydrogen_hydrogenMixture.txt"
       logLevel="1"/>
   </Tasks>
 
