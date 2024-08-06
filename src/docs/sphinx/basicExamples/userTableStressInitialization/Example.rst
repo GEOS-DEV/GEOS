@@ -8,7 +8,7 @@
 
 **Context**
 
-This example build uses the same simple reservoir model as in the gravity induced hysrostatic stress initialization case (see :ref:`gravityinducedhydrostaticinitialization`). In this example, however, we provide the stress and pore pressure gradients for a reservoir under an hydrostatic pressure equilibrium and then request the simulator to perform an initialization of the stresses in every element in the numerical model. The problem is also solved by using the singlephase poromechanics solver (see :ref:`PoroelasticSolver`) in Geos.
+This example uses the same reservoir model as the gravity-induced hydrostatic stress initialization case (see :ref:`gravityinducedhydrostaticinitialization`). Here, we provide the stress and pore pressure gradients for a reservoir under an hydrostatic pressure equilibrium and then request the simulator to perform an initialization of the stresses in every element in the model. The problem is solved by using the single-phase poromechanics solver (see :ref:`PoroelasticSolver`) in GEOS.
 
 **Input file**
 
@@ -50,7 +50,7 @@ A Python script to generate these files is provided:
 
   src/docs/sphinx/basicExamples/initialization/genetrateTable.py
 
-In addition to generating the files listed above, the script prints out the resultant fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags, respectively, as shown below:
+In addition to generating the files listed above, the script prints out the resultant fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags respectively, as shown below:
 
 .. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
@@ -64,7 +64,7 @@ In addition to generating the files listed above, the script prints out the resu
 
 
 ---------------------------------
-Inspecting results
+Inspecting Results
 ---------------------------------
 
 In the example, we request vtk output files for time-series (time history). We use Python scripts to visualize the outcome at the time 0s.
