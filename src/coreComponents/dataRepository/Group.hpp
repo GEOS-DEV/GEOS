@@ -338,8 +338,12 @@ public:
                    "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
-
-    return dynamicCast< T & >( *child );
+    T * const castedChild = dynamicCast< T * >( child );
+    GEOS_THROW_IF( castedChild == nullptr,
+                   GEOS_FMT( "{} was expected to be a '{}'.",
+                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   BadTypeError );
+    return *castedChild;
   }
 
   /**
@@ -353,8 +357,12 @@ public:
                    "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
-
-    return dynamicCast< T const & >( *child );
+    T const * const castedChild = dynamicCast< T const * >( child );
+    GEOS_THROW_IF( castedChild == nullptr,
+                   GEOS_FMT( "{} was expected to be a '{}'.",
+                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   BadTypeError );
+    return *castedChild;
   }
 
   /**

@@ -72,6 +72,7 @@ void PackCollection::initializePostSubGroups( )
     {
       // coord meta collectors should have m_disableCoordCollection == true to avoid
       //  infinite recursive init calls here
+      //          (side note: should we create a m_isMetaCollector field to prevent any confusion?)
       metaCollector->initializePostSubGroups();
     }
     m_initialized = true;
@@ -255,7 +256,7 @@ localIndex PackCollection::numMetaDataCollectors() const
 
 void PackCollection::buildMetaDataCollectors()
 {
-  if( !m_disableCoordCollection )
+  if( !m_disableCoordCollection && m_targetIsMeshObject )
   {
     char const * coordField = nullptr;
     if( m_objectPath.find( "nodeManager" ) != string::npos )

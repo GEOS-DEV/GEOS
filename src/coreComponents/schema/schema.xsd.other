@@ -1325,6 +1325,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CellToCellDataCollection" type="CellToCellDataCollectionType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
@@ -1343,6 +1344,16 @@
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CellToCellDataCollectionType">
+		<!--cellAGlobalId => (no description available)-->
+		<xsd:attribute name="cellAGlobalId" type="globalIndex_array" />
+		<!--cellBGlobalId => (no description available)-->
+		<xsd:attribute name="cellBGlobalId" type="globalIndex_array" />
+		<!--transmissibilityAB => (no description available)-->
+		<xsd:attribute name="transmissibilityAB" type="real64_array" />
+		<!--transmissibilityBA => (no description available)-->
+		<xsd:attribute name="transmissibilityBA" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType" />
