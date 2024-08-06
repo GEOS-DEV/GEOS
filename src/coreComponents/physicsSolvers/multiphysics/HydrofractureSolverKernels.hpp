@@ -45,6 +45,7 @@ struct DeformationUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
+          arrayView1d< real64 const > const & refAperture,
           arrayView1d< real64 > const & hydraulicAperture
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
           ,
@@ -87,7 +88,7 @@ struct DeformationUpdateKernel
       maxAperture.max( aperture[kfe] );
 
       real64 dHydraulicAperture_dNormalJump = 0;
-      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dNormalJump );
+      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], refAperture[kfe], dHydraulicAperture_dNormalJump );
       maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
       real64 const oldHydraulicAperture = hydraulicAperture[kfe];
       hydraulicAperture[kfe] = newHydraulicAperture;
@@ -139,12 +140,13 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const (&Nbar)[ 3 ],
                                  real64 const & area,
                                  real64 const & aperture,
+                                 real64 const & refAperture,
                                  real64 const & dens,
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
   {
     real64 dHydraulicAperture_dNormalJump = 0;
-    real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
+    real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, refAperture, dHydraulicAperture_dNormalJump );
     GEOS_UNUSED_VAR( hydraulicAperture );
 
     constexpr integer kfSign[2] = { -1, 1 };
@@ -212,6 +214,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const area,
           arrayView1d< real64 const > const aperture,
+          arrayView1d< real64 const > const & refAperture,
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const > const dens,
@@ -238,6 +241,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                      Nbar,
                                      area[ei],
                                      aperture[ei],
+                                     refAperture[ei],
                                      dens[ei][0],
                                      nodeDOF,
                                      dRdU );

@@ -33,6 +33,7 @@
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
 
 
@@ -466,7 +467,7 @@ void SurfaceGenerator::postRestartInitialization()
 
 real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                      real64 const & dt,
-                                     const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                     const int cycleNumber,
                                      DomainPartition & domain )
 {
   int rval = 0;
@@ -554,7 +555,15 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       permModel.initializeState();
     }
 
+    if( cycleNumber == 0 && time_n + dt <= 0 )
+    {
+      /// THIS is a hack to force variables in the fractures to be initialized since they are created after initialization occurs.
+      FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();;
+      fsManager.applyInitialConditions( meshLevel );
+    }
   } );
+
+
 
   return rval;
 }
@@ -3232,7 +3241,6 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       {
         SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
       }
-
       for( localIndex const edgeIndex: m_tipEdges )
       {
         if( edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex )

@@ -41,6 +41,10 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setDescription( "Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. " );
 
   registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+
+  registerWrapper( viewKeyStruct::timeLagFlagString(), &m_timeLagFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL );
 }
 
 std::unique_ptr< ConstitutiveBase >

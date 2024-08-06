@@ -68,6 +68,9 @@ public:
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n );
+
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
 
   GEOS_HOST_DEVICE

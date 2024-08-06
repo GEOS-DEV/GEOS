@@ -40,8 +40,13 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Pressure dependence coefficients for each permeability component." );
 
-  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+  registerWrapper( viewKeyStruct::defaultReferencePressureString(), &m_defaultReferencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default reference pressure" );
+
+  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Reference pressure for the pressure permeability model" );
 
   registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
@@ -93,6 +98,8 @@ void PressurePermeability::allocateConstitutiveData( dataRepository::Group & par
       m_referencePermeability[ei][q][1] =  m_referencePermeabilityComponents[1];
       m_referencePermeability[ei][q][2] =  m_referencePermeabilityComponents[2];
     }
+
+    m_referencePressure[ei] = m_defaultReferencePressure;
   }
 }
 

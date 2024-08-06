@@ -35,9 +35,11 @@ public:
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dPressure,
                                     arrayView4d< real64 > const & dPerm_dDispJump,
+                                    integer const timeLagFlag,
                                     bool const updateTransversalComponent )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dDispJump( dPerm_dDispJump ),
+    m_timeLagFlag( timeLagFlag ),
     m_numDimensionsToUpdate( 3 )
   {
     m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2;
@@ -48,12 +50,25 @@ public:
                 real64 const & newHydraulicAperture,
                 real64 const & dHydraulicAperture_dNormalJump,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice2d< real64 > const & dPerm_dDispJump ) const
+                arraySlice2d< real64 > const & dPerm_dDispJump,
+                integer const timeLagFlag ) const
   {
-    GEOS_UNUSED_VAR( oldHydraulicAperture );
+    real64 perm = 0.0;
+    real64 dPerm_dHydraulicAperture = 0.0;
 
-    real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
-    real64 const dPerm_dHydraulicAperture = newHydraulicAperture / 6.0;
+    if( timeLagFlag )
+    {
+      GEOS_UNUSED_VAR( newHydraulicAperture, dPerm_dHydraulicAperture );
+
+      perm  = oldHydraulicAperture*oldHydraulicAperture / 12.0;
+    }
+    else
+    {
+      GEOS_UNUSED_VAR( oldHydraulicAperture );
+
+      perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
+      dPerm_dHydraulicAperture = newHydraulicAperture / 6.0;
+    }
 
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
@@ -77,7 +92,8 @@ public:
              newHydraulicAperture,
              dHydraulicAperture_dNormalJump,
              m_permeability[k][0],
-             m_dPerm_dDispJump[k][0] );
+             m_dPerm_dDispJump[k][0],
+             m_timeLagFlag );
   }
 
   GEOS_HOST_DEVICE
@@ -98,6 +114,9 @@ public:
 private:
 
   arrayView4d< real64 > m_dPerm_dDispJump;
+
+  integer m_timeLagFlag;
+
   int m_numDimensionsToUpdate;
 };
 
@@ -132,12 +151,16 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dDispJump,
+                          m_timeLagFlag,
                           m_updateTransversalComponent );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
+    /// string/key for the flag to use time lagging computation of permeability
+    constexpr static char const * timeLagFlagString() { return "timeLagFlag"; }
+
     static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
   } viewKeys;
 
@@ -147,6 +170,9 @@ private:
 
   /// Derivative of fracture permeability w.r.t. displacement jump
   array4d< real64 > m_dPerm_dDispJump;
+
+  /// Flag to turn on time lagging computation of permeability
+  integer m_timeLagFlag;
 
   real64 m_transversalPermeability;
 

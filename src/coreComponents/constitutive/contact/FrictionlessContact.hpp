@@ -40,8 +40,10 @@ public:
   FrictionlessContactUpdates( real64 const & penaltyStiffness,
                               real64 const & shearStiffness,
                               real64 const & displacementJumpThreshold,
-                              TableFunction const & apertureTable )
-    : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable )
+                              TableFunction const & apertureTable,
+                              integer const useApertureModel,
+                              real64 const & refNormalStress )
+    : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable, useApertureModel, refNormalStress )
   {}
 
   /// Default copy constructor

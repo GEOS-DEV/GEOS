@@ -43,6 +43,8 @@ public:
   using Base::m_rhs;
   using Base::m_solution;
   using Base::m_linearSolverParameters;
+  using Base::m_performStressInitialization;
+  using Base::m_isThermal;
 
   using Base::registerWrapper;
   using Base::forDiscretizationOnMeshTargets;

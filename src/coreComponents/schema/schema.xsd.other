@@ -2454,6 +2454,8 @@
 		<xsd:attribute name="permeability" type="real64_array3d" />
 		<!--referencePermeability => Reference permeability field-->
 		<xsd:attribute name="referencePermeability" type="real64_array3d" />
+		<!--referencePressure => Reference pressure for the pressure permeability model-->
+		<xsd:attribute name="referencePressure" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->

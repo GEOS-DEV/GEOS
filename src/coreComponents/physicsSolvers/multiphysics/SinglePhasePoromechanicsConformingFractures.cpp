@@ -761,6 +761,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
       arrayView1d< real64 const > const pressure           = subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
+      arrayView1d< real64 const > const minimumHydraulicAperture = subRegion.getField< flow::minimumHydraulicAperture >();
 
       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
@@ -791,6 +792,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
                                               volume,
                                               deltaVolume,
                                               aperture,
+                                              minimumHydraulicAperture,
                                               oldHydraulicAperture,
                                               hydraulicAperture,
                                               fractureTraction );

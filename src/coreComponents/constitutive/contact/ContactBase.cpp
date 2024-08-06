@@ -60,8 +60,19 @@ ContactBase::ContactBase( string const & name,
 
   registerWrapper( viewKeyStruct::apertureTableNameString(), &m_apertureTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the aperture table" );
+
+  registerWrapper( viewKeyStruct::useApertureModelString(), &m_useApertureModel ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag for using the nonlinear aperture model instead of the aperture model."
+                    "For now, 1 is for the Barton--Bandis model, and 2 is for the exponential model." );
+
+  registerWrapper( viewKeyStruct::refNormalStressString(), &m_refNormalStress ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Value of the reference normal stress in the aperture model." );
 }
 
 ContactBase::~ContactBase()
@@ -71,8 +82,11 @@ ContactBase::~ContactBase()
 void ContactBase::postInputInitialization()
 {
 
-  GEOS_THROW_IF( m_apertureTableName.empty(),
+  GEOS_THROW_IF( m_apertureTableName.empty() && m_useApertureModel == 0,
                  getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
+
+  GEOS_THROW_IF( m_useApertureModel >= 1 && m_refNormalStress <= 0.0,
+                 getFullName() << ": the reference normal stress is not given or has a wrong value", InputError );
 
 }
 
@@ -85,51 +99,54 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
-  GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                 getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
-                 InputError );
-
-  TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
-  validateApertureTable( apertureTable );
-
-  ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
-  arraySlice1d< real64 const > apertureValues = coords[0];
-  array1d< real64 > & hydraulicApertureValues = apertureTable.getValues();
-
-  localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
-  real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
-
-  // if the aperture transition is larger than the last coordinates, we enlarge the table
-  // this check is necessary to ensure that the coordinates are strictly increasing
-  if( apertureTransition > apertureValues[apertureValues.size()-1] )
+  if( m_useApertureModel == 0 )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT ( "Adding aperture transition for table {}:", m_apertureTableName ) );
-    std::ostringstream s_orig;
-    for( localIndex i = 0; i < apertureValues.size(); i++ )
-      s_orig << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
-    GEOS_LOG_RANK_0( GEOS_FMT ( "    Original table = {}", s_orig.str()));
+    FunctionManager & functionManager = FunctionManager::getInstance();
 
-    coords.emplaceBack( 0, apertureTransition );
-    hydraulicApertureValues.emplace_back( apertureTransition );
-    // if the aperture transition is larger than 0, we keep enlarging the table
+    GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
+                   getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
+                   InputError );
+
+    TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
+    validateApertureTable( apertureTable );
+
+    ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
+    arraySlice1d< real64 const > apertureValues = coords[0];
+    array1d< real64 > & hydraulicApertureValues = apertureTable.getValues();
+
+    localIndex const n = apertureValues.size()-1;
+    real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+    real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
+
+    // if the aperture transition is larger than the last coordinates, we enlarge the table
     // this check is necessary to ensure that the coordinates are strictly increasing
-    if( apertureTransition > 0 )
+    if( apertureTransition > apertureValues[apertureValues.size()-1] )
     {
-      coords.emplaceBack( 0, apertureTransition*10e9 );
-      hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
-      apertureTable.reInitializeFunction();
+      GEOS_LOG_RANK_0( GEOS_FMT ( "Adding aperture transition for table {}:", m_apertureTableName ) );
+      std::ostringstream s_orig;
+      for( localIndex i = 0; i < apertureValues.size(); i++ )
+        s_orig << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
+      GEOS_LOG_RANK_0( GEOS_FMT ( "    Original table = {}", s_orig.str()));
+
+      coords.emplaceBack( 0, apertureTransition );
+      hydraulicApertureValues.emplace_back( apertureTransition );
+      // if the aperture transition is larger than 0, we keep enlarging the table
+      // this check is necessary to ensure that the coordinates are strictly increasing
+      if( apertureTransition > 0 )
+      {
+        coords.emplaceBack( 0, apertureTransition*10e9 );
+        hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
+        apertureTable.reInitializeFunction();
+      }
+
+      std::ostringstream s_mod;
+      for( localIndex i = 0; i < apertureValues.size(); i++ )
+        s_mod << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
+      GEOS_LOG_RANK_0( GEOS_FMT ( "    Modified table = {}", s_mod.str()));
     }
 
-    std::ostringstream s_mod;
-    for( localIndex i = 0; i < apertureValues.size(); i++ )
-      s_mod << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
-    GEOS_LOG_RANK_0( GEOS_FMT ( "    Modified table = {}", s_mod.str()));
+    m_apertureTable = &apertureTable;
   }
-
-  m_apertureTable = &apertureTable;
 }
 
 
@@ -168,7 +185,9 @@ ContactBaseUpdates ContactBase::createKernelWrapper() const
   return ContactBaseUpdates( m_penaltyStiffness,
                              m_shearStiffness,
                              m_displacementJumpThreshold,
-                             *m_apertureTable );
+                             *m_apertureTable,
+                             m_useApertureModel,
+                             m_refNormalStress );
 }
 
 } /* end namespace constitutive */
