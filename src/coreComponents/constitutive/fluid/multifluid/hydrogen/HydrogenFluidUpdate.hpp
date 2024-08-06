@@ -23,6 +23,8 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 
+#include "constitutive/fluid/multifluid/hydrogen/models/HydrogenFlash.hpp"
+
 namespace geos
 {
 
@@ -40,7 +42,8 @@ public:
   using FluidProp = MultiFluidBase::FluidProp;
 
 public:
-  HydrogenFluidUpdate( arrayView1d< real64 const > componentMolarWeight,
+  HydrogenFluidUpdate( HydrogenFlash const & flash,
+                       arrayView1d< real64 const > componentMolarWeight,
                        bool const useMass,
                        bool const isThermal,
                        PhaseProp::ViewType phaseFraction,
@@ -71,9 +74,14 @@ public:
                        real64 const pressure,
                        real64 const temperature,
                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
+
+private:
+  // Flash kernel wrapper
+  typename HydrogenFlash::KernelWrapper m_flash;
 };
 
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void HydrogenFluidUpdate::compute( real64 const pressure,
                                    real64 const temperature,
                                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -100,6 +108,7 @@ void HydrogenFluidUpdate::compute( real64 const pressure,
 }
 
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void HydrogenFluidUpdate::update( localIndex const k,
                                   localIndex const q,
                                   real64 const pressure,

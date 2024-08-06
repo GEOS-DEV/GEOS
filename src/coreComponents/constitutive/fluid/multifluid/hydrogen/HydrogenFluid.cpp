@@ -20,7 +20,7 @@
 #include "HydrogenFluid.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
@@ -65,6 +65,8 @@ HydrogenFluid::deliverClone( string const & name, Group * const parent ) const
   hydrogenFluid.m_h2ComponentIndex = m_h2ComponentIndex;
   hydrogenFluid.m_h2oComponentIndex = m_h2oComponentIndex;
 
+  hydrogenFluid.createModels();
+
   return clone;
 }
 
@@ -95,9 +97,9 @@ void HydrogenFluid::postInputInitialization()
   m_gasPhaseIndex = -1;
   m_watPhaseIndex = -1;
   arrayView1d< string const > const names = phaseNames();
-  for( integer ip = 0; ip < numPhases; ++ic )
+  for( integer ip = 0; ip < numPhases; ++ip )
   {
-    string const phaseName = stringutilities::toLower( names[ic] );
+    string const phaseName = stringutilities::toLower( names[ip] );
     if( phaseName == "gas" )
     {
       m_gasPhaseIndex = ip;
@@ -147,10 +149,22 @@ void HydrogenFluid::checkTablesParameters( real64 pressure, real64 temperature )
   GEOS_UNUSED_VAR( temperature );
 }
 
+void HydrogenFluid::createModels()
+{
+  m_flash = std::make_unique< HydrogenFlash >( GEOS_FMT( "{}_HydrogenFlash", getName()),
+                                               m_componentMolarWeight,
+                                               m_h2ComponentIndex,
+                                               m_h2oComponentIndex,
+                                               m_gasPhaseIndex,
+                                               m_watPhaseIndex,
+                                               getLogLevel() > 0 && logger::internal::rank==0 );
+}
+
 typename HydrogenFluid::KernelWrapper
 HydrogenFluid::createKernelWrapper()
 {
-  return KernelWrapper( m_componentMolarWeight.toViewConst(),
+  return KernelWrapper( *m_flash,
+                        m_componentMolarWeight.toViewConst(),
                         m_useMass,
                         isThermal(),
                         m_phaseFraction.toView(),

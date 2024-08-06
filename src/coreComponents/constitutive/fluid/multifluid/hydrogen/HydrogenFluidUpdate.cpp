@@ -25,7 +25,8 @@ namespace geos
 namespace constitutive
 {
 
-HydrogenFluidUpdate::HydrogenFluidUpdate( arrayView1d< geos::real64 const > componentMolarWeight,
+HydrogenFluidUpdate::HydrogenFluidUpdate( HydrogenFlash const & flash,
+                                          arrayView1d< geos::real64 const > componentMolarWeight,
                                           bool const useMass,
                                           bool const isThermal,
                                           PhaseProp::ViewType phaseFraction,
@@ -45,7 +46,8 @@ HydrogenFluidUpdate::HydrogenFluidUpdate( arrayView1d< geos::real64 const > comp
                                    std::move( phaseEnthalpy ),
                                    std::move( phaseInternalEnergy ),
                                    std::move( phaseCompFraction ),
-                                   std::move( totalDensity ) )
+                                   std::move( totalDensity ) ),
+  m_flash( flash.createKernelWrapper())
 {
   GEOS_UNUSED_VAR( isThermal );
 }

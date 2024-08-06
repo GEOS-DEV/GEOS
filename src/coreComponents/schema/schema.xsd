@@ -701,6 +701,10 @@
 					<xsd:selector xpath="FrictionlessContact" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveHydrogenFluidUniqueName">
+					<xsd:selector xpath="HydrogenFluid" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveJFunctionCapillaryPressureUniqueName">
 					<xsd:selector xpath="JFunctionCapillaryPressure" />
 					<xsd:field xpath="@name" />
@@ -4180,6 +4184,7 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
+			<xsd:element name="HydrogenFluid" type="HydrogenFluidType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
 			<xsd:element name="LinearIsotropicDispersion" type="LinearIsotropicDispersionType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
@@ -5015,6 +5020,20 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="penaltyStiffness" type="real64" default="0" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
 		<xsd:attribute name="shearStiffness" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="HydrogenFluidType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

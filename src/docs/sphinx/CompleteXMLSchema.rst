@@ -577,6 +577,13 @@ Element: HydrofractureInitialization
 .. include:: ../../coreComponents/schema/docs/HydrofractureInitialization.rst
 
 
+.. _XML_HydrogenFluid:
+
+Element: HydrogenFluid
+======================
+.. include:: ../../coreComponents/schema/docs/HydrogenFluid.rst
+
+
 .. _XML_HydrostaticEquilibrium:
 
 Element: HydrostaticEquilibrium
@@ -2049,6 +2056,13 @@ Datastructure: Hydrofracture
 Datastructure: HydrofractureInitialization
 ==========================================
 .. include:: ../../coreComponents/schema/docs/HydrofractureInitialization_other.rst
+
+
+.. _DATASTRUCTURE_HydrogenFluid:
+
+Datastructure: HydrogenFluid
+============================
+.. include:: ../../coreComponents/schema/docs/HydrogenFluid_other.rst
 
 
 .. _DATASTRUCTURE_HydrostaticEquilibrium:

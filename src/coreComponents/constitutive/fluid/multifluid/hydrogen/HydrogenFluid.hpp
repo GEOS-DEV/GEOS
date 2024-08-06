@@ -73,12 +73,16 @@ public:
 protected:
   void postInputInitialization() override;
 
+  void createModels();
+
 private:
+  // Flash model
+  std::unique_ptr< HydrogenFlash > m_flash{};
+
   integer m_gasPhaseIndex{-1};
   integer m_watPhaseIndex{-1};
   integer m_h2ComponentIndex{-1};
   integer m_h2oComponentIndex{-1};
-
 };
 
 } // namespace constitutive
