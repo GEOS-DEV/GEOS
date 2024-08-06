@@ -82,6 +82,8 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/PhaseModel.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
+     fluid/multifluid/hydrogen/HydrogenFluid.hpp
+     fluid/multifluid/hydrogen/HydrogenFluidUpdate.hpp
      fluid/multifluid/reactive/ReactiveBrineFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluidFields.hpp
@@ -230,6 +232,9 @@ set( constitutive_sources
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
      fluid/multifluid/compositional/PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
      fluid/multifluid/compositional/PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
+     fluid/multifluid/hydrogen/HydrogenFluid.cpp
+     fluid/multifluid/hydrogen/HydrogenFluidUpdate.cpp
+     fluid/multifluid/hydrogen/PVTDriverRunTestHydrogenFluid.cpp
      fluid/multifluid/reactive/ReactiveBrineFluid.cpp
      fluid/multifluid/reactive/ReactiveMultiFluid.cpp
      fluid/multifluid/reactive/ReactiveFluidDriver.cpp
