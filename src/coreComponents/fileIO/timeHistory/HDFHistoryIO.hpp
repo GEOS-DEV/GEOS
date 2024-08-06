@@ -20,6 +20,7 @@
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "BufferedHistoryIO.hpp"
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <hdf5.h>
 

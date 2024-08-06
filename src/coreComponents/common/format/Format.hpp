@@ -17,6 +17,7 @@
 #define GEOS_COMMON_FORMAT_HPP_
 
 #include <type_traits>
+#include <optional>
 
 #if __cplusplus < 202002L
 #define GEOS_USE_FMT
@@ -87,6 +88,36 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
  * @note Ensures the output buffer is zero-terminated (std::format_to_n doesn't)
  */
 #define GEOS_FMT_TO( iter, size, msg, ... ) *GEOS_FMT_NS::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
+
+/**
+ * @name Custom formatters
+ */
+///@{
+
+/**
+ * @brief Format to be able to directly use a std::optional<T>.
+ * @param T The type of the value contained std::optional and GEOS_FMT_NS::formatter.
+ */
+template< typename T >
+struct GEOS_FMT_NS::formatter< std::optional< T > > : GEOS_FMT_NS::formatter< T >
+{
+  /**
+   * @brief Format the std::optional<T> to a string.
+   * @param opt The std::optional< T > value to format
+   * @param ctx formatting state consisting of the formatting arguments and the output iterator
+   * @return return the corresponding value string. If std::optional<T> is empty retun an empty string
+   */
+  auto format( std::optional< T > const & opt, format_context & ctx ) const
+  {
+    if( opt )
+    {
+      return GEOS_FMT_NS::formatter< T >::format( *opt, ctx );
+    }
+    return GEOS_FMT_NS::format_to( ctx.out(), "" );
+  }
+};
+
+///@}
 
 // The following workaround is needed to fix compilation with NVCC on some PowerPC machines.
 // The issue causes the following assertion error message:
