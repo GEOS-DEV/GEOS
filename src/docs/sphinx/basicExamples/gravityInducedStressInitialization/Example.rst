@@ -8,7 +8,7 @@
 
 **Context**
 
-In this example, we perform a gravity-only stress initialization for a reservoir with an hydrostatic in-situ pressure. The problem is solved by using a singlephase poromechanics solver (see :ref:`SinglePhasePoroMechanicsSolver`) in Geos to predict the initial state of stress with depth in the reservoir subject to the reservoir rock properties and the prevailing hydrostatic pressure condition. We verify the numerical results obtained by Geos against an anlaytical Eaton's equation. 
+In this example, we perform a gravity-only stress initialization for a reservoir with an hydrostatic in-situ pressure. The problem is solved by using a singlephase poromechanics solver (see :ref:`PoroelasticSolver`) in Geos to predict the initial state of stress with depth in the reservoir subject to the reservoir rock properties and the prevailing hydrostatic pressure condition. We verify the numerical results obtained by Geos against an anlaytical Eaton's equation. 
 
 
 **Input file**
@@ -88,7 +88,7 @@ The problem is run as ``QuasiStatic`` without considering inertial effects.
 The computational domain is discretized by ``FE1``, defined in the ``NumericalMethods`` section.
 We use the ``targetRegions`` attribute to define the regions where the solid mechanics solver is applied.
 Here, since we only have one cellBlockName type called ``Domain``, the solid mechanics solver is applied to every element of the model. 
-The flow solver for this problem (see :ref:`SinglePhaseFVM`) called ``SinglePhaseFlow`` is discretized by ``fluidTPFA``, defined in the ``NumericalMethods`` section by using the same cellBlockName type called ``Domain`` that was applied for the solid mechanics solver. 
+The flow solver for this problem (see :ref:`SinglePhaseFlow`) called ``SinglePhaseFlow`` is discretized by ``fluidTPFA``, defined in the ``NumericalMethods`` section by using the same cellBlockName type called ``Domain`` that was applied for the solid mechanics solver. 
 
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
     :language: xml

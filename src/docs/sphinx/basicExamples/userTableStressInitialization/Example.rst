@@ -8,7 +8,7 @@
 
 **Context**
 
-This example build uses the same simple reservoir model as in the gravity induced hysrostatic stress initialization case (see :ref:`gravityinducedhydrostaticinitialization`). In this example, however, we provide the stress and pore pressure gradients for a reservoir under an hydrostatic pressure equilibrium and then request the simulator to perform an initialization of the stresses in every element in the numerical model. The problem is also solved by using the singlephase poromechanics solver (see :ref:`SinglePhasePoroMechanicsSolver`) in Geos.
+This example build uses the same simple reservoir model as in the gravity induced hysrostatic stress initialization case (see :ref:`gravityinducedhydrostaticinitialization`). In this example, however, we provide the stress and pore pressure gradients for a reservoir under an hydrostatic pressure equilibrium and then request the simulator to perform an initialization of the stresses in every element in the numerical model. The problem is also solved by using the singlephase poromechanics solver (see :ref:`PoroelasticSolver`) in Geos.
 
 **Input file**
 
