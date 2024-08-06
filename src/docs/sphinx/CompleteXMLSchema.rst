@@ -150,6 +150,13 @@ Element: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion.rst
 
 
+.. _XML_CellToCellDataCollection:
+
+Element: CellToCellDataCollection
+=================================
+.. include:: ../../coreComponents/schema/docs/CellToCellDataCollection.rst
+
+
 .. _XML_CeramicDamage:
 
 Element: CeramicDamage
@@ -1615,6 +1622,13 @@ Datastructure: CarmanKozenyPermeability
 Datastructure: CellElementRegion
 ================================
 .. include:: ../../coreComponents/schema/docs/CellElementRegion_other.rst
+
+
+.. _DATASTRUCTURE_CellToCellDataCollection:
+
+Datastructure: CellToCellDataCollection
+=======================================
+.. include:: ../../coreComponents/schema/docs/CellToCellDataCollection_other.rst
 
 
 .. _DATASTRUCTURE_CeramicDamage:

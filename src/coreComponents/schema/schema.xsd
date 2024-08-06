@@ -471,6 +471,10 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Tasks" type="TasksType" maxOccurs="1">
+				<xsd:unique name="TasksCellToCellDataCollectionUniqueName">
+					<xsd:selector xpath="CellToCellDataCollection" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksCompositionalMultiphaseReservoirPoromechanicsInitializationUniqueName">
 					<xsd:selector xpath="CompositionalMultiphaseReservoirPoromechanicsInitialization" />
 					<xsd:field xpath="@name" />
@@ -3883,6 +3887,7 @@ Local- Add jump stabilization on interior of macro elements-->
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CellToCellDataCollection" type="CellToCellDataCollectionType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
@@ -3901,6 +3906,16 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CellToCellDataCollectionType">
+		<!--flowSolverName => Name of the flow solver, to get the permeabilities.-->
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
+		<!--logLevel => When higher than 1: Display store events details.-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--meshBody => Name of the target -->
+		<xsd:attribute name="meshBody" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType">
 		<!--logLevel => Log level-->

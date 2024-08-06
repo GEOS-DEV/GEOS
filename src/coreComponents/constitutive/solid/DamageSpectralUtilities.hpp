@@ -26,11 +26,15 @@
 
 #ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_
 #define GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "common/DataTypes.hpp"
+#include "common/logger/Logger.hpp"
+
 namespace geos
 {
 
