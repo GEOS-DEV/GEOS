@@ -90,7 +90,8 @@ TimeFormatInfo TimeFormatInfo::fromDuration( DURATION const value )
                          int( minutesOut.count() ), int( secondsOut.count() ) );
 }
 // available specializations
-template TimeFormatInfo TimeFormatInfo::fromDuration< SystemClock::duration >( SystemClock::duration duration );
+template TimeFormatInfo TimeFormatInfo::fromDuration< std::chrono::high_resolution_clock::duration >( std::chrono::high_resolution_clock::duration );
+template TimeFormatInfo TimeFormatInfo::fromDuration< std::chrono::system_clock::duration >( std::chrono::system_clock::duration );
 
 TimeFormatInfo TimeFormatInfo::fromSeconds( double const seconds )
 {
