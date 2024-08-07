@@ -23,6 +23,7 @@
 #include "constitutive/fluid/multifluid/blackOil/DeadOilFluid.hpp"
 #include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
+#include "constitutive/fluid/multifluid/hydrogen/HydrogenFluid.hpp"
 
 #include "common/TypeDispatch.hpp"
 #ifdef GEOS_USE_PVTPackage
@@ -54,7 +55,8 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
 #endif
-                               CompositionalTwoPhaseConstantViscosity
+                               CompositionalTwoPhaseConstantViscosity,
+                               HydrogenFluid
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -76,7 +78,8 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
 #endif
-                               CompositionalTwoPhaseConstantViscosity
+                               CompositionalTwoPhaseConstantViscosity,
+                               HydrogenFluid
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
