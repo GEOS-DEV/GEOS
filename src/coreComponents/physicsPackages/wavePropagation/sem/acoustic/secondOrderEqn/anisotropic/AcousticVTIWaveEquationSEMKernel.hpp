@@ -175,9 +175,9 @@ struct PrecomputeSourceAndReceiverKernel
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             WavePackageUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              baseElemsToNodes[k],
-                                                                              baseNodeCoords,
-                                                                              coordsOnRefElem );
+                                                                               baseElemsToNodes[k],
+                                                                               baseNodeCoords,
+                                                                               coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
 
