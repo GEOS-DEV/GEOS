@@ -892,15 +892,15 @@ if(DEFINED GRPC_DIR)
     message( " ----> protobuf_VERSION=${protobuf_VERSION}")
 
     get_target_property(includeDirs
-                        gRPC::grpc
+                        gRPC::grpc++
                         INTERFACE_INCLUDE_DIRECTORIES)
 
-    set_property(TARGET gRPC::grpc
+    set_property(TARGET gRPC::grpc++
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                  ${includeDirs})
 
     set(ENABLE_GRPC ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} gRPC::grpc)
+    set(thirdPartyLibs ${thirdPartyLibs} gRPC::grpc++)
 else()
     if(ENABLE_GRPC)
         message(WARNING "ENABLE_GRPC is ON but GRPC_DIR isn't defined.")
