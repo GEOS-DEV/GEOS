@@ -25,7 +25,7 @@ A Python script for post-processing the simulation results is provided:
 
 .. code-block:: console
 
-  src/docs/sphinx/basicExamples/initialization/plotInitialization.py
+  src/docs/sphinx/basicExamples/initialization/gravityInitializationFigure.py
 
 
 ------------------------------------------------------------------
@@ -90,7 +90,7 @@ We use the ``targetRegions`` attribute to define the regions where the solid mec
 Since we only have one cellBlockName type called ``Domain``, the solid mechanics solver is applied to every element of the model. 
 The flow solver for this problem (see :ref:`SinglePhaseFlow`) called ``SinglePhaseFlow`` is discretized by ``fluidTPFA``, defined in the ``NumericalMethods`` section by using the same cellBlockName type called ``Domain`` that was applied for the solid mechanics solver. 
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
     :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
@@ -211,7 +211,7 @@ The following figure shows the final gradient of the principal stress components
 
 The figure below shows the comparisons between GEOS numerical predictions (marks) and the corresponding analytical solutions (lines) with respect to the computed principal stresses.
 
-.. plot:: docs/sphinx/basicExamples/gravityInducedStressInitialization/plotInitialization.py
+.. plot:: docs/sphinx/basicExamples/gravityInducedStressInitialization/gravityInitializationFigure.py
 
 
 ------------------------------------------------------------------

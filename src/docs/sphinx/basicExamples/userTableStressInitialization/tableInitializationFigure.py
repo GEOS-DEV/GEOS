@@ -76,7 +76,7 @@ def main():
 	rhoB = (1-phi)*rhoR + phi*rhoF
 	
 	traction = hydromechanicalParameters["traction"]
-	gravity = 9.8 
+	gravity = 9.81 
 	
 	file = open("simulation_result_0.csv")
 	csvreader = csv.reader(file)
@@ -88,25 +88,25 @@ def main():
 	file.close() 
 
 	rows = np.array(rows)
-	zloc_0 = np.empty(len(rows[:,23]))
-	pressure_0 = np.empty(len(rows[:,23]))
-	tsxx_0 = np.empty(len(rows[:,23]))
-	tsyy_0 = np.empty(len(rows[:,23]))
-	tszz_0 = np.empty(len(rows[:,23]))
-	for i in range(0,len(rows[:,23])):
-		zloc_0[i]=-(float(rows[i,12]))
-		pressure_0[i]=float(rows[i,15])		
-		tsxx_0[i]=-(float(rows[i,22])-BiotCoefficient*pressure_0[i])/1.0e6
-		tsyy_0[i]=-(float(rows[i,23])-BiotCoefficient*pressure_0[i])/1.0e6
-		tszz_0[i]=-(float(rows[i,24])-BiotCoefficient*pressure_0[i])/1.0e6
+	zloc_0 = np.empty(len(rows[:,1]))
+	pressure_0 = np.empty(len(rows[:,1]))
+	tsxx_0 = np.empty(len(rows[:,1]))
+	tsyy_0 = np.empty(len(rows[:,1]))
+	tszz_0 = np.empty(len(rows[:,1]))
+	for i in range(0,len(rows[:,1])):
+		zloc_0[i]=-(float(rows[i,2]))
+		pressure_0[i]=float(rows[i,3])		
+		tsxx_0[i]=-(float(rows[i,4])-BiotCoefficient*pressure_0[i])/1.0e6
+		tsyy_0[i]=-(float(rows[i,5])-BiotCoefficient*pressure_0[i])/1.0e6
+		tszz_0[i]=-(float(rows[i,6])-BiotCoefficient*pressure_0[i])/1.0e6
 
 	
 	z_analytical= np.linspace(0, 1000, 100)
 
 	pp_analytical= pp_grad*100000*z_analytical/1.0e6
-	szz_analtyical= szz_grad*100000*(z_analytical-zloc_0[0])/1.0e6
-	sxx_analtyical = sxx_grad*100000*(z_analytical-zloc_0[0])/1.0e6
-	syy_analtyical = syy_grad*100000*(z_analytical-zloc_0[0])/1.0e6
+	szz_analtyical= szz_grad*100000*z_analytical/1.0e6
+	sxx_analtyical = sxx_grad*100000*z_analytical/1.0e6
+	syy_analtyical = syy_grad*100000*z_analytical/1.0e6
 
 	fsize = 20
 	msize = 12

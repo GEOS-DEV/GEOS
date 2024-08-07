@@ -81,7 +81,7 @@ The following figure shows the final gradient of pressure after initialization i
 
 The figure below shows the comparisons between the numerical predictions (marks) and the corresponding user-provided stress gradients.
 
-.. plot:: docs/sphinx/basicExamples/userTableStressInitialization/plotInitialization_usertable.py
+.. plot:: docs/sphinx/basicExamples/userTableStressInitialization/tableInitializationFigure.py
 
 
 ------------------------------------------------------------------
