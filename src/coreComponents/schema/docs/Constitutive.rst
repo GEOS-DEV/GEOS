@@ -42,6 +42,7 @@ ElasticTransverseIsotropic                    node         :ref:`XML_ElasticTran
 ExponentialDecayPermeability                  node         :ref:`XML_ExponentialDecayPermeability`                  
 ExtendedDruckerPrager                         node         :ref:`XML_ExtendedDruckerPrager`                         
 FrictionlessContact                           node         :ref:`XML_FrictionlessContact`                           
+HydraulicApertureTable                        node         :ref:`XML_HydraulicApertureTable`                        
 JFunctionCapillaryPressure                    node         :ref:`XML_JFunctionCapillaryPressure`                    
 LinearIsotropicDispersion                     node         :ref:`XML_LinearIsotropicDispersion`                     
 ModifiedCamClay                               node         :ref:`XML_ModifiedCamClay`                               

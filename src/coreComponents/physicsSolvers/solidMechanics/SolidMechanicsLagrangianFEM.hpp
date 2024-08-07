@@ -251,6 +251,9 @@ public:
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
+
+    static constexpr char const * contactPenaltyStiffnessString() { return "contactPenaltyStiffness"; }
+
   };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
@@ -296,6 +299,8 @@ protected:
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
+
+  real64 m_contactPenaltyStiffness;
 
 private:
 

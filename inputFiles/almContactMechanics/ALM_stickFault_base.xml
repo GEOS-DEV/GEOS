@@ -92,8 +92,11 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionCoefficient="0.1"
-      apertureTableName="apertureTable"/>
+      frictionCoefficient="0.1"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>  
   </Constitutive>
 
   <Functions>

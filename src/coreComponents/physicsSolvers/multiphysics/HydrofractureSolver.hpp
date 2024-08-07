@@ -163,8 +163,6 @@ public:
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
     constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
@@ -175,7 +173,7 @@ public:
 
     constexpr static char const * useQuasiNewtonString() { return "useQuasiNewton"; }
 
-    static constexpr char const * isLaggingFractureStencilWeightsUpdateString() { return "isLaggingFractureStencilWeightsUpdate"; }
+    constexpr static char const * isLaggingFractureStencilWeightsUpdateString() { return "isLaggingFractureStencilWeightsUpdate"; }
 
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }

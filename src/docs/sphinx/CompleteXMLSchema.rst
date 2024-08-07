@@ -563,6 +563,13 @@ Element: HybridMimeticDiscretization
 .. include:: ../../coreComponents/schema/docs/HybridMimeticDiscretization.rst
 
 
+.. _XML_HydraulicApertureTable:
+
+Element: HydraulicApertureTable
+===============================
+.. include:: ../../coreComponents/schema/docs/HydraulicApertureTable.rst
+
+
 .. _XML_Hydrofracture:
 
 Element: Hydrofracture
@@ -2035,6 +2042,13 @@ Datastructure: HaltEvent
 Datastructure: HybridMimeticDiscretization
 ==========================================
 .. include:: ../../coreComponents/schema/docs/HybridMimeticDiscretization_other.rst
+
+
+.. _DATASTRUCTURE_HydraulicApertureTable:
+
+Datastructure: HydraulicApertureTable
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydraulicApertureTable_other.rst
 
 
 .. _DATASTRUCTURE_Hydrofracture:
