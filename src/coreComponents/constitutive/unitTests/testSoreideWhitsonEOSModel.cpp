@@ -34,7 +34,7 @@ using TestData = std::tuple<
   Feed< NC > const      // Input composition
   >;
 
-template< integer NC, SoreideWhitsonPhaseType PHASE_TYPE, EquationOfStateType EOS_TYPE >
+template< integer NC, SoreideWhitsonPhaseType PHASE_TYPE, typename EOS_TYPE >
 class SoreideWhitsonEOSModelTestFixture : public ::testing::TestWithParam< TestData< NC > >
 {
 public:
@@ -121,13 +121,13 @@ struct FluidData< 4 >
   }
 };
 
-template< integer NC, SoreideWhitsonPhaseType PHASE_TYPE, EquationOfStateType EOS_TYPE >
+template< integer NC, SoreideWhitsonPhaseType PHASE_TYPE, typename EOS_TYPE >
 SoreideWhitsonEOSModelTestFixture< NC, PHASE_TYPE, EOS_TYPE >::SoreideWhitsonEOSModelTestFixture():
   m_fluid( FluidData< NC >::create() )
 {}
 
-using PengRobinsonAqueous4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Aqueous, EquationOfStateType::PengRobinson >;
-using PengRobinsonVapour4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Vapour, EquationOfStateType::PengRobinson >;
+using PengRobinsonAqueous4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Aqueous, PengRobinsonEOS >;
+using PengRobinsonVapour4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Vapour, PengRobinsonEOS >;
 
 TEST_P( PengRobinsonAqueous4, testPureCoefficients )
 {
