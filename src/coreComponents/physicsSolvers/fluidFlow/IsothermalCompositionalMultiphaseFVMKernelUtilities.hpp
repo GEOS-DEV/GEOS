@@ -751,6 +751,7 @@ struct PPUICPhaseFlux
            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const & globalCompDensity,
            localIndex & k_up,
            real64 & potGrad,
            real64 ( &phaseFlux ),
@@ -913,6 +914,8 @@ struct PPUICPhaseFlux
     // step 3: global solver flux and jacobian
     //
   
+
+  GEOS_UNUSED_VAR(mobility, rho_l_j, pi, pj, Ti, Tj, pc_i, dpcdSi, Ut, tol, max_iter, globalCompDensity, compFlux, dCompFlux_dP, dCompFlux_dC);
 
   }
 };

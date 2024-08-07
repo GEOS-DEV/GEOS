@@ -304,9 +304,10 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using CompFlowAccessors =
-    StencilAccessors< fields::ghostRank,
+    StencilAccessors< fields::ghostRank, 
                       fields::flow::gravityCoefficient,
                       fields::flow::pressure,
+                      fields::flow::globalCompDensity,
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
@@ -474,7 +475,8 @@ public:
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
-    m_sei( stencilWrapper.getElementIndices() )
+    m_sei( stencilWrapper.getElementIndices() ),
+    m_globalCompDensity( compFlowAccessors.get( fields::flow::globalCompDensity {} ) ) // TODO: Maybe only store this for IC solver where its needed?
   { }
 
   /**
@@ -692,6 +694,7 @@ public:
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              m_globalCompDensity,
               k_up,
               potGrad,
               phaseFlux,
@@ -869,6 +872,8 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_seri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
+
+  ElementViewConst< arrayView2d < real64 const, compflow::USD_COMP > > const m_globalCompDensity;
 
 };
 
