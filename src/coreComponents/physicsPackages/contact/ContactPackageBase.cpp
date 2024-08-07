@@ -20,14 +20,8 @@
 #include "ContactPackageBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
-#include "constitutive/solid/ElasticIsotropic.hpp"
-#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
-#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "constitutive/contact/FrictionBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -244,15 +238,15 @@ void ContactPackageBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & s
   }
   else if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
   {
-    subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+    subRegion.registerWrapper< string >( viewKeyStruct::frictionLawNameString() ).
       setPlotLevel( PlotLevel::NOPLOT ).
       setRestartFlags( RestartFlags::NO_WRITE ).
       setSizedFromParent( 0 );
 
-    string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-    contactRelationName = PhysicsPackageBase::getConstitutiveName< ContactBase >( subRegion );
-    GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: ContactBase model not found on subregion {}",
-                                                          getDataContext(), subRegion.getDataContext() ) );
+    string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+    frictionLawName = PhysicsPackageBase::getConstitutiveName< FrictionBase >( subRegion );
+    GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
+                                                      getDataContext(), subRegion.getDataContext() ) );
   }
 }
 

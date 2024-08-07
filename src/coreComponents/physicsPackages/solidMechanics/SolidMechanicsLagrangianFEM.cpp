@@ -28,7 +28,6 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -116,6 +115,11 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setApplyDefaultValue( viewKeyStruct::noContactRelationNameString() ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
+
+  registerWrapper( viewKeyStruct::contactPenaltyStiffnessString(), &m_contactPenaltyStiffness ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
     setInputFlag( InputFlags::FALSE ).
@@ -1378,9 +1382,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
-        ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
-
-        real64 const contactStiffness = contact.stiffness();
+        real64 const contactStiffness = m_contactPenaltyStiffness;
 
         arrayView1d< real64 > const area = subRegion.getElementArea();
         ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();

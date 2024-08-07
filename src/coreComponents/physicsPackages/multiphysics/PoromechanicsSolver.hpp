@@ -27,6 +27,7 @@
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -121,6 +122,23 @@ public:
                    GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` must be set to 1 since the poromechanics solver is thermal",
                              this->getCatalogName(), this->getName(), FlowPackageBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ),
                    InputError );
+  }
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
+  {
+    if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
+    {
+      subRegion.registerWrapper< string >( viewKeyStruct::hydraulicApertureRelationNameString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent( 0 );
+
+      string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
+      hydraulicApertureModelName =PhysicsPackageBase::getConstitutiveName< HydraulicApertureBase >( subRegion );
+      GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
+                                                                   this->getDataContext(), subRegion.getDataContext() ) );
+    }
+
   }
 
   virtual void initializePreSubGroups() override
@@ -311,6 +329,10 @@ public:
 
     /// Multiplier on stabilization strength
     constexpr static const char * stabilizationMultiplierString() {return "stabilizationMultiplier"; }
+
+    /// Name of the hydraulicApertureRelationName
+    static constexpr char const * hydraulicApertureRelationNameString() {return "hydraulicApertureRelationName"; }
+
   };
 
   void updateStabilizationParameters( DomainPartition & domain ) const

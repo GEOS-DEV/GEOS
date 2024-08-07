@@ -85,7 +85,7 @@ struct StateUpdateKernel
   /**
    * @brief Launch the kernel function doing constitutive updates
    * @tparam POLICY the type of policy used in the kernel launch
-   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the constitutive updates
+   * @tparam CONSTITUTIVE_WRAPPER the type of consitutive wrapper doing the constitutive updates
    * @param[in] size the size of the subregion
    * @param[in] constitutiveWrapper the wrapper implementing the constitutive model
    * @param[in] deformationGradient the deformation gradient

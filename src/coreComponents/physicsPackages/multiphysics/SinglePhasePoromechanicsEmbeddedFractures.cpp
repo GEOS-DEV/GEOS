@@ -18,7 +18,7 @@
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsPackages/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
@@ -496,33 +496,38 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< fields::flow::pressure >();
 
-      string const & contactRelationName = subRegion.template getReference< string >( ContactPackageBase::viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
-
-      ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
+      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
+      HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
       string const porousSolidName = subRegion.template getReference< string >( FlowPackageBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &hydraulicApertureModel] ( auto & castedPorousSolid )
       {
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        poromechanicsEFEMKernels::StateUpdateKernel::
-          launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            contactWrapper,
-                                            porousMaterialWrapper,
-                                            dispJump,
-                                            pressure,
-                                            area,
-                                            volume,
-                                            deltaVolume,
-                                            aperture,
-                                            oldHydraulicAperture,
-                                            hydraulicAperture,
-                                            fractureTraction,
-                                            dTdpf );
+        constitutiveUpdatePassThru( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
+        {
 
+          using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
+          typename HydraulicApertureModelType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
+
+          poromechanicsEFEMKernels::StateUpdateKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              hydraulicApertureModelWrapper,
+                                              porousMaterialWrapper,
+                                              dispJump,
+                                              pressure,
+                                              area,
+                                              volume,
+                                              deltaVolume,
+                                              aperture,
+                                              oldHydraulicAperture,
+                                              hydraulicAperture,
+                                              fractureTraction,
+                                              dTdpf );
+
+        } );
       } );
 
       // update the stencil weights using the updated hydraulic aperture

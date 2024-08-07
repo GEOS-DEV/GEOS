@@ -270,6 +270,21 @@ struct TimeFormatInfo
   string toSecondsString() const;
 };
 
+template< typename DURATION >
+TimeFormatInfo TimeFormatInfo::fromDuration( DURATION const value )
+{
+  using namespace std::chrono;
+
+  auto const totalYears = duration_cast< units::Years >( value );
+  auto const daysOut = duration_cast< units::Days >( value - totalYears );
+  auto const hoursOut = duration_cast< hours >( value - totalYears - daysOut );
+  auto const minutesOut = duration_cast< minutes >( value - totalYears - daysOut - hoursOut );
+  auto const secondsOut = duration_cast< seconds >( value - totalYears - daysOut - hoursOut - minutesOut );
+
+  return TimeFormatInfo( duration< double >( value ).count(), int( totalYears.count() ),
+                         int( daysOut.count() ), int( hoursOut.count() ),
+                         int( minutesOut.count() ), int( secondsOut.count() ) );
+}
 
 } // end namespace units
 
