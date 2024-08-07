@@ -154,11 +154,11 @@ struct PureCoefficientCalculator< SoreideWhitsonPhaseType::Aqueous, EOS_TYPE >
     real64 const trToMinus2 = 1.0/(tr*tr);
     real64 const trToMinus3 = trToMinus2/tr;
 
-    real64 constexpr salinity = 0.0;
+    real64 constexpr salinity = 0.1;
     real64 const csw = salinity < MultiFluidConstants::minForSpeciesPresence ? 0.0 : LvArray::math::exp( 1.1 * LvArray::math::log( salinity ) );
 
     real64 const sqrtAlpha = 1.0 - 0.4530*(1.0 - tr*(1.0 - 0.0103*csw)) + 0.0034*(trToMinus3 - 1.0);
-    real64 const dSqrtAlpha_dtr = 0.4530 - 0.0102*trToMinus3/tr;
+    real64 const dSqrtAlpha_dtr = 0.4530*(1.0 - 0.0103*csw) - 0.0102*trToMinus3/tr;
     real64 const alpha = sqrtAlpha * sqrtAlpha;
     real64 const dAlpha_dt = 2.0 * sqrtAlpha * dSqrtAlpha_dtr / criticalTemperature[ic];
 
@@ -168,7 +168,7 @@ struct PureCoefficientCalculator< SoreideWhitsonPhaseType::Aqueous, EOS_TYPE >
     daCoefficient_dp = aCoefficient / pressure;
     dbCoefficient_dp = bCoefficient / pressure;
 
-    daCoefficient_dt = CubicEOS::omegaA * pr * (-2.0*trToMinus3 / criticalTemperature[ic] + trToMinus2 * dAlpha_dt);
+    daCoefficient_dt = CubicEOS::omegaA * pr * (-2.0*trToMinus3 * alpha / criticalTemperature[ic] + trToMinus2 * dAlpha_dt);
     dbCoefficient_dt = -bCoefficient / temperature;
   }
 };

@@ -127,22 +127,61 @@ SoreideWhitsonEOSModelTestFixture< NC, PHASE_TYPE, EOS_TYPE >::SoreideWhitsonEOS
 {}
 
 using PengRobinsonAqueous4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Aqueous, EquationOfStateType::PengRobinson >;
+using PengRobinsonVapour4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Vapour, EquationOfStateType::PengRobinson >;
 
 TEST_P( PengRobinsonAqueous4, testPureCoefficients )
 {
   testPureCoefficients( GetParam() );
 }
+TEST_P( PengRobinsonVapour4, testPureCoefficients )
+{
+  testPureCoefficients( GetParam() );
+}
 
-/* UNCRUSTIFY-OFF */
+template< int NC >
+struct TestFeed {};
 
-INSTANTIATE_TEST_SUITE_P(
-  SoreideWhitsonEOSModelTest, PengRobinsonAqueous4,
-  ::testing::Values(
-    TestData< 4 >( 1.000000e+05, 1.931500e+02, { 0.05695100, 0.10481800, 0.10482200, 0.73340900 })
-  )
-);
+template<>
+struct TestFeed< 2 >
+{
+  static std::array< Feed< 2 >, 3 > constexpr feeds = {
+    Feed< 2 >{0.100000, 0.900000},
+    Feed< 2 >{0.500000, 0.500000},
+    Feed< 2 >{0.001000, 0.999000}
+  };
+};
 
-/* UNCRUSTIFY-ON */
+template<>
+struct TestFeed< 4 >
+{
+  static std::array< Feed< 4 >, 3 > constexpr feeds = {
+    Feed< 4 >{0.030933, 0.319683, 0.637861, 0.011523},
+    Feed< 4 >{0.000000, 0.349686, 0.637891, 0.012423},
+    Feed< 4 >{0.000000, 0.349686, 0.650314, 0.000000}
+  };
+};
+
+template< int NC >
+std::vector< TestData< NC > > generateTestData()
+{
+  std::array< real64 const, 2 > pressures( {1.83959e+06, 1.83959e+08} );
+  std::array< real64 const, 2 > temperatures( {2.97150e+02, 3.63000e+02} );
+  std::vector< TestData< NC > > testData;
+  for( const auto & composition : TestFeed< NC >::feeds )
+  {
+    for( const real64 pressure : pressures )
+    {
+      for( const real64 temperature : temperatures )
+      {
+        testData.emplace_back( pressure, temperature, composition );
+      }
+    }
+  }
+  return testData;
+}
+
+INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSModelTest, PengRobinsonAqueous4, ::testing::ValuesIn( generateTestData< 4 >()) );
+INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSModelTest, PengRobinsonVapour4, ::testing::ValuesIn( generateTestData< 4 >()) );
 
 } // namespace testing
 
