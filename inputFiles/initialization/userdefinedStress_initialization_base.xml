@@ -1,6 +1,42 @@
 <?xml version="1.0"?>
 
 <Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <!-- SPHINX_POROMECHANICSSOLVER -->
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseFlow"
+      logLevel="1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"
+        newtonTol="1.0e-2"
+        maxTimeStepCuts="1"
+        lineSearchMaxCuts="0" />
+      <LinearSolverParameters
+        directParallel="0" />
+    </SinglePhasePoromechanics>
+    <!-- SPHINX_POROMECHANICSSOLVER_END -->
+
+    <!-- SPHINX_MECHANICALSOLVER -->
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }" />
+    <!-- SPHINX_MECHANICALSOLVER_END -->
+
+    <!-- SPHINX_SINGLEPHASEFVM -->
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ Domain }" />
+    <!-- SPHINX_SINGLEPHASEFVM_END -->
+  </Solvers>
 
   <!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
@@ -69,12 +105,6 @@
 
   <!-- SPHINX_BC -->
   <FieldSpecifications>
-    <HydrostaticEquilibrium
-      datumElevation="-1"
-      datumPressure="1.1e5"
-      name="equil"
-      objectPath="ElementRegions/Domain" />
-
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
@@ -100,21 +130,44 @@
       setNames="{ zneg }" />
 
     <!-- SPHINX_USER_TABLES -->
-    <FieldSpecification component="0" fieldName="rockSolid_stress" functionName="sigma_xx"
-      initialCondition="1" name="init_sigma_xx" objectPath="ElementRegions/Domain" scale="1.0"
+    <FieldSpecification 
+      component="0" 
+      fieldName="rockSolid_stress" 
+      functionName="sigma_xx"
+      initialCondition="1" 
+      name="init_sigma_xx" 
+      objectPath="ElementRegions/Domain" 
+      scale="1.0"
       setNames="{ all }" />
 
-
-    <FieldSpecification component="1" fieldName="rockSolid_stress" functionName="sigma_yy"
-      initialCondition="1" name="init_sigma_yy" objectPath="ElementRegions/Domain" scale="1.0"
+    <FieldSpecification
+      component="1" 
+      fieldName="rockSolid_stress" 
+      functionName="sigma_yy"
+      initialCondition="1" 
+      name="init_sigma_yy" 
+      objectPath="ElementRegions/Domain" 
+      scale="1.0"
       setNames="{ all }" />
 
-    <FieldSpecification component="2" fieldName="rockSolid_stress" functionName="sigma_zz"
-      initialCondition="1" name="init_sigma_zz" objectPath="ElementRegions/Domain" scale="1.0"
+    <FieldSpecification 
+      component="2" 
+      fieldName="rockSolid_stress" 
+      functionName="sigma_zz"
+      initialCondition="1" 
+      name="init_sigma_zz" 
+      objectPath="ElementRegions/Domain" 
+      scale="1.0"
       setNames="{ all }" />
 
-    <FieldSpecification fieldName="pressure" functionName="init_pressure" initialCondition="1"
-      name="init_pressure" objectPath="ElementRegions/Domain" scale="1.0" setNames="{ all }" />
+    <FieldSpecification 
+      fieldName="pressure" 
+      functionName="init_pressure" 
+      initialCondition="1"
+      name="init_pressure" 
+      objectPath="ElementRegions/Domain" 
+      scale="1.0" 
+      setNames="{ all }" />
     <!-- SPHINX_USER_TABLES_END -->
 
   </FieldSpecifications>
@@ -123,32 +176,43 @@
   <!-- SPHINX_FUNCTIONS -->
   <Functions>
 
-    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
-      inputVarNames="{elementCenter}" interpolation="linear" name="sigma_xx"
-      voxelFile="effectiveSigma_xx.csv" />
+    <TableFunction 
+      coordinateFiles="{userTables/x.csv, userTables/y.csv, userTables/z.csv}"
+      inputVarNames="{elementCenter}" 
+      interpolation="linear" 
+      name="sigma_xx"
+      voxelFile="userTables/effectiveSigma_xx.csv" />
 
-    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
-      inputVarNames="{elementCenter}" interpolation="linear" name="sigma_yy"
-      voxelFile="effectiveSigma_yy.csv" />
+    <TableFunction 
+      coordinateFiles="{userTables/x.csv, userTables/y.csv,userTables/z.csv}"
+      inputVarNames="{elementCenter}" 
+      interpolation="linear" 
+      name="sigma_yy"
+      voxelFile="userTables/effectiveSigma_yy.csv" />
 
-    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
-      inputVarNames="{elementCenter}" interpolation="linear" name="sigma_zz"
-      voxelFile="effectiveSigma_zz.csv" />
+    <TableFunction 
+      coordinateFiles="{userTables/x.csv, userTables/y.csv, userTables/z.csv}"
+      inputVarNames="{elementCenter}" 
+      interpolation="linear" 
+      name="sigma_zz"
+      voxelFile="userTables/effectiveSigma_zz.csv" />
 
-    <TableFunction coordinateFiles="{x.csv, y.csv, z.csv}"
-      inputVarNames="{elementCenter}" interpolation="linear" name="init_pressure"
-      voxelFile="porePressure.csv" />
-
-
+    <TableFunction 
+      coordinateFiles="{userTables/x.csv, userTables/y.csv, userTables/z.csv}"
+      inputVarNames="{elementCenter}" 
+      interpolation="linear" 
+      name="init_pressure"
+      voxelFile="userTables/porePressure.csv" />
   </Functions>
   <!-- SPHINX_FUNCTIONS_END -->
 
 
   <!-- SPHINX_TASKS -->
   <Tasks>
-    <SinglePhasePoromechanicsInitialization logLevel="1"
-    name="singlephasePoromechanicsPreEquilibrationStep"
-    poromechanicsSolverName="poroSolve" />
+    <SinglePhasePoromechanicsInitialization 
+      logLevel="1"
+      name="singlephasePoromechanicsPreEquilibrationStep"
+      poromechanicsSolverName="poroSolve" />
   </Tasks>
   <!-- SPHINX_TASKS_END -->
 
@@ -156,6 +220,9 @@
   <Outputs>
     <VTK
       name="vtkOutput" />
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
   <!-- SPHINX_OUTPUT_END -->
 </Problem>

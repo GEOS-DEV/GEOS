@@ -13,9 +13,9 @@
       xCoords="{ 0.0, 1000 }"
       yCoords="{ 0.0, 1000 }"
       zCoords="{ -1000, 0 }"
-      nx="{ 20 }"
-      ny="{ 20 }"
-      nz="{ 40 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
+      nz="{ 4 }"
       cellBlockNames="{ cb1 }" />
   </Mesh>
   <!-- SPHINX_MESH_END -->
@@ -41,6 +41,12 @@
       name="singlephasePoromechanicsPreEquilibrationStep"
       target="/Tasks/singlephasePoromechanicsPreEquilibrationStep"
       targetTime="-1e10" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="10.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
 
   </Events>
    <!-- SPHINX_EVENTS_END-->
