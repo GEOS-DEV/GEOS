@@ -120,9 +120,9 @@ public:
 
     KernelWrapper( arrayView2d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
                    arrayView2d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
-                   real64 const & jerauldParam_a,
-                   real64 const & jerauldParam_b,
-                   real64 const & killoughCurvatureParam,
+                   arrayView1d< real64 const > const & jerauldParam_a,
+                   arrayView1d< real64 const > const & jerauldParam_b,
+                   arrayView1d< real64 const > const & killoughCurvatureParam,
                    arrayView1d< integer const > const & phaseHasHysteresis,
                    arrayView1d< real64 const > const & landParam,
                    arrayView2d< real64 const > const & drainageMinPhaseVolFraction,
@@ -196,6 +196,7 @@ public:
                                           TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                           real64 const & jerauldParam_a,
                                           real64 const & jerauldParam_b,
+                                          real64 const & killoughCurvatureParam,
                                           real64 const & landParam,
                                           real64 const & phaseVolFraction,
                                           real64 const & phaseMinHistoricalVolFraction,
@@ -229,6 +230,7 @@ public:
                                              TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                              real64 const & jerauldParam_a,
                                              real64 const & jerauldParam_b,
+                                             real64 const & killoughCurvatureParam,
                                              real64 const & landParam,
                                              real64 const & phaseVolFraction,
                                              real64 const & phaseMaxHistoricalVolFraction,
@@ -331,13 +333,13 @@ private:
     arrayView2d< TableFunction::KernelWrapper const > m_imbibitionRelPermKernelWrappers;
 
     /// Parameter a introduced by Jerauld in the Land model
-    real64 const m_jerauldParam_a;
+    arrayView1d< real64 const > m_jerauldParam_a;
 
     /// Parameter b introduced by Jerauld in the Land model
-    real64 const m_jerauldParam_b;
+    arrayView1d< real64 const > m_jerauldParam_b;
 
     /// Curvature parameter introduced for wetting phase hysteresis in Killough
-    real64 const m_killoughCurvatureParam;
+    arrayView1d< real64 const > m_killoughCurvatureParam;
 
     /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
     arrayView1d< integer const > m_phaseHasHysteresis;
@@ -529,13 +531,13 @@ private:
   // Hysteresis parameters
 
   /// Parameter a introduced by Jerauld in the Land model
-  real64 m_jerauldParam_a;
+  array1d< real64 > m_jerauldParam_a;
 
   /// Parameter b introduced by Jerauld in the Land model
-  real64 m_jerauldParam_b;
+  array1d< real64 > m_jerauldParam_b;
 
   /// Curvature parameter in Killough wetting phase hysteresis (enpoints durvatures)
-  real64 m_killoughCurvatureParam;
+  array1d< real64 > m_killoughCurvatureParam;
 
   /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
   array1d< integer > m_phaseHasHysteresis;
@@ -617,6 +619,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                    TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                    real64 const & jerauldParam_a,
                                    real64 const & jerauldParam_b,
+                                   real64 const & killoughCurvatureParam,
                                    real64 const & landParam,
                                    real64 const & phaseVolFraction,
                                    real64 const & phaseMinHistoricalVolFraction,
@@ -672,7 +675,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     real64 const krwedAtScrt = drainageRelPermKernelWrapper.compute( &Scrt );
     real64 const krwieStar = krwedAtScrt
                              + deltak * pow( ( Smxd - Scrt ) / LvArray::math::max( minScriMinusScrd, ( Smxd - Smxi ) ),
-                                             m_killoughCurvatureParam );
+                                             killoughCurvatureParam );
 
     // Step 2: get the normalized value of saturation
     real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
@@ -704,6 +707,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                       TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
                                       real64 const & jerauldParam_a,
                                       real64 const & jerauldParam_b,
+                                      real64 const & killoughCurvatureParam,
                                       real64 const & landParam,
                                       real64 const & phaseVolFraction,
                                       real64 const & phaseMaxHistoricalVolFraction,
@@ -807,8 +811,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     {
       computeImbibitionWettingRelPerm( m_drainageRelPermKernelWrappers[dir][TPT::WETTING],
                                       m_imbibitionRelPermKernelWrappers[dir][IPT::WETTING],
-                                      m_jerauldParam_a,
-                                      m_jerauldParam_b,
+                                      m_jerauldParam_a[dir],
+                                      m_jerauldParam_b[dir],
+                                      m_killoughCurvatureParam[dir],
                                       m_landParam[IPT::WETTING],
                                       phaseVolFraction[ipWetting],
                                       phaseMinHistoricalVolFraction[ipWetting],
@@ -836,8 +841,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       computeTrappedCriticalPhaseVolFraction( m_drainagePhaseMinVolFraction[dir][ipNonWetting],
                                               Shy,
                                               m_drainagePhaseMaxVolFraction[ipNonWetting],
-                                              m_jerauldParam_a,
-                                              m_jerauldParam_b,
+                                              m_jerauldParam_a[dir],
+                                              m_jerauldParam_b[dir],
                                               m_landParam[IPT::NONWETTING],
                                               Scrt );
       phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min( Scrt, phaseVolFraction[ipNonWetting] );
@@ -852,8 +857,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     {
       computeImbibitionNonWettingRelPerm( m_drainageRelPermKernelWrappers[dir][TPT::NONWETTING],
                                           m_imbibitionRelPermKernelWrappers[dir][IPT::NONWETTING],
-                                          m_jerauldParam_a,
-                                          m_jerauldParam_b,
+                                          m_jerauldParam_a[dir],
+                                          m_jerauldParam_b[dir],
+                                          m_killoughCurvatureParam[dir],
                                           m_landParam[IPT::NONWETTING],
                                           phaseVolFraction[ipNonWetting],
                                           phaseMaxHistoricalVolFraction[ipNonWetting],
@@ -907,8 +913,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     {
       computeImbibitionWettingRelPerm( m_drainageRelPermKernelWrappers[dir][TPT::WETTING],
                                       m_imbibitionRelPermKernelWrappers[dir][IPT::WETTING],
-                                      m_jerauldParam_a,
-                                      m_jerauldParam_b,
+                                      m_jerauldParam_a[dir],
+                                      m_jerauldParam_b[dir],
+                                      m_killoughCurvatureParam[dir],
                                       m_landParam[IPT::WETTING],
                                       phaseVolFraction[ipWetting],
                                       phaseMinHistoricalVolFraction[ipWetting],
@@ -942,8 +949,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       computeTrappedCriticalPhaseVolFraction( m_drainagePhaseMinVolFraction[dir][ipNonWetting],
                                               Shy,
                                               m_drainagePhaseMaxVolFraction[ipNonWetting],
-                                              m_jerauldParam_a,
-                                              m_jerauldParam_b,
+                                              m_jerauldParam_a[dir],
+                                              m_jerauldParam_b[dir],
                                               m_landParam[IPT::NONWETTING],
                                               Scrt );
       phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min( Scrt, phaseVolFraction[ipNonWetting] );
@@ -958,8 +965,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     {
       computeImbibitionNonWettingRelPerm( m_drainageRelPermKernelWrappers[dir][TPT::NONWETTING],
                                           m_imbibitionRelPermKernelWrappers[dir][IPT::NONWETTING],
-                                          m_jerauldParam_a,
-                                          m_jerauldParam_b,
+                                          m_jerauldParam_a[dir],
+                                          m_jerauldParam_b[dir],
+                                          m_killoughCurvatureParam[dir],
                                           m_landParam[IPT::NONWETTING],
                                           phaseVolFraction[ipNonWetting],
                                           phaseMaxHistoricalVolFraction[ipNonWetting],
