@@ -605,68 +605,23 @@ computeCompressibilityFactor( integer const numComps,
                               aMixtureCoefficient,
                               bMixtureCoefficient );
 
-  // a Z3 + b Z2 + cZ + d = 0
-  real64 const a = 1.0;
-  real64 const b = ( EOS_TYPE::delta1 + EOS_TYPE::delta2 - 1.0 ) * bMixtureCoefficient - 1.0;
-  real64 const c = aMixtureCoefficient + EOS_TYPE::delta1 * EOS_TYPE::delta2 * bMixtureCoefficient * bMixtureCoefficient
-                   - ( EOS_TYPE::delta1 + EOS_TYPE::delta2 ) * bMixtureCoefficient * ( bMixtureCoefficient + 1.0 );
-  real64 const d = -( aMixtureCoefficient * bMixtureCoefficient
-                      + EOS_TYPE::delta1 * EOS_TYPE::delta2 * bMixtureCoefficient * bMixtureCoefficient * ( bMixtureCoefficient + 1.0 ) );
-
-  real64 roots[3]{};
-  integer numRoots = 0;
-  CubicEOSPhaseModel< EOS_TYPE >::solveCubicPolynomial( a, b, c, d, roots, numRoots );
-
-  if( numRoots == 1 )
+  stackArray2d< real64, numMaxComps *numMaxComps > kij( numComps, numComps );
+  real64 dkij_dT = 0.0;
+  for( integer ic = 0; ic < numComps; ++ic )
   {
-    compressibilityFactor = roots[0];
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
+    }
   }
-  else
-  {
-    real64 zMin =  LvArray::NumericLimits< real64 >::max;
-    real64 zMax = -LvArray::NumericLimits< real64 >::max;
-
-    for( integer i = 0; i < 3; ++i )
-    {
-      // skip unphysical roots
-      if( roots[i] > bMixtureCoefficient )
-      {
-        // choose the root according to Gibbs' free energy minimization
-        if( zMin > roots[i] )
-        {
-          zMin = roots[i];
-        }
-        if( zMax < roots[i] )
-        {
-          zMax = roots[i];
-        }
-      }
-    }
-    arraySlice1d< real64 > logFugacityCoefficientsMax = tempData[2];
-    arraySlice1d< real64 > logFugacityCoefficientsMin = tempData[3];
-    stackArray2d< real64, numMaxComps *numMaxComps > kij( numComps, numComps );
-    real64 dkij_dT = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      for( integer jc = 0; jc < numComps; ++jc )
-      {
-        getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
-      }
-    }
-    CubicEOSPhaseModel< EOS_TYPE >::computeLogFugacityCoefficients( numComps, composition, kij.toSliceConst(), zMin,
-                                                                    aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient,
-                                                                    logFugacityCoefficientsMin );
-    CubicEOSPhaseModel< EOS_TYPE >::computeLogFugacityCoefficients( numComps, composition, kij.toSliceConst(), zMax,
-                                                                    aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient,
-                                                                    logFugacityCoefficientsMax );
-
-    real64 dG = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      dG += composition[ic] * ( logFugacityCoefficientsMin[ic] - logFugacityCoefficientsMax[ic] );
-    }
-    compressibilityFactor = ( dG < 0 ) ? zMin : zMax;
-  }
+  CubicEOSPhaseModel< EOS_TYPE >::computeCompressibilityFactor( numComps,
+                                                                composition,
+                                                                kij.toSliceConst(),
+                                                                aPureCoefficient,
+                                                                bPureCoefficient,
+                                                                aMixtureCoefficient,
+                                                                bMixtureCoefficient,
+                                                                compressibilityFactor );
 }
 
 template< SoreideWhitsonPhaseType PHASE_TYPE, typename EOS_TYPE >
