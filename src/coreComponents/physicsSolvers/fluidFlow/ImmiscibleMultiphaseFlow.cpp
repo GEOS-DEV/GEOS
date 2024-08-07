@@ -21,6 +21,7 @@
 
 #include "FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
+#include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
@@ -48,74 +49,78 @@ using namespace constitutive;
 using namespace fields::immiscibleMultiphaseFlow;
 
 // Fluid model for isothermal T = 175 oC
-double co2_viscosity(double P) 
+real64 co2_viscosity(real64 P) 
 {
-  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  P = P / 1000000.0; // check whether GEOS uses Pa or MPa
   return ( -1.5596 * pow(10, -10) * pow(P, 3) + 1.94571 * pow(10, -8) * pow(P, 2) + 6.77304 * pow(10, -8) * P + 0.0000214166); // [Pa.s]
 }
 
-double co2_dviscosity(double P)
+real64 co2_dviscosity(real64 P)
 {
-  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  P = P / 1000000.0; // check whether GEOS uses Pa or MPa
   return ( -4.6788 * pow(10, -10) * pow(P, 2) + 3.89142 * pow(10, -8) * P + 6.77304 * pow(10, -8)); // [Pa.s/MPa]
 }
 
-double co2_density(double P)
+real64 co2_density(real64 P)
 {
-  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  P = P / 1000000.0; // check whether GEOS uses Pa or MPa
   return ( -0.0000126691 * pow(P, 3) - 0.118131 * pow(P, 2) + 19.6211 * P - 52.0635 ); // [kg/m3]
 }
 
-double co2_ddensity(double P)
+real64 co2_ddensity(real64 P)
 {
-  P = P / 1000000; // check whether GEOS uses Pa or MPa
+  P = P / 1000000.0; // check whether GEOS uses Pa or MPa
   return ( -0.0000380073 * pow(P, 2) - 0.236262 * P + 19.6211 ); // [kg/m3.MPa]
 }
 
-double water_viscosity(double P) {
+real64 water_viscosity(real64 P) 
+{
   return ( 0.000164 ); // [Pa.s]
 }
 
-double water_dviscosity(double P) {
+real64 water_dviscosity(real64 P) 
+{
   return ( 0.0 ); // [Pa.s/MPa]
 }
 
-double water_density(double P) {
-  P = P / 1000000; // check whether GEOS uses Pa or MPa
+real64 water_density(real64 P) 
+{
+  P = P / 1000000.0; // check whether GEOS uses Pa or MPa
   return ( 0.55125 * P + 893.06044); // [kg/m3]
 }
 
-double water_ddensity(double P) {  
+real64 water_ddensity(real64 P) 
+{  
   return ( 0.55125 ); // [kg/m3.MPa]
 }
 
 // Rock-Fluid model
-double co2_relperm(double S)
+real64 co2_relperm(real64 S)
 {
   return ( pow(1 - S, 2) ); // [-]
 }
 
-double co2_drelperm(double S)
+real64 co2_drelperm(real64 S)
 {
-  return ( 2 * (1 - S) ); // [-]
+  return ( 2.0 * (1 - S) ); // [-]
 }
 
-double water_relperm(double S)
+real64 water_relperm(real64 S)
 {
   return ( pow(S, 6) ); // [-]
 }
 
-double water_drelperm(double S)
+real64 water_drelperm(real64 S)
 {
-  return ( 6 * pow(S, 5) ); // [-]
+  return ( 6.0 * pow(S, 5) ); // [-]
 }
 
-double co2_cappress(double S) 
+real64 co2_cappress(real64 S) 
 {
   return ( 0.00049309 * pow(S, -2.34806) ); // [MPa] check whether GEOS uses Pa or MPa
 }
 
-double co2_dcappress(double S) 
+real64 co2_dcappress(real64 S) 
 {
   return ( -0.00021 * pow(S, -1.34806) ); // [MPa] check whether GEOS uses Pa or MPa
 }
@@ -606,6 +611,58 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                   arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
+
+  GEOS_MARK_FUNCTION;
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+    {
+      FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >(  dofManager.rankOffset(),
+                                                                                  dofKey,
+                                                                                  getName(),
+                                                                                  mesh.getElemManager(),
+                                                                                  stencilWrapper,
+                                                                                  dt,
+                                                                                  localMatrix.toViewConstSizes(),
+                                                                                  localRhs.toView() );
+    } ); 
+  } );                                                           
+
+}
+
+void ImmiscibleMultiphaseFlow::setupDofs( DomainPartition const & domain,
+                                            DofManager & dofManager ) const
+{
+  GEOS_UNUSED_VAR(domain, dofManager);
+  //// add a field for the cell-centered degrees of freedom
+  //dofManager.addField( viewKeyStruct::elemDofFieldString(),
+  //                     FieldLocation::Elem,
+  //                     m_numDofPerCell,
+  //                     getMeshTargets() );
+
+  //// this call with instruct GEOS to reorder the dof numbers
+  //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
+  //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
+
+  //// for the volume balance equation, disable global coupling
+  //// this equation is purely local (not coupled to neighbors or other physics)
+  //dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
+  //                                             m_numComponents );
+
+
+  //NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  //FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  //FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  //dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), fluxApprox );
 }
 
 // Ryan: Looks like this will need to be overwritten as well...
