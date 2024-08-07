@@ -217,6 +217,72 @@ public:
     }
   }
 
+  void testCompressibilityFactor( ParamType const & testData )
+  {
+    auto componentProperties = this->m_fluid->createKernelWrapper();
+    real64 const pressure = std::get< 0 >( testData );
+    real64 const temperature = std::get< 1 >( testData );
+    real64 const salinity = std::get< 2 >( testData );
+    stackArray1d< real64, numComps > composition;
+    TestFluid< NC >::createArray( composition, std::get< 3 >( testData ));
+
+    real64 compressibilityFactor = 0.0;
+    stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
+
+    SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+    computeCompressibilityFactor( numComps,
+                                  pressure,
+                                  temperature,
+                                  composition.toSliceConst(),
+                                  componentProperties,
+                                  salinity,
+                                  compressibilityFactor );
+
+    SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+    computeCompressibilityFactor( numComps,
+                                  pressure,
+                                  temperature,
+                                  composition.toSliceConst(),
+                                  componentProperties,
+                                  salinity,
+                                  compressibilityFactor,
+                                  compressibilityFactorDerivs.toSlice() );
+
+    auto computeCompressibility = [&]( real64 p, real64 t, auto z ) -> real64 {
+      real64 zfactor = 0.0;
+      SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::computeCompressibilityFactor( numComps, p, t, z, componentProperties, salinity, zfactor );
+      return zfactor;
+    };
+
+    real64 const dp = 1.0e-4 * pressure;
+    internal::testNumericalDerivative( pressure, dp, compressibilityFactorDerivs[Deriv::dP],
+                                       [&]( real64 p )
+    {
+      return computeCompressibility( p, temperature, composition.toSliceConst() );
+    }, absTol, relTol );
+
+    real64 const dT = 1.0e-6 * temperature;
+    internal::testNumericalDerivative( temperature, dT, compressibilityFactorDerivs[Deriv::dT],
+                                       [&]( real64 t )
+    {
+      return computeCompressibility( pressure, t, composition.toSliceConst() );
+    }, absTol, relTol );
+
+    real64 const dz = 1.0e-7;
+    for( integer kc = 0; kc < numComps; kc++ )
+    {
+      internal::testNumericalDerivative( 0.0, dz, compressibilityFactorDerivs[Deriv::dC+kc],
+                                         [&]( real64 z )
+      {
+        real64 const z_old = composition[kc];
+        composition[kc] += z;
+        real64 zfactor = computeCompressibility( pressure, temperature, composition.toSliceConst() );
+        composition[kc] = z_old;
+        return zfactor;
+      }, absTol, relTol );
+    }
+  }
+
 protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
@@ -249,6 +315,10 @@ TEST_P( PengRobinsonAqueous4, testMixtureCoefficients )
 {
   testMixtureCoefficients( GetParam() );
 }
+TEST_P( PengRobinsonAqueous4, testCompressibilityFactor )
+{
+  testCompressibilityFactor( GetParam() );
+}
 TEST_P( PengRobinsonVapour4, testPureCoefficients )
 {
   testPureCoefficients( GetParam() );
@@ -256,6 +326,10 @@ TEST_P( PengRobinsonVapour4, testPureCoefficients )
 TEST_P( PengRobinsonVapour4, testMixtureCoefficients )
 {
   testMixtureCoefficients( GetParam() );
+}
+TEST_P( PengRobinsonVapour4, testCompressibilityFactor )
+{
+  testCompressibilityFactor( GetParam() );
 }
 
 template< int NC >
