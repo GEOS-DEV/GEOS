@@ -62,6 +62,7 @@ def main():
 	xmlFile1Path = "../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml"
 	xmlFile2Path = "../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml"
 
+
 	hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
 	stress_gradients = inputStressGradientsMPa(0.17,0.27,0.24,0.1)
 	sxx_grad = stress_gradients["stressXX"]
@@ -78,14 +79,23 @@ def main():
 	traction = hydromechanicalParameters["traction"]
 	gravity = 9.81 
 	
+	# rename this file to the name of your Paraview output file
 	file = open("simulation_result_0.csv")
 	csvreader = csv.reader(file)
 	header = next(csvreader)
+	header_index = {column_name: index for index, column_name in enumerate(header)}
 
 	rows = []
 	for row in csvreader:
 		rows.append(row)
 	file.close() 
+
+	zloc_index = header_index["elementCenter:2"]
+	pressure_index = header_index["pressure"]
+	tsxx_index = header_index["rockSolid_stress:0"] # the solidModelName="rockSolid" has been defined in the gravityInducedStress_initialization_base.xml file, please change if you have a different solidModelName 
+	tsyy_index = header_index["rockSolid_stress:1"]
+	tszz_index = header_index["rockSolid_stress:2"]
+	
 
 	rows = np.array(rows)
 	zloc_0 = np.empty(len(rows[:,1]))
@@ -94,11 +104,11 @@ def main():
 	tsyy_0 = np.empty(len(rows[:,1]))
 	tszz_0 = np.empty(len(rows[:,1]))
 	for i in range(0,len(rows[:,1])):
-		zloc_0[i]=-(float(rows[i,2]))
-		pressure_0[i]=float(rows[i,3])		
-		tsxx_0[i]=-(float(rows[i,4])-BiotCoefficient*pressure_0[i])/1.0e6
-		tsyy_0[i]=-(float(rows[i,5])-BiotCoefficient*pressure_0[i])/1.0e6
-		tszz_0[i]=-(float(rows[i,6])-BiotCoefficient*pressure_0[i])/1.0e6
+		zloc_0[i]=-(float(rows[i,zloc_index]))
+		pressure_0[i]=float(rows[i,pressure_index])		
+		tsxx_0[i]=-(float(rows[i,tsxx_index])-BiotCoefficient*pressure_0[i])/1.0e6
+		tsyy_0[i]=-(float(rows[i,tsyy_index])-BiotCoefficient*pressure_0[i])/1.0e6
+		tszz_0[i]=-(float(rows[i,tszz_index])-BiotCoefficient*pressure_0[i])/1.0e6
 
 	
 	z_analytical= np.linspace(0, 1000, 100)
