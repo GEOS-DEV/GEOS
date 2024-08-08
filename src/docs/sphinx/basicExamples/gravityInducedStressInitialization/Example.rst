@@ -131,7 +131,7 @@ In the ``Tasks`` section, ``SinglePhasePoromechanicsInitialization`` tasks are d
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
     
-The initialization is triggered into action using the ``Event`` management section, where the ``soloEvent`` function calls the task at the target time (in this case -1e10\u00A0s).
+The initialization is triggered into action using the ``Event`` management section, where the ``soloEvent`` function calls the task at the target time (in this case -1e10s).
  
 .. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
     :language: xml
@@ -197,7 +197,7 @@ The parameters used in the simulation are summarized in the following table.
 Inspecting Results
 ---------------------------------
 
-In the example, we request vtk output files for time-series (time history). We use paraview to visualize the outcome at the time 0\u00A0s.
+In the example, we request vtk output files for time-series (time history). We use paraview to visualize the outcome at the time 0s.
 The following figure shows the final gradient of pressure and of the effective vertical stress after initialization is completed.
 
 .. _problemInitializationPres:

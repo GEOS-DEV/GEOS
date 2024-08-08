@@ -67,7 +67,7 @@ In addition to generating the files listed above, the script prints out the resu
 Inspecting Results
 ---------------------------------
 
-In the example, we request vtk output files for time-series (time history). We use Python scripts to visualize the outcome at the time 0\u00A0s.
+In the example, we request vtk output files for time-series (time history). We use Python scripts to visualize the outcome at the time 0s.
 The following figure shows the final gradient of pressure and of the effective vertical stress after initialization is completed.
 
 .. _problemInitializationPres:

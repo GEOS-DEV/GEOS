@@ -51,7 +51,7 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
 
 def main():
 	# File path
- 	xmlFile1Path = "../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml"
+	xmlFile1Path = "../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml"
 	xmlFile2Path = "../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml"
 
 	hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
