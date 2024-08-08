@@ -77,13 +77,22 @@ DECLARE_FIELD( phaseMobility,
                WRITE_AND_READ,
                "Phase mobility" );
 
+DECLARE_FIELD( dPhaseVolumeFraction,
+               "dPhaseVolumeFraction",
+               array3dLayoutPhase_dS,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
+
 DECLARE_FIELD( dPhaseMobility,
                "dPhaseMobility",
                array3dLayoutPhase_dS,
                0,
                NOPLOT,
                NO_WRITE,
-               "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
+               "Derivative of phase mobility with respect to pressure, temperature, global component density" );
+
 
 DECLARE_FIELD( phaseOutflux,
                "phaseOutflux",
