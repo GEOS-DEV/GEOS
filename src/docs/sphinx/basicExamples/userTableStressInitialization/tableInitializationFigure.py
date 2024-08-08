@@ -53,7 +53,7 @@ def inputStressGradientsMPa(stressXX=None, stressYY=None, stressZZ=None,porePres
         'stressXX': stressXX,
         'stressYY': stressYY,
         'stressZZ': stressZZ,
-		'porePressure': porePressure
+	'porePressure': porePressure
     }
     return stress_gradients 
 
@@ -131,13 +131,13 @@ def main():
 
         
 	plt.plot(tsxx_0[::N1], zloc_0[::N1], 'o', color=cmap(0), markersize=msize, alpha=malpha, mec=cmap(0), fillstyle='none', mew=mew, label= 'Sxx_Total_GEOS')
-	plt.plot(sxx_analtyical, z_analytical, lw=lw, alpha=0.8, color='b', linestyle= ':', label='Sxx_Total_Analytical')
+	plt.plot(sxx_analtyical, z_analytical, lw=lw, alpha=0.8, color='b', linestyle= ':', label='Sxx_Total_Reference')
 	plt.plot(tsyy_0[::N1], zloc_0[::N1], 's', color=cmap(1), markersize=msize, alpha=malpha, mec=cmap(1), fillstyle='none', mew=mew, label= 'Syy_Total_GEOS')
-	plt.plot(syy_analtyical, z_analytical, lw=lw, alpha=0.8, color='orange', linestyle= ':', label='Syy_Total_Analytical')
+	plt.plot(syy_analtyical, z_analytical, lw=lw, alpha=0.8, color='orange', linestyle= ':', label='Syy_Total_Reference')
 	plt.plot(tszz_0[::N1], zloc_0[::N1], 'd', color=cmap(2), markersize=msize, alpha=malpha, mec=cmap(2), fillstyle='none', mew=mew, label= 'Szz_Total_GEOS')
-	plt.plot(szz_analtyical, z_analytical, lw=lw, alpha=0.8, color='y', linestyle= ':', label='Szz_Total_Analytical')
+	plt.plot(szz_analtyical, z_analytical, lw=lw, alpha=0.8, color='y', linestyle= ':', label='Szz_Total_Reference')
 	plt.plot(pressure_0[::N1]/1.0e6, zloc_0[::N1], 'x', color=cmap(3), markersize=msize, alpha=malpha, mec=cmap(3), fillstyle='none', mew=mew, label= 'Pore Pressure_GEOS')
-	plt.plot(pp_analytical, z_analytical, lw=lw, alpha=0.8, color='r', linestyle= ':', label='Pore Pressure_Analytical')
+	plt.plot(pp_analytical, z_analytical, lw=lw, alpha=0.8, color='r', linestyle= ':', label='Pore Pressure_Reference')
 	plt.xlabel('Total Stresses [MPa]', size=fsize, weight="bold")
 	plt.ylabel('Depth [m]', size=fsize, weight="bold")
 	plt.legend(loc='upper right',fontsize=fsize*0.5)

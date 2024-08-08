@@ -2,13 +2,13 @@
 
 
 #################################################################################
- Verification of User Defined Stress Initialization
+ Model Initialization: User Defined Tables
 #################################################################################
 
 
 **Context**
 
-This example uses the same reservoir model as the gravity-induced hydrostatic stress initialization case (see :ref:`gravityinducedhydrostaticinitialization`). Here, we provide the stress and pore pressure gradients for a reservoir under an hydrostatic pressure equilibrium and then request the simulator to perform an initialization of the stresses in every element in the model. The problem is solved by using the single-phase poromechanics solver (see :ref:`PoroelasticSolver`) in GEOS.
+This example uses the same reservoir model as the gravity-induced hydrostatic stress initialization case (see :ref:`gravityinducedhydrostaticinitialization`). Instead of using the gravity based equilibrium initialization procedure, we collect the interpretated stress and pore pressure gradients for a reservoir and then request the simulator to perform an initialization with the provided pressure and stresses in every element in the model. The problem is solved by using the single-phase poromechanics solver (see :ref:`PoroelasticSolver`) in GEOS.
 
 **Input file**
 
@@ -20,13 +20,28 @@ The xml input files for the test case are located at:
   inputFiles/initialization/userdefinedStress_initialization_benchmark.xml
 
 
+This example also uses a set of table files located at:
+
+.. code-block:: console
+
+  inputFiles/initialization/userTables/
+
+
+Last, a Python script for post-processing the results is provided:
+
+.. code-block:: console
+
+  src/docs/sphinx/basicExamples/userTableStressInitialization/tableInitializationFigure.py
+
+
 -------------------------------------
 Stress Initialization Table Functions
 -------------------------------------
 
 The major distinction between this "user-defined" initialization and the "gravity-based" initialization is that in the user-defined case, the user provides the following additional information:
 
-  - The effective stresses at the top and base of the model.
+  - The distribution of effective stresses and pore pressure across the domain, with their gradients assumed constant along the depth in this example. We use a table function (see :ref:`FunctionManager`) to specify pressure and stress conditions throughout the area.
+
 
 This is shown in the following tags under the ``FieldSpecifications`` section below
 
@@ -50,7 +65,7 @@ A Python script to generate these files is provided:
 
   src/docs/sphinx/basicExamples/initialization/genetrateTable.py
 
-In addition to generating the files listed above, the script prints out the resultant fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags respectively, as shown below:
+In addition to generating the files listed above, the script prints out the corresponding fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags respectively, as shown below:
 
 .. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
@@ -67,7 +82,7 @@ In addition to generating the files listed above, the script prints out the resu
 Inspecting Results
 ---------------------------------
 
-In the example, we request vtk output files for time-series (time history). We use Python scripts to visualize the outcome at the time 0s.
+In the example, we request vtk output files for time-series (time history). We use paraview to visualize the outcome at the time 0s.
 The following figure shows the final gradient of pressure and of the effective vertical stress after initialization is completed.
 
 .. _problemInitializationPres:
@@ -86,7 +101,7 @@ The following figure shows the final gradient of pressure and of the effective v
 
    Simulation result of effective vertical stress
 
-The figure below shows the comparisons between the numerical predictions (marks) and the corresponding user-provided stress gradients.
+The figure below shows the comparisons between the numerical predictions (marks) and the corresponding user-provided stress gradients. Note that anisotropic horizontal stresses are obtained through this intialization procedure; however, mechanical equilibrium might not be guaranteed, especially for the heterogeneous models.
 
 .. plot:: docs/sphinx/basicExamples/userTableStressInitialization/tableInitializationFigure.py
 

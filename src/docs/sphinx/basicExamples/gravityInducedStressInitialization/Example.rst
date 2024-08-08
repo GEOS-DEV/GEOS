@@ -2,7 +2,7 @@
 
 
 #################################################################################
- Verification of a Gravity Induced Hydrostatic Stress Initialization
+ Model Initialization: Hydrostatic and Mechanical Equilibrium
 #################################################################################
 
 
