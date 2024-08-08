@@ -586,6 +586,7 @@ public:
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
     static constexpr char const * meshTargetsString() { return "meshTargets"; }
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+    static constexpr char const * noLinearSolveFailString() { return "noLinearSolveFail"; }
   };
 
   struct groupKeyStruct
@@ -785,6 +786,9 @@ protected:
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
+
+  /// behavior in case of linear solver failure
+  bool m_noLinearSolveFail;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
