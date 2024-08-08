@@ -167,10 +167,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postInputInitialization()
 }
 
 template< typename POROMECHANICS_SOLVER >
-real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real64 const & time_n,
-                                                                            real64 const & dt,
-                                                                            int const cycleNumber,
-                                                                            DomainPartition & domain )
+real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSimulationStep( real64 const & time_n,
+                                                                                real64 const & dt,
+                                                                                int const cycleNumber,
+                                                                                DomainPartition & domain )
 {
   if( cycleNumber == 0 && time_n <= 0 )
   {
@@ -208,7 +208,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
 
-    if( !this->m_performStressInitialization && m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+    if( !this->m_performStressInitialization && m_surfaceGenerator->simulationStep( time_n, dt, cycleNumber, domain ) > 0 )
     {
       locallyFractured = 1;
     }

@@ -131,10 +131,10 @@ public:
    * This function is the entry point to perform a solver step. The choice of time integration
    * method is determined in this function, and the appropriate step function is called.
    */
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition & domain );
+  virtual real64 simulationStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 DomainPartition & domain );
 
   /**
    * @brief function to set the next time step size

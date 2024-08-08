@@ -160,10 +160,10 @@ public:
 
   // (requires not to be private because it is called from GEOS_HOST_DEVICE method)
   virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain ) override;
+  simulationStep( real64 const & time_n,
+                  real64 const & dt,
+                  integer const cycleNumber,
+                  DomainPartition & domain ) override;
 
   virtual void
   cleanup( real64 const time_n,

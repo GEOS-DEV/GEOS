@@ -40,7 +40,7 @@ public:
   static string catalogName() { return "NewComponent"; }
   string getCatalogName() const override { return catalogName(); }
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SimulationStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;

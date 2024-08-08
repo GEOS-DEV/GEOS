@@ -214,10 +214,10 @@ protected:
 
 private:
 
-  virtual real64 fullyCoupledSolverStep( real64 const & time_n,
-                                         real64 const & dt,
-                                         int const cycleNumber,
-                                         DomainPartition & domain ) override final;
+  virtual real64 fullyCoupledSimulationStep( real64 const & time_n,
+                                             real64 const & dt,
+                                             int const cycleNumber,
+                                             DomainPartition & domain ) override final;
 
 
   /**

@@ -458,10 +458,10 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
-                                                real64 const & dt,
-                                                const int cycleNumber,
-                                                DomainPartition & domain )
+real64 SolidMechanicsLagrangianFEM::simulationStep( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    const int cycleNumber,
+                                                    DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
@@ -472,7 +472,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
 
     if( m_surfaceGenerator != nullptr )
     {
-      m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain );
+      m_surfaceGenerator->simulationStep( time_n, dt, cycleNumber, domain );
     }
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic ||
@@ -503,7 +503,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       {
         int locallyFractured = 0;
         globallyFractured = 0;
-        if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+        if( m_surfaceGenerator->simulationStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }

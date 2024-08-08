@@ -140,10 +140,10 @@ void PhaseFieldDamageFEM::postInputInitialization()
   // m_linearSolverParameters.amg.coarseType = "direct";
 }
 
-real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
-                                        real64 const & dt,
-                                        const int cycleNumber,
-                                        DomainPartition & domain )
+real64 PhaseFieldDamageFEM::simulationStep( real64 const & time_n,
+                                            real64 const & dt,
+                                            const int cycleNumber,
+                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;

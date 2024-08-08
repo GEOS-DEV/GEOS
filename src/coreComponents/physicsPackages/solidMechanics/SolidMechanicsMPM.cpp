@@ -512,18 +512,18 @@ bool SolidMechanicsMPM::execute( real64 const time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  m_nextDt = solverStep( time_n,
-                         dt,
-                         cycleNumber,
-                         domain );
+  m_nextDt = simulationStep( time_n,
+                             dt,
+                             cycleNumber,
+                             domain );
 
   return false;
 }
 
-real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
-                                      real64 const & dt,
-                                      const int cycleNumber,
-                                      DomainPartition & domain )
+real64 SolidMechanicsMPM::simulationStep( real64 const & time_n,
+                                          real64 const & dt,
+                                          const int cycleNumber,
+                                          DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
@@ -536,7 +536,7 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
 
     if( surfaceGenerator!=nullptr )
     {
-      surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain );
+      surfaceGenerator->simulationStep( time_n, dt, cycleNumber, domain );
     }
   }
   else

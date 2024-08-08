@@ -270,10 +270,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {}
 
-real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                             real64 const & GEOS_UNUSED_PARAM( dt ),
-                                             const int GEOS_UNUSED_PARAM( cycleNumber ),
-                                             DomainPartition & domain )
+real64 EmbeddedSurfaceGenerator::simulationStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                 real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                 const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                                 DomainPartition & domain )
 {
   real64 rval = 0;
   /*

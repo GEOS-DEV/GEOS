@@ -386,10 +386,10 @@ void WavePackageBase::postInputInitialization()
 
 }
 
-real64 WavePackageBase::solverStep( real64 const & time_n,
-                                    real64 const & dt,
-                                    integer const cycleNumber,
-                                    DomainPartition & domain )
+real64 WavePackageBase::simulationStep( real64 const & time_n,
+                                        real64 const & dt,
+                                        integer const cycleNumber,
+                                        DomainPartition & domain )
 {
   return explicitStep( time_n, dt, cycleNumber, domain );
 }

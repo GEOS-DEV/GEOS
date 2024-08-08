@@ -215,22 +215,22 @@ public:
   }
 
   /// This method is meant to be kept final. Derived CoupledSolvers are expected, if needed,
-  /// to override fullyCoupledSolverStep and/or sequentiallyCoupledSolverStep.
+  /// to override fullyCoupledSimulationStep and/or sequentiallyCoupledSimulationStep.
   real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override final
+  simulationStep( real64 const & time_n,
+                  real64 const & dt,
+                  int const cycleNumber,
+                  DomainPartition & domain ) override final
   {
     GEOS_MARK_FUNCTION;
 
     if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
     {
-      return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
+      return fullyCoupledSimulationStep( time_n, dt, cycleNumber, domain );
     }
     else if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
     {
-      return sequentiallyCoupledSolverStep( time_n, dt, cycleNumber, domain );
+      return sequentiallyCoupledSimulationStep( time_n, dt, cycleNumber, domain );
     }
     else
     {
@@ -399,12 +399,12 @@ protected:
    * @param domain the domain partition
    * @return real64 size of the accepted timestep
    */
-  virtual real64 fullyCoupledSolverStep( real64 const & time_n,
-                                         real64 const & dt,
-                                         int const cycleNumber,
-                                         DomainPartition & domain )
+  virtual real64 fullyCoupledSimulationStep( real64 const & time_n,
+                                             real64 const & dt,
+                                             int const cycleNumber,
+                                             DomainPartition & domain )
   {
-    return PhysicsPackageBase::solverStep( time_n, dt, cycleNumber, domain );
+    return PhysicsPackageBase::simulationStep( time_n, dt, cycleNumber, domain );
   }
 
   /**
@@ -417,10 +417,10 @@ protected:
    * @param domain the domain partition
    * @return real64 size of the accepted timestep
    */
-  virtual real64 sequentiallyCoupledSolverStep( real64 const & time_n,
-                                                real64 const & dt,
-                                                int const cycleNumber,
-                                                DomainPartition & domain )
+  virtual real64 sequentiallyCoupledSimulationStep( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    int const cycleNumber,
+                                                    DomainPartition & domain )
   {
     GEOS_MARK_FUNCTION;
 

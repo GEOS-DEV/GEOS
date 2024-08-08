@@ -36,7 +36,7 @@ NewComponent::~NewComponent()
 
 
 
-real64 NewComponent::solverStep( real64 const & /*time_n*/,
+real64 NewComponent::simulationStep( real64 const & /*time_n*/,
                real64 const & /*dt*/,
                integer const /*cycleNumber*/,
                DomainPartition & /*domain*/ )

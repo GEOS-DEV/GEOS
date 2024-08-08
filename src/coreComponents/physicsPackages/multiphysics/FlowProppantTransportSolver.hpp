@@ -89,10 +89,10 @@ public:
 
 private:
 
-  real64 sequentiallyCoupledSolverStep( real64 const & time_n,
-                                        real64 const & dt,
-                                        int const cycleNumber,
-                                        DomainPartition & domain ) override final;
+  real64 sequentiallyCoupledSimulationStep( real64 const & time_n,
+                                            real64 const & dt,
+                                            int const cycleNumber,
+                                            DomainPartition & domain ) override final;
 
   /**
    * @brief Utility function to perform the pre-step Update

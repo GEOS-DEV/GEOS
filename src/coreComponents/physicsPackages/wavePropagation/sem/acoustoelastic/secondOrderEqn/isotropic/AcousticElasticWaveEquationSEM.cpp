@@ -127,10 +127,10 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   } );
 }
 
-real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
-                                                   real64 const & dt,
-                                                   int const cycleNumber,
-                                                   DomainPartition & domain )
+real64 AcousticElasticWaveEquationSEM::simulationStep( real64 const & time_n,
+                                                       real64 const & dt,
+                                                       int const cycleNumber,
+                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 

@@ -128,7 +128,7 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) con
   arrayView1d< real64 > const sig   = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
   arrayView1d< real64 > const tau   = subRegion.getField< inducedSeismicity::projectedShearTraction >();
 
-  // Retrieve stress state computed by m_stressSolver, called in solverStep
+  // Retrieve stress state computed by m_stressSolver, called in simulationStep
   string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
   SolidBase const & solidModel  = getConstitutiveModel< SolidBase >( subRegion, solidModelName );
   arrayView3d< real64 const, solid::STRESS_USD > const stress = solidModel.getStress();
@@ -214,7 +214,7 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
   // Only call initialization step before stress solver has been called for first time step
   if( cycleNumber == 0 )
   {
-    // Call solverStep of stress solver with dt=0 to initialize stresses in the matrix
+    // Call simulationStep of stress solver with dt=0 to initialize stresses in the matrix
 
     updateStresses( time_n, 0.0, cycleNumber, domain );
 
@@ -266,10 +266,10 @@ void SeismicityRate::constructFaultStressProjectionTensors( real64 (& faultNorma
   faultShearProjectionTensor[5] = m_faultShearDirection[0]*m_faultNormalDirection[1] + m_faultShearDirection[1]*m_faultNormalDirection[0];
 }
 
-real64 SeismicityRate::solverStep( real64 const & time_n,
-                                   real64 const & dt,
-                                   const int cycleNumber,
-                                   DomainPartition & domain )
+real64 SeismicityRate::simulationStep( real64 const & time_n,
+                                       real64 const & dt,
+                                       const int cycleNumber,
+                                       DomainPartition & domain )
 {
   // Save initial stress state on pre-defined fault orientations to field variables
   if( cycleNumber == 0 )
@@ -311,7 +311,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
   {
 
     // 1. Solve the momentum balance
-    real64 const dtStress =  m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
+    real64 const dtStress =  m_stressSolver->simulationStep( time_n, dt, cycleNumber, domain );
 
     // 2. Loop over subRegions to update stress on faults
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

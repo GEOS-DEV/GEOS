@@ -464,10 +464,10 @@ void SurfaceGenerator::postRestartInitialization()
 }
 
 
-real64 SurfaceGenerator::solverStep( real64 const & time_n,
-                                     real64 const & dt,
-                                     const int GEOS_UNUSED_PARAM( cycleNumber ),
-                                     DomainPartition & domain )
+real64 SurfaceGenerator::simulationStep( real64 const & time_n,
+                                         real64 const & dt,
+                                         const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                         DomainPartition & domain )
 {
   int rval = 0;
 

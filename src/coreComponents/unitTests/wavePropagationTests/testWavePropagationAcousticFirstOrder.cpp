@@ -186,7 +186,7 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
   // run for 1s (20 steps)
   for( int i=0; i<20; i++ )
   {
-    propagator->solverStep( time_n, dt, i, domain );
+    propagator->simulationStep( time_n, dt, i, domain );
     time_n += dt;
   }
   // cleanup (triggers calculation of the remaining seismograms data points)

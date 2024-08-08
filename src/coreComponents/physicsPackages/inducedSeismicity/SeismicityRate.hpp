@@ -61,10 +61,10 @@ public:
     static constexpr char const * backgroundStressingRateString() { return "backgroundStressingRate"; }
   };
 
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition & domain ) override final;
+  virtual real64 simulationStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 DomainPartition & domain ) override final;
 
   /**
    * @brief single step advance in computing the seismicity rate based on

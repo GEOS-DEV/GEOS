@@ -74,7 +74,7 @@ public:
                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
                         DomainPartition & domain ) override
   {
-    solverStep( time_n, dt, cycleNumber, domain );
+    simulationStep( time_n, dt, cycleNumber, domain );
     return false;
   }
 
@@ -86,10 +86,10 @@ public:
    * @return ...
    *
    */
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition & domain ) override;
+  virtual real64 simulationStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 DomainPartition & domain ) override;
 
   /**@}*/
 

@@ -211,10 +211,10 @@ bool PhysicsPackageBase::registerCallback( void * func, const std::type_info & f
   return false;
 }
 
-real64 PhysicsPackageBase::solverStep( real64 const & time_n,
-                                       real64 const & dt,
-                                       const integer cycleNumber,
-                                       DomainPartition & domain )
+real64 PhysicsPackageBase::simulationStep( real64 const & time_n,
+                                           real64 const & dt,
+                                           const integer cycleNumber,
+                                           DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -256,10 +256,10 @@ bool PhysicsPackageBase::execute( real64 const time_n,
     // reset number of nonlinear and linear iterations
     m_solverStatistics.initializeTimeStepStatistics();
 
-    real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
-                                          nextDt,
-                                          cycleNumber,
-                                          domain );
+    real64 const dtAccepted = simulationStep( time_n + (dt - dtRemaining),
+                                              nextDt,
+                                              cycleNumber,
+                                              domain );
 
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();

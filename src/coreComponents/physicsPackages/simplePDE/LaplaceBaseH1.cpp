@@ -91,13 +91,13 @@ void LaplaceBaseH1::registerDataOnMesh( Group & meshBodies )
    PhysicsPackageBase.  From now on, we oscillate between specific Laplace solver operations if implemented
    and more generic PhysicsPackageBase operations.  The initial values of the solver step are all at time_n,
    and the solver attempts to advance by a time step of dt.  This dt time step size is specified
-   initially by the user and the solverStep method also returns its value.
+   initially by the user and the simulationStep method also returns its value.
  */
 
-real64 LaplaceBaseH1::solverStep( real64 const & time_n,
-                                  real64 const & dt,
-                                  const int cycleNumber,
-                                  DomainPartition & domain )
+real64 LaplaceBaseH1::simulationStep( real64 const & time_n,
+                                      real64 const & dt,
+                                      const int cycleNumber,
+                                      DomainPartition & domain )
 {
   return this->linearImplicitStep( time_n, dt, cycleNumber, domain );
 }
