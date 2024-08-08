@@ -290,7 +290,7 @@ real64 SeismicityRate::simulationStep( real64 const & time_n,
                                                      ElementSubRegionBase & subRegion )
     {
       // solve for the seismicity rate given new stresses on faults
-      integralSolverStep( time_n, dtStress, subRegion );
+      computeSeismicityRate( time_n, dtStress, subRegion );
 
       // save old state
       saveOldState( subRegion );
@@ -396,7 +396,7 @@ void SeismicityRate::saveOldState( ElementSubRegionBase & subRegion ) const
 }
 
 // Solve integral solution to ODE
-void SeismicityRate::integralSolverStep( real64 const & time_n,
+void SeismicityRate::computeSeismicityRate( real64 const & time_n,
                                          real64 const & dt,
                                          ElementSubRegionBase & subRegion )
 {

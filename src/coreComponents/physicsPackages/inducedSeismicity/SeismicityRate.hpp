@@ -74,7 +74,7 @@ public:
    * @param dt time step size
    * @param subRegion ElementSubRegionBase to compute the solution in
    */
-  void integralSolverStep( real64 const & time_n,
+  void computeSeismicityRate( real64 const & time_n,
                            real64 const & dt,
                            ElementSubRegionBase & subRegion );
 
