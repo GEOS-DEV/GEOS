@@ -8,23 +8,23 @@
     "constants": [
       [
         "ExplicitSmallStrainPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ],
       [
         "ExplicitFiniteStrainPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ],
       [
         "FixedStressThermoPoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ],
       [
         "ImplicitSmallStrainNewmarkPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ],
       [
         "ImplicitSmallStrainQuasiStaticPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -55,7 +55,7 @@
         "H1_Tetrahedron_VEM_Gauss1",
         "H1_Prism5_VEM_Gauss1",
         "H1_Prism6_VEM_Gauss1",
-        "H1_Prism7_VEM_Gauss",
+        "H1_Prism7_VEM_Gauss1",
         "H1_Prism8_VEM_Gauss1",
         "H1_Prism9_VEM_Gauss1",
         "H1_Prism10_VEM_Gauss1",
@@ -71,7 +71,7 @@
     },
     "explicit": []
   },
-  "SolidMechanicsFixedStressThermPoroElasticKernels": {
+  "SolidMechanicsFixedStressThermoPoromechanicsKernels": {
     "vars": [
       "SUBREGION_TYPE",
       "CONSTITUTIVE_TYPE",
@@ -79,8 +79,24 @@
     ],
     "constants": [
       [
+        "ExplicitSmallStrainPolicy",
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
+      ],
+      [
+        "ExplicitFiniteStrainPolicy",
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
+      ],
+      [
         "FixedStressThermoPoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
+      ],
+      [
+        "ImplicitSmallStrainNewmarkPolicy",
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
+      ],
+      [
+        "ImplicitSmallStrainQuasiStaticPolicy",
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -98,7 +114,50 @@
         "H1_Tetrahedron_VEM_Gauss1",
         "H1_Prism5_VEM_Gauss1",
         "H1_Prism6_VEM_Gauss1",
-        "H1_Prism7_VEM_Gauss",
+        "H1_Prism7_VEM_Gauss1",
+        "H1_Prism8_VEM_Gauss1",
+        "H1_Prism9_VEM_Gauss1",
+        "H1_Prism10_VEM_Gauss1",
+        "Q1_Hexahedron_Lagrange_GaussLobatto",
+        "Q2_Hexahedron_Lagrange_GaussLobatto",
+        "Q3_Hexahedron_Lagrange_GaussLobatto",
+        "Q4_Hexahedron_Lagrange_GaussLobatto",
+        "Q5_Hexahedron_Lagrange_GaussLobatto",
+        "H1_Hexahedron_VEM_Gauss1",
+        "H1_Wedge_VEM_Gauss1",
+        "H1_Prism11_VEM_Gauss1"
+      ]
+    },
+    "explicit": []
+  },
+  "SolidMechanicsFixedStressThermoPoroElasticKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [
+        "FixedStressThermoPoromechanicsPolicy",
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
+      ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousSolid<ElasticIsotropic>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Pyramid_Lagrange1_Gauss5",
+        "H1_Tetrahedron_VEM_Gauss1",
+        "H1_Prism5_VEM_Gauss1",
+        "H1_Prism6_VEM_Gauss1",
+        "H1_Prism7_VEM_Gauss1",
         "H1_Prism8_VEM_Gauss1",
         "H1_Prism9_VEM_Gauss1",
         "H1_Prism10_VEM_Gauss1",
@@ -123,11 +182,11 @@
     "constants": [
       [
         "SinglePhasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ],
       [
         "MultiphasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -155,7 +214,7 @@
         "H1_Tetrahedron_VEM_Gauss1",
         "H1_Prism5_VEM_Gauss1",
         "H1_Prism6_VEM_Gauss1",
-        "H1_Prism7_VEM_Gauss",
+        "H1_Prism7_VEM_Gauss1",
         "H1_Prism8_VEM_Gauss1",
         "H1_Prism9_VEM_Gauss1",
         "H1_Prism10_VEM_Gauss1",
@@ -175,7 +234,7 @@
     "constants": [
       [
         "SinglePhasePoromechanicsEFEMPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -193,7 +252,7 @@
         "H1_Tetrahedron_VEM_Gauss1",
         "H1_Prism5_VEM_Gauss1",
         "H1_Prism6_VEM_Gauss1",
-        "H1_Prism7_VEM_Gauss",
+        "H1_Prism7_VEM_Gauss1",
         "H1_Prism8_VEM_Gauss1",
         "H1_Prism9_VEM_Gauss1",
         "H1_Prism10_VEM_Gauss1",
@@ -213,15 +272,15 @@
     "constants": [
       [
         "ThermalMultiphasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ],
       [
         "ThermalSinglePhasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ],
       [
         "ThermalSinglePhasePoromechanicsEFEMPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -239,7 +298,7 @@
         "H1_Tetrahedron_VEM_Gauss1",
         "H1_Prism5_VEM_Gauss1",
         "H1_Prism6_VEM_Gauss1",
-        "H1_Prism7_VEM_Gauss",
+        "H1_Prism7_VEM_Gauss1",
         "H1_Prism8_VEM_Gauss1",
         "H1_Prism9_VEM_Gauss1",
         "H1_Prism10_VEM_Gauss1",
@@ -259,7 +318,7 @@
     "constants": [
       [
         "ElementBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -379,7 +438,7 @@
     "constants": [
       [
         "FaceBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -420,7 +479,7 @@
     "constants": [
       [
         "DirichletFaceBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {
@@ -453,7 +512,7 @@
     "constants": [
       [
         "DirichletFaceBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOSX_BLOCK_SIZE >"
+        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
       ]
     ],
     "combinations": {

@@ -40,7 +40,6 @@ endif()
   
 if( GEOS_ENABLE_SOLIDMECHANICS )
   add_subdirectory( solidMechanics )
-  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
 endif()
 
 if( GEOS_ENABLE_SURFACEGENERATION )
@@ -78,6 +77,7 @@ foreach( kernelTemplateFile ${kernelTemplateFileList} )
                    KEY ${jsonKey}
                    HEADERS headerFiles
                    SOURCES sourceFiles )
+
   list(APPEND physicsSolvers_headers ${headerFiles})
   list(APPEND physicsSolvers_sources ${sourceFiles})
 endforeach()

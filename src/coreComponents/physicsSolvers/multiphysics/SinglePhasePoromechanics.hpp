@@ -176,12 +176,11 @@ real64 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch
 
   return finiteElement::
            regionBasedKernelApplication< parallelDevicePolicy< >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 this->solidMechanicsSolver()->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+                                         TYPE_LIST >( mesh,
+                                                      regionNames,
+                                                      this->solidMechanicsSolver()->getDiscretizationName(),
+                                                      materialNamesString,
+                                                      kernelWrapper );
 }
 
 

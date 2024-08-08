@@ -98,9 +98,9 @@ function( combinatoricLists )
     foreach(item IN LISTS ${listname})
       if( "${ARG_PREFIX}" STREQUAL "" )
         set( newprefix "${item}" )
-      else( )
+      else()
         set( newprefix "${ARG_PREFIX}${ARG_JOIN}${item}" )
-      endif( )
+      endif()
       combinatoricLists( PREFIX "${newprefix}" LISTS ${ARG_LISTS} RESULT newresult )
 
 
@@ -247,7 +247,7 @@ function(generateKernels)
 
   # Skip generation if key not found in kernel spec
   if(jsonError)
-    message(STATUS "${jsonError}, skipping kernel generation")
+    message(FATAL_ERROR "${jsonError}, skipping kernel generation")
     return()
   endif()
 
@@ -316,6 +316,8 @@ function(generateKernels)
     set(${ARG_SOURCES} ${generatedSourcesList} PARENT_SCOPE)
   endif()
 endfunction()
+
+##------------------------------------------------------------------------------
 ## geos_add_test( NAME       [name]
 ##                COMMAND    [command]
 ##                EXECUTABLE [executable] )
