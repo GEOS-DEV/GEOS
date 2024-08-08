@@ -247,7 +247,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
     ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
     arrayView3d< real64 > const
@@ -270,9 +270,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
     arrayView1d< real64 const > const normalDisplacementTolerance =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
-    arrayView1d< real64 > const & slidingTolerance =
+    arrayView1d< real64 > const slidingTolerance =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
-    arrayView1d< real64 const > const & normalTractionTolerance =
+    arrayView1d< real64 const > const  normalTractionTolerance =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
 
     arrayView1d< real64 const > const area = 
@@ -282,19 +282,20 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     penalty = subRegion.getField< fields::contact::penalty >().toView();
 
     // Set the penalty coefficients
-    // TODO: This is only temporary. The setting of penalty will be adaptive in the final version.
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), 
+                                      [ penalty, normalTractionTolerance, 
+                                        normalDisplacementTolerance, area,
+                                        dispJumpUpdPenalty ] 
+                                      GEOS_HOST_DEVICE ( localIndex const k )
     {
-
       penalty[k] [0] = normalTractionTolerance[k]/(normalDisplacementTolerance[k]*area[k] );
       penalty[k] [1] = penalty[k][0] * 1.0e-01;
-      std::cout << "penalty: " << penalty[k][0] << " " << penalty[k][1] << " " 
-                << "normalTol: " << normalDisplacementTolerance[k] << " "
-                << "slidingTol: " << slidingTolerance[k] << " "
-                << "tractionTol: " << normalTractionTolerance[k] << " "
-                << "area: " << area[k] << " "
-                << std::endl;
 
+      //GEOS_LOG_LEVEL(2,
+      //GEOS_FMT(" Element: {}  penalty: {:4.2e} nDispTol: {:4.2e} sliTol: {:4.2e} nTraTol: {:4.2e} area: {:4.2e}\n",
+      //k, penalty[k][0], normalDisplacementTolerance[k], 
+      //slidingTolerance[k], normalTractionTolerance[k], area[k] ));
+     
       LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
     } );
 
@@ -471,8 +472,11 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
     arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
 
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), 
+                                      [ deltaDispJump, 
+                                        oldDispJump, dispJump,
+                                        oldFractureState, fractureState ] 
+                                      GEOS_HOST_DEVICE ( localIndex const kfe )
     {
       LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
       LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
@@ -515,7 +519,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
     ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
@@ -704,7 +708,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
@@ -725,8 +729,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       traction_new.resize( 2, sizes );
       arrayView2d< real64 > const traction_new_v = traction_new.toView();
 
-      // TODO: Create a Kernel to update Traction
-      forAll< parallelHostPolicy >( subRegion.size(),
+      // Update Traction
+      forAll< parallelDevicePolicy<> >( subRegion.size(),
                                     [ traction_new_v, traction, penalty, 
                                       dispJump, deltaDispJump, fractureState ] ( localIndex const kfe )
       {
@@ -749,13 +753,11 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-        bool printflag = true;
-
         forAll< parallelHostPolicy >( subRegion.size(),
                                       [ &condConv, ghostRank, traction_new_v, 
                                         normalTractionTolerance, normalDisplacementTolerance, 
                                         slidingTolerance, deltaDispJump, dispJump, area,
-                                        fractureState, contactWrapper, slidingCheckTolerance, this, &printflag ] ( localIndex const kfe )
+                                        fractureState, contactWrapper, slidingCheckTolerance ] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -764,13 +766,13 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
             {
               if (fractureState[kfe] != contact::FractureState::Open)
               {
-                if (printflag)
-                {
-                  GEOS_LOG_LEVEL(2,
-                  GEOS_FMT(" Element: {}, traction_n > tol4 => open, traction_n: {:4.2e} tol4: {:4.2e}\n",
-                  kfe,traction_new_v[kfe][0], normalTractionTolerance[kfe] ));
-                  printflag = false;
-                }
+                //if (printflag)
+                //{
+                //  GEOS_LOG_LEVEL(2,
+                //  GEOS_FMT(" Element: {}, traction_n > tol4 => open, traction_n: {:4.2e} tol4: {:4.2e}\n",
+                //  kfe,traction_new_v[kfe][0], normalTractionTolerance[kfe] ));
+                //  printflag = false;
+                //}
                 condConv = false;
               }
               traction_new_v[kfe][0] = 0.0;
@@ -783,26 +785,26 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
               real64 deltaDisp = sqrt( pow( deltaDispJump[kfe][1], 2 ) + pow( deltaDispJump[kfe][2], 2 ));
               if( std::abs( dispJump[kfe][0]/area[kfe] ) > normalDisplacementTolerance[kfe] )
               {
-                if (printflag)
-                {
-                  GEOS_LOG_LEVEL(2,
-                  GEOS_FMT( " Element: {}, Stick mode and g_n > tol1 => compenetration, g_n: {:4.2e} tol1: {:4.2e}",
-                  kfe,std::abs(dispJump[kfe][0])/area[kfe], normalDisplacementTolerance[kfe] ));
-                  printflag = false;
-                }
+                //if (printflag)
+                //{
+                //  GEOS_LOG_LEVEL(2,
+                //  GEOS_FMT( " Element: {}, Stick mode and g_n > tol1 => compenetration, g_n: {:4.2e} tol1: {:4.2e}",
+                //  kfe,std::abs(dispJump[kfe][0])/area[kfe], normalDisplacementTolerance[kfe] ));
+                //  printflag = false;
+                //}
                 condConv = false;
               }
               // Case 3: it is stick and dg is greater than 0
               if( fractureState[kfe] == contact::FractureState::Stick && 
                   deltaDisp/area[kfe] > slidingTolerance[kfe] )
               {
-                if (printflag)
-                {
-                  GEOS_LOG_LEVEL(2,
-                  GEOS_FMT( " Element: {}, Stick and dg_t > tol2, dg_t: {:4.2e} tol2: {:4.2e}",
-                  kfe, deltaDisp/area[kfe], slidingTolerance[kfe] ))
-                  printflag = false;
-                }
+                //if (printflag)
+                //{
+                //  GEOS_LOG_LEVEL(2,
+                //  GEOS_FMT( " Element: {}, Stick and dg_t > tol2, dg_t: {:4.2e} tol2: {:4.2e}",
+                //  kfe, deltaDisp/area[kfe], slidingTolerance[kfe] ))
+                //  printflag = false;
+                //}
                 condConv = false;
               }
      
@@ -826,15 +828,13 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
      
               if( currentTau > (std::abs(limitTau) * (1.0 + slidingCheckTolerance)) )
               {
-                //std::cout << currentTau << " " << limitTau << " " << (1.0 + slidingCheckTolerance) << std::endl;
-
-                if (printflag)
-                {
-                  GEOS_LOG_LEVEL(2,
-                  GEOS_FMT( " Element: {}, tau > tau_lim, tau: {:4.2e} tauLim: {:4.2e}",
-                  kfe, currentTau, limitTau ))
-                  printflag = false;
-                }
+                //if (printflag)
+                //{
+                //  GEOS_LOG_LEVEL(2,
+                //  GEOS_FMT( " Element: {}, tau > tau_lim, tau: {:4.2e} tauLim: {:4.2e}",
+                //  kfe, currentTau, limitTau ))
+                //  printflag = false;
+                //}
                 condConv = false;
               }
               
@@ -871,20 +871,14 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                                                                   FaceElementSubRegion & subRegion )
       {
  
-        arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
- 
         arrayView2d< real64 > const traction_new_v = traction_new.toView();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
  
-        forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
-                                                          traction, traction_new_v ] ( localIndex const kfe )
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [ traction, traction_new_v ] ( localIndex const kfe )
         {
-          if( ghostRank[kfe] < 0 )
-          {
-            traction[kfe][0] = traction_new_v( kfe, 0 );
-            traction[kfe][1] = traction_new_v( kfe, 1 );
-            traction[kfe][2] = traction_new_v( kfe, 2 );
-          }
+          traction[kfe][0] = traction_new_v( kfe, 0 );
+          traction[kfe][1] = traction_new_v( kfe, 1 );
+          traction[kfe][2] = traction_new_v( kfe, 2 );
         } );
       } );
     } );
@@ -903,8 +897,6 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
  
         string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
         ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
- 
-        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
  
         arrayView2d< real64 > const traction_new_v = traction_new.toView();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
@@ -931,8 +923,9 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
         arrayView2d< real64 const > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
 
-        forAll< parallelHostPolicy >( subRegion.size(),
-                                      [ traction_new_v, traction, penalty, dispJump, deltaDispJump ] ( localIndex const kfe )
+        forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [ traction_new_v, traction, penalty,
+                                        dispJump, deltaDispJump ] ( localIndex const kfe )
         {
           real64 eps_N = penalty[kfe][0];
           real64 eps_T = penalty[kfe][1];
@@ -947,158 +940,152 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           using ContactType = TYPEOFREF( castedContact );
           typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
  
-          forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
-                                                            contactWrapper, 
+          forAll< parallelHostPolicy >( subRegion.size(), [ contactWrapper, 
                                                             normalTractionTolerance, slidingTolerance,
                                                             normalDisplacementTolerance,
                                                             slidingCheckTolerance,
                                                             dispJumpUpdPenalty, penalty,
                                                             fractureState, area,
                                                             dispJump, deltaDispJump,
-                                                            traction, traction_new_v, this ] ( localIndex const kfe )
+                                                            traction, traction_new_v ] ( localIndex const kfe )
           {
        
-            if( ghostRank[kfe] < 0 )
-            {
-              //integer const originalFractureState = fractureState[kfe];
 
-              // Case 1: if it is open
-              if( traction_new_v[kfe][0] >= normalTractionTolerance[kfe] )
+            // Case 1: if it is open
+            if( traction_new_v[kfe][0] >= normalTractionTolerance[kfe] )
+            {
+              fractureState[kfe] = contact::FractureState::Open;
+              traction[kfe][0] = 0.0;
+              traction[kfe][1] = 0.0;
+              traction[kfe][2] = 0.0;
+            }
+            else
+            {
+              // Case 2: If the normal stress is zero,
+              //         then the tangential stress is also zero.
+              if (std::abs(traction_new_v[kfe][0]) < normalTractionTolerance[kfe])
               {
-                //GEOS_ERROR( "Unsuported open mode! Only stick mode is supported with ALM" );
-                //std::cout << "Case 1 " << traction_new_v[kfe][0] << " " << normalTractionTolerance[kfe] << std::endl;
-                fractureState[kfe] = contact::FractureState::Open;
+
+                //GEOS_LOG_LEVEL(2,
+                //GEOS_FMT( "WARNING: The normal stress of element {} is lower than the tolerance, t_n: {:4.2e} tol: {:4.2e}",
+                //kfe, traction_new_v[kfe][0], normalTractionTolerance[kfe] ))
+                fractureState[kfe] = contact::FractureState::Slip;
                 traction[kfe][0] = 0.0;
                 traction[kfe][1] = 0.0;
                 traction[kfe][2] = 0.0;
+
+                // Update the penalty coefficient to accelerate the convergence
+                penalty[kfe][0] *= 10.0;
+                
+                real64 const eps_N_lim =  1.0e+4*normalTractionTolerance[kfe]/(normalDisplacementTolerance[kfe]*area[kfe]);
+                if (penalty[kfe][0] > eps_N_lim )
+                {
+                  //GEOS_LOG_LEVEL(2,
+                  //GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
+                  //kfe, penalty[kfe][0], eps_N_lim ))
+
+                  penalty[kfe][0] = eps_N_lim;
+                }
               }
               else
               {
-                // Case 2: If the normal stress is zero,
-                //         then the tangential stress is also zero.
-                //if (std::abs(traction_new_v[kfe][0]) < 0.001*normalTractionTolerance[kfe])
-                if (std::abs(traction_new_v[kfe][0]) < normalTractionTolerance[kfe])
+                traction[kfe][0] = traction_new_v( kfe, 0 );
+
+                // Update the penalty coefficient to accelerate the convergence
+                if ((std::abs(dispJump[kfe][0])/area[kfe] > normalDisplacementTolerance[kfe] ) && 
+                   (std::abs(dispJump[kfe][0]) > 0.25 * std::abs(dispJumpUpdPenalty[kfe][0])))
                 {
-
-                  GEOS_LOG_LEVEL(2,
-                  GEOS_FMT( "WARNING: The normal stress of element {} is lower than the tolerance, t_n: {:4.2e} tol: {:4.2e}",
-                  kfe, traction_new_v[kfe][0], normalTractionTolerance[kfe] ))
-                  fractureState[kfe] = contact::FractureState::Slip;
-                  traction[kfe][0] = 0.0;
-                  traction[kfe][1] = 0.0;
-                  traction[kfe][2] = 0.0;
-
-                  // Update the penalty coefficient to accelerate the convergence
                   penalty[kfe][0] *= 10.0;
                   
                   real64 const eps_N_lim =  1.0e+4*normalTractionTolerance[kfe]/(normalDisplacementTolerance[kfe]*area[kfe]);
-                  //real64 const eps_N_lim = 1.e+10;
                   if (penalty[kfe][0] > eps_N_lim )
                   {
-                    GEOS_LOG_LEVEL(2,
-                    GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
-                    kfe, penalty[kfe][0], eps_N_lim ))
+                    //GEOS_LOG_LEVEL(2,
+                    //GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
+                    //kfe, penalty[kfe][0], eps_N_lim ))
 
                     penalty[kfe][0] = eps_N_lim;
                   }
+                  
                 }
+       
+                real64 currentTau = sqrt( pow(traction_new_v[kfe][1], 2 ) +
+                                          pow(traction_new_v[kfe][2], 2 ) );
+       
+                real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+                real64 const limitTau =
+                  contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                     dLimitTangentialTractionNorm_dTraction );
+
+                real64 const LimitTangentialTractionNorm_TangentialTractionNorm = std::abs(limitTau) / currentTau;
+       
+                //if( originalFractureState == contact::FractureState::Stick && currentTau >= limitTau )
+                //{
+                //  currentTau *= (1.0 - slidingCheckTolerance);
+                //}
+                //else if( originalFractureState != contact::FractureState::Stick && currentTau <= limitTau )
+                //{
+                //  currentTau *= (1.0 + slidingCheckTolerance);
+                //}
+       
+                // Case 3: if it is slip
+                if( currentTau >= (std::abs(limitTau) * (1.0 + slidingCheckTolerance)) )
+                {
+                  //if( originalFractureState == contact::FractureState::Stick )
+                  //{
+                  //  fractureState[kfe] = contact::FractureState::NewSlip;
+                  //}
+                  //else
+                  //{
+                  //  fractureState[kfe] = contact::FractureState::Slip;
+                  //}
+                  fractureState[kfe] = contact::FractureState::Slip;
+       
+                  traction[kfe][1] = traction_new_v( kfe, 1 ) * LimitTangentialTractionNorm_TangentialTractionNorm;
+                  traction[kfe][2] = traction_new_v( kfe, 2 ) * LimitTangentialTractionNorm_TangentialTractionNorm;
+
+                }
+                // Case 4: if it is stick
                 else
                 {
-                  traction[kfe][0] = traction_new_v( kfe, 0 );
-
+                  fractureState[kfe] = contact::FractureState::Stick;
+                  traction[kfe][1] = traction_new_v( kfe, 1 );
+                  traction[kfe][2] = traction_new_v( kfe, 2 );
+       
                   // Update the penalty coefficient to accelerate the convergence
-                  if ((std::abs(dispJump[kfe][0])/area[kfe] > normalDisplacementTolerance[kfe] ) && 
-                     (std::abs(dispJump[kfe][0]) > 0.25 * std::abs(dispJumpUpdPenalty[kfe][0])))
+                  real64 const deltaDisp = sqrt( pow( deltaDispJump[kfe][1], 2 ) + 
+                                                 pow( deltaDispJump[kfe][2], 2 ));
+                  real64 const deltaDispUpdPenalty = sqrt( pow( dispJumpUpdPenalty[kfe][1], 2 ) + 
+                                                           pow( dispJumpUpdPenalty[kfe][2], 2 )); 
+       
+                  if (( deltaDisp/area[kfe] > slidingTolerance[kfe] ) && 
+                      ( deltaDisp > 0.25 * deltaDispUpdPenalty))
                   {
-                    penalty[kfe][0] *= 10.0;
-                    
-                    real64 const eps_N_lim =  1.0e+4*normalTractionTolerance[kfe]/(normalDisplacementTolerance[kfe]*area[kfe]);
-                    if (penalty[kfe][0] > eps_N_lim )
-                    {
-                      GEOS_LOG_LEVEL(2,
-                      GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
-                      kfe, penalty[kfe][0], eps_N_lim ))
+                    penalty[kfe][1] *= 10.0; 
 
-                      penalty[kfe][0] = eps_N_lim;
+                    
+                    real64 const eps_T_lim = 1.0e+04 * normalTractionTolerance[kfe]/(slidingTolerance[kfe] * area[kfe] * 10 );
+                    if (penalty[kfe][1] > eps_T_lim )
+                    {
+                      //GEOS_LOG_LEVEL(2,
+                      //GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
+                      //kfe, penalty[kfe][1], eps_T_lim ))
+
+                      penalty[kfe][1] = eps_T_lim;
                     }
                     
                   }
-       
-                  real64 currentTau = sqrt( pow(traction_new_v[kfe][1], 2 ) +
-                                            pow(traction_new_v[kfe][2], 2 ) );
-       
-                  real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-                  real64 const limitTau =
-                    contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
-                                                                       dLimitTangentialTractionNorm_dTraction );
-
-                  real64 const LimitTangentialTractionNorm_TangentialTractionNorm = std::abs(limitTau) / currentTau;
-       
-                  //if( originalFractureState == contact::FractureState::Stick && currentTau >= limitTau )
-                  //{
-                  //  currentTau *= (1.0 - slidingCheckTolerance);
-                  //}
-                  //else if( originalFractureState != contact::FractureState::Stick && currentTau <= limitTau )
-                  //{
-                  //  currentTau *= (1.0 + slidingCheckTolerance);
-                  //}
-       
-                  // Case 3: if it is slip
-                  if( currentTau >= (std::abs(limitTau) * (1.0 + slidingCheckTolerance)) )
-                  {
-                    //if( originalFractureState == contact::FractureState::Stick )
-                    //{
-                    //  fractureState[kfe] = contact::FractureState::NewSlip;
-                    //}
-                    //else
-                    //{
-                      fractureState[kfe] = contact::FractureState::Slip;
-                    //}
-       
-                    traction[kfe][1] = traction_new_v( kfe, 1 ) * LimitTangentialTractionNorm_TangentialTractionNorm;
-                    traction[kfe][2] = traction_new_v( kfe, 2 ) * LimitTangentialTractionNorm_TangentialTractionNorm;
-
-                  }
-                  // Case 4: if it is stick
-                  else
-                  {
-                    fractureState[kfe] = contact::FractureState::Stick;
-                    traction[kfe][1] = traction_new_v( kfe, 1 );
-                    traction[kfe][2] = traction_new_v( kfe, 2 );
-       
-                    // Update the penalty coefficient to accelerate the convergence
-                    real64 const deltaDisp = sqrt( pow( deltaDispJump[kfe][1], 2 ) + 
-                                                   pow( deltaDispJump[kfe][2], 2 ));
-                    real64 const deltaDispUpdPenalty = sqrt( pow( dispJumpUpdPenalty[kfe][1], 2 ) + 
-                                                             pow( dispJumpUpdPenalty[kfe][2], 2 )); 
-       
-                    if (( deltaDisp/area[kfe] > slidingTolerance[kfe] ) && 
-                        ( deltaDisp > 0.25 * deltaDispUpdPenalty))
-                    {
-                      penalty[kfe][1] *= 10.0; 
-
-                      
-                      real64 const eps_T_lim = 1.0e+04 * normalTractionTolerance[kfe]/(slidingTolerance[kfe] * area[kfe] * 10 );
-                      if (penalty[kfe][1] > eps_T_lim )
-                      {
-                        GEOS_LOG_LEVEL(2,
-                        GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
-                        kfe, penalty[kfe][1], eps_T_lim ))
-
-                        penalty[kfe][1] = eps_T_lim;
-                      }
-                      
-                    }
-                    
-                    
-                  }
+                  
+                  
                 }
-              }    
-            }
+              }
+            }    
           } );
         } );
 
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [ dispJumpUpdPenalty, 
+                                                              dispJump, deltaDispJump] 
+                                                              GEOS_HOST_DEVICE ( localIndex const kfe )
         {
           dispJumpUpdPenalty[kfe][0] = dispJump[kfe][0];
           dispJumpUpdPenalty[kfe][1] = deltaDispJump[kfe][1];
@@ -1151,12 +1138,12 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       arrayView1d< localIndex > const keys_v = keys.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
       forAll< parallelDevicePolicy<> >( faceElementList.size(), 
-                                        [ nStick_r, nSlip_r, 
+                                        [ nStick_r, nSlip_r,
                                           fractureState, faceElementList, 
                                           keys_v, vals_v ] 
                                         GEOS_HOST_DEVICE ( localIndex const kfe )
       {
-    
+
         localIndex const faceIndex = faceElementList[kfe];
         if( fractureState[faceIndex] == contact::FractureState::Stick )
         {
@@ -1203,8 +1190,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      std::cout << "nStick: " << nStick << std::endl;
-      std::cout << "nSlip: " << nSlip << std::endl;
+      //GEOS_LOG_LEVEL(2,
+      //GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
@@ -1236,7 +1223,9 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     arrayView1d< localIndex > const vals_v = vals.toView();
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [ nTri_r, nQuad_r, faceToNodeMap, keys_v, vals_v ] GEOS_HOST_DEVICE ( localIndex const kfe )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), 
+                                      [ nTri_r, nQuad_r, faceToNodeMap,
+                                        keys_v, vals_v ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
@@ -1689,16 +1678,16 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
     // Get the "face to element" map (valid for the entire mesh)
     FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-    arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
-    arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
-    arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+    arrayView2d< localIndex const > const faceToElemRegion = faceToElem.m_toElementRegion;
+    arrayView2d< localIndex const > const faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+    arrayView2d< localIndex const > const faceToElemIndex = faceToElem.m_toElementIndex;
 
     // Get the volume for all elements
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
       elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
     // Get the coordinates for all nodes
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
 
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
@@ -1716,107 +1705,105 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
     {
       if( subRegion.hasField< contact::traction >() )
       {
-        arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-        arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
-        arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getField< fields::contact::rotationMatrix >().toView();
-        ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+        arrayView1d< real64 const > const faceArea = subRegion.getElementArea().toViewConst();
+        arrayView3d< real64 const > const faceRotationMatrix = subRegion.getField< fields::contact::rotationMatrix >().toView();
+        ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
-        arrayView1d< real64 > const & normalTractionTolerance =
+        arrayView1d< real64 > const normalTractionTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
-        arrayView1d< real64 > const & normalDisplacementTolerance =
+        arrayView1d< real64 > const normalDisplacementTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
-        arrayView1d< real64 > const & slidingTolerance =
+        arrayView1d< real64 > const slidingTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-          if( ghostRank[kfe] < 0 )
+          
+          real64 const area = faceArea[kfe];
+          // approximation of the stiffness along coordinate directions
+          // ( first, second ) index -> ( element index, direction )
+          // 1. T -> top (index 0), B -> bottom (index 1)
+          // 2. the coordinate direction (x, y, z)
+          real64 stiffDiagApprox[ 2 ][ 3 ];
+          real64 averageYoungModulus = 0.0;
+          real64 averageConstrainedModulus = 0.0;
+          real64 averageBoxSize0 = 0.0;
+
+          for( localIndex i = 0; i < elemsToFaces.sizeOfArray( kfe ); ++i )
           {
-            real64 const area = faceArea[kfe];
-            // approximation of the stiffness along coordinate directions
-            // ( first, second ) index -> ( element index, direction )
-            // 1. T -> top (index 0), B -> bottom (index 1)
-            // 2. the coordinate direction (x, y, z)
-            real64 stiffDiagApprox[ 2 ][ 3 ];
-            real64 averageYoungModulus = 0.0;
-            real64 averageConstrainedModulus = 0.0;
-            real64 averageBoxSize0 = 0.0;
+            localIndex const faceIndex = elemsToFaces[kfe][i];
+            localIndex const er = faceToElemRegion[faceIndex][0];
+            localIndex const esr = faceToElemSubRegion[faceIndex][0];
+            localIndex const ei = faceToElemIndex[faceIndex][0];
 
-            for( localIndex i = 0; i < elemsToFaces.sizeOfArray( kfe ); ++i )
-            {
-              localIndex const faceIndex = elemsToFaces[kfe][i];
-              localIndex const er = faceToElemRegion[faceIndex][0];
-              localIndex const esr = faceToElemSubRegion[faceIndex][0];
-              localIndex const ei = faceToElemIndex[faceIndex][0];
+            real64 const volume = elemVolume[er][esr][ei];
 
-              real64 const volume = elemVolume[er][esr][ei];
+            // Get the "element to node" map for the specific region/subregion
+            NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
+            localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
 
-              // Get the "element to node" map for the specific region/subregion
-              NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
-              localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
-
-              // Compute the box size
-              real64 maxSize[3];
-              real64 minSize[3];
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-                minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-              }
-              for( localIndex a = 1; a < numNodesPerElem; ++a )
-              {
-                for( localIndex j = 0; j < 3; ++j )
-                {
-                  maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                  minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                }
-              }
-
-              real64 boxSize[3];
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                boxSize[j] = maxSize[j] - minSize[j];
-              }
-
-              // Get linear elastic isotropic constitutive parameters for the element
-              real64 const K = bulkModulus[er][esr][ei];
-              real64 const G = shearModulus[er][esr][ei];
-              real64 const E = 9.0 * K * G / ( 3.0 * K + G );
-              real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
-              real64 const M = K + 4.0 / 3.0 * G;
-
-              // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
-              }
-
-              averageYoungModulus += 0.5*E;
-              averageConstrainedModulus += 0.5*M;
-              averageBoxSize0 += 0.5*boxSize[0];
-            }
-
-            // Average the stiffness and compute the inverse
-            real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
+            // Compute the box size
+            real64 maxSize[3];
+            real64 minSize[3];
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
+              maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
+              minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
+            }
+            for( localIndex a = 1; a < numNodesPerElem; ++a )
+            {
+              for( localIndex j = 0; j < 3; ++j )
+              {
+                maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+              }
             }
 
-            // Rotate in the local reference system, computing R^T * (invK) * R
-            real64 temp[ 3 ][ 3 ];
-            LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
-            real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
-            LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
+            real64 boxSize[3];
+            for( localIndex j = 0; j < 3; ++j )
+            {
+              boxSize[j] = maxSize[j] - minSize[j];
+            }
 
-            // Finally, compute tolerances for the given fracture element
-            normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+8;
-            slidingTolerance[kfe] = sqrt( pow(rotatedInvStiffApprox[ 1 ][ 1 ],2) +
-                                          pow(rotatedInvStiffApprox[ 2 ][ 2 ],2)) * averageYoungModulus / 2.e+8;
-            normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) * 
-                                           (normalDisplacementTolerance[kfe])*1.0e+01;
+            // Get linear elastic isotropic constitutive parameters for the element
+            real64 const K = bulkModulus[er][esr][ei];
+            real64 const G = shearModulus[er][esr][ei];
+            real64 const E = 9.0 * K * G / ( 3.0 * K + G );
+            real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
+            real64 const M = K + 4.0 / 3.0 * G;
+
+            // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
+            for( localIndex j = 0; j < 3; ++j )
+            {
+              stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+            }
+
+            averageYoungModulus += 0.5*E;
+            averageConstrainedModulus += 0.5*M;
+            averageBoxSize0 += 0.5*boxSize[0];
           }
+
+          // Average the stiffness and compute the inverse
+          real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
+          for( localIndex j = 0; j < 3; ++j )
+          {
+            invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
+          }
+
+          // Rotate in the local reference system, computing R^T * (invK) * R
+          real64 temp[ 3 ][ 3 ];
+          LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
+          real64 rotatedInvStiffApprox[ 3 ][ 3 ];
+          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
+          LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
+
+          // Finally, compute tolerances for the given fracture element
+          normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+8;
+          slidingTolerance[kfe] = sqrt( pow(rotatedInvStiffApprox[ 1 ][ 1 ],2) +
+                                        pow(rotatedInvStiffApprox[ 2 ][ 2 ],2)) * averageYoungModulus / 2.e+8;
+          normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) * 
+                                         (normalDisplacementTolerance[kfe])*1.0e+01;
+          
         } );
       }
     } );
