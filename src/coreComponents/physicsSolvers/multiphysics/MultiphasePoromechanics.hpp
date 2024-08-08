@@ -118,7 +118,7 @@ private:
    */
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
@@ -134,7 +134,7 @@ private:
 };
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-template< typename CONSTITUTIVE_BASE,
+template< typename TYPE_LIST,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 real64 MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch( MeshLevel & mesh,
@@ -165,12 +165,11 @@ real64 MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch(
 
   return finiteElement::
            regionBasedKernelApplication< parallelDevicePolicy< >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 this->solidMechanicsSolver()->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+                                         TYPE_LIST >( mesh,
+                                                      regionNames,
+                                                      this->solidMechanicsSolver()->getDiscretizationName(),
+                                                      materialNamesString,
+                                                      kernelWrapper );
 }
 
 
