@@ -107,7 +107,10 @@ public:
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
       arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
-      lambda( finiteElementName, faceElemList );
+
+      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at(finiteElementName));
+
+      lambda( finiteElementName, subRegionFE, faceElemList );
     }
 
   }

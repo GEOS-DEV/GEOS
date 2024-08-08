@@ -329,6 +329,21 @@ public:
     LvArray::tensorOps::scaledAdd< nBubbleUdof, nUdof >( stack.localAbu, Abu_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< nUdof, nBubbleUdof >( stack.localAub, Aub_gauss, -detJ );
 
+    // Compute the initial stress
+    real64 rb_gauss[nBubbleUdof];
+    real64 strain[6] = {0};
+    LvArray::tensorOps::Ri_eq_AijBj< 6, nUdof >( strain , strainMatrix, stack.uLocal );
+
+    real64 initStressLocal[ 6 ] = {0};
+    LvArray::tensorOps::Ri_eq_AijBj< 6, 6 >( initStressLocal , stack.constitutiveStiffness, strain );
+    for( localIndex c = 0; c < 6; ++c )
+    {
+      initStressLocal[ c ] -= m_constitutiveUpdate.m_newStress( k, q, c ); 
+    }
+
+    LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( rb_gauss, strainBubbleMatrix, initStressLocal );
+    LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localRb, rb_gauss, detJ );
+
   }
 
   GEOS_HOST_DEVICE

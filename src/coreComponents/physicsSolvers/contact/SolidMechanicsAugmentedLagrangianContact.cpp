@@ -155,14 +155,6 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
                           solidMechanics::totalBubbleDisplacement::key(),
                           DofManager::Connector::Elem );
 
-  // The dofManager can not create the connection due to the coupling
-  // between totalDisplacement and totalBubbleDisplacement
-  // These connection are created using the two functions
-  // addCouplingNumNonzeros and addCouplingSparsityPattern
-  // dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-  //                         solidMechanics::totalBubbleDisplacement::key(),
-  //                         DofManager::Connector::Elem);
-
 }
 
 void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & domain,
@@ -260,7 +252,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                         elemsToFaces,
                                         rotationMatrix );
 
-
     // Set the tollerances
     computeTolerances( domain );
 
@@ -325,7 +316,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   //ParallelMatrix parallel_matrix;
   //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix.write("mech.mtx");
-  //abort();
 
   // Loop for assembling contributes from interface elements (Aut*eps^-1*Atu and Aub*eps^-1*Abu)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
@@ -351,9 +341,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                                bool const isStickState )
     {
 
-      //finiteElement::FiniteElementBase & subRegionFE = *(m_faceTypeToFiniteElements[finiteElementName]);
-
-      //bool isStickState = true;
       solidMechanicsALMKernels::ALMFactory kernelFactory( dispDofNumber,
                                                           bubbleDofNumber,
                                                           dofManager.rankOffset(),
@@ -628,11 +615,10 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
     CRSMatrix< real64, globalIndex > const voidMatrix;
     array1d< real64 > const voidRhs;
 
-    forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
+    forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & ,
+                                                          finiteElement::FiniteElementBase const & subRegionFE,
                                                           arrayView1d< localIndex const > const & faceElementList )
     {
-
-      finiteElement::FiniteElementBase & subRegionFE = *(m_faceTypeToFiniteElements[finiteElementName]);
 
       solidMechanicsALMKernels::ALMJumpUpdateFactory kernelFactory( dispDofNumber,
                                                                     bubbleDofNumber,
@@ -691,8 +677,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   int hasConfigurationConverged = true;
   int condConv = true;
-  // TODO: This function's design is temporary and intended solely for testing the stick mode.
-  // In the final version the parallelHostPolicy will be substitute with the parallelDevicePolicy<>.
+
   array2d< real64 > traction_new;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1031,14 +1016,6 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                 // Case 3: if it is slip
                 if( currentTau >= (std::abs(limitTau) * (1.0 + slidingCheckTolerance)) )
                 {
-                  //if( originalFractureState == contact::FractureState::Stick )
-                  //{
-                  //  fractureState[kfe] = contact::FractureState::NewSlip;
-                  //}
-                  //else
-                  //{
-                  //  fractureState[kfe] = contact::FractureState::Slip;
-                  //}
                   fractureState[kfe] = contact::FractureState::Slip;
        
                   traction[kfe][1] = traction_new_v( kfe, 1 ) * LimitTangentialTractionNorm_TangentialTractionNorm;
@@ -1125,6 +1102,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
+                                                          finiteElement::FiniteElementBase const & ,
                                                           arrayView1d< localIndex const > const & faceElementList )
     {
 
@@ -1663,7 +1641,6 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
 
 }
 
-// TODO: Is it possible to define this method once? Similar to SolidMechanicsLagrangeContact
 void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartition & domain ) const
 {
   GEOS_MARK_FUNCTION;
