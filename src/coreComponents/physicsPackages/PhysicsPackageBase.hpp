@@ -194,7 +194,7 @@ public:
    * @return return the timestep that was achieved during the step.
    *
    * This function implements a nonlinear newton method for implicit problems. It requires that the
-   * other functions in the solver interface are implemented in the derived physics solver. The
+   * other functions in the solver interface are implemented in the derived physics package. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
@@ -217,7 +217,7 @@ public:
    * @return return true if line search succeeded, false otherwise
    *
    * This function implements a nonlinear newton method for implicit problems. It requires that the
-   * other functions in the solver interface are implemented in the derived physics solver. The
+   * other functions in the solver interface are implemented in the derived physics package. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
@@ -270,7 +270,7 @@ public:
    *
    * This function implements a single linear step. Similar to the nonlinear step, however it
    * assumes that the solution is achieved in a iteration. The use of this function requires that
-   * the other functions in the solver interface are implemented in the derived physics solver. The
+   * the other functions in the solver interface are implemented in the derived physics package. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
@@ -288,7 +288,7 @@ public:
    * This function should contain any step level initialization required to perform an implicit
    * step.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics package in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
@@ -313,7 +313,7 @@ public:
    * @param solution the solution vector
    *
    * @note While the function is virtual, the base class implementation should be
-   *       sufficient for most single-physics solvers.
+   *       sufficient for most single-physics packages.
    */
   virtual void
   setupSystem( DomainPartition & domain,
@@ -334,12 +334,12 @@ public:
    * @return the residual for convergence evaluation
    *
    * This function assembles the residual and the jacobian of the residual wrt the primary
-   * variables. In a stand alone physics solver, this function will fill a single block in the
+   * variables. In a stand alone physics package, this function will fill a single block in the
    * block system. However the capability to query the block system structure for any coupled blocks
    * may be implemented to fill in off diagonal blocks of the system to enable coupling between
    * solvers.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics package in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
@@ -425,9 +425,9 @@ public:
    * @param solution the solution vector
    *
    * This function calls the linear solver package to perform a single linear solve on the block
-   * system. The derived physics solver is required to specify the call, as no default is provided.
+   * system. The derived physics package is required to specify the call, as no default is provided.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics package in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
@@ -446,7 +446,7 @@ public:
    * @param objectManager the object manager that holds the fields we wish to apply the solution to
    * @return true if solution can be safely applied without violating physical constraints, false otherwise
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics package in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    *
    */
@@ -486,7 +486,7 @@ public:
    * instance, a line search may apply a negative scaling factor to remove part of the previously
    * applied solution.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics package in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    *
    */
@@ -537,7 +537,7 @@ public:
    * the beginning of the step. This is useful for cases where convergence was not achieved, and
    * a cut in timestep was required.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics package in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
@@ -553,7 +553,7 @@ public:
    * example, the acceptance of the solution will occur during this step, and deallocation of
    * temporaries will be be performed in this function.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics package in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
