@@ -63,7 +63,11 @@ on:
         type: string
       LOCAL_BASELINE_DIR:
         required: false
-        type: string  
+        type: string
+      BUILD_GENERATOR:
+        required: false
+        type: string
+        default: 'Ninja'
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -134,6 +138,11 @@ jobs:
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
           script_args+=(--nproc ${NPROC})
+        fi
+
+        if [[ -n "${{ inputs.BUILD_GENERATOR }}" ]]; then
+          BUILD_GENERATOR="${{ inputs.BUILD_GENERATOR }}"
+          script_args+=(--build-generator "${BUILD_GENERATOR}")
         fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
