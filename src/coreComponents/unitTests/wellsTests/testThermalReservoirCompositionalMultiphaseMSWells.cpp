@@ -615,25 +615,21 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
               if( iwelem == 1 )
               {
                 real64 dRdX = 0.0;
-                globalIndex rowIndex = wellElemDofNumber[0] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
+                localIndex rowIndex = wellElemDofNumber[0] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
                 for( integer ider=0; ider< 3; ider++ )
                 {
                   globalIndex colIndex = wellElemDofNumber[0]+ ider;
-                  jacobianFD.removeNonZero ( rowIndex, colIndex );
-                  jacobianFD.insertNonZero( rowIndex, colIndex, dRdX );
+                  setNumericalJacobianValue( rowIndex, colIndex, dRdX, jacobianFD.toView() );
                 }
-                jacobianFD.removeNonZero ( rowIndex, wellElemDofNumber[1]+3 );
-                jacobianFD.insertNonZero( rowIndex, wellElemDofNumber[1]+3, dRdX );
+                globalIndex colIndex = wellElemDofNumber[1]+3;
+                setNumericalJacobianValue( rowIndex, colIndex, dRdX, jacobianFD.toView() );
               }
             }
             else
             {
-              real64 dRdX = 0.0;
-              globalIndex rowIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
-              dRdX = 1.0;
-              jacobianFD.removeNonZero( rowIndex, rowIndex );
-              jacobianFD.insertNonZero( rowIndex, rowIndex, dRdX );
-              //jacobianFD.addToRow< parallelDeviceAtomic >( rowIndex, &rowIndex, &dRdX, 1 );
+              localIndex rowIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
+              globalIndex colIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
+              setNumericalJacobianValue( rowIndex, colIndex, 1.0, jacobianFD.toView() );
             }
 
           }

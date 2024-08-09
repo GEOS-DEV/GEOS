@@ -54,6 +54,20 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
 }
 
 inline
+void setNumericalJacobianValue( localIndex const rowIndex,
+                                globalIndex const colIndex,
+                                real64 const val,
+                                CRSMatrixView< real64, globalIndex > const & jacobian )
+{
+  forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    GEOS_UNUSED_VAR( k );
+    jacobian.removeNonZero( rowIndex, colIndex );
+    jacobian.insertNonZero( rowIndex, colIndex, val );
+  } );
+}
+
+inline
 void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;

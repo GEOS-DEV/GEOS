@@ -617,14 +617,10 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
             }
             else
             {
-              real64 dRdX = 0.0;
-              globalIndex rowIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
-              dRdX = 1.0;
-              jacobianFD.removeNonZero( rowIndex, rowIndex );
-              jacobianFD.insertNonZero( rowIndex, rowIndex, dRdX );
-              //jacobianFD.addToRow< parallelDeviceAtomic >( rowIndex, &rowIndex, &dRdX, 1 );
+              localIndex rowIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
+              globalIndex colIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
+              setNumericalJacobianValue( rowIndex, colIndex, 1.0, jacobianFD.toView() );
             }
-
           }
         }
 
