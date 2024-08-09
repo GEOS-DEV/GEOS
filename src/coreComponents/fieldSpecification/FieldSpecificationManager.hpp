@@ -22,7 +22,7 @@
 
 #include "FieldSpecificationBase.hpp"
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/ObjectManagerBase.hpp"

@@ -17,8 +17,8 @@
  * @file TableFormatter.hpp
  */
 
-#ifndef GEOS_COMMON_TABLEFORMATTER_HPP
-#define GEOS_COMMON_TABLEFORMATTER_HPP
+#ifndef GEOS_COMMON_FORMAT_TABLE_TABLEFORMATTER_HPP
+#define GEOS_COMMON_FORMAT_TABLE_TABLEFORMATTER_HPP
 
 #include "TableData.hpp"
 #include "TableLayout.hpp"
@@ -219,4 +219,4 @@ private:
 };
 }
 
-#endif
+#endif /* GEOS_COMMON_FORMAT_TABLE_TABLEFORMATTER_HPP */

@@ -34,6 +34,8 @@ Usage: $0
       Request for the build of geos only.
   --cmake-build-type ...
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
+  --build-generator generator_name
+      Build system generator. One of "Eclipse CDT4 - Unix Makefiles", "Ninja, "Unix Makefiles" and "Xcode".
   --code-coverage
       run a code build and test.
   --data-basename output.tar.gz
@@ -68,10 +70,11 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,build-generator:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
+BUILD_GENERATOR=""
 GEOS_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
@@ -91,6 +94,20 @@ do
       RUN_UNIT_TESTS=false
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
+    --build-generator)
+        if [[ -z "$2" || "Unix Makefiles" == "$2" ]] ; then
+            BUILD_GENERATOR=""
+        elif [[ "Eclipse CDT4 - Unix Makefiles" == "$2" ]] ; then
+            BUILD_GENERATOR="--eclipse"
+        elif [[ "Ninja" == "$2" ]] ; then
+            BUILD_GENERATOR="--ninja"
+        elif [[ "Xcode" == "$2" ]] ; then
+            BUILD_GENERATOR="--xcode"
+        else
+            echo "Unexpected generator passed to '--build-generator' option."
+            exit 1
+        fi
+        shift 2;;
     --data-basename)
       DATA_BASENAME=$2
       DATA_BASENAME_WE=${DATA_BASENAME%%.*}
@@ -211,7 +228,7 @@ fi
 # The option `--oversubscribe` tells OpenMPI to allow more MPI ranks than the node has cores.
 # This is needed because our unit test `blt_mpi_smoke` is run in parallel with _hard coded_ 4 ranks.
 # While some of our ci nodes may have less cores available.
-# 
+#
 # In case we have more powerful nodes, consider removing `--oversubscribe` and use `--use-hwthread-cpus` instead.
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
@@ -221,7 +238,7 @@ or_die python3 scripts/config-build.py \
                -bt ${CMAKE_BUILD_TYPE} \
                -bp ${GEOS_BUILD_DIR} \
                -ip ${GEOS_DIR} \
-               --ninja \
+               ${BUILD_GENERATOR} \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
@@ -245,10 +262,10 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die ninja -v -j $NPROC geosx
+  or_die cmake --build . -j $NPROC --target geosx
 else
-  or_die ninja -j $NPROC
-  or_die ninja install
+  or_die cmake --build . -j $NPROC
+  or_die cmake --install .
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
@@ -269,7 +286,7 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
-  or_die ninja coreComponents_coverage
+  or_die cmake --build . --target coreComponents_coverage
   cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
 fi
 
@@ -284,9 +301,11 @@ fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
-  or_die ninja ats_environment
-  
-  # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
+  or_die cmake --build . --target ats_environment
+
+  # The tests are not run using cmake (`cmake --build . --verbose  --target ats_run`)
+  # because with ninja it swallows the output while all the
+  # simulations are running.
   # We directly use the script instead...
   echo "Available baselines:"
   ls -lR /tmp/geos/baselines
@@ -321,7 +340,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 fi
 
 # Cleaning the build directory.
-or_die ninja clean
+or_die cmake --build . --target clean
 
 
 # Clean the repository

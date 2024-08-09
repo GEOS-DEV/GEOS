@@ -1053,8 +1053,10 @@ void HypreMatrix::getRowCopy( globalIndex const globalRowIndex,
                                                        -1,
                                                        &numEntries,
                                                        &row,
+                                                       nullptr,
                                                        hypre::toHypreBigInt( colIndices ),
-                                                       values ) );
+                                                       values,
+                                                       0 ) );
 }
 
 void HypreMatrix::extractDiagonal( HypreVector & dst ) const
