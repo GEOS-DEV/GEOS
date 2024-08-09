@@ -96,12 +96,12 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
-  registerWrapper( viewKeyStruct::noLinearSolveFailString(), &m_noLinearSolveFail).
-    setApplyDefaultValue( false ).
+  registerWrapper( viewKeyStruct::noLinearSolveFailString(), &m_noLinearSolveFail ).
+    setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
-    
+
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
@@ -1023,8 +1023,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
       // Do not allow non converged linear solver - cut time step
-      if(m_noLinearSolveFail && m_linearSolverResult.status == LinearSolverResult::Status::NotConverged)
-          return false;
+      if( m_noLinearSolveFail && m_linearSolverResult.status == LinearSolverResult::Status::NotConverged )
+        return false;
     }
 
     {

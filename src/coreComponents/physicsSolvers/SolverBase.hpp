@@ -788,7 +788,7 @@ protected:
   real64 m_nextDt;
 
   /// behavior in case of linear solver failure
-  bool m_noLinearSolveFail;
+  integer m_noLinearSolveFail;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
