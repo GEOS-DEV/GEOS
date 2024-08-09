@@ -10,6 +10,7 @@ set( gtest_geosx_tests
      testImmiscibleWaterFlashModel.cpp
      testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
+     testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp
      testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp

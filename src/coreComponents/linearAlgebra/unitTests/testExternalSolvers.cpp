@@ -151,7 +151,7 @@ protected:
   void SetUp() override
   {
     globalIndex constexpr n = 100;
-    geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
+    geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOS, n, this->matrix );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
     this->cond_est = 4.0 * n * n / std::pow( M_PI, 2 );
@@ -232,7 +232,7 @@ protected:
   void SetUp() override
   {
     globalIndex constexpr n = 100;
-    geos::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
+    geos::testing::compute2DElasticityOperator( MPI_COMM_GEOS, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
     this->cond_est = 1e4; // not a true condition number estimate, but enough to pass tests
   }
 };

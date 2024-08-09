@@ -78,7 +78,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="faceElementSubRegion"
-      materialList="{ fluid, fractureFilling, fractureContact, contactThermalCond }"
+      materialList="{ fluid, fractureFilling, frictionLaw, contactThermalCond, hApertureModel }"
       defaultAperture="5.0e-4"/>
     <!-- SPHINX_SurfaceElementRegionEnd -->  
 
@@ -100,11 +100,13 @@
 
   <Constitutive>
     <Coulomb
-      name="fractureContact"
+      name="frictionLaw"
       cohesion="0"
-      frictionCoefficient="0.5"
-      penaltyStiffness="1.0e8"
-      apertureTableName="apertureTable"/>
+      frictionCoefficient="0.5"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>   
 
     <!-- SPHINX_ContactFlowProperties -->
     <CompressibleSolidParallelPlatesPermeability
