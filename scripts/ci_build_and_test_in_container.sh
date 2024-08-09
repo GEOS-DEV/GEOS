@@ -211,7 +211,7 @@ fi
 # The option `--oversubscribe` tells OpenMPI to allow more MPI ranks than the node has cores.
 # This is needed because our unit test `blt_mpi_smoke` is run in parallel with _hard coded_ 4 ranks.
 # While some of our ci nodes may have less cores available.
-# 
+#
 # In case we have more powerful nodes, consider removing `--oversubscribe` and use `--use-hwthread-cpus` instead.
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
@@ -285,7 +285,7 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die ninja ats_environment
-  
+
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   echo "Available baselines:"
