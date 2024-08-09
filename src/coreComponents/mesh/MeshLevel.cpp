@@ -429,6 +429,13 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
 
   GEOS_LOG_RANK_IF(commRank == 23, "after adding collocated nodes, the size of nodeAdjacencySet is " << nodeAdjacencySet.size());
 
+  if (commRank == 23)
+  {
+	  auto testnl2g = nodeManager.localToGlobalMap();
+	  for (auto iter = nodeAdjacencySet.begin(); iter != nodeAdjacencySet.end(); ++iter)
+		  {GEOS_LOG_RANK("elements of nodeAdjacencySet: " << testnl2g(*iter));}
+  }
+
   for( integer d = 0; d < depth; ++d )
   {
     for( localIndex const nodeIndex: nodeAdjacencySet )
