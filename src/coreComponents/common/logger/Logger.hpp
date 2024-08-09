@@ -23,7 +23,7 @@
 // Source incldes
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes
@@ -44,6 +44,25 @@
  * @details The expression to log must evaluate something that can be stream inserted.
  */
 #define GEOS_LOG_VAR( ... ) LVARRAY_LOG_VAR( __VA_ARGS__ )
+
+
+/**
+ * @brief Conditionally log a message.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#if defined(GEOS_DEVICE_COMPILE)
+#define GEOS_LOG_IF( EXP, msg )
+#else
+#define GEOS_LOG_IF( EXP, msg ) \
+  do { \
+    if( EXP ) \
+    { \
+      std::cout<< msg << std::endl; \
+    } \
+  } while( false )
+#endif
+
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
@@ -438,7 +457,7 @@
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, msg );
+#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_LOG_IF( this->getLogLevel() >= minLevel, msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
@@ -515,6 +534,23 @@ struct SimulationError : public std::runtime_error
    * It will be inserted before the error message inside of subException.
    */
   SimulationError( std::exception const & subException, std::string const & msgToInsert );
+};
+
+/**
+ * @brief Exception class used to report errors from type conversion
+ * @todo (ErrorManager EPIC #2940) Consider adding a way to precise custom exception parameters, to add
+ * expected & encountered typeid for this one (in order to manage the exception output more precisely).
+ * We could also manage this by having:    BadTypeErrorABC <|--- BadTypeError< T >      /!\ compilation time
+ */
+struct BadTypeError : public std::runtime_error
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  BadTypeError( std::string const & what ):
+    std::runtime_error( what )
+  {}
 };
 
 /**
