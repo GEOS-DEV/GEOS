@@ -14,10 +14,10 @@
  */
 
 /**
- *  @file CoulombContact.cpp
+ *  @file CoulombFriction.cpp
  */
 
-#include "CoulombContact.hpp"
+#include "CoulombFriction.hpp"
 
 namespace geos
 {
@@ -27,12 +27,16 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CoulombContact::CoulombContact( string const & name, Group * const parent ):
-  ContactBase( name, parent ),
+CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
+  FrictionBase( name, parent ),
   m_cohesion(),
   m_frictionCoefficient(),
   m_elasticSlip()
 {
+  registerWrapper( viewKeyStruct::shearStiffnessString(), &m_shearStiffness ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Value of the shear elastic stiffness. Units of Pressure/length" );
+
   registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -49,10 +53,10 @@ CoulombContact::CoulombContact( string const & name, Group * const parent ):
 
 }
 
-CoulombContact::~CoulombContact()
+CoulombFriction::~CoulombFriction()
 {}
 
-void CoulombContact::postInputInitialization()
+void CoulombFriction::postInputInitialization()
 {
   GEOS_THROW_IF( m_frictionCoefficient < 0.0,
                  getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
@@ -60,27 +64,25 @@ void CoulombContact::postInputInitialization()
 
 }
 
-void CoulombContact::allocateConstitutiveData( Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+void CoulombFriction::allocateConstitutiveData( Group & parent,
+                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   m_elasticSlip.resize( 0, 2 );
 
-  ContactBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 
-CoulombContactUpdates CoulombContact::createKernelWrapper() const
+CoulombFrictionUpdates CoulombFriction::createKernelWrapper() const
 {
-  return CoulombContactUpdates( m_penaltyStiffness,
-                                m_shearStiffness,
-                                m_displacementJumpThreshold,
-                                *m_apertureTable,
-                                m_cohesion,
-                                m_frictionCoefficient,
-                                m_elasticSlip );
+  return CoulombFrictionUpdates( m_displacementJumpThreshold,
+                                 m_shearStiffness,
+                                 m_cohesion,
+                                 m_frictionCoefficient,
+                                 m_elasticSlip );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombContact, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombFriction, string const &, Group * const )
 
 } /* namespace constitutive */
 

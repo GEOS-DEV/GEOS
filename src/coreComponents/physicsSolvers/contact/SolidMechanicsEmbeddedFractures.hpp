@@ -117,6 +117,8 @@ public:
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
     constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
+
+    constexpr static char const * contactPenaltyStiffnessString() { return "contactPenaltyStiffness"; }
   };
 
 protected:
@@ -133,6 +135,9 @@ private:
 
   /// decide whether to use static condensation or not
   integer m_useStaticCondensation;
+
+  // TODO: activate when solidMechanicsPenalty contact is used and this is removed from base solver.
+  // real64 m_contactPenaltyStiffness;
 
 };
 

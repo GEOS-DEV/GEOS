@@ -14,23 +14,16 @@
  */
 
 /**
- * @file DataTypes.cpp
+ * @file RTTypes.cpp
  */
 
 
-#include "DataTypes.hpp"
-#include "Logger.hpp"
+#include "RTTypes.hpp"
 #include "LvArray/src/system.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
-#ifdef GEOS_USE_MPI
-MPI_Comm MPI_COMM_GEOSX;
-#else
-int MPI_COMM_GEOSX = 0;
-#endif
-
 
 Regex::Regex( string_view regexStr, string_view formatDescription ):
   m_regexStr( regexStr ),

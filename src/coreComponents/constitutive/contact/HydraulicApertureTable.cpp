@@ -14,11 +14,10 @@
  */
 
 /**
- * @file ApertureTableContact.cpp
+ * @file HydraulicApertureTable.cpp
  */
 
-#include "../deprecated/ApertureTableContact.hpp"
-
+#include "HydraulicApertureTable.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -30,10 +29,9 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ApertureTableContact::ApertureTableContact( string const & name,
-                                            Group * const parent )
-  : ContactBase( name, parent ),
-  m_apertureTolerance( 1.0e-99 ),
+HydraulicApertureTable::HydraulicApertureTable( string const & name,
+                                                Group * const parent ):
+  HydraulicApertureBase( name, parent ),
   m_apertureTable( nullptr )
 {
   registerWrapper( viewKeyStruct::apertureToleranceString(), &m_apertureTolerance ).
@@ -52,49 +50,77 @@ ApertureTableContact::ApertureTableContact( string const & name,
     setDescription( "Name of the aperture table" );
 }
 
-ApertureTableContact::~ApertureTableContact()
+HydraulicApertureTable::~HydraulicApertureTable()
 {}
 
-void ApertureTableContact::postInputInitialization()
+
+
+void HydraulicApertureTable::postInputInitialization()
 {
-  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   GEOS_THROW_IF( m_apertureTableName.empty(),
-                 getFullName() << ": the aperture table name " << m_apertureTableName << " is empty",
-                 InputError );
+                 getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
+
+}
+
+
+void HydraulicApertureTable::allocateConstitutiveData( Group & parent,
+                                                       localIndex const numConstitutivePointsPerParentIndex )
+{
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
                  getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
                  InputError );
-}
 
-void ApertureTableContact::initializePreSubGroups()
-{
-  FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
   validateApertureTable( apertureTable );
 
   ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
   arraySlice1d< real64 const > apertureValues = coords[0];
-  array1d< real64 > & effectiveApertureValues = apertureTable.getValues();
+  array1d< real64 > & hydraulicApertureValues = apertureTable.getValues();
 
   localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
-  real64 const apertureTransition = ( effectiveApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
+  real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+  real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
-  coords.emplaceBack( 0, apertureTransition );
-  effectiveApertureValues.emplace_back( apertureTransition );
-  coords.emplaceBack( 0, apertureTransition*10e9 );
-  effectiveApertureValues.emplace_back( apertureTransition*10e9 );
-  apertureTable.reInitializeFunction();
+  // if the aperture transition is larger than the last coordinates, we enlarge the table
+  // this check is necessary to ensure that the coordinates are strictly increasing
+  if( apertureTransition > apertureValues[apertureValues.size()-1] )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT ( "Adding aperture transition for table {}:", m_apertureTableName ) );
+    std::ostringstream s_orig;
+    for( localIndex i = 0; i < apertureValues.size(); i++ )
+      s_orig << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
+    GEOS_LOG_RANK_0( GEOS_FMT ( "    Original table = {}", s_orig.str()));
+
+    coords.emplaceBack( 0, apertureTransition );
+    hydraulicApertureValues.emplace_back( apertureTransition );
+    // if the aperture transition is larger than 0, we keep enlarging the table
+    // this check is necessary to ensure that the coordinates are strictly increasing
+    if( apertureTransition > 0 )
+    {
+      coords.emplaceBack( 0, apertureTransition*10e9 );
+      hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
+      apertureTable.reInitializeFunction();
+    }
+
+    std::ostringstream s_mod;
+    for( localIndex i = 0; i < apertureValues.size(); i++ )
+      s_mod << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
+    GEOS_LOG_RANK_0( GEOS_FMT ( "    Modified table = {}", s_mod.str()));
+  }
 
   m_apertureTable = &apertureTable;
 }
 
-void ApertureTableContact::validateApertureTable( TableFunction const & apertureTable ) const
+
+void HydraulicApertureTable::validateApertureTable( TableFunction const & apertureTable ) const
 {
   ArrayOfArraysView< real64 const > const coords = apertureTable.getCoordinates();
-  arrayView1d< real64 const > const & effectiveApertureValues = apertureTable.getValues();
+  arrayView1d< real64 const > const & hydraulicApertureValues = apertureTable.getValues();
 
   GEOS_THROW_IF( coords.size() > 1,
                  getFullName() << ": Aperture limiter table cannot be greater than a 1D table.",
@@ -112,21 +138,22 @@ void ApertureTableContact::validateApertureTable( TableFunction const & aperture
                  InputError );
 
   localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+  real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
 
   GEOS_THROW_IF( slope >= 1.0,
                  getFullName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
                  InputError );
 }
 
-ApertureTableContactUpdates ApertureTableContact::createKernelWrapper() const
+
+
+HydraulicApertureTableUpdates HydraulicApertureTable::createKernelWrapper() const
 {
-  return ApertureTableContactUpdates( m_penaltyStiffness,
-                                      *m_apertureTable );
+  return HydraulicApertureTableUpdates( *m_apertureTable );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ApertureTableContact, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, HydraulicApertureTable, string const &, Group * const )
 
-} /* namespace constitutive */
+} /* end namespace constitutive */
 
-} /* namespace geos */
+} /* end namespace geos */

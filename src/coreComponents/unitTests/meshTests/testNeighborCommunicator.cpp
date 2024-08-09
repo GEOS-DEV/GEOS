@@ -85,7 +85,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
 {
   SKIP_TEST_IN_SERIAL( "Parallel test" );
   {
-    int rnk = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int rnk = MpiWrapper::commRank( MPI_COMM_GEOS );
 
     constexpr localIndex size = 1000;
     constexpr localIndex byte_size = 1000 * sizeof(int);
@@ -104,11 +104,11 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
       veloc.move( parallelDeviceMemorySpace );
       auto veloc_view = veloc.toViewConst();
       pack( buf, veloc_view, size );
-      MpiWrapper::iSend( buf, byte_size, 1, 0, MPI_COMM_GEOSX, &request );
+      MpiWrapper::iSend( buf, byte_size, 1, 0, MPI_COMM_GEOS, &request );
     }
     else
     {
-      int err = MpiWrapper::iRecv( buf, byte_size, 0, 0, MPI_COMM_GEOSX, &request );
+      int err = MpiWrapper::iRecv( buf, byte_size, 0, 0, MPI_COMM_GEOS, &request );
       EXPECT_EQ( err, MPI_SUCCESS );
       MPI_Status status;
       err = MpiWrapper::Wait( &request, &status );
