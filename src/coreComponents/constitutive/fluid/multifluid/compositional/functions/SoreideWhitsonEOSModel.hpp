@@ -43,12 +43,30 @@ enum class SoreideWhitsonPhaseType : integer
 template< SoreideWhitsonPhaseType PHASE_TYPE, typename EOS_TYPE >
 struct SoreideWhitsonEOSModel
 {
-  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
-public:
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+  using Deriv = multifluid::DerivativeOffset;
+
   /**
-   * @brief Generate a catalog name
+   * @brief Main entry point of the cubic EOS model
+   * @details Computes the logarithm of the fugacity coefficients
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] composition composition of the phase
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] salinity salinity
+   * @param[out] logFugacityCoefficients log of the fugacity coefficients
    */
-  static constexpr char const * catalogName(){ return "SoreideWhitson"; }
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static void
+  computeLogFugacityCoefficients( integer const numComps,
+                                  real64 const & pressure,
+                                  real64 const & temperature,
+                                  arraySlice1d< real64 const, USD > const & composition,
+                                  ComponentProperties::KernelWrapper const & componentProperties,
+                                  real64 const & salinity,
+                                  arraySlice1d< real64 > const & logFugacityCoefficients );
 
   /**
    * @brief Calculate the pure coefficients
@@ -358,7 +376,6 @@ getBinaryInteractionCiefficient( real64 const & pressure,
 
   if constexpr (PHASE_TYPE == SoreideWhitsonPhaseType::Aqueous)
   {
-
     // Initialise default values
     kij = componentProperties.m_componentBinaryCoeff( ic, jc );
     dkij_dT = 0.0;
@@ -384,8 +401,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
         real64 const a1 = 1.0 + 0.17837 * power( salinity, 0.979 );
         real64 const a2 = LvArray::math::exp( -6.7222*Tr - salinity );
         kij = A0*a0 + A1*a1 + A2*a2;
-        real64 const dkij_dTr = -6.7222*A2*a2;
-        dkij_dT = dkij_dTr * dTr_dt;
+        dkij_dT = -6.7222*A2*a2 * dTr_dt;
       }
       else if( isType( type_ic, ComponentProperties::ComponentType::HydrogenSulphide ))
       {
@@ -516,7 +532,7 @@ computeMixtureCoefficients( integer const numComps,
     real64 aCoefficient = 0.0;
     real64 bCoefficient = 0.0;
     real64 dummy = 0.0;
-    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > daPureCoefficient_dt( numComps );
+    stackArray1d< real64, maxNumComps > daPureCoefficient_dt( numComps );
     for( integer ic = 0; ic < numComps; ++ic )
     {
       computePureCoefficients( ic, pressure, temperature, componentProperties, salinity,
@@ -584,16 +600,13 @@ computeCompressibilityFactor( integer const numComps,
                               real64 const & salinity,
                               real64 & compressibilityFactor )
 {
-
-  integer constexpr numMaxComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
-
-  stackArray2d< real64, 4*numMaxComps > tempData( 4, numComps );
+  stackArray2d< real64, 2*maxNumComps > tempData( 2, numComps );
   arraySlice1d< real64 > aPureCoefficient = tempData[0];
   arraySlice1d< real64 > bPureCoefficient = tempData[1];
   real64 aMixtureCoefficient = 0.0;
   real64 bMixtureCoefficient = 0.0;
 
-  // step 1: compute the mixture coefficients aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient
+  // step 1: compute the mixture coefficients
   computeMixtureCoefficients( numComps, // number of components
                               pressure, // cell input
                               temperature,
@@ -605,7 +618,7 @@ computeCompressibilityFactor( integer const numComps,
                               aMixtureCoefficient,
                               bMixtureCoefficient );
 
-  stackArray2d< real64, numMaxComps *numMaxComps > kij( numComps, numComps );
+  stackArray2d< real64, maxNumComps *maxNumComps > kij( numComps, numComps );
   real64 dkij_dT = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
@@ -638,7 +651,7 @@ computeCompressibilityFactor( integer const numComps,
                               real64 const & compressibilityFactor,
                               arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
-  integer constexpr numMaxDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
+  integer constexpr numMaxDofs = maxNumComps + 2;
 
   stackArray2d< real64, 4*numMaxDofs > tempData( 4, numMaxDofs );
   arraySlice1d< real64 > aPureCoefficient = tempData[0];
@@ -683,6 +696,84 @@ computeCompressibilityFactor( integer const numComps,
                                                                 aMixtureCoefficientDerivs.toSliceConst(),
                                                                 bMixtureCoefficientDerivs.toSliceConst(),
                                                                 compressibilityFactorDerivs );
+}
+
+template< SoreideWhitsonPhaseType PHASE_TYPE, typename EOS_TYPE >
+template< integer USD >
+GEOS_HOST_DEVICE
+void
+SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+computeLogFugacityCoefficients( integer const numComps,
+                                real64 const & pressure,
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD > const & composition,
+                                ComponentProperties::KernelWrapper const & componentProperties,
+                                real64 const & salinity,
+                                arraySlice1d< real64 > const & logFugacityCoefficients )
+{
+  if constexpr (PHASE_TYPE == SoreideWhitsonPhaseType::Aqueous)
+  {
+    // step 0: allocate the stack memory needed for the update
+    stackArray2d< real64, 2*maxNumComps > pureCoefficients( 2, numComps );
+    arraySlice1d< real64 > aPureCoefficient = pureCoefficients[0];
+    arraySlice1d< real64 > bPureCoefficient = pureCoefficients[1];
+    real64 aMixtureCoefficient = 0.0;
+    real64 bMixtureCoefficient = 0.0;
+    real64 compressibilityFactor = 0.0;
+
+    // step 1: calculate the dynamic binary interaction coefficients
+    stackArray2d< real64, maxNumComps *maxNumComps > kij( numComps, numComps );
+    real64 dkij_dT = 0.0;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      for( integer jc = 0; jc < numComps; ++jc )
+      {
+        getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
+      }
+    }
+
+    // step 2: compute the mixture coefficients
+    computeMixtureCoefficients( numComps,
+                                pressure,
+                                temperature,
+                                composition,
+                                componentProperties,
+                                salinity,
+                                aPureCoefficient,
+                                bPureCoefficient,
+                                aMixtureCoefficient,
+                                bMixtureCoefficient );
+
+    // step 3: compute the compressibility factor
+    CubicEOSPhaseModel< EOS_TYPE >::computeCompressibilityFactor( numComps,
+                                                                  composition,
+                                                                  kij.toSliceConst(),
+                                                                  aPureCoefficient,
+                                                                  bPureCoefficient,
+                                                                  aMixtureCoefficient,
+                                                                  bMixtureCoefficient,
+                                                                  compressibilityFactor );
+
+    // step 4: use mixture coefficients and compressibility factor to update fugacity coefficients
+    CubicEOSPhaseModel< EOS_TYPE >::computeLogFugacityCoefficients( numComps,
+                                                                    composition,
+                                                                    kij.toSliceConst(),
+                                                                    compressibilityFactor,
+                                                                    aPureCoefficient,
+                                                                    bPureCoefficient,
+                                                                    aMixtureCoefficient,
+                                                                    bMixtureCoefficient,
+                                                                    logFugacityCoefficients );
+  }
+  else
+  {
+    CubicEOSPhaseModel< EOS_TYPE >::computeLogFugacityCoefficients( numComps,
+                                                                    pressure,
+                                                                    temperature,
+                                                                    composition,
+                                                                    componentProperties,
+                                                                    logFugacityCoefficients );
+  }
 }
 
 } // namespace compositional
