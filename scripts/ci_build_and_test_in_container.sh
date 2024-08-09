@@ -95,14 +95,8 @@ do
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
     --build-generator)
-        if [[ -z "$2" || "Unix Makefiles" == "$2" ]] ; then
-            BUILD_GENERATOR=""
-        elif [[ "Eclipse CDT4 - Unix Makefiles" == "$2" ]] ; then
-            BUILD_GENERATOR="--eclipse"
-        elif [[ "Ninja" == "$2" ]] ; then
+        if [[ "Ninja" == "$2" ]] ; then
             BUILD_GENERATOR="--ninja"
-        elif [[ "Xcode" == "$2" ]] ; then
-            BUILD_GENERATOR="--xcode"
         else
             echo "Unexpected generator passed to '--build-generator' option."
             exit 1
