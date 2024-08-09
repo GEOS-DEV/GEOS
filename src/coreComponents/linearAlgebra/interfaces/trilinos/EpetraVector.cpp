@@ -19,6 +19,7 @@
 
 #include "EpetraVector.hpp"
 
+#include "codingUtilities/RTTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraUtils.hpp"
 
@@ -293,7 +294,7 @@ MPI_Comm EpetraVector::comm() const
 #ifdef GEOS_USE_MPI
   return dynamicCast< Epetra_MpiComm const & >( m_vec->Map().Comm() ).Comm();
 #else
-  return MPI_COMM_GEOSX;
+  return MPI_COMM_GEOS;
 #endif
 }
 
