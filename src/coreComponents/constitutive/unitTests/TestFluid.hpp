@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_UNITTESTS_TESTFLUID_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/format/Format.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
 
 namespace geos
