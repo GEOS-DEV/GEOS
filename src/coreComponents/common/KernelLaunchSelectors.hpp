@@ -19,8 +19,6 @@
 #ifndef GEOS_COMMON_KERNELLAUNCHSELECTORS_HPP
 #define GEOS_COMMON_KERNELLAUNCHSELECTORS_HPP
 
-#include "common/Logger.hpp"
-
 namespace geos
 {
 namespace internal
