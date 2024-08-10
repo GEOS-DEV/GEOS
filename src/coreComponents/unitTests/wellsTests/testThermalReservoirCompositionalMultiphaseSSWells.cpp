@@ -619,7 +619,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
             {
               localIndex rowIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
               globalIndex colIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
-              setNumericalJacobianValue( rowIndex, colIndex, 1.0, jacobianFD.toView() );
+              setNumericalJacobianValue( rowIndex, colIndex, 1.0, jacobianFD.toViewConstSizes() );
             }
           }
         }

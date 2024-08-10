@@ -619,17 +619,17 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
                 for( integer ider=0; ider< 3; ider++ )
                 {
                   globalIndex colIndex = wellElemDofNumber[0]+ ider;
-                  setNumericalJacobianValue( rowIndex, colIndex, dRdX, jacobianFD.toView() );
+                  setNumericalJacobianValue( rowIndex, colIndex, dRdX, jacobianFD.toViewConstSizes() );
                 }
                 globalIndex colIndex = wellElemDofNumber[1]+3;
-                setNumericalJacobianValue( rowIndex, colIndex, dRdX, jacobianFD.toView() );
+                setNumericalJacobianValue( rowIndex, colIndex, dRdX, jacobianFD.toViewConstSizes() );
               }
             }
             else
             {
               localIndex rowIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
               globalIndex colIndex = wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1;;
-              setNumericalJacobianValue( rowIndex, colIndex, 1.0, jacobianFD.toView() );
+              setNumericalJacobianValue( rowIndex, colIndex, 1.0, jacobianFD.toViewConstSizes() );
             }
 
           }

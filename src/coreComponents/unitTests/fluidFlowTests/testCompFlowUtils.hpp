@@ -57,13 +57,14 @@ inline
 void setNumericalJacobianValue( localIndex const rowIndex,
                                 globalIndex const colIndex,
                                 real64 const val,
-                                CRSMatrixView< real64, globalIndex > const & jacobian )
+                                CRSMatrixView< real64, const globalIndex > const jacobian )
 {
   forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     GEOS_UNUSED_VAR( k );
-    jacobian.removeNonZero( rowIndex, colIndex );
-    jacobian.insertNonZero( rowIndex, colIndex, val );
+    jacobian.addToRow< parallelDeviceAtomic >( row, &colIndex, &val, 1 );
+    // jacobian.removeNonZero( rowIndex, colIndex );
+    // jacobian.insertNonZero( rowIndex, colIndex, val );
   } );
 }
 
