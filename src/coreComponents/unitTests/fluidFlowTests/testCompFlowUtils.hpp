@@ -62,7 +62,7 @@ void setNumericalJacobianValue( localIndex const rowIndex,
   forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     GEOS_UNUSED_VAR( k );
-    jacobian.addToRow< parallelDeviceAtomic >( row, &colIndex, &val, 1 );
+    jacobian.addToRow< parallelDeviceAtomic >( rowIndex, &colIndex, &val, 1 );
     // jacobian.removeNonZero( rowIndex, colIndex );
     // jacobian.insertNonZero( rowIndex, colIndex, val );
   } );
