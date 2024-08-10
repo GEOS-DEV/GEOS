@@ -804,12 +804,12 @@ protected:
   /// Element phase fraction
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_wellElemPhaseFrac;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseFrac;
-  arrayView3d< real64 const, multifluid::USD_PHASE >  m_wellElemPhaseEnthalpy;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC >  m_dWellElemPhaseEnthalpy;
+  arrayView3d< real64 const, multifluid::USD_PHASE > const m_wellElemPhaseEnthalpy;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dWellElemPhaseEnthalpy;
 
   /// Views on energy flux
-  arrayView1d< real64 > const & m_energyPerfFlux;
-  arrayView3d< real64 > const & m_dEnergyPerfFlux;
+  arrayView1d< real64 > const m_energyPerfFlux;
+  arrayView3d< real64 > const m_dEnergyPerfFlux;
 
   /// Views on temperature
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
