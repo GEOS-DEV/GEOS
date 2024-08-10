@@ -26,7 +26,7 @@ namespace geos
 
 //specific to Hysteresis
 template< typename RELPERM_TYPE >
-std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, 
+std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis,
                                 RELPERM_TYPE >::value, void >
 RelpermDriver::runTest( RELPERM_TYPE & relperm,
                         const arrayView2d< real64 > & table )

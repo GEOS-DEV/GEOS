@@ -43,7 +43,7 @@ namespace geos
 
 namespace singlePhaseFVMKernels
 {
-  
+
 /******************************** FaceBasedAssemblyKernelBase ********************************/
 
 /**
@@ -79,7 +79,7 @@ public:
                               fields::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
-    StencilMaterialAccessors<  constitutive::SlurryFluidBase,
+    StencilMaterialAccessors< constitutive::SlurryFluidBase,
                               fields::singlefluid::density,
                               fields::singlefluid::dDensity_dPressure >;
 

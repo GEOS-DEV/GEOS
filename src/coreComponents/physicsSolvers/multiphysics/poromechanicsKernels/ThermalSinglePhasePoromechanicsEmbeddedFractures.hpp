@@ -205,24 +205,24 @@ public:
       real64 dMassFlux_dT[2]{};
 
       fluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
-                           trans,
-                           m_enthalpy,
-                           m_dEnthalpy_dPres,
-                           m_dEnthalpy_dTemp,
-                           m_gravCoef,
-                           m_dDens_dTemp,
-                           m_dMob_dTemp,
-                           alpha,
-                           mobility,
-                           potGrad,
-                           massFlux,
-                           dMassFlux_dTrans,
-                           dMassFlux_dP,
-                           dMassFlux_dT,
-                           stack.energyFlux,
-                           stack.dEnergyFlux_dTrans,
-                           stack.dEnergyFlux_dP,
-                           stack.dEnergyFlux_dT );
+                                              trans,
+                                              m_enthalpy,
+                                              m_dEnthalpy_dPres,
+                                              m_dEnthalpy_dTemp,
+                                              m_gravCoef,
+                                              m_dDens_dTemp,
+                                              m_dMob_dTemp,
+                                              alpha,
+                                              mobility,
+                                              potGrad,
+                                              massFlux,
+                                              dMassFlux_dTrans,
+                                              dMassFlux_dP,
+                                              dMassFlux_dT,
+                                              stack.energyFlux,
+                                              stack.dEnergyFlux_dTrans,
+                                              stack.dEnergyFlux_dP,
+                                              stack.dEnergyFlux_dT );
 
       for( localIndex i=0; i < 3; i++ )
       {

@@ -1861,17 +1861,17 @@ public:
     real64 faceTotalDens = 0.0;
 
     constitutive::MultiFluidBase::KernelWrapper::computeValues( m_fluidWrapper,
-                                                  m_facePres[kf],
-                                                  m_faceTemp[kf],
-                                                  m_faceCompFrac[kf],
-                                                  facePhaseFrac[0][0],
-                                                  facePhaseDens[0][0],
-                                                  facePhaseMassDens[0][0],
-                                                  facePhaseVisc[0][0],
-                                                  facePhaseEnthalpy[0][0],
-                                                  facePhaseInternalEnergy[0][0],
-                                                  facePhaseCompFrac[0][0],
-                                                  faceTotalDens );
+                                                                m_facePres[kf],
+                                                                m_faceTemp[kf],
+                                                                m_faceCompFrac[kf],
+                                                                facePhaseFrac[0][0],
+                                                                facePhaseDens[0][0],
+                                                                facePhaseMassDens[0][0],
+                                                                facePhaseVisc[0][0],
+                                                                facePhaseEnthalpy[0][0],
+                                                                facePhaseInternalEnergy[0][0],
+                                                                facePhaseCompFrac[0][0],
+                                                                faceTotalDens );
 
     // Step 3: loop over phases, compute and upwind phase flux and sum contributions to each component's flux
 
