@@ -118,18 +118,15 @@ void AcousticWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
-void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
+void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
   GEOS_MARK_FUNCTION;
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
-  nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
+  arrayView1d< globalIndex const > const nodeLocalToGlobalMap = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
+  ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodes = baseMesh.getFaceManager().nodeList().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -159,8 +156,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     }
   }
 
-  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                        CellElementSubRegion & elementSubRegion )
+  mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                localIndex const er,
+                                                                                                localIndex const esr,
+                                                                                                ElementRegionBase &,
+                                                                                                CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                    getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
@@ -168,8 +168,10 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes = baseMesh.getElemManager().getRegion( er ).getSubRegion< CellElementSubRegion >( esr ).nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
+    arrayView1d< globalIndex const > const elemLocalToGlobalMap = elementSubRegion.localToGlobalMap().toViewConst();
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -177,22 +179,22 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-
       {
         GEOS_MARK_SCOPE( acousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel );
         PreComputeSourcesAndReceivers::
           Compute1DSourceAndReceiverConstants
         < EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
-          numFacesPerElem,
-          nodeCoords32,
+          facesToNodes,
+          nodeCoords,
+          nodeLocalToGlobalMap,
+          elemLocalToGlobalMap,
+          nodesToElements,
+          baseElemsToNodes,
           elemGhostRank,
           elemsToNodes,
           elemsToFaces,
           elemCenter,
-          faceNormal,
-          faceCenter,
           sourceCoordinates,
           sourceIsAccessible,
           sourceNodeIds,
@@ -250,11 +252,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   applyFreeSurfaceBC( 0.0, domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    precomputeSourceAndReceiverTerm( mesh, regionNames );
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -430,7 +435,7 @@ void AcousticWaveEquationSEM::initializePML()
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
     arrayView1d< real32 > const indicatorPML = nodeManager.getField< acousticfields::AuxiliaryVar4PML >();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
     indicatorPML.zero();
 
     real32 xInteriorMin[3]{};
@@ -770,7 +775,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       {
         if( !m_lifo )
         {
-          int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+          int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
           std::string lifoPrefix = GEOS_FMT( "lifo/rank_{:05}/pdt2_shot{:06}", rank, m_shotIndex );
           m_lifo = std::make_unique< LifoStorage< real32, localIndex > >( lifoPrefix, p_dt2, m_lifoOnDevice, m_lifoOnHost, m_lifoSize );
         }
@@ -792,7 +797,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       {
         GEOS_MARK_SCOPE ( DirectWrite );
         p_dt2.move( MemorySpace::host, false );
-        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         int lastDirSeparator = fileName.find_last_of( "/\\" );
         std::string dirName = fileName.substr( 0, lastDirSeparator );
@@ -861,7 +866,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
       {
         GEOS_MARK_SCOPE ( DirectRead );
 
-        int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
         GEOS_THROW_IF( !wf,
