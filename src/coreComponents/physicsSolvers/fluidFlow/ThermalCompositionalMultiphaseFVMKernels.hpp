@@ -31,8 +31,6 @@ namespace geos
 namespace thermalCompositionalMultiphaseFVMKernels
 {
 
-;
-
 /******************************** PhaseMobilityKernel ********************************/
 
 /**

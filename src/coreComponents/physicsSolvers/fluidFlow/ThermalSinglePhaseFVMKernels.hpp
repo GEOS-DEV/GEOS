@@ -30,8 +30,6 @@ namespace geos
 
 namespace thermalSinglePhaseFVMKernels
 {
-;
-
 /******************************** FaceBasedAssemblyKernel ********************************/
 
 /**

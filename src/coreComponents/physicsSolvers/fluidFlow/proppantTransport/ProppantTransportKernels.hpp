@@ -40,8 +40,6 @@ namespace geos
 
 namespace proppantTransportKernels
 {
-;
-
 /******************************** FluidUpdateKernel ********************************/
 
 struct FluidUpdateKernel

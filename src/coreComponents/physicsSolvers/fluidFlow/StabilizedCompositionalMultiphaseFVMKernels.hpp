@@ -28,9 +28,6 @@ namespace geos
 namespace stabilizedCompositionalMultiphaseFVMKernels
 {
 
-;
-
-
 /******************************** FaceBasedAssemblyKernel ********************************/
 
 /**

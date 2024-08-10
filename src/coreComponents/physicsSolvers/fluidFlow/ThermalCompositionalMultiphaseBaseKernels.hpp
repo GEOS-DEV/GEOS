@@ -30,8 +30,6 @@ namespace geos
 namespace thermalCompositionalMultiphaseBaseKernels
 {
 
-;
-
 
 /******************************** PhaseVolumeFractionKernel ********************************/
 

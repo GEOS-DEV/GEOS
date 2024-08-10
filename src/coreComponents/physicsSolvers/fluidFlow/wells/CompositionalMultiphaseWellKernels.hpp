@@ -43,8 +43,6 @@ namespace geos
 namespace compositionalMultiphaseWellKernels
 {
 
-;
-
 static constexpr real64 minDensForDivision = 1e-10;
 
 // tag to access well and reservoir elements in perforation rates computation

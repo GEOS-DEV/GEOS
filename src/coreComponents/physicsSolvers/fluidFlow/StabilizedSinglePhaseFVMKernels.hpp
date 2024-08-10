@@ -28,8 +28,6 @@ namespace geos
 namespace stabilizedSinglePhaseFVMKernels
 {
 
-;
-
 
 /******************************** FaceBasedAssemblyKernel ********************************/
 
