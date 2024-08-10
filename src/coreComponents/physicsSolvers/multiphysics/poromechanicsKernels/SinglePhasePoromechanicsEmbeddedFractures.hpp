@@ -29,9 +29,6 @@ namespace geos
 namespace singlePhasePoromechanicsEmbeddedFracturesKernels
 {
 
-using namespace fluxKernelsHelper;
-;
-
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
@@ -183,7 +180,7 @@ public:
     real64 mobility = 0.0;
     real64 potGrad = 0.0;
 
-    computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+    fluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                             trans,
                             dTrans,
                             m_pres,

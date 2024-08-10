@@ -28,9 +28,6 @@ namespace geos
 namespace thermalSinglePhasePoromechanicsEmbeddedFracturesKernels
 {
 
-using namespace fluxKernelsHelper;
-;
-
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >
 {
@@ -207,7 +204,7 @@ public:
       real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
       real64 dMassFlux_dT[2]{};
 
-      computeEnthalpyFlux( seri, sesri, sei,
+      fluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
                            trans,
                            m_enthalpy,
                            m_dEnthalpy_dPres,
@@ -274,7 +271,7 @@ public:
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // Step 2: compute temperature difference at the interface
-        computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
+        fluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;

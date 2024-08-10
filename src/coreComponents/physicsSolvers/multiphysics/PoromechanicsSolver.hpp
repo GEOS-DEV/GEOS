@@ -50,9 +50,6 @@ ENUM_STRINGS( StabilizationType,
               "Local" );
 }
 
-//using namespace stabilization;
-;
-
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
@@ -128,12 +125,12 @@ public:
     if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.registerWrapper< string >( viewKeyStruct::hydraulicApertureRelationNameString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
+        setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
 
       string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
-      hydraulicApertureModelName = SolverBase::getConstitutiveName< HydraulicApertureBase >( subRegion );
+      hydraulicApertureModelName = SolverBase::getConstitutiveName< constitutive::HydraulicApertureBase >( subRegion );
       GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
                                                                    this->getDataContext(), subRegion.getDataContext() ) );
     }

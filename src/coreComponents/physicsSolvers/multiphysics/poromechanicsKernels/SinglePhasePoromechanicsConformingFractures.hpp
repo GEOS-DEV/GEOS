@@ -28,10 +28,7 @@ namespace geos
 
 namespace singlePhasePoromechanicsConformingFracturesKernels
 {
-
-using namespace fluxKernelsHelper;
-;
-
+  
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
@@ -193,7 +190,7 @@ public:
         localIndex const subRegionIndex[2] = {m_sesri[iconn][k[0]], m_sesri[iconn][k[1]]};
         localIndex const elementIndex[2]   = {m_sei[iconn][k[0]], m_sei[iconn][k[1]]};
 
-        computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+        fluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                                 trans,
                                 dTrans,
                                 m_pres,
