@@ -23,8 +23,8 @@
 
 using namespace geos;
 using namespace geos::testing;
-using namespace geos::constitutive;
 using namespace geos::dataRepository;
+using namespace geos::constitutive;
 
 static constexpr char const * pvdgTableContent = "# Pg(Pa) Bg(m3/sm3) Visc(Pa.s)\n"
                                                  "3000000  0.04234  0.00001344\n"

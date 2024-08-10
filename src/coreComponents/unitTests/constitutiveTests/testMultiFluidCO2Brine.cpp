@@ -24,8 +24,8 @@
 
 using namespace geos;
 using namespace geos::testing;
-using namespace geos::constitutive;
 using namespace geos::dataRepository;
+using namespace geos::constitutive;
 
 enum class BrineModelType : int {Phillips, Ezrokhi};
 enum class FlashType : int {DuanSun, SpycherPruess};

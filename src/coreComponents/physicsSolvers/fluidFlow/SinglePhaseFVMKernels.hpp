@@ -84,12 +84,12 @@ public:
                               fields::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
+    StencilMaterialAccessors< constitutive::PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 
   using ProppantPermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
+    StencilMaterialAccessors< constitutive::PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure,
                               fields::permeability::dPerm_dDispJump,
