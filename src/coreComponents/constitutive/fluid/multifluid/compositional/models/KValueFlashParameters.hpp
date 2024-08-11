@@ -26,6 +26,8 @@
 namespace geos
 {
 
+class TableFunction;
+
 namespace constitutive
 {
 
@@ -42,7 +44,17 @@ public:
 
   static std::unique_ptr< ModelParameters > create( std::unique_ptr< ModelParameters > parameters );
 
+  void createTables( string const & name,
+                     string & pressureTableName,
+                     string & temperatureTableName ) const;
+
+  array1d< real64 > m_pressureCoordinates;
+  array1d< real64 > m_temperatureCoordinates;
   Array< string, 2 > m_kValueTables;
+
+  array1d< array1d< real64 > > m_pressureValues;
+  array1d< array1d< real64 > > m_temperatureValues;
+  array4d< real64 > m_kValueHyperCube;
 
 protected:
   void registerParametersImpl( MultiFluidBase * fluid ) override;
@@ -50,8 +62,16 @@ protected:
 
   struct viewKeyStruct
   {
+    static constexpr char const * pressureCoordinatesString() { return "pressureCoordinates"; }
+    static constexpr char const * temperatureCoordinatesString() { return "temperatureCoordinates"; }
     static constexpr char const * kValueTablesString() { return "kValueTables"; }
   };
+
+private:
+  static bool isIncreasing( arraySlice1d< real64 const > const & array );
+
+  void generateHyperCube();
+  bool validateKValues( MultiFluidBase const * fluid ) const;
 };
 
 } // end namespace compositional

@@ -13,8 +13,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include "constitutiveTestHelpers.hpp"
+
 #include "constitutive/fluid/multifluid/compositional/models/KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/KValueFlashParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/unitTests/TestFluid.hpp"
 #include "constitutive/unitTests/TestFluidUtilities.hpp"
 
@@ -24,7 +28,9 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
+using namespace geos::dataRepository;
 using namespace geos::testing;
+using namespace geos::constitutive;
 using namespace geos::constitutive::compositional;
 
 namespace geos
@@ -57,9 +63,8 @@ struct TestData< 9 >
   }
 };
 
-
 template< integer numPhases, integer numComps >
-class KValueFlashTestFixture : public ::testing::TestWithParam< FlashData< numPhases, numComps > >
+class KValueFlashTestFixture : public ConstitutiveTestBase< MultiFluidBase >, public ::testing::WithParamInterface< FlashData< numPhases, numComps > >
 {
   static constexpr real64 relTol = 1.0e-5;
   static constexpr real64 absTol = 1.0e-7;
@@ -78,12 +83,15 @@ protected:
   std::unique_ptr< TestFluid< numComps > > m_fluid{};
   std::unique_ptr< KValueFlashModel< numPhases > > m_flash{};
   std::unique_ptr< ModelParameters > m_parameters{};
+
 private:
-  void generateTables( arraySlice2d< string > const & names );
+  void generateTables( arraySlice2d< string > const & names, string const fluidName );
 
   static void writeToFile( string const & fileName, string const & content );
 
   static void removeFile( string const & fileName );
+
+  static CompositionalTwoPhaseConstantViscosity * makeFluid( string const & name, Group * parent, TestFluid< numComps > const * testFluid );
 
 private:
   string_array m_fileNames;
@@ -94,14 +102,29 @@ KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture():
   m_fluid( TestData< numComps >::createFluid() )
 {
   using ModelParamType = KValueFlashParameters< numPhases >;
+
+  string const fluidName = GEOS_FMT( "fluid_{}_{}", numPhases, numComps );
+
   m_parameters = KValueFlashModel< numPhases >::createParameters( std::move( m_parameters ));
   ModelParamType * parameters = const_cast< ModelParamType * >(m_parameters->get< ModelParamType >());
   parameters->m_kValueTables.resize( numPhases-1, numComps );
-  generateTables( parameters->m_kValueTables.toSlice());
+  generateTables( parameters->m_kValueTables.toSlice(), fluidName );
 
   ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
 
-  m_flash = std::make_unique< KValueFlashModel< numPhases > >( "Flash", componentProperties, *m_parameters );
+  string const flashName = fluidName + "_flash";
+  m_flash = std::make_unique< KValueFlashModel< numPhases > >( flashName, componentProperties, *m_parameters );
+
+  auto & parent = this->m_parent;
+  parent.resize( 1 );
+
+
+  m_model = makeFluid( fluidName, &parent, m_fluid.get() );
+
+  parent.initialize();
+  parent.initializePostInitialConditions();
+
+  m_parameters->postInputInitialization( m_model, componentProperties );
 }
 
 template< integer numPhases, integer numComps >
@@ -111,6 +134,57 @@ KValueFlashTestFixture< numPhases, numComps >::~KValueFlashTestFixture()
   {
     removeFile( fileName );
   }
+}
+
+template< integer numComps >
+struct MakeFluid;
+
+template<>
+struct MakeFluid< 9 >
+{
+  static void populate( CompositionalTwoPhaseConstantViscosity & fluid, TestFluid< 9 > const * testFluid )
+  {
+    using FluidModel = CompositionalTwoPhaseConstantViscosity;
+
+    string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+    TestFluid< 9 >::createArray( componentNames, testFluid->componentNames );
+
+    array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
+    TestFluid< 9 >::createArray( molarWeight, testFluid->molecularWeight );
+
+    array1d< real64 > & criticalPressure = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentCriticalPressureString() );
+    TestFluid< 9 >::createArray( criticalPressure, testFluid->criticalPressure );
+
+    array1d< real64 > & criticalTemperature = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentCriticalTemperatureString() );
+    TestFluid< 9 >::createArray( criticalTemperature, testFluid->criticalTemperature );
+
+    array1d< real64 > & acentricFactor = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentAcentricFactorString() );
+    TestFluid< 9 >::createArray( acentricFactor, testFluid->acentricFactor );
+  }
+};
+
+template< integer numPhases, integer numComps >
+CompositionalTwoPhaseConstantViscosity *
+KValueFlashTestFixture< numPhases, numComps >::makeFluid( string const & name, Group * parent, TestFluid< numComps > const * testFluid )
+{
+  CompositionalTwoPhaseConstantViscosity & compositionalFluid = parent->registerGroup< CompositionalTwoPhaseConstantViscosity >( name );
+
+  Group & fluid = compositionalFluid;
+
+  auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.emplace_back( "gas" );
+  phaseNames.emplace_back( "liquid" );
+
+  string const eosName = EnumStrings< EquationOfStateType >::toString( EquationOfStateType::PengRobinson );
+  string_array & equationsOfState = fluid.template getReference< string_array >( EquationOfState::viewKeyStruct::equationsOfStateString() );
+  equationsOfState.emplace_back( eosName );
+  equationsOfState.emplace_back( eosName );
+
+  MakeFluid< numComps >::populate( compositionalFluid, testFluid );
+
+  compositionalFluid.postInputInitializationRecursive();
+
+  return &compositionalFluid;
 }
 
 // Crookston correlations pressure (bar), temperature (K)
@@ -127,7 +201,7 @@ real64 getKValue( integer const phaseIndex, integer const compIndex, real64 cons
 }
 
 template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d< string > const & names )
+void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d< string > const & names, string const fluidName )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   std::ostringstream content;
@@ -135,7 +209,7 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d
   {
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      string const tableName = GEOS_FMT( "KVALUE_{}_{}", ip+1, ic+1 );
+      string const tableName = GEOS_FMT( "{}_KVALUE_{}_{}", fluidName, ip+1, ic+1 );
 
       // Generate tables whose end-points are not exactly the same
       real64 const th = (ip + 0.5)*numComps + ic + 0.5;
@@ -206,12 +280,6 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d
 }
 
 template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::testFlash( typename KValueFlashTestFixture::ParamType const & data )
-{
-  GEOS_UNUSED_VAR( data );
-}
-
-template< integer numPhases, integer numComps >
 void KValueFlashTestFixture< numPhases, numComps >::writeToFile( string const & fileName, string const & content )
 {
   std::ofstream os( fileName );
@@ -225,6 +293,16 @@ void KValueFlashTestFixture< numPhases, numComps >::removeFile( string const & f
 {
   int const ret = std::remove( fileName.c_str() );
   ASSERT_TRUE( ret == 0 );
+}
+
+/* --- Start tests --- */
+
+template< integer numPhases, integer numComps >
+void KValueFlashTestFixture< numPhases, numComps >::testFlash( typename KValueFlashTestFixture::ParamType const & data )
+{
+  GEOS_UNUSED_VAR( data );
+  auto flashKernelWrapper = this->m_flash->createKernelWrapper();
+  GEOS_UNUSED_VAR( flashKernelWrapper );
 }
 
 using KValueFlashTest_2_9 = KValueFlashTestFixture< 2, 9 >;

@@ -20,6 +20,8 @@
 #include "KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/KValueFlashParameters.hpp"
 
+#include "functions/FunctionManager.hpp"
+
 namespace geos
 {
 
@@ -64,12 +66,33 @@ template< integer NUM_PHASE >
 typename KValueFlashModel< NUM_PHASE >::KernelWrapper
 KValueFlashModel< NUM_PHASE >::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentProperties.getNumberOfComponents() );
+  string pressureTableName;
+  string temperatureTableName;
+  m_parameters->createTables( functionName(),
+                              pressureTableName,
+                              temperatureTableName );
+
+  FunctionManager const & functionManager = FunctionManager::getInstance();
+  TableFunction const * pressureTable = functionManager.getGroupPointer< TableFunction >( pressureTableName );
+  TableFunction const * temperatureTable = functionManager.getGroupPointer< TableFunction >( temperatureTableName );
+
+  return KernelWrapper( m_componentProperties.getNumberOfComponents(),
+                        *pressureTable,
+                        *temperatureTable,
+                        m_parameters->m_kValueHyperCube );
 }
 
 template< integer NUM_PHASE >
-KValueFlashModelUpdate< NUM_PHASE >::KValueFlashModelUpdate( integer const numComponents ):
-  m_numComponents( numComponents )
+KValueFlashModelUpdate< NUM_PHASE >::KValueFlashModelUpdate( integer const numComponents,
+                                                             TableFunction const & pressureTable,
+                                                             TableFunction const & temperatureTable,
+                                                             arrayView4d< real64 const > const & kValues ):
+  m_numComponents( numComponents ),
+  m_numPressurePoints( pressureTable.getCoordinates()[0].size()),
+  m_numTemperaturePoints( temperatureTable.getCoordinates()[0].size()),
+  m_pressureTable( pressureTable.createKernelWrapper()),
+  m_temperatureTable( temperatureTable.createKernelWrapper()),
+  m_kValues( kValues )
 {}
 
 template< integer NUM_PHASE >
