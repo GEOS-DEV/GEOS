@@ -47,7 +47,7 @@ public:
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = SinglePhaseFVMAbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::SlurryFluidBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
                                                                   fields::permeability::dPerm_dDispJump >;
   using SinglePhaseFVMAbstractBase::m_dt;
   using SinglePhaseFVMAbstractBase::m_rankOffset;

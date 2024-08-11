@@ -48,7 +48,7 @@ public:
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::SlurryFluidBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
                                                                   fields::permeability::dPerm_dDispJump >;
 
   using AbstractBase::m_dt;
