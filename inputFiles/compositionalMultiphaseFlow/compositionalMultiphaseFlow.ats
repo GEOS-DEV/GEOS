@@ -22,6 +22,14 @@ decks = [
         check_step=218,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="4comp_2ph_cap_1d_DD",
+        description=
+            "Compositional multiphase flow test (1D displacement, 2-phase 4-component, capillary pressure) with dispersion and diffusion",
+        partitions=((1, 1, 1), (2, 1, 1), (3, 1, 1)),
+        restart_step=118,
+        check_step=218,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
         name="deadoil_3ph_corey_1d",
         description=
         "Compositional multiphase flow test (1D displacement, 3-phase dead-oil, Brooks-Corey pairwise 2-phase relperm curves)",
