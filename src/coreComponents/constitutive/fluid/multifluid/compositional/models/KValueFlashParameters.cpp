@@ -116,14 +116,16 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
                         InputError );
 
   // Check that the tables exist and are 2D
-  FunctionManager const & functionManager = FunctionManager::getInstance();
+  FunctionManager & functionManager = FunctionManager::getInstance();
   for( integer tableIndex = 0; tableIndex < numTables; ++tableIndex )
   {
     string const tableName = m_kValueTables[tableIndex];
-    TableFunction const * tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
     GEOS_THROW_IF( tableFunction == nullptr,
                    GEOS_FMT( "TableFunction with name {} not found. ", tableName ),
                    InputError );
+
+    tableFunction->initializeFunction();
 
     GEOS_THROW_IF_NE_MSG( tableFunction->numDimensions(), 2,
                           GEOS_FMT( "TableFunction with name {} must have a dimension of 2. ", tableName ),

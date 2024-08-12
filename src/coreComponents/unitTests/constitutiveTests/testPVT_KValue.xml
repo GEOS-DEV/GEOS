@@ -1,0 +1,157 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <PVTDriver
+      name="testkValue2Phase"
+      fluid="kValue2Phase"
+      feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="100"
+      outputMassDensity="1"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      output="testPVT_KValue_kValue2Phase.txt"
+      logLevel="1"/>
+    <PVTDriver
+      name="testkValue3Phase"
+      fluid="kValue3Phase"
+      feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="1000"
+      outputMassDensity="1"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      output="testPVT_KValue_kValue3Phase.txt"
+      logLevel="1"/>
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="eventkValue2Phase"
+      target="/Tasks/testkValue2Phase"/>
+    <SoloEvent
+      name="eventkValue3Phase"
+      target="/Tasks/testkValue3Phase"/>
+  </Events>
+
+  <Constitutive>
+    <CompositionalKValueFluid
+      name="kValue2Phase"
+      phaseNames="{ oil, gas }"
+      equationsOfState="{ pr, pr }"
+      componentNames="{ CO2, N2, C1, C2, C3, C4, C5, C6, C7+ }"
+      componentCriticalPressure="{ 73.8659e5, 33.9439e5, 46.0421e5, 48.8387e5, 42.4552e5, 37.47e5, 33.5892e5, 30.1037e5, 20.549e5 }"
+      componentCriticalTemperature="{ 304.7, 126.2, 190.6, 305.43, 369.8, 419.5, 465.9, 507.5, 678.8 }"
+      componentAcentricFactor="{ 0.225, 0.04, 0.013, 0.0986, 0.1524, 0.1956, 0.2413, 0.299, 0.5618 }"
+      componentMolarWeight="{ 44.01e-3, 28.01e-3, 16.04e-3, 30.07e-3, 44.1e-3, 58.12e-3, 72.15e-3, 84e-3, 173e-3 }"
+      componentVolumeShift="{ -0.04958, -0.136012, -0.1486264, -0.10863408, -0.08349872, -0.06331568, -0.04196464, -0.0150072, 0.0000 }"
+      kValueTables="{ KV1, KV2, KV3, KV4, KV5, KV6, KV7, KV8, KV9 }" />
+    <CompositionalThreePhaseKValueFluid
+      name="kValue3Phase"
+      phaseNames="{ oil, gas, water }"
+      equationsOfState="{ pr, pr, pr }"
+      componentNames="{ CO2, N2, C1, C2, C3, C4, C5, C6, C7+ }"
+      componentCriticalPressure="{ 73.8659e5, 33.9439e5, 46.0421e5, 48.8387e5, 42.4552e5, 37.47e5, 33.5892e5, 30.1037e5, 20.549e5 }"
+      componentCriticalTemperature="{ 304.7, 126.2, 190.6, 305.43, 369.8, 419.5, 465.9, 507.5, 678.8 }"
+      componentAcentricFactor="{ 0.225, 0.04, 0.013, 0.0986, 0.1524, 0.1956, 0.2413, 0.299, 0.5618 }"
+      componentMolarWeight="{ 44.01e-3, 28.01e-3, 16.04e-3, 30.07e-3, 44.1e-3, 58.12e-3, 72.15e-3, 84e-3, 173e-3 }"
+      componentVolumeShift="{ -0.04958, -0.136012, -0.1486264, -0.10863408, -0.08349872, -0.06331568, -0.04196464, -0.0150072, 0.0000 }"
+      kValueTables="{ 
+        KV1, KV2, KV3, KV4, KV5, KV6, KV7, KV8, KV9,
+        KV1, KV2, KV3, KV4, KV5, KV6, KV7, KV8, KV9 }" />
+  </Constitutive>
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 0.5, 1.0, 1.5, 2.0 }"
+      values="{ 3.5e+07, 1.0e+07, 1.0e+05, 1.0e+07, 3.5e+07 }"/>
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      interpolation="lower"
+      coordinates="{ 0.0, 1.0, 2.0 }"
+      values="{ 553.15, 583.15, 583.15 }"/>
+
+    <TableFunction
+      name="KV1"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue1.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV2"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue2.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV3"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue3.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV4"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue4.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV5"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue5.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV6"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue6.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV7"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue7.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV8"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue8.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+    <TableFunction
+      name="KV9"
+      voxelFile="testPVT_data/testPVT_KValue_kvalue9.csv"
+      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
+      interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+</Problem>
