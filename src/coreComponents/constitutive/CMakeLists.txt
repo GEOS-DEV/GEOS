@@ -17,10 +17,14 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
-     contact/ContactBase.hpp
-     contact/CoulombContact.hpp
-     contact/ContactSelector.hpp
+     contact/BartonBandis.hpp
+     contact/CoulombFriction.hpp
+     contact/FrictionSelector.hpp
+     contact/FrictionBase.hpp
      contact/FrictionlessContact.hpp
+     contact/HydraulicApertureBase.hpp
+     contact/HydraulicApertureRelationSelector.hpp
+     contact/HydraulicApertureTable.hpp
      diffusion/ConstantDiffusion.hpp
      diffusion/DiffusionBase.hpp
      diffusion/DiffusionFields.hpp
@@ -188,9 +192,12 @@ set( constitutive_sources
      capillaryPressure/TableCapillaryPressure.cpp
      capillaryPressure/TableCapillaryPressureHelpers.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contact/ContactBase.cpp
-     contact/CoulombContact.cpp
+     contact/BartonBandis.cpp
+     contact/CoulombFriction.cpp
+     contact/FrictionBase.cpp
      contact/FrictionlessContact.cpp
+     contact/HydraulicApertureBase.cpp
+     contact/HydraulicApertureTable.cpp
      diffusion/ConstantDiffusion.cpp
      diffusion/DiffusionBase.cpp
      dispersion/DispersionBase.cpp
@@ -322,7 +329,7 @@ blt_add_library( NAME       constitutive
                  SOURCES    ${constitutive_sources}
                  HEADERS    ${constitutive_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
