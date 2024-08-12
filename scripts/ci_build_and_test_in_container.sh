@@ -100,7 +100,7 @@ do
       RUN_UNIT_TESTS=false
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --eclipse|--ninja|--xcode)
+    --ninja)
         BUILD_GENERATOR=$1;
         shift;;
     --data-basename)
@@ -116,7 +116,6 @@ do
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
     --install-dir-basename)  GEOS_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
-    --makefile)              BUILD_GENERATOR="";         shift;;
     --no-install-schema)     GEOS_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --nproc)                 NPROC=$2;                   shift 2;;
