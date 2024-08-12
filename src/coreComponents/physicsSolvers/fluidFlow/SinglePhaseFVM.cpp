@@ -126,6 +126,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 {
   GEOS_MARK_FUNCTION;
 
+  std::cout << "In SinglePhaseFVM< BASE >::calculateResidualNorm:" << std::endl;
+
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
@@ -477,6 +479,8 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
                                                     string const & jumpDofKey )
 {
   GEOS_MARK_FUNCTION;
+
+  std::cout << "In SinglePhaseFVM< BASE >::assembleEDFMFluxTerms!!" << std::endl;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

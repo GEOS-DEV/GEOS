@@ -79,6 +79,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
+  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups: " << std::endl;
+
   Base::initializePostInitialConditionsPreSubGroups();
 
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
@@ -454,6 +456,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::updateState:" << std::endl;
 
   /// 1. update the reservoir
   Base::updateState( domain );

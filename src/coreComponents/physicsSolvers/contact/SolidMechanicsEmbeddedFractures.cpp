@@ -134,6 +134,8 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
                                                             real64 const & dt,
                                                             DomainPartition & domain )
 {
+  std::cout << "In SolidMechanicsEmbeddedFractures::implicitStepComplete:" << std::endl;
+
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -715,6 +717,8 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  std::cout << "In SolidMechanicsEmbeddedFractures::updateState:" << std::endl;
 
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {

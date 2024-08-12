@@ -30,6 +30,9 @@
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 
+// #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
+// #include "constitutive/contact/ContactSelector.hpp"
+
 namespace geos
 {
 
@@ -224,6 +227,8 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override
   {
+    std::cout << "In PoromechanicsSolver::implicitStepSetup: " << std::endl;
+    
     flowSolver()->setKeepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
     if( this->m_stabilizationType == StabilizationType::Global || this->m_stabilizationType == StabilizationType::Local )
@@ -524,6 +529,9 @@ protected:
     if( solverType == static_cast< integer >( SolverType::SolidMechanics )
         && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
+      // std::cout << "In PoromechanicsSolver::mapSolutionBetweenSolvers after mechanics solve: " << std::endl;
+      // updateHydraulicAperture( domain );
+
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
 
@@ -551,6 +559,64 @@ protected:
       recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
     }
   }
+
+  // void updateHydraulicAperture( DomainPartition & domain )
+  // {
+  //   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  //                                                                       MeshLevel & mesh,
+  //                                                                       arrayView1d< string const > const & regionNames )
+  //   {
+  //     ElementRegionManager & elemManager = mesh.getElemManager();
+
+  //     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+  //                                                               [&]( localIndex const,
+  //                                                                   FaceElementSubRegion & subRegion )
+  //     {
+  //       arrayView2d< real64 const > const dispJump           = subRegion.getField< contact::dispJump >();
+  //       arrayView1d< real64 const > const area               = subRegion.getElementArea();
+  //       arrayView1d< real64 const > const volume             = subRegion.getElementVolume();
+  //       arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
+  //       arrayView1d< real64 const > const pressure           = subRegion.getField< fields::flow::pressure >();
+  //       arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
+
+  //       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
+  //       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
+  //       arrayView1d< real64 > const deltaVolume              = subRegion.getField< flow::deltaVolume >();
+
+  //       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+  //       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
+
+  //       string const & contactRelationName = subRegion.template getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString() );
+  //       ContactBase const & contact = subRegion.getConstitutiveModel< ContactBase >( contactRelationName );
+
+  //       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+  //       {
+  //         using ContactType = TYPEOFREF( castedContact );
+  //         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+  //         constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+  //         {
+  //           typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+
+  //           poromechanicsFracturesKernels::StateUpdateKernel::
+  //             launch< parallelDevicePolicy<> >( subRegion.size(),
+  //                                               porousMaterialWrapper,
+  //                                               contactWrapper,
+  //                                               dispJump,
+  //                                               pressure,
+  //                                               area,
+  //                                               volume,
+  //                                               deltaVolume,
+  //                                               aperture,
+  //                                               oldHydraulicAperture,
+  //                                               hydraulicAperture,
+  //                                               fractureTraction );
+
+  //         } );
+  //       } );
+  //     } );
+  //   } );
+  // }
 
   /**
    * @brief Helper function to average the mean total stress increment over quadrature points

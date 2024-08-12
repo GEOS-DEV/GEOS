@@ -247,6 +247,10 @@ GEOS_FORCE_INLINE
 real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
+  // std::cout << " In ContactBaseUpdates::computeHydraulicAperture:" << std::endl;
+  // std::cout << "aperture = " << aperture << std::endl;
+  // std::cout << "dHydraulicAperture_dAperture = " << dHydraulicAperture_dAperture << std::endl;
+
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
 

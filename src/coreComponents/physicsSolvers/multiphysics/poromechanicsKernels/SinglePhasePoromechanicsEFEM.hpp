@@ -281,7 +281,9 @@ protected:
 
   arrayView1d< real64 const > const m_surfaceArea;
 
-  arrayView1d< real64 const > const m_elementVolume;
+  arrayView1d< real64 const > const m_elementVolumeCell;
+
+  arrayView1d< real64 const > const m_elementVolumeFrac;
 
   arrayView1d< real64 const > const m_deltaVolume;
 
@@ -356,6 +358,8 @@ struct StateUpdateKernel
                                                                       dHydraulicAperture_dNormalJump );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
+
+      std::cout << "k = " << k << ", aperture = " << aperture[k] << ", hydraulicAperture = " << hydraulicAperture[k] << ", oldHydraulicAperture = " << oldHydraulicAperture[k] << ", fracture pressure = " << pressure[k] << std::endl; 
 
       // traction on the fracture to include the pressure contribution
       contactWrapper.addPressureToTraction( pressure[k],

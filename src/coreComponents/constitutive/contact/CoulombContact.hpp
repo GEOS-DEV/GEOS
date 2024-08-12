@@ -215,6 +215,12 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
                                                     arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
 
+  if (k == 0 || k == 79)
+  {
+    std::cout << "In CoulombContactUpdates::computeTraction: " << std::endl;
+    std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << ", OldDispJump[0] = " << oldDispJump[0] << std::endl;
+  }
+
   bool const isOpen = fractureState == fields::contact::FractureState::Open;
 
   // Initialize everyting to 0
@@ -227,6 +233,18 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
   {
     // normal component of the traction
     tractionVector[0] = m_penaltyStiffness * dispJump[0];
+    // if (dispJump[0] < 0)
+    // {
+    //   tractionVector[0] = m_penaltyStiffness * dispJump[0];
+    //   dTractionVector_dJump[0][0] = m_penaltyStiffness;
+    // }
+    // else
+    // {
+    //   tractionVector[0] = 0;
+    //   dTractionVector_dJump[0][0] = 0;
+    // }
+
+
     // derivative of the normal component w.r.t. to the nomral dispJump
     dTractionVector_dJump[0][0] = m_penaltyStiffness;
 
@@ -297,11 +315,19 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
 {
   using namespace fields::contact;
 
+  if (k == 0 || k == 79)
+  {
+    std::cout << "In CoulombContactUpdates::updateFractureState: " << std::endl;
+    std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << std::endl;
+  }
+
   if( dispJump[0] >  -m_displacementJumpThreshold )
   {
     fractureState = FractureState::Open;
     m_elasticSlip[k][0] = 0.0;
     m_elasticSlip[k][1] = 0.0;
+
+    std::cout << "k = " << k << ". normal_dispJump = " << dispJump[0] << ", fracture state = Open" << std::endl;
   }
   else
   {
@@ -313,9 +339,23 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
     real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
                                                                 dLimitTau_dNormalTraction );
 
+  if (k == 0 || k == 79)
+  {
+    std::cout << "k = " << k << ", tauNorm = " << tauNorm << std::endl;
+    std::cout << "k = " << k << ", limitTau = " << limitTau << std::endl;
+  }
+
     // Yield function (not necessary but makes it clearer)
     real64 const yield = tauNorm - limitTau;
 
+    if (yield < 0)
+    {
+      std::cout << "k = " << k << ". normal_dispJump = " << dispJump[0] << ", fracture state = stick" << std::endl;
+    }
+    else
+    {
+      std::cout << "k = " << k << ". normal_dispJump = " << dispJump[0] << ", fracture state = slip" << std::endl;
+    }
     fractureState = yield < 0 ? FractureState::Stick : FractureState::Slip;
   }
 }

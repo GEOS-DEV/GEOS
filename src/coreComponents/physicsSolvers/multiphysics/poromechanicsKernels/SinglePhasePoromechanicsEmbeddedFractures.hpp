@@ -168,6 +168,11 @@ public:
                                      stack.dTrans_dPres,
                                      stack.dTrans_dDispJump );
 
+    std::cout << "iconn = " << iconn << std::endl;
+    std::cout << "Trans = { " << stack.transmissibility[0][0] << ", " << stack.transmissibility[0][1] << " }" << std::endl;
+    std::cout << "dTrans_dP = { " << stack.dTrans_dPres[0][0] << ", " << stack.dTrans_dPres[0][0] << " }" << std::endl;
+
+
 
     real64 fluxVal = 0.0;
     real64 dFlux_dTrans = 0.0;
@@ -203,6 +208,8 @@ public:
     // populate local flux vector and derivatives
     stack.localFlux[0] =  m_dt * fluxVal;
     stack.localFlux[1] = -m_dt * fluxVal;
+
+    std::cout << "stack.localFlux[0] = " << stack.localFlux[0] << std::endl;
 
     real64 dFlux_dDispJump[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
     for( localIndex i=0; i < 3; i++ )

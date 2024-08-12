@@ -244,6 +244,13 @@ public:
 
     // Customize the kernel with this lambda
     kernelOp();
+
+    if ( ei == 0 || ei == 1 )
+    {
+      std::cout << "In ElementBasedAssemblyKernel computeAccumulation:" << std::endl;
+      std::cout << "accumulation = " << stack.localResidual[0] << std::endl;
+      std::cout << "dAcc_dP = " << stack.localJacobian[0][0] << std::endl;
+    } 
   }
 
   /**
@@ -368,13 +375,26 @@ public:
   void computeAccumulation( localIndex const ei,
                             Base::StackVariables & stack ) const
   {
+    if ( ei == 0 || ei == 1 )
+    {
+      std::cout << "In SurfaceElementBasedAssemblyKernel computeAccumulation:" << std::endl;
+      std::cout << "Before accumulation added: accumulation = " << stack.localResidual[0] << std::endl;
+    } 
+
     Base::computeAccumulation( ei, stack, [&] ()
     {
       if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
       {
         stack.localResidual[0] += m_creationMass[ei] * 0.25;
+        // std::cout << "Creation mass added at [" << ei << "]: mass added = " << m_creationMass[ei] * 0.25 << std::endl;
       }
     } );
+
+    if ( ei == 0 || ei == 1 )
+    {
+      std::cout << "After accumulation added: accumulation = " << stack.localResidual[0] << std::endl;
+    } 
+
   }
 
 protected:
@@ -573,8 +593,12 @@ struct SolutionCheckKernel
         localIndex const lid = dofNumber[ei] - rankOffset;
         real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
 
+        // std::cout << "Neg pres at [" << ei << "], pres = " << newPres << ", pres_k = " << pres[ei] << std::endl;
+
         if( newPres < 0.0 )
         {
+          std::cout << "Neg pres at [" << ei << "], pres = " << newPres << ", pres_k = " << pres[ei] << ", size = " << dofNumber.size() << std::endl;
+
           numNegativePressures += 1;
           minPres.min( newPres );
         }

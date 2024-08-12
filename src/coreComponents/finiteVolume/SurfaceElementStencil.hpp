@@ -426,6 +426,8 @@ SurfaceElementStencilWrapper::
                   real64 (& dWeight_dVar1 )[maxNumConnections][2],
                   real64 (& dWeight_dVar2 )[maxNumConnections][2][3] ) const
 {
+  // std::cout << "In SurfaceElementStencilWrapper::computeWeights" << std::endl;
+  
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
@@ -449,6 +451,9 @@ SurfaceElementStencilWrapper::
       localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
       localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
       localIndex const ei1  =  m_elementIndices[iconn][k[1]];
+
+      // std::cout << "m_weights[iconn][0] = " << m_weights[iconn][0] << ", m_weights[iconn][1] = " << m_weights[iconn][1] << std::endl;
+      // std::cout << "coefficient[er0][esr0][ei0][0][0] = " << coefficient[er0][esr0][ei0][0][0] << ", coefficient[er1][esr1][ei1][0][0] = " << coefficient[er1][esr1][ei1][0][0] << std::endl;
 
       real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
       real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];

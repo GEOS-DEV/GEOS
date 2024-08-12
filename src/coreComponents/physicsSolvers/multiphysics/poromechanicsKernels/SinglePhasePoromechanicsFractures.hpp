@@ -69,7 +69,19 @@ struct StateUpdateKernel
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
       real64 dHydraulicAperture_dNormalJump = 0.0;
+      
+      if (k == 0 )
+      {
+        std::cout << "aperture[0] = " << aperture[k] << std::endl;
+        std::cout << "Before update, hydraulicAperture[0] = " << hydraulicAperture[k] << std::endl;
+      }
+
       hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k], dHydraulicAperture_dNormalJump );
+
+      if (k == 0 )
+      {
+        std::cout << "After update, hydraulicAperture[0] = " << hydraulicAperture[k] << std::endl;
+      }
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 

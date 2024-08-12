@@ -341,6 +341,14 @@ public:
     localIndex k[2];
     localIndex connectionIndex = 0;
 
+
+    if ( iconn == 0 || iconn == 1) 
+    {
+      std::cout << "iconn_FaceBasedAssemblyKernelFactory = " << iconn << std::endl;
+      std::cout << "Trans = { " << stack.transmissibility[connectionIndex][0] << ", " << stack.transmissibility[connectionIndex][1] << " }" << std::endl;
+    }
+    
+
     for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
     {
       for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )

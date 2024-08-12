@@ -215,9 +215,14 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
 void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
+  std::cout << "In FlowSolverBase::saveConvergedState: " << std::endl;
+
   arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
   arrayView1d< real64 > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
   pres_n.setValues< parallelDevicePolicy<> >( pres );
+
+  std::cout << "pres[0] = " << pres[0] << ", size = " << pres.size()  << std::endl;
+  std::cout << "pres[1] = " << pres[1] << ", size = " << pres.size()  << std::endl;
 
   arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
   arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
@@ -498,6 +503,8 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
 {
   GEOS_MARK_FUNCTION;
 
+  std::cout << "In FlowSolverBase::updatePorosityAndPermeability CellElementSubRegion: " << std::endl;
+
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
 
@@ -527,10 +534,17 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 {
   GEOS_MARK_FUNCTION;
 
+  std::cout << "In FlowSolverBase::updatePorosityAndPermeability SurfaceElementSubRegion: " << std::endl;
+
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
 
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
+
+  std::cout << "    newHydraulicAperture[0] = " << newHydraulicAperture[0] << std::endl;
+  std::cout << "    newHydraulicAperture[1] = " << newHydraulicAperture[1] << std::endl;
+  std::cout << "    oldHydraulicAperture[0] = " << oldHydraulicAperture[0] << std::endl;
+  std::cout << "    oldHydraulicAperture[1] = " << oldHydraulicAperture[1] << std::endl;
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( solidName );
