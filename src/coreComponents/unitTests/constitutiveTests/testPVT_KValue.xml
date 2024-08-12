@@ -124,13 +124,13 @@
     <SymbolicFunction
       name="KV2_PRESSURE"
       expression="-1.8141e+00+6.2655e+02/p+6.7489e-03*p"
-      variableNames="{ p }" 
-      inputVarNames="{ pressure }" />  
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
     <SymbolicFunction
       name="KV2_TEMPERATURE"
       expression="exp(-5.0732e+00/(t-2.5249e+02))"
-      variableNames="{ t }" 
-      inputVarNames="{ temperature }" />  
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
     <CompositeFunction
       name="KV2"
       functionNames="{ KV2_PRESSURE, KV2_TEMPERATURE }"
