@@ -70,7 +70,7 @@ on:
       BUILD_GENERATOR:
         required: false
         type: string
-        default: 'Ninja'
+        default: '--ninja'
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -150,8 +150,7 @@ jobs:
         fi
 
         if [[ -n "${{ inputs.BUILD_GENERATOR }}" ]]; then
-          BUILD_GENERATOR="${{ inputs.BUILD_GENERATOR }}"
-          script_args+=(--build-generator "${BUILD_GENERATOR}")
+          script_args+=(${{ inputs.BUILD_GENERATOR }})
         fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})

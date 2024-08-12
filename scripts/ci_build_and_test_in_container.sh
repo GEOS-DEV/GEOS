@@ -34,18 +34,22 @@ Usage: $0
       Request for the build of geos only.
   --cmake-build-type ...
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
-  --build-generator generator_name
-      Build system generator. One of "Eclipse CDT4 - Unix Makefiles", "Ninja, "Unix Makefiles" and "Xcode".
   --code-coverage
       run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
+  --eclipse
+      Use "Eclipse CDT4 - Unix Makefiles" as build system generator.
   --exchange-dir /path/to/exchange
       Folder to share data with outside of the container.
   --host-config host-config/my_config.cmake
       The host-config. Path is relative to the root of the repository.
   --install-dir-basename GEOS-e42ffc1
       GEOS installation basename.
+  --makefile
+      Use "Unix Makefiles" as build system generator.
+  --ninja
+      Use "Ninja" as build system generator.
   --no-install-schema
       Do not install the xsd schema.
   --no-run-unit-tests
@@ -60,6 +64,8 @@ Usage: $0
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
   --test-documentation
+  --xcode
+      Use "Xcode" as build system generator.
   -h | --help
 EOF
 exit 1
@@ -70,7 +76,7 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,build-generator:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,eclipse,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,xcode,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -94,20 +100,9 @@ do
       RUN_UNIT_TESTS=false
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --build-generator)
-        if [[ -z "$2" || "Unix Makefiles" == "$2" ]] ; then
-            BUILD_GENERATOR=""
-        elif [[ "Eclipse CDT4 - Unix Makefiles" == "$2" ]] ; then
-            BUILD_GENERATOR="--eclipse"
-        elif [[ "Ninja" == "$2" ]] ; then
-            BUILD_GENERATOR="--ninja"
-        elif [[ "Xcode" == "$2" ]] ; then
-            BUILD_GENERATOR="--xcode"
-        else
-            echo "Unexpected generator passed to '--build-generator' option."
-            exit 1
-        fi
-        shift 2;;
+    --eclipse|--ninja|--xcode)
+        BUILD_GENERATOR=$1;
+        shift;;
     --data-basename)
       DATA_BASENAME=$2
       DATA_BASENAME_WE=${DATA_BASENAME%%.*}
@@ -121,6 +116,7 @@ do
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
     --install-dir-basename)  GEOS_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
+    --makefile)              BUILD_GENERATOR="";         shift;;
     --no-install-schema)     GEOS_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --nproc)                 NPROC=$2;                   shift 2;;
