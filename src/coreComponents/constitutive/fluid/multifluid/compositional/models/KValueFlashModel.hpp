@@ -130,10 +130,27 @@ KValueFlashModelUpdate< NUM_PHASE >::compute( ComponentProperties::KernelWrapper
   GEOS_UNUSED_VAR( componentProperties );
   GEOS_UNUSED_VAR( pressure );
   GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( compFraction );
   GEOS_UNUSED_VAR( kValues );
-  GEOS_UNUSED_VAR( phaseFraction );
-  GEOS_UNUSED_VAR( phaseCompFraction );
+
+  // Zero derivatives
+  LvArray::forValuesInSlice( phaseFraction.derivs, setZero );
+  LvArray::forValuesInSlice( phaseCompFraction.derivs, setZero );
+
+  // 1) Compute phase fractions
+
+  for( integer phaseIndex = 0; phaseIndex < numPhases; phaseIndex++ )
+  {
+    phaseFraction.value[phaseIndex] = 1.0/numPhases;
+  }
+
+  // 2) Compute phase component fractions
+  for( integer phaseIndex = 0; phaseIndex < numPhases; phaseIndex++ )
+  {
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      phaseCompFraction.value[phaseIndex][ic] = compFraction[ic];
+    }
+  }
 }
 
 } // end namespace compositional
