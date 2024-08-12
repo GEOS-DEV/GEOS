@@ -116,7 +116,7 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
   dofManager.reorderByRank();
 
   Vector nodalVariable;
-  nodalVariable.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  nodalVariable.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   arrayView1d< real64 > const nodalVariableView = nodalVariable.open();
@@ -167,7 +167,7 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   dofManager.reorderByRank();
 
   Vector cellCenteredVariable;
-  cellCenteredVariable.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  cellCenteredVariable.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   arrayView1d< real64 > const cellCenteredVariableView = cellCenteredVariable.open();

@@ -6,6 +6,14 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR 3197 (2024-08-07)
+====================
+Separation of contact and friction laws.
+
+PR #3202 (2024-08-03)
+======================
+Acoustic VTI tests needed rebaselining after update in source and receiver location algorithm.
+
 PR #3215 (2024-07-23)
 ======================
 Changed the default value for massCreation and name of the wrapper.
