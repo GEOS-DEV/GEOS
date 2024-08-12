@@ -69,9 +69,9 @@ enum class FaceBasedAssemblyKernelFlags
   /// Add more flags like that if needed:
   computeVelocity = 1 << 3, // 8
   IHU = 1 << 4 // 16
-  // Flag6 = 1 << 5, // 32
-  // Flag7 = 1 << 6, // 64
-  // Flag8 = 1 << 7  //128
+        // Flag6 = 1 << 5, // 32
+        // Flag7 = 1 << 6, // 64
+        // Flag8 = 1 << 7  //128
 };
 
 /******************************** PhaseMobilityKernel ********************************/
@@ -2199,11 +2199,11 @@ public:
       BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
-        //here hasCapPressure and hasVelocityCompute defaulted to false
+      //here hasCapPressure and hasVelocityCompute defaulted to false
 
-        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
-          elemManager.constructArrayViewAccessor< real64, 2 >(
-            CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
       using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -2213,8 +2213,8 @@ public:
 
       kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
                          dofNumberAccessor, cellCartDimAccessor, compFlowAccessors,
-                           multiFluidAccessors, capPressureAccessors,
-                           permeabilityAccessors,
+                         multiFluidAccessors, capPressureAccessors,
+                         permeabilityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

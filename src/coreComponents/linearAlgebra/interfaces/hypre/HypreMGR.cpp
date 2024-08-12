@@ -79,7 +79,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   {
     GEOS_LOG_RANK( GEOS_FMT( "        MGR preconditioner: pointMarkers = {}", mgrData.pointMarkers ) );
   }
-..
   switch( params.mgr.strategy )
   {
     case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM:
