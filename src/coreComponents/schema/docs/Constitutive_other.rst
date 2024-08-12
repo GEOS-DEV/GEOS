@@ -42,6 +42,7 @@ ElasticTransverseIsotropic                    node :ref:`DATASTRUCTURE_ElasticTr
 ExponentialDecayPermeability                  node :ref:`DATASTRUCTURE_ExponentialDecayPermeability`                  
 ExtendedDruckerPrager                         node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                         
 FrictionlessContact                           node :ref:`DATASTRUCTURE_FrictionlessContact`                           
+HydraulicApertureTable                        node :ref:`DATASTRUCTURE_HydraulicApertureTable`                        
 JFunctionCapillaryPressure                    node :ref:`DATASTRUCTURE_JFunctionCapillaryPressure`                    
 LinearIsotropicDispersion                     node :ref:`DATASTRUCTURE_LinearIsotropicDispersion`                     
 ModifiedCamClay                               node :ref:`DATASTRUCTURE_ModifiedCamClay`                               

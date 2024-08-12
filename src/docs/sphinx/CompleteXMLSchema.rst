@@ -150,6 +150,13 @@ Element: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion.rst
 
 
+.. _XML_CellToCellDataCollection:
+
+Element: CellToCellDataCollection
+=================================
+.. include:: ../../coreComponents/schema/docs/CellToCellDataCollection.rst
+
+
 .. _XML_CeramicDamage:
 
 Element: CeramicDamage
@@ -554,6 +561,13 @@ Element: HaltEvent
 Element: HybridMimeticDiscretization
 ====================================
 .. include:: ../../coreComponents/schema/docs/HybridMimeticDiscretization.rst
+
+
+.. _XML_HydraulicApertureTable:
+
+Element: HydraulicApertureTable
+===============================
+.. include:: ../../coreComponents/schema/docs/HydraulicApertureTable.rst
 
 
 .. _XML_Hydrofracture:
@@ -1610,6 +1624,13 @@ Datastructure: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion_other.rst
 
 
+.. _DATASTRUCTURE_CellToCellDataCollection:
+
+Datastructure: CellToCellDataCollection
+=======================================
+.. include:: ../../coreComponents/schema/docs/CellToCellDataCollection_other.rst
+
+
 .. _DATASTRUCTURE_CeramicDamage:
 
 Datastructure: CeramicDamage
@@ -2021,6 +2042,13 @@ Datastructure: HaltEvent
 Datastructure: HybridMimeticDiscretization
 ==========================================
 .. include:: ../../coreComponents/schema/docs/HybridMimeticDiscretization_other.rst
+
+
+.. _DATASTRUCTURE_HydraulicApertureTable:
+
+Datastructure: HydraulicApertureTable
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydraulicApertureTable_other.rst
 
 
 .. _DATASTRUCTURE_Hydrofracture:
