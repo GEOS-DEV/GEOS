@@ -188,7 +188,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   GEOS_UNUSED_VAR( totalDensity );
 #else
 
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
