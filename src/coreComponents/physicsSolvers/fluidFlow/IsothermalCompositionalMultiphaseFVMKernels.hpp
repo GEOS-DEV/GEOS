@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -331,8 +332,6 @@ public:
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 
-
-
   /**
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
@@ -517,7 +516,6 @@ public:
     /// Number of elements connected at a given connection
     localIndex const numConnectedElems;
 
-
     // Transmissibility and derivatives
 
     /// Transmissibility
@@ -641,7 +639,6 @@ public:
           real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
           localIndex k_up = -1;
-
 
           if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::C1PPU ) )
           {
@@ -851,7 +848,6 @@ public:
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
-
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );
@@ -878,7 +874,6 @@ protected:
 
   // Stencil information
 
-  //soon deprecated
   arrayView2d< real64 const > const m_globalDistance;
 
   /// Reference to the stencil wrapper
@@ -954,7 +949,7 @@ public:
         kernelFlags.set( FaceBasedAssemblyKernelFlags::C1PPU );
       else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::IHU );
-      
+
       if( hasVelocityCompute )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::computeVelocity );
 
@@ -1318,9 +1313,6 @@ public:
 
     localIndex k[numFluxSupportPoints]{};
     localIndex connectionIndex = 0;
-
-
-
     for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
     {
       for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
@@ -1376,7 +1368,6 @@ public:
             localIndex const esr_up = sesri[k_up];
             localIndex const ei_up  = sei[k_up];
 
-
             // computation of the upwinded mass flux
             dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad;
 
@@ -1392,6 +1383,7 @@ public:
 
             // add contributions of the derivatives of upwind coefficient wrt pressure/component fractions
             dDispersionFlux_dP[k_up][ic] += m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * compFracGrad;
+
             applyChainRule( numComp,
                             m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
                             m_dPhaseDens[er_up][esr_up][ei_up][0][ip],
@@ -2191,43 +2183,40 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    constitutive::constitutiveComponentUpdatePassThru( fluidBase, numComps, [&]( auto & fluid, auto NC )
     {
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-      {
-        integer constexpr NUM_COMP = NC();
-        integer constexpr NUM_DOF = NC() + 1;
+      integer constexpr NUM_COMP = NC();
+      integer constexpr NUM_DOF = NC() + 1;
 
-        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        // for now, we neglect capillary pressure in the kernel
-        BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
-        if( useTotalMassEquation )
-          kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
+      // for now, we neglect capillary pressure in the kernel
+      BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
+      if( useTotalMassEquation )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
         //here hasCapPressure and hasVelocityCompute defaulted to false
 
         ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
           elemManager.constructArrayViewAccessor< real64, 2 >(
             CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
-        using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-        kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, cellCartDimAccessor, compFlowAccessors,
+      kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
+                         dofNumberAccessor, cellCartDimAccessor, compFlowAccessors,
                            multiFluidAccessors, capPressureAccessors,
                            permeabilityAccessors,
-                           dt, localMatrix, localRhs, kernelFlags );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      } );
+                         dt, localMatrix, localRhs, kernelFlags );
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
 };

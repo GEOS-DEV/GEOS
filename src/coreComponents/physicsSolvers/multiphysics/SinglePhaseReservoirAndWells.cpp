@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,6 +27,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
 
 namespace geos
 {
@@ -47,15 +49,15 @@ SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 
 template<>
 SinglePhaseBase *
-SinglePhaseReservoirAndWells< SinglePhaseBase >::
+SinglePhaseReservoirAndWells<>::
 flowSolver() const
 {
   return this->reservoirSolver();
 }
 
-template<>
+template< typename POROMECHANICS_SOLVER >
 SinglePhaseBase *
-SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >::
+SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::
 flowSolver() const
 {
   return this->reservoirSolver()->flowSolver();
@@ -63,7 +65,7 @@ flowSolver() const
 
 template<>
 void
-SinglePhaseReservoirAndWells< SinglePhaseBase >::
+SinglePhaseReservoirAndWells<>::
 setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
@@ -78,9 +80,9 @@ setMGRStrategy()
   }
 }
 
-template<>
+template< typename POROMECHANICS_SOLVER >
 void
-SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >::
+SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::
 setMGRStrategy()
 {
   // flow solver here is indeed flow solver, not poromechanics solver
@@ -340,15 +342,18 @@ assembleCouplingTerms( real64 const time_n,
 
 }
 
-template class SinglePhaseReservoirAndWells< SinglePhaseBase >;
-template class SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >;
+template class SinglePhaseReservoirAndWells<>;
+template class SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> >;
+template class SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures<> >;
 
 namespace
 {
-typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;
-typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsAndWells;
+typedef SinglePhaseReservoirAndWells<> SinglePhaseFlowAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> > SinglePhasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures<> > SinglePhasePoromechanicsConformingFracturesAndWells;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFracturesAndWells, string const &, Group * const )
 }
 
 } /* namespace geos */

@@ -1,18 +1,20 @@
 # Specify list of tests
-set(gtest_geosx_tests
-        testSinglePhaseBaseKernels.cpp
-        testThermalCompMultiphaseFlow.cpp
-        testThermalSinglePhaseFlow.cpp
-        )
+set( gtest_geosx_tests
+     testSinglePhaseBaseKernels.cpp
+     testThermalCompMultiphaseFlow.cpp
+     testThermalSinglePhaseFlow.cpp
+     testFlowStatistics.cpp
+     testTransmissibility.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
+if ( GEOS_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )
 else()
   list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
+set( dependencyList testingUtilities )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
@@ -31,8 +33,8 @@ if (TARGET pugixml)
   list( APPEND dependencyList pugixml )
 endif()
 
-if (TARGET fmt::fmt)
-  list( APPEND dependencyList fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  list( APPEND dependencyList fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)

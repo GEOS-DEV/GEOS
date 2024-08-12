@@ -2,24 +2,25 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+#define GEOS_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 // Source includes
 #include "ProblemManager.hpp"
 #include "GeosxState.hpp"
 #include "initialization.hpp"
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/Path.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -150,7 +151,7 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
-  postProcessInputRecursive();
+  postInputInitializationRecursive();
 
   generateMesh();
 
@@ -490,7 +491,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 }
 
 
-void ProblemManager::postProcessInput()
+void ProblemManager::postInputInitialization()
 {
   DomainPartition & domain = getDomainPartition();
 
@@ -525,7 +526,7 @@ void ProblemManager::postProcessInput()
   if( repartition )
   {
     partition.setPartitions( xpar, ypar, zpar );
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
     // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
@@ -540,22 +541,22 @@ void ProblemManager::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
 
+  // first, numerical methods
+  order.emplace_back( groupKeys.numericalMethodsManager.key() );
+  usedNames.insert( groupKeys.numericalMethodsManager.key() );
 
-  {
-    order.emplace_back( groupKeys.numericalMethodsManager.key() );
-    usedNames.insert( groupKeys.numericalMethodsManager.key() );
-  }
+  // next, domain
+  order.emplace_back( groupKeys.domain.key() );
+  usedNames.insert( groupKeys.domain.key() );
 
-  {
-    order.emplace_back( groupKeys.domain.key() );
-    usedNames.insert( groupKeys.domain.key() );
-  }
+  // next, events
+  order.emplace_back( groupKeys.eventManager.key() );
+  usedNames.insert( groupKeys.eventManager.key() );
 
-  {
-    order.emplace_back( groupKeys.eventManager.key() );
-    usedNames.insert( groupKeys.eventManager.key() );
-  }
+  // (keeping outputs for the end)
+  usedNames.insert( groupKeys.outputManager.key() );
 
+  // next, everything...
   for( auto const & subGroup : this->getSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
@@ -563,6 +564,9 @@ void ProblemManager::initializationOrder( string_array & order )
       order.emplace_back( subGroup.first );
     }
   }
+
+  // end with outputs (in order to define the chunk sizes after any data source)
+  order.emplace_back( groupKeys.outputManager.key() );
 }
 
 
@@ -665,6 +669,7 @@ void ProblemManager::generateMesh()
   }
 
   domain.setupCommunications( useNonblockingMPI );
+  domain.outputPartitionInformation();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {

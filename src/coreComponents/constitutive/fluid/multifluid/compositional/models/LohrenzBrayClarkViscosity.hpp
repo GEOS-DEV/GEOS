@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_
 
 #include "FunctionBase.hpp"
+
 #include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
@@ -45,7 +47,8 @@ public:
   };
 
 public:
-  explicit LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type );
+  LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type,
+                                   arrayView1d< real64 const > const & componentCriticalVolume );
 
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
@@ -252,6 +255,7 @@ private:
 
 private:
   MixingType m_mixing_type;
+  arrayView1d< real64 const > m_componentCriticalVolume;
 
 private:
   // Conversion factor from cP to Pa.s
@@ -264,9 +268,11 @@ class LohrenzBrayClarkViscosity : public FunctionBase
 {
 public:
   LohrenzBrayClarkViscosity( string const & name,
-                             ComponentProperties const & componentProperties );
+                             ComponentProperties const & componentProperties,
+                             integer const phaseIndex,
+                             ModelParameters const & modelParameters );
 
-  static string catalogName() { return "LBC"; }
+  static string catalogName() { return "LohrenzBrayClark"; }
 
   FunctionType functionType() const override
   {
@@ -282,13 +288,50 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 
+  // Parameters for the LBC viscosity model
+  class Parameters : public ModelParameters
+  {
+public:
+    Parameters( std::unique_ptr< ModelParameters > parameters );
+    ~Parameters() override = default;
+
+    string m_componentMixingType;
+    array1d< real64 > m_componentCriticalVolume;
+
 private:
-  LohrenzBrayClarkViscosityUpdate::MixingType m_mixing_type{LohrenzBrayClarkViscosityUpdate::MixingType::HERNING_ZIPPERER};
+    void registerParametersImpl( MultiFluidBase * fluid ) override;
+    void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
+
+    struct viewKeyStruct
+    {
+      static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
+      static constexpr char const * componentMixingTypeString() { return "viscosityMixingRule"; }
+    };
+
+    /**
+     * @brief Estimate critical volumes using Ihmels' (2010) correlation
+     * @details reference: http://dx.doi.org/10.1021/je100167w
+     * @param[in] numComponents The number of components
+     * @param[in] criticalPressure The component critical pressures
+     * @param[in] criticalTemperature The component critical temperatures
+     * @param[in] criticalVolume The component critical volumes
+     */
+    static void calculateCriticalVolume( integer const numComponents,
+                                         arrayView1d< const real64 > const criticalPressure,
+                                         arrayView1d< const real64 > const criticalTemperature,
+                                         arrayView1d< real64 > const criticalVolume );
+  };
+
+  // Create parameters unique to this model
+  static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
+
+private:
+  Parameters const * m_parameters{};
 };
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LohrenzBrayClarkViscosityUpdate::MixingType,
-              "Herning-Zipperer",
+              "HerningZipperer",
               "Wilke",
               "Brokaw" );
 

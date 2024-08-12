@@ -37,7 +37,7 @@
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="1.672e5"
+      referenceVolumetricHeatCapacity="1.672e5"
       referenceTemperature="0.0"
       referenceInternalEnergy="0.0"/>
 
@@ -66,9 +66,11 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="4.0e9"
-      apertureTableName="apertureTable"/>
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>     
   </Constitutive>
 
   <Functions>

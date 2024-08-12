@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -55,6 +56,20 @@ public:
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
   static constexpr integer MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
+
+  /**
+   * @brief Minimum supported number of fluid components (species) for dispatch
+   * @note This is the mininum number of components that can be used for dispatch in a kernel launch specific for
+   *       this fluid type.
+   */
+  static constexpr integer min_n_components = 2;
+
+  /**
+   * @brief Maximum supported number of fluid components (species) for dispatch
+   * @note This is the maxinum number of components that can be used for dispatch in a kernel launch specific for
+   *       this fluid type.
+   */
+  static constexpr integer max_n_components = 5;
 
   /**
    * @return number of fluid components (species) in the model
@@ -651,7 +666,7 @@ protected:
    */
   virtual void resizeFields( localIndex const size, localIndex const numPts );
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;

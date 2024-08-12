@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -101,13 +102,19 @@ public:
     {
       m_component_properties = std::make_unique< constitutive::compositional::ComponentProperties >(
         componentNames,
-        molecularWeight,
-        criticalPressure,
-        criticalTemperature,
-        criticalVolume,
-        acentricFactor,
-        volumeShift,
-        binaryCoeff );
+        molecularWeight );
+      createArray( m_component_properties->m_componentCriticalPressure, criticalPressure );
+      createArray( m_component_properties->m_componentCriticalTemperature, criticalTemperature );
+      createArray( m_component_properties->m_componentAcentricFactor, acentricFactor );
+      createArray( m_component_properties->m_componentVolumeShift, volumeShift );
+      m_component_properties->m_componentBinaryCoeff.resize( NC, NC );
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        for( integer jc = 0; jc < NC; ++jc )
+        {
+          m_component_properties->m_componentBinaryCoeff( ic, jc ) = binaryCoeff( ic, jc );
+        }
+      }
     }
     return *m_component_properties;
   }

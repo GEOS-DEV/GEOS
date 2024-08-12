@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,7 +27,7 @@
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 
 #include <fstream>
 
@@ -92,7 +93,7 @@ PVTDriver::PVTDriver( const string & name,
     setDescription( "Baseline file" );
 }
 
-void PVTDriver::postProcessInput()
+void PVTDriver::postInputInitialization()
 {
   // Validate some inputs
   GEOS_ERROR_IF( m_outputMassDensity != 0 && m_outputMassDensity != 1,
@@ -309,6 +310,10 @@ void PVTDriver::compareWithBaseline()
   {
     headerRows++;
   }
+  if( m_outputMassDensity )
+  {
+    headerRows++;
+  }
   if( m_outputPhaseComposition )
   {
     headerRows += getFluid().numFluidPhases();
@@ -335,9 +340,9 @@ void PVTDriver::compareWithBaseline()
 
       real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
       GEOS_THROW_IF( error > MultiFluidConstants::baselineTolerance,
-                     "Results do not match baseline at data row " << row+1
-                                                                  << " (row " << row+headerRows << " with header)"
-                                                                  << " and column " << col+1, std::runtime_error );
+                     GEOS_FMT( "Results do not match baseline ({} vs {}) at data row {} (row {} with header) and column {}",
+                               m_table[row][col], value, row+1, row+headerRows, col+1 ),
+                     std::runtime_error );
     }
   }
 
