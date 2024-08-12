@@ -287,6 +287,7 @@ public:
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+    static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
   };
 
 private:
@@ -346,7 +347,7 @@ protected:
   integer m_writeSegDebug;
 
   std::map< std::string, WellPropWriter > m_wellPropWriter;
-  };
+};
 
 }
 

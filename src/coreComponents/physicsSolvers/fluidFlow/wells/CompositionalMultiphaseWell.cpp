@@ -540,117 +540,125 @@ void CompositionalMultiphaseWell::outputWellDebug( DomainPartition & domain,
                                                                         [&]( localIndex const,
                                                                              WellElementSubRegion & subRegion )
     {
-      if( m_writeSegDebug > 0 ) //&& subRegion.isLocallyOwned() )
+
+      if( m_writeSegDebug > 0 )
       {
-        ////CompositionalMultiphaseReservoirAndWells<CompositionalMultiphaseBase> const& cmr=  getParent().getParent().getGroup<CompositionalMultiphaseReservoir>();
-        string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-        fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-        WellControls & wellControls = getWellControls( subRegion );
         CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
- 
-        std::string coupled_solver_name = getParent().getSubGroupsNames()[0];
-
-        MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-        PerforationData & perforationData = *subRegion.getPerforationData();
-        using CompFlowAccessors =
-          StencilAccessors< fields::flow::pressure,
-                            fields::flow::temperature,
-                            fields::flow::phaseVolumeFraction,
-                            fields::flow::dPhaseVolumeFraction,
-                            fields::flow::globalCompDensity,
-                            fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
-        string const flowSolverName = flowSolver.getName();
-        CompFlowAccessors compFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
-
-        using MultiFluidAccessors =
-          StencilMaterialAccessors< MultiFluidBase,
-                                    fields::multifluid::phaseDensity,
-                                    fields::multifluid::dPhaseDensity,
-                                    fields::multifluid::phaseViscosity,
-                                    fields::multifluid::dPhaseViscosity,
-                                    fields::multifluid::phaseCompFraction,
-                                    fields::multifluid::dPhaseCompFraction >;
-        MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
-        /*
-           using RelPermAccessors =
-           StencilMaterialAccessors< RelativePermeabilityBase,
-                                 fields::relperm::phaseRelPerm,
-                                 fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
-         */
+        auto solver_names = getParent().getSubGroupsNames();
+        integer n = solver_names.size();
+        // Bit of a hack, cases with > 3 solvers we need to find the base solver for wells
+        // Assume that solver definition order follows coupledreswell, res, and then well
+        std::string coupled_solver_name = solver_names[n-3];
 
         GeosxState & gs = getGlobalState();
-        //string const &  coupled_solve_name =  gs.getProblemManager().getPhysicsSolverManager().getGroup<
-        // geos::ag< geos::CompositionalMultiphaseBase > >.getName();
 
         CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > * solver =
-          &(gs.getProblemManager().getPhysicsSolverManager().getGroup< geos::CompositionalMultiphaseReservoirAndWells< geos::CompositionalMultiphaseBase > >( coupled_solver_name));
-        //CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > * solver =  &(gs.getProblemManager().getGroupByPath<
-        // CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >(
-        // "/Problem/Solvers/CompositionalMultiphaseReservoirAndWells"));
-        SolverStatistics & solver_stat = solver->getSolverStatistics();
+          &(gs.getProblemManager().getPhysicsSolverManager().getGroup< geos::CompositionalMultiphaseReservoirAndWells< geos::CompositionalMultiphaseBase > >( coupled_solver_name ));
 
-        string const srn = subRegion.getName();
         EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
         real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
         real64 const & dt = event.getReference< real64 >( EventManager::viewKeyStruct::dtString() );
         integer const & cycle = event.getReference< integer >( EventManager::viewKeyStruct::cycleString() );
         integer const & subevent = event.getReference< integer >( EventManager::viewKeyStruct::currentSubEventString() );
-
-        integer num_timesteps = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepsString());
-        integer current_newton_iteration = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numCurrentNonlinearIterationsString());
-        integer num_timestep_cuts = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepCutsString());
-        std::vector< string > cp_der {"dP", "dT"};
-        for( integer i=0; i<m_numComponents; i++ )
+        if( cycle >= m_writeSegDebug   )
         {
-          cp_der.push_back( "dRho"+std::to_string( i+1 ));
+          SolverStatistics & solver_stat = solver->getSolverStatistics();
+          integer num_timesteps = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepsString());
+          integer current_newton_iteration = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numCurrentNonlinearIterationsString());
+          integer num_timestep_cuts = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepCutsString());
+
+          string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+          fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
+          WellControls & wellControls = getWellControls( subRegion );
+
+
+          MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+          PerforationData & perforationData = *subRegion.getPerforationData();
+          using CompFlowAccessors =
+            StencilAccessors< fields::flow::pressure,
+                              fields::flow::temperature,
+                              fields::flow::phaseVolumeFraction,
+                              fields::flow::dPhaseVolumeFraction,
+                              fields::flow::globalCompDensity,
+                              fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
+          string const flowSolverName = flowSolver.getName();
+          CompFlowAccessors compFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
+
+          using MultiFluidAccessors =
+            StencilMaterialAccessors< MultiFluidBase,
+                                      fields::multifluid::phaseDensity,
+                                      fields::multifluid::dPhaseDensity,
+                                      fields::multifluid::phaseViscosity,
+                                      fields::multifluid::dPhaseViscosity,
+                                      fields::multifluid::phaseCompFraction,
+                                      fields::multifluid::dPhaseCompFraction >;
+          MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
+
+          using RelPermAccessors =
+            StencilMaterialAccessors< RelativePermeabilityBase,
+                                      fields::relperm::phaseRelPerm,
+                                      fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+
+          RelPermAccessors relPermAccessors( mesh.getElemManager(), flowSolver.getName() );
+
+
+          string const srn = subRegion.getName();
+
+          std::vector< string > cp_der {"dP", "dT"};
+          for( integer i=0; i<m_numComponents; i++ )
+          {
+            cp_der.push_back( "dRho"+std::to_string( i+1 ));
+          }
+          if( num_timesteps == 0 && current_newton_iteration ==0 && num_timestep_cuts == 0 )
+          {
+            integer my_rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+            m_wellPropWriter[srn].initialize_perf( my_rank, m_ratesOutputDir, wellControls.getName(), perforationData );
+            m_wellPropWriter[srn].initialize_seg( my_rank, m_ratesOutputDir, wellControls.getName(), fluid.phaseNames(), fluid.componentNames(), subRegion );
+          }
+          m_wellPropWriter[srn].registerSegProp( "Pressure", subRegion.getField< fields::well::pressure >());
+          if( isThermal() )
+          {
+            m_wellPropWriter[srn].registerSegProp( "Temperature", subRegion.getField< fields::well::temperature >());
+          }
+          m_wellPropWriter[srn].registerSegComponentProp( "ComponentDensity", subRegion.getField< fields::well::globalCompDensity >());
+
+          m_wellPropWriter[srn].registerSegProp( "TotalRate", subRegion.getField< fields::well::mixtureConnectionRate >());
+
+          m_wellPropWriter[srn].registerSegProp( "MassDensity", subRegion.getField< fields::well::totalMassDensity >());
+
+          m_wellPropWriter[srn].registerSegComponentProp( "CompFraction", subRegion.getField< fields::well::globalCompFraction >());
+
+          m_wellPropWriter[srn].registerSegPhasePropf( "PhaseDensity", fluid.phaseMassDensity());
+          m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseDensity", cp_der, fluid.dPhaseMassDensity());
+          m_wellPropWriter[srn].registerSegPhaseProp( "PhaseVolumeFraction", subRegion.getField< fields::well::phaseVolumeFraction >());
+          m_wellPropWriter[srn].registerSegPhasePropDer( "dPhaseVolume", cp_der, subRegion.getField< fields::well::dPhaseVolumeFraction >());
+          if( isThermal() )
+          {
+            m_wellPropWriter[srn].registerSegPhasePropf( "InternalEnergy", fluid.phaseInternalEnergy());
+            m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseEnthalpy", cp_der, fluid.dPhaseEnthalpy());
+
+            m_wellPropWriter[srn].registerSegPhasePropf( "PhaseEnthalpy", fluid.phaseEnthalpy());
+            m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseInternalEnergy", cp_der, fluid.dPhaseInternalEnergy());
+          }
+          m_wellPropWriter[srn].registerSegPhaseComponentPropf( "PhaseCompFrac", fluid.phaseCompFraction());
+
+          // Perforation properties
+
+          m_wellPropWriter[srn].registerPerfResProp( "Pressure", compFlowAccessors.get( fields::flow::pressure {} ));
+          if( isThermal() )
+          {
+            m_wellPropWriter[srn].registerPerfResProp( "Temperature", compFlowAccessors.get( fields::flow::temperature{} ));
+          }
+          m_wellPropWriter[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
+          m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
+          m_wellPropWriter[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
+          m_wellPropWriter[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
+          m_wellPropWriter[srn].registerPerfResPhasePropf( "RelPerm", relPermAccessors.get( fields::relperm::phaseRelPerm{} ));
+
+          m_wellPropWriter[srn].write( ctime, dt, cycle, subevent, num_timesteps,
+                                       current_newton_iteration,
+                                       num_timestep_cuts );
         }
-        if( num_timesteps == 0 && current_newton_iteration ==0 && num_timestep_cuts == 0 )
-        {
-          integer my_rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-          m_wellPropWriter[srn].initialize_perf( my_rank, m_ratesOutputDir, wellControls.getName(), perforationData );
-          m_wellPropWriter[srn].initialize_seg( my_rank, m_ratesOutputDir, wellControls.getName(), fluid.phaseNames(), fluid.componentNames(), subRegion );
-        }
-        m_wellPropWriter[srn].registerSegProp( "Pressure", subRegion.getField< fields::well::pressure >());
-        if( isThermal() )
-        {
-          m_wellPropWriter[srn].registerSegProp( "Temperature", subRegion.getField< fields::well::temperature >());
-        }
-        m_wellPropWriter[srn].registerSegComponentProp( "ComponentDensity", subRegion.getField< fields::well::globalCompDensity >());
-
-        m_wellPropWriter[srn].registerSegProp( "TotalRate", subRegion.getField< fields::well::mixtureConnectionRate >());
-
-        m_wellPropWriter[srn].registerSegProp( "MassDensity", subRegion.getField< fields::well::totalMassDensity >());
-
-        m_wellPropWriter[srn].registerSegComponentProp( "CompFraction", subRegion.getField< fields::well::globalCompFraction >());
-
-        m_wellPropWriter[srn].registerSegPhasePropf( "PhaseDensity", fluid.phaseMassDensity());
-        m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseDensity", cp_der, fluid.dPhaseMassDensity());
-        m_wellPropWriter[srn].registerSegPhaseProp( "PhaseVolumeFraction", subRegion.getField< fields::well::phaseVolumeFraction >());
-        m_wellPropWriter[srn].registerSegPhasePropDer( "dPhaseVolume", cp_der, subRegion.getField< fields::well::dPhaseVolumeFraction >());
-        if( isThermal() )
-        {
-          m_wellPropWriter[srn].registerSegPhasePropf( "InternalEnergy", fluid.phaseInternalEnergy());
-          m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseEnthalpy", cp_der, fluid.dPhaseEnthalpy());
-
-          m_wellPropWriter[srn].registerSegPhasePropf( "PhaseEnthalpy", fluid.phaseEnthalpy());
-          m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseInternalEnergy", cp_der, fluid.dPhaseInternalEnergy());
-        }
-        m_wellPropWriter[srn].registerSegPhaseComponentPropf( "PhaseCompFrac", fluid.phaseCompFraction());
-
-        // Perforation properties
-        m_wellPropWriter[srn].registerPerfProp( "Pressure", compFlowAccessors.get( fields::flow::pressure {} ));
-        if( isThermal() )
-        {
-          m_wellPropWriter[srn].registerPerfProp( "Temperature", compFlowAccessors.get( fields::flow::temperature{} ));
-        }
-        m_wellPropWriter[srn].registerPerfComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
-        m_wellPropWriter[srn].registerPerfPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
-        m_wellPropWriter[srn].registerPerfPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
-
-        //string const srn = subRegion.getName();
-        m_wellPropWriter[srn].write( ctime,dt,cycle,subevent, num_timesteps,
-                                     current_newton_iteration,
-                                     num_timestep_cuts );
       }
     } );
   } );

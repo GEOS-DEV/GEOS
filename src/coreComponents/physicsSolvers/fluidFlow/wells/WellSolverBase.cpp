@@ -42,7 +42,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" )),
-  m_writeSegDebug( 1 )
+  m_writeSegDebug( 0 )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -56,6 +56,11 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Write rates into a CSV file" );
+
+  this->registerWrapper( viewKeyStruct::writeSegDebugFlagString(), &m_writeSegDebug ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Write well seg/perf debug into CSV files" );
 }
 
 Group * WellSolverBase::createChild( string const & childKey, string const & childName )
@@ -85,6 +90,13 @@ void WellSolverBase::postInputInitialization()
 {
   SolverBase::postInputInitialization();
 
+  if( m_writeSegDebug > 0 )
+  {
+    if( m_writeCSV == 0 )
+    {
+      m_writeCSV=1;
+    }
+  }
   // create dir for rates output
   if( m_writeCSV > 0 )
   {
@@ -223,7 +235,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   // then apply a special treatment to the wells that are shut
   shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
 
- outputWellDebug( domain, dofManager, localMatrix, localRhs );
+  outputWellDebug( domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
