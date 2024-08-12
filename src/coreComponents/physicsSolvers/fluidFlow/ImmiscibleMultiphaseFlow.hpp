@@ -239,6 +239,9 @@ private:
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
+  /// flag to determine whether or not to use total mass formulation
+  integer m_useTotalMassEquation;
+
   struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
   {
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
