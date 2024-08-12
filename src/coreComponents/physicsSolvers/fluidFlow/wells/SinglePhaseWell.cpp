@@ -49,6 +49,8 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 {
   m_numDofPerWellElement = 2;
   m_numDofPerResElement = 1;
+  m_numPhases = 1;
+  m_numComponents = 1;
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
@@ -309,7 +311,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   } );
 }
 
-void SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
+real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
   // update volumetric rates for the well constraints
   // Warning! This must be called before updating the fluid model
@@ -322,12 +324,21 @@ void SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
   updateBHPForConstraint( subRegion );
 
   // note: the perforation rates are updated separately
+  return 0.0;  // change in phasevolume fraction doesnt apply
 }
 
-void SinglePhaseWell::initializeWells( DomainPartition & domain )
+void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
+  // different functionality than for compositional
+  // compositional has better treatment of well initialization in cases where well starts later in sim
+  // logic will be incorporated into single phase in different push
+  if( time_n > 0 )
+  {
+    return;
+  }
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
@@ -376,7 +387,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
                 subRegion.size(),
                 perforationData.getNumPerforationsGlobal(),
                 wellControls,
-                0.0, // initialization done at t = 0
+                0.0,   // initialization done at t = 0
                 resSinglePhaseFlowAccessors.get( fields::flow::pressure{} ),
                 resSingleFluidAccessors.get( fields::singlefluid::density{} ),
                 resElementRegion,
@@ -398,7 +409,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
       // 5) Estimate the well rates
       RateInitializationKernel::launch( subRegion.size(),
                                         wellControls,
-                                        0.0, // initialization done at t = 0
+                                        0.0,   // initialization done at t = 0
                                         wellElemDens,
                                         connRate );
 
@@ -407,14 +418,16 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseWell::assembleFluxTerms( real64 const dt,
-                                         DomainPartition const & domain,
+void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
+                                         real64 const & dt,
+                                         DomainPartition & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                          arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
 
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -501,7 +514,7 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                         subRegion.isLocallyOwned(),
                                         subRegion.getTopWellElementIndex(),
                                         wellControls,
-                                        time_n + dt, // controls evaluated with BHP/rate of the end of the time interval
+                                        time_n + dt,   // controls evaluated with BHP/rate of the end of the time interval
                                         wellElemDofNumber,
                                         wellElemGravCoef,
                                         nextWellElemIndex,
@@ -536,13 +549,16 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
   } );
 }
 
-void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
+void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
+                                                 real64 const & dt,
+                                                 DomainPartition & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -581,7 +597,8 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
 
     } );
   } );
-
+  // then assemble the volume balance equations
+  assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
 }
 
 void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
@@ -669,10 +686,12 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
 }
 
 
-void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
+void SinglePhaseWell::computePerforationRates( real64 const & time_n,
+                                               real64 const & dt, DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )

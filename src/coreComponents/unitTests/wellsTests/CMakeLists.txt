@@ -13,7 +13,11 @@ endif()
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
-          testReservoirCompositionalMultiphaseMSWells.cpp )
+          testReservoirCompositionalMultiphaseMSWells.cpp
+          testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
+          testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 
+          testThermalReservoirCompositionalMultiphaseSSWells.cpp 
+          testThermalReservoirCompositionalMultiphaseMSWells.cpp )
 
     list( APPEND dependencyList PVTPackage )
 endif()
