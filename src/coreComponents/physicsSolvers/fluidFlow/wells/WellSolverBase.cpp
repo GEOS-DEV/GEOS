@@ -122,7 +122,10 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::well::pressure_n >( getName() );
 
       subRegion.registerField< fields::well::temperature >( getName() );
-      subRegion.registerField< fields::well::temperature_n >( getName() );
+      if( isThermal() )
+      {
+        subRegion.registerField< fields::well::temperature_n >( getName() );
+      }
 
       subRegion.registerField< fields::well::gravityCoefficient >( getName() );
 
