@@ -31,7 +31,7 @@ Last, a Python script for post-processing the results is provided:
 
 .. code-block:: console
 
-  src/docs/sphinx/basicExamples/userTableStressInitialization/tableInitializationFigure.py
+  src/coreComponents/physicsSolvers/multiphysics/docs/userTableStressInitialization/tableInitializationFigure.py
 
 
 -------------------------------------
@@ -45,14 +45,14 @@ The major distinction between this "user-defined" initialization and the "gravit
 
 This is shown in the following tags under the ``FieldSpecifications`` section below
 
-.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_USER_TABLES -->
     :end-before: <!-- SPHINX_USER_TABLES_END -->
 
 The tables for ``sigma_xx``, ``sigma_yy``, ``sigma_zz`` and ``init_pressure`` are listed under the ``Functions`` section as shown below.
 
-.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FUNCTIONS -->
     :end-before: <!-- SPHINX_FUNCTIONS_END -->
@@ -67,12 +67,12 @@ A Python script to generate these files is provided:
 
 In addition to generating the files listed above, the script prints out the corresponding fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags respectively, as shown below:
 
-.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_Modify_Density -->
     :end-before: <!-- SPHINX_Modify_Density_END -->
 
-.. literalinclude:: ../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_Modify_FluidDensity -->
     :end-before: <!-- SPHINX_Modify_FluidDensity_END -->
@@ -103,7 +103,7 @@ The following figure shows the final gradient of pressure and of the effective v
 
 The figure below shows the comparisons between the numerical predictions (marks) and the corresponding user-provided stress gradients. Note that anisotropic horizontal stresses are obtained through this intialization procedure; however, mechanical equilibrium might not be guaranteed, especially for the heterogeneous models.
 
-.. plot:: docs/sphinx/basicExamples/userTableStressInitialization/tableInitializationFigure.py
+.. plot:: coreComponents/physicsSolvers/multiphysics/docs/userTableStressInitialization/tableInitializationFigure.py
 
 
 ------------------------------------------------------------------

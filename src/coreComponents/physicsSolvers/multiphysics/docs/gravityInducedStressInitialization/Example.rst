@@ -25,7 +25,7 @@ A Python script for post-processing the simulation results is provided:
 
 .. code-block:: console
 
-  src/docs/sphinx/basicExamples/initialization/gravityInitializationFigure.py
+  /src/coreComponents/physicsSolvers/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
 
 
 ------------------------------------------------------------------
@@ -72,7 +72,7 @@ Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and th
 with one group of cell blocks named here ``cellBlockNames``.
 
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -90,12 +90,12 @@ We use the ``targetRegions`` attribute to define the regions where the poromecha
 Since we only have one cellBlockName type called ``Domain``, the poromechanics solver is applied to every element of the model. 
 The flow solver for this problem (see :ref:`SinglePhaseFlow`) called ``SinglePhaseFlow`` is discretized by ``fluidTPFA``, defined in the ``NumericalMethods`` section.
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
     :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_NUMERICAL -->
     :end-before: <!-- SPHINX_NUMERICAL_END -->
@@ -107,7 +107,7 @@ Constitutive Laws
 
 A homogeneous domain with one solid material is assumed, and its mechanical and fluid properties are specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -126,21 +126,21 @@ Stress Initialization Function
 
 In the ``Tasks`` section, ``SinglePhasePoromechanicsInitialization`` tasks are defined to initialize the model by calling the poro-mechanics solver ``poroSolve``. This task is used to determine stress gradients through designated densities and established constitutive relationships to maintain mechanical equilibrium and reset all initial displacements to zero following the initialization process.  
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
     
 The initialization is triggered into action using the ``Event`` management section, where the ``soloEvent`` function calls the task at the target time (in this case -1e10s).
  
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_EVENTS -->
     :end-before: <!-- SPHINX_EVENTS_END -->
 
 The ``PeriodicEvent`` function is used here to define recurring tasks that progress for a stipulated time during the simuation. We also use it in this example to save the vtkOuput results.
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_OUTPUT -->
     :end-before: <!-- SPHINX_OUTPUT_END -->
@@ -162,7 +162,7 @@ In this problem, all outer boundaries of the domain are subject to roller constr
 
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
-.. literalinclude:: ../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
+.. literalinclude:: ../../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -217,9 +217,9 @@ The following figure shows the final gradient of pressure and of the effective v
    Simulation result of effective vertical stress
 
 
-The figure below shows the comparisons between GEOS numerical predictions (marks) and the corresponding analytical solutions (lines) with respect to the computed total stresses. Note that isotropic horizontal stresses are obtained through this intialization procedure.
+The figure below shows the comparison between the total stress computed by GEOS(marks) and with an analytical solutions (solid lines). Note that, because of the use of an isotropic model, the minimum and maximul horizontal stresses are equal.
 
-.. plot:: docs/sphinx/basicExamples/gravityInducedStressInitialization/gravityInitializationFigure.py
+.. plot:: coreComponents/physicsSolvers/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
 
 
 ------------------------------------------------------------------

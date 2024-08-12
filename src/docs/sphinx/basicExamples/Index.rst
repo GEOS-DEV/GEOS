@@ -19,9 +19,6 @@ Basic Examples
 
    triaxialDriver/Example
 
-   gravityInducedStressInitialization/Example
-
-   userTableStressInitialization/Example
 
 
 
