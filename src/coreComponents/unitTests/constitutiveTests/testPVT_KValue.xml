@@ -79,58 +79,63 @@
       values="{ 553.15, 583.15, 583.15 }"/>
 
     <TableFunction
-      name="KV1"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue1.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
-      name="KV2"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue2.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
-      name="KV3"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue3.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
-      name="KV4"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue4.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
-      name="KV5"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue5.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
-      name="KV6"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue6.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
-      name="KV7"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue7.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
-      name="KV8"
-      voxelFile="testPVT_data/testPVT_KValue_kvalue8.csv"
-      coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
-      interpolation="linear"
-      inputVarNames="{ pressure, temperature }" />
-    <TableFunction
       name="KV9"
       voxelFile="testPVT_data/testPVT_KValue_kvalue9.csv"
       coordinateFiles="{ testPVT_data/testPVT_KValue_pressure.csv, testPVT_data/testPVT_KValue_temperature.csv  }"
       interpolation="linear"
+      inputVarNames="{ pressure, temperature }" />
+
+    <SymbolicFunction
+      name="KV1"
+      expression="(3.0620e+00+8.9414e+02/p+1.1912e-02*p)*exp(-5.3659e+02/(t-1.1951e+02))"
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
+    <SymbolicFunction
+      name="KV3"
+      expression="(-3.5742e-01+4.8660e+02/p+5.7887e-03*p)*exp(-9.1910e+01/(t-1.8027e+02))"
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
+    <SymbolicFunction
+      name="KV4"
+      expression="(3.6577e+00+7.1889e+02/p+1.4154e-02*p)*exp(-5.7323e+02/(t-1.1088e+02))"
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
+    <SymbolicFunction
+      name="KV5"
+      expression="(8.2845e+00+1.0144e+03/p+5.2968e-02*p)*exp(-9.5800e+02/(t-9.3548e+01))"
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
+    <SymbolicFunction
+      name="KV6"
+      expression="(1.5732e+01+1.4968e+03/p+1.7407e-01*p)*exp(-1.3707e+03/(t-8.1261e+01))"
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
+    <SymbolicFunction
+      name="KV7"
+      expression="(2.5068e+01+2.2625e+03/p+5.3888e-01*p)*exp(-1.7981e+03/(t-7.1948e+01))"
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
+    <SymbolicFunction
+      name="KV8"
+      expression="(3.6243e+01+4.1985e+03/p+1.9055e+00*p)*exp(-2.3575e+03/(t-5.8025e+01))"
+      variableNames="{ p, t }" 
+      inputVarNames="{ pressure, temperature }" />  
+
+    <SymbolicFunction
+      name="KV2_PRESSURE"
+      expression="-1.8141e+00+6.2655e+02/p+6.7489e-03*p"
+      variableNames="{ p }" 
+      inputVarNames="{ pressure }" />  
+    <SymbolicFunction
+      name="KV2_TEMPERATURE"
+      expression="exp(-5.0732e+00/(t-2.5249e+02))"
+      variableNames="{ t }" 
+      inputVarNames="{ temperature }" />  
+    <CompositeFunction
+      name="KV2"
+      functionNames="{ KV2_PRESSURE, KV2_TEMPERATURE }"
+      variableNames="{ P, T }"
+      expression="P*T"
       inputVarNames="{ pressure, temperature }" />
   </Functions>
 

@@ -22,6 +22,8 @@
 
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
+#include "functions/SymbolicFunction.hpp"
+#include "functions/CompositeFunction.hpp"
 
 #include "common/Units.hpp"
 #include "common/format/table/TableFormatter.hpp"
@@ -119,16 +121,29 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
   FunctionManager & functionManager = FunctionManager::getInstance();
   for( integer tableIndex = 0; tableIndex < numTables; ++tableIndex )
   {
-    string const tableName = m_kValueTables[tableIndex];
-    TableFunction * tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
-    GEOS_THROW_IF( tableFunction == nullptr,
-                   GEOS_FMT( "TableFunction with name {} not found. ", tableName ),
+    string const functionName = m_kValueTables[tableIndex];
+    FunctionBase * function = functionManager.getGroupPointer< FunctionBase >( functionName );
+    GEOS_THROW_IF( function == nullptr,
+                   GEOS_FMT( "Function with name {} not found. ", functionName ),
                    InputError );
 
-    tableFunction->initializeFunction();
+    function->initializeFunction();
 
-    GEOS_THROW_IF_NE_MSG( tableFunction->numDimensions(), 2,
-                          GEOS_FMT( "TableFunction with name {} must have a dimension of 2. ", tableName ),
+    integer numDims = 0;
+    if( TableFunction const * tableFunction = dynamicCast< TableFunction const * >( function ))
+    {
+      numDims = tableFunction->numDimensions();
+    }
+    else if( SymbolicFunction const * symbolicFunction = dynamicCast< SymbolicFunction const * >( function ))
+    {
+      numDims = symbolicFunction->getWrapper< string_array >( "variableNames" ).reference().size();
+    }
+    else if( CompositeFunction const * compositeFunction = dynamicCast< CompositeFunction const * >( function ))
+    {
+      numDims = compositeFunction->getWrapper< string_array >( "variableNames" ).reference().size();
+    }
+    GEOS_THROW_IF_NE_MSG( numDims, 2,
+                          GEOS_FMT( "Function with name {} must have a dimension of 2. ", functionName ),
                           InputError );
   }
 
@@ -203,6 +218,11 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
         string const tableName = m_kValueTables[tableIndex];
         tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
 
+        if( tableFunction == nullptr )
+        {
+          continue;
+        }
+
         ArrayOfArraysView< real64 const > coordinates = tableFunction->getCoordinates();
 
         integer const np = coordinates[0].size();
@@ -231,12 +251,21 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
 
   if( !m_pressureCoordinates.empty() )
   {
-    numTemperaturePoints = m_pressureCoordinates.size();
+    numPressurePoints = m_pressureCoordinates.size();
   }
   if( !m_temperatureCoordinates.empty() )
   {
     numTemperaturePoints = m_temperatureCoordinates.size();
   }
+
+  GEOS_THROW_IF_EQ_MSG( numPressurePoints, 0,
+                        GEOS_FMT( "Failed to calculate number of pressure points for k-value interpolation. "
+                                  "Provide values for {}.", KValueFlashParameters::viewKeyStruct::pressureCoordinatesString() ),
+                        InputError );
+  GEOS_THROW_IF_EQ_MSG( numTemperaturePoints, 0,
+                        GEOS_FMT( "Failed to calculate number of temperature points for k-value interpolation. "
+                                  "Provide values for {}.", KValueFlashParameters::viewKeyStruct::temperatureCoordinatesString() ),
+                        InputError );
 
   // Create the pressure index lookup table
   m_pressureValues.resize( 1 );
@@ -287,14 +316,14 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
     {
       integer const tableIndex = numComps*phaseIndex + compIndex;
       string const tableName = m_kValueTables[tableIndex];
-      tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
+      FunctionBase const * function = functionManager.getGroupPointer< FunctionBase >( tableName );
       for( integer pressureIndex = 0; pressureIndex < numPressurePoints; ++pressureIndex )
       {
         lookupValue[0] = m_pressureValues[0][pressureIndex];
         for( integer temperatureIndex = 0; temperatureIndex < numTemperaturePoints; ++temperatureIndex )
         {
           lookupValue[1] = m_temperatureValues[0][temperatureIndex];
-          m_kValueHyperCube( phaseIndex, compIndex, pressureIndex, temperatureIndex ) = tableFunction->evaluate( lookupValue );
+          m_kValueHyperCube( phaseIndex, compIndex, pressureIndex, temperatureIndex ) = function->evaluate( lookupValue );
         }
       }
     }
