@@ -59,8 +59,8 @@ def inputStressGradientsMPa(stressXX=None, stressYY=None, stressZZ=None,porePres
 
 def main():
 	# File path
-	xmlFile1Path = "../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml"
-	xmlFile2Path = "../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml"
+	xmlFile1Path = "../../../../../../inputFiles/initialization/userdefinedStress_initialization_base.xml"
+	xmlFile2Path = "../../../../../../inputFiles/initialization/userdefinedStress_initialization_benchmark.xml"
 
 
 	hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
