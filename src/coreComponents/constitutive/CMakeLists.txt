@@ -239,6 +239,8 @@ set( constitutive_sources
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
+     fluid/multifluid/compositional/PVTDriverRunTestCompositionalKValueConstantViscosity.cpp
+     fluid/multifluid/compositional/PVTDriverRunTestCompositionalThreePhaseKValueConstantViscosity.cpp
      fluid/multifluid/compositional/PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
      fluid/multifluid/compositional/PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
      fluid/multifluid/reactive/ReactiveBrineFluid.cpp
