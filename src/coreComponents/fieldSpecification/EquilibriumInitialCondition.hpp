@@ -34,7 +34,7 @@ class EquilibriumInitialCondition : public FieldSpecificationBase
 {
 public:
 
-  /// @copydoc FieldSpecificationBase(string const &, Group *)
+  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
   EquilibriumInitialCondition( string const & name, Group * parent );
 
   /// deleted default constructor

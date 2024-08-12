@@ -140,7 +140,7 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                    dPhaseComposition,
                    useMass );
 
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   // compute the viscosity of pure water as a function of temperature
   real64 dPureWaterVisc_dTemperature;

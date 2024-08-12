@@ -29,6 +29,7 @@
 
 namespace geos
 {
+using namespace constitutive;
 
 namespace compositionalMultiphaseHybridFVMKernels
 {

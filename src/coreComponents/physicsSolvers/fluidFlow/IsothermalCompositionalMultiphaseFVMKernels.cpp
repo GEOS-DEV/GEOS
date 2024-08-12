@@ -28,6 +28,7 @@
 
 namespace geos
 {
+using namespace constitutive;
 
 namespace isothermalCompositionalMultiphaseFVMKernels
 {

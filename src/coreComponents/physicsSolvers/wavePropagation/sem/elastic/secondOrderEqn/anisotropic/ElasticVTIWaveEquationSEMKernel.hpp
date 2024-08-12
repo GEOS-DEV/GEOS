@@ -27,7 +27,7 @@
 
 namespace geos
 {
-using namespace fields;
+
 /// Namespace to contain the elastic wave kernels.
 namespace elasticVTIWaveEquationSEMKernels
 {
@@ -100,18 +100,18 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
-    m_ux_n( nodeManager.getField< elasticfields::Displacementx_n >() ),
-    m_uy_n( nodeManager.getField< elasticfields::Displacementy_n >() ),
-    m_uz_n( nodeManager.getField< elasticfields::Displacementz_n >() ),
-    m_stiffnessVectorx( nodeManager.getField< elasticfields::StiffnessVectorx >() ),
-    m_stiffnessVectory( nodeManager.getField< elasticfields::StiffnessVectory >() ),
-    m_stiffnessVectorz( nodeManager.getField< elasticfields::StiffnessVectorz >() ),
-    m_density( elementSubRegion.template getField< elasticfields::ElasticDensity >() ),
-    m_velocityVp( elementSubRegion.template getField< elasticfields::ElasticVelocityVp >() ),
-    m_velocityVs( elementSubRegion.template getField< elasticfields::ElasticVelocityVs >() ),
-    m_gamma( elementSubRegion.template getField< elasticvtifields::Gamma >()),
-    m_epsilon( elementSubRegion.template getField< elasticvtifields::Epsilon >()),
-    m_delta( elementSubRegion.template getField< elasticvtifields::Delta >()),
+    m_ux_n( nodeManager.getField< fields::elasticfields::Displacementx_n >() ),
+    m_uy_n( nodeManager.getField< fields::elasticfields::Displacementy_n >() ),
+    m_uz_n( nodeManager.getField< fields::elasticfields::Displacementz_n >() ),
+    m_stiffnessVectorx( nodeManager.getField< fields::elasticfields::StiffnessVectorx >() ),
+    m_stiffnessVectory( nodeManager.getField< fields::elasticfields::StiffnessVectory >() ),
+    m_stiffnessVectorz( nodeManager.getField< fields::elasticfields::StiffnessVectorz >() ),
+    m_density( elementSubRegion.template getField< fields::elasticfields::ElasticDensity >() ),
+    m_velocityVp( elementSubRegion.template getField< fields::elasticfields::ElasticVelocityVp >() ),
+    m_velocityVs( elementSubRegion.template getField< fields::elasticfields::ElasticVelocityVs >() ),
+    m_gamma( elementSubRegion.template getField< fields::elasticvtifields::Gamma >()),
+    m_epsilon( elementSubRegion.template getField< fields::elasticvtifields::Epsilon >()),
+    m_delta( elementSubRegion.template getField< fields::elasticvtifields::Delta >()),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

@@ -135,7 +135,7 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
 {
   GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2]{};

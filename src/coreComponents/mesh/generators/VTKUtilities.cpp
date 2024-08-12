@@ -72,6 +72,7 @@
 
 namespace geos
 {
+using namespace dataRepository;
 
 namespace vtk
 {

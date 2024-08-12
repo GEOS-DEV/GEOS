@@ -32,15 +32,12 @@ namespace geos
 
 namespace constitutive
 {
-
-using namespace multifluid;
-
 namespace compositional
 {
 
 struct NegativeTwoPhaseFlash
 {
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
 public:
   /**
