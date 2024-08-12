@@ -24,11 +24,10 @@
 namespace geos
 {
 
-using namespace constitutive;
-
 //specific to Hysteresis
 template< typename RELPERM_TYPE >
-std::enable_if_t< std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis,
+                                RELPERM_TYPE >::value, void >
 RelpermDriver::runTest( RELPERM_TYPE & relperm,
                         const arrayView2d< real64 > & table )
 {
@@ -37,7 +36,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   // create kernel wrapper
 
-  typename TableRelativePermeabilityHysteresis::KernelWrapper const kernelWrapper = relperm.createKernelWrapper();
+  typename constitutive::TableRelativePermeabilityHysteresis::KernelWrapper const kernelWrapper = relperm.createKernelWrapper();
 
   // set saturation to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
@@ -91,15 +90,15 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 
   arrayView2d< real64 const, compflow::USD_PHASE > const saturation = saturationValues.toViewConst();
 
-  auto const & phaseHasHysteresis = relperm.template getReference< array1d< integer > >( TableRelativePermeabilityHysteresis::viewKeyStruct::phaseHasHysteresisString());
+  auto const & phaseHasHysteresis = relperm.template getReference< array1d< integer > >( constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::phaseHasHysteresisString());
 
   arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMaxHistoricalVolFraction >().reference();
   arrayView2d< real64, compflow::USD_PHASE >  phaseMinHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMinHistoricalVolFraction >().reference();
 
   arrayView1d< real64 > const drainagePhaseMinVolFraction = relperm.template getReference< array1d< real64 > >(
-    TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMinVolumeFractionString());
+    constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMinVolumeFractionString());
   arrayView1d< real64 > const drainagePhaseMaxVolFraction = relperm.template getReference< array1d< real64 > >(
-    TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMaxVolumeFractionString());
+    constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMaxVolumeFractionString());
 
   //setting for drainage
   {
@@ -165,7 +164,7 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm,
 }
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< !std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
 RelpermDriver::runTest( RELPERM_TYPE & relperm,
                         const arrayView2d< real64 > & table )
 {
