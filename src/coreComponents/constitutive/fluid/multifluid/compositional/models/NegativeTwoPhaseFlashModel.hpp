@@ -42,10 +42,9 @@ class ModelParameters;
 class NegativeTwoPhaseFlashModelUpdate final : public FunctionBaseUpdate
 {
 public:
-
-  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
-  using Deriv = multifluid::DerivativeOffset;
+  using PhaseProp = MultiFluidVar< real64, 3, constitutive::multifluid::LAYOUT_PHASE, constitutive::multifluid::LAYOUT_PHASE_DC >;
+  using PhaseComp = MultiFluidVar< real64, 4, constitutive::multifluid::LAYOUT_PHASE_COMP, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   static constexpr real64 stabilityTolerance = MultiFluidConstants::fugacityTolerance;
 

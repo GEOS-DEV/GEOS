@@ -11,7 +11,6 @@ if ( GEOS_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core HDF5::HDF5 )
 else()
   list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
-  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
 endif()
 
 if (TARGET pugixml::pugixml)

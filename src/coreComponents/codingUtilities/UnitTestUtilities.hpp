@@ -64,7 +64,7 @@ namespace testing
 template< typename T >
 T expected( T expectedSerial,
             std::initializer_list< T > expectedParallel,
-            MPI_Comm const & comm = MPI_COMM_GEOSX )
+            MPI_Comm const & comm = MPI_COMM_GEOS )
 {
   int const mpiSize = MpiWrapper::commSize( comm );
   if( mpiSize == 1 )
