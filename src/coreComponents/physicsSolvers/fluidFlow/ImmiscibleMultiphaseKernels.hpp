@@ -360,7 +360,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] NoOpFunc the function used to customize the computation of the flux
    */
-  template< typename FUNC = multiPhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >   // should change to multiphase
   GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
@@ -599,7 +599,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = multiPhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >  // should change to multiphase
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
@@ -615,13 +615,18 @@ public:
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
         GEOS_ASSERT_GE( localRow, 0 );
-        GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow );
+        GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow + numEqn);
 
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux[i * numEqn] );
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                            stack.dofColIndices.data(),
-                                                                            stack.localFluxJacobian[i * numEqn].dataIfContiguous(), // fix numbering
-                                                                            stack.stencilSize * numDof );
+        for( integer ic = 0; ic < numEqn; ++ic )
+        {
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic],
+                           stack.localFlux[i * numEqn + ic] );
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+            ( localRow + ic,
+            stack.dofColIndices.data(),
+            stack.localFluxJacobian[i * numEqn + ic].dataIfContiguous(),
+            stack.stencilSize * numDof );
+        }        
 
         // call the lambda to assemble additional terms, such as thermal terms
         kernelOp( i, localRow );
