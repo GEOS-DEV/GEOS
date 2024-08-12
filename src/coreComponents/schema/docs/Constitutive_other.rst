@@ -15,7 +15,9 @@ CO2BrinePhillipsFluid                         node :ref:`DATASTRUCTURE_CO2BrineP
 CO2BrinePhillipsThermalFluid                  node :ref:`DATASTRUCTURE_CO2BrinePhillipsThermalFluid`                  
 CarmanKozenyPermeability                      node :ref:`DATASTRUCTURE_CarmanKozenyPermeability`                      
 CeramicDamage                                 node :ref:`DATASTRUCTURE_CeramicDamage`                                 
+CompositionalKValueFluid                      node :ref:`DATASTRUCTURE_CompositionalKValueFluid`                      
 CompositionalMultiphaseFluid                  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`                  
+CompositionalThreePhaseKValueFluid            node :ref:`DATASTRUCTURE_CompositionalThreePhaseKValueFluid`            
 CompositionalTwoPhaseFluid                    node :ref:`DATASTRUCTURE_CompositionalTwoPhaseFluid`                    
 CompositionalTwoPhaseFluidLohrenzBrayClark    node :ref:`DATASTRUCTURE_CompositionalTwoPhaseFluidLohrenzBrayClark`    
 CompressibleSinglePhaseFluid                  node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`                  

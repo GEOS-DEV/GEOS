@@ -50,7 +50,7 @@ public:
 
   array1d< real64 > m_pressureCoordinates;
   array1d< real64 > m_temperatureCoordinates;
-  Array< string, 2 > m_kValueTables;
+  string_array m_kValueTables;
 
   array1d< array1d< real64 > > m_pressureValues;
   array1d< array1d< real64 > > m_temperatureValues;
@@ -70,7 +70,7 @@ protected:
 private:
   static bool isIncreasing( arraySlice1d< real64 const > const & array );
 
-  void generateHyperCube();
+  void generateHyperCube( integer const numComps );
   bool validateKValues( MultiFluidBase const * fluid ) const;
 };
 

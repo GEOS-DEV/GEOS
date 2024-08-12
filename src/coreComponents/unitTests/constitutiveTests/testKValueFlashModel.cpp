@@ -85,7 +85,7 @@ protected:
   std::unique_ptr< ModelParameters > m_parameters{};
 
 private:
-  void generateTables( arraySlice2d< string > const & names, string const fluidName );
+  void generateTables( arraySlice1d< string > const & names, string const fluidName );
 
   static void writeToFile( string const & fileName, string const & content );
 
@@ -107,7 +107,7 @@ KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture():
 
   m_parameters = KValueFlashModel< numPhases >::createParameters( std::move( m_parameters ));
   ModelParamType * parameters = const_cast< ModelParamType * >(m_parameters->get< ModelParamType >());
-  parameters->m_kValueTables.resize( numPhases-1, numComps );
+  parameters->m_kValueTables.resize( (numPhases-1)*numComps );
   generateTables( parameters->m_kValueTables.toSlice(), fluidName );
 
   ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
@@ -201,7 +201,7 @@ real64 getKValue( integer const phaseIndex, integer const compIndex, real64 cons
 }
 
 template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d< string > const & names, string const fluidName )
+void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice1d< string > const & names, string const fluidName )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   std::ostringstream content;
@@ -218,7 +218,7 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d
       // Pressure in bar
       real64 const minPressure = 1.0 + c*c;
       real64 const maxPressure = 600.0 + 50.0*c*c;
-      integer const NP = static_cast< integer >(6.0 + 8.0*c*c);
+      integer const NP = static_cast< integer >(6.0 + 8.0*s*s);
       real64 const dp = (maxPressure - minPressure)/NP;
       content.str( "" );
       for( integer i = 0; i <= NP; ++i )
@@ -233,7 +233,7 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d
       // Temp in degC
       real64 const minTemp = 10.0 + 5.0*s*s;
       real64 const maxTemp = 200.0 + 50.0*s*s;
-      integer const NT = static_cast< integer >(6.0 + 8.0*(1.0-s*s));
+      integer const NT = static_cast< integer >(6.0 + 8.0*c*c);
       real64 const dt = (maxTemp - minTemp)/NP;
       content.str( "" );
       for( integer j = 0; j <= NT; ++j )
@@ -274,7 +274,9 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice2d
       tableFunction->setInterpolationMethod( TableFunction::InterpolationType::Linear );
       tableFunction->initializeFunction();
 
-      names( ip, ic ) = tableName;
+      integer const tableIndex = numComps*ip + ic;
+
+      names[tableIndex] = tableName;
     }
   }
 }

@@ -109,38 +109,28 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
                    InputError );
   }
 
-  integer const numPhaseTable = m_kValueTables.size( 0 );
-  integer const numComponentTable = m_kValueTables.size( 1 );
+  integer const numTables = m_kValueTables.size();
 
-  GEOS_THROW_IF_NE_MSG( numPhases-1, numPhaseTable,
-                        GEOS_FMT( "{}: invalid number of phases provided for k-value tables. "
-                                  "First dimension of table should be {}", fluid->getFullName(), numPhases-1 ),
-                        InputError );
-
-  GEOS_THROW_IF_NE_MSG( numFluidComponent, numComponentTable,
-                        GEOS_FMT( "{}: invalid number of components provided for k-value tables. "
-                                  "Second dimension of table should be {}", fluid->getFullName(), numFluidComponent ),
+  GEOS_THROW_IF_NE_MSG( numTables, (numPhases-1)*numFluidComponent,
+                        GEOS_FMT( "{}: invalid number of k-value tables provided.", fluid->getFullName() ),
                         InputError );
 
   // Check that the tables exist and are 2D
   FunctionManager const & functionManager = FunctionManager::getInstance();
-  for( integer phaseIndex = 0; phaseIndex < numPhaseTable; ++phaseIndex )
+  for( integer tableIndex = 0; tableIndex < numTables; ++tableIndex )
   {
-    for( integer compIndex = 0; compIndex < numComponentTable; ++compIndex )
-    {
-      string const tableName = m_kValueTables( phaseIndex, compIndex );
-      TableFunction const * tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
-      GEOS_THROW_IF( tableFunction == nullptr,
-                     GEOS_FMT( "TableFunction with name {} not found. ", tableName ),
-                     InputError );
+    string const tableName = m_kValueTables[tableIndex];
+    TableFunction const * tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
+    GEOS_THROW_IF( tableFunction == nullptr,
+                   GEOS_FMT( "TableFunction with name {} not found. ", tableName ),
+                   InputError );
 
-      GEOS_THROW_IF_NE_MSG( tableFunction->numDimensions(), 2,
-                            GEOS_FMT( "TableFunction with name {} must have a dimension of 2. ", tableName ),
-                            InputError );
-    }
+    GEOS_THROW_IF_NE_MSG( tableFunction->numDimensions(), 2,
+                          GEOS_FMT( "TableFunction with name {} must have a dimension of 2. ", tableName ),
+                          InputError );
   }
 
-  generateHyperCube();
+  generateHyperCube( numFluidComponent );
   validateKValues( fluid );
 }
 
@@ -186,12 +176,10 @@ void KValueFlashParameters< NUM_PHASE >::createTables( string const & name,
 }
 
 template< integer NUM_PHASE >
-void KValueFlashParameters< NUM_PHASE >::generateHyperCube()
+void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numComps )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction const * tableFunction = nullptr;
-
-  integer const numComps = m_kValueTables.size( 1 );
 
   real64 minPressure = LvArray::NumericLimits< real64 >::max;
   real64 maxPressure = LvArray::NumericLimits< real64 >::min;
@@ -205,11 +193,12 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube()
   // discretised.
   if( m_pressureCoordinates.empty() || m_temperatureCoordinates.empty() )
   {
-    for( integer phaseIndex = 0; phaseIndex < m_kValueTables.size( 0 ); ++phaseIndex )
+    for( integer phaseIndex = 0; phaseIndex < numPhases-1; ++phaseIndex )
     {
       for( integer compIndex = 0; compIndex < numComps; ++compIndex )
       {
-        string const tableName = m_kValueTables( phaseIndex, compIndex );
+        integer const tableIndex = numComps*phaseIndex + compIndex;
+        string const tableName = m_kValueTables[tableIndex];
         tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
 
         ArrayOfArraysView< real64 const > coordinates = tableFunction->getCoordinates();
@@ -225,6 +214,7 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube()
         maxTemperature = LvArray::math::max( maxTemperature, coordinates[1][nt-1] );
       }
     }
+
     if( numPressurePoints == 1 )
     {
       numPressurePoints = 2;
@@ -236,6 +226,7 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube()
       maxTemperature = minTemperature + 10.0;
     }
   }
+
   if( !m_pressureCoordinates.empty() )
   {
     numTemperaturePoints = m_pressureCoordinates.size();
@@ -288,11 +279,12 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube()
   // Create the "hypercube" of k-values
   real64 lookupValue[2]{};
   m_kValueHyperCube.resize( numPhases-1, numComps, numPressurePoints, numTemperaturePoints );
-  for( integer phaseIndex = 0; phaseIndex < m_kValueTables.size( 0 ); ++phaseIndex )
+  for( integer phaseIndex = 0; phaseIndex < numPhases-1; ++phaseIndex )
   {
     for( integer compIndex = 0; compIndex < numComps; ++compIndex )
     {
-      string const tableName = m_kValueTables( phaseIndex, compIndex );
+      integer const tableIndex = numComps*phaseIndex + compIndex;
+      string const tableName = m_kValueTables[tableIndex];
       tableFunction = functionManager.getGroupPointer< TableFunction >( tableName );
       for( integer pressureIndex = 0; pressureIndex < numPressurePoints; ++pressureIndex )
       {
@@ -337,7 +329,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
   integer const numTableColumns = numComps+3;
   TableData tableData;
   std::vector< string > tableRow( numTableColumns );
-  for( integer phaseIndex = 0; phaseIndex < m_kValueHyperCube.size( 0 ); ++phaseIndex )
+  for( integer phaseIndex = 0; phaseIndex < numPhases-1; ++phaseIndex )
   {
     for( integer pressureIndex = 0; pressureIndex < numPressures; ++pressureIndex )
     {

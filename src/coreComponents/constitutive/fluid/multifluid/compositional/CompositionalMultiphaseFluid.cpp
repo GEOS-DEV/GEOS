@@ -267,6 +267,15 @@ template class CompositionalMultiphaseFluid<
     compositional::NegativeTwoPhaseFlashModel,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::KValueFlashModel< 2 >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::KValueFlashModel< 3 >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseConstantViscosity,
@@ -275,6 +284,16 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseLohrenzBrayClarkViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalKValueConstantViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalThreePhaseKValueConstantViscosity,
                         string const &,
                         dataRepository::Group * const )
 
