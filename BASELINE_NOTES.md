@@ -6,9 +6,11 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR 3197 (2024-08-07)
+
+
+PR 3278 (2024-08-12)
 ====================
-Separation of contact and friction laws.
+Renamed GEOSX to GEOS in enternal mesh import, so rebaseline to change these names is the baselines. 
 
 PR #3202 (2024-08-03)
 ======================
