@@ -158,7 +158,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     {
       setConstitutiveNamesCallSuper( subRegion );
 
-      subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::averageStrain >( getName() ).reference().resizeDimension< 1 >( 6 );
       subRegion.registerField< solidMechanics::averageStress >( getName() ).reference().resizeDimension< 1 >( 6 );
     } );
 
@@ -947,7 +947,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
       arrayView3d < real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
 
-      solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
+      solidMechanics::arrayView2dLayoutStrain avgStrain = subRegion.getField< solidMechanics::averageStrain >();
       solidMechanics::arrayView2dLayoutAvgStress avgStress = subRegion.getField< solidMechanics::averageStress >();
 
       finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
@@ -960,7 +960,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
                                                                                                                                   subRegion,
                                                                                                                                   finiteElement,
                                                                                                                                   disp,
-                                                                                                                                  strain );
+                                                                                                                                  avgStrain );
 
 
         AverageStressOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
