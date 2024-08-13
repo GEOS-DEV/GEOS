@@ -275,8 +275,8 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     // Set the penalty coefficients
     forAll< parallelDevicePolicy<> >( subRegion.size(), 
                                       [ penalty, normalTractionTolerance, 
-                                        normalDisplacementTolerance, area,
-                                        dispJumpUpdPenalty ] 
+                                        normalDisplacementTolerance, slidingTolerance, 
+                                        area, dispJumpUpdPenalty ] 
                                       GEOS_HOST_DEVICE ( localIndex const k )
     {
       penalty[k] [0] = normalTractionTolerance[k]/(normalDisplacementTolerance[k]*area[k] );
@@ -731,7 +731,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         }
       } );
 
-      
+      //bool printflag = true; 
       real64 const slidingCheckTolerance = m_slidingCheckTolerance;
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -768,7 +768,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
             {
               // Case 2: compenetration
               real64 deltaDisp = sqrt( pow( deltaDispJump[kfe][1], 2 ) + pow( deltaDispJump[kfe][2], 2 ));
-              if( std::abs( dispJump[kfe][0]/area[kfe] ) > normalDisplacementTolerance[kfe] )
+              if (( std::abs( dispJump[kfe][0]/area[kfe] ) > normalDisplacementTolerance[kfe] ) && (fractureState[kfe] != contact::FractureState::Open))
               {
                 //if (printflag)
                 //{
@@ -966,9 +966,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                 if (penalty[kfe][0] > eps_N_lim )
                 {
                   //GEOS_LOG_LEVEL(2,
-                  //GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
+                  //GEOS_FMT( " Element: {}, eps_N > eps_N_lim, eps: {:4.2e} epsLim: {:4.2e}",
                   //kfe, penalty[kfe][0], eps_N_lim ))
-
                   penalty[kfe][0] = eps_N_lim;
                 }
               }
@@ -986,9 +985,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                   if (penalty[kfe][0] > eps_N_lim )
                   {
                     //GEOS_LOG_LEVEL(2,
-                    //GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
+                    //GEOS_FMT( " Element: {}, eps_N > eps_N_lim, eps: {:4.2e} epsLim: {:4.2e}",
                     //kfe, penalty[kfe][0], eps_N_lim ))
-
                     penalty[kfe][0] = eps_N_lim;
                   }
                   
@@ -1039,20 +1037,17 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                       ( deltaDisp > 0.25 * deltaDispUpdPenalty))
                   {
                     penalty[kfe][1] *= 10.0; 
-
                     
                     real64 const eps_T_lim = 1.0e+04 * normalTractionTolerance[kfe]/(slidingTolerance[kfe] * area[kfe] * 10 );
                     if (penalty[kfe][1] > eps_T_lim )
                     {
                       //GEOS_LOG_LEVEL(2,
-                      //GEOS_FMT( " Element: {}, eps > eps_lim, eps: {:4.2e} epsLim: {:4.2e}",
+                      //GEOS_FMT( " Element: {}, eps_T > eps_T_lim, eps: {:4.2e} epsLim: {:4.2e}",
                       //kfe, penalty[kfe][1], eps_T_lim ))
-
                       penalty[kfe][1] = eps_T_lim;
                     }
                     
                   }
-                  
                   
                 }
               }
@@ -1079,7 +1074,6 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
   if (!hasConfigurationConvergedGlobally)
   {
     updateStickSlipList( domain );
-
   }
 
   return hasConfigurationConvergedGlobally;
@@ -1126,15 +1120,19 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
         if( fractureState[faceIndex] == contact::FractureState::Stick )
         {
           keys_v[kfe]=0;
-          vals_v[kfe]=kfe;
+          vals_v[kfe]=faceIndex;
           nStick_r += 1;
         }
         else if (( fractureState[faceIndex] == contact::FractureState::Slip ) ||
                  (fractureState[faceIndex] == contact::FractureState::NewSlip))
         {
           keys_v[kfe]=1;
-          vals_v[kfe]=kfe;
+          vals_v[kfe]=faceIndex;
           nSlip_r += 1;
+        }
+        else 
+        {
+          keys_v[kfe] = 2;
         }
 
       } );
@@ -1168,8 +1166,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      //GEOS_LOG_LEVEL(2,
-      //GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL(2,
+      GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
