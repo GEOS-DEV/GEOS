@@ -954,22 +954,16 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
       {
         using FE_TYPE = decltype( finiteElement );
-        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
+        AverageStressStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
                                                                                                                                   mesh.getEdgeManager(),
                                                                                                                                   mesh.getFaceManager(),
                                                                                                                                   subRegion,
                                                                                                                                   finiteElement,
                                                                                                                                   disp,
-                                                                                                                                  avgStrain );
-
-
-        AverageStressOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
-                                                                                                                                  mesh.getEdgeManager(),
-                                                                                                                                  mesh.getFaceManager(),
-                                                                                                                                  subRegion,
-                                                                                                                                  finiteElement,
+                                                                                                                                  avgStrain,
                                                                                                                                   stress,
                                                                                                                                   avgStress );
+
 
       } );
 
