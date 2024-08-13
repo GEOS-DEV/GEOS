@@ -18,9 +18,7 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-#include "fileIO/Table/TableLayout.hpp"
-#include "fileIO/Table/TableData.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
+#include "common/format/table/TableFormatter.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
 #include <umpire/TypedAllocator.hpp>
