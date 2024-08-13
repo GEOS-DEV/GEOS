@@ -56,8 +56,8 @@ void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real
 {
   arrayView3d< real64 > dEffectiveConductivity_dT = m_dEffectiveConductivity_dT.toView();
   arrayView3d< real64 > effectiveConductivity = m_effectiveConductivity.toView();
-  R1Tensor const & defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
-  R1Tensor const & thermalConductivityGradientComponents = m_thermalConductivityGradientComponents;
+  R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
+  R1Tensor const thermalConductivityGradientComponents = m_thermalConductivityGradientComponents;
 
   forAll< parallelDevicePolicy<> >( initialPorosity.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
@@ -79,8 +79,8 @@ void SinglePhaseThermalConductivity::updateFromTemperature( arrayView1d< real64 
 {
   arrayView3d< real64 > dEffectiveConductivity_dT = m_dEffectiveConductivity_dT.toView();
   arrayView3d< real64 > effectiveConductivity = m_effectiveConductivity.toView();
-  R1Tensor const & defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
-  R1Tensor const & thermalConductivityGradientComponents = m_thermalConductivityGradientComponents;
+  R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
+  R1Tensor const thermalConductivityGradientComponents = m_thermalConductivityGradientComponents;
   real64 const referenceTemperature = m_referenceTemperature;
 
   forAll< parallelDevicePolicy<> >( temperature.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ei )
