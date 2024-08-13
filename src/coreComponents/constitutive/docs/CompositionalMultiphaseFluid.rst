@@ -170,25 +170,20 @@ so called Rachford and-Rice equation:
 
 The flash calculation process is as follows:
 
-#. Once the mixture is confirmed to be stable, an initial set of K-values is chosen, typically
-using Wilson's formula.
-#. Given :math:`z_i` and :math:`K_i`, the Rachford-Rice equation is solved to determine the molar
-fraction of vapor,  :math:`V`. This is initially solved using successive substitution, followed by
-Newton iterations once the residual is sufficiently reduced.
-#. After  :math:`V` is calculated, the corresponding liquid and vapor mole fractions, :math:`x_i` and :math:`y_i`,
-are computed.
-#. These phase compositions are then used to calculate the component fugacities :math:`\phi_{iL}` and :math:`\phi_{iV}`
-in the liquid and vapor phases using the equation of state.
-#. Convergence is reached when the fugacities are equal for all components. The convergence criterion is
-defined as:
+#. Once the mixture is confirmed to be stable, an initial set of K-values is chosen, typically using Wilson's formula.
 
+#. Given :math:`z_i` and :math:`K_i`, the Rachford-Rice equation is solved to determine the molar fraction of vapor,  :math:`V`. This is initially solved using successive substitution, followed by Newton iterations once the residual is sufficiently reduced.
+
+#. After  :math:`V` is calculated, the corresponding liquid and vapor mole fractions, :math:`x_i` and :math:`y_i`, are computed.
+
+#. These phase compositions are then used to calculate the component fugacities :math:`\phi_{iL}` and :math:`\phi_{iV}` in the liquid and vapor phases using the equation of state.
+
+#. Convergence is reached when the fugacities are equal for all components. The convergence criterion is defined as:
 .. math::
     \sum_{i=1}^{N_c} \left( \phi_{iL} - \phi_{iV} \right)^2 < \varepsilon
+   where :math:`\varepsilon` is the convergence tolerance.
 
-where :math:`\varepsilon` is the convergence tolerance.
-#. If convergence is not achieved, successive substitution is used to update the set of K-values for
-the next iteration. The new K-values at iteration  :math:`t+1` are given by:
-
+#. If convergence is not achieved, successive substitution is used to update the set of K-values for the next iteration. The new K-values at iteration  :math:`t+1` are given by:
 .. math::
     K_i^{(t+1)} = K_i^{(t)} \frac{\phi_{iL}}{\phi_{iV}}
 
