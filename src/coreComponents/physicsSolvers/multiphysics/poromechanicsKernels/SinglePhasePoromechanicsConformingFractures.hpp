@@ -29,9 +29,6 @@ namespace geos
 namespace singlePhasePoromechanicsConformingFracturesKernels
 {
 
-using namespace fluxKernelsHelper;
-using namespace constitutive;
-
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
@@ -51,7 +48,7 @@ public:
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
                                                                   fields::permeability::dPerm_dDispJump >;
 
   using AbstractBase::m_dt;
@@ -193,21 +190,21 @@ public:
         localIndex const subRegionIndex[2] = {m_sesri[iconn][k[0]], m_sesri[iconn][k[1]]};
         localIndex const elementIndex[2]   = {m_sei[iconn][k[0]], m_sei[iconn][k[1]]};
 
-        computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
-                                trans,
-                                dTrans,
-                                m_pres,
-                                m_gravCoef,
-                                m_dens,
-                                m_dDens_dPres,
-                                m_mob,
-                                m_dMob_dPres,
-                                alpha,
-                                mobility,
-                                potGrad,
-                                fluxVal,
-                                dFlux_dP,
-                                dFlux_dTrans );
+        fluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+                                                   trans,
+                                                   dTrans,
+                                                   m_pres,
+                                                   m_gravCoef,
+                                                   m_dens,
+                                                   m_dDens_dPres,
+                                                   m_mob,
+                                                   m_dMob_dPres,
+                                                   alpha,
+                                                   mobility,
+                                                   potGrad,
+                                                   fluxVal,
+                                                   dFlux_dP,
+                                                   dFlux_dTrans );
 
         // populate local flux vector and derivatives
         stack.localFlux[k[0]* numDof] += m_dt * fluxVal;
