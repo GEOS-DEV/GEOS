@@ -25,7 +25,7 @@ A Python script for post-processing the simulation results is provided:
 
 .. code-block:: console
 
-  /src/coreComponents/physicsSolvers/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
+  src/coreComponents/physicsSolvers/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
 
 
 ------------------------------------------------------------------

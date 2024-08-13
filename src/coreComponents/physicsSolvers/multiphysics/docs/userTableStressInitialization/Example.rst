@@ -63,7 +63,7 @@ A Python script to generate these files is provided:
 
 .. code-block:: console
 
-  src/docs/sphinx/basicExamples/initialization/genetrateTable.py
+  src/coreComponents/physicsSolvers/multiphysics/docs/userTableStressInitialization/genetrateTable.py
 
 In addition to generating the files listed above, the script prints out the corresponding fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags respectively, as shown below:
 
