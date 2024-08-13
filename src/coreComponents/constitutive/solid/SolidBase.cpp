@@ -37,7 +37,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
   registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Current Material Stress" ).
     setDimLabels( 2, voightLabels );
