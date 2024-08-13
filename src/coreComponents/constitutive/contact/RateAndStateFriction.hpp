@@ -36,16 +36,10 @@ namespace constitutive
 class RateAndStateFrictionUpdates : public FrictionBaseUpdates
 {
 public:
-  RateAndStateFrictionUpdates( real64 const & displacementJumpThreshold,
-                          real64 const & shearStiffness,
-                          real64 const & cohesion,
-                          real64 const & frictionCoefficient,
-                          arrayView2d< real64 > const & elasticSlip )
+  RateAndStateFrictionUpdates( real64 const displacementJumpThreshold,
+                               arrayView1d< real64 > const frictionCoefficient )
     : FrictionBaseUpdates( displacementJumpThreshold ),
-    m_shearStiffness( shearStiffness ),
-    m_cohesion( cohesion ),
-    m_frictionCoefficient( frictionCoefficient ),
-    m_elasticSlip( elasticSlip )
+    m_frictionCoefficient( frictionCoefficient )
   {}
 
   /// Default copy constructor
@@ -63,26 +57,6 @@ public:
   /// Deleted move assignment operator
   RateAndStateFrictionUpdates & operator=( RateAndStateFrictionUpdates && ) =  delete;
 
-  /**
-   * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
-   * @param[in] normalTraction the normal traction
-   * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
-   * @return the limit tangential traction norm
-   */
-  GEOS_HOST_DEVICE
-  inline
-  virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
-
-  GEOS_HOST_DEVICE
-  inline
-  virtual void computeShearTraction( localIndex const k,
-                                     arraySlice1d< real64 const > const & oldDispJump,
-                                     arraySlice1d< real64 const > const & dispJump,
-                                     integer const & fractureState,
-                                     arraySlice1d< real64 > const & tractionVector,
-                                     arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
-
   GEOS_HOST_DEVICE
   inline
   virtual void updateFractureState( localIndex const k,
@@ -91,8 +65,17 @@ public:
                                     integer & fractureState ) const override final;
 
 private:
-  /// The friction coefficient for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionCoefficient;
+  /// The friction coefficient 
+  arrayView1d< real64 > m_frictionCoefficient;
+
+  /// Rate and State coefficient a  
+  arrayView1d< real64 const > m_a;
+  
+  /// Rate and State coefficient b 
+  arrayView1d< real64 const > m_b;
+  
+  /// Rate and State reference velocity
+  arrayView1d< real64 const > m_V0;
 };
 
 
@@ -169,32 +152,11 @@ private:
 
 };
 
-
-GEOS_HOST_DEVICE
-real64 RateAndStateFrictionUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                                        real64 & dLimitTangentialTractionNorm_dTraction ) const
-{
-  dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient;
-  return ( m_cohesion - normalTraction * m_frictionCoefficient );
-}
-
-
-GEOS_HOST_DEVICE
-inline void RateAndStateFrictionUpdates::computeShearTraction( localIndex const k,
-                                                          arraySlice1d< real64 const > const & oldDispJump,
-                                                          arraySlice1d< real64 const > const & dispJump,
-                                                          integer const & fractureState,
-                                                          arraySlice1d< real64 > const & tractionVector,
-                                                          arraySlice2d< real64 > const & dTractionVector_dJump ) const
-{
-  
-}
-
 GEOS_HOST_DEVICE
 inline void RateAndStateFrictionUpdates::updateFractureState( localIndex const k,
-                                                         arraySlice1d< real64 const > const & dispJump,
-                                                         arraySlice1d< real64 const > const & tractionVector,
-                                                         integer & fractureState ) const
+                                                              arraySlice1d< real64 const > const & dispJump,
+                                                              arraySlice1d< real64 const > const & tractionVector,
+                                                              integer & fractureState ) const
 {
   using namespace fields::contact;
 
