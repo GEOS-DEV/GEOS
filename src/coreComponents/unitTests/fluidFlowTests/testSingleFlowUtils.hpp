@@ -33,8 +33,6 @@ namespace geos
 namespace testing
 {
 
-using namespace geos::constitutive;
-
 void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             arrayView1d< real64 const > const & residualOrig,
                             globalIndex const dofIndex,
