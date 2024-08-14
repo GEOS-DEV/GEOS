@@ -259,8 +259,8 @@ CO2Solubility::CO2Solubility( string const & name,
 
   if( printTable )
   {
-    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
-    m_WaterVapourisationTable->print( m_WaterVapourisationTable->getName() );
+    // m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
+    // m_WaterVapourisationTable->print( m_WaterVapourisationTable->getName() );
   }
 }
 

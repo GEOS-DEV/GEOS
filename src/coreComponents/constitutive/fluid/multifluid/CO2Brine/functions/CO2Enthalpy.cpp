@@ -266,8 +266,8 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
-  if( printTable )
-    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
+  // if( printTable )
+  //   m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
 }
 
 

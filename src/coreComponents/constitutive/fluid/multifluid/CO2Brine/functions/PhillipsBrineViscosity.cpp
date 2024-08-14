@@ -43,8 +43,8 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
                    componentMolarWeight )
 {
   m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
-  if( printTable )
-    m_waterViscosityTable->print( m_waterViscosityTable->getName() );
+  // if( printTable )
+  //   m_waterViscosityTable->print( m_waterViscosityTable->getName() );
   makeCoefficients( inputPara );
 }
 
