@@ -27,7 +27,7 @@ if( ENABLE_MATHPRESSO )
 endif()
 
 
-set( dependencyList ${parallelDeps} codingUtilities dataRepository )
+set( dependencyList ${parallelDeps} dataRepository )
 
 if( ENABLE_MATHPRESSO )
    list( APPEND dependencyList mathpresso )

@@ -51,7 +51,7 @@ if( GEOS_ENABLE_WAVEPROPAGATION )
   add_subdirectory( wavePropagation )
 endif()
 
-set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
+set( dependencyList ${parallelDeps} discretizationMethods events )
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
   python/PySolver.hpp

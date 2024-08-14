@@ -26,7 +26,7 @@ set( fieldSpecification_sources
      PerfectlyMatchedLayer.cpp
    )
 
-set( dependencyList ${parallelDeps} functions linearAlgebra )
+set( dependencyList ${parallelDeps} linearAlgebra )
 
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}
