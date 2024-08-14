@@ -371,7 +371,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     // Get the finite volume method used to compute the stabilization
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
+    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
     SurfaceElementRegion const & fractureRegion =
       elemManager.getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() );
@@ -405,7 +405,9 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
           for( localIndex kf = 0; kf < 2; ++kf )
           {
             // Set row DOF index
-            localIndex const rowIndex = presDofNumber[sei[iconn][kf]] - rankOffset;
+            // Note that the 1-kf index is intentional, as this is coupling the pressure of one face cell
+            // to the nodes of the adjacent cell
+            localIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
 
             if( rowIndex > 0 && rowIndex < pattern.numRows() )
             {
