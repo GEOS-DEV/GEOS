@@ -522,7 +522,7 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
 }
 
 
-// The assembleAccumulationTerm below is Added by Ammar.
+// This part of the code "assembleAccumulationTerm" is added by Ammar along with the comments.
 
 void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domain,
                                                          DofManager const & dofManager,
@@ -531,8 +531,6 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 {
   GEOS_MARK_FUNCTION;
 
- // I need to pass this: ObjectManagerBase & dataGroup
- // GEOS_UNUSED_VAR( domain, dofManager, localMatrix, localRhs );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -545,31 +543,35 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
 
+    // The line below needs to be used once we have a fluid model
     //  MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-    //arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
-    integer const m_numofPhases = 2;
-    globalIndex const m_rankOffset = dofManager.rankOffset();
-    arrayView1d< globalIndex const > const m_dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const m_elemGhostRank= subRegion.ghostRank();
-    arrayView1d< real64 const > const m_volume = subRegion.getElementVolume();
-    arrayView2d< real64 const > const m_porosity = solid.getPorosity();
-    arrayView2d< real64 const > const m_dPoro_dPres = solid.getDporosity_dPressure();
-    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseVolFrac= subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
-    arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > const m_dPhaseVolFrac = subRegion.template getField< fields::immiscibleMultiphaseFlow::dPhaseVolumeFraction >();
+    arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+    integer const numofPhases = 2;
+    globalIndex const rankOffset = dofManager.rankOffset();
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const elemGhostRank= subRegion.ghostRank();
+    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+    arrayView2d< real64 const > const porosity = solid.getPorosity();
+    arrayView2d< real64 const > const dPoro_dPres = solid.getDporosity_dPressure();
+    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac= subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+    // The two lines below need to be used once we have a fluid model
     //arrayView3d< real64 const, immiscibleFlow::USD_PHASE > m_phaseDens = fluid.phaseDensity();
     //arrayView4d< real64 const, immiscibleFlow::USD_PHASE_DS > m_dPhaseDens = fluid.dPhaseDensity();
-    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseMass_n = subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();
-    CRSMatrixView< real64, globalIndex const > m_localMatrix_2 = localMatrix;
-    arrayView1d< real64 > m_localRhs = localRhs;
+    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > phaseDens = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseDensity>();
+    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > dPhaseDens = subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseDensity>();
+    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const PhaseMass_n = subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();
+
+    // The line below is to be used if we want to use the total mass flux formulation
     //BitFlags< ElementBasedAssemblyKernelFlags > m_kernelFlags = kernelFlags;
     GEOS_MARK_FUNCTION;
 
     integer const numElems = subRegion.size();
-    forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( 
+      numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      if( m_elemGhostRank( ei ) >= 0 )
+      if( elemGhostRank( ei ) >= 0 )
       {
         return;
       }
@@ -579,58 +581,59 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       real64 localResidual[2]{};
       real64 localJacobian[2][2]{};
 
-   real64 const poreVolume = m_volume[ei] * m_porosity[ei][0];
-   real64 const dPoreVolume_dPres = m_volume[ei] * m_dPoro_dPres[ei][0];
+   real64 const poreVolume = volume[ei] * porosity[ei][0];
+   real64 const dPoreVolume_dPres = volume[ei] * dPoro_dPres[ei][0];
 
-   localIndex localRow = m_dofNumber[ei] - m_rankOffset;
+   localIndex localRow = dofNumber[ei] - rankOffset;
     
-    for( integer idof = 0; idof < m_numDofPerCell; ++idof )
+    for( integer idof = 0; idof < 2; ++idof )
     {
-      dofIndices[idof] = m_dofNumber[ei] + idof;
+      dofIndices[idof] = dofNumber[ei] + idof;
     }
 
       // compute accumulation
 
 
-   for( integer ip = 0; ip < m_numofPhases; ++ip )
+   for( integer ip = 0; ip < numofPhases; ++ip )
       {
 
-        real64 const dummyPressure = 1.0e6;
+        // The few lines of code below are to be used if we want to use free functions for the phase density (to test the derivatives)
+       // real64 const pressure = pres[ei];
 
-        real64 m_phaseDens = computeDensityV ( dummyPressure );
-        real64 dPhaseDens = computedDensitydPV ( dummyPressure );
+       // real64 phaseDens = computeDensityV ( pressure );
+       // real64 dPhaseDens = computedDensitydPV ( pressure );
 
-        if( ip == 1)
-        {
-          m_phaseDens = computeDensityL ( dummyPressure );
-          dPhaseDens = computedDensitydPL ( dummyPressure );
-        }
+       // if( ip == 1)
+       // {
+         // phaseDens = computeDensityL ( pressure );
+         // dPhaseDens = computedDensitydPL ( pressure );
+        //}
 
-        real64 const phaseMass = poreVolume * m_phaseVolFrac[ei][ip] * m_phaseDens;
-        real64 const phaseMass_n = m_phaseMass_n[ei][ip];
+        real64 const phaseMass = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][ip];
+        real64 const phaseMass_n = PhaseMass_n[ei][ip];
 
         localResidual[ip] += phaseMass - phaseMass_n;
 
-        real64 const dPhaseMass_dP =  dPoreVolume_dPres * m_phaseVolFrac[ei][ip] * m_phaseDens
-                                       + poreVolume * m_phaseVolFrac[ei][ip] * dPhaseDens;
+        real64 const dPhaseMass_dP =  dPoreVolume_dPres * phaseVolFrac[ei][ip] * phaseDens[ei][ip]
+                                       + poreVolume * phaseVolFrac[ei][ip] * dPhaseDens[ei][ip];
         localJacobian[ip][0] += dPhaseMass_dP;
 
-        real64 const dPhaseMass_dS = poreVolume * m_phaseDens;
-        // Ammar:- not quite clear on how to fill jacobian for dRdS??
-        localJacobian[ip][ip + 1] += dPhaseMass_dS;
+        real64 const dPhaseMass_dS = poreVolume * phaseDens[ei][ip];
+    
+        localJacobian[ip][1] += dPhaseMass_dS;
       }
 
       // complete
       
-      integer const numRows = m_numofPhases + 1;
+      integer const numRows = numofPhases + 1;
 
     for( integer i = 0; i < numRows; ++i )
     {
-      m_localRhs[localRow + i] += localResidual[i];
-      m_localMatrix_2.addToRow< serialAtomic >( localRow + i,
+      localRhs[localRow + i] += localResidual[i];
+      localMatrix.addToRow< serialAtomic >( localRow + i,
                                               dofIndices,
                                               localJacobian[i],
-                                              m_numDofPerCell );
+                                              2);
     }
 
     } );
