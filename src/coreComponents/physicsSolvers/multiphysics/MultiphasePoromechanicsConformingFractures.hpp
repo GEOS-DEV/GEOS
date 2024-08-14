@@ -19,11 +19,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/MultihasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "dataRepository/Group.hpp"
 
 namespace geos
 {
@@ -44,15 +41,15 @@ public:
   static string coupledSolverAttributePrefix() { return "poromechanicsConformingFractures"; }
 
   /**
-   * @brief main constructor for SinglePhasePoromechanicsConformingFractures objects
-   * @param name the name of this instantiation of SinglePhasePoromechanicsConformingFractures in the repository
-   * @param parent the parent group of this instantiation of SinglePhasePoromechanicsConformingFractures
+   * @brief main constructor for MultiphasePoromechanicsConformingFractures objects
+   * @param name the name of this instantiation of MultiphasePoromechanicsConformingFractures in the repository
+   * @param parent the parent group of this instantiation of MultiphasePoromechanicsConformingFractures
    */
-  SinglePhasePoromechanicsConformingFractures( const string & name,
+  MultiphasePoromechanicsConformingFractures( const string & name,
                                                dataRepository::Group * const parent );
 
   /// Destructor for the class
-  ~SinglePhasePoromechanicsConformingFractures() override {}
+  ~MultiphasePoromechanicsConformingFractures() override {}
 
   /**
    * @brief name of the node manager in the object catalog
@@ -106,6 +103,9 @@ public:
 
 private:
 
+  struct viewKeyStruct : public Base::viewKeyStruct
+  {};
+  
   static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
 
   void assembleElementBasedContributions( real64 const time_n,
@@ -190,9 +190,10 @@ private:
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
-  string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
+  string const m_pressureKey = CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); // TODO
+
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_ */

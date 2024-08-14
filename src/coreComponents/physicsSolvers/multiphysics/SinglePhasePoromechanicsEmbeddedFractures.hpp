@@ -58,7 +58,7 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual void
-  setupDofs( DomainPartition const & domain,
+  setupCoupling( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void

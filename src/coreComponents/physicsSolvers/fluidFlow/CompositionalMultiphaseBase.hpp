@@ -96,6 +96,24 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
+  /**
+   * @brief assembles the accumulation terms for all cells of a spcefici subRegion.
+   * @tparam SUBREGION_TYPE the subRegion type
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param subRegion the subRegion
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   *
+   */
+  template< typename SUBREGION_TYPE >
+  void accumulationAssemblyLaunch( DofManager const & dofManager,
+                                   SUBREGION_TYPE const & subRegion,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
+{
+  // TODO
+}
+
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
