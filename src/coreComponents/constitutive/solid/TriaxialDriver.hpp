@@ -32,8 +32,6 @@
 namespace geos
 {
 
-using namespace constitutive;
-
 /**
  * @class TriaxialDriver
  *
