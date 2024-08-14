@@ -8,13 +8,13 @@ These notes should be in reverse-chronological order, and use the following time
 
 
 
-PR 3249 (2024-08-14)
-====================
+PR #3249 (2024-08-14)
+======================
 Two initialization options for poromechanical models. Rebaseline the corresponding cases. 
 
 
-PR 3278 (2024-08-12)
-====================
+PR #3278 (2024-08-12)
+======================
 Renamed GEOSX to GEOS in enternal mesh import, so rebaseline to change these names is the baselines. 
 
 
