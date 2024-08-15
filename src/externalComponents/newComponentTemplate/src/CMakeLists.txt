@@ -9,7 +9,7 @@ set( componentSources NewComponent.cpp )
 unset( dependencyList )
 
 # Specify dependencies
-if ( GEOS_BUILD_SHARED_LIBS )
+if ( GEOS_BUILD_SHARED_CORE_LIB )
   list( APPEND dependencyList geosx_core)
 else()
   list( APPEND dependencyList ${geosx_core_libs} )

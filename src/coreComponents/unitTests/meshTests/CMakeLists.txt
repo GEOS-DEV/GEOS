@@ -21,7 +21,7 @@ endif()
 
 set( dependencyList ${parallelDeps} gtest )
 
-if( GEOS_BUILD_SHARED_LIBS )
+if( GEOS_BUILD_SHARED_CORE_LIB )
   list( APPEND dependencyList geosx_core HDF5::HDF5 )
 else()
   list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )

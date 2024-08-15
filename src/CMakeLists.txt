@@ -135,7 +135,7 @@ if( ENABLE_HIP )
   list( APPEND extraComponentsLinkList blt::hip )
 endif()
 
-if ( GEOS_BUILD_SHARED_LIBS )
+if ( GEOS_BUILD_SHARED_CORE_LIB )
   list( APPEND extraComponentsLinkList geosx_core )
 else()
   list( APPEND extraComponentsLinkList ${geosx_core_libs} )

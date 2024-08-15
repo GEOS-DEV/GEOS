@@ -57,7 +57,7 @@ foreach( lib ${subdirs} )
 endforeach()
 
 # if we're building full static libs and not obj_libs
-if( NOT GEOS_BUILD_SHARED_LIBS )
+if( NOT GEOS_BUILD_SHARED_CORE_LIB )
   set( geosx_core_list "" )
   foreach( lib ${coreLibs} )
     list( APPEND geosx_core_list ${GEOS_LINK_PREPEND_FLAG} ${lib} ${GEOS_LINK_POSTPEND_FLAG} )
@@ -69,14 +69,14 @@ foreach( lib ${subdirs} )
   add_subdirectory( ${lib} )
 endforeach()
 
-if( GEOS_BUILD_SHARED_LIBS AND GEOS_BUILD_OBJ_LIBS )
+if( GEOS_BUILD_SHARED_CORE_LIB AND GEOS_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers HDF5::HDF5
                     SHARED TRUE )
 
-elseif( GEOS_BUILD_SHARED_LIBS AND NOT GEOS_BUILD_OBJ_LIBS )
+elseif( GEOS_BUILD_SHARED_CORE_LIB AND NOT GEOS_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with static coreComponents, executables link to geosx_core" )
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
@@ -84,7 +84,7 @@ elseif( GEOS_BUILD_SHARED_LIBS AND NOT GEOS_BUILD_OBJ_LIBS )
                                 LINK_PREPEND  ${GEOS_LINK_PREPEND_FLAG}
                                 LINK_POSTPEND ${GEOS_LINK_POSTPEND_FLAG} )
 
-elseif( NOT GEOS_BUILD_SHARED_LIBS AND GEOS_BUILD_OBJ_LIBS )
+elseif( NOT GEOS_BUILD_SHARED_CORE_LIB AND GEOS_BUILD_OBJ_LIBS )
   message( "Building object coreComponents, executables link to coreComponents" )
 else()
   message( "Building static coreComponents, executables link to coreComponents" )
