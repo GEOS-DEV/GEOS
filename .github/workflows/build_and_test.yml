@@ -5,6 +5,10 @@ on:
       BUILD_AND_TEST_CLI_ARGS:
         required: false
         type: string
+      BUILD_SHARED_LIBS:
+        required: false
+        type: boolean
+        default: false
       BUILD_TYPE:
         required: false
         type: string
@@ -184,6 +188,7 @@ jobs:
         docker_args+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
+        docker_args+=(-e GEOS_BUILD_SHARED_LIBS=${{ inputs.BUILD_SHARED_LIBS }})
 
         docker_args+=(--cap-add=SYS_PTRACE --rm)
 
