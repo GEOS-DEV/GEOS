@@ -110,9 +110,9 @@ public:
                                    SUBREGION_TYPE const & subRegion,
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
-{
-  // TODO
-}
+  {
+    // TODO
+  }
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;

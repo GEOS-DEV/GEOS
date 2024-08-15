@@ -59,7 +59,7 @@ public:
 
   virtual void
   setupCoupling( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+                 DofManager & dofManager ) const override;
 
   virtual void
   assembleSystem( real64 const time,

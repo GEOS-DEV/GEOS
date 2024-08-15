@@ -46,7 +46,7 @@ public:
    * @param parent the parent group of this instantiation of MultiphasePoromechanicsConformingFractures
    */
   MultiphasePoromechanicsConformingFractures( const string & name,
-                                               dataRepository::Group * const parent );
+                                              dataRepository::Group * const parent );
 
   /// Destructor for the class
   ~MultiphasePoromechanicsConformingFractures() override {}
@@ -105,7 +105,7 @@ private:
 
   struct viewKeyStruct : public Base::viewKeyStruct
   {};
-  
+
   static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
 
   void assembleElementBasedContributions( real64 const time_n,

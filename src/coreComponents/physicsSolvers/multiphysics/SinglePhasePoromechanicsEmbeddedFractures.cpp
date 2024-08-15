@@ -86,7 +86,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsP
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::setupCoupling( DomainPartition const & domain,
-                                                           DofManager & dofManager ) const
+                                                               DofManager & dofManager ) const
 {
   Base::setupCoupling( domain, dofManager );
 

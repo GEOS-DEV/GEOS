@@ -170,24 +170,24 @@ public:
    * @param localRhs the system right-hand side vector
    * @param dR_dAper
    */
-virtual void assembleHydrofracFluxTerms( real64 const time_n,
-                                                       real64 const dt,
-                                                       DomainPartition const & domain,
-                                                       DofManager const & dofManager,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       arrayView1d< real64 > const & localRhs,
-                                                       CRSMatrixView< real64, localIndex const > const & dR_dAper )
-{
-  GEOS_UNUSED_VAR ( time_n );
-  GEOS_UNUSED_VAR ( dt );
-  GEOS_UNUSED_VAR ( domain );
-  GEOS_UNUSED_VAR ( dofManager );
-  GEOS_UNUSED_VAR ( localMatrix );
-  GEOS_UNUSED_VAR ( localRhs );
-  GEOS_UNUSED_VAR ( dR_dAper );
+  virtual void assembleHydrofracFluxTerms( real64 const time_n,
+                                           real64 const dt,
+                                           DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs,
+                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
+  {
+    GEOS_UNUSED_VAR ( time_n );
+    GEOS_UNUSED_VAR ( dt );
+    GEOS_UNUSED_VAR ( domain );
+    GEOS_UNUSED_VAR ( dofManager );
+    GEOS_UNUSED_VAR ( localMatrix );
+    GEOS_UNUSED_VAR ( localRhs );
+    GEOS_UNUSED_VAR ( dR_dAper );
 
-  GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
-}
+    GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
+  }
 
 protected:
 

@@ -40,6 +40,7 @@
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/DissipationCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp"
 
 namespace geos
 {
@@ -1103,6 +1104,108 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     } );
   } );
 
+}
+
+void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
+                                                             real64 const dt,
+                                                             DomainPartition const & domain,
+                                                             DofManager const & dofManager,
+                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             arrayView1d< real64 > const & localRhs,
+                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper )
+{
+  GEOS_MARK_FUNCTION;
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & )
+  {
+    fluxApprox.forStencils< CellElementStencilTPFA, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
+      {
+        thermalCompositionalMultiphaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     m_hasCapPressure,
+                                                     m_useTotalMassEquation,
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
+      }
+      else
+      {
+        isothermalCompositionalMultiphaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     m_hasCapPressure,
+                                                     m_useTotalMassEquation,
+                                                     fluxApprox.upwindingParams(),
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
+      }
+    } );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
+      {
+/*
+        thermalSinglePhasePoromechanicsConformingFracturesKernels::
+          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                          elemDofKey,
+                                                                                          this->getName(),
+                                                                                          mesh.getElemManager(),
+                                                                                          stencilWrapper,
+                                                                                          dt,
+                                                                                          localMatrix.toViewConstSizes(),
+                                                                                          localRhs.toView(),
+                                                                                          dR_dAper );
+ */
+      }
+      else
+      {
+        multiphasePoromechanicsConformingFracturesKernels::
+          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                                                     m_numPhases,
+                                                                                     dofManager.rankOffset(),
+                                                                                     elemDofKey,
+                                                                                     m_hasCapPressure,
+                                                                                     m_useTotalMassEquation,
+                                                                                     fluxApprox.upwindingParams(),
+                                                                                     getName(),
+                                                                                     mesh.getElemManager(),
+                                                                                     stencilWrapper,
+                                                                                     dt,
+                                                                                     localMatrix.toViewConstSizes(),
+                                                                                     localRhs.toView(),
+                                                                                     dR_dAper );
+      }
+    } );
+  } );
 }
 
 //START_SPHINX_INCLUDE_01

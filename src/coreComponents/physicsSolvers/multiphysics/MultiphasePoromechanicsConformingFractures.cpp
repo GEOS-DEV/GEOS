@@ -35,7 +35,7 @@ using namespace fields;
 
 template< typename FLOW_SOLVER >
 MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::MultiphasePoromechanicsConformingFractures( const string & name,
-                                                                                                         Group * const parent )
+                                                                                                       Group * const parent )
   : Base( name, parent )
 {
   LinearSolverParameters & params = this->m_linearSolverParameters.get();
@@ -48,7 +48,7 @@ MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::MultiphasePoromechani
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( DomainPartition const & domain,
-                                                                                DofManager & dofManager ) const
+                                                                               DofManager & dofManager ) const
 {
   /// We need to add 2 coupling terms:
   // 1. Poromechanical coupling in the bulk
@@ -62,11 +62,11 @@ void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( D
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
-                                                                              DofManager & dofManager,
-                                                                              CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                              ParallelVector & rhs,
-                                                                              ParallelVector & solution,
-                                                                              bool const setSparsity )
+                                                                             DofManager & dofManager,
+                                                                             CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                             ParallelVector & rhs,
+                                                                             ParallelVector & solution,
+                                                                             bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
 
@@ -133,11 +133,11 @@ void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( Dom
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem( real64 const time_n,
-                                                                                 real64 const dt,
-                                                                                 DomainPartition & domain,
-                                                                                 DofManager const & dofManager,
-                                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                 arrayView1d< real64 > const & localRhs )
+                                                                                real64 const dt,
+                                                                                DomainPartition & domain,
+                                                                                DofManager const & dofManager,
+                                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                arrayView1d< real64 > const & localRhs )
 {
 
   GEOS_MARK_FUNCTION;
@@ -171,11 +171,11 @@ void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem( 
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleElementBasedContributions( real64 const time_n,
-                                                                                                    real64 const dt,
-                                                                                                    DomainPartition & domain,
-                                                                                                    DofManager const & dofManager,
-                                                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                                    arrayView1d< real64 > const & localRhs )
+                                                                                                   real64 const dt,
+                                                                                                   DomainPartition & domain,
+                                                                                                   DofManager const & dofManager,
+                                                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n, dt );
 
@@ -200,11 +200,11 @@ void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleElementB
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleCouplingTerms( real64 const time_n,
-                                                                                        real64 const dt,
-                                                                                        DomainPartition const & domain,
-                                                                                        DofManager const & dofManager,
-                                                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                        arrayView1d< real64 > const & localRhs )
+                                                                                       real64 const dt,
+                                                                                       DomainPartition const & domain,
+                                                                                       DofManager const & dofManager,
+                                                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                       arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n, dt );
   // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
