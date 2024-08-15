@@ -26,6 +26,7 @@ blt_add_library( NAME       codingUtilities
                  HEADERS    ${codingUtilities_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 # Avoid compiling with nvcc which sometimes crashes on fast_float

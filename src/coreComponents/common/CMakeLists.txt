@@ -109,6 +109,7 @@ blt_add_library( NAME       common
                  HEADERS    ${common_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )

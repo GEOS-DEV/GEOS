@@ -144,7 +144,7 @@ endif()
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
-                               ${externalComponentsLinkList} fmt::fmt-header-only HDF5::HDF5 )
+                               ${externalComponentsLinkList}  )
 
 # blt_print_target_properties(TARGET               geosx
 #                             CHILDREN             TRUE

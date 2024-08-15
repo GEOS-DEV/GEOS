@@ -154,6 +154,7 @@ blt_add_library( NAME       linearAlgebra
                  HEADERS    ${linearAlgebra_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )

@@ -24,13 +24,14 @@ set( events_sources
      tasks/TasksManager.cpp
    )
 
-set( dependencyList ${parallelDeps} fileIO )
+set( dependencyList ${parallelDeps} mesh )
 
 blt_add_library( NAME       events
                  SOURCES    ${events_sources}
                  HEADERS    ${events_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( events PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

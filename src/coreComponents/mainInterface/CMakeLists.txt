@@ -25,6 +25,7 @@ blt_add_library( NAME       mainInterface
                  HEADERS    ${mainInterface_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 add_dependencies( mainInterface generate_version )

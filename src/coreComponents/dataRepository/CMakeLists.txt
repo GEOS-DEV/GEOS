@@ -55,7 +55,9 @@ blt_add_library( NAME       dataRepository
                  SOURCES    ${dataRepository_sources}
                  HEADERS    ${dataRepository_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOS_BUILD_OBJ_LIBS} )
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
+               )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

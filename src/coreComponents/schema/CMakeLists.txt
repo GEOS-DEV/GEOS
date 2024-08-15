@@ -19,6 +19,7 @@ blt_add_library( NAME       schema
                  HEADERS    ${schema_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 
