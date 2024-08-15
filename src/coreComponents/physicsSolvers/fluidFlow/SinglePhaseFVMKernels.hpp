@@ -352,7 +352,7 @@ public:
         real64 alpha = 0.0;
         real64 mobility = 0.0;
         real64 potGrad = 0.0;
-        real64 trans[2] = {stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1]};
+        real64 trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
         real64 dTrans[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
         real64 dFlux_dP[2] = {0.0, 0.0};
         localIndex const regionIndex[2]    = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
