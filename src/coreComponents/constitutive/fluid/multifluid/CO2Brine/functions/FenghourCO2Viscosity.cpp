@@ -148,6 +148,7 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                      componentMolarWeight )
 {
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  GEOS_UNUSED_VAR( printTable );
 //  if( printTable )
 //    m_CO2ViscosityTable->print( m_CO2ViscosityTable->getName() );
 }

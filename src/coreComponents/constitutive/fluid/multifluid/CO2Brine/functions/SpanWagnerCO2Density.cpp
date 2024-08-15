@@ -288,6 +288,7 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  GEOS_UNUSED_VAR( printTable );
   // if( printTable )
   //   m_CO2DensityTable->print( m_CO2DensityTable->getName() );
 }

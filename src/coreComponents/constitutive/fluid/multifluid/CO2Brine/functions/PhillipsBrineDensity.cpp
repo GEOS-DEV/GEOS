@@ -189,6 +189,7 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  GEOS_UNUSED_VAR( printTable );
   // if( printTable )
   //   m_brineDensityTable->print( m_brineDensityTable->getName() );
 }

@@ -257,11 +257,12 @@ CO2Solubility::CO2Solubility( string const & name,
 
   std::tie( m_CO2SolubilityTable, m_WaterVapourisationTable ) = makeSolubilityTables( m_modelName, inputParams, solubilityModel );
 
-  if( printTable )
-  {
+  GEOS_UNUSED_VAR( printTable );
+  // if( printTable )
+  // {
     // m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
     // m_WaterVapourisationTable->print( m_WaterVapourisationTable->getName() );
-  }
+  // }
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,

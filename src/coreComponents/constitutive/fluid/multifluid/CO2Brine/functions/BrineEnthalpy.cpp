@@ -205,11 +205,12 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
 
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
-  if( printTable )
-  {
+  GEOS_UNUSED_VAR( printTable );
+  // if( printTable )
+  // {
     // m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
     // m_brineEnthalpyTable->print( m_brineEnthalpyTable->getName() );
-  }
+  // }
 }
 
 void BrineEnthalpy::checkTablesParameters( real64 const pressure,
