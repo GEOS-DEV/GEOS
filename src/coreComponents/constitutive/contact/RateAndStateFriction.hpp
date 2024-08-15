@@ -33,50 +33,6 @@ namespace constitutive
  *
  * This class is used for in-kernel contact relation updates
  */
-class RateAndStateFrictionUpdates : public FrictionBaseUpdates
-{
-public:
-  RateAndStateFrictionUpdates( real64 const displacementJumpThreshold,
-                               arrayView1d< real64 > const frictionCoefficient )
-    : FrictionBaseUpdates( displacementJumpThreshold ),
-    m_frictionCoefficient( frictionCoefficient )
-  {}
-
-  /// Default copy constructor
-  RateAndStateFrictionUpdates( RateAndStateFrictionUpdates const & ) = default;
-
-  /// Default move constructor
-  RateAndStateFrictionUpdates( RateAndStateFrictionUpdates && ) = default;
-
-  /// Deleted default constructor
-  RateAndStateFrictionUpdates() = delete;
-
-  /// Deleted copy assignment operator
-  RateAndStateFrictionUpdates & operator=( RateAndStateFrictionUpdates const & ) = delete;
-
-  /// Deleted move assignment operator
-  RateAndStateFrictionUpdates & operator=( RateAndStateFrictionUpdates && ) =  delete;
-
-  GEOS_HOST_DEVICE
-  inline
-  virtual void updateFractureState( localIndex const k,
-                                    arraySlice1d< real64 const > const & dispJump,
-                                    arraySlice1d< real64 const > const & tractionVector,
-                                    integer & fractureState ) const override final;
-
-private:
-  /// The friction coefficient 
-  arrayView1d< real64 > m_frictionCoefficient;
-
-  /// Rate and State coefficient a  
-  arrayView1d< real64 const > m_a;
-  
-  /// Rate and State coefficient b 
-  arrayView1d< real64 const > m_b;
-  
-  /// Rate and State reference velocity
-  arrayView1d< real64 const > m_V0;
-};
 
 
 /**
@@ -116,8 +72,99 @@ public:
    */
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
-  /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = RateAndStateFrictionUpdates;
+  
+class KernelWrapper : public FrictionBaseUpdates
+{
+public:
+  KernelWrapper( real64 const displacementJumpThreshold,
+                               arrayView1d< real64 > const frictionCoefficient,
+                               arrayView1d< real64 > m_frictionCoefficient, 
+                               arrayView1d< real64 const > a, 
+                               arrayView1d< real64 const > b,
+                               arrayView1d< real64 const > Dc,
+                               arrayView1d< real64 const > V0 )
+    : FrictionBaseUpdates( displacementJumpThreshold ),
+    m_frictionCoefficient( frictionCoefficient )
+    m_a( a ),
+    m_b( b ),
+    m_Dc( Dc ),
+    m_V0( V0 )
+  {}
+
+  /// Default copy constructor
+  KernelWrapper( RateAndStateFrictionUpdates const & ) = default;
+
+  /// Default move constructor
+  KernelWrapper( RateAndStateFrictionUpdates && ) = default;
+
+  /// Deleted default constructor
+  KernelWrapper() = delete;
+
+  /// Deleted copy assignment operator
+  KernelWrapper & operator=( KernelWrapper const & ) = delete;
+
+  /// Deleted move assignment operator
+  KernelWrapper & operator=( KernelWrapper && ) =  delete;
+
+  GEOS_HOST_DEVICE
+  inline
+  virtual void updateFractureState( localIndex const k,
+                                    arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & tractionVector,
+                                    integer & fractureState ) const override final;
+
+GEOS_HOST_DEVICE
+inline std::tuple< real64, real64[2] > 
+computeShearTraction( real64 const normalTraction, 
+                      real64 const slipRate, 
+                      real64 const stateVariable ) const;
+
+GEOS_HOST_DEVICE
+inline real64 frictionCoefficient( localIndex const k, 
+                                   real64 const slipRate, 
+                                   real64 const stateVariable ) const;
+
+GEOS_HOST_DEVICE
+inline real64 dfrictionCoefficient_dSlipRate( localIndex const k, 
+                                              real64 const slipRate, 
+                                              real64 const stateVariable ) const;
+
+GEOS_HOST_DEVICE
+inline real64 dfrictionCoefficient_dStateVariable( localIndex const k, 
+                                                   real64 const slipRate, 
+                                                   real64 const stateVariable) const;                                                                                                              
+
+GEOS_HOST_DEVICE
+inline real64 dStateVariabledT( localIndex const k, 
+                                real64 const slipRate, 
+                                real64 const stateVariable) const;
+
+GEOS_HOST_DEVICE
+inline real64 dStateVariabledT_dStateVariable( localIndex const k, 
+                                               real64 const slipRate, 
+                                               real64 const stateVariable) const;
+
+GEOS_HOST_DEVICE
+inline real64 dStateVariabledT_dSlipRate( localIndex const k, 
+                                          real64 const slipRate, 
+                                          real64 const stateVariable) const;                        
+private:
+  /// The friction coefficient 
+  arrayView1d< real64 > m_frictionCoefficient;
+
+  /// Rate and State coefficient a  
+  arrayView1d< real64 const > m_a;
+  
+  /// Rate and State coefficient b 
+  arrayView1d< real64 const > m_b;
+
+   /// Rate and State characteristic length
+  arrayView1d< real64 const > m_Dc;
+  
+  /// Rate and State reference velocity
+  arrayView1d< real64 const > m_V0;
+};
+
 
   /**
    * @brief Create an update kernel wrapper.
@@ -137,6 +184,9 @@ private:
   
   /// Rate and State coefficient b 
   array1d< real64 > m_b;
+
+  /// Rate and State characteristic length
+  array1d< real64 > m_Dc;
   
   /// Rate and State reference velocity
   array1d< real64 > m_V0;
@@ -153,10 +203,10 @@ private:
 };
 
 GEOS_HOST_DEVICE
-inline void RateAndStateFrictionUpdates::updateFractureState( localIndex const k,
-                                                              arraySlice1d< real64 const > const & dispJump,
-                                                              arraySlice1d< real64 const > const & tractionVector,
-                                                              integer & fractureState ) const
+inline void RateAndStateFriction::KernelWrapper::updateFractureState( localIndex const k,
+                                                                      arraySlice1d< real64 const > const & dispJump,
+                                                                      arraySlice1d< real64 const > const & tractionVector,
+                                                                      integer & fractureState ) const
 {
   using namespace fields::contact;
 
@@ -167,6 +217,85 @@ inline void RateAndStateFrictionUpdates::updateFractureState( localIndex const k
   {
     fractureState = FractureState::Slip;
   }
+}
+
+GEOS_HOST_DEVICE
+inline std::tuple< real64, real64[2] > 
+RateAndStateFriction::KernelWrapper::computeShearTraction( real64 const normalTraction, 
+                                                           real64 const slipRate, 
+                                                           real64 const stateVariable ) const 
+{
+  real64 const shearTraction = 0.0;
+  real64 const dTauFriction = {0.0, 0.0}; 
+
+  return std::make_tuple( shearTraction, dTauFriction );
+}
+
+GEOS_HOST_DEVICE
+inline real64 RateAndStateFriction::KernelWrapper::frictionCoefficient( localIndex const k, 
+                                                                        real64 const slipRate, 
+                                                                        real64 const stateVariable ) const
+{
+  real64 const arg = ( slipRate / (2 * m_V0[k]) ) * LvArray::math::exp( stateVariable / m_a[k] );
+  real64 const frictionCoefficient = m_a[k] * LvArray::math::asinh( arg );
+  
+  m_frictionCoefficient[k] = frictionCoefficient;
+
+  return frictionCoefficient;
+}         
+
+GEOS_HOST_DEVICE
+inline real64 RateAndStateFriction::KernelWrapper::dfrictionCoefficient_dSlipRate( localIndex const k, 
+                                                                                   real64 const slipRate, 
+                                                                                   real64 const stateVariable ) const 
+{
+
+  real64 const inner_expression = ( slip_velocity / (2 * m_V0[k]) ) * LvArray::math::exp( theta / m_a[k] ) 
+
+  return (m_a[k] / LvArray::math::sqrt(1 + inner_expression**2)) * (1 / (2 * m_V0[k])) * LvArray::math::exp( theta / m_a[k] );
+}
+    
+GEOS_HOST_DEVICE
+inline real64 dfrictionCoefficient_dStateVariable( localIndex const k, 
+                                                   real64 const slipRate, 
+                                                   real64 const stateVariable) const
+{
+        
+  real64 const arg = (slipRate / (2 * m_V0[k])) * LvArray::math::exp(stateVariable / m_a[k]);      
+        
+  return (slipRate / (2 * m_V0[k])) * LvArray::math::exp(stateVariable / m_a[k]) / LvArray::math::sqrt(arg**2 + 1);
+}
+
+GEOS_HOST_DEVICE
+inline real64 RateAndStateFriction::KernelWrapper::dStateVariabledT( localIndex const k, 
+                                                                     real64 const slipRate, 
+                                                                     real64 const stateVariable) const
+{
+  real64 const mu = frictionCoefficient(k, slipRate, stateVariable);
+        
+  return -slipRate / m_Dc * (mu - m_mu0 + (m_b - m_a) * LvArray::math::log(slipRate / m_V0)) ;
+}
+
+GEOS_HOST_DEVICE
+inline real64 RateAndStateFriction::KernelWrapper::dStateVariabledT_dStateVariable( localIndex const k,
+                                                                                    real64 const slipRate, 
+                                                                                    real64 const stateVariable) const
+{
+  return -slipRate /m_Dc[k] * dfrictionCoefficient_dStateVariable( k, slipRate, stateVariable );
+}
+
+GEOS_HOST_DEVICE
+inline real64 RateAndStateFriction::KernelWrapper::dStateVariabledT_dSlipRate( localIndex const k,
+                                                                               real64 const slipRate, 
+                                                                               real64 const stateVariable ) const
+{
+  real64 const dfrictionCoefficient_dSlipRate = dfrictionCoefficient_dSlipRate(k, slipRate, stateVariable);
+        
+  real64 const part1 = - 1.0 / m_Dc[k] * (frictionCoefficient(slipRate, stateVariable) - m_mu0[k] + (m_b[k] - m_a[k]) * LvArray::math::log(slipRate / m_V0[k]))
+        
+  real64 const part2 = - slipRate / m_Dc[k] * (dfrictionCoefficient_dSlipRate + (m_b[k] - m_a[k]) / slipRate)
+        
+  return part1 + part2;
 }
 
 } /* namespace constitutive */

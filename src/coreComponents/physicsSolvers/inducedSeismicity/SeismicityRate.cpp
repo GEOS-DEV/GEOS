@@ -23,7 +23,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "SeismicityRateKernels.hpp"
+#include "kernels/SeismicityRateKernels.hpp"
 
 namespace geos
 {

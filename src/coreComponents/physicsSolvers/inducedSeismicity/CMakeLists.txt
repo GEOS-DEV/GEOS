@@ -3,7 +3,7 @@ set( physicsSolvers_headers
      ${physicsSolvers_headers}
      inducedSeismicity/inducedSeismicityFields.hpp
      inducedSeismicity/SeismicityRate.hpp
-     inducedSeismicity/SeismicityRateKernels.hpp 
+     inducedSeismicity/kernels/SeismicityRateKernels.hpp 
      PARENT_SCOPE )
 
 # Specify solver sources
