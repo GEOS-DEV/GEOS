@@ -371,7 +371,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     // Get the finite volume method used to compute the stabilization
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+    FluxApproximationBase const & fvDiscretization = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
     SurfaceElementRegion const & fractureRegion =
       elemManager.getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() );
@@ -390,7 +390,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
 
     ArrayOfArraysView< localIndex const > const & elemsToFaces = fractureSubRegion.faceList().toViewConst();
 
-    stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+    fvDiscretization.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
       forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
       {
