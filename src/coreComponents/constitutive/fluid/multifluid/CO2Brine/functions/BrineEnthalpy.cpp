@@ -208,8 +208,8 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   GEOS_UNUSED_VAR( printTable );
   // if( printTable )
   // {
-    // m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
-    // m_brineEnthalpyTable->print( m_brineEnthalpyTable->getName() );
+  // m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
+  // m_brineEnthalpyTable->print( m_brineEnthalpyTable->getName() );
   // }
 }
 

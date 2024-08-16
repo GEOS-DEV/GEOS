@@ -68,7 +68,7 @@ PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 postInputInitialization()
 {
   Group & problemManager = this->getGroupByPath( "/Problem" );
-  Group & physicsSolverManager = problemManager.getGroup("Solvers");
+  Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
                  GEOS_FMT( "{}: {} solver named {} not found",
@@ -81,7 +81,7 @@ postInputInitialization()
 
   if( !m_solidMechanicsStatisticsName.empty())
   {
-    TasksManager & tasksManager = problemManager.getGroup<TasksManager>("Tasks");
+    TasksManager & tasksManager = problemManager.getGroup< TasksManager >( "Tasks" );
 
     GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
                    GEOS_FMT( "{}: statistics task named {} not found",

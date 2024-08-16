@@ -59,7 +59,7 @@ SolidMechanicsStateReset::~SolidMechanicsStateReset()
 void SolidMechanicsStateReset::postInputInitialization()
 {
   Group & problemManager = this->getGroupByPath( "/Problem" );
-  Group & physicsSolverManager = problemManager.getGroup("Solvers");
+  Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "Task {}: physics solver named {} not found",

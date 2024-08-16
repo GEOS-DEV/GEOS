@@ -63,7 +63,7 @@ void StencilDataCollection::postInputInitialization()
   Group & problemManager = this->getGroupByPath( "/Problem" );
 
   { // find targeted solver
-    Group & physicsSolverManager = problemManager.getGroup("Solvers");
+    Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
     m_solver = physicsSolverManager.getGroupPointer< FlowSolverBase >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,

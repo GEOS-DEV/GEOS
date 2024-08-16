@@ -84,7 +84,7 @@ protected:
   void postInputInitialization() override
   {
     Group & problemManager = this->getGroupByPath( "/Problem" );
-    Group & physicsSolverManager = problemManager.getGroup("Solvers");
+    Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
