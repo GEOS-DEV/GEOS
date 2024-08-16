@@ -89,8 +89,6 @@ option( GEOS_INSTALL_SCHEMA "Enables schema generation and installation" ON )
 
 option( GEOS_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF )
 
-option( GEOS_BUILD_SHARED_CORE_LIB "Builds geosx_core as a shared library " ON )
-
 option( GEOS_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
 set( GEOS_PARALLEL_COMPILE_JOBS "" CACHE STRING "Maximum number of concurrent compilation jobs" )
@@ -160,18 +158,6 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOS_NINJA_FLAGS}" )
 endif()
 
-
-if( CMAKE_HOST_APPLE )
-   set(GEOS_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
-   set(GEOS_LINK_POSTPEND_FLAG "" CACHE STRING "")
-# elseif( ENABLE_CUDA )
-#     set( GEOS_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
-#     set( GEOS_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
-else()
-    set( GEOS_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" )
-    set( GEOS_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
-endif()
-
 set( GEOS_LOCALINDEX_TYPE "int" CACHE STRING "" )
 if( ENABLE_HYPRE_MIXINT )
   set( GEOS_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
@@ -218,9 +204,6 @@ message( "GEOS_GLOBALINDEX_TYPE_FLAG = ${GEOS_GLOBALINDEX_TYPE_FLAG}" )
 
 
 message( "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}" )
-message( "GEOS_LINK_PREPEND_FLAG=${GEOS_LINK_PREPEND_FLAG}" )
-message( "GEOS_LINK_POSTPEND_FLAG=${GEOS_LINK_POSTPEND_FLAG}" )
-
 
 set( GRAPHVIZ_EXTERNAL_LIBS TRUE )
 set( GRAPHVIZ_IGNORE_TARGETS "testingUtilities" )

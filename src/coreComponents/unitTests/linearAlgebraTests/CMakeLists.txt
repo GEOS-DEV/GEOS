@@ -8,11 +8,7 @@ set( nranks 2 )
 # Add gtest C++ based tests
 set( dependencyList ${parallelDeps} gtest )
 
-if ( GEOS_BUILD_SHARED_CORE_LIB )
-  list( APPEND dependencyList geosx_core HDF5::HDF5 )
-else()
-  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
-endif()
+list( APPEND dependencyList geosx_core )
 
 if (TARGET pugixml::pugixml)
   set( dependencyList ${dependencyList} pugixml::pugixml )

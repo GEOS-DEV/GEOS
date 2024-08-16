@@ -3,11 +3,7 @@ set( geosx_fileio_tests testHDFFile.cpp )
 
 set( dependencyList ${parallelDeps} gtest HDF5::HDF5 )
 
-if ( GEOS_BUILD_SHARED_CORE_LIB )
-  list( APPEND dependencyList geosx_core )
-else()
-  list( APPEND dependencyList ${geosx_core_libs} )
-endif()
+list( APPEND dependencyList geosx_core )
 
 # Add gtest C++ based tests
 foreach(test ${geosx_fileio_tests})

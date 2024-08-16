@@ -19,13 +19,7 @@ if( ENABLE_VTK )
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 endif()
 
-set( dependencyList ${parallelDeps} gtest )
-
-if( GEOS_BUILD_SHARED_CORE_LIB )
-  list( APPEND dependencyList geosx_core HDF5::HDF5 )
-else()
-  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
-endif()
+set( dependencyList ${parallelDeps} gtest geosx_core )
 
 if (TARGET pugixml::pugixml)
   list( APPEND dependencyList pugixml::pugixml )

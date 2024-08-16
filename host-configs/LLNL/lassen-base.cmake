@@ -7,7 +7,6 @@
 #
 ###############################################################################
 
-set( GEOS_BUILD_SHARED_CORE_LIB ON CACHE BOOL "" )
 set( GEOS_BUILD_OBJ_LIBS OFF CACHE BOOL "" )
 # Fortran
 set(ENABLE_FORTRAN OFF CACHE BOOL "")

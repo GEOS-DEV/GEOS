@@ -135,32 +135,17 @@ if( ENABLE_HIP )
   list( APPEND extraComponentsLinkList blt::hip )
 endif()
 
-if ( GEOS_BUILD_SHARED_CORE_LIB )
-  list( APPEND extraComponentsLinkList geosx_core )
-else()
-  list( APPEND extraComponentsLinkList ${geosx_core_libs} )
-endif()
-
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
-                    DEPENDS_ON ${extraComponentsLinkList}
-                               ${externalComponentsLinkList} common fmt::fmt-header-only HDF5::HDF5 )
-
-# blt_print_target_properties(TARGET               geosx
-#                             CHILDREN             TRUE
-#                             PROPERTY_NAME_REGEX  "LINK_LIBRARIES"
-#                             )
-
-# blt_print_target_properties(TARGET               HDF5::HDF5
-#                             CHILDREN             TRUE )
+                    DEPENDS_ON geosx_core 
+                               ${extraComponentsLinkList}
+                               ${externalComponentsLinkList} )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
-
-target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 # To change the runtime path during installation
 set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
