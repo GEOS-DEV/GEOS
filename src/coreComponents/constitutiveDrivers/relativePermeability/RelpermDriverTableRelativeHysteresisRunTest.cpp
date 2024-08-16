@@ -14,7 +14,7 @@
  */
 
 #include "RelpermDriverRunTest.hpp"
-#include "TableRelativePermeabilityHysteresis.hpp"
+#include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 
 
 namespace geos

@@ -17,7 +17,7 @@
  * PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
  */
 
-#include "constitutive/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos

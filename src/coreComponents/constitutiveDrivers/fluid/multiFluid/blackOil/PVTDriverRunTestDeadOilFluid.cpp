@@ -17,7 +17,7 @@
  * PVTDriverRunTestDeadOilFluid.cpp
  */
 
-#include "constitutive/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
 #include "constitutive/fluid/multifluid/blackOil/DeadOilFluid.hpp"
 #include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
 

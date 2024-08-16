@@ -162,8 +162,8 @@ endif()
 
 
 if( CMAKE_HOST_APPLE )
-#    set(GEOS_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
-#    set(GEOS_LINK_POSTPEND_FLAG "" CACHE STRING "")
+   set(GEOS_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
+   set(GEOS_LINK_POSTPEND_FLAG "" CACHE STRING "")
 # elseif( ENABLE_CUDA )
 #     set( GEOS_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
 #     set( GEOS_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
@@ -220,4 +220,11 @@ message( "GEOS_GLOBALINDEX_TYPE_FLAG = ${GEOS_GLOBALINDEX_TYPE_FLAG}" )
 message( "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}" )
 message( "GEOS_LINK_PREPEND_FLAG=${GEOS_LINK_PREPEND_FLAG}" )
 message( "GEOS_LINK_POSTPEND_FLAG=${GEOS_LINK_POSTPEND_FLAG}" )
+
+
+set( GRAPHVIZ_EXTERNAL_LIBS TRUE )
+set( GRAPHVIZ_IGNORE_TARGETS "testingUtilities" )
+set( GRAPHVIZ_EXECUTABLES TRUE )
+set( GRAPHVIZ_CUSTOM_TARGETS TRUE )
+
 message( "Leaving GeosxOptions.cmake\n" )

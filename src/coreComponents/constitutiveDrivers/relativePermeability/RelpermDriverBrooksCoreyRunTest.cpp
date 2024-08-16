@@ -14,7 +14,7 @@
  */
 
 #include "RelpermDriverRunTest.hpp"
-#include "BrooksCoreyRelativePermeability.hpp"
+#include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
 
 
 namespace geos

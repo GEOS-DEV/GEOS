@@ -14,7 +14,7 @@
  */
 
 #include "RelpermDriverRunTest.hpp"
-#include "VanGenuchtenStone2RelativePermeability.hpp"
+#include "constitutive/relativePermeability/VanGenuchtenStone2RelativePermeability.hpp"
 
 
 namespace geos

@@ -85,6 +85,8 @@ elseif( GEOS_BUILD_SHARED_CORE_LIB AND NOT GEOS_BUILD_OBJ_LIBS )
                                 LINK_PREPEND  ${GEOS_LINK_PREPEND_FLAG}
                                 LINK_POSTPEND ${GEOS_LINK_POSTPEND_FLAG} )
 
+  blt_print_target_properties( TARGET geosx_core )
+
 elseif( NOT GEOS_BUILD_SHARED_CORE_LIB AND GEOS_BUILD_OBJ_LIBS )
   message( "Building object coreComponents, executables link to coreComponents" )
 else()
@@ -104,6 +106,8 @@ if ( TARGET geosx_core )
   install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
   target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+  target_include_directories( geosx_core PUBLIC ${CMAKE_BINARY_DIR}/include )
+
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents

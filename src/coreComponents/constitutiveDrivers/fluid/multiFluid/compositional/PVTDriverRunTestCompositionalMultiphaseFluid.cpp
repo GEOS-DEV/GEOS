@@ -17,7 +17,7 @@
  * PVTDriverRunTestCompositionalMultiphaseFluid.cpp
  */
 
-#include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
 
 namespace geos

@@ -13,7 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
 
 namespace geos

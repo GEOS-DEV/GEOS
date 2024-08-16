@@ -18,7 +18,7 @@ set( testingUtilities_sources
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOS_BUILD_SHARED_CORE_LIB )
-  list( APPEND dependencyList geosx_core HDF5::HDF5 )
+  list( APPEND dependencyList mainInterface HDF5::HDF5 )
 else()
   list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
 endif()
@@ -32,3 +32,4 @@ blt_add_library( NAME       testingUtilities
                )
 
 target_include_directories( testingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories( testingUtilities PUBLIC ${CMAKE_BINARY_DIR}/include )
