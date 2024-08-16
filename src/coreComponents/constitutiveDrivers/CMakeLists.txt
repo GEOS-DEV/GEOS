@@ -37,7 +37,7 @@ set( dependencyList ${parallelDeps} constitutive events )
 if( ENABLE_PVTPackage )
     set( constitutiveDrivers_sources
          ${constitutiveDrivers_sources}
-          fluid/multifluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
+          fluid/multiFluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
           )
 endif()
 
