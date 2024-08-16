@@ -21,7 +21,7 @@
 #include "ComponentProperties.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "dataRepository/InputFlags.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
