@@ -6,6 +6,7 @@ set( subdirs
      schema
      functions
      constitutive
+     constitutiveDrivers
      mesh
      denseLinearAlgebra
      linearAlgebra
@@ -79,7 +80,7 @@ if( GEOS_BUILD_SHARED_CORE_LIB AND GEOS_BUILD_OBJ_LIBS )
 elseif( GEOS_BUILD_SHARED_CORE_LIB AND NOT GEOS_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with static coreComponents, executables link to geosx_core" )
   blt_combine_static_libraries( NAME          geosx_core
-                                SOURCE_LIBS   ${coreLibs}
+                                SOURCE_LIBS   mainInterface 
                                 LIB_TYPE      SHARED
                                 LINK_PREPEND  ${GEOS_LINK_PREPEND_FLAG}
                                 LINK_POSTPEND ${GEOS_LINK_POSTPEND_FLAG} )
