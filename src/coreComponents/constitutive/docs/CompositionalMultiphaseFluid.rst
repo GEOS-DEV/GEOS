@@ -179,13 +179,16 @@ The flash calculation process is as follows:
 #. These phase compositions are then used to calculate the component fugacities :math:`\phi_{iL}` and :math:`\phi_{iV}` in the liquid and vapor phases using the equation of state.
 
 #. Convergence is reached when the fugacities are equal for all components. The convergence criterion is defined as:
-.. math::
-    \sum_{i=1}^{N_c} \left( \phi_{iL} - \phi_{iV} \right)^2 < \varepsilon
+
+   .. math::
+       \sum_{i=1}^{N_c} \left( \phi_{iL} - \phi_{iV} \right)^2 < \varepsilon
+   
    where :math:`\varepsilon` is the convergence tolerance.
 
 #. If convergence is not achieved, successive substitution is used to update the set of K-values for the next iteration. The new K-values at iteration  :math:`t+1` are given by:
-.. math::
-    K_i^{(t+1)} = K_i^{(t)} \frac{\phi_{iL}}{\phi_{iV}}
+
+   .. math::
+       K_i^{(t+1)} = K_i^{(t)} \frac{\phi_{iL}}{\phi_{iV}}
 
 Parameters
 =========================
