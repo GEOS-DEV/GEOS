@@ -18,7 +18,7 @@ set( mainInterface_sources
      version.cpp
    )
 
-set( dependencyList ${parallelDeps} physicsSolvers optionparser )
+set( dependencyList ${parallelDeps} physicsSolvers constitutiveDrivers optionparser )
 
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}
