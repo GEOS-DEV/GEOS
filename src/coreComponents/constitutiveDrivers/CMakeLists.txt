@@ -30,6 +30,7 @@ set( constitutiveDrivers_sources
      relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
      relativePermeability/RelpermDriverTableRelativeRunTest.cpp
      relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
+     solid/TriaxialDriver.cpp
    )
 
 set( dependencyList ${parallelDeps} constitutive events )
