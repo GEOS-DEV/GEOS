@@ -62,7 +62,19 @@ foreach( lib ${subdirs} )
 endforeach()
 
 add_library(geosx_core INTERFACE)
-target_link_libraries(geosx_core INTERFACE mainInterface )
+if( GEOS_BUILD_SHARED_LIBS)
+  target_link_libraries(geosx_core INTERFACE mainInterface )
+else()
+  get_target_property( libs geosx_core INTERFACE_LINK_LIBRARIES )
+
+  set( linkLibs "" )
+  foreach( lib ${coreLibs} )
+    list( APPEND linkLibs "$<LINK_LIBRARY:WHOLE_ARCHIVE,${lib}>" )
+  endforeach()
+  message( "linkLibs = ${linkLibs}" )
+  target_link_libraries(geosx_core INTERFACE ${linkLibs} )
+endif()
+blt_print_target_properties( TARGET geosx_core )
 
 geosx_add_code_checks( PREFIX coreComponents
                        EXCLUDES cmake constitutive/PVTPackage )
