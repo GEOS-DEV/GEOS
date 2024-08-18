@@ -34,7 +34,7 @@ set( gtest_reactivefluid_xmls
 
 set( dependencyList ${parallelDeps} gtest )
 
-list( APPEND dependencyList geosx_core )
+list( APPEND dependencyList mainInterface )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
