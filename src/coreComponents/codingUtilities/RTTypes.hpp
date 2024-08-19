@@ -259,5 +259,4 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
 
 }
 
-
 #endif /* GEOS_CODINGUTILITIES_RTTYPES_HPP */

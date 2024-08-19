@@ -32,8 +32,6 @@
 namespace geos
 {
 
-using namespace constitutive;
-
 /**
  * @class ReactiveFluidDriver
  *
@@ -114,7 +112,8 @@ private:
 
   enum columnKeys { TIME, PRES, TEMP }; ///< Enumeration of "input" column keys for readability
 
-  static constexpr real64 m_baselineTol = MultiFluidConstants::baselineTolerance; ///< Comparison tolerance for baseline results
+  static constexpr real64 m_baselineTol = constitutive::MultiFluidConstants::baselineTolerance; ///< Comparison tolerance for baseline
+                                                                                                ///< results
 };
 
 } /* namespace geos */
