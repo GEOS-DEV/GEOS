@@ -148,22 +148,7 @@ public:
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
-  /**
-   * @brief init the phaseVelocity container
-   * @param iconn connexion index
-   * @param phaseVelocity arrayView of the phase velocity container
-   */
-  GEOS_HOST_DEVICE
-  inline void
-  initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
-  {
-    GEOS_UNUSED_VAR( iconn, phaseVelocity );
-  };
-  /**
-   * @brief Compute the stabilization weights
-   * @param[in] iconn connection index
-   * @param[out] stabilizationWeight view weights
-   */
+
   GEOS_HOST_DEVICE
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( & stabilizationWeight )[1][2] ) const

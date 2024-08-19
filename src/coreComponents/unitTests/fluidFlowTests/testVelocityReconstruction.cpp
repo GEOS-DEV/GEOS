@@ -99,8 +99,8 @@ TEST( testAligned2D, Velocity_aligned2D )
   for( int iconn = 0; iconn < nfaces; ++iconn )
   {
 
-    computeVelocity( wrapper, iconn /*iconn*/, 0 /*ip*/, flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1 }, phaseVelocityView.toNestedView());
-    computeVelocity( wrapper, iconn /*iconn*/, 1 /*ip*/, 100*flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1}, phaseVelocityView.toNestedView());
+    StencilUtils::computeVelocity( wrapper, iconn /*iconn*/, 0 /*ip*/, flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1 }, phaseVelocityView.toNestedView());
+    StencilUtils::computeVelocity( wrapper, iconn /*iconn*/, 1 /*ip*/, 100*flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1}, phaseVelocityView.toNestedView());
   }
 
   for( int ip = 0; ip < 2; ++ip )

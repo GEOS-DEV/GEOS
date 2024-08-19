@@ -121,12 +121,12 @@ CellElementStencilTPFAWrapper::
 {}
 
 void
-computeVelocity( const CellElementStencilTPFAWrapper & stencil,
-                 localIndex iconn, localIndex ip,
-                 const real64 (&phaseFlux),
-                 arraySlice1d< real64 const > const (&cellCartDim)[2],
-                 localIndex const (&ghostRank)[2],
-                 ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity )
+StencilUtils::computeVelocity( const geos::CellElementStencilTPFAWrapper & stencil,
+                               localIndex iconn, localIndex ip,
+                               const real64 (&phaseFlux),
+                               arraySlice1d< real64 const > const (&cellCartDim)[2],
+                               localIndex const (&ghostRank)[2],
+                               ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity )
 {
 
   real64 surface[2];
@@ -168,5 +168,20 @@ computeVelocity( const CellElementStencilTPFAWrapper & stencil,
     }
   }
 }
+
+void
+StencilUtils::initVelocity( const CellElementStencilTPFAWrapper & stencil, localIndex iconn,
+                            ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity )
+{
+  for( localIndex i = 0; i < 2; i++ )
+  {
+    localIndex const er = stencil.m_elementRegionIndices[iconn][i];
+    localIndex const esr = stencil.m_elementSubRegionIndices[iconn][i];
+
+    phaseVelocity[er][esr].zero();
+
+  }
+}
+
 
 } /* namespace geos */

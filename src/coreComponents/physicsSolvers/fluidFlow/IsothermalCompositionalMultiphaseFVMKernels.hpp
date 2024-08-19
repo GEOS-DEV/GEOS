@@ -580,7 +580,9 @@ public:
   inline
   void initVelocity( localIndex const iconn ) const
   {
-    m_stencilWrapper.initVelocity( iconn, m_phaseVelocity );
+    // reset velocity
+    if constexpr ( std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value)
+      StencilUtils::initVelocity( m_stencilWrapper, iconn, m_phaseVelocity );
   }
 
   /**
@@ -721,14 +723,14 @@ public:
           if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::computeVelocity ) )
           {
             if constexpr ( std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value ) {
-              computeVelocity( m_stencilWrapper,
-                               iconn, ip,
-                               phaseFlux,
-                               {m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
-                                m_globalCellDimAccessor[seri[1]][sesri[1]][sei[1]]},
-                               {m_ghostRank[seri[0]][sesri[0]][sei[0]],
-                                m_ghostRank[seri[1]][sesri[1]][sei[1]]},
-                               m_phaseVelocity );
+              StencilUtils::computeVelocity( m_stencilWrapper,
+                                             iconn, ip,
+                                             phaseFlux,
+                                             {m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
+                                              m_globalCellDimAccessor[seri[1]][sesri[1]][sei[1]]},
+                                             {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                              m_ghostRank[seri[1]][sesri[1]][sei[1]]},
+                                             m_phaseVelocity );
             }
           }
 
@@ -835,6 +837,7 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
+    //velocity has to be reset on all faces prior computing flux. (to be specific on all stencil extends)
     forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
       kernelComponent.initVelocity( iconn );
     } );
@@ -843,7 +846,6 @@ public:
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
-
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
       kernelComponent.complete( iconn, stack );

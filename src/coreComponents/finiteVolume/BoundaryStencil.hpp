@@ -102,16 +102,6 @@ public:
     return maxNumPointsInFlux;
   }
 
-
-/**
- * @brief init the phaseVelocity container
- * @param iconn connexion index
- * @param phaseVelocity arrayView of the phase velocity container
- */
-  GEOS_HOST_DEVICE
-  void initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
-  { GEOS_UNUSED_VAR( iconn, phaseVelocity );};
-
 private:
 
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > m_faceNormal;

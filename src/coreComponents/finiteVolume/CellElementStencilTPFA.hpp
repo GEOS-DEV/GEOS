@@ -24,7 +24,43 @@
 
 namespace geos
 {
+class CellElementStencilTPFAWrapper;
 
+namespace StencilUtils
+{
+
+/**
+ * @brief init the phaseVelocity container
+ * @param[in] stencil for face neighborhood extraction
+ * @param iconn connexion index
+ * @param phaseVelocity arrayView of the phase velocity container
+ */
+GEOS_HOST_DEVICE
+void
+initVelocity( const CellElementStencilTPFAWrapper & stencil, localIndex iconn,
+              ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+
+
+
+/**
+ * @brief Compute approximate cell-centered velocity field
+ * @param[in] stencil for face neighborhood extraction
+ * @param[in] iconn connection index
+ * @param[in] ip phase index
+ * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
+ * @param[in] ghostRank ghost status of connexion's neighbooring cells
+ * @param[in] phaseFlux flux for a specific phase ip and connection iconn
+ * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
+ */
+GEOS_HOST_DEVICE
+void
+computeVelocity( const CellElementStencilTPFAWrapper & stencil,
+                 localIndex iconn, localIndex ip,
+                 const real64 (&phaseFlux),
+                 arraySlice1d< real64 const > const (&cellCartDim)[2],
+                 localIndex const (&ghostRank)[2],
+                 ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+}    /* namespace StencilUtils */
 /**
  * Provides access to the cellElement stencil that may be called from a kernel function.
  */
@@ -32,12 +68,15 @@ class CellElementStencilTPFAWrapper : public StencilWrapperBase< TwoPointStencil
 {
 public:
   friend void
-  computeVelocity( const CellElementStencilTPFAWrapper & stencil,
-                   localIndex iconn, localIndex ip,
-                   const real64 (&phaseFlux),
-                   arraySlice1d< real64 const > const (&cellCartDim)[2],
-                   localIndex const (&ghostRank)[2],
-                   ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+  StencilUtils::computeVelocity( const CellElementStencilTPFAWrapper & stencil,
+                                 localIndex iconn, localIndex ip,
+                                 const real64 (&phaseFlux),
+                                 arraySlice1d< real64 const > const (&cellCartDim)[2],
+                                 localIndex const (&ghostRank)[2],
+                                 ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+  friend void
+  StencilUtils::initVelocity( const CellElementStencilTPFAWrapper & stencil, localIndex iconn,
+                              ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
   /// Coefficient view accessory type
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
@@ -117,31 +156,6 @@ public:
   GEOS_HOST_DEVICE
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( &stabilizationWeight )[1][2] ) const;
-
-/**
- * @brief init the phaseVelocity container
- * @param iconn connexion index
- * @param phaseVelocity arrayView of the phase velocity container
- */
-  GEOS_HOST_DEVICE
-  void initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
-  /**
-   * @brief Compute approximate cell-centered velocity field
-   * @param[in] iconn connection index
-   * @param[in] ip phase index
-   * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
-   * @param[in] ghostRank ghost status of connexion's neighbooring cells
-   * @param[in] phaseFlux flux for a specific phase ip and connection iconn
-   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
-   */
-  GEOS_HOST_DEVICE
-  void computeVelocity( localIndex iconn,
-                        localIndex ip,
-                        real64 const ( &phaseFlux ),
-                        arraySlice1d< real64 const > const (&cellCartDim)[2],
-                        localIndex const (&ghostRank)[2],
-                        ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
-
   /**
    * @brief Give the number of stencil entries.
    * @return The number of stencil entries
@@ -412,21 +426,6 @@ CellElementStencilTPFAWrapper::
 
 GEOS_HOST_DEVICE
 inline void
-CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
-{
-  for( localIndex i = 0; i < 2; i++ )
-  {
-    localIndex const er = m_elementRegionIndices[iconn][i];
-    localIndex const esr = m_elementSubRegionIndices[iconn][i];
-
-    phaseVelocity[er][esr].zero();
-
-  }
-}
-
-
-GEOS_HOST_DEVICE
-inline void
 CellElementStencilTPFAWrapper::
   computeWeights( localIndex iconn,
                   real64 (& weight)[1][2],
@@ -477,24 +476,8 @@ CellElementStencilTPFAWrapper::
   stabilizationWeight[0][0] = m_geometricStabilizationCoef[iconn];
   stabilizationWeight[0][1] = -m_geometricStabilizationCoef[iconn];
 }
-/**
- * @brief Compute approximate cell-centered velocity field
- * @param[in] stencil for face neighborhood extraction
- * @param[in] iconn connection index
- * @param[in] ip phase index
- * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
- * @param[in] ghostRank ghost status of connexion's neighbooring cells
- * @param[in] phaseFlux flux for a specific phase ip and connection iconn
- * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
- */
-GEOS_HOST_DEVICE
-void
-computeVelocity( const CellElementStencilTPFAWrapper & stencil,
-                 localIndex iconn, localIndex ip,
-                 const real64 (&phaseFlux),
-                 arraySlice1d< real64 const > const (&cellCartDim)[2],
-                 localIndex const (&ghostRank)[2],
-                 ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+
+
 
 } /* namespace geos */
 
