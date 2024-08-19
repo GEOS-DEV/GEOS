@@ -227,7 +227,7 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override
   {
-    std::cout << "In PoromechanicsSolver::implicitStepSetup: " << std::endl;
+    // std::cout << "In PoromechanicsSolver::implicitStepSetup: " << std::endl;
     
     flowSolver()->setKeepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
@@ -504,7 +504,7 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    std::cout << "In PoromechanicsSolver::mapSolutionBetweenSolvers " << std::endl;
+    // std::cout << "In PoromechanicsSolver::mapSolutionBetweenSolvers " << std::endl;
 
     /// After the flow solver
     if( solverType == static_cast< integer >( SolverType::Flow ) )

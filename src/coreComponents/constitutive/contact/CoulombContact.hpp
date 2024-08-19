@@ -325,11 +325,11 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
 {
   using namespace fields::contact;
 
-  if (k == 0)
-  {
-    std::cout << "In CoulombContactUpdates::updateFractureState, pressure = " << pressure << std::endl;
-    // std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << std::endl;
-  }
+  // if (k == 0)
+  // {
+  //   std::cout << "In CoulombContactUpdates::updateFractureState, pressure = " << pressure << std::endl;
+  //   // std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << std::endl;
+  // }
 
   if ( dispJump[0] >  -m_displacementJumpThreshold ) //  original
   // if (tractionVector[0] > 2400 )
@@ -338,7 +338,7 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
     m_elasticSlip[k][0] = 0.0;
     m_elasticSlip[k][1] = 0.0;
 
-    std::cout << "k = " << k << ". normal_dispJump = " << dispJump[0] << ", fracture state = Open" << std::endl;
+    // std::cout << "k = " << k << ". normal_dispJump = " << dispJump[0] << ", fracture state = Open" << std::endl;
   }
   else
   {
@@ -369,14 +369,14 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
     // Yield function (not necessary but makes it clearer)
     real64 const yield = tauNorm - limitTau;
 
-    if (yield < 0)
-    {
-      std::cout << "k = " << k << ", normal traction = " << tractionVector[0] + pressure << ", normal_dispJump = " << dispJump[0] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau <<  ", fracture state = stick" << std::endl;
-    }
-    else
-    {
-      std::cout << "k = " << k << ", normal traction = " << tractionVector[0] + pressure << ", normal_dispJump = " << dispJump[0] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau << ", fracture state = slip" << std::endl;
-    }
+    // if (yield < 0)
+    // {
+    //   std::cout << "k = " << k << ", normal traction = " << tractionVector[0] + pressure << ", normal_dispJump = " << dispJump[0] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau <<  ", fracture state = stick" << std::endl;
+    // }
+    // else
+    // {
+    //   std::cout << "k = " << k << ", normal traction = " << tractionVector[0] + pressure << ", normal_dispJump = " << dispJump[0] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau << ", fracture state = slip" << std::endl;
+    // }
     fractureState = yield < 0 ? FractureState::Stick : FractureState::Slip;
   }
 }

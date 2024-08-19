@@ -677,7 +677,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
                                          real64 const & GEOS_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
-  std::cout << "In SinglePhaseBase::implicitStepSetup: " << std::endl;
+  // std::cout << "In SinglePhaseBase::implicitStepSetup: " << std::endl;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -707,7 +707,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           FaceElementSubRegion & subRegion )
     {
-      std::cout << "In SinglePhaseBase::implicitStepSetup -> FaceElementSubregion " << std::endl;
+      // std::cout << "In SinglePhaseBase::implicitStepSetup -> FaceElementSubregion " << std::endl;
       
       arrayView1d< real64 const > const aper = subRegion.getField< fields::flow::hydraulicAperture >();
       arrayView1d< real64 > const aper0 = subRegion.getField< fields::flow::aperture0 >();
@@ -731,7 +731,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                              SurfaceElementSubRegion & subRegion )
     {
-      std::cout << "In SinglePhaseBase::implicitStepSetup -> FaceElementSubregion 2" << std::endl;
+      // std::cout << "In SinglePhaseBase::implicitStepSetup -> FaceElementSubregion 2" << std::endl;
       
       arrayView1d< real64 const > const aper = subRegion.getField< fields::flow::hydraulicAperture >();
       arrayView1d< real64 > const aper0 = subRegion.getField< fields::flow::aperture0 >();
@@ -760,7 +760,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhaseBase::implicitStepComplete:" << std::endl;
+  // std::cout << "In SinglePhaseBase::implicitStepComplete:" << std::endl;
 
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level
@@ -819,7 +819,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           FaceElementSubRegion & subRegion )
     {
-      std::cout << "In SinglePhaseBase::implicitStepComplete -> FaceElementSubregion " << std::endl;
+      // std::cout << "In SinglePhaseBase::implicitStepComplete -> FaceElementSubregion " << std::endl;
 
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -887,8 +887,8 @@ void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhaseBase::assembleSystem " << std::endl;
-  std::cout <<"size of localRhs = " << localRhs.size() << std::endl;
+  // std::cout << "In SinglePhaseBase::assembleSystem " << std::endl;
+  // std::cout <<"size of localRhs = " << localRhs.size() << std::endl;
 
   assembleAccumulationTerms( domain,
                              dofManager,
@@ -920,7 +920,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhaseBase::assembleAccumulationTerms: " << std::endl;
+  // std::cout << "In SinglePhaseBase::assembleAccumulationTerms: " << std::endl;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1322,7 +1322,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhaseBase::updateState :" << std::endl;
+  // std::cout << "In SinglePhaseBase::updateState :" << std::endl;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1459,7 +1459,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
 
 void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
-  std::cout << "In SinglePhaseBase::saveConvergedState: " << std::endl;
+  // std::cout << "In SinglePhaseBase::saveConvergedState: " << std::endl;
 
   FlowSolverBase::saveConvergedState( subRegion );
 

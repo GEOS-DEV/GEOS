@@ -248,7 +248,7 @@ bool SolverBase::execute( real64 const time_n,
   real64 dtRemaining = dt;
   real64 nextDt = dt;
 
-  std::cout << "In SolverBase::execute: " << std::endl;
+  // std::cout << "In SolverBase::execute: " << std::endl;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
 
@@ -734,7 +734,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
-  std::cout << "In SolverBase::nonlinearImplicitStep: " << std::endl;
+  // std::cout << "In SolverBase::nonlinearImplicitStep: " << std::endl;
 
   integer const maxNumberDtCuts = m_nonlinearSolverParameters.m_maxTimeStepCuts;
   real64 const dtCutFactor = m_nonlinearSolverParameters.m_timeStepCutFactor;
@@ -846,7 +846,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                        integer const cycleNumber,
                                        DomainPartition & domain )
 {
-  std::cout << "In SolverBase::solveNonlinearSystem: " << std::endl;
+  // std::cout << "In SolverBase::solveNonlinearSystem: " << std::endl;
 
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
   integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
@@ -1102,7 +1102,7 @@ void SolverBase::setupSystem( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SolverBase::setupSystem : " << std::endl;
+  // std::cout << "In SolverBase::setupSystem : " << std::endl;
 
   dofManager.setDomain( domain );
 

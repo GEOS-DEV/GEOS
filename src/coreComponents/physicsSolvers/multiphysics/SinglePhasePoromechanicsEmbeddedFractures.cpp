@@ -79,7 +79,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups: " << std::endl;
+  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups: " << std::endl;
 
   Base::initializePostInitialConditionsPreSubGroups();
 
@@ -131,7 +131,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::setupSystem :" << std::endl;
+  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::setupSystem :" << std::endl;
 
   GEOS_UNUSED_VAR( setSparsity );
 
@@ -412,8 +412,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
   //updateState( domain );
 
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::assembleSystem " << std::endl;
-  std::cout << "size of localrhs = " << localRhs.size() << std::endl;
+  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::assembleSystem " << std::endl;
+  // std::cout << "size of localrhs = " << localRhs.size() << std::endl;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -464,7 +464,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::updateState:" << std::endl;
+  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::updateState:" << std::endl;
 
   /// 1. update the reservoir
   Base::updateState( domain );

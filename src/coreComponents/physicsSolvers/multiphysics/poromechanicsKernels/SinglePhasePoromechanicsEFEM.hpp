@@ -359,7 +359,7 @@ struct StateUpdateKernel
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
-      std::cout << "k = " << k << ", aperture = " << aperture[k] << ", hydraulicAperture = " << hydraulicAperture[k] << ", oldHydraulicAperture = " << oldHydraulicAperture[k] << ", fracture pressure = " << pressure[k] << std::endl; 
+      // std::cout << "k = " << k << ", aperture = " << aperture[k] << ", hydraulicAperture = " << hydraulicAperture[k] << ", oldHydraulicAperture = " << oldHydraulicAperture[k] << ", fracture pressure = " << pressure[k] << std::endl; 
 
       // traction on the fracture to include the pressure contribution
       contactWrapper.addPressureToTraction( pressure[k],

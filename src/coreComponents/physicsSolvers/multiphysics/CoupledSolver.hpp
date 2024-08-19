@@ -144,7 +144,7 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override
   {
-    std::cout << "In CoupledSolver::implicitStepSetup: " << std::endl;
+    // std::cout << "In CoupledSolver::implicitStepSetup: " << std::endl;
 
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
@@ -157,7 +157,7 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override
   {
-    std::cout << "In CoupledSolver::implicitStepComplete:" << std::endl;
+    // std::cout << "In CoupledSolver::implicitStepComplete:" << std::endl;
     
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
@@ -202,7 +202,7 @@ public:
   virtual void
   updateState( DomainPartition & domain ) override
   {
-    std::cout << "In CoupledSolver::updateState: " << std::endl;
+    // std::cout << "In CoupledSolver::updateState: " << std::endl;
 
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {

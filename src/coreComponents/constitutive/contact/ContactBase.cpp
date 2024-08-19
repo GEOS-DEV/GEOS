@@ -101,10 +101,10 @@ void ContactBase::allocateConstitutiveData( Group & parent,
   real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
   real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
-  std::cout << "apertureValues[n-1] = " << apertureValues[n-1] << std::endl;
-  std::cout << "apertureValues[n] = " << apertureValues[n] << std::endl;
-  std::cout << "hydraulicApertureValues[n-1] = " << hydraulicApertureValues[n-1] << std::endl;
-  std::cout << "hydraulicApertureValues[n] = " << hydraulicApertureValues[n] << std::endl;
+  // std::cout << "apertureValues[n-1] = " << apertureValues[n-1] << std::endl;
+  // std::cout << "apertureValues[n] = " << apertureValues[n] << std::endl;
+  // std::cout << "hydraulicApertureValues[n-1] = " << hydraulicApertureValues[n-1] << std::endl;
+  // std::cout << "hydraulicApertureValues[n] = " << hydraulicApertureValues[n] << std::endl;
 
   // if the aperture transition is larger than the last coordinates, we enlarge the table
   // this check is necessary to ensure that the coordinates are strictly increasing

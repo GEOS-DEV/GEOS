@@ -727,7 +727,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( Do
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState: " << std::endl;
+  // std::cout << "In SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState: " << std::endl;
 
   // call base poromechanics update
   Base::updateState( domain );

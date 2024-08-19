@@ -389,11 +389,11 @@ complete( localIndex const k,
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
   // rm later!!
-  std::cout << "printing tractionVec: " << std::endl;
-  for (int i = 0; i < 3; i++)
-  {
-    std::cout << "tractionVec[" << i << "] = " << stack.tractionVec[i] << std::endl;
-  }
+  // std::cout << "printing tractionVec: " << std::endl;
+  // for (int i = 0; i < 3; i++)
+  // {
+  //   std::cout << "tractionVec[" << i << "] = " << stack.tractionVec[i] << std::endl;
+  // }
 
   // std::cout << "printing dTractiondw: " << std::endl;
   // for (int i = 0; i < 3; i++)

@@ -342,10 +342,10 @@ public:
     localIndex connectionIndex = 0;
 
 
-    if ( iconn == 0 ) 
-    {
-      std::cout << "iconn_FaceBasedAssemblyKernelFactory = " << iconn << std::endl;
-    }
+    // if ( iconn == 0 ) 
+    // {
+    //   std::cout << "iconn_FaceBasedAssemblyKernelFactory = " << iconn << std::endl;
+    // }
     // std::cout << "iconn = " << iconn << ", Trans = { " << stack.transmissibility[connectionIndex][0] << ", " << stack.transmissibility[connectionIndex][1] << " }" << std::endl;
     
 
