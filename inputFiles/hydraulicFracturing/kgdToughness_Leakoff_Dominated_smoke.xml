@@ -13,8 +13,8 @@
       xCoords="{ -100, 0, 100 }"
       yCoords="{ 0, 50 }"
       zCoords="{ 0, 1 }"
-      nx="{ 100, 100 }"
-      ny="{ 100 }"
+      nx="{ 5, 5 }"
+      ny="{ 50 }"
       nz="{ 2 }"
       xBias="{ 0.5, -0.5}"
       cellBlockNames="{cb1}"/>
@@ -35,8 +35,7 @@
       name="source"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{  0.01,  1.01,  1.01 }"/>
-    <!-- Sphinx_Geometry_InjSource_End -->
-
+    <!-- Sphinx_Geometry_InjSource_End --> 
     <!-- Sphinx_Geometry_FracturePlane -->
     <Box
       name="core"
@@ -76,36 +75,36 @@
 
     <PeriodicEvent
       name="timeHistoryCollection0"
-      beginTime="0"
-      timeFrequency="1"
+      beginTime="0.0"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Tasks/pressureCollection" />
  
     <PeriodicEvent
       name="timeHistoryCollection1"
-      beginTime="0"
-      timeFrequency="1"
+      beginTime="0.0"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Tasks/apertureCollection" />
  
     <PeriodicEvent
       name="timeHistoryCollection2"
       beginTime="0.0"
-      timeFrequency="1"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Tasks/hydraulicApertureCollection" />
 
       <PeriodicEvent
       name="timeHistoryCollection3"
       beginTime="0.0"
-      timeFrequency="1"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Tasks/areaCollection" />      
  
     <PeriodicEvent
       name="timeHistoryOutput"
       beginTime="0.0"
-      timeFrequency="1"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>  
 
@@ -113,20 +112,20 @@
       name="solverApplications0"
       beginTime="0.0"
       endTime="10.0"
-      forceDt="0.25"
+      forceDt="2.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications1"
       beginTime="10.0"
       endTime="20.0"
-      forceDt="0.5"
+      forceDt="5.0"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
       name="solverApplications2"
       beginTime="20.0"      
-      forceDt="1.0"
+      forceDt="10.0"
       target="/Solvers/hydrofracture"/>
   </Events>  
 </Problem>

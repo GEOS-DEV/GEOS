@@ -74,7 +74,7 @@
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
-      <!-- <PeriodicEvent
+    <PeriodicEvent
       name="timeHistoryCollection0"
       beginTime="0"
       timeFrequency="1"
@@ -107,7 +107,7 @@
       beginTime="0.0"
       timeFrequency="1"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>  -->
+      target="/Outputs/timeHistoryOutput"/> 
 
     <PeriodicEvent
       name="solverApplications0"
