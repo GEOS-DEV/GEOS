@@ -40,12 +40,12 @@ MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::MultiphasePoromechani
 {
   // TODO
 /*
-  LinearSolverParameters & params = this->m_linearSolverParameters.get();
-  params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsConformingFractures;
-  params.mgr.separateComponents = false;
-  params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  params.dofsPerNode = 3;
-*/
+   LinearSolverParameters & params = this->m_linearSolverParameters.get();
+   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsConformingFractures;
+   params.mgr.separateComponents = false;
+   params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+   params.dofsPerNode = 3;
+ */
 }
 
 template< typename FLOW_SOLVER >
