@@ -12,19 +12,17 @@
       targetRegions="{ Domain, Fracture }"
       isMatrixPoroelastic="0"
       useQuasiNewton="1"
-      contactRelationName="fractureContact"
       maxNumResolves="2">
 
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="20"
         maxAllowedResidualNorm="1.0e30"
-	      lineSearchAction="None"
-        lineSearchMaxCuts="3"/>
+        lineSearchAction="None"/>
 
       <LinearSolverParameters
         solverType="gmres"
-	      preconditionerType="mgr"/>
+        preconditionerType="mgr"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -72,7 +70,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-5"
-      materialList="{ water, rock, fractureFilling, fractureContact }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact, hApertureModel}"/>
   </ElementRegions>
 
   <Constitutive>
@@ -99,7 +97,7 @@
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="20e9"
+      defaultGrainBulkModulus="20e9"
       defaultReferencePorosity="0.3"/>
 
     <ConstantPermeability
@@ -125,20 +123,14 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="1.0e13"
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
       apertureTableName="aperTable"/>
   </Constitutive>
 
   <FieldSpecifications>
-
-    <!--HydrostaticEquilibrium
-      name="equil"
-      objectPath="ElementRegions"
-      datumElevation="0.25"
-      datumPressure="0e6"
-    /-->
-
     <FieldSpecification
       name="waterDensity"
       initialCondition="1"

@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./kgdToughnessDominated_poroelastic_base.xml"/>
+    <File name="./kgdToughness_Storage_Dominated_base.xml"/>
   </Included>
   
   <Mesh>
