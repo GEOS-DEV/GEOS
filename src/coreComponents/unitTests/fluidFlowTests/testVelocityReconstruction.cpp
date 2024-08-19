@@ -13,7 +13,6 @@
  */
 
 // Source includes
-#include "common/Logger.hpp"
 #include "mainInterface/initialization.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "testFlowKernelHelpers.hpp"
@@ -100,8 +99,8 @@ TEST( testAligned2D, Velocity_aligned2D )
   for( int iconn = 0; iconn < nfaces; ++iconn )
   {
 
-    wrapper.computeVelocity( iconn /*iconn*/, 0 /*ip*/, flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1 }, phaseVelocityView.toNestedView());
-    wrapper.computeVelocity( iconn /*iconn*/, 1 /*ip*/, 100*flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1}, phaseVelocityView.toNestedView());
+    computeVelocity( wrapper, iconn /*iconn*/, 0 /*ip*/, flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1 }, phaseVelocityView.toNestedView());
+    computeVelocity( wrapper, iconn /*iconn*/, 1 /*ip*/, 100*flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1}, phaseVelocityView.toNestedView());
   }
 
   for( int ip = 0; ip < 2; ++ip )
