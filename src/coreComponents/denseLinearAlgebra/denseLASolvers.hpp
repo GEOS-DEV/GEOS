@@ -117,7 +117,20 @@ void solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYP
     x[2] = detX2 / detA;
 }
 
-
+/**
+ * @brief Solves a linear system where the matrix is upper triangular using back substitution.
+ * 
+ * This function solves the linear system `Ax = b`, where `A` is an upper triangular matrix, using 
+ * back substitution. The solution `x` is computed and stored in the provided output vector.
+ * 
+ * @tparam N The size of the square matrix `A`.
+ * @tparam MATRIX_TYPE The type of the matrix `A`.
+ * @tparam RHS_TYPE The type of the right-hand side vector `b`.
+ * @tparam SOL_TYPE The type of the solution vector `x`.
+ * @param[in] A The upper triangular matrix representing the coefficients of the system.
+ * @param[in,out] b The right-hand side vector. It is used to compute the solution, but the values are not preserved.
+ * @param[out] x The solution vector. The result of solving the system `Ax = b` using back substitution.
+ */
 template< std::ptrdiff_t N, 
           typename MATRIX_TYPE,
           typename RHS_TYPE,
@@ -135,6 +148,21 @@ void solveUpperTriangularSystem( MATRIX_TYPE const & A, RHS_TYPE & b, SOL_TYPE &
   }
 }
 
+/**
+ * @brief Solves a linear system using Gaussian elimination.
+ * 
+ * This function performs Gaussian elimination on the given matrix `A` and right-hand side vector `b`.
+ * It transforms the matrix `A` into an upper triangular matrix and then solves for the solution `x`
+ * using back substitution.
+ * 
+ * @tparam N The size of the square matrix `A`.
+ * @tparam MATRIX_TYPE The type of the matrix `A`.
+ * @tparam RHS_TYPE The type of the right-hand side vector `b`.
+ * @tparam SOL_TYPE The type of the solution vector `x`.
+ * @param[in,out] A The matrix to be transformed into an upper triangular matrix. Modified in place.
+ * @param[in,out] b The right-hand side vector. Modified in place to reflect the transformed system.
+ * @param[out] x The solution vector. The result of solving the system `Ax = b`.
+ */
 template< std::ptrdiff_t N, 
           typename MATRIX_TYPE,
           typename RHS_TYPE,
@@ -189,7 +217,18 @@ void solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
 }
 
 /**
- * Const version of the function
+ * @brief Const version of the solveGaussianElimination function.
+ * 
+ * This function solves a linear system using Gaussian elimination, without modifying the original matrix `A` 
+ * and vector `b`. It creates copies of `A` and `b`, performs the elimination, and then solves the system.
+ * 
+ * @tparam N The size of the square matrix `A`.
+ * @tparam MATRIX_TYPE The type of the matrix `A`.
+ * @tparam RHS_TYPE The type of the right-hand side vector `b`.
+ * @tparam SOL_TYPE The type of the solution vector `x`.
+ * @param[in] A The constant matrix representing the coefficients of the system.
+ * @param[in] b The constant right-hand side vector.
+ * @param[out] x The solution vector. The result of solving the system `Ax = b`.
  */
 template< std::ptrdiff_t N, 
           typename MATRIX_TYPE,
@@ -216,9 +255,20 @@ void solveGaussianElimination( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TY
 
 }; // internal namespace
 
-
 /**
+ * @brief Solves a linear system using the most appropriate method based on the size of the system.
  * 
+ * This function determines the appropriate method for solving a linear system `Ax = b` based on 
+ * the size of the matrix `A`. For 2x2 and 3x3 systems, specialized solvers are used. For larger systems, 
+ * Gaussian elimination is employed.
+ * 
+ * @tparam N The size of the square matrix `A`.
+ * @tparam MATRIX_TYPE The type of the matrix `A`.
+ * @tparam RHS_TYPE The type of the right-hand side vector `b`.
+ * @tparam SOL_TYPE The type of the solution vector `x`.
+ * @param[in] A The constant matrix representing the coefficients of the system.
+ * @param[in] b The constant right-hand side vector.
+ * @param[out] x The solution vector. The result of solving the system `Ax = b`.
  */
 template< std::ptrdiff_t N, 
           typename MATRIX_TYPE,
