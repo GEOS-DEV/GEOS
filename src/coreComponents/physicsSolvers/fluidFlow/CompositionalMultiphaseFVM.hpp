@@ -173,15 +173,6 @@ public:
     static constexpr char const * scalingTypeString()               { return "scalingType"; }
   };
 
-  /**
-   * @brief Solution scaling type
-   */
-  enum class ScalingType : integer
-  {
-    Global,         ///< Scale the Newton update with a unique scaling factor
-    Local            ///< Scale the Newton update locally (modifies the Newton direction)
-  };
-
 protected:
 
   virtual void postInputInitialization() override;
@@ -208,7 +199,7 @@ protected:
   } m_dbcParams;
 
   /// Solution scaling type
-  ScalingType m_scalingType;
+  compositionalMultiphaseUtilities::ScalingType m_scalingType;
 
 private:
 
@@ -239,10 +230,6 @@ private:
   // no data needed here, see CompositionalMultiphaseBase
 
 };
-
-ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
-              "Global",
-              "Local" );
 
 } // namespace geos
 

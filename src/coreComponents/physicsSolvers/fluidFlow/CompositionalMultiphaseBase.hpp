@@ -22,6 +22,10 @@
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
 
 namespace geos
 {
@@ -109,10 +113,7 @@ public:
   void accumulationAssemblyLaunch( DofManager const & dofManager,
                                    SUBREGION_TYPE const & subRegion,
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                   arrayView1d< real64 > const & localRhs )
-  {
-    // TODO
-  }
+                                   arrayView1d< real64 > const & localRhs );
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -563,6 +564,51 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
   } );
 }
 
+template< typename SUBREGION_TYPE >
+void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
+                                                  SUBREGION_TYPE const & subRegion,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs )
+{
+  constitutive::MultiFluidBase const & fluid =
+    getConstitutiveModel< constitutive::MultiFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  constitutive::CoupledSolidBase const & solid =
+    getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  if( m_isThermal )
+  {
+    thermalCompositionalMultiphaseBaseKernels::
+      ElementBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                  m_numPhases,
+                                                  dofManager.rankOffset(),
+                                                  m_useTotalMassEquation,
+                                                  dofKey,
+                                                  subRegion,
+                                                  fluid,
+                                                  solid,
+                                                  localMatrix,
+                                                  localRhs );
+  }
+  else
+  {
+    isothermalCompositionalMultiphaseBaseKernels::
+      ElementBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                  m_numPhases,
+                                                  dofManager.rankOffset(),
+                                                  m_useTotalMassEquation,
+                                                  m_useSimpleAccumulation,
+                                                  dofKey,
+                                                  subRegion,
+                                                  fluid,
+                                                  solid,
+                                                  localMatrix,
+                                                  localRhs );
+  }
+}
 
 } // namespace geos
 

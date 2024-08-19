@@ -38,12 +38,14 @@ MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::MultiphasePoromechani
                                                                                                        Group * const parent )
   : Base( name, parent )
 {
-  LinearSolverParameters & params = this->m_linearSolverParameters.get();
   // TODO
-  params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
+/*
+  LinearSolverParameters & params = this->m_linearSolverParameters.get();
+  params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsConformingFractures;
   params.mgr.separateComponents = false;
   params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   params.dofsPerNode = 3;
+*/
 }
 
 template< typename FLOW_SOLVER >
@@ -55,7 +57,7 @@ void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( D
   Base::setupCoupling( domain, dofManager );
 
   // 2. Traction - pressure coupling in the fracture
-  dofManager.addCoupling( m_pressureKey,
+  dofManager.addCoupling( m_flowDofKey,
                           fields::contact::traction::key(),
                           DofManager::Connector::Elem );
 }
@@ -292,7 +294,7 @@ addTransmissibilityCouplingNNZ( DomainPartition const & domain,
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const presDofKey = dofManager.getKey( m_pressureKey );
+    string const flowDofKey = dofManager.getKey( m_flowDofKey );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -315,7 +317,7 @@ addTransmissibilityCouplingNNZ( DomainPartition const & domain,
         ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
 
         arrayView1d< globalIndex const > const faceElementDofNumber =
-          elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
+          elementSubRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
         for( localIndex k0=0; k0<numFluxElems; ++k0 )
         {
@@ -358,7 +360,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const presDofKey = dofManager.getKey( m_pressureKey );
+    string const flowDofKey = dofManager.getKey( m_flowDofKey );
 
     arrayView1d< globalIndex const > const &
     dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -380,7 +382,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     ArrayOfArraysView< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
     arrayView1d< globalIndex const > const &
-    presDofNumber = fractureSubRegion.getReference< globalIndex_array >( presDofKey );
+    flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( flowDofKey );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -401,7 +403,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
           for( localIndex kf = 0; kf < 2; ++kf )
           {
             // Set row DOF index
-            globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
+            globalIndex const rowIndex = flowDofNumber[sei[iconn][1-kf]] - rankOffset;
 
             if( rowIndex > 0 && rowIndex < pattern.numRows() )
             {
@@ -460,7 +462,7 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
   arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-  string const & presDofKey = dofManager.getKey( m_pressureKey );
+  string const & flowDofKey = dofManager.getKey( m_flowDofKey );
 
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -474,7 +476,7 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
                                                                  FaceElementSubRegion const & subRegion )
   {
     arrayView1d< globalIndex const > const &
-    presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
+    flowDofNumber = subRegion.getReference< globalIndex_array >( flowDofKey );
     arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
     ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
@@ -492,7 +494,7 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
       real64 nodeRHS[3 * m_maxFaceNodes];
       stackArray1d< real64, 3 * m_maxFaceNodes > dRdP( 3*m_maxFaceNodes );
       globalIndex colDOF[1];
-      colDOF[0] = presDofNumber[kfe];
+      colDOF[0] = flowDofNumber[kfe];
 
       for( localIndex kf=0; kf<2; ++kf )
       {
@@ -570,7 +572,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
   dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-  string const & presDofKey = dofManager.getKey( m_pressureKey );
+  string const & flowDofKey = dofManager.getKey( m_flowDofKey );
 
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -583,12 +585,12 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-    string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
+    //string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    //
     //MultiFluidBase const & fluid = this->template getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
     //arrayView2d< real64 const > const & density = fluid.density();
 
-    arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
+    arrayView1d< globalIndex const > const & flowDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
     ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
@@ -601,7 +603,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       globalIndex nodeDOF[2*3*m_maxFaceNodes];
       globalIndex elemDOF[1];
-      elemDOF[0] = presDofNumber[kfe];
+      elemDOF[0] = flowDofNumber[kfe];
 
       real64 Nbar[3];
       Nbar[ 0 ] = faceNormal[kf0][0] - faceNormal[kf1][0];

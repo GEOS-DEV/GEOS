@@ -47,6 +47,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace compositionalMultiphaseUtilities; // for ScalingType
 
 CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )

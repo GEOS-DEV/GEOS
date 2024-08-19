@@ -75,12 +75,14 @@
       fieldName="fracturePorosity_porosity"
       scale="1.00"/>
 
+<!--
     <FieldSpecification
       name="prescribedFaultPressure"
       setNames="{ all }"
       objectPath="ElementRegions/Fault"
       fieldName="pressure"
       scale="35.0e6"/>
+-->
 
     <FieldSpecification
       name="xconstraint"
@@ -144,6 +146,25 @@
       fieldName="pressure"
       functionName="init_pressure"
       scale="1.0"/>
+
+    <FieldSpecification
+      name="initialComposition_co2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.005"/>
+
+    <FieldSpecification
+      name="initialComposition_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.995"/>
+
   </FieldSpecifications>
 
   <ElementRegions>

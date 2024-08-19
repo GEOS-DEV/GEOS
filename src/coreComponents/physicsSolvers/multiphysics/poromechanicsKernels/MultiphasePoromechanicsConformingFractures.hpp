@@ -207,7 +207,7 @@ public:
         real64 compFlux[numComp]{};
         real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
         real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
-        real64 dCompFlux_dTrans[numComp]{};
+        //real64 dCompFlux_dTrans[numComp]{};
 
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };
@@ -441,6 +441,8 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
+      if( hasCapPressure )
+        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
