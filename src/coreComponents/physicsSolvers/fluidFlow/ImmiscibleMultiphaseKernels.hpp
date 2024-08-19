@@ -24,17 +24,19 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"           // get correct fluid model
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
-#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"            // create for multiphase for kernels
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"            // check need of multiphase equivalent
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geos
@@ -69,17 +71,11 @@ public:
   using ImmiscibleMultiphaseFlowAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
-                      fields::flow::pressure_n,
-                      fields::flow::phaseVolumeFraction,                  
-                      fields::flow::phaseVolumeFraction_n,
                       fields::flow::gravityCoefficient,
-                      fields::flow::phaseMobility,
-                      fields::flow::dPhaseMobility >;                      // TODO: fix derivatives of mobility
-
-  using ImmiscibleMultiphaseFluidAccessors =
-    StencilMaterialAccessors< MultiFluidBase,
-                              fields::multifluid::phaseDensity,
-                              fields::multifluid::dPhaseDensity >;
+                      fields::immiscibleMultiphaseFlow::phaseDensity,
+                      fields::immiscibleMultiphaseFlow::dPhaseDensity,                      
+                      fields::immiscibleMultiphaseFlow::phaseMobility,
+                      fields::immiscibleMultiphaseFlow::dPhaseMobility >;              
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
@@ -89,7 +85,9 @@ public:
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
                               fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure >;  
+                              fields::permeability::dPerm_dPressure >; 
+
+  using Deriv = immiscibleFlow::DerivativeOffset;                             
 
   /**
    * @brief Constructor for the kernel interface
@@ -97,7 +95,6 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofNumberAccessor accessor for the dof numbers
    * @param[in] multiPhaseFlowAccessors accessor for wrappers registered by the solver
-   * @param[in] multiPhaseFluidAccessors accessor for wrappers registered by the multiphase fluid model
    * @param[in] capPressureAccessors accessor for wrappers registered by the capillary pressure model
    * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
    * @param[in] dt time step size
@@ -107,8 +104,7 @@ public:
   FaceBasedAssemblyKernelBase( integer const numPhases,
                                globalIndex const rankOffset,
                                DofNumberAccessor const & dofNumberAccessor,
-                               ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                               ImmiscibleMultiphaseFluidAccessors const & multiPhaseFluidAccessors,
+                               ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,                               
                                CapPressureAccessors const & capPressureAccessors,
                                PermeabilityAccessors const & permeabilityAccessors,
                                real64 const & dt,
@@ -125,11 +121,10 @@ public:
     m_ghostRank( multiPhaseFlowAccessors.get( fields::ghostRank {} ) ),
     m_gravCoef( multiPhaseFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
     m_pres( multiPhaseFlowAccessors.get( fields::flow::pressure {} ) ),
-    m_mob( multiPhaseFlowAccessors.get( fields::flow::phaseMobility {} ) ),
-    m_dMob_dPres( multiPhaseFlowAccessors.get( fields::flow::dPhaseMobility {} ) ),
-    m_dMob_dSat( multiPhaseFlowAccessors.get( fields::flow::dPhaseMobility {} ) ),
-    m_dens( multiPhaseFluidAccessors.get( fields::multifluid::phaseDensity {} ) ),
-    m_dDens_dPres( multiPhaseFluidAccessors.get( fields::multifluid::dPhaseDensity {} ) ),
+    m_mob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
+    m_dMob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),    
+    m_dens( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseDensity {} ) ),
+    m_dDens_dPres( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseDensity {} ) ),
     m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
     m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
     m_localMatrix( localMatrix ),
@@ -163,21 +158,18 @@ protected:
   // Primary and secondary variables
   /// Views on pressure
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
-  /// Views on saturation
-  ElementViewConst< arrayView1d< real64 const > > const m_phaseVolFraction;
 
   /// Views on fluid mobility
-  ElementViewConst< arrayView2d< real64 const > > const m_mob;
-  ElementViewConst< arrayView2d< real64 const > > const m_dMob_dPres;
-  ElementViewConst< arrayView2d< real64 const > > const m_dMob_dSat;
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_mob;
+  ElementViewConst< arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > > const m_dMob;
 
   /// Views on fluid density
-  ElementViewConst< arrayView2d< real64 const > > const m_dens;
-  ElementViewConst< arrayView2d< real64 const > > const m_dDens_dPres;
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_dens;
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_dDens_dPres;
 
   /// Views on capillary pressure
-  ElementViewConst< arrayView2d< real64 const > > const m_phaseCapPressure;
-  ElementViewConst< arrayView2d< real64 const > > const m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
+  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
 
   // Residual and jacobian
 
@@ -239,7 +231,6 @@ public:
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                           ImmiscibleMultiphaseFluidAccessors const & multiPhaseFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            real64 const & dt,
@@ -250,8 +241,7 @@ public:
     : FaceBasedAssemblyKernelBase( numPhases,
                                    rankOffset,
                                    dofNumberAccessor,
-                                   multiPhaseFlowAccessors,
-                                   multiPhaseFluidAccessors,
+                                   multiPhaseFlowAccessors,                                   
                                    capPressureAccessors,
                                    permeabilityAccessors,
                                    dt,
@@ -383,18 +373,12 @@ public:
         // clear working arrays
         real64 densMean[m_numPhases]{};
         real64 dDensMean_dP[m_numPhases][2]{};
-        // real64 densMean = 0.0;
-        // real64 dDensMean_dP[2]{0.0, 0.0};
 
-        real64 presGrad[m_numPhases]{};           /// check need for vector
+        real64 presGrad[m_numPhases]{};           
         real64 dPresGrad_dP[m_numPhases][2]{};
-        // real64 presGrad = 0.0;
-        // real64 dPresGrad_dP[2]{0.0, 0.0};
 
         real64 gravHead[m_numPhases]{};
         real64 dGravHead_dP[m_numPhases][2]{};
-        // real64 gravHead = 0.0;
-        // real64 dGravHead_dP[2]{0.0, 0.0};
 
         real64 capGrad[m_numPhases]{};
         real64 dCapGrad_dP[m_numPhases][2]{};
@@ -403,8 +387,6 @@ public:
         real64 fluxVal[m_numPhases]{};
         real64 dFlux_dP[m_numPhases][2]{};
         real64 dFlux_dS[m_numPhases][2]{};
-        // real64 fluxVal = 0.0;
-        // real64 dFlux_dP[2]{0.0, 0.0};
 
         real64 mobility[m_numPhases]{};
         real64 dMob_dP[m_numPhases][2]{};
@@ -421,17 +403,16 @@ public:
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {        
-
           // calculate quantities on primary connected cells          
           for( integer ke = 0; ke < 2; ++ke )
           {
             // density
-            real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][ip];
-            real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][ip];
+            real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];         // r = rho1 || rho2
+            real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip];  // dr/dP = dr1/dP1 || dr2/dP
 
             // average density and derivatives
             densMean[ip] += 0.5 * density;          // rho = (rho1 + rho2) / 2
-            dDensMean_dP[ip][ke] = 0.5 * dDens_dP;  // drho/dP = { (drho1/dP)/2 , (drho2/dP)/2 }
+            dDensMean_dP[ip][ke] = 0.5 * dDens_dP;  // drho/dP = { (dr1/dP1)/2 , (dr2/dP2)/2 }
           }
 
           //***** calculation of flux *****
@@ -452,7 +433,7 @@ public:
             real64 const pressure = m_pres[er][esr][ei];      // P = P1 || P2
             presGrad[ip] += trans[ke] * pressure;             // DPv = T (P1 - P2)
             dPresGrad_dTrans += signPotDiff[ke] * pressure;   // dDPv/dT = (P1 - P2)
-            dPresGrad_dP[ip][ke] = trans[ke];                 // dDPv/dP = {T , -T}
+            dPresGrad_dP[ip][ke] = trans[ke];                 // dDPv/dP = { T , -T }
 
             real64 const gravD = trans[ke] * m_gravCoef[er][esr][ei];       // D = T g z1 || -T g z2
             real64 const pot = trans[ke] * pressure - densMean[ip] * gravD; // Phi = T P1 - rho T g z1 || -T P2 + rho T g z2
@@ -462,15 +443,15 @@ public:
 
             for( integer i = 0; i < 2; ++i )
             {
-              dGravHead_dP[ip][i] += dDensMean_dP[ip][i] * gravD; // dDPg/dP = {drho1/dP * T g (z1 - z2) , drho2/dP * T g (z1 - z2)}
+              dGravHead_dP[ip][i] += dDensMean_dP[ip][i] * gravD; // dDPg/dP = {drho/dP1 * T g (z1 - z2) , drho/dP2 * T g (z1 - z2)}
             }
 
             if ( m_hasCapPressure ) // check sign convention
             {
-              real64 const capPres = m_phaseCapPressure[er][esr][ei]; // Pc = Pc1 || Pc2
-              dCapGrad_dTrans -= signPotDiff[ke] * capPres;           // dDPc/dT = (-Pc1 + Pc2)
-              pot -= trans[ke] * capPres;                             // Phi = T P1 - rho T g z1 - T Pc1 || -T P2 + rho T g z2 + T Pc2
-              capGrad[ip] -= trans[ke] * capPres;                     // DPc = T (-Pc1 + Pc2)                                             
+              real64 const capPres = m_phaseCapPressure[er][esr][ei][0][ip];  // Pc = Pc1 || Pc2
+              dCapGrad_dTrans -= signPotDiff[ke] * capPres;                   // dDPc/dT = (-Pc1 + Pc2)
+              pot -= trans[ke] * capPres;                                     // Phi = T P1 - rho T g z1 - T Pc1 || -T P2 + rho T g z2 + T Pc2
+              capGrad[ip] -= trans[ke] * capPres;                             // DPc = T (-Pc1 + Pc2)                                             
             }
 
             potScale = fmax( potScale, fabs( pot ) ); // maxPhi = Phi1 > Phi2 ? Phi1 : Phi2
@@ -479,11 +460,14 @@ public:
           for( integer ke = 0; ke < 2; ++ke )
           {
             dPresGrad_dP[ip][ke] += dTrans_dP[ke] * dPresGrad_dTrans;   // dDPv/dP = { T + dT/dP1 * (P1 - P2) , -T + dT/dP2 * (P1 - P2)}
-            dGravHead_dP[ip][ke] += dTrans_dP[ke] * dGravHead_dTrans;   // dDPg/dP = { drho1/dP * T g (z1 - z2) + dT/dP1 * rho g (z1 - z2) , 
-                                                                        //             drho2/dP * T g (z1 - z2) + dT/dP2 * rho g (z1 - z2) }
+            dGravHead_dP[ip][ke] += dTrans_dP[ke] * dGravHead_dTrans;   // dDPg/dP = { drho/dP1 * T g (z1 - z2) + dT/dP1 * rho g (z1 - z2) , 
+                                                                        //             drho/dP2 * T g (z1 - z2) + dT/dP2 * rho g (z1 - z2) }
             if ( m_hasCapPressure )
             {
-              dCapGrad_dP[ip][ke] +=  dTrans_dP[ke] * dCapGrad_dTrans;  // dDPc/dP = { dT/dP1 * (-Pc1 + Pc2) , dT/dP2 * (-Pc1 + Pc2) }
+              real64 const dCapPres_dS = m_dPhaseCapPressure_dPhaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][0][ip][ip]; // dPc/dS = dPc1/dS1 || dPc2/dS2
+              dCapGrad_dP[ip][ke] += dTrans_dP[ke] * dCapGrad_dTrans;                                                // dDPc/dP = { dT/dP1 * (-Pc1 + Pc2) ,
+                                                                                                                     //             dT/dP2 * (-Pc1 + Pc2) }
+              dCapGrad_dS[ip][ke] -= trans[ke] * dCapPres_dS;                                                        // dDPc/dS = { -T * dPc1/dS1 , T * dPc2/dS2 }
             }                                                            
           }
 
@@ -504,24 +488,22 @@ public:
           real64 const alpha = ( potGrad + upwAbsTol ) / ( 2 * upwAbsTol );   // alpha = (DPhi + abstol) / abstol / 2
 
           // choose upstream cell
-          // real64 mobility{};
-          // real64 dMob_dP[2]{};
           if( alpha <= 0.0 || alpha >= 1.0 )  // no smoothing needed
           {
             localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) ); // 1 upwind -> k_up = 0 || 2 upwind -> k_up = 1
 
-            mobility[ip] = m_mob[seri[k_up]][sesri[k_up]][sei[k_up]][ip];             // M = Mupstream 
-            dMob_dP[ip][k_up] = m_dMob_dPres[seri[k_up]][sesri[k_up]][sei[k_up]][ip]; // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
-            dMob_dS[ip][k_up] = m_dMob_dSat[seri[k_up]][sesri[k_up]][sei[k_up]][ip];  // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
+            mobility[ip] = m_mob[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip];                     // M = Mupstream 
+            dMob_dP[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip][Deriv::dP];    // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
+            dMob_dS[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip][Deriv::dS];    // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
           }
           else  // perform smoothing
           {
             real64 const mobWeights[2] = { alpha, 1.0 - alpha };
             for( integer ke = 0; ke < 2; ++ke )
             {
-              mobility[ip] += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]][ip];           // M = alpha * M1 + (1 - alpha) * M2
-              dMob_dP[ip][ke] = mobWeights[ke] * m_dMob_dPres[seri[ke]][sesri[ke]][sei[ke]][ip];  // dM/dP = {alpha * dM1/dP1 , (1 - alpha) * dM2/dP2}
-              dMob_dS[ip][ke] = mobWeights[ke] * m_dMob_dSat[seri[ke]][sesri[ke]][sei[ke]][ip];   // dM/dP = {alpha * dM1/dS1 , (1 - alpha) * dM2/dS2}
+              mobility[ip] += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]][0][ip];               // M = alpha * M1 + (1 - alpha) * M2
+              dMob_dP[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP]; // dM/dP = {alpha * dM1/dP1 , (1 - alpha) * dM2/dP2}
+              dMob_dS[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dS]; // dM/dP = {alpha * dM1/dS1 , (1 - alpha) * dM2/dS2}
             }
           }
 
@@ -535,8 +517,8 @@ public:
           // gravitational head depends only on the two cells connected (same as mean density)
           for( integer ke = 0; ke < 2; ++ke ) 
           {
-            dFlux_dP[ip][ke] -= dGravHead_dP[ip][ke]; // dF/dP = { T + dT/dP1 * (P1 - P2) - drho1/dP * T g (z1 - z2) - dT/dP1 * rho g (z1 - z2) ,
-                                                      //          -T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 * rho g (z1 - z2) }
+            dFlux_dP[ip][ke] -= dGravHead_dP[ip][ke]; // dF/dP = { T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1 - z2) ,
+                                                      //          -T + dT/dP2 * (P1 - P2) - drho/dP2 * T g (z1 - z2) - dT/dP2 * rho g (z1 - z2) }
           }
 
           // capillary pressure contribution
@@ -544,8 +526,10 @@ public:
           {
             for( integer ke = 0; ke < 2; ++ke )
             {              
-              dFlux_dP[ip][ke] += dCapGrad_dP[ip][ke];  // dF/dP = { T + dT/dP1 * (P1 - P2) - drho1/dP * T g (z1 - z2) - dT/dP1 * rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2) ,
-                                                        //          -T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 * rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2) }
+              dFlux_dP[ip][ke] += dCapGrad_dP[ip][ke];  // dF/dP = { T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2) ,
+                                                        //          -T + dT/dP2 * (P1 - P2) - drho/dP2 * T g (z1 - z2) - dT/dP2 * rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2) }
+
+              dFlux_dS[ip][ke] += dCapGrad_dS[ip][ke];  // dF/dS = { T * -dPc/dS1 , T * dPc/dS2 }                                         
             }
           }
 
@@ -554,8 +538,10 @@ public:
 
           for( integer ke = 0; ke < 2; ++ke )
           {
-            dFlux_dP[ip][ke] *= mobility[ip];   // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho1/dP * T g (z1 - z2) - dT/dP1 * rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2)] ,
-                                                //           M [-T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 * rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] }
+            dFlux_dP[ip][ke] *= mobility[ip];   // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2)] ,
+                                                //           M [-T + dT/dP2 * (P1 - P2) - drho/dP2 * T g (z1 - z2) - dT/dP2 * rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] }
+
+            dFlux_dS[ip][ke] *= mobility[ip];   // dF/dS = { M [T * -dPc/dS1] , M [T * dPc/dS2] }                                   
           }
 
           // add contribution from upstream cell mobility derivatives
@@ -564,7 +550,7 @@ public:
             dFlux_dP[ip][ke] += dMob_dP[ip][ke] * potGrad;  // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho1/dP * T g (z1 - z2) - dT/dP1 * rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2)] + dM/dP1 * DPhi ,
                                                             //           M [-T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 * rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] + dM/dP2 * DPhi }
 
-            dFlux_dS[ip][ke] += dMob_dS[ip][ke] * potGrad;  // dF/dS = { dM/dS1 * DPhi , dM/dS2 * DPhi }                                        
+            dFlux_dS[ip][ke] += dMob_dS[ip][ke] * potGrad;  // dF/dS = { M [T * -dPc/dS1] + dM/dS1 * DPhi , M [T * dPc/dS2] + dM/dS2 * DPhi }                                        
           }        
 
           // populate local flux vector and derivatives
@@ -698,7 +684,7 @@ public:
   template< typename POLICY, typename STENCILWRAPPER >
   static void
   createAndLaunch( integer const numPhases,
-                   globalIndex const rankOffset,                                    // add capillary pressure and total mass equation flags
+                   globalIndex const rankOffset,                                    
                    string const & dofKey,
                    integer const hasCapPressure,
                    integer const useTotalMassEquation,
@@ -717,18 +703,16 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using kernelType = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
-    typename kernelType::ImmiscibleMultiPhaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::ImmiscibleMultiPhaseFluidAccessors fluidAccessors( elemManager, solverName );
+    typename kernelType::ImmiscibleMultiPhaseFlowAccessors flowAccessors( elemManager, solverName );    
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
 
     kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                       flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
+                       flowAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
 };
-
 
 
 
