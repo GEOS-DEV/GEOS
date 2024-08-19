@@ -229,6 +229,9 @@ void solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
  * @tparam MATRIX_TYPE The type of the matrix `A`.
  * @tparam RHS_TYPE The type of the right-hand side vector `b`.
  * @tparam SOL_TYPE The type of the solution vector `x`.
+ * @tparam MODIFY_MATRIX Boolean flag indicating whether the input matrix `A` and vector `b` should be modified.
+ *                       If `true`, the matrix `A` and vector `b` are modified in place. If `false`, copies of 
+ *                       `A` and `b` are made, and the original data is left unchanged.
  * @param[in] A The constant matrix representing the coefficients of the system.
  * @param[in] b The constant right-hand side vector.
  * @param[out] x The solution vector. The result of solving the system `Ax = b`.
