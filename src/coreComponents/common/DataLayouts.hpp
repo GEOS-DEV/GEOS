@@ -232,6 +232,15 @@ static constexpr int USD_PHASE = LvArray::typeManipulation::getStrideOneDimensio
 /// Phase property compositional derivative unit stride dimension
 static constexpr int USD_PHASE_DS = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_DS{} );
 
+/// indices of pressure and saturation derivatives
+struct DerivativeOffset
+{
+  /// index of derivative wrt pressure
+  static integer constexpr dP = 0;
+  /// index of first derivative wrt compositions
+  static integer constexpr dS = 1;
+};
+
 } // namespace immiscibleFlow
 
 namespace compflow
