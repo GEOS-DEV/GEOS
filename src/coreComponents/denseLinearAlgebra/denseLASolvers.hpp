@@ -260,7 +260,50 @@ void solveGaussianElimination( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TY
  * 
  * This function determines the appropriate method for solving a linear system `Ax = b` based on 
  * the size of the matrix `A`. For 2x2 and 3x3 systems, specialized solvers are used. For larger systems, 
- * Gaussian elimination is employed.
+ * Gaussian elimination is employed. The matrix and the rhs are modified by the function.
+ * 
+ * @tparam N The size of the square matrix `A`.
+ * @tparam MATRIX_TYPE The type of the matrix `A`.
+ * @tparam RHS_TYPE The type of the right-hand side vector `b`.
+ * @tparam SOL_TYPE The type of the solution vector `x`.
+ * @param[in] A The constant matrix representing the coefficients of the system.
+ * @param[in] b The constant right-hand side vector.
+ * @param[out] x The solution vector. The result of solving the system `Ax = b`.
+ */
+template< std::ptrdiff_t N, 
+          typename MATRIX_TYPE,
+          typename RHS_TYPE,
+          typename SOL_TYPE >
+GEOS_HOST_DEVICE 
+inline
+void solve( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
+{
+  static_assert( N > 0, "N must be greater than 0." );
+  internal::checkSizes< N, N >( A );
+  internal::checkSizes< N >( b ); 
+  internal::checkSizes< N >( x );
+  
+  if constexpr ( N == 2 )
+  {
+    internal::solveTwoByTwoSystem( A, b, std::forward<SOL_TYPE>(x) );
+  }
+  else if constexpr( N == 3 )
+  {
+    internal::solveThreeByThreeSystem( A, b, std::forward<SOL_TYPE>(x) );
+  }
+  else
+  {
+    internal::solveGaussianElimination< N >( A, b, std::forward<SOL_TYPE>(x) );
+  }
+}
+
+/**
+ * @brief Solves a linear system using the most appropriate method based on the size of the system.
+ * 
+ * This function determines the appropriate method for solving a linear system `Ax = b` based on 
+ * the size of the matrix `A`. For 2x2 and 3x3 systems, specialized solvers are used. For larger systems, 
+ * Gaussian elimination is employed. The matrix `A` and the right-hand side vector `b` are not modified, 
+ * making this function suitable for cases where `A` and `b` need to remain constant.
  * 
  * @tparam N The size of the square matrix `A`.
  * @tparam MATRIX_TYPE The type of the matrix `A`.
@@ -296,6 +339,7 @@ void solve( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && x )
     internal::solveGaussianElimination< N >( A, b, std::forward<SOL_TYPE>(x) );
   }
 }
+
 
 };
 
