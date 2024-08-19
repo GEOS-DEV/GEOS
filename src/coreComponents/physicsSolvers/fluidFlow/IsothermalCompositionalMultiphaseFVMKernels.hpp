@@ -720,20 +720,16 @@ public:
           }
           if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::computeVelocity ) )
           {
-
-
-            //TODO (jacques) move it to Dispersion kernel
-//              GEOS_LOG_RANK(GEOS_FMT("Distance : {} \n\t {}\n",
-//                                     m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
-//                                     m_globalCellDimAccessor[seri[1]][sesri[1]][sei[1]]));
-//
-            m_stencilWrapper.computeVelocity( iconn, ip,
-                                              phaseFlux,
-                                              {m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
-                                               m_globalCellDimAccessor[seri[1]][sesri[1]][sei[1]] },
-                                              {m_ghostRank[seri[0]][sesri[0]][sei[0]],
-                                               m_ghostRank[seri[1]][sesri[1]][sei[1]] },
-                                              m_phaseVelocity );
+            if constexpr ( std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value ) {
+              computeVelocity( m_stencilWrapper,
+                               iconn, ip,
+                               phaseFlux,
+                               {m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
+                                m_globalCellDimAccessor[seri[1]][sesri[1]][sei[1]]},
+                               {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                m_ghostRank[seri[1]][sesri[1]][sei[1]]},
+                               m_phaseVelocity );
+            }
           }
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
