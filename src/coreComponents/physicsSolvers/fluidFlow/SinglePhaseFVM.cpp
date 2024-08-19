@@ -526,6 +526,8 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
     // connection
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
     {
+      std::cout << "In fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil ):" << std::endl;
+
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       if( m_isThermal )

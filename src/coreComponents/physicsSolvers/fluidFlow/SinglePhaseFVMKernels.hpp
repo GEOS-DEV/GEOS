@@ -342,11 +342,11 @@ public:
     localIndex connectionIndex = 0;
 
 
-    if ( iconn == 0 || iconn == 1) 
+    if ( iconn == 0 ) 
     {
       std::cout << "iconn_FaceBasedAssemblyKernelFactory = " << iconn << std::endl;
-      std::cout << "Trans = { " << stack.transmissibility[connectionIndex][0] << ", " << stack.transmissibility[connectionIndex][1] << " }" << std::endl;
     }
+    // std::cout << "iconn = " << iconn << ", Trans = { " << stack.transmissibility[connectionIndex][0] << ", " << stack.transmissibility[connectionIndex][1] << " }" << std::endl;
     
 
     for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
@@ -401,6 +401,9 @@ public:
           localIndex const ei  = sei[ke];
 
           real64 const pressure = m_pres[er][esr][ei];
+
+          // std::cout << "pres = " << m_pres[er][esr][ei] << std::endl;
+
           presGrad += trans[ke] * pressure;
           dPresGrad_dTrans += signPotDiff[ke] * pressure;
           dPresGrad_dP[ke] = trans[ke];
@@ -487,11 +490,17 @@ public:
         stack.localFlux[k[0]*numEqn] += m_dt * fluxVal;
         stack.localFlux[k[1]*numEqn] -= m_dt * fluxVal;
 
+        // std::cout << "k = " << k << ", k[0] = " << k[0] << ", stack.localFlux[k[0]*numEqn] = " << stack.localFlux[k[0]*numEqn] << std::endl;
+        // std::cout << "k = " << k << ", k[1] = " << k[1] << ", stack.localFlux[k[1]*numEqn] = " << stack.localFlux[k[1]*numEqn] << std::endl;
+
         for( integer ke = 0; ke < 2; ++ke )
         {
           localIndex const localDofIndexPres = k[ke] * numDof;
           stack.localFluxJacobian[k[0]*numEqn][localDofIndexPres] += m_dt * dFlux_dP[ke];
           stack.localFluxJacobian[k[1]*numEqn][localDofIndexPres] -= m_dt * dFlux_dP[ke];
+
+          // std::cout << "ke = " << ke << ", k = " << k << ", k[0] = " <<  k[0] << ", numEqn = " << numEqn << ", k[0]*numEqn = " << k[0]*numEqn << ", localDofIndexPres = " << localDofIndexPres << ", dFlux_dP[ke] = " << dFlux_dP[ke] << ", stack.localFluxJacobian[k[0]*numEqn][localDofIndexPres] = " << stack.localFluxJacobian[k[0]*numEqn][localDofIndexPres] <<  std::endl;
+          // std::cout << "ke = " << ke << ", k = " << k << ", k[1] = " <<  k[1] << ", numEqn = " << numEqn << ", k[1]*numEqn = " << k[1]*numEqn << ", localDofIndexPres = " << localDofIndexPres << ", dFlux_dP[ke] = " << dFlux_dP[ke] << ", stack.localFluxJacobian[k[1]*numEqn][localDofIndexPres] = " << stack.localFluxJacobian[k[1]*numEqn][localDofIndexPres] <<  std::endl;
         }
 
         // Customize the kernel with this lambda
@@ -518,12 +527,20 @@ public:
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
     for( integer i = 0; i < stack.numFluxElems; ++i )
     {
+      // std::cout << "stack.numFluxElems = " << stack.numFluxElems << ", iconn = " << iconn << std::endl;
+      // std::cout << "m_seri( iconn, i ) = " << m_seri( iconn, i ) << ", m_sesri( iconn, i ) = " << m_sesri( iconn, i ) << ", m_sei( iconn, i ) = " << m_sei( iconn, i ) << std::endl;
+      // std::cout << "m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] = " << m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] << std::endl;
+
       if( m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] < 0 )
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
         GEOS_ASSERT_GE( localRow, 0 );
         GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow );
+
+        // std::cout << "global row = " << globalRow << ", localRow = " << localRow << ", numEqn = " << numEqn << ", size of stack.localFlux = " << stack.localFlux.size() <<  std::endl;
+        // std::cout << "numDof = " << numDof << ", stack.stencilSize = " << stack.stencilSize << ", stack.dofColIndices[0] = " << stack.dofColIndices[0] << ", stack.dofColIndices[1] = " << stack.dofColIndices[1] << std::endl;
+        // std::cout << "i * numEqn = " << i * numEqn << ", stack.localFlux[i * numEqn] = " << stack.localFlux[i * numEqn] << ", stack.localFluxJacobian[i * numEqn] = " << stack.localFluxJacobian[i * numEqn] << std::endl;
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux[i * numEqn] );
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,

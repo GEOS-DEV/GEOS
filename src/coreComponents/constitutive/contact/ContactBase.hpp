@@ -103,8 +103,9 @@ public:
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
-                                    integer & fractureState ) const
-  { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
+                                    integer & fractureState,
+                                    real64 const pressure ) const
+  { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState, pressure ); }
 
   /**
    * @brief Update the traction with the pressure term

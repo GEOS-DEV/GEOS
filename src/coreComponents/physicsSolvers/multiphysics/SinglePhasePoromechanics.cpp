@@ -81,6 +81,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
                                                                              ParallelVector & solution,
                                                                              bool const setSparsity )
 {
+  std::cout << "In SinglePhasePoromechanics setupSystem: " << std::endl;
+  
   if( this->m_precond )
   {
     this->m_precond->clear();

@@ -35,6 +35,8 @@
 #include "physicsSolvers/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+
 namespace geos
 {
 
@@ -195,6 +197,8 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
+
+  std::cout << "SolidMechanicsEmbeddedFractures::setupSystem: " << std::endl;
 
   if( !m_useStaticCondensation )
   {
@@ -771,6 +775,10 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView2d< real64 const > const & traction = subRegion.getField< fields::contact::traction >();
       arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
+      arrayView1d< real64 const > const & pressure = subRegion.template getField< fields::flow::pressure >();
+
+      std::cout << "In SolidMechanicsEmbeddedFractures::updateConfiguration << size of pres = " << pressure.size() << std::endl;
+
       string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
@@ -786,7 +794,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
-            contactWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
+            contactWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe], pressure[kfe] );
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
           }
         } );

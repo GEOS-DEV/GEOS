@@ -593,8 +593,6 @@ struct SolutionCheckKernel
         localIndex const lid = dofNumber[ei] - rankOffset;
         real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
 
-        // std::cout << "Neg pres at [" << ei << "], pres = " << newPres << ", pres_k = " << pres[ei] << std::endl;
-
         if( newPres < 0.0 )
         {
           std::cout << "Neg pres at [" << ei << "], pres = " << newPres << ", pres_k = " << pres[ei] << ", size = " << dofNumber.size() << std::endl;

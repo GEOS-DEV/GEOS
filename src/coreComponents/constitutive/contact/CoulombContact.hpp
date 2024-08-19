@@ -89,7 +89,16 @@ public:
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
-                                    integer & fractureState ) const override final;
+                                    integer & fractureState,
+                                    real64 const pressure ) const override final;
+
+
+  // GEOS_HOST_DEVICE
+  // inline
+  // void updateFractureStateUsingEffectiveTraction( localIndex const k,
+  //                                                 arraySlice1d< real64 const > const & dispJump,
+  //                                                 arraySlice1d< real64 const > const & tractionVector,
+  //                                                 integer & fractureState ) const;
 
 private:
 
@@ -215,11 +224,11 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
                                                     arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
 
-  if (k == 0 || k == 79)
-  {
-    std::cout << "In CoulombContactUpdates::computeTraction: " << std::endl;
-    std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << ", OldDispJump[0] = " << oldDispJump[0] << std::endl;
-  }
+  // if (k == 0 || k == 79)
+  // {
+  //   std::cout << "In CoulombContactUpdates::computeTraction: " << std::endl;
+  //   std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << ", OldDispJump[0] = " << oldDispJump[0] << std::endl;
+  // }
 
   bool const isOpen = fractureState == fields::contact::FractureState::Open;
 
@@ -311,17 +320,19 @@ GEOS_HOST_DEVICE
 inline void CoulombContactUpdates::updateFractureState( localIndex const k,
                                                         arraySlice1d< real64 const > const & dispJump,
                                                         arraySlice1d< real64 const > const & tractionVector,
-                                                        integer & fractureState ) const
+                                                        integer & fractureState,
+                                                        real64 const pressure ) const
 {
   using namespace fields::contact;
 
-  if (k == 0 || k == 79)
+  if (k == 0)
   {
-    std::cout << "In CoulombContactUpdates::updateFractureState: " << std::endl;
-    std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << std::endl;
+    std::cout << "In CoulombContactUpdates::updateFractureState, pressure = " << pressure << std::endl;
+    // std::cout << "k = " << k << ", dispJump[0] = " << dispJump[0] << std::endl;
   }
 
-  if( dispJump[0] >  -m_displacementJumpThreshold )
+  if ( dispJump[0] >  -m_displacementJumpThreshold ) //  original
+  // if (tractionVector[0] > 2400 )
   {
     fractureState = FractureState::Open;
     m_elasticSlip[k][0] = 0.0;
@@ -333,28 +344,38 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
   {
     real64 const tau[2] = { tractionVector[1],
                             tractionVector[2] };
-    real64 const tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
+    // real64 const tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
+    real64 tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
+
+    // // add pressure to normal traction
+    // tractionVector[0] += pressure;
 
     real64 dLimitTau_dNormalTraction;
-    real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
-                                                                dLimitTau_dNormalTraction );
+    // real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
+    //                                                             dLimitTau_dNormalTraction );
+    real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0] + pressure, // pressure added to convert to effective traction, biotCoeff = 1 is assumed
+                                                           dLimitTau_dNormalTraction );
 
-  if (k == 0 || k == 79)
-  {
-    std::cout << "k = " << k << ", tauNorm = " << tauNorm << std::endl;
-    std::cout << "k = " << k << ", limitTau = " << limitTau << std::endl;
-  }
+    real64 slidingCheckTolerance = 0.05;
+    if( fractureState == FractureState::Stick && tauNorm >= limitTau )
+    {
+      tauNorm *= (1.0 - slidingCheckTolerance);
+    }
+    else if( fractureState != FractureState::Stick && tauNorm <= limitTau )
+    {
+      tauNorm *= (1.0 + slidingCheckTolerance);
+    }
 
     // Yield function (not necessary but makes it clearer)
     real64 const yield = tauNorm - limitTau;
 
     if (yield < 0)
     {
-      std::cout << "k = " << k << ". normal_dispJump = " << dispJump[0] << ", fracture state = stick" << std::endl;
+      std::cout << "k = " << k << ", normal traction = " << tractionVector[0] + pressure << ", normal_dispJump = " << dispJump[0] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau <<  ", fracture state = stick" << std::endl;
     }
     else
     {
-      std::cout << "k = " << k << ". normal_dispJump = " << dispJump[0] << ", fracture state = slip" << std::endl;
+      std::cout << "k = " << k << ", normal traction = " << tractionVector[0] + pressure << ", normal_dispJump = " << dispJump[0] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau << ", fracture state = slip" << std::endl;
     }
     fractureState = yield < 0 ? FractureState::Stick : FractureState::Slip;
   }

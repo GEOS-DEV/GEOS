@@ -131,6 +131,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 
   GEOS_MARK_FUNCTION;
 
+  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::setupSystem :" << std::endl;
+
   GEOS_UNUSED_VAR( setSparsity );
 
   dofManager.setDomain( domain );
@@ -164,6 +166,11 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
+
+  // for( localIndex localRow = 0; localRow < rowLengths.size(); ++localRow )
+  // {
+  //   std::cout << "row = " << localRow << ", row length = " << rowLengths[localRow] << std::endl;
+  // }
 
   // Finally, steal the pattern into a CRS matrix
   localMatrix.setName( this->getName() + "/localMatrix" );
@@ -406,7 +413,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
   //updateState( domain );
 
   std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::assembleSystem " << std::endl;
-  std::cout <<"size of localrhs = " << localRhs.size() << std::endl;
+  std::cout << "size of localrhs = " << localRhs.size() << std::endl;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

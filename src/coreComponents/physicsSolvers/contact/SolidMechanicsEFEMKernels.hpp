@@ -310,7 +310,7 @@ struct StateUpdateKernel
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      std::cout << "k = " << k << ", fractureState = " << fractureState[k] << std::endl;
+      // std::cout << "k = " << k << ", fractureState = " << fractureState[k] << std::endl;
 
       contactWrapper.computeTraction( k, oldJump[k], jump[k],
                                       fractureState[k],

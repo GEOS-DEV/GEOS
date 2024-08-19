@@ -123,7 +123,7 @@ kernelLaunch( localIndex const numElems,
     localIndex k = kernelComponent.m_fracturedElems[i];
     typename KERNEL_TYPE::StackVariables stack;
 
-    std::cout << "k = " << k << std::endl;
+    // std::cout << "k = " << k << std::endl;
 
     kernelComponent.setup( k, stack );
     for( integer q=0; q<numQuadraturePointsPerElem; ++q )
@@ -149,17 +149,17 @@ setup( localIndex const k,
 {
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
-  std::cout << "size of m_elementVolumeCell = " << m_elementVolumeCell.size() << std::endl;
-  std::cout << "size of m_elementVolumeFrac = " << m_elementVolumeFrac.size() << std::endl;
+  // std::cout << "size of m_elementVolumeCell = " << m_elementVolumeCell.size() << std::endl;
+  // std::cout << "size of m_elementVolumeFrac = " << m_elementVolumeFrac.size() << std::endl;
 
   stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolumeCell[k];
   // stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolumeFrac[embSurfIndex];
 
-  std::cout << "hInv = " << stack.hInv << std::endl;
-  std::cout << "m_surfaceArea[embSurfIndex] = " << m_surfaceArea[embSurfIndex] << std::endl;
-  std::cout << "m_elementVolume[k] = " << m_elementVolumeCell[k] << std::endl;
-  std::cout << "m_elementVolume[embSurfIndex] = " << m_elementVolumeFrac[embSurfIndex] << std::endl;
-  std::cout << "embSurfIndex = " << embSurfIndex << std::endl;
+  // std::cout << "hInv = " << stack.hInv << std::endl;
+  // std::cout << "m_surfaceArea[embSurfIndex] = " << m_surfaceArea[embSurfIndex] << std::endl;
+  // std::cout << "m_elementVolume[k] = " << m_elementVolumeCell[k] << std::endl;
+  // std::cout << "m_elementVolume[embSurfIndex] = " << m_elementVolumeFrac[embSurfIndex] << std::endl;
+  // std::cout << "embSurfIndex = " << embSurfIndex << std::endl;
 
   for( localIndex a=0; a<numNodesPerElem; ++a )
   {
@@ -367,8 +367,8 @@ complete( localIndex const k,
   //   std::cout << "localDispResidual[" << i << "] = " << stack.localDispResidual[i] << std::endl;
   // }
 
-  std::cout << "printing m_matrixPressure[ k ]: " << std::endl;
-  std::cout << "m_matrixPressure[" << k << "] = " << m_matrixPressure[ k ] << std::endl;
+  // std::cout << "printing m_matrixPressure[ k ]: " << std::endl;
+  // std::cout << "m_matrixPressure[" << k << "] = " << m_matrixPressure[ k ] << std::endl;
   
   // std::cout << "printing localKwpm: " << std::endl;
   // for (int i = 0; i < 3; i++)
@@ -380,7 +380,7 @@ complete( localIndex const k,
   LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] );
 
   // rm later!!
-  // std::cout << "printing localJumpResidual: " << std::endl;
+  // std::cout << "printing localJumpResidual after matrix pressure contribution added: " << std::endl;
   // for (int i = 0; i < 3; i++)
   // {
   //   std::cout << "localJumpResidual[" << i << "] = " << stack.localJumpResidual[i] << std::endl;
@@ -389,24 +389,31 @@ complete( localIndex const k,
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
   // rm later!!
-  // std::cout << "printing tractionVec: " << std::endl;
-  // for (int i = 0; i < 3; i++)
-  // {
-  //   std::cout << "tractionVec[" << i << "] = " << stack.tractionVec[i] << std::endl;
-  // }
+  std::cout << "printing tractionVec: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "tractionVec[" << i << "] = " << stack.tractionVec[i] << std::endl;
+  }
 
   // std::cout << "printing dTractiondw: " << std::endl;
   // for (int i = 0; i < 3; i++)
   // {
   //   for (int j = 0; j < 3; j++)
   //   {
-  //     std::cout << "dTractiondw[" << i << "," << j << "] = " << stack.localKuw[i][j] << std::endl;
+  //     std::cout << "dTractiondw[" << i << "," << j << "] = " << stack.dTractiondw[i][j] << std::endl;
   //   }
   // }
 
   // Add traction contribution tranction
   LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.tractionVec, -1 );
   LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
+
+  // rm later!!
+  // std::cout << "printing localJumpResidual after traction added added: " << std::endl;
+  // for (int i = 0; i < 3; i++)
+  // {
+  //   std::cout << "localJumpResidual[" << i << "] = " << stack.localJumpResidual[i] << std::endl;
+  // }
 
   // JumpFractureFlowJacobian
   real64 const localJumpFracPressureJacobian = -m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
@@ -421,22 +428,22 @@ complete( localIndex const k,
   real64 const localFlowFlowJacobian = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * newVolume;
 
 
-  std::cout << "size of m_fluidDensity = " << m_fluidDensity.size() << std::endl;
-  std::cout << "size of m_fluidDensity_n = " << m_fluidDensity_n.size() << std::endl;
-  std::cout << "size of m_deltaVolume = " << m_deltaVolume.size() << std::endl;
-  std::cout << "size of m_surfaceArea = " << m_surfaceArea.size() << std::endl;
-  std::cout << "size of m_dFluidDensity_dPressure = " << m_dFluidDensity_dPressure.size() << std::endl;
-  std::cout << "size of m_dTraction_dPressure = " << m_dTraction_dPressure.size() << std::endl;
+  // std::cout << "size of m_fluidDensity = " << m_fluidDensity.size() << std::endl;
+  // std::cout << "size of m_fluidDensity_n = " << m_fluidDensity_n.size() << std::endl;
+  // std::cout << "size of m_deltaVolume = " << m_deltaVolume.size() << std::endl;
+  // std::cout << "size of m_surfaceArea = " << m_surfaceArea.size() << std::endl;
+  // std::cout << "size of m_dFluidDensity_dPressure = " << m_dFluidDensity_dPressure.size() << std::endl;
+  // std::cout << "size of m_dTraction_dPressure = " << m_dTraction_dPressure.size() << std::endl;
 
-  std::cout << "embSurfIndex = " << embSurfIndex << std::endl;
-  std::cout << "dens_n = " << m_fluidDensity_n( embSurfIndex, 0 ) << std::endl;
-  std::cout << "dens = " << m_fluidDensity( embSurfIndex, 0 ) << std::endl;
-  std::cout << "vol = " << m_elementVolumeFrac( embSurfIndex ) << std::endl;
-  std::cout << "newVolume = " << newVolume << std::endl;
-  std::cout << "localFlowResidual = " << localFlowResidual << std::endl;
-  std::cout << "m_fluidDensity * m_surfaceArea = " << m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ] << std::endl;
-  std::cout << "localFlowJumpJacobian = " << localFlowJumpJacobian << std::endl;
-  std::cout << "localFlowFlowJacobian = " << localFlowFlowJacobian << std::endl;
+  // std::cout << "embSurfIndex = " << embSurfIndex << std::endl;
+  // std::cout << "dens_n = " << m_fluidDensity_n( embSurfIndex, 0 ) << std::endl;
+  // std::cout << "dens = " << m_fluidDensity( embSurfIndex, 0 ) << std::endl;
+  // std::cout << "vol = " << m_elementVolumeFrac( embSurfIndex ) << std::endl;
+  // std::cout << "newVolume = " << newVolume << std::endl;
+  // std::cout << "localFlowResidual = " << localFlowResidual << std::endl;
+  // std::cout << "m_fluidDensity * m_surfaceArea = " << m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ] << std::endl;
+  // std::cout << "localFlowJumpJacobian = " << localFlowJumpJacobian << std::endl;
+  // std::cout << "localFlowFlowJacobian = " << localFlowFlowJacobian << std::endl;
 
   // std::cout << "nUdof = " << nUdof << std::endl;
 

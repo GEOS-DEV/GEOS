@@ -2261,15 +2261,9 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
 
-          if (kfe == 0) 
-          {
-            std::cout << "kfe = " << kfe <<", ghostRank[kfe] = " << ghostRank[kfe] << std::endl;
-            std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << std::endl;
-            std::cout << "kfe = " << kfe <<", dispJump[kfe][0] = " << dispJump[kfe][0] << std::endl;
-            std::cout << "kfe = " << kfe <<", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << std::endl;
-            std::cout << "kfe = " << kfe <<", traction[kfe][0] = " << traction[kfe][0] << std::endl;
-            std::cout << "kfe = " << kfe <<", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-          }
+          std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
+          ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
+          ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
 
           if( ghostRank[kfe] < 0 )
           {
@@ -2298,6 +2292,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
 
+              std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
+
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
                 contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
@@ -2312,11 +2308,11 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
 
-              if (kfe == 0)
-              {
-                std::cout << "kfe = " << kfe <<", currentTau[kfe] = " << currentTau << std::endl;
+              // if (kfe == 0)
+              // {
+                std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
                 std::cout << "kfe = " << kfe <<", limitTau[kfe] = " << limitTau << std::endl;
-              }
+              // }
 
               if( currentTau > limitTau )
               {

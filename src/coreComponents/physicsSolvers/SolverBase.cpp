@@ -248,6 +248,8 @@ bool SolverBase::execute( real64 const time_n,
   real64 dtRemaining = dt;
   real64 nextDt = dt;
 
+  std::cout << "In SolverBase::execute: " << std::endl;
+
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
@@ -732,6 +734,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
+  std::cout << "In SolverBase::nonlinearImplicitStep: " << std::endl;
+
   integer const maxNumberDtCuts = m_nonlinearSolverParameters.m_maxTimeStepCuts;
   real64 const dtCutFactor = m_nonlinearSolverParameters.m_timeStepCutFactor;
 
@@ -842,6 +846,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                        integer const cycleNumber,
                                        DomainPartition & domain )
 {
+  std::cout << "In SolverBase::solveNonlinearSystem: " << std::endl;
+
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
   integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
   integer & configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
@@ -873,6 +879,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       arrayView1d< real64 > const localRhs = m_rhs.open();
 
+      // std::cout << "Linear System just before assembleSystem: " << std::endl;
+      // m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+      // debugOutputJacobian( time_n, cycleNumber, newtonIter, m_matrix );
+
       // call assemble to fill the matrix and the rhs
       assembleSystem( time_n,
                       stepDt,
@@ -881,6 +891,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                       m_localMatrix.toViewConstSizes(),
                       localRhs );
 
+      // std::cout << "Linear System just after assemble system and just before applyBoundaryConditions: " << std::endl;
+      // m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+      // debugOutputJacobian( time_n, cycleNumber, newtonIter, m_matrix );
+
       // apply boundary conditions to system
       applyBoundaryConditions( time_n,
                                stepDt,
@@ -888,6 +902,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                m_dofManager,
                                m_localMatrix.toViewConstSizes(),
                                localRhs );
+
+      // std::cout << "Linear System just after debugOutputSystem: " << std::endl;
+      // m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+      // debugOutputJacobian( time_n, cycleNumber, newtonIter, m_matrix );
 
       m_rhs.close();
 
@@ -1003,6 +1021,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
         m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
       }
 
+      // std::cout << "Linear System just before Linear solve: " << std::endl;
+
       // Output the linear system matrix/rhs for debugging purposes
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
@@ -1081,6 +1101,8 @@ void SolverBase::setupSystem( DomainPartition & domain,
                               bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
+
+  std::cout << "In SolverBase::setupSystem : " << std::endl;
 
   dofManager.setDomain( domain );
 
@@ -1191,6 +1213,25 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        m_writeLinearSystem == 1,
                        m_writeLinearSystem >= 2 );
 }
+
+// void SolverBase::debugOutputJacobian( real64 const & time,
+//                                       integer const cycleNumber,
+//                                       integer const nonlinearIteration,
+//                                       ParallelMatrix const & matrix ) const
+// {
+//   // special case when flag value > 2
+//   if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
+//     return;
+
+//   debugOutputLAObject( matrix,
+//                        time,
+//                        cycleNumber,
+//                        nonlinearIteration,
+//                        getName() + "_mat",
+//                        "System matrix",
+//                        m_writeLinearSystem == 1,
+//                        m_writeLinearSystem >= 2 );
+// }
 
 void SolverBase::debugOutputSolution( real64 const & time,
                                       integer const cycleNumber,

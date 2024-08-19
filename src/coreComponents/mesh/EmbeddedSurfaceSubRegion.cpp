@@ -93,6 +93,9 @@ void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( arrayView2d<
 
   // update volume
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
+
+  // std::cout << "In EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities: " << std::endl;
+  // std::cout << "k = " << k << ", m_elementArea[ k ] " << m_elementArea[ k ] << ", m_elementVolume[k] = " << m_elementVolume[k] << std::endl;
 }
 
 bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex,

@@ -62,6 +62,14 @@ DECLARE_FIELD( totalDisplacement,
                WRITE_AND_READ,
                "Total displacements at the nodes" );
 
+// DECLARE_FIELD( totalDisplacement_n,
+//                "totalDisplacement_n",
+//                array2dLayoutTotalDisplacement,
+//                0,
+//                LEVEL_0,
+//                WRITE_AND_READ,
+//                "Total displacements at the nodes at time level n" );
+
 DECLARE_FIELD( totalBubbleDisplacement,
                "totalBubbleDisplacement",
                array2d< real64 >,
