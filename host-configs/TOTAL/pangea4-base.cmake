@@ -63,3 +63,6 @@ set( RAJA_ENABLE_TBB    OFF         CACHE BOOL "" FORCE )
 
 set( ENABLE_PYGEOSX         ON CACHE BOOL "" )
 set( ENABLE_VTK_WRAP_PYTHON ON CACHE BOOL "" )
+
+set(GEOSX_TPL_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../thirdPartyLibs/install-pangea4-gcc12.1-hpcxompi2.17.1-onemkl2023.2.0-release" CACHE PATH "" FORCE)
+
