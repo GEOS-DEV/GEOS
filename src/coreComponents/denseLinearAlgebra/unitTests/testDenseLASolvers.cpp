@@ -14,17 +14,24 @@
  */
 
 #include "denseLinearAlgebra/denseLASolvers.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "testUtils.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 
 #include <random>
 
-using namespace geos;
+namespace geos
+{
 
+namespace denseLinearAlgebra
+{
+
+namespace testing
+{
 
 constexpr real64 machinePrecision = 1.0e2 * LvArray::NumericLimits< real64 >::epsilon;
-
 
 template< std::ptrdiff_t N >
 struct LinearSystem
@@ -117,27 +124,44 @@ public:
   void test_solve()
   {
     InvertibleLinearSystem< size > LS( 2024 );
-    real64 sol[size];
 
-    bool const success = denseLinearAlgebra::solve< size >( LS.matrix, LS.rhs, sol );
-
-    EXPECT_TRUE( success );
-
-    for( std::ptrdiff_t i = 0; i < size; ++i )
+    forAll< parallelDevicePolicy<> >( 1, GEOS_HOST_DEVICE [=]( int )
     {
-      EXPECT_NEAR( sol[i],
-                   LS.solution[i],
-                   machinePrecision );
-    }
+      real64 sol[size];
+      real64 matrix[size][size];
+      real64 rhs[size];
+
+      LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
+      LvArray::tensorOps::copy< size >( rhs, LS.rhs );
+      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+
+      EXPECT_TRUE( success );
+
+      for( std::ptrdiff_t i = 0; i < size; ++i )
+      {
+        PORTABLE_EXPECT_NEAR( sol[i],
+                              LS.solution[i],
+                              machinePrecision );
+      }
+    } );
   }
   void test_singularSystem()
   {
     SingularLinearSystem< size > LS( 2024 );
-    real64 sol[size];
 
-    bool const success = denseLinearAlgebra::solve< size >( LS.matrix, LS.rhs, sol );
+    forAll< parallelDevicePolicy<> >( 1, GEOS_HOST_DEVICE [=]( int )
+    {
 
-    EXPECT_FALSE( success );
+      real64 sol[size];
+      real64 matrix[size][size];
+      real64 rhs[size];
+
+      LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
+      LvArray::tensorOps::copy< size >( rhs, LS.rhs );
+      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+
+      EXPECT_FALSE( success );
+    } );
   }
 
 };
@@ -182,3 +206,10 @@ int main( int argc, char * * argv )
   int const result = RUN_ALL_TESTS();
   return result;
 }
+
+
+} // testing
+
+} // denseLinearAlgebra
+
+} // namespace geos
