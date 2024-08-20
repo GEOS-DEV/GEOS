@@ -175,6 +175,8 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   if( cycleNumber == 0 && time_n <= 0 )
   {
     initializeNewFractureFields( domain );
+
+    flowSolver()->initializePostInitialConditionsPreSubGroups();
   }
 
   real64 dtReturn = dt;
@@ -868,6 +870,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
     // update the stencil weights using the updated hydraulic aperture
     flowSolver()->updateStencilWeights( domain );
   }
+
+  flowSolver()->updateState( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
