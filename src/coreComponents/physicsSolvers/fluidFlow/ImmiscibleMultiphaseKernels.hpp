@@ -71,11 +71,13 @@ public:
   using ImmiscibleMultiphaseFlowAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
-                      fields::flow::gravityCoefficient,
-                      fields::immiscibleMultiphaseFlow::phaseDensity,
-                      fields::immiscibleMultiphaseFlow::dPhaseDensity,                      
+                      fields::flow::gravityCoefficient,                      
                       fields::immiscibleMultiphaseFlow::phaseMobility,
-                      fields::immiscibleMultiphaseFlow::dPhaseMobility >;              
+                      fields::immiscibleMultiphaseFlow::dPhaseMobility >;   
+
+  using MultiphaseFluidAccessors =
+    StencilAccessors< fields::immiscibleMultiphaseFlow::phaseDensity,
+                              fields::immiscibleMultiphaseFlow::dPhaseDensity >;                               
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
@@ -104,7 +106,8 @@ public:
   FaceBasedAssemblyKernelBase( integer const numPhases,
                                globalIndex const rankOffset,
                                DofNumberAccessor const & dofNumberAccessor,
-                               ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,                               
+                               ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors, 
+                               MultiphaseFluidAccessors const & fluidAccessors,                              
                                CapPressureAccessors const & capPressureAccessors,
                                PermeabilityAccessors const & permeabilityAccessors,
                                real64 const & dt,
@@ -123,15 +126,15 @@ public:
     m_pres( multiPhaseFlowAccessors.get( fields::flow::pressure {} ) ),
     m_mob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
     m_dMob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),    
-    m_dens( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseDensity {} ) ),
-    m_dDens_dPres( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseDensity {} ) ),
+    m_dens( fluidAccessors.get( fields::immiscibleMultiphaseFlow::phaseDensity {} ) ),
+    m_dDens_dPres( fluidAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseDensity {} ) ),
     m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
     m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs ),
     m_hasCapPressure ( hasCapPressure ),
     m_useTotalMassEquation ( useTotalMassEquation )
-  {}
+  {GEOS_UNUSED_VAR(m_useTotalMassEquation);}
 
 protected:
 
@@ -231,6 +234,7 @@ public:
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
+                           MultiphaseFluidAccessors const & fluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            real64 const & dt,
@@ -241,7 +245,8 @@ public:
     : FaceBasedAssemblyKernelBase( numPhases,
                                    rankOffset,
                                    dofNumberAccessor,
-                                   multiPhaseFlowAccessors,                                   
+                                   multiPhaseFlowAccessors, 
+                                   fluidAccessors,                                  
                                    capPressureAccessors,
                                    permeabilityAccessors,
                                    dt,
@@ -371,26 +376,26 @@ public:
       for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
       {
         // clear working arrays
-        real64 densMean[m_numPhases]{};
-        real64 dDensMean_dP[m_numPhases][2]{};
+        real64 densMean[numEqn]{};
+        real64 dDensMean_dP[numEqn][2]{};
 
-        real64 presGrad[m_numPhases]{};           
-        real64 dPresGrad_dP[m_numPhases][2]{};
+        real64 presGrad[numEqn]{};           
+        real64 dPresGrad_dP[numEqn][2]{};
 
-        real64 gravHead[m_numPhases]{};
-        real64 dGravHead_dP[m_numPhases][2]{};
+        real64 gravHead[numEqn]{};
+        real64 dGravHead_dP[numEqn][2]{};
 
-        real64 capGrad[m_numPhases]{};
-        real64 dCapGrad_dP[m_numPhases][2]{};
-        real64 dCapGrad_dS[m_numPhases][2]{};
+        real64 capGrad[numEqn]{};
+        real64 dCapGrad_dP[numEqn][2]{};
+        real64 dCapGrad_dS[numEqn][2]{};
         
-        real64 fluxVal[m_numPhases]{};
-        real64 dFlux_dP[m_numPhases][2]{};
-        real64 dFlux_dS[m_numPhases][2]{};
+        real64 fluxVal[numEqn]{};
+        real64 dFlux_dP[numEqn][2]{};
+        real64 dFlux_dS[numEqn][2]{};
 
-        real64 mobility[m_numPhases]{};
-        real64 dMob_dP[m_numPhases][2]{};
-        real64 dMob_dS[m_numPhases][2]{};
+        real64 mobility[numEqn]{};
+        real64 dMob_dP[numEqn][2]{};
+        real64 dMob_dS[numEqn][2]{};
 
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
         real64 const dTrans_dP[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };        
@@ -407,8 +412,8 @@ public:
           for( integer ke = 0; ke < 2; ++ke )
           {
             // density
-            real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];         // r = rho1 || rho2
-            real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip];  // dr/dP = dr1/dP1 || dr2/dP
+            real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][ip];         // r = rho1 || rho2
+            real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][ip];  // dr/dP = dr1/dP1 || dr2/dP
 
             // average density and derivatives
             densMean[ip] += 0.5 * density;          // rho = (rho1 + rho2) / 2
@@ -436,7 +441,7 @@ public:
             dPresGrad_dP[ip][ke] = trans[ke];                 // dDPv/dP = { T , -T }
 
             real64 const gravD = trans[ke] * m_gravCoef[er][esr][ei];       // D = T g z1 || -T g z2
-            real64 const pot = trans[ke] * pressure - densMean[ip] * gravD; // Phi = T P1 - rho T g z1 || -T P2 + rho T g z2
+            real64 pot = trans[ke] * pressure - densMean[ip] * gravD; // Phi = T P1 - rho T g z1 || -T P2 + rho T g z2
 
             gravHead[ip] += densMean[ip] * gravD;                                         // DPg = rho (T g z1 - T g z2) = T rho g (z1 - z2)
             dGravHead_dTrans += signPotDiff[ke] * densMean[ip] * m_gravCoef[er][esr][ei]; // dDPg/dT = rho g z1 - rho g z2 = rho g (z1 - z2)
@@ -474,7 +479,7 @@ public:
           // *** upwinding ***
 
           // compute potential gradient
-          real64 const potGrad = presGrad[ip] - gravHead[ip]; // DPhi = T (P1 - P2) - T rho g (z1 - z2)
+          real64 potGrad = presGrad[ip] - gravHead[ip]; // DPhi = T (P1 - P2) - T rho g (z1 - z2)
           if ( m_hasCapPressure )
           {
             potGrad += capGrad[ip]; // DPhi = T (P1 - P2) - T rho g (z1 - z2) + T (-Pc1 + Pc2)
@@ -492,18 +497,18 @@ public:
           {
             localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) ); // 1 upwind -> k_up = 0 || 2 upwind -> k_up = 1
 
-            mobility[ip] = m_mob[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip];                     // M = Mupstream 
-            dMob_dP[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip][Deriv::dP];    // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
-            dMob_dS[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip][Deriv::dS];    // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
+            mobility[ip] = m_mob[seri[k_up]][sesri[k_up]][sei[k_up]][ip];                     // M = Mupstream 
+            dMob_dP[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][ip][Deriv::dP];    // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
+            dMob_dS[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][ip][Deriv::dS];    // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
           }
           else  // perform smoothing
           {
             real64 const mobWeights[2] = { alpha, 1.0 - alpha };
             for( integer ke = 0; ke < 2; ++ke )
             {
-              mobility[ip] += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]][0][ip];               // M = alpha * M1 + (1 - alpha) * M2
-              dMob_dP[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP]; // dM/dP = {alpha * dM1/dP1 , (1 - alpha) * dM2/dP2}
-              dMob_dS[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dS]; // dM/dP = {alpha * dM1/dS1 , (1 - alpha) * dM2/dS2}
+              mobility[ip] += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]][ip];               // M = alpha * M1 + (1 - alpha) * M2
+              dMob_dP[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP]; // dM/dP = {alpha * dM1/dP1 , (1 - alpha) * dM2/dP2}
+              dMob_dS[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dS]; // dM/dP = {alpha * dM1/dS1 , (1 - alpha) * dM2/dS2}
             }
           }
 
@@ -585,7 +590,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >  // should change to multiphase
+  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >                                  // should change to multiphase
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
@@ -703,12 +708,13 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using kernelType = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
-    typename kernelType::ImmiscibleMultiPhaseFlowAccessors flowAccessors( elemManager, solverName );    
+    typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
+    typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );    
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
 
     kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                       flowAccessors, capPressureAccessors, permAccessors,
+                       flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
@@ -726,7 +732,7 @@ class PhaseMobilityKernel
 {
 public:
 
-  //using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;  
+  //using Base = MultiphaseFluidAccessors::PropertyKernelBase< NUM_COMP >;  
 
   /// Compile time value for the number of phases
   static constexpr integer numPhase = NUM_PHASE;
@@ -786,10 +792,10 @@ public:
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
-      real64 const density = m_phaseDens[ei][0][ip];
-      real64 const dDens_dP = m_dPhaseDens[ei][0][ip];
-      real64 const viscosity = m_phaseVisc[ei][0][ip];
-      real64 const dVisc_dP = m_dPhaseVisc[ei][0][ip];
+      real64 const density = m_phaseDens[ei][ip];
+      real64 const dDens_dP = m_dPhaseDens[ei][ip];
+      real64 const viscosity = m_phaseVisc[ei][ip];
+      real64 const dVisc_dP = m_dPhaseVisc[ei][ip];
 
       real64 const relPerm = m_phaseRelPerm[ei][0][ip];    
 
@@ -800,7 +806,7 @@ public:
 
       for( integer jp = 0; jp < numPhase; ++jp )                                                  // check if we need numPhase or numPhase-1 derivatives
       {
-        real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][jp];        
+        real64 const dRelPerm_dS = m_dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][jp];        
         dPhaseMob[ip][Deriv::dS+jp] = dRelPerm_dS * density / viscosity;                                      
       }            
 

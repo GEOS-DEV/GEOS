@@ -21,6 +21,7 @@
 #define GEOS_COMMON_DATALAYOUTS_HPP_
 
 #include "common/GeosxConfig.hpp"
+#include "common/DataTypes.hpp"
 
 #include "LvArray/src/Array.hpp"
 #include "RAJA/RAJA.hpp"
@@ -236,9 +237,9 @@ static constexpr int USD_PHASE_DS = LvArray::typeManipulation::getStrideOneDimen
 struct DerivativeOffset
 {
   /// index of derivative wrt pressure
-  static integer constexpr dP = 0;
+  static int constexpr dP = 0;
   /// index of first derivative wrt compositions
-  static integer constexpr dS = 1;
+  static int constexpr dS = 1;
 };
 
 } // namespace immiscibleFlow

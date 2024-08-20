@@ -53,6 +53,14 @@ DECLARE_FIELD( phaseVolumeFraction_n,
                WRITE_AND_READ,
                "Phase volume fraction at the previous converged time step" );
 
+DECLARE_FIELD( bcPhaseVolumeFraction,
+               "bcPhaseVolumeFraction",
+               array2dLayoutPhase,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Boundary condition phase volume fraction" );               
+
 DECLARE_FIELD( phaseMass,
                "phaseMass",
                array2dLayoutPhase,
