@@ -130,7 +130,6 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
                                                                    localIndex const ei,
                                                                    CellElementRegion const & )
   {
-    std::cout << "computeCellStencil " << ei << std::endl;
     regionFilter.insert( ei );
   } );
 
