@@ -302,7 +302,7 @@ CellElementStencilTPFAWrapper::
 
   GEOS_UNUSED_VAR( dCoeff_dVar );
   real64 halfWeight[2];
-  real64 dHalfWeight_dVar[2];
+  // real64 dHalfWeight_dVar[2];
 
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
