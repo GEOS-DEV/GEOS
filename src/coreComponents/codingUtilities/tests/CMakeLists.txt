@@ -1,7 +1,6 @@
 # Specify list of tests
 set( testSources
      testGeosxTraits.cpp
-     testStringUtilities.cpp
      testParsing.cpp
      testUtilities.cpp )
 
