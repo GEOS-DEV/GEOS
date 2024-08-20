@@ -144,7 +144,8 @@ ProblemManager::ProblemManager( conduit::Node & root ):
 ProblemManager::~ProblemManager()
 {
   {
-    // This is a dummy to force the inclusion of constitutiveDrivers in the linking process for systems that have "--no-as-needed" as a default.
+    // This is a dummy to force the inclusion of constitutiveDrivers in the linking process for systems that have "--no-as-needed" as a
+    // default.
     // The "correct" way to do this is in cmake using:
     //   target_link_options(constitutiveDrivers INTERFACE "SHELL:LINKER:--no-as-needed")
     // but this applies "--no-as-needed" to all targets that link to constitutiveDrivers, which is not what we want.

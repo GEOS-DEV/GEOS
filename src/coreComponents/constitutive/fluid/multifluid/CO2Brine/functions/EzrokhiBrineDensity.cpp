@@ -52,14 +52,11 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   makeCoefficients( inputPara );
   m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
   m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
-
-  GEOS_UNUSED_VAR( printTable );
-
-  // if( printTable )
-  // {
-  // m_waterSatDensityTable->print( m_waterSatDensityTable->getName() );
-  // m_waterSatPressureTable->print( m_waterSatPressureTable->getName() );
-  // }
+  if( printTable )
+  {
+    m_waterSatDensityTable->print( m_waterSatDensityTable->getName() );
+    m_waterSatPressureTable->print( m_waterSatPressureTable->getName() );
+  }
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )

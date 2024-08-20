@@ -124,6 +124,17 @@ public:
    */
   void setInputVarNames( string_array inputVarNames ) { m_inputVarNames = std::move( inputVarNames ); }
 
+  /**
+   * @brief Get the output directory for function output
+   * @return a string containing the output directory
+   */
+  static string const & getOutputDirectory();
+
+  /**
+   * @brief Set the output directory for function output
+   * @param dir The output directory
+   */
+  static void setOutputDirectory( string const & outputDir );
 
 protected:
   /// names for the input variables
