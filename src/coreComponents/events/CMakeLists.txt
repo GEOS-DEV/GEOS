@@ -24,7 +24,7 @@ set( events_sources
      tasks/TasksManager.cpp
    )
 
-set( dependencyList ${parallelDeps} mesh )
+set( dependencyList ${parallelDeps} functions )
 
 blt_add_library( NAME       events
                  SOURCES    ${events_sources}

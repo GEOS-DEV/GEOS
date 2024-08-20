@@ -24,6 +24,7 @@
 #include "common/Path.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutiveDrivers/solid/TriaxialDriver.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
 #include "dataRepository/KeyNames.hpp"
@@ -141,7 +142,17 @@ ProblemManager::ProblemManager( conduit::Node & root ):
 }
 
 ProblemManager::~ProblemManager()
-{}
+{
+  {
+    // This is a dummy to force the inclusion of constitutiveDrivers in the linking process for systems that have "--no-as-needed" as a default.
+    // The "correct" way to do this is in cmake using:
+    //   target_link_options(constitutiveDrivers INTERFACE "SHELL:LINKER:--no-as-needed")
+    // but this applies "--no-as-needed" to all targets that link to constitutiveDrivers, which is not what we want.
+    // Also "--no-as-needed" is not supported on all platforms, so we have to guard the use of it.
+    // This is a workaround until we can figure out in cmake without too much trouble.
+    TriaxialDriver dummy( "dummy", this );
+  }
+}
 
 
 Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
