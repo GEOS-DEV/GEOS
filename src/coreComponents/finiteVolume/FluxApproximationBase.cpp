@@ -18,16 +18,23 @@
  *
  */
 
+#include "LvArray/src/tensorOps.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "finiteVolume/ProjectionEDFMHelper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "FluxApproximationBase.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
+
 
 namespace geos
 {
 
 using namespace dataRepository;
+
+
 
 FluxApproximationBase::FluxApproximationBase( string const & name, Group * const parent )
   : Group( name, parent ),
@@ -59,7 +66,6 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setApplyDefaultValue( UpwindingScheme::PPU ).
     setDescription( "Type of upwinding scheme. "
                     "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
-
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

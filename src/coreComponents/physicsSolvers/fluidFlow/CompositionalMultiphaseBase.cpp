@@ -266,7 +266,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const dispersionName = getConstitutiveName< DispersionBase >( subRegion );
       if( !dispersionName.empty() )
       {
-        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
+//        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
         m_hasDispersion = true;
       }
 
@@ -294,6 +294,81 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      {
+
+        if( m_hasCapPressure )
+        {
+
+          subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
+            setPlotLevel( PlotLevel::NOPLOT ).
+            setRestartFlags( RestartFlags::NO_WRITE ).
+            setSizedFromParent( 0 ).
+            setDescription( "Name of the capillary pressure constitutive model to use" ).
+            reference();
+
+          string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+          capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
+          GEOS_THROW_IF( capPresName.empty(),
+                         GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
+                                   getDataContext(), subRegion.getDataContext() ),
+                         InputError );
+        }
+        if( m_hasDiffusion )
+        {
+          subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
+            setPlotLevel( PlotLevel::NOPLOT ).
+            setRestartFlags( RestartFlags::NO_WRITE ).
+            setSizedFromParent( 0 ).
+            setDescription( "Name of the diffusion constitutive model to use" );
+
+          string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+          diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+          GEOS_THROW_IF( diffusionName.empty(),
+                         GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                         InputError );
+        }
+        if( m_hasDispersion )
+        {
+          subRegion.registerWrapper< string >( viewKeyStruct::dispersionNamesString() ).
+            setPlotLevel( PlotLevel::NOPLOT ).
+            setRestartFlags( RestartFlags::NO_WRITE ).
+            setSizedFromParent( 0 ).
+            setDescription( "Name of the dispersion constitutive model to use" );
+
+          string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
+          dispersionName = getConstitutiveName< DispersionBase >( subRegion );
+          GEOS_THROW_IF( dispersionName.empty(),
+                         GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
+                         InputError );
+
+          array1d< std::string > directions( 3 );
+          directions[0] = "x"; directions[1] = "y"; directions[2] = "z";
+          subRegion.registerField< phaseVelocity >( getName()).
+            setDimLabels( 1, fluid.phaseNames() ).
+            setDimLabels( 2, directions ).
+            reference().resizeDimension< 1, 2 >( m_numPhases, directions.size() );
+
+        }
+
+
+        if( m_targetFlowCFL > 0 )
+        {
+
+          subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
+            reference().resizeDimension< 1 >( m_numPhases );
+
+          subRegion.registerField< fields::flow::componentOutflux >( getName() ).
+            reference().resizeDimension< 1 >( m_numComponents );
+          subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
+          subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
+        }
+
+      }
+
+
       if( m_hasCapPressure )
       {
         subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
@@ -350,9 +425,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
         subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
       }
-
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
       subRegion.registerField< pressureScalingFactor >( getName() );
       subRegion.registerField< temperatureScalingFactor >( getName() );
@@ -987,9 +1059,11 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     {
       string const & dispersionName = subRegion.template getReference< string >( viewKeyStruct::dispersionNamesString() );
       DispersionBase const & dispersionMaterial = getConstitutiveModel< DispersionBase >( subRegion, dispersionName );
-      GEOS_UNUSED_VAR( dispersionMaterial );
-      // TODO: compute the phase velocities here
-      //dispersionMaterial.saveConvergedVelocitySate( phaseVelovity );
+      arrayView3d< real64 const > const phaseVelocity = subRegion.template getField< fields::flow::phaseVelocity >();
+      if( m_useMass )
+        dispersionMaterial.initializeVelocityState( phaseVelocity, fluidMaterial.phaseMassDensity());
+      else
+        dispersionMaterial.initializeVelocityState( phaseVelocity, fluidMaterial.phaseDensity());
     }
 
   } );
@@ -2505,9 +2579,12 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       {
         string const & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
         DispersionBase const & dispersionMaterial = getConstitutiveModel< DispersionBase >( subRegion, dispersionName );
-        GEOS_UNUSED_VAR( dispersionMaterial );
-        // TODO: compute the total velocity here
-        //dispersionMaterial.saveConvergedVelocitySate( totalVelovity );
+        arrayView3d< real64 const > const velocity = subRegion.template getField< fields::flow::phaseVelocity >();
+        if( m_useMass )
+          dispersionMaterial.saveConvergedVelocityState( velocity, fluidMaterial.phaseMassDensity() );
+        else
+          dispersionMaterial.saveConvergedVelocityState( velocity, fluidMaterial.phaseDensity() );
+
       }
     } );
   } );

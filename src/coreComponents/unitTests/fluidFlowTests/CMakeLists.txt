@@ -4,14 +4,15 @@ set( gtest_geosx_tests
      testThermalCompMultiphaseFlow.cpp
      testThermalSinglePhaseFlow.cpp
      testFlowStatistics.cpp
+     testVelocityReconstruction.cpp
      testTransmissibility.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOS_BUILD_SHARED_LIBS )
-  list( APPEND dependencyList geosx_core HDF5::HDF5 )
+  list( APPEND dependencyList geosx_core )
 else()
-  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
+  list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
 set( dependencyList testingUtilities )

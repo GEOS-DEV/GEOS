@@ -196,6 +196,8 @@ public:
     static constexpr char const * bubbleCellsString() { return "bubbleCells"; }
     /// @return String key to toFaceElements
     static constexpr char const * toFaceElementsString() { return "toFaceElements"; }
+    /// @return String key to cell x-y-z dimensions
+    static constexpr char const * cellCartesianDimString() { return "cellCartesianDim";}
 
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
@@ -358,6 +360,13 @@ public:
   void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                             FaceManager const & faceManager ) override;
 
+  /**
+   * @copydoc ElementSubRegionBase::calculateCellDimension
+   */
+  void calculateCellDimension( ElementRegionManager const & elemManager,
+                               FaceManager const & faceManager,
+                               NodeManager const & nodeManager ) override;
+
 private:
 
   /// Map used for constitutive grouping
@@ -417,6 +426,9 @@ private:
   /// A 2D array is needed to store both the face ID in the physical space
   /// and the corresponding face ID in the parent element space.
   array2d< localIndex > m_toFaceElements;
+
+  /// container used to store cell-wise distance to faces (for interpolation)
+  array2d< real64 > m_cellCartesianDimension;
 
   /**
    * @brief Pack element-to-node and element-to-face maps

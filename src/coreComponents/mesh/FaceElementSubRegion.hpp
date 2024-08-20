@@ -99,7 +99,6 @@ public:
    */
   void calculateSingleElementGeometricQuantities( localIndex const k,
                                                   arrayView1d< real64 const > const & faceArea );
-
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,

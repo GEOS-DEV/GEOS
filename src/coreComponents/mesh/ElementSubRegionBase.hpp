@@ -30,6 +30,7 @@ namespace geos
 class NodeManager;
 class FaceManager;
 class MeshLevel;
+class ElementRegionManager;
 
 namespace constitutive
 {
@@ -79,6 +80,18 @@ public:
    */
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) = 0;
+
+
+  /**
+   * @brief function used to compute roughly cell dimension used in linear
+   * interpolation in velocity field reconstruction
+   * @param elemManager handling all element data access
+   * @param faceManager handling all face data access
+   * @param nodeManager handling all node data access
+   */
+  virtual void calculateCellDimension( ElementRegionManager const & elemManager,
+                                       FaceManager const & faceManager,
+                                       NodeManager const & nodeManager ) = 0;
 
   /**
    * @brief Link the connectivity maps of the subregion to the managers storing the mesh information.
