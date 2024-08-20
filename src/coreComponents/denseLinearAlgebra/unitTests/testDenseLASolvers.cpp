@@ -24,10 +24,8 @@
 
 namespace geos
 {
-
 namespace denseLinearAlgebra
 {
-
 namespace testing
 {
 
@@ -75,7 +73,6 @@ struct InvertibleLinearSystem : public LinearSystem< N >
     }
   }
 };
-
 template< std::ptrdiff_t N >
 struct SingularLinearSystem : public LinearSystem< N >
 {
@@ -126,42 +123,42 @@ public:
     InvertibleLinearSystem< size > LS( 2024 );
 
     forAll< parallelDevicePolicy<> >( 1, GEOS_HOST_DEVICE [=]( int )
-    {
-      real64 sol[size];
-      real64 matrix[size][size];
-      real64 rhs[size];
+          {
+            real64 sol[size];
+            real64 matrix[size][size];
+            real64 rhs[size];
 
-      LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
-      LvArray::tensorOps::copy< size >( rhs, LS.rhs );
-      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+            LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
+            LvArray::tensorOps::copy< size >( rhs, LS.rhs );
+            bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
-      EXPECT_TRUE( success );
+            EXPECT_TRUE( success );
 
-      for( std::ptrdiff_t i = 0; i < size; ++i )
-      {
-        PORTABLE_EXPECT_NEAR( sol[i],
-                              LS.solution[i],
-                              machinePrecision );
-      }
-    } );
+            for( std::ptrdiff_t i = 0; i < size; ++i )
+            {
+              PORTABLE_EXPECT_NEAR( sol[i],
+                                    LS.solution[i],
+                                    machinePrecision );
+            }
+          } );
   }
   void test_singularSystem()
   {
     SingularLinearSystem< size > LS( 2024 );
 
     forAll< parallelDevicePolicy<> >( 1, GEOS_HOST_DEVICE [=]( int )
-    {
+          {
 
-      real64 sol[size];
-      real64 matrix[size][size];
-      real64 rhs[size];
+            real64 sol[size];
+            real64 matrix[size][size];
+            real64 rhs[size];
 
-      LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
-      LvArray::tensorOps::copy< size >( rhs, LS.rhs );
-      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+            LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
+            LvArray::tensorOps::copy< size >( rhs, LS.rhs );
+            bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
-      EXPECT_FALSE( success );
-    } );
+            EXPECT_FALSE( success );
+          } );
   }
 
 };
@@ -206,7 +203,6 @@ int main( int argc, char * * argv )
   int const result = RUN_ALL_TESTS();
   return result;
 }
-
 
 } // testing
 
