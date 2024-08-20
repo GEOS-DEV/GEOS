@@ -18,6 +18,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/contact/RateAndStateFriction.hpp"
 #include "physicsSolvers/inducedSeismicity/rateAndStateFields.hpp"
 #include "denseLinearAlgebra/denseLASolvers.hpp"
 
@@ -37,7 +38,14 @@ class RateAndStateKernel
 {
 public:
 
-  RateAndStateKernel( SurfaceElementSubRegion & subRegion ):
+  RateAndStateKernel( SurfaceElementSubRegion & subRegion,
+                      RateAndStateFriction const & frictionLaw ):
+  m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
+  m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
+  m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable >() ),
+  m_normalTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
+  m_shearTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
+  m_frictionLaw( frictionLaw.createKernelWrapper()  )
   {}
 
   /**
@@ -52,20 +60,21 @@ public:
     StackVariables( )
     {}
 
-  jacobian[2][2]{};
+  real64 jacobian[2][2]{};
 
-  rhs[2]{};  
+  real64 rhs[2]{};  
 
   };
 
   GEOS_HOST_DEVICE
   void setup( localIndex const k,
+              real64 const dt,
               StackVariables & stack ) const
   {
     
     // Eq 1: shear stress balance
     real64 tauFriction  = 0.0;
-    real64 dTauFriction = {0.0, 0.0}; 
+    real64 dTauFriction[2] = {0.0, 0.0}; 
     
     frictionLaw.computeShearTraction( m_normalTraction[k], 
                                       m_slipRate[k], 
@@ -76,7 +85,7 @@ public:
     stack.rhs[0] = m_shearTraction[k] - tauFriction;
 
     // Eq 2: slip law
-    stack.rhs[1] = (theta - theta_n) / dt - m_frictionLaw.dStateVariabledT( m_slipRate[k], m_stateVariable[k] )
+    stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.dStateVariabledT( m_slipRate[k], m_stateVariable[k] )
     real64 const dStateEvolutionLaw[0] = 1 / dt - m_frictionLaw.dStateVariabledT_dtheta( m_slipRate[k], m_stateVariable[k] )
     real64 const dStateEvolutionLaw[1] =  - m_frictionLaw.dStateVariabledT_dSlipRate( m_slipRate[k], m_stateVariable[k] )
         
@@ -96,13 +105,13 @@ public:
               StackVariables & stack ) const
   {
     /// Solve 2x2 system
-    real64 const solution = {0.0, 0.0};
+    real64 const solution[2] = {0.0, 0.0};
 
     denseLinearAlgebra::solveTwoByTwoSystem( stack.jacobian, stack.rhs, solution );
 
     /// Update variables
-    m_stateVariable[k] += soluiton[0];
-    m_slipRate[k]      += soluiton[1];
+    m_stateVariable[k] += solution[0];
+    m_slipRate[k]      += solution[1];
   }
 
 private:
@@ -110,6 +119,8 @@ private:
  arrayView1d< real64 > const m_slipRate;
 
  arrayView1d< real64 > const m_stateVariable;
+
+ arrayView1d< real64 const > const m_stateVariable_n;
 
  arrayView1d< real64 const > const m_normalTraction;
 
@@ -127,15 +138,16 @@ private:
  */
 template< typename POLICY >
 static void
-createAndLaunch( SurfaceElementSubRegionBase & subRegion,
+createAndLaunch( SurfaceElementSubRegion & subRegion,
+                 string const & frictionLawName,
                  integer const maxNewtonIter, 
                  real64 const time_n,
                  real64 const dt )
 {
   GEOS_MARK_FUNCTION;
 
-  using kernelType ;
-  kernelType kernel( subRegion );
+  RateAndStateFrction const & frictionLaw = subRegion.getConstitutiveModel( frictionaLawName );
+  RateAndStateKernel kernel( subRegion, frictionLaw );
   
   // Newton loops outside of the kernel launch
   for( integer iter = 0; iter < maxNewtonIter; iter++ )
@@ -143,9 +155,9 @@ createAndLaunch( SurfaceElementSubRegionBase & subRegion,
   /// Kernel 1: Do a solver for all non converged elements
   forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    typename kernelType::StackVariables stack();
-    kernel.setup( k, stack );
-    kernel.( k, time_n, dt, stack );
+    RateAndStateKernel::StackVariables stack();
+    kernel.setup( k, dt, stack );
+    kernel.solve( k, stack );
   } );
   
   /// Kernel 2: Update set of non-converged elements  
