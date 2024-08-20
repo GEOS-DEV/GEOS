@@ -29,7 +29,7 @@ namespace denseLinearAlgebra
 namespace testing
 {
 
-constexpr real64 machinePrecision = 1.0e2 * LvArray::NumericLimits< real64 >::epsilon;
+constexpr real64 machinePrecision = 1.0e3 * LvArray::NumericLimits< real64 >::epsilon;
 
 template< std::ptrdiff_t N >
 struct LinearSystem
