@@ -21,6 +21,8 @@
 
 #include "common/DataTypes.hpp"
 #include "denseLinearAlgebra/common/layouts.hpp"
+#include "LvArray/src/tensorOps.hpp"
+#include "common/logger/Logger.hpp"
 
 #include <complex>
 
@@ -30,7 +32,7 @@ namespace geos
 namespace denseLinearAlgebra
 {
 
-namespace internal
+namespace details
 {
 /**
  * @brief Solves a 2x2 linear system A * x = b.
@@ -59,12 +61,14 @@ void solveTwoByTwoSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE &&
   LvArray::tensorOps::internal::checkSizes< 2 >( b );
   LvArray::tensorOps::internal::checkSizes< 2 >( x );
 
-  real64 const detA = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+  real64 const detA = LvArray::tensorOps::determinant< 2 >( A ); 
 
-  GEOS_ERROR_IF_LT_MSG( LvArray::math::abs( detA ), LvArray::NumericLimits< real64 >::epsilon; , "Singular system." );
+  GEOS_ERROR_IF_LT_MSG( LvArray::math::abs( detA ), LvArray::NumericLimits< real64 >::epsilon , "Singular system." );
 
-  x[0] = (A[1][1] * b[0] - A[0][1] * b[1] ) / detA;
-  x[1] = (A[0][0] * b[1] - A[1][0] * b[0] ) / detA;
+  real64 const invA = 1.0 / detA;
+
+  x[0] = ( A[1][1] * b[0] - A[0][1] * b[1] ) * invA;
+  x[1] = ( A[0][0] * b[1] - A[1][0] * b[0] ) * invA;
 }
 
 /**
@@ -94,27 +98,27 @@ void solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYP
   LvArray::tensorOps::internal::checkSizes< 3 >( b );
   LvArray::tensorOps::internal::checkSizes< 3 >( x );
 
-  real64 const detA = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
-                      A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
-                      A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+  real64 const detA = LvArray::tensorOps::determinant< 3 >( A ); 
 
-  GEOS_ERROR_IF_LT_MSG( LvArray::math::abs( detA ), LvArray::NumericLimits< real64 >::epsilon; , "Singular system." );
+  GEOS_ERROR_IF_LT_MSG( LvArray::math::abs( detA ), LvArray::NumericLimits< real64 >::epsilon, "Singular system." );
 
-  real64 const detX0 = b[0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
-                       b[1] * (A[0][1] * A[2][2] - A[0][2] * A[2][1]) +
-                       b[2] * (A[0][1] * A[1][2] - A[0][2] * A[1][1]);
+  real64 const invA = 1.0 / detA;
 
-  real64 const detX1 = A[0][0] * (b[1] * A[2][2] - b[2] * A[2][1]) -
-                       A[0][1] * (b[0] * A[2][2] - b[2] * A[2][0]) +
-                       A[0][2] * (b[0] * A[1][2] - b[1] * A[1][0]);
+  real64 const detX0 = b[0] * ( A[1][1] * A[2][2] - A[2][1] * A[1][2] ) -
+                       b[1] * ( A[0][1] * A[2][2] - A[0][2] * A[2][1] ) +
+                       b[2] * ( A[0][1] * A[1][2] - A[0][2] * A[1][1] );
 
-  real64 const detX2 = A[0][0] * (A[1][1] * b[2] - A[1][2] * b[1]) -
-                       A[0][1] * (A[1][0] * b[2] - A[1][2] * b[0]) +
-                       A[0][2] * (A[1][0] * b[1] - A[1][1] * b[0]);
+  real64 const detX1 = A[0][0] * ( b[1] * A[2][2] - b[2] * A[1][2] ) -
+                       A[1][0] * ( b[0] * A[2][2] - b[2] * A[0][2] ) +
+                       A[2][0] * ( b[0] * A[1][2] - b[1] * A[0][2] );                   
 
-  x[0] = detX0 / detA;
-  x[1] = detX1 / detA;
-  x[2] = detX2 / detA;
+  real64 const detX2 = A[0][0] * ( A[1][1] * b[2] - A[2][1] * b[1] ) -
+                       A[1][0] * ( A[0][1] * b[2] - A[2][1] * b[0] ) +
+                       A[2][0] * ( A[0][1] * b[1] - A[1][1] * b[0] );
+
+  x[0] = detX0 * invA;
+  x[1] = detX1 * invA;
+  x[2] = detX2 * invA;
 }
 
 /**
@@ -128,14 +132,14 @@ void solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYP
  * @tparam RHS_TYPE The type of the right-hand side vector `b`.
  * @tparam SOL_TYPE The type of the solution vector `x`.
  * @param[in] A The upper triangular matrix representing the coefficients of the system.
- * @param[in,out] b The right-hand side vector. It is used to compute the solution, but the values are not preserved.
+ * @param[in] b The right-hand side vector. It is used to compute the solution.
  * @param[out] x The solution vector. The result of solving the system `Ax = b` using back substitution.
  */
 template< std::ptrdiff_t N,
           typename MATRIX_TYPE,
           typename RHS_TYPE,
           typename SOL_TYPE >
-void solveUpperTriangularSystem( MATRIX_TYPE const & A, RHS_TYPE & b, SOL_TYPE && x )
+void solveUpperTriangularSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && x )
 {
   for( std::ptrdiff_t i = N - 1; i >= 0; --i )
   {
@@ -172,9 +176,9 @@ inline
 void solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
 {
   static_assert( N > 0, "N must be greater than 0." );
-  internal::checkSizes< N, N >( matrix );
-  internal::checkSizes< N >( b );
-  internal::checkSizes< N >( x );
+  LvArray::tensorOps::internal::checkSizes< N, N >( A );
+  LvArray::tensorOps::internal::checkSizes< N >( b );
+  LvArray::tensorOps::internal::checkSizes< N >( x );
 
 
   // Step 1: Transform  into an upper triangular matrix
@@ -213,7 +217,7 @@ void solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
   }
 
   // Step 2: Backward substitution
-  solveUpperTriangularSystem< N >( A, b, std::forward< N >( x ) )
+  solveUpperTriangularSystem< N >( A, b, std::forward< N >( x ) );
 }
 
 }; // internal namespace
@@ -232,8 +236,8 @@ void solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
  * @tparam MODIFY_MATRIX Boolean flag indicating whether the input matrix `A` and vector `b` should be modified.
  *                       If `true`, the matrix `A` and vector `b` are modified in place. If `false`, copies of 
  *                       `A` and `b` are made, and the original data is left unchanged.
- * @param[in] A The constant matrix representing the coefficients of the system.
- * @param[in] b The constant right-hand side vector.
+ * @param[in] A The matrix representing the coefficients of the system.
+ * @param[in] b The right-hand side vector.
  * @param[out] x The solution vector. The result of solving the system `Ax = b`.
  */
 template< std::ptrdiff_t N,
@@ -247,30 +251,30 @@ void solve( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
 {
   static_assert( N > 0, "N must be greater than 0." );
   static_assert( N < 10, "N cannot be larger than 9" );
-  internal::checkSizes< N, N >( A );
-  internal::checkSizes< N >( b );
-  internal::checkSizes< N >( x );
+  LvArray::tensorOps::internal::checkSizes< N, N >( A );
+  LvArray::tensorOps::internal::checkSizes< N >( b );
+  LvArray::tensorOps::internal::checkSizes< N >( x );
 
   if constexpr ( N == 2 )
   {
-    internal::solveTwoByTwoSystem( A, b, std::forward< SOL_TYPE >( x ) );
+    details::solveTwoByTwoSystem( A, b, std::forward< SOL_TYPE >( x ) );
   }
   else if constexpr ( N == 3 )
   {
-    internal::solveThreeByThreeSystem( A, b, std::forward< SOL_TYPE >( x ) );
+    details::solveThreeByThreeSystem( A, b, std::forward< SOL_TYPE >( x ) );
   }
   else
   {
     if constexpr ( MODIFY_MATRIX )
     {
-      internal::solveGaussianElimination< N >( A, b, std::forward< SOL_TYPE >( x ) );
+      details::solveGaussianElimination< N >( A, b, std::forward< SOL_TYPE >( x ) );
     }
     else
     {
-      real64[N][N] A_copy{};
-      real64[N] b_copy{};
+      real64 A_copy[N][N]{};
+      real64 b_copy[N]{};
 
-      for( std::ptrdiff_t i=0; i < N; ++j )
+      for( std::ptrdiff_t i=0; i < N; ++i )
       {
         b_copy[i] = b[i];
         for( std::ptrdiff_t j=0; j < N; ++j )
@@ -278,7 +282,7 @@ void solve( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
           A_copy[i][j] = A[i][j];
         }
       }
-      internal::solveGaussianElimination< N >( A_copy, b_copy, std::forward< SOL_TYPE >( x ) );
+      details::solveGaussianElimination< N >( A_copy, b_copy, std::forward< SOL_TYPE >( x ) );
     }
   }
 }
