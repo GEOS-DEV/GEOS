@@ -149,9 +149,15 @@ Note that GEOS, as presented here, is a complete rewrite of the previous incarna
 The threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
 Carbon Capture and Storage (CCS) of CO~2~ in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals.
 Given the 2050 net-zero GHG goals, CO~2~ storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
-The ability to evaluate the reservoir performance and containment risks associated with the injection of liquefied CO~2~ in the subsurface in a reproducible and transparent manner is an important consideration when evaluating new storage sites.
-The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir.
+Evaluation of reservoir performance and containment risks associated with the injection of liquefied CO~2~ in the subsurface in a reproducible and transparent manner is an important consideration when evaluating new storage sites.
+As an example of typical complexities in carbon storage reservoirs, the 11th Society of Petroleum Engineers Comparative Solution Project (SPE11) [@Nordbotten2024] provides a benchmark example for evaluating the the predictions of carbon storage simulators.
+The goal of GEOS is to provide the global community with an exascale capable open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir.
 To this end, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
+Open source projects such as OMP [@RASMUSSEN2021159], OpenGeoSys [@ogs:6.5.2], DuMux [@Kochetal2020Dumux], Darts [@Voskov2024] are example efforts that share similar objectives.
+However, GEOS stands out in two key areas: the explicit fault modeling coupled with flow and mechanical deformation, and the ability to leverage the computational power of current exascale supercomputers. 
+
+
+
 
 # GEOS Components
 
