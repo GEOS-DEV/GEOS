@@ -271,24 +271,17 @@ void ImmiscibleMultiphaseFlow::updateFluidState( ElementSubRegionBase & subRegio
 void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
+
+  // note that the phase mobility computed here also includes phase density
+  string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
+  RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
+
+  immiscibleMultiphaseKernels::
+      PhaseMobilityKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                 dataGroup,                                                 
+                                                 relperm );  
   
-  GEOS_UNUSED_VAR( dataGroup );
-
-  /// Matteo: looks like you will to create a new update function for the mobility. I have left the code as an example.
-  // // note that the phase mobility computed here also includes phase density
-  // string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
-  // MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
-
-  // string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
-  // RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
-
-  // isothermalCompositionalMultiphaseFVMKernels::
-  //   PhaseMobilityKernelFactory::
-  //   createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-  //                                              m_numPhases,
-  //                                              dataGroup,
-  //                                              fluid,
-  //                                              relperm );
 }
 
 void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,

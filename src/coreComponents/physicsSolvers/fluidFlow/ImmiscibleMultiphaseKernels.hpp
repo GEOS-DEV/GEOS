@@ -714,6 +714,161 @@ public:
   }
 };
 
+/******************************** PhaseMobilityKernel ********************************/
+
+/**
+ * @class PhaseMobilityKernel
+ * @tparam NUM_PHASE number of fluid phases
+ * @brief Define the interface for the property kernel in charge of computing the phase mobilities
+ */
+template< integer NUM_PHASE >
+class PhaseMobilityKernel
+{
+public:
+
+  //using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;  
+
+  /// Compile time value for the number of phases
+  static constexpr integer numPhase = NUM_PHASE;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] relperm the relperm model
+   */
+  PhaseMobilityKernel( ObjectManagerBase & subRegion,                       
+                       RelativePermeabilityBase const & relperm )
+    :     
+    m_phaseDens( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseDensity >() ),
+    m_dPhaseDens( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseDensity>() ),
+    m_phaseVisc( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseViscosity >() ),
+    m_dPhaseVisc( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseViscosity >() ),
+    m_phaseRelPerm( relperm.phaseRelPerm() ),
+    m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
+    m_phaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseMobility >() )
+  {}
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      kernelComponent.compute( ei );
+    } );
+  }
+
+  /**
+   * @brief Compute the phase mobilities in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] phaseMobilityKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei,
+                FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
+  {
+    using Deriv = immiscibleFlow::DerivativeOffset;   
+    
+    arraySlice1d< real64, immiscibleFlow::USD_PHASE - 1 > const phaseMob = m_phaseMob[ei];
+    arraySlice2d< real64, immiscibleFlow::USD_PHASE_DS - 1 > const dPhaseMob = m_dPhaseMob[ei];    
+
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+      real64 const density = m_phaseDens[ei][0][ip];
+      real64 const dDens_dP = m_dPhaseDens[ei][0][ip];
+      real64 const viscosity = m_phaseVisc[ei][0][ip];
+      real64 const dVisc_dP = m_dPhaseVisc[ei][0][ip];
+
+      real64 const relPerm = m_phaseRelPerm[ei][0][ip];    
+
+      real64 const mobility = relPerm * density / viscosity;
+
+      phaseMob[ip] = mobility;
+      dPhaseMob[ip][Deriv::dP] = mobility * (dDens_dP / density - dVisc_dP / viscosity);        
+
+      for( integer jp = 0; jp < numPhase; ++jp )                                                  // check if we need numPhase or numPhase-1 derivatives
+      {
+        real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][jp];        
+        dPhaseMob[ip][Deriv::dS+jp] = dRelPerm_dS * density / viscosity;                                      
+      }            
+
+      // call the lambda in the phase loop to allow the reuse of the relperm, density, viscosity, and mobility
+      // possible use: assemble the derivatives wrt temperature
+      phaseMobilityKernelOp( ip, phaseMob[ip], dPhaseMob[ip] );
+    }
+  }
+
+protected:
+
+  // inputs
+
+  /// Views on the phase densities
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_phaseDens;
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_dPhaseDens;
+
+  /// Views on the phase viscosities
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_phaseVisc;
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_dPhaseVisc;
+
+  /// Views on the phase relative permeabilities
+  arrayView3d< real64 const, relperm::USD_RELPERM > m_phaseRelPerm;
+  arrayView4d< real64 const, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+
+  // outputs
+
+  /// Views on the phase mobilities
+  arrayView2d< real64, immiscibleFlow::USD_PHASE > m_phaseMob;
+  arrayView3d< real64, immiscibleFlow::USD_PHASE_DS > m_dPhaseMob;
+};
+
+/**
+ * @class PhaseMobilityKernelFactory
+ */
+class PhaseMobilityKernelFactory
+{
+public: 
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numPhase the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] relperm the relperm model
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numPhase,
+                   ObjectManagerBase & subRegion,                   
+                   RelativePermeabilityBase const & relperm )
+  {
+    if( numPhase == 2 )
+    {      
+      PhaseMobilityKernel< 2 > kernel( subRegion, relperm );
+      PhaseMobilityKernel< 2 >::template launch< POLICY >( subRegion.size(), kernel );
+    }    
+    else if( numPhase == 3 )
+    {      
+      PhaseMobilityKernel< 3 > kernel( subRegion, relperm );
+      PhaseMobilityKernel< 3 >::template launch< POLICY >( subRegion.size(), kernel );
+    } 
+  }
+
+};
+
+
+
 
 
 } // namesace immiscible multiphasekernels
