@@ -52,12 +52,9 @@ struct InvertibleLinearSystem : public LinearSystem< N >
       for( ptrdiff_t j=0; j<N; ++j )
       {
         matrix[i][j] = distribution( generator );
-        if( i == j )
-        {
-          // add a perturbation on the diagonal to avoid singular matrices.
-          matrix[i][j] += perturbation( generator );
-        }
       }
+      // add a perturbation on the diagonal to avoid singular matrices.
+      matrix[i][i] += perturbation( generator );
     }
 
     // Compute rhs as matrix * solution
