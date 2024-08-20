@@ -1263,6 +1263,13 @@ Element: SourceFluxStatistics
 .. include:: ../../coreComponents/schema/docs/SourceFluxStatistics.rst
 
 
+.. _XML_StatOutputController:
+
+Element: StatOutputController
+=============================
+.. include:: ../../coreComponents/schema/docs/StatOutputController.rst
+
+
 .. _XML_SurfaceElementRegion:
 
 Element: SurfaceElementRegion
@@ -2749,6 +2756,13 @@ Datastructure: SourceFlux
 Datastructure: SourceFluxStatistics
 ===================================
 .. include:: ../../coreComponents/schema/docs/SourceFluxStatistics_other.rst
+
+
+.. _DATASTRUCTURE_StatOutputController:
+
+Datastructure: StatOutputController
+===================================
+.. include:: ../../coreComponents/schema/docs/StatOutputController_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:

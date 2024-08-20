@@ -86,7 +86,7 @@ private:
 
   void postInputInitialization() override;
 
-  void registerDataOnMesh( Group & meshBodies ) override;
+  void initializePreSubGroups() override;
 
   TimeHistoryOutput * m_timeHistory;
   std::vector< PeriodicEvent * >  m_periodicEvents;

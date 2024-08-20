@@ -189,7 +189,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
                                                                  arrayView1d< string const > const & regionNames )
 {
   GEOS_MARK_FUNCTION;
-
+std::cout << "GET PATHHHH " << this->getPath() << std::endl;
   integer const numPhases = m_solver->numFluidPhases();
   integer const numComps = m_solver->numFluidComponents();
 

@@ -3896,14 +3896,6 @@ Local- Add jump stabilization on interior of macro elements-->
 					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="TasksStatOutputControllerSinglePhaseStatisticsUniqueName">
-					<xsd:selector xpath="SinglePhaseStatistics" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="TasksStatOutputControllerSolidMechanicsStatisticsUniqueName">
-					<xsd:selector xpath="SolidMechanicsStatistics" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
@@ -4118,8 +4110,6 @@ Local- Add jump stabilization on interior of macro elements-->
 	<xsd:complexType name="StatOutputControllerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
-			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
-			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 		</xsd:choice>
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />

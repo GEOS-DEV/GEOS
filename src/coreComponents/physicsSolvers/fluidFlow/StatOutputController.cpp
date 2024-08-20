@@ -43,10 +43,72 @@ StatOutputController::StatOutputController( const string & name,
 {}
 
 void StatOutputController::postInputInitialization()
-{}
-
-void StatOutputController::registerDataOnMesh( Group & meshBodies )
 {
+  // CompositionalMultiphaseStatistics & compMultiStats =
+  //   this->getGroupByPath< CompositionalMultiphaseStatistics >( "/Tasks/testStats/compflowStatistics" );
+
+  // // for now, this guard is needed to avoid breaking the xml schema generation
+  // if( compMultiStats.getSolver() == nullptr )
+  // {
+  //   return;
+  // }
+
+  // OutputManager & outputManager = this->getGroupByPath< OutputManager >( "/Outputs" );
+  // //EventManager & eventManager = this->getGroupByPath< EventManager >( "/Events" );
+
+  // // string_array timeHistoryStatsSource;
+  // compMultiStats.getSolver()->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+  //                                                                               MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+  //                                                                               arrayView1d< string const > const & regionNames )
+  // {
+  //   //get TaskManager
+  //   TasksManager & taskManager = this->getGroupByPath< TasksManager >( "/Tasks" );
+  //   for( string const & regionName : regionNames )
+  //   {
+  //     std::cout <<"RegionName : "<< regionName << std::endl;
+  //     CompositionalMultiphaseStatistics::RegionStatistics & regionStats =
+  //       this->getGroupByPath< CompositionalMultiphaseStatistics::RegionStatistics >(
+  //         "/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/aquiferTop/regionStatistics" );
+
+  //     regionStats.forWrappers( [&]( WrapperBase const & wrapper )
+  //     {
+  //       std::cout <<"RegionPath : "<< regionStats.getPath() << std::endl;
+  //       string const keyGroup = GEOS_FMT( "packCollection{}", wrapper.getName());
+  //       string const packCollectionObjectPath = GEOS_FMT( "{}{}", regionStats.getPath(), regionName );
+
+  //       //PackCollection generation
+  //       PackCollection * packCollection = &taskManager.registerGroup< PackCollection >( keyGroup );
+  //       packCollection->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString()).
+  //         setApplyDefaultValue( packCollectionObjectPath );
+  //       packCollection->getWrapper< string >( PackCollection::viewKeysStruct::fieldNameString()).
+  //         setApplyDefaultValue( wrapper.getName());
+  //       m_packCollections.push_back( packCollection );
+
+  //       string const & packFullPath = GEOS_FMT( "{}{}", packCollection->getPath(), packCollection->getName());
+
+  //       //std::cout << "packFullPath " << string(packFullPath) << std::cout;
+  //       // timeHistoryStatsSource.emplace_back( packFullPath );
+
+  //       // std::cout << "packCollectionObjectPath " << packCollectionObjectPath << std::cout;
+  //     }
+  //                              );
+  //   }
+  // } );
+
+  // //TimeHistory Generation
+  // m_timeHistory =  &outputManager.registerGroup< TimeHistoryOutput >( "generatedStatsHistoryOutput" );
+  // // m_timeHistory->getWrapper< string >( TimeHistoryOutput::viewKeys::timeHistoryOutputTargetString()).
+  // //   setApplyDefaultValue( timeHistoryStatsSource );
+  // m_timeHistory->getWrapper< string >( TimeHistoryOutput::viewKeys::timeHistoryOutputFilenameString()).
+  //   setApplyDefaultValue( "generatedHDFStat" );
+}
+
+void StatOutputController::initializePreSubGroups()
+{
+  ProblemManager & rootGroup = this->getGroupByPath< ProblemManager >( "/Problem" );
+
+  DomainPartition & domain = rootGroup.getDomainPartition();
+  Group & meshBodies = domain.getMeshBodies();
 
   CompositionalMultiphaseStatistics & compMultiStats =
     this->getGroupByPath< CompositionalMultiphaseStatistics >( "/Tasks/testStats/compflowStatistics" );
@@ -57,45 +119,45 @@ void StatOutputController::registerDataOnMesh( Group & meshBodies )
     return;
   }
 
-  OutputManager & outputManager = this->getGroupByPath< OutputManager >( "/Outputs" );
-  //EventManager & eventManager = this->getGroupByPath< EventManager >( "/Events" );
-
   compMultiStats.getSolver()->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                                                MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                                                                MeshLevel & mesh ,
                                                                                 arrayView1d< string const > const & regionNames )
   {
     TasksManager & taskManager = this->getGroupByPath< TasksManager >( "/Tasks" );
-    std::vector< string > timeHistoryStatsSource;
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
     for( string const & regionName : regionNames )
     {
+      ElementRegionBase & region = elemManager.getRegion( regionName );
+      string const regionStatPath = GEOS_FMT( "{}/{}/{}/regionStatistics", domain.getPath(), region.getPath(), regionName );
+      std::cout<< "testPath -- " << regionStatPath << std::endl;
+
       CompositionalMultiphaseStatistics::RegionStatistics & regionStats =
-        this->getGroupByPath< CompositionalMultiphaseStatistics::RegionStatistics >( regionName );
+        this->getGroupByPath< CompositionalMultiphaseStatistics::RegionStatistics >( regionStatPath );
+
       regionStats.forWrappers( [&]( WrapperBase const & wrapper )
       {
-        string keyGroup = GEOS_FMT( "packCollection{}", wrapper.getName());
+        string const keyGroup = GEOS_FMT( "packCollection{}", wrapper.getName());
+        string const packCollectionObjectPath = GEOS_FMT( "{}{}", regionStats.getPath(), "regionName" );
 
         //PackCollection generation
         PackCollection * packCollection = &taskManager.registerGroup< PackCollection >( keyGroup );
         packCollection->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString()).
-          setApplyDefaultValue( GEOS_FMT( "{}{}", regionStats.getPath(), "/regionStatistics" ) );
+          setApplyDefaultValue( packCollectionObjectPath );
         packCollection->getWrapper< string >( PackCollection::viewKeysStruct::fieldNameString()).
           setApplyDefaultValue( wrapper.getName());
         m_packCollections.push_back( packCollection );
 
-        string packFullPath = GEOS_FMT( "{}{}", packCollection->getPath(), packCollection->getName());
-        timeHistoryStatsSource.push_back( packFullPath );
-      }
-                               );
+        string const & packFullPath = GEOS_FMT( "{}/", packCollection->getPath());
+
+        std::cout << "packFullPath " << packFullPath << std::endl;
+        std::cout << "packCollectionObjectPath " << packFullPath << std::endl;
+        // timeHistoryStatsSource.emplace_back( packFullPath );
+
+        // std::cout << "packCollectionObjectPath " << packCollectionObjectPath << std::cout;
+      } );
     }
   } );
-
-  //TimeHistory Generation
-  m_timeHistory =  &outputManager.registerGroup< TimeHistoryOutput >( "generatedStatsHistoryOutput" );
-  m_timeHistory->getWrapper< string >( TimeHistoryOutput::viewKeys::timeHistoryOutputTargetString()).
-    setApplyDefaultValue( "4.32e6" );
-  m_timeHistory->getWrapper< string >( TimeHistoryOutput::viewKeys::timeHistoryOutputFilenameString()).
-    setApplyDefaultValue( "generatedHDFStat" );
-
 }
 
 Group * StatOutputController::createChild( string const & childKey, string const & childName )
@@ -108,6 +170,7 @@ Group * StatOutputController::createChild( string const & childKey, string const
 
 void StatOutputController::expandObjectCatalogs()
 {
+  std::cout << "expandObjectCatalogs -- "<<std::endl;
   createChild( CompositionalMultiphaseStatistics::catalogName(), CompositionalMultiphaseStatistics::catalogName() );
   // createChild( SolidMechanicsStatistics::catalogName(), SolidMechanicsStatistics::catalogName() );
   // createChild( SinglePhaseStatistics::catalogName(), SinglePhaseStatistics::catalogName() );

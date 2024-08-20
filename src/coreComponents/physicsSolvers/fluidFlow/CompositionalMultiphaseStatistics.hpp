@@ -68,6 +68,8 @@ public:
                         Group * const parent )
         : Group( name, parent )
       {
+std::cout << "GET PATHHHH " << this->getPath() << std::endl;
+
         registerWrapper( viewKeyStruct::averagePressureString(), &m_averagePressure ).
           setApplyDefaultValue( 0 ).
           //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
