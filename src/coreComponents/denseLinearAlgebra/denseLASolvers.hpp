@@ -234,7 +234,7 @@ bool solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
   return true;
 }
 
-}; // details namespace
+} // details namespace
 
 /**
  * @brief Solves a linear system using the most appropriate method based on the size of the system.
@@ -301,9 +301,10 @@ bool solve( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
     }
   }
 }
-};
 
-};
+} // denseLinearAlgebra
+
+} // geos
 
 
 #endif /*GEOS_DENSELINEARALGEBRA_DENSELASOLVERS_HPP_*/
