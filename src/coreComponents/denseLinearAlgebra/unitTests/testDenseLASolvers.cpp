@@ -18,6 +18,8 @@
 // TPL includes
 #include <gtest/gtest.h>
 
+#include <random>
+
 
 using namespace geos;
 
@@ -25,79 +27,65 @@ using namespace geos;
 constexpr real64 machinePrecision = 1.0e2 * LvArray::NumericLimits< real64 >::epsilon;
 
 template< std::ptrdiff_t N >
-struct Reference 
-{};
-
-template<>
-struct Reference< 2 >
+struct LinearSystem
 {
+  static constexpr std::ptrdiff_t size() { return N; }
 
-  static constexpr std::ptrdiff_t size() { return 2; }
-  
-  static constexpr real64 A[2][2] = { { 2.0, -1.0},
-                                      { 0.0, 1.0 } };
-  
-  static constexpr real64 rhs[2] = {0.0, 1.0};
-
-  static constexpr real64 solution[2] = {0.5, 1.0};
-};
-
-template<>
-struct Reference< 3 >
-{
-  static constexpr std::ptrdiff_t size() { return 3; }
-
-  static constexpr real64 A[3][3] = { { 4.0, 3.0, -2.0},
-                                      { 2.0, -1.0, 5.0 },
-                                      { -1.0, 3.0, -2.0 } };
-  
-  static constexpr real64 rhs[3] = {-8.0, 19.0, -13.0};
-
-  static constexpr real64 solution[3] = {1.0, -2.0, 3.0};
-};
-
-template< typename MATRIX_TYPE, typename VECTOR_TYPE, typename REFERENCE >
-void assemble( MATRIX_TYPE & A, VECTOR_TYPE & rhs )
-{
-  for( std::ptrdiff_t i=0; i < REFERENCE::size(); ++i )
+  LinearSystem( short int seed )
   {
-    rhs[i] = REFERENCE::rhs[i];
-    for( std::ptrdiff_t j=0; j < REFERENCE::size(); ++j )
+    std::mt19937 generator( seed ); 
+    std::uniform_real_distribution< real64 > distribution( -10.0, 10.0 );
+    for( ptrdiff_t i=0; i<N; ++i )
     {
-      A[i][j] = REFERENCE::A[i][j];
+      solution[i] = distribution( generator );
+      for( ptrdiff_t j=0; j<N; ++j )
+      {
+        matrix[i][j] =  distribution( generator );
+      }
+    }
+
+    // Compute rhs as matrix * solution
+    for( std::ptrdiff_t i = 0; i < N; ++i )
+    {
+      rhs[i] = 0.0;
+      for( std::ptrdiff_t j = 0; j < N; ++j )
+      {
+        rhs[i] += matrix[i][j] * solution[j];
+      }
     }
   }
-}
 
-template< typename REFERENCE >
+  real64 matrix[N][N];
+  real64 solution[N];
+  real64 rhs[N];
+};
+
+template< typename LINEAR_SYSTEM >
 void test_denseLASolve()
 {
-  constexpr std::ptrdiff_t N = REFERENCE::size();
+  constexpr std::ptrdiff_t N = LINEAR_SYSTEM::size();
 
-  real64 A[N][N];
-  real64 b[N];
+  LINEAR_SYSTEM LS(2024);
   real64 sol[N];
 
-  assemble< decltype(A), decltype(b), REFERENCE >( A, b );
-     
-  denseLinearAlgebra::solve< N >( A, b, sol );
+  denseLinearAlgebra::solve< N >( LS.matrix, LS.rhs, sol );
 
   for( std::ptrdiff_t i = 0; i < N; ++i )
   {
     EXPECT_NEAR( sol[i],
-                 REFERENCE::solution[i],
+                 LS.solution[i],
                  machinePrecision );
   }
 }
 
 TEST( denseLASolve, testTwoByTwo )
 {
-  test_denseLASolve< Reference< 2 > >();
+  test_denseLASolve< LinearSystem< 2 > >();
 }
 
 TEST( denseLASolve, testThreeByThree )
 {
-  test_denseLASolve< Reference< 3 > >();
+  test_denseLASolve< LinearSystem< 3 > >();
 }
 
 int main( int argc, char * * argv )

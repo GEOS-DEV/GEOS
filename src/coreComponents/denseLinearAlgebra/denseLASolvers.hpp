@@ -61,9 +61,9 @@ void solveTwoByTwoSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE &&
   LvArray::tensorOps::internal::checkSizes< 2 >( b );
   LvArray::tensorOps::internal::checkSizes< 2 >( x );
 
-  real64 const detA = LvArray::tensorOps::determinant< 2 >( A ); 
+  real64 const detA = LvArray::tensorOps::determinant< 2 >( A );
 
-  GEOS_ERROR_IF_LT_MSG( LvArray::math::abs( detA ), LvArray::NumericLimits< real64 >::epsilon , "Singular system." );
+  GEOS_ERROR_IF_LT_MSG( LvArray::math::abs( detA ), LvArray::NumericLimits< real64 >::epsilon, "Singular system." );
 
   real64 const invA = 1.0 / detA;
 
@@ -98,7 +98,7 @@ void solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYP
   LvArray::tensorOps::internal::checkSizes< 3 >( b );
   LvArray::tensorOps::internal::checkSizes< 3 >( x );
 
-  real64 const detA = LvArray::tensorOps::determinant< 3 >( A ); 
+  real64 const detA = LvArray::tensorOps::determinant< 3 >( A );
 
   GEOS_ERROR_IF_LT_MSG( LvArray::math::abs( detA ), LvArray::NumericLimits< real64 >::epsilon, "Singular system." );
 
@@ -110,7 +110,7 @@ void solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYP
 
   real64 const detX1 = A[0][0] * ( b[1] * A[2][2] - b[2] * A[1][2] ) -
                        A[1][0] * ( b[0] * A[2][2] - b[2] * A[0][2] ) +
-                       A[2][0] * ( b[0] * A[1][2] - b[1] * A[0][2] );                   
+                       A[2][0] * ( b[0] * A[1][2] - b[1] * A[0][2] );
 
   real64 const detX2 = A[0][0] * ( A[1][1] * b[2] - A[2][1] * b[1] ) -
                        A[1][0] * ( A[0][1] * b[2] - A[2][1] * b[0] ) +
@@ -234,7 +234,7 @@ void solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
  * @tparam RHS_TYPE The type of the right-hand side vector `b`.
  * @tparam SOL_TYPE The type of the solution vector `x`.
  * @tparam MODIFY_MATRIX Boolean flag indicating whether the input matrix `A` and vector `b` should be modified.
- *                       If `true`, the matrix `A` and vector `b` are modified in place. If `false`, copies of 
+ *                       If `true`, the matrix `A` and vector `b` are modified in place. If `false`, copies of
  *                       `A` and `b` are made, and the original data is left unchanged.
  * @param[in] A The matrix representing the coefficients of the system.
  * @param[in] b The right-hand side vector.
