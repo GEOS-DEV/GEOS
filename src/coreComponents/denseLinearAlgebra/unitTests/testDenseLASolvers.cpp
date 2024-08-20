@@ -122,43 +122,43 @@ public:
   {
     InvertibleLinearSystem< size > LS( 2024 );
 
-    forAll< parallelDevicePolicy<> >( 1, GEOS_HOST_DEVICE [=]( int )
-          {
-            real64 sol[size];
-            real64 matrix[size][size];
-            real64 rhs[size];
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( int )
+    {
+      real64 sol[size];
+      real64 matrix[size][size];
+      real64 rhs[size];
 
-            LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
-            LvArray::tensorOps::copy< size >( rhs, LS.rhs );
-            bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+      LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
+      LvArray::tensorOps::copy< size >( rhs, LS.rhs );
+      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
-            EXPECT_TRUE( success );
+      EXPECT_TRUE( success );
 
-            for( std::ptrdiff_t i = 0; i < size; ++i )
-            {
-              PORTABLE_EXPECT_NEAR( sol[i],
-                                    LS.solution[i],
-                                    machinePrecision );
-            }
-          } );
+      for( std::ptrdiff_t i = 0; i < size; ++i )
+      {
+        PORTABLE_EXPECT_NEAR( sol[i],
+                              LS.solution[i],
+                              machinePrecision );
+      }
+    } );
   }
   void test_singularSystem()
   {
     SingularLinearSystem< size > LS( 2024 );
 
-    forAll< parallelDevicePolicy<> >( 1, GEOS_HOST_DEVICE [=]( int )
-          {
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( int )
+    {
 
-            real64 sol[size];
-            real64 matrix[size][size];
-            real64 rhs[size];
+      real64 sol[size];
+      real64 matrix[size][size];
+      real64 rhs[size];
 
-            LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
-            LvArray::tensorOps::copy< size >( rhs, LS.rhs );
-            bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+      LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
+      LvArray::tensorOps::copy< size >( rhs, LS.rhs );
+      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
-            EXPECT_FALSE( success );
-          } );
+      EXPECT_FALSE( success );
+    } );
   }
 
 };
