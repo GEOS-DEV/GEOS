@@ -164,8 +164,6 @@ First, using a terminal, create the ``codes`` directory wherever you like.
 
 Inside this directory, we can clone the GEOS repository.
 We will also use some Git commands to initialize and download the submodules (e.g. ``LvArray``).
-Note that most users will not have access to our integrated tests repository, and so we "deinit" (deactivate) this submodule.
-Developers who will be working with the integratedTests repository should skip this line.
 
 .. code-block:: sh
 
@@ -173,7 +171,6 @@ Developers who will be working with the integratedTests repository should skip t
    cd GEOS
    git lfs install
    git submodule init
-   git submodule deinit integratedTests
    git submodule update
    cd ..
 
@@ -181,19 +178,10 @@ If all goes well, you should have a complete copy of the GEOS source at this poi
 The most common errors people encounter here have to do with Github not recognizing their authentication settings and/or repository permissions.
 See the previous section for tips on ensuring your SSH is working properly.
 
-*Note*: The integratedTests submodule is not publicly available, with access limited to the core development team.
-This may cause the ``git submodule update`` command to fail
-if you forget the ``git submodule deinit integratedTests`` step above.
-This submodule is not required for building GEOS. If you see an error message here, however, you may need to initialize and update the submodules manually:
-
-.. code-block:: sh
-
-   cd GEOS
-   git submodule update --init src/cmake/blt
-   git submodule update --init src/coreComponents/LvArray
-   git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
-   git submodule update --init src/coreComponents/constitutive/PVTPackage
-   cd ..
+*Note*: Previous versions of GEOS also imported the integratedTests submodule, which is not publicly available (access is limited to the core development team).
+This may cause the ``git submodule update`` command to fail.
+In that case, run ``git submodule deinit integratedTests`` before ``git submodule update``.
+This submodule is not required for building GEOS.
 
 Once we have grabbed GEOS, we do the same for the thirdPartyLibs repository.  From the ``codes`` directory, type
 
