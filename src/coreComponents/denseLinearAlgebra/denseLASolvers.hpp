@@ -108,8 +108,6 @@ bool solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYP
 
   real64 const detA = LvArray::tensorOps::determinant< 3 >( A );
 
-  std::cout << "detA: " << detA << std::endl;
-
   if( LvArray::math::abs( detA ) < singularMatrixTolerance )
     return false;
 
@@ -193,7 +191,6 @@ bool solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
   LvArray::tensorOps::internal::checkSizes< N, N >( A );
   LvArray::tensorOps::internal::checkSizes< N >( b );
   LvArray::tensorOps::internal::checkSizes< N >( x );
-
 
   // Step 1: Transform  into an upper triangular matrix
 
