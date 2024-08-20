@@ -541,22 +541,22 @@ void ProblemManager::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
 
+  // first, numerical methods
+  order.emplace_back( groupKeys.numericalMethodsManager.key() );
+  usedNames.insert( groupKeys.numericalMethodsManager.key() );
 
-  {
-    order.emplace_back( groupKeys.numericalMethodsManager.key() );
-    usedNames.insert( groupKeys.numericalMethodsManager.key() );
-  }
+  // next, domain
+  order.emplace_back( groupKeys.domain.key() );
+  usedNames.insert( groupKeys.domain.key() );
 
-  {
-    order.emplace_back( groupKeys.domain.key() );
-    usedNames.insert( groupKeys.domain.key() );
-  }
+  // next, events
+  order.emplace_back( groupKeys.eventManager.key() );
+  usedNames.insert( groupKeys.eventManager.key() );
 
-  {
-    order.emplace_back( groupKeys.eventManager.key() );
-    usedNames.insert( groupKeys.eventManager.key() );
-  }
+  // (keeping outputs for the end)
+  usedNames.insert( groupKeys.outputManager.key() );
 
+  // next, everything...
   for( auto const & subGroup : this->getSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
@@ -564,6 +564,9 @@ void ProblemManager::initializationOrder( string_array & order )
       order.emplace_back( subGroup.first );
     }
   }
+
+  // end with outputs (in order to define the chunk sizes after any data source)
+  order.emplace_back( groupKeys.outputManager.key() );
 }
 
 
