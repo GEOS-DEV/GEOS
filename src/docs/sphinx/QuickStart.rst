@@ -218,8 +218,8 @@ If you are using an older version, you may need to add ``git lfs pull`` after ``
 The clone ``https://github.com/GEOS-DEV/GEOS.git`` becomes ``git clone git@github.com:GEOS-DEV/GEOS.git``.
 You may also be willing to insert your credentials in the command line (less secure) ``git clone https://${USER}:${TOKEN}@github.com/GEOS-DEV/GEOS.git``.
 
-Configuration
-================
+Configuration 
+=============
 
 At a minimum, you will need a relatively recent compiler suite installed on your system (e.g. `GCC <https://gcc.gnu.org>`_, `Clang <https://clang.llvm.org>`_) as well as `CMake <https://cmake.org>`_.
 If you want to run jobs using MPI-based parallelism, you will also need an MPI implementation (e.g. `OpenMPI <https://www.open-mpi.org>`_, `MVAPICH <https://mvapich.cse.ohio-state.edu>`_).
@@ -237,6 +237,8 @@ If something goes wrong, the first thing the support team will ask you for is th
 
 Here, you may need to replace ``cpp`` with the full path to the C++ compiler you would like to use, depending on how your path and any aliases are configured.
 
+Defining a host-config file
+---------------------------
 GEOS compilations are driven by a cmake ``host-config`` file, which tells the build system about the compilers you are using, where various packages reside, and what options you want to enable.
 We have created a number of default hostconfig files for common systems.
 You should browse them to see if any are close to your needs:
@@ -301,54 +303,82 @@ The final line is related to our unit test suite.  See the :ref:`BuildGuide` for
 Compilation
 ==================
 
-We will begin by compiling the TPLs, followed by the main code.
-If you work on an HPC system with other GEOS developers, check with them to see if the TPLs have already been compiled in a shared directory.
-If this is the case, you can skip ahead to just compiling the main code.
-If you are working on your own machine, you will need to compile both.
+The configuration process for both the third-party libraries (TPLs) and GEOS is managed through a Python script called ``config-build.py``. This script simplifies and automates the setup by configuring the build ad install directories and by running CMake.
+The ``config-build.py`` script has several command-line options that can be visualized by using the ``-h`` option.
 
-We strongly suggest that GEOS and TPLs be built with the same hostconfig file.
-Below, we assume that you keep it in, say, ``GEOS/host-configs/your-platform.cmake``, but this is up to you.
+.. code-block:: sh
 
-We begin with the third-party libraries, and use a python ``config-build.py`` script to configure and build all of the TPLs.
-Note that we will request a Release build type, which will enable various optimizations.
-The other option is a Debug build, which allows for debugging but will be much slower in production mode.
-The TPLS will then be built in a build directory named consistently with your hostconfig file.
+   cd thirdPartyLibs
+   python scripts/config-build.py -h
+
+Here, we will only use some basic options and rely on default values for many others.
+
+.. note::
+
+   It is strongly recommended that GEOS and TPLs be configured using the same host configuration file. Below, we assume that you keep this file in, for example, ``GEOS/host-configs/your-platform.cmake``, but the exact location is up to you.
+
+Compiling the TPLs
+-------------------
+
+.. note::
+
+   If you are working on an HPC system with other GEOS developers, check with them to see if the TPLs have already been compiled in a shared directory. If this is the case, you can skip ahead to just compiling the main code.
+   If you are working on your own machine, you will need to configure and compile both the TPLs and the main code.
+
+We begin by configuring the third-party libraries (TPLs) using the ``config-build.py`` script. This script sets up the build directory and runs CMake to generate the necessary build files.
 
 .. code-block:: sh
 
    cd thirdPartyLibs
    python scripts/config-build.py -hc ../GEOS/host-configs/your-platform.cmake -bt Release
+
+The TPLs will be configured in a build directory named consistently with your host configuration file, i.e., ``build-your-platform-release``.
+
+.. code-block:: sh
+
    cd build-your-platform-release
    make
 
-Note that building all of the TPLs can take quite a while, so you may want to go get a cup of coffee at this point.
-Also note that you should *not* use a parallel ``make -j N`` command to try and speed up the build time.
+.. note::
 
-The next step is to compile the main code.
-Again, the ``config-build.py`` sets up cmake for you, so the process is very similar.
+   Building all of the TPLs can take quite a while, so you may want to go get a cup of coffee at this point.
+   Also note that you should *not* use a parallel ``make -j N`` command to try and speed up the build time.
+
+Compiling GEOS
+-------------------
+
+Once the TPLs have been compiler, the next step is to compile the main code. The ``config-build.py`` script is used to configure the build directory. Before running the configuration script, ensure that the path to the TPLs is correctly set in the host configuration file by setting
+
+.. code-block:: sh
+   set(GEOS_TPL_DIR "/path/to/your/TPL/installation/dir" CACHE PATH "")
+
+If you have followed these instructions, the TPLs are installed at the default location, i.e. ``/path/to/your/TPL/thirdPartyLibs/install-your-platform-release``.
 
 .. code-block:: sh
 
    cd ../../GEOS
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
-   cd build-your-platform-release
-   make -j4
-   make install
 
-The host-config file is the place to set all relevant configuration options.
-Note that the path to the previously installed third party libraries is typically specified within this file.
 An alternative is to set the path ``GEOS_TPL_DIR`` via a cmake command line option, e.g.
-
 .. code-block:: sh
 
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release -D GEOS_TPL_DIR=/full/path/to/thirdPartyLibs
 
-We highly recommend using full paths, rather than relative paths, whenever possible.
+.. note::
+   
+   We highly recommend using full paths, rather than relative paths, whenever possible.
+
+Once the configuration process is completed, we proceed with the compilation of the main code and the instalation of geos.  
+
+.. code-block:: sh
+
+   cd build-your-platform-release
+   make -j4
+   make install   
+
 The parallel ``make -j 4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
 You can adjust this value to match the number of processors available on your machine.
 The ``make install`` command then installs GEOS to a default location unless otherwise specified.
-
-
 
 If all goes well, a ``geosx`` executable should now be available:
 
