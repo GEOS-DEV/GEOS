@@ -328,6 +328,51 @@ public:
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
                            real64 ( &gradN )[numNodes][3] );
+  /**
+   * @brief Calculate the shape functions derivatives wrt the physical
+   *   coordinates.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the mesh corners.
+   * @param gradN Array to contain the shape function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcGradNWithCorners( localIndex const q,
+                                      real64 const (&X)[8][3],
+                                      real64 ( &gradN )[numNodes][3] );
+  /**
+   * @brief Calculate the shape functions derivatives wrt the physical
+   *   coordinates at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[in] X Array containing the coordinates of the mesh corners.
+   * @param[out] gradN Array to contain the shape function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcGradNWithCorners( real64 const (&coords)[3],
+                                      real64 const (&X)[8][3],
+                                      real64 ( &gradN )[numNodes][3] );
+
+  /**
+   * @brief Calculate the shape functions derivatives wrt the physical
+   *   coordinates.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the mesh corners.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param gradN Array to contain the shape function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcGradNWithCorners( localIndex const q,
+                                      real64 const (&X)[8][3],
+                                      StackVariables const & stack,
+                                      real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -923,6 +968,57 @@ calcGradN( localIndex const q,
   return calcGradN( q, X, gradN );
 }
 
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradNWithCorners( localIndex const q,
+                                                                       real64 const (&X)[8][3],
+                                                                       real64 (& gradN)[numNodes][3] )
+{
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
+  real64 J[3][3] = {{0}};
+
+  jacobianTransformation( qa, qb, qc, X, J );
+
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+
+  applyTransformationToParentGradients( q, J, gradN );
+
+  return detJ;
+}
+//*************************************************************************************************
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradNWithCorners( real64 const (&coords)[3],
+                                                                       real64 const (&X)[8][3],
+                                                                       real64 (& gradN)[numNodes][3] )
+{
+  real64 J[3][3] = {{0}};
+
+  jacobianTransformation( coords, X, J );
+
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+
+  applyTransformationToParentGradients( coords, J, gradN );
+
+  return detJ;
+}
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+calcGradNWithCorners( localIndex const q,
+                      real64 const (&X)[8][3],
+                      StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                      real64 ( & gradN )[numNodes][3] )
+{
+  return calcGradN( q, X, gradN );
+}
 //*************************************************************************************************
 #if __GNUC__
 #pragma GCC diagnostic push
