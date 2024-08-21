@@ -6,16 +6,16 @@ set( gtest_geosx_tests
      testFlowStatistics.cpp
      testTransmissibility.cpp )
 
-set( tplDependencyList ${parallelDeps} gtest )
-
-set( dependencyList mainInterface testingUtilities )
-
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
           testCompMultiphaseFlowHybrid.cpp
           testReactiveCompositionalMultiphaseOBL.cpp )
 endif()
+
+set( tplDependencyList ${parallelDeps} gtest )
+
+set( dependencyList mainInterface testingUtilities )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )

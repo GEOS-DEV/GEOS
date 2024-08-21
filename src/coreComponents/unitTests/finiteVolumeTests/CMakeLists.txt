@@ -2,17 +2,20 @@
 set( gtest_geosx_tests
      testMimeticInnerProducts.cpp )
 
-set( dependencyList ${parallelDeps} gtest )
+set( tplDependencyList ${parallelDeps} gtest )
 
-list( APPEND dependencyList geosx_core )
-
+set( dependencyList mainInterface )
+     
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+     
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${dependencyList} )
+                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
 
     # Guard to prevent GCC (version 8) from giving warnings due
     # to some sort of possible conversion from int to long unsigned.
