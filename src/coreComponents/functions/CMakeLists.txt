@@ -33,10 +33,13 @@ if( ENABLE_MATHPRESSO )
    list( APPEND dependencyList mathpresso )
 endif()
 
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
 blt_add_library( NAME       functions
                  SOURCES    ${functions_sources}
                  HEADERS    ${functions_headers}
-                 DEPENDS_ON ${dependencyList}
+                 DEPENDS_ON ${decoratedDependencies}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )

@@ -15,14 +15,16 @@ set( testingUtilities_sources
 #
 # Specify all dependencies
 #
-set( dependencyList ${parallelDeps} gtest )
+set( tplDependencyList ${parallelDeps} gtest )
 
-list( APPEND dependencyList geosx_core )
-   
+set( dependencyList events )
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
 blt_add_library( NAME       testingUtilities
                  SOURCES    ${testingUtilities_sources}
                  HEADERS    ${testingUtilities_headers}
-                 DEPENDS_ON ${dependencyList}
+                 DEPENDS_ON ${decoratedDependencies} ${tplDependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )

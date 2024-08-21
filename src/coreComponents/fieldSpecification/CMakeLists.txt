@@ -28,10 +28,13 @@ set( fieldSpecification_sources
 
 set( dependencyList ${parallelDeps} linearAlgebra )
 
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}
                  HEADERS    ${fieldSpecification_headers}
-                 DEPENDS_ON ${dependencyList}
+                 DEPENDS_ON ${decoratedDependencies}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )

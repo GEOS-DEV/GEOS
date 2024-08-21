@@ -50,11 +50,13 @@ if( ENABLE_PYGEOSX )
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       dataRepository
                  SOURCES    ${dataRepository_sources}
                  HEADERS    ${dataRepository_headers}
-                 DEPENDS_ON ${dependencyList}
+                 DEPENDS_ON ${decoratedDependencies}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )

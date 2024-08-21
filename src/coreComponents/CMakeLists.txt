@@ -3,20 +3,20 @@ set( subdirs
      common
      codingUtilities
      dataRepository
-     schema
+     denseLinearAlgebra
      functions
      constitutive
-     constitutiveDrivers
+     schema
+     finiteElement
      mesh
-     denseLinearAlgebra
      linearAlgebra
      fieldSpecification
-     finiteElement
      finiteVolume
      discretizationMethods
+     events
+     constitutiveDrivers
      fileIO
      physicsSolvers
-     events
      mainInterface )
 
 unset( parallelDeps )
@@ -65,16 +65,8 @@ add_library(geosx_core INTERFACE)
 if( GEOS_BUILD_SHARED_LIBS)
   target_link_libraries(geosx_core INTERFACE mainInterface )
 else()
-  get_target_property( libs geosx_core INTERFACE_LINK_LIBRARIES )
-
-  set( linkLibs "" )
-  foreach( lib ${coreLibs} )
-    list( APPEND linkLibs "$<LINK_LIBRARY:WHOLE_ARCHIVE,${lib}>" )
-  endforeach()
-  message( "linkLibs = ${linkLibs}" )
-  target_link_libraries(geosx_core INTERFACE ${linkLibs} )
+  target_link_libraries(geosx_core INTERFACE $<LINK_LIBRARY:WHOLE_ARCHIVE,mainInterface> )
 endif()
-blt_print_target_properties( TARGET geosx_core )
 
 geosx_add_code_checks( PREFIX coreComponents
                        EXCLUDES cmake constitutive/PVTPackage )

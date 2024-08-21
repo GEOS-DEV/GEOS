@@ -6,36 +6,19 @@ set( gtest_geosx_tests
      testFlowStatistics.cpp
      testTransmissibility.cpp )
 
-set( dependencyList ${parallelDeps} gtest )
+set( tplDependencyList ${parallelDeps} gtest )
 
-list( APPEND dependencyList geosx_core )
-
-set( dependencyList testingUtilities )
+set( dependencyList mainInterface testingUtilities )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
           testCompMultiphaseFlowHybrid.cpp
           testReactiveCompositionalMultiphaseOBL.cpp )
-
-    list( APPEND dependencyList PVTPackage )
 endif()
 
-if (TARGET pugixml::pugixml)
-  list( APPEND dependencyList pugixml::pugixml )
-endif()
-
-if (TARGET pugixml)
-  list( APPEND dependencyList pugixml )
-endif()
-
-if (TARGET fmt::fmt-header-only)
-  list( APPEND dependencyList fmt::fmt-header-only )
-endif()
-
-if (TARGET fmt)
-  list( APPEND dependencyList fmt )
-endif()
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
@@ -44,7 +27,7 @@ foreach(test ${gtest_geosx_tests})
   blt_add_executable( NAME ${test_name}
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON ${dependencyList} )
+                      DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
 
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} )

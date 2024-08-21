@@ -79,10 +79,13 @@ if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
 blt_add_library( NAME       fileIO
                  SOURCES    ${fileIO_sources}
                  HEADERS    ${fileIO_headers}
-                 DEPENDS_ON ${dependencyList}
+                 DEPENDS_ON ${decoratedDependencies}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )

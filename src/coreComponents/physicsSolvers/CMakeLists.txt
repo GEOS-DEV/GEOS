@@ -52,6 +52,7 @@ if( GEOS_ENABLE_WAVEPROPAGATION )
 endif()
 
 set( dependencyList ${parallelDeps} fileIO discretizationMethods events )
+
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
   python/PySolver.hpp
@@ -61,10 +62,13 @@ if( ENABLE_PYGEOSX )
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
 blt_add_library( NAME       physicsSolvers
                  SOURCES    ${physicsSolvers_sources}
                  HEADERS    ${physicsSolvers_headers}
-                 DEPENDS_ON ${dependencyList} ${externalComponentDeps}
+                 DEPENDS_ON ${decoratedDependencies} ${externalComponentDeps}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
