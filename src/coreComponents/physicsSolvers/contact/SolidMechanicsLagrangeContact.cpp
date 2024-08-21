@@ -1167,7 +1167,7 @@ void SolidMechanicsLagrangeContact::
     constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
       using ContactType = TYPEOFREF( castedContact );
-      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -1889,7 +1889,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {

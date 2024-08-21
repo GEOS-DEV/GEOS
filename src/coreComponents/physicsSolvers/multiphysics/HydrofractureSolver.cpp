@@ -317,7 +317,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
 
         auto const statistics = hydrofractureSolverKernels::DeformationUpdateKernel
                                   ::launch< parallelDevicePolicy<> >( subRegion.size(),
@@ -828,7 +828,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
 
         hydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),

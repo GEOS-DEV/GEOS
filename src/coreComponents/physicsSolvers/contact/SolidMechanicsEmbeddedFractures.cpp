@@ -735,7 +735,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
 
         solidMechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
@@ -770,7 +770,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
 
         RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
 

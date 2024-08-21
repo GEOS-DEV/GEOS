@@ -68,7 +68,7 @@ void CoulombContact::allocateConstitutiveData( Group & parent,
 }
 
 
-CoulombContactUpdates CoulombContact::createKernelWrapper() const
+CoulombContactUpdates CoulombContact::createKernelUpdates() const
 {
   return CoulombContactUpdates( m_penaltyStiffness,
                                 m_shearStiffness,

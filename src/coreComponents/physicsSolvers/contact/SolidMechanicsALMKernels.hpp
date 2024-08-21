@@ -51,6 +51,7 @@ public:
   using Base::m_elemsToFaces;
   using Base::m_faceToNodes;
   using Base::m_finiteElementSpace;
+  using Base::m_constitutiveUpdate;
   using Base::m_dofNumber;
   using Base::m_bDofNumber;
   using Base::m_dofRankOffset;
@@ -224,31 +225,11 @@ public:
       }
     }
 
-    // The minus sign is consistent with the sign of the Jacobian
-    stack.localPenalty[0][0] = -m_penalty( k, 0 );
-    if (m_isStickState)
-    {
-      stack.localPenalty[1][1] = -m_penalty( k, 1 );
-      stack.localPenalty[2][2] = -m_penalty( k, 1 );
-    }
-    else
-    {
-      stack.localPenalty[1][1] = 0.0;
-      stack.localPenalty[2][2] = 0.0;
-    }
-
     for( int i=0; i<numTdofs; ++i )
     {
       stack.tLocal[i] = m_traction( k, i );
       stack.dispJumpLocal[i] = m_dispJump( k, i );
-      if (m_isStickState)
-      {
-        stack.oldDispJumpLocal[i] = m_oldDispJump( k, i );
-      }
-      else
-      {
-        stack.oldDispJumpLocal[i] = 0.0;
-      }
+      stack.oldDispJumpLocal[i] = m_oldDispJump( k, i );
     }
     stack.oldDispJumpLocal[0] = 0.0;
 
@@ -268,7 +249,9 @@ public:
                    StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( k );
-
+    constexpr bool symmetric = false;
+    constexpr real64 zero = 1.e-10;
+    
     constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
     constexpr int numBdofs = 3*2;
@@ -276,12 +259,115 @@ public:
     real64 matRRtAtu[3][numUdofs], matDRtAtu[3][numUdofs];
     real64 matRRtAtb[3][numBdofs], matDRtAtb[3][numBdofs];
 
-    real64 dispJumpR[numUdofs];
-    real64 oldDispJumpR[numUdofs];
     real64 tractionR[numUdofs];
-    real64 dispJumpRb[numBdofs];
-    real64 oldDispJumpRb[numBdofs];
     real64 tractionRb[numBdofs];
+
+    real64 tractionNew[3];
+    real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+    real64 limitTau = 0.0;
+
+    // Compute the trial traction
+    real64 tractionTrial[ 3 ];
+    tractionTrial[ 0 ] = stack.tLocal[0] + m_penalty(k, 0) * stack.dispJumpLocal[0];
+    tractionTrial[ 1 ] = stack.tLocal[1] + m_penalty(k, 1) * (stack.dispJumpLocal[1] - stack.oldDispJumpLocal[1]);
+    tractionTrial[ 2 ] = stack.tLocal[2] + m_penalty(k, 1) * (stack.dispJumpLocal[2] - stack.oldDispJumpLocal[2]);
+
+    // Compute tangential trial traction norm
+    real64 const tractionTrialNorm = std::sqrt( std::pow(tractionTrial[1], 2) +
+                                                 std::pow(tractionTrial[2], 2));
+                                      
+    // If normal tangential trial is positive (opening)
+    if (tractionTrial[ 0 ] > zero)
+    {
+      tractionNew[0] = 0.0;
+      stack.localPenalty[0][0] = 0.0;
+    }
+    else 
+    {
+      tractionNew[0] = stack.tLocal[0] + m_penalty(k, 0) * stack.dispJumpLocal[0];
+      stack.localPenalty[0][0] = -m_penalty( k, 0 );
+    }
+
+    // Compute limit Tau
+    if (symmetric)
+    {
+      limitTau = m_constitutiveUpdate.computeLimitTangentialTractionNorm( m_traction(k, 0),
+                                                                        dLimitTangentialTractionNorm_dTraction );
+    }
+    else
+    {
+      limitTau = m_constitutiveUpdate.computeLimitTangentialTractionNorm( tractionNew[0],
+                                                                        dLimitTangentialTractionNorm_dTraction );
+    }
+
+    if (tractionTrialNorm <= zero) 
+    {
+      // It is needed for the first iteration (both t and u are equal to zero)  
+      stack.localPenalty[1][1] = -m_penalty( k, 1);
+      stack.localPenalty[2][2] = -m_penalty( k, 1);
+
+      tractionNew[1] = tractionTrial[1];
+      tractionNew[2] = tractionTrial[2];
+    }
+    else if (limitTau <= zero) 
+    {
+      stack.localPenalty[1][1] = 0.0;
+      stack.localPenalty[2][2] = 0.0;
+
+      tractionNew[1] = (symmetric) ? tractionTrial[1] : 0.0;
+      tractionNew[2] = (symmetric) ? tractionTrial[2] : 0.0;
+    }
+    
+    else
+    {
+      // Compute psi and dpsi
+      //real64 const psi = std::tanh( tractionTrialNorm/limitTau );
+      //real64 const dpsi = 1.0-std::pow(psi,2);
+      real64 const psi = ( tractionTrialNorm > limitTau) ? 1.0 : tractionTrialNorm/limitTau;
+      real64 const dpsi = ( tractionTrialNorm > limitTau) ? 0.0 : 1.0;
+
+      // Two symmetric 2x2 matrices
+      real64 dNormTTdgT[ 3 ];
+      dNormTTdgT[ 0 ] = tractionTrial[ 1 ] * tractionTrial[ 1 ];
+      dNormTTdgT[ 1 ] = tractionTrial[ 2 ] * tractionTrial[ 2 ];
+      dNormTTdgT[ 2 ] = tractionTrial[ 1 ] * tractionTrial[ 2 ];
+   
+      real64 dTdgT[ 3 ];
+      dTdgT[ 0 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[0]); 
+      dTdgT[ 1 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[1]);
+      dTdgT[ 2 ] = - dNormTTdgT[2];
+   
+      LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow(tractionTrialNorm, 2) );
+      LvArray::tensorOps::scale< 3 >( dTdgT, 1. / std::pow( tractionTrialNorm, 3 )  );
+
+      // Compute dTdDispJump
+      stack.localPenalty[1][1] = -m_penalty( k, 1) * ( 
+           dpsi * dNormTTdgT[0] +
+            psi * dTdgT[0] * limitTau ); 
+      stack.localPenalty[2][2] = -m_penalty( k, 1) * ( 
+           dpsi * dNormTTdgT[1] +
+            psi * dTdgT[1] * limitTau ); 
+      stack.localPenalty[1][2] = -m_penalty( k, 1) * ( 
+           dpsi * dNormTTdgT[2] +
+            psi * dTdgT[2] * limitTau ); 
+      stack.localPenalty[2][1] =  stack.localPenalty[1][2];
+   
+      if (!symmetric)
+      {
+        // Nonsymetric term
+        //real64 const friction = m_constitutiveUpdate.frictionCoefficient();
+        real64 const friction = (std::abs(tractionNew[0]) > zero) ? - limitTau / tractionNew[0] : 0.0;
+        stack.localPenalty[1][0] = -stack.localPenalty[0][0] * friction * 
+          tractionTrial[1] * (psi/tractionTrialNorm - dpsi/limitTau);
+        stack.localPenalty[2][0] = -stack.localPenalty[0][0] * friction  * 
+          tractionTrial[2] * (psi/tractionTrialNorm - dpsi/limitTau);
+      }
+
+      tensorOps::scale< 3 >( tractionTrial, (psi * limitTau)/tractionTrialNorm );
+      tractionNew[1] = tractionTrial[1];
+      tractionNew[2] = tractionTrial[2];
+    }
+    
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix,
@@ -291,8 +377,8 @@ public:
                                                          stack.localAtb );
 
     // Compute the traction contribute of the local residuals
-    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( tractionR, matRRtAtu, stack.tLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( tractionRb, matRRtAtb, stack.tLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( tractionR, matRRtAtu, tractionNew );
+    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( tractionRb, matRRtAtb, tractionNew );
 
     // D*RtAtu
     LvArray::tensorOps::Rij_eq_AikBkj< 3, numUdofs, 3 >( matDRtAtu, stack.localPenalty,
@@ -324,18 +410,9 @@ public:
                                                                 matRRtAtb );
 
     // Compute the local residuals
-    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( dispJumpR, matDRtAtu, stack.dispJumpLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( oldDispJumpR, matDRtAtu, stack.oldDispJumpLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( dispJumpRb, matDRtAtb, stack.dispJumpLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( oldDispJumpRb, matDRtAtb, stack.oldDispJumpLocal );
-
     LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, tractionR, -1 );
-    LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, dispJumpR, 1 );
-    LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, oldDispJumpR, -1 );
 
     LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, tractionRb, -1 );
-    LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, dispJumpRb, 1 );
-    LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, oldDispJumpRb, -1 );
 
     for( localIndex i=0; i < numUdofs; ++i )
     {

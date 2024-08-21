@@ -48,6 +48,7 @@
 #include "permeability/ProppantPermeability.hpp"
 #include "permeability/SlipDependentPermeability.hpp"
 #include "permeability/WillisRichardsPermeability.hpp"
+#include "contact/CoulombContact.hpp"
 
 
 namespace geos
@@ -82,6 +83,20 @@ struct ConstitutivePassThru< ElasticIsotropic >
   }
 };
 
+/**
+ * Specialization for models that derive from ConstactCoulomb.
+ */
+template<>
+struct ConstitutivePassThru< CoulombContact >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CoulombContact >::execute( constitutiveRelation,
+                                                              std::forward< LAMBDA >( lambda ) );
+  }
+};
 
 /**
  * Specialization for models that derive from SolidBase.

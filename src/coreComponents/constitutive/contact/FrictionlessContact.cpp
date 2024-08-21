@@ -40,7 +40,7 @@ void FrictionlessContact::allocateConstitutiveData( Group & parent,
   ContactBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-FrictionlessContactUpdates FrictionlessContact::createKernelWrapper() const
+FrictionlessContactUpdates FrictionlessContact::createKernelUpdates() const
 {
   return FrictionlessContactUpdates( m_penaltyStiffness,
                                      m_shearStiffness,
