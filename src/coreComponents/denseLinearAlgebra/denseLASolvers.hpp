@@ -202,7 +202,7 @@ bool solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
     std::ptrdiff_t max_row = i;
     for( std::ptrdiff_t k = i + 1; k < N; ++k )
     {
-      if( std::abs( A[k][i] ) > std::abs( A[max_row][i] ))
+      if( LvArray::math::abs( A[k][i] ) > LvArray::math::abs( A[max_row][i] ))
       {
         max_row = k;
       }
@@ -211,9 +211,16 @@ bool solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
     // 1.b. Swap rows
     for( std::ptrdiff_t k = i; k < N; ++k )
     {
-      std::swap( A[i][k], A[max_row][k] );
+      // std::swap( A[i][k], A[max_row][k] );
+      real64 const temp = A[max_row][k];
+      A[max_row][k] = A[i][k];
+      A[i][k] = temp;
     }
-    std::swap( b[i], b[max_row] );
+    // std::swap( b[i], b[max_row] ); cannot be done on device
+    real64 const temp = b[i];
+    b[i] =  b[max_row];
+    b[max_row] = temp;
+    
 
     if( LvArray::math::abs( A[i][i] ) < singularMatrixTolerance )
       return false;
