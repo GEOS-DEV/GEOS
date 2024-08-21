@@ -19,6 +19,7 @@
 #define GEOS_COMMON_LOGLEVELSINFO_HPP
 
 #include "DataTypes.hpp"
+#include "format/Format.hpp"
 
 namespace geos
 {
