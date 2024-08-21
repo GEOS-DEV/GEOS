@@ -150,6 +150,8 @@ template< std::ptrdiff_t N,
           typename MATRIX_TYPE,
           typename RHS_TYPE,
           typename SOL_TYPE >
+GEOS_HOST_DEVICE
+inline
 void solveUpperTriangularSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && x )
 {
   for( std::ptrdiff_t i = N - 1; i >= 0; --i )
