@@ -48,21 +48,6 @@ public:
   using LinearSystem< N >::solution;
   using LinearSystem< N >::rhs;
 
-  /// Default copy constructor
-  InvertibleLinearSystem( InvertibleLinearSystem const & ) = default;
-
-  /// Default move constructor
-  InvertibleLinearSystem( InvertibleLinearSystem && ) = default;
-
-  /// Deleted default constructor
-  InvertibleLinearSystem() = delete;
-
-  /// Deleted copy assignment operator
-  InvertibleLinearSystem & operator=( InvertibleLinearSystem const & ) = delete;
-
-  /// Deleted move assignment operator
-  InvertibleLinearSystem & operator=( InvertibleLinearSystem && ) =  delete;
-
   InvertibleLinearSystem( short int seed )
   {
     std::mt19937 generator( seed );
@@ -98,21 +83,6 @@ public:
   using LinearSystem< N >::matrix;
   using LinearSystem< N >::solution;
   using LinearSystem< N >::rhs;
-
-  /// Default copy constructor
-  SingularLinearSystem( SingularLinearSystem const & ) = default;
-
-  /// Default move constructor
-  SingularLinearSystem( SingularLinearSystem && ) = default;
-
-  /// Deleted default constructor
-  SingularLinearSystem() = delete;
-
-  /// Deleted copy assignment operator
-  SingularLinearSystem & operator=( SingularLinearSystem const & ) = delete;
-
-  /// Deleted move assignment operator
-  SingularLinearSystem & operator=( SingularLinearSystem && ) =  delete;
 
   SingularLinearSystem( short int seed )
   {
@@ -167,7 +137,7 @@ public:
 
       LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
       LvArray::tensorOps::copy< size >( rhs, LS.rhs );
-      int const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
       PORTABLE_EXPECT_TRUE( success );
 
@@ -186,13 +156,13 @@ public:
     forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( int )
     {
 
-      real64 sol[size];
-      real64 matrix[size][size];
-      real64 rhs[size];
+      real64 sol[size]{};
+      real64 matrix[size][size]{};
+      real64 rhs[size]{};
 
       LvArray::tensorOps::copy< size, size >( matrix, LS.matrix );
       LvArray::tensorOps::copy< size >( rhs, LS.rhs );
-      int const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
+      bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
       PORTABLE_EXPECT_FALSE( success );
     } );
@@ -232,7 +202,7 @@ TYPED_TEST_SUITE( DenseLinearSolverTest, Dimensions, NameGenerator );
 TYPED_TEST( DenseLinearSolverTest, testDenseLA )
 {
   this->test_solve();
-  // this->test_singularSystem();
+  this->test_singularSystem();
 }
 
 int main( int argc, char * * argv )

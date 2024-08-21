@@ -52,14 +52,14 @@ constexpr real64 singularMatrixTolerance = 1e2*LvArray::NumericLimits< real64 >:
  * @param[in] A The 2x2 matrix representing the system of equations. Must have size 2x2.
  * @param[in] b The 2-element vector representing the right-hand side of the equation.
  * @param[out] x The 2-element vector that will store the solution to the system.
- * @return int that sepcifies whether the solve succeeded (1) or not (0).
+ * @return bool that sepcifies whether the solve succeeded (1) or not (0).
  */
 template< typename MATRIX_TYPE,
           typename RHS_TYPE,
           typename SOL_TYPE >
 GEOS_HOST_DEVICE
 inline
-int solveTwoByTwoSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && x )
+bool solveTwoByTwoSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && x )
 {
   LvArray::tensorOps::internal::checkSizes< 2, 2 >( A );
   LvArray::tensorOps::internal::checkSizes< 2 >( b );
@@ -68,14 +68,14 @@ int solveTwoByTwoSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && 
   real64 const detA = LvArray::tensorOps::determinant< 2 >( A );
 
   if( LvArray::math::abs( detA ) < singularMatrixTolerance )
-    return 0;
+    return false;
 
   real64 const invA = 1.0 / detA;
 
   x[0] = ( A[1][1] * b[0] - A[0][1] * b[1] ) * invA;
   x[1] = ( A[0][0] * b[1] - A[1][0] * b[0] ) * invA;
 
-  return 1;
+  return true;
 }
 
 /**
@@ -93,14 +93,14 @@ int solveTwoByTwoSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && 
  * @param[in] A The 3x3 matrix representing the system of equations. Must have size 3x3.
  * @param[in] b The 3-element vector representing the right-hand side of the equation.
  * @param[out] x The 3-element vector that will store the solution to the system.
- * @return int that sepcifies whether the solve succeeded (1) or not (0).
+ * @return bool that sepcifies whether the solve succeeded (1) or not (0).
  */
 template< typename MATRIX_TYPE,
           typename RHS_TYPE,
           typename SOL_TYPE >
 GEOS_HOST_DEVICE
 inline
-int solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && x )
+bool solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE && x )
 {
   LvArray::tensorOps::internal::checkSizes< 3, 3 >( A );
   LvArray::tensorOps::internal::checkSizes< 3 >( b );
@@ -109,7 +109,7 @@ int solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE
   real64 const detA = LvArray::tensorOps::determinant< 3 >( A );
 
   if( LvArray::math::abs( detA ) < singularMatrixTolerance )
-    return 0;
+    return false;
 
   real64 const invA = 1.0 / detA;
 
@@ -129,7 +129,7 @@ int solveThreeByThreeSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_TYPE
   x[1] = detX1 * invA;
   x[2] = detX2 * invA;
 
-  return 1;
+  return true;
 }
 
 /**
@@ -169,17 +169,17 @@ void solveUpperTriangularSystem( MATRIX_TYPE const & A, RHS_TYPE const & b, SOL_
  * @brief Solves a linear system using Gaussian elimination.
  *
  * This function performs Gaussian elimination on the given matrix `A` and right-hand side vector `b`.
- * It transforms the matrix `A` into an upper triangular matrix and then solves for the solution `x`
+ * It transforms the matrix `A` boolo an upper triangular matrix and then solves for the solution `x`
  * using back substitution.
  *
  * @tparam N The size of the square matrix `A`.
  * @tparam MATRIX_TYPE The type of the matrix `A`.
  * @tparam RHS_TYPE The type of the right-hand side vector `b`.
  * @tparam SOL_TYPE The type of the solution vector `x`.
- * @param[in,out] A The matrix to be transformed into an upper triangular matrix. Modified in place.
+ * @param[in,out] A The matrix to be transformed boolo an upper triangular matrix. Modified in place.
  * @param[in,out] b The right-hand side vector. Modified in place to reflect the transformed system.
  * @param[out] x The solution vector. The result of solving the system `Ax = b`.
- * @return int that sepcifies whether the solve succeeded (1) or not (0).
+ * @return bool that sepcifies whether the solve succeeded (1) or not (0).
  */
 template< std::ptrdiff_t N,
           typename MATRIX_TYPE,
@@ -187,14 +187,14 @@ template< std::ptrdiff_t N,
           typename SOL_TYPE >
 GEOS_HOST_DEVICE
 inline
-int solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
+bool solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
 {
   static_assert( N > 0, "N must be greater than 0." );
   LvArray::tensorOps::internal::checkSizes< N, N >( A );
   LvArray::tensorOps::internal::checkSizes< N >( b );
   LvArray::tensorOps::internal::checkSizes< N >( x );
 
-  // Step 1: Transform  into an upper triangular matrix
+  // Step 1: Transform  boolo an upper triangular matrix
 
   // 1.a. Find the pivot
   for( std::ptrdiff_t i = 0; i < N; ++i )
@@ -223,7 +223,7 @@ int solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
 
 
     if( LvArray::math::abs( A[i][i] ) < singularMatrixTolerance )
-      return 0;
+      return false;
 
     // 1.c Eliminate entries below the pivot
     for( std::ptrdiff_t k = i + 1; k < N; ++k )
@@ -240,7 +240,7 @@ int solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
   // Step 2: Backward substitution
   solveUpperTriangularSystem< N >( A, b, std::forward< SOL_TYPE >( x ) );
 
-  return 1;
+  return true;
 }
 
 } // details namespace
@@ -256,22 +256,22 @@ int solveGaussianElimination( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
  * @tparam MATRIX_TYPE The type of the matrix `A`.
  * @tparam RHS_TYPE The type of the right-hand side vector `b`.
  * @tparam SOL_TYPE The type of the solution vector `x`.
- * @tparam MODIFY_MATRIX intean flag indicating whether the input matrix `A` and vector `b` should be modified.
+ * @tparam MODIFY_MATRIX boolean flag indicating whether the input matrix `A` and vector `b` should be modified.
  *                       If `1`, the matrix `A` and vector `b` are modified in place. If `0`, copies of
  *                       `A` and `b` are made, and the original data is left unchanged.
  * @param[in] A The matrix representing the coefficients of the system.
  * @param[in] b The right-hand side vector.
  * @param[out] x The solution vector. The result of solving the system `Ax = b`.
- * @return int that sepcifies whether the solve succeeded (1) or not (0).
+ * @return bool that sepcifies whether the solve succeeded (1) or not (0).
  */
 template< std::ptrdiff_t N,
           typename MATRIX_TYPE,
           typename RHS_TYPE,
           typename SOL_TYPE,
-          int MODIFY_MATRIX = 1 >
+          bool MODIFY_MATRIX = 1 >
 GEOS_HOST_DEVICE
 inline
-int solve( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
+bool solve( MATRIX_TYPE & A, RHS_TYPE & b, SOL_TYPE && x )
 {
   static_assert( N > 0, "N must be greater than 0." );
   static_assert( N < 10, "N cannot be larger than 9" );
