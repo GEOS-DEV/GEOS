@@ -539,6 +539,22 @@ public:
   static void jacobianTransformation( real64 const (&coords)[3],
                                       real64 const (&X)[numNodes][3],
                                       real64 ( &J )[3][3] );
+
+  /**
+   * @brief Calculates the isoparametric "Jacobian" transformation
+   *   matrix/mapping from the parent space to the physical space at a single point.
+   *   Assumes that the coordinate of high-order nodes are given by trilinear
+   *   interpolation of the mesh corners.
+   * @param coords The parent coordinates at which to evaluate the shape function value
+   * @param X Array containing the coordinates of the mesh corners.
+   * @param J Array to store the Jacobian transformation.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void jacobianTransformationWithCorners( real64 const (&coords)[3],
+                                                 real64 const (&X)[8][3],
+                                                 real64 ( &J )[3][3] );
+
   /**
    * @brief performs a trilinear interpolation to determine the real-world coordinates of a
    *   vertex
@@ -1000,7 +1016,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradNWithCorners( real64 co
 {
   real64 J[3][3] = {{0}};
 
-  jacobianTransformation( coords, X, J );
+  jacobianTransformationWithCorners( coords, X, J );
 
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
@@ -1069,6 +1085,37 @@ jacobianTransformation( real64 const (&coords)[3],
                                              real64 (& J)[3][3] )
   {
     real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
+      }
+    }
+  }, X, J );
+}
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+jacobianTransformationWithCorners( real64 const (&coords)[3],
+                                   real64 const (&X)[8][3],
+                                   real64 ( & J )[3][3] )
+{
+  supportLoop( coords, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                             int const nodeIndex,
+                                             real64 const (&X)[8][3],
+                                             real64 (& J)[3][3] )
+  {
+    int qa, qb, qc;
+    GL_BASIS::TensorProduct3D::multiIndex( nodeIndex, qa, qb, qc );
+    real64 Xnode[3];
+    real64 alpha = ( GL_BASIS::parentSupportCoord( qa ) + 1.0 ) / 2.0;
+    real64 beta = ( GL_BASIS::parentSupportCoord( qb ) + 1.0 ) / 2.0;
+    real64 gamma = ( GL_BASIS::parentSupportCoord( qc ) + 1.0 ) / 2.0;
+    trilinearInterp( alpha, beta, gamma, X, Xnode);
     for( int i = 0; i < 3; ++i )
     {
       for( int j = 0; j < 3; ++j )
