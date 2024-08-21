@@ -24,7 +24,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
+#include "common/format/table/TableFormatter.hpp"
 #include "common/Units.hpp"
 
 namespace geos
