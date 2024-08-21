@@ -303,15 +303,16 @@ The final line is related to our unit test suite.  See the :ref:`BuildGuide` for
 Compilation
 ==================
 
-The configuration process for both the third-party libraries (TPLs) and GEOS is managed through a Python script called ``config-build.py``. This script simplifies and automates the setup by configuring the build ad install directories and by running CMake.
-The ``config-build.py`` script has several command-line options that can be visualized by using the ``-h`` option.
+The configuration process for both the third-party libraries (TPLs) and GEOS is managed through a Python script called ``config-build.py``. This script simplifies and automates the setup by configuring the build ad install directories and by running CMake based on the options set in the host-config file 
+which is passed as a command-lne argument. The ``config-build.py`` script has several command-line options. Here, we will only use some basic options and rely on default values for many others. During this build process there wil be automatically generated build and install directories for both the TPLs and the main code,
+with names consistent with the name specified in the host-config by the variable ``CONFIG_NAME``, i.e. ``build-your-platform-release`` and ``install-your-platform-release``. 
+
+All options can be visualized by running
 
 .. code-block:: sh
 
    cd thirdPartyLibs
    python scripts/config-build.py -h
-
-Here, we will only use some basic options and rely on default values for many others.
 
 .. note::
 
