@@ -381,7 +381,7 @@ The parallel ``make -j 4`` will use four processes for compilation, which can su
 You can adjust this value to match the number of processors available on your machine.
 The ``make install`` command then installs GEOS to a default location unless otherwise specified.
 
-If all goes well, a ``geosx`` executable should now be available:
+If all goes well, a ``geosx`` executable should now be available
 
 .. code-block:: sh
 
