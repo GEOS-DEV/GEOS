@@ -132,7 +132,7 @@ public:
       LvArray::tensorOps::copy< size >( rhs, LS.rhs );
       bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
-      EXPECT_TRUE( success );
+      PORTABLE_EXPECT_TRUE( success );
 
       for( std::ptrdiff_t i = 0; i < size; ++i )
       {
@@ -157,7 +157,7 @@ public:
       LvArray::tensorOps::copy< size >( rhs, LS.rhs );
       bool const success = denseLinearAlgebra::solve< size >( matrix, rhs, sol );
 
-      EXPECT_FALSE( success );
+      PORTABLE_EXPECT_FALSE( success );
     } );
   }
 
