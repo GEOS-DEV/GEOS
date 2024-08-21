@@ -132,7 +132,7 @@ public:
 
   /**
    * @brief Set the output directory for function output
-   * @param dir The output directory
+   * @param outputDir The output directory
    */
   static void setOutputDirectory( string const & outputDir );
 
