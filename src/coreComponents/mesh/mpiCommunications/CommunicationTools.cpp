@@ -139,7 +139,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
                               1,
                               commData.mpiRecvBufferSizeRequest( neighborIndex ),
                               commData.commID(),
-                              MPI_COMM_GEOSX );
+                              MPI_COMM_GEOS );
   }
 
   for( std::size_t count=0; count<neighbors.size(); ++count )
@@ -160,7 +160,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
                               receiveBufferSizes[neighborIndex],
                               commData.mpiRecvBufferRequest( neighborIndex ),
                               commData.commID(),
-                              MPI_COMM_GEOSX );
+                              MPI_COMM_GEOS );
   }
 
   // unpack the data from neighbor->tempNeighborData.neighborNumbers[DomainPartition::FiniteElementNodeManager] to
@@ -271,7 +271,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
 void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
                                                  std::set< localIndex > const & indexList )
 {
-  globalIndex const glocalIndexOffset = MpiWrapper::prefixSum< globalIndex >( indexList.size(), MPI_COMM_GEOSX );
+  globalIndex const glocalIndexOffset = MpiWrapper::prefixSum< globalIndex >( indexList.size(), MPI_COMM_GEOS );
 
   arrayView1d< globalIndex > const & localToGlobal = manager.localToGlobalMap();
 
@@ -301,7 +301,7 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
     numberOfNewObjectsHere += LvArray::integerConversion< localIndex >( iter.second.size() );
   }
 
-  globalIndex const glocalIndexOffset = MpiWrapper::prefixSum< globalIndex >( numberOfNewObjectsHere, MPI_COMM_GEOSX );
+  globalIndex const glocalIndexOffset = MpiWrapper::prefixSum< globalIndex >( numberOfNewObjectsHere, MPI_COMM_GEOS );
 
   localIndex nIndicesAssigned = 0;
   for( auto const & iter : newElems )
@@ -353,7 +353,7 @@ array1d< array1d< globalIndex > > exchange( int commId,
                                        commData.mpiSendBufferSizeRequest( i ),
                                        commData.mpiRecvBufferSizeRequest( i ),
                                        commId,
-                                       MPI_COMM_GEOSX );
+                                       MPI_COMM_GEOS );
   }
 
   MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
@@ -368,7 +368,7 @@ array1d< array1d< globalIndex > > exchange( int commId,
                                       output[i],
                                       commData.mpiRecvBufferRequest( i ),
                                       commId,
-                                      MPI_COMM_GEOSX );
+                                      MPI_COMM_GEOS );
   }
   MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferRequest(), commData.mpiSendBufferStatus() );
   MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferRequest(), commData.mpiRecvBufferStatus() );
@@ -680,7 +680,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toView(),
                        neighborRank,
                        nonLocalGhostsTag,
-                       MPI_COMM_GEOSX,
+                       MPI_COMM_GEOS,
                        &nonLocalGhostsRequests[ i ] );
   }
 
@@ -693,7 +693,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     MpiWrapper::recv( ghostsFromSecondNeighbor,
                       neighborRank,
                       nonLocalGhostsTag,
-                      MPI_COMM_GEOSX,
+                      MPI_COMM_GEOS,
                       MPI_STATUS_IGNORE );
 
     /// Array of ghosts to fix.
@@ -942,7 +942,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & 
     neighbor.mpiISendReceiveBufferSizes( icomm.commID(),
                                          icomm.mpiSendBufferSizeRequest( neighborIndex ),
                                          icomm.mpiRecvBufferSizeRequest( neighborIndex ),
-                                         MPI_COMM_GEOSX );
+                                         MPI_COMM_GEOS );
 
     neighbor.resizeSendBuffer( icomm.commID(), bufferSize );
   }
@@ -992,7 +992,7 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
     neighbor.mpiISendReceiveBuffers( icomm.commID(),
                                      icomm.mpiSendBufferRequest( neighborIndex ),
                                      icomm.mpiRecvBufferRequest( neighborIndex ),
-                                     MPI_COMM_GEOSX );
+                                     MPI_COMM_GEOS );
   }
 }
 

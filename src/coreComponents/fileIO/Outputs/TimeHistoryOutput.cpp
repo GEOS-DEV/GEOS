@@ -23,6 +23,8 @@
 
 namespace geos
 {
+using namespace dataRepository;
+
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),
@@ -89,12 +91,12 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
   };
 
   registerBufferCalls( collector );
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOS );
 
   for( localIndex metaIdx = 0; metaIdx < collector.numMetaDataCollectors(); ++metaIdx )
   {
     registerBufferCalls( collector.getMetaDataCollector( metaIdx ), collector.getTargetName() + " " );
-    MpiWrapper::barrier( MPI_COMM_GEOSX );
+    MpiWrapper::barrier( MPI_COMM_GEOS );
   }
 
   // Do the time output last so its at the end of the m_io list, since writes are parallel
@@ -111,7 +113,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
     m_io.back()->init( !freshInit );
   }
 
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOS );
 }
 
 void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
@@ -119,13 +121,13 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
     string const outputDirectory = getOutputDirectory();
-    if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+    if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
     {
       makeDirsForPath( outputDirectory );
     }
-    MpiWrapper::barrier( MPI_COMM_GEOSX );
+    MpiWrapper::barrier( MPI_COMM_GEOS );
     string const outputFile = joinPath( outputDirectory, m_filename );
-    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOS );
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -182,7 +184,7 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
                                  DomainPartition & domain )
 {
   execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
-  MpiWrapper::barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOS );
   // remove any unused trailing space reserved to write additional histories
   for( auto & th_io : m_io )
   {

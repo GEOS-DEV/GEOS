@@ -77,7 +77,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
                       globalAllocations.data(),
                       numValues,
                       0,
-                      MPI_COMM_GEOSX );
+                      MPI_COMM_GEOS );
 
   // reduce data across ranks (min, max, sum)
   if( MpiWrapper::commRank()==0 )
