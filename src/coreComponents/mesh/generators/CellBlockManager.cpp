@@ -249,13 +249,13 @@ struct FaceBuilder
    */
   auto duplicateFaceEquality() const
   {
-    return [localDuplicateFaces = duplicateFaces.toViewConst()]
+    return [faces = duplicateFaces.toViewConst()]
              ( NodesAndElementOfFace const & lhs, NodesAndElementOfFace const & rhs )
     {
-      return std::equal( localDuplicateFaces[ lhs.duplicateFaceNodesIndex ].begin(),
-                         localDuplicateFaces[ lhs.duplicateFaceNodesIndex ].end(),
-                         localDuplicateFaces[ rhs.duplicateFaceNodesIndex ].begin(),
-                         localDuplicateFaces[ rhs.duplicateFaceNodesIndex ].end() );
+      return std::equal( faces[ lhs.duplicateFaceNodesIndex ].begin(),
+                         faces[ lhs.duplicateFaceNodesIndex ].end(),
+                         faces[ rhs.duplicateFaceNodesIndex ].begin(),
+                         faces[ rhs.duplicateFaceNodesIndex ].end() );
     };
   }
 
