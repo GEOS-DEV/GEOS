@@ -221,8 +221,7 @@ You may also be willing to insert your credentials in the command line (less sec
 Configuration 
 =============
 
-At a minimum, you will need a relatively recent compiler suite installed on your system (e.g. `GCC <https://gcc.gnu.org>`_, `Clang <https://clang.llvm.org>`_) as well as `CMake <https://cmake.org>`_.
-If you want to run jobs using MPI-based parallelism, you will also need an MPI implementation (e.g. `OpenMPI <https://www.open-mpi.org>`_, `MVAPICH <https://mvapich.cse.ohio-state.edu>`_).
+Before proceeding, make sure to have installed all the minimal prerequisites as described in :ref:`Prerequisites`
 Note that GEOS supports a variety of parallel computing models, depending on the hardware and software environment.
 Advanced users are referred to the :ref:`BuildGuide` for a discussion of the available configuration options.
 
