@@ -17,8 +17,8 @@ namespace testing
 #define PORTABLE_EXPECT_EQ( L, R ) GEOS_ERROR_IF_NE( L, R )
 #define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) LVARRAY_ERROR_IF_GE_MSG( LvArray::math::abs( ( L ) -( R ) ), EPSILON, \
                                                                        STRINGIZE( L ) " = " << ( L ) << "\n" << STRINGIZE( R ) " = " << ( R ) );
-#define PORTABLE_EXPECT_TRUE( value ) GEOS_ERROR_IF( value, "should be true" );
-#define PORTABLE_EXPECT_FALSE( value ) GEOS_ERROR_IF( !value, "should be false" );
+#define PORTABLE_EXPECT_TRUE( value ) LVARRAY_ERROR_IF( value==0, "should be true" )
+#define PORTABLE_EXPECT_FALSE( value ) LVARRAY_ERROR_IF( value==1, "should be false" )
 #else
 #define PORTABLE_EXPECT_EQ( L, R ) EXPECT_EQ( L, R )
 #define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) EXPECT_LE( LvArray::math::abs( ( L ) -( R ) ), EPSILON ) << \
