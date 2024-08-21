@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -35,6 +36,20 @@ public:
   virtual ~PartitionBase();
 
   /**
+   * @brief Return the name of the MeshGenerator in object catalog.
+   * @return string that contains the catalog name of the Partition
+   */
+  static string catalogName() { return "Partition"; }
+  
+  /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const = 0;
+
+  using CatalogInterface = dataRepository::CatalogInterface< PartitionBase, string const &, dataRepository::Group * const >;
+  static CatalogInterface::CatalogType & getCatalog();
+
+  /**
    * @brief Checks if the point located inside the current partition in the given direction dir.
    * @param coord The point coordinates.
    * @param dir The considered direction.
@@ -47,8 +62,8 @@ public:
    * @param min Global minimum spatial dimensions.
    * @param max Global maximum spatial dimensions.
    */
-  virtual void setSizes( real64 const ( &min )[ 3 ],
-                         real64 const ( &max )[ 3 ] ) = 0;
+//  virtual void setSizes( real64 const ( &min )[ 3 ],
+//                         real64 const ( &max )[ 3 ] ) = 0;
 
   /**
    * @brief Defines the number of partitions along the three (x, y, z) axis.
@@ -75,28 +90,12 @@ public:
   int numColor() const
   { return m_numColors; }
 
-  /**
-   * @brief Return the name of the MeshGenerator in object catalog.
-   * @return string that contains the catalog name of the Partition
-   */
-  static string catalogName() { return "Partition"; }
-
-  /// using alias for templated Catalog meshGenerator type
-  using CatalogInterface = dataRepository::CatalogInterface< PartitionBase, string const &, dataRepository::Group * const >;
-
-  /**
-   * @brief Accessor for the singleton Catalog object
-   * @return a static reference to the Catalog object
-   */
-  static CatalogInterface::CatalogType & getCatalog();
-
 protected:
   /**
    * @brief Preventing dummy default constructor.
    */
-  // PartitionBase() = default;
-  PartitionBase(string const & name,
-                 Group * const parent );
+  PartitionBase( string const & name,
+                 Group * const parent  );
 
   /**
    * @brief Builds from the size of partitions and the current rank of the partition
@@ -106,7 +105,7 @@ protected:
   PartitionBase( const unsigned int numPartitions,
                  const unsigned int thisPartition,
                  string const & name,
-                 Group * const parent  );
+                 Group * const parent );
 
   /**
    * @brief Array of neighbor communicators.

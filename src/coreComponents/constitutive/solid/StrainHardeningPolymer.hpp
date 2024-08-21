@@ -81,8 +81,17 @@ public:
                                  arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                  arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                  arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                                 arrayView2d< real64 > const & density,
+                                 arrayView2d< real64 > const & wavespeed,
                                  bool const & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicUpdates( bulkModulus,
+                             shearModulus,
+                             thermalExpansionCoefficient,
+                             newStress,
+                             oldStress,
+                             density,
+                             wavespeed,
+                             disableInelasticity ),
     m_deformationGradient( deformationGradient ),
     m_plasticStrain( plasticStrain ),
     m_damage( damage ),
@@ -466,7 +475,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
         LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
 
-        if(abs(yieldStrength - oldYieldStrength) < tol)
+        if(std::abs(yieldStrength - oldYieldStrength) < tol)
         {
           unrotatedNewPlasticStrain[3] *= 0.5;
           unrotatedNewPlasticStrain[4] *= 0.5;
@@ -653,6 +662,8 @@ public:
                                           m_thermalExpansionCoefficient,
                                           m_newStress,
                                           m_oldStress,
+                                          m_density,
+                                          m_wavespeed,
                                           m_disableInelasticity );
   }
 
@@ -682,12 +693,14 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
   /// State variable: The deformation gradient values for each element/particle.
   array3d< real64 > m_deformationGradient;
 

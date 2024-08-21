@@ -59,7 +59,7 @@ public:
   int getInterpType() const { return m_interpType; } 
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   // Event variables
   real64 m_startTemperature;

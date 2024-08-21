@@ -59,9 +59,21 @@ registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain ).
 VonMisesJ::~VonMisesJ()
 {}
 
-void VonMisesJ::postProcessInput()
+void VonMisesJ::allocateConstitutiveData( dataRepository::Group & parent,
+                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  ElasticIsotropic::postProcessInput();
+  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  m_deformationGradient.resize( 0, 3, 3);
+  m_velocityGradient.resize(0, 3, 3);
+  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6);
+  m_yieldStrength.resize( 0 );
+}
+
+
+void VonMisesJ::postInputInitialization()
+{
+  ElasticIsotropic::postInputInitialization();
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStrengthString() ).
     setApplyDefaultValue( m_defaultYieldStrength );

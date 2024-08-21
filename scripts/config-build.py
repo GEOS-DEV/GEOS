@@ -198,6 +198,8 @@ def main(calling_script, args, unknown_args):
 
     if args.ninja:
         cmake_line.append('-GNinja')
+    else:
+        cmake_line.append('-G "Unix Makefiles"')
 
     if args.xcode:
         cmake_line.append('-GXcode')

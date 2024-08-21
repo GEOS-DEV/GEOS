@@ -3,6 +3,14 @@
 #
 message("in tpls.cmake GEOS_TPL_DIR=${GEOS_TPL_DIR}")
 
+#
+# General TPL Folder verifications
+#
+if(NOT EXISTS ${GEOS_TPL_DIR})
+  message(WARNING "'GEOS_TPL_DIR' does not exist.\n")
+endif()
+
+
 if(EXISTS ${GEOS_TPL_DIR}/raja)
   set(RAJA_DIR ${GEOS_TPL_DIR}/raja CACHE PATH "" FORCE)
 endif()
@@ -45,11 +53,8 @@ if(EXISTS ${GEOS_TPL_DIR}/vtk)
 endif()
 
 if(EXISTS ${GEOS_TPL_DIR}/fmt)
-  set(FMT_DIR ${GEOS_TPL_DIR}/fmt CACHE PATH "" FORCE)
-endif()
-
-if(EXISTS ${GEOS_TPL_DIR}/fesapi)
-  set(FESAPI_DIR ${GEOS_TPL_DIR}/fesapi CACHE PATH "" FORCE)
+#  set(FMT_DIR ${GEOS_TPL_DIR}/fmt CACHE PATH "" FORCE)
+  set(FMT_DIR ${GEOS_TPL_DIR}/chai CACHE PATH "" FORCE)
 endif()
 
 #

@@ -36,7 +36,7 @@ namespace geos
   HealMPMEvent::~HealMPMEvent() 
   {}
 
-  void HealMPMEvent::postProcessInput()
+  void HealMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "HealEvent: " << 
                      "Time=" << m_time << ", " << 

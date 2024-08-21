@@ -58,11 +58,16 @@ public:
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                    arrayView2d< real64 > const & density,
+                    arrayView2d< real64 > const & wavespeed,
                     const bool & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus, 
                              shearModulus, 
                              thermalExpansionCoefficient,
-                             newStress, oldStress, 
+                             newStress, 
+                             oldStress,
+                             density,
+                             wavespeed, 
                              disableInelasticity ),
     m_yieldStrength( yieldStrength ),
     m_deformationGradient( deformationGradient ),
@@ -289,39 +294,40 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                      real64 const ( & endRotation )[3][3],
                                                      real64 const ( & strainIncrement )[6],
                                                      real64 ( & stress )[6] ) const
-{         
-  real64 trialP;
-  real64 trialQ;
-  real64 oldDeviatoricStress[6];
-
+{
   real64 previousStress[6] = { 0 };
   LvArray::tensorOps::copy< 6 >( previousStress, m_oldStress[k][q] );
+
+  real64 trialP;
+  real64 trialQ;
+  real64 oldDeviatoricStress[6] = { 0 };
   twoInvariant::stressDecomposition( previousStress,
                                      trialP,
                                      trialQ,
                                      oldDeviatoricStress );
+  LvArray::tensorOps::scale< 6 >( oldDeviatoricStress, sqrt(2.0 / 3.0)*trialQ );
 
   // Exactly compute pressure 
   real64 J = LvArray::tensorOps::determinant< 3 >( m_deformationGradient[k] );
   real64 pressure = -m_bulkModulus[k] * std::log( J );
 
   // Hypoelastically compute deviatoric stress
-  real64 rotationTranspose[3][3];
+  real64 rotationTranspose[3][3] = { { 0 } };
   LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
 
-  real64 unrotatedVelocityGradient[3][3];
+  real64 unrotatedVelocityGradient[3][3]  = { { 0 } };
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedVelocityGradient, rotationTranspose, m_velocityGradient[k] );
 
-  real64 unrotatedVelocityGradientTranspose[3][3];
+  real64 unrotatedVelocityGradientTranspose[3][3]  = { { 0 } };
   LvArray::tensorOps::transpose< 3, 3 >( unrotatedVelocityGradientTranspose, unrotatedVelocityGradient );
 
   // CC: Is there an LvArray operation to get the symmetric part of a matrix?
-  real64 denseD[3][3];
+  real64 denseD[3][3] = { { 0 } };
   LvArray::tensorOps::copy< 3, 3 >( denseD, unrotatedVelocityGradient );
   LvArray::tensorOps::add< 3, 3 >( denseD, unrotatedVelocityGradientTranspose );
   LvArray::tensorOps::scale< 3, 3 >( denseD, 0.5 );
 
-  real64 D[6];
+  real64 D[6] = { 0 };
   LvArray::tensorOps::denseToSymmetric<3>( D, denseD );
 
   // Get deviatoric part of D
@@ -329,10 +335,9 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   D[0] -= trD;
   D[1] -= trD;
   D[2] -= trD;
- 
+
   real64 deviatoricStressIncrement[6] = { 0 };
-  LvArray::tensorOps::copy< 6 >( deviatoricStressIncrement, D );
-  LvArray::tensorOps::scale< 6 >( deviatoricStressIncrement, 2.0 * m_shearModulus[k] * timeIncrement );
+  LvArray::tensorOps::scaledCopy< 6 >( deviatoricStressIncrement, D, 2.0 * m_shearModulus[k] * timeIncrement );
 
   LvArray::tensorOps::copy< 6 >( stress, oldDeviatoricStress );
   LvArray::tensorOps::add< 6 >( stress, deviatoricStressIncrement );
@@ -344,7 +349,7 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
     return;
   }
 
-  real64 deviator[6];
+  real64 deviator[6] = { 0 };
   twoInvariant::stressDecomposition( stress,
                                      trialP,
                                      trialQ,
@@ -353,7 +358,7 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   real64 yieldStrength = m_yieldStrength[k];
   if( trialQ > yieldStrength )
   {
-    real64 oldStress[6];
+    real64 oldStress[6] = { 0 };
     LvArray::tensorOps::copy< 6 >( oldStress, stress );
 
     // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
@@ -519,6 +524,9 @@ public:
    */
   virtual ~VonMisesJ() override;
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -602,6 +610,8 @@ public:
                                m_thermalExpansionCoefficient,
                                m_newStress,
                                m_oldStress,
+                               m_density,
+                               m_wavespeed,
                                m_disableInelasticity );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
@@ -615,6 +625,8 @@ public:
                                m_thermalExpansionCoefficient,
                                arrayView3d< real64, solid::STRESS_USD >(),
                                arrayView3d< real64, solid::STRESS_USD >(),
+                               m_density,
+                               m_wavespeed,
                                m_disableInelasticity );
     }
   }
@@ -640,13 +652,15 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 
 protected:
 
   /// Post-process XML data
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the yield strength for any new allocations
   real64 m_defaultYieldStrength;
@@ -660,7 +674,7 @@ protected:
   /// The velocity gradient for each upper level dimension (i.e. cell) of *this
   array3d< real64 > m_velocityGradient;
 
-  ///
+  /// The plastic strain for each upper level dimension (i.e. cell) of *this
   array3d< real64 > m_plasticStrain;
 
 };

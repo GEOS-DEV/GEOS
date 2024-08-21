@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -67,8 +68,15 @@ public:
                                      arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                                     arrayView2d< real64 > const & density,
+                                     arrayView2d< real64 > const & wavespeed,
                                      bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
+    SolidBaseUpdates( newStress, 
+                      oldStress,
+                      density,
+                      wavespeed,
+                      thermalExpansionCoefficient,
+                      disableInelasticity ),
     m_c11( c11 ),
     m_c13( c13 ),
     m_c33( c33 ),
@@ -160,6 +168,17 @@ public:
 
   GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override;
+
+  /**
+   * @brief Getter for apparent shear modulus.
+   * @return reference to shear modulus that will be used for computing stabilization scalling parameter.
+   */
+  GEOS_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const override final
+  {
+    return LvArray::math::max( m_c44[k], m_c66[k] );
+  }
+
 
 protected:
 
@@ -317,11 +336,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   v[2][0] = -rotationAxis[1];
   v[2][1] = rotationAxis[0];
 
-  // LvArray::tensorOps::Rij_eq_AikBkj uses restrict to avoid potential aliasing
-  // v,v cant be used within LvArray::tensorOps::Rij_eq_AikBkj
-  real64 vDup[3][3];  
-  std::memcpy(vDup, v, sizeof(v));
-
   real64 c = LvArray::tensorOps::AiBi< 3 >( axis, unrotatedMaterialDirection );
   real64 s = LvArray::tensorOps::l2Norm< 3 >( rotationAxis );
 
@@ -329,8 +343,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   LvArray::tensorOps::addIdentity< 3 >( R, 1);
   LvArray::tensorOps::add< 3, 3 >( R, v);
 
-  real64 temp[3][3] = { {0} }; 
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, vDup, v );
+  real64 temp[3][3] = { {0} };
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v, v );
   LvArray::tensorOps::scale< 3, 3 >( temp, ( 1 - c ) / ( s * s ));
   LvArray::tensorOps::add< 3, 3 >( R, temp );
 
@@ -767,6 +781,8 @@ public:
                                               m_thermalExpansionCoefficient,
                                               m_newStress,
                                               m_oldStress,
+                                              m_density,
+                                              m_wavespeed,
                                               m_disableInelasticity );
   }
 
@@ -793,11 +809,13 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the transverse Young's modulus for any new
   /// allocations.
