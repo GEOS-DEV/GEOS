@@ -13,10 +13,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
+/*
+ * PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
+ */
+
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CO2BrineEzrokhiThermalFluid >( constitutive::CO2BrineEzrokhiThermalFluid &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity >(
+  constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity &, arrayView2d< real64 > const & );
 }

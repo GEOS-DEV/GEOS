@@ -13,11 +13,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriverRunTest.hpp"
-#include "BrooksCoreyStone2RelativePermeability.hpp"
-
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
 
 namespace geos
 {
-template void RelpermDriver::runTest< geos::constitutive::BrooksCoreyStone2RelativePermeability >( geos::constitutive::BrooksCoreyStone2RelativePermeability &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CO2BrineEzrokhiThermalFluid >( constitutive::CO2BrineEzrokhiThermalFluid &, arrayView2d< real64 > const & );
 }

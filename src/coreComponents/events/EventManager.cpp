@@ -21,7 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "events/EventBase.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/Units.hpp"
 
 namespace geos

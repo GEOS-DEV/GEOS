@@ -16,9 +16,9 @@
 #ifndef GEOS_RELPERMDRIVERRUNTEST_HPP_
 #define GEOS_RELPERMDRIVERRUNTEST_HPP_
 
-#include "constitutive/relativePermeability/RelpermDriver.hpp"
+#include "constitutiveDrivers/relativePermeability/RelpermDriver.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
-#include "layouts.hpp"
+#include "constitutive/relativePermeability/layouts.hpp"
 
 
 namespace geos

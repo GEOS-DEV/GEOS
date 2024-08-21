@@ -13,15 +13,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
- */
+#include "RelpermDriverRunTest.hpp"
+#include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 
-#include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseConstantViscosity >(
-  constitutive::CompositionalTwoPhaseConstantViscosity &, arrayView2d< real64 > const & );
+template void RelpermDriver::runTest< geos::constitutive::TableRelativePermeabilityHysteresis >( geos::constitutive::TableRelativePermeabilityHysteresis &, arrayView2d< real64 > const & );
 }
