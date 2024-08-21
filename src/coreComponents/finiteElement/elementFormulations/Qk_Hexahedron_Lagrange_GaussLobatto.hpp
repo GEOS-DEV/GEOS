@@ -1115,7 +1115,7 @@ jacobianTransformationWithCorners( real64 const (&coords)[3],
     real64 alpha = ( GL_BASIS::parentSupportCoord( qa ) + 1.0 ) / 2.0;
     real64 beta = ( GL_BASIS::parentSupportCoord( qb ) + 1.0 ) / 2.0;
     real64 gamma = ( GL_BASIS::parentSupportCoord( qc ) + 1.0 ) / 2.0;
-    trilinearInterp( alpha, beta, gamma, X, Xnode);
+    trilinearInterp( alpha, beta, gamma, X, Xnode );
     for( int i = 0; i < 3; ++i )
     {
       for( int j = 0; j < 3; ++j )
