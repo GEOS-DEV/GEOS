@@ -20,7 +20,6 @@
 #include "TableFunction.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
-#include "fileIO/Outputs/OutputBase.hpp"
 
 #include <algorithm>
 
@@ -187,7 +186,7 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
 
 void TableFunction::print( std::string const & filename ) const
 {
-  std::ofstream os( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
+  std::ofstream os( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
 
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
 

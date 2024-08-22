@@ -421,7 +421,7 @@ convertDerivativesToTotalMoleFraction( integer const numComps,
                                        arraySlice1d< real64, USD2 > const & dProperty,
                                        arraySlice1d< real64 > const & workSpace )
 {
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
   integer const numDofs = numComps + 2;
   for( integer kc = 0; kc < numDofs; ++kc )
   {
