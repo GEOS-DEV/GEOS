@@ -466,7 +466,7 @@ struct PreComputeSourcesAndReceivers
           {
             for( localIndex i = 0; i < 3; ++i )
             {
-              xLocal[a][i] = baseNodeCoords( elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
+              xLocal[a][i] = baseNodeCoords( baseElemsToNodes( k, a ), i );
             }
           }
 
@@ -599,7 +599,7 @@ struct PreComputeSourcesAndReceivers
             {
               for( localIndex i=0; i < 3; ++i )
               {
-                xLocal[a][i] = baseNodeCoords( elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
+                xLocal[a][i] = baseNodeCoords( baseElemsToNodes( k, a ), i );
               }
             }
 
