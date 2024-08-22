@@ -174,7 +174,7 @@ private:
    * @param[out] fugacityRatios the fugacity rations
    * @return The error
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static real64 computeFugacityRatio(
     integer const numComps,
@@ -184,11 +184,11 @@ private:
     ComponentProperties::KernelWrapper const & componentProperties,
     EquationOfStateType const liquidEos,
     EquationOfStateType const vapourEos,
-    arraySlice1d< real64 const, USD > const & kValues,
+    arraySlice1d< real64 const, USD1 > const & kValues,
     arraySlice1d< integer const > const & presentComponents,
     real64 & vapourPhaseMoleFraction,
-    arraySlice1d< real64, USD > const & liquidComposition,
-    arraySlice1d< real64, USD > const & vapourComposition,
+    arraySlice1d< real64, USD2 > const & liquidComposition,
+    arraySlice1d< real64, USD2 > const & vapourComposition,
     arraySlice1d< real64 > const & logLiquidFugacity,
     arraySlice1d< real64 > const & logVapourFugacity,
     arraySlice1d< real64 > const & fugacityRatios );
@@ -512,7 +512,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   }
 }
 
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 real64 NegativeTwoPhaseFlash::computeFugacityRatio(
   integer const numComps,
@@ -522,11 +522,11 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
   ComponentProperties::KernelWrapper const & componentProperties,
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
-  arraySlice1d< real64 const, USD > const & kValues,
+  arraySlice1d< real64 const, USD1 > const & kValues,
   arraySlice1d< integer const > const & presentComponents,
   real64 & vapourPhaseMoleFraction,
-  arraySlice1d< real64, USD > const & liquidComposition,
-  arraySlice1d< real64, USD > const & vapourComposition,
+  arraySlice1d< real64, USD2 > const & liquidComposition,
+  arraySlice1d< real64, USD2 > const & vapourComposition,
   arraySlice1d< real64 > const & logLiquidFugacity,
   arraySlice1d< real64 > const & logVapourFugacity,
   arraySlice1d< real64 > const & fugacityRatios )

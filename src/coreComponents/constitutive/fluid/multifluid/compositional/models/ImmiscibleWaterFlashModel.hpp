@@ -44,8 +44,8 @@ private:
   static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
 public:
 
-  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
+  using PhaseProp = NegativeTwoPhaseFlashModelUpdate::PhaseProp;
+  using PhaseComp = NegativeTwoPhaseFlashModelUpdate::PhaseComp;
   using Deriv = multifluid::DerivativeOffset;
 
   ImmiscibleWaterFlashModelUpdate( integer const numComponents,

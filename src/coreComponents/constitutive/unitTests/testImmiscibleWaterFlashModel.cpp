@@ -120,10 +120,15 @@ public:
     stackArray2d< real64, (numPhases-1)*numComps > kValues( numPhases-1, numComps );
     LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
 
-    stackArray1d< real64, numPhases > phaseFraction( numPhases );
-    stackArray2d< real64, numPhases *numDofs > dPhaseFraction( numPhases, numDofs );
-    stackArray2d< real64, numPhases *numComps > phaseComponentFraction( numPhases, numComps );
-    stackArray3d< real64, numPhases *numComps *numDofs > dPhaseComponentFraction( numPhases, numComps, numDofs );
+    StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseFractionData( 1, 1, numPhases );
+    StackArray< real64, 4, numPhases *numDofs, multifluid::LAYOUT_PHASE_DC > dPhaseFractionData( 1, 1, numPhases, numDofs );
+    StackArray< real64, 4, numPhases *numComps, multifluid::LAYOUT_PHASE_COMP > phaseComponentFractionData( 1, 1, numPhases, numComps );
+    StackArray< real64, 5, numPhases *numComps *numDofs, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseComponentFractionData( 1, 1, numPhases, numComps, numDofs );
+
+    auto phaseFraction = phaseFractionData[0][0];
+    auto dPhaseFraction = dPhaseFractionData[0][0];
+    auto phaseComponentFraction = phaseComponentFractionData[0][0];
+    auto dPhaseComponentFraction = dPhaseComponentFractionData[0][0];
 
     auto componentProperties = m_fluid->createKernelWrapper();
     auto flashKernelWrapper = m_flash->createKernelWrapper();
@@ -160,10 +165,16 @@ public:
     stackArray2d< real64, (numPhases-1)*numComps > kValues( numPhases-1, numComps );
     LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
 
-    stackArray1d< real64, numPhases > phaseFraction( numPhases );
-    stackArray2d< real64, numPhases *numDofs > dPhaseFraction( numPhases, numDofs );
-    stackArray2d< real64, numPhases *numComps > phaseComponentFraction( numPhases, numComps );
-    stackArray3d< real64, numPhases *numComps *numDofs > dPhaseComponentFraction( numPhases, numComps, numDofs );
+    StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseFractionData( 1, 1, numPhases );
+    StackArray< real64, 4, numPhases *numDofs, multifluid::LAYOUT_PHASE_DC > dPhaseFractionData( 1, 1, numPhases, numDofs );
+    StackArray< real64, 4, numPhases *numComps, multifluid::LAYOUT_PHASE_COMP > phaseComponentFractionData( 1, 1, numPhases, numComps );
+    StackArray< real64, 5, numPhases *numComps *numDofs, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseComponentFractionData( 1, 1, numPhases, numComps, numDofs );
+
+    auto phaseFraction = phaseFractionData[0][0];
+    auto dPhaseFraction = dPhaseFractionData[0][0];
+    auto phaseComponentFraction = phaseComponentFractionData[0][0];
+    auto dPhaseComponentFraction = dPhaseComponentFractionData[0][0];
+
     stackArray1d< real64, numValues > derivatives( numValues );
 
     auto componentProperties = m_fluid->createKernelWrapper();
@@ -191,10 +202,15 @@ public:
     };
 
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
-      stackArray1d< real64, numPhases > displacedPhaseFraction( numPhases );
-      stackArray2d< real64, numPhases *numDofs > displacedPhaseFractionDerivs( numPhases, numDofs );
-      stackArray2d< real64, numPhases *numComps > displacedPhaseComponentFraction( numPhases, numComps );
-      stackArray3d< real64, numPhases *numComps *numDofs > displacedPhaseComponentFractionDerivs( numPhases, numComps, numDofs );
+      StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > displacedPhaseFractionData( 1, 1, numPhases );
+      StackArray< real64, 4, numPhases *numDofs, multifluid::LAYOUT_PHASE_DC > displacedPhaseFractionDerivsData( 1, 1, numPhases, numDofs );
+      StackArray< real64, 4, numPhases *numComps, multifluid::LAYOUT_PHASE_COMP > displacedPhaseComponentFractionData( 1, 1, numPhases, numComps );
+      StackArray< real64, 5, numPhases *numComps *numDofs, multifluid::LAYOUT_PHASE_COMP_DC > displacedPhaseComponentFractionDerivsData( 1, 1, numPhases, numComps, numDofs );
+
+      auto displacedPhaseFraction = displacedPhaseFractionData[0][0];
+      auto displacedPhaseFractionDerivs = displacedPhaseFractionDerivsData[0][0];
+      auto displacedPhaseComponentFraction = displacedPhaseComponentFractionData[0][0];
+      auto displacedPhaseComponentFractionDerivs = displacedPhaseComponentFractionDerivsData[0][0];
 
       flashKernelWrapper.compute( componentProperties,
                                   p,
