@@ -240,10 +240,10 @@ GEOS compilations are driven by a CMake ``host-config`` file, which informs the 
 
 A template for creating a simple ``host-config`` is provided in ``host-configs/quick-start-template.cmake``.
 
-.. literalinclude:: ../../host-configs/quick-start-template.cmake
+.. literalinclude:: ../../../host-configs/quick-start-template.cmake
    :language: sh
 
-To begin, make a copy of the template file and modify the paths according to the installation locations on your system. The various ``set()`` commands are used to set variables that control the build.
+The various ``set()`` commands are used to set variables that control the build. To begin, make a copy of the template file and modify the paths according to the installation locations on your system. 
 
 We have created a number of default host-config files for common systems. You should browse them to see if any are close to your needs:
 We maintain host configuration files (ending in ``.cmake``) for HPC systems at various institutions, as well as for common personal systems. 
