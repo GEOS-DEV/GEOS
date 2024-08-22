@@ -72,5 +72,16 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
   return result;
 }
 
+string const & FunctionBase::getOutputDirectory()
+{
+  static string outputDirectory;
+  return outputDirectory;
+}
+void FunctionBase::setOutputDirectory( string const & dir )
+{
+  string & outputDirectory = const_cast< string & >( getOutputDirectory() );
+  outputDirectory = dir;
+}
+
 
 } // end of namespace geos

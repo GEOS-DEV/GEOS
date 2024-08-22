@@ -13,11 +13,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriverRunTest.hpp"
-#include "BrooksCoreyBakerRelativePermeability.hpp"
+/*
+ * PVTDriverRunTestCompositionalMultiphaseFluid.cpp
+ */
 
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
 
 namespace geos
 {
-template void RelpermDriver::runTest< geos::constitutive::BrooksCoreyBakerRelativePermeability >( geos::constitutive::BrooksCoreyBakerRelativePermeability &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluidPVTPackage >( constitutive::CompositionalMultiphaseFluidPVTPackage &, arrayView2d< real64 > const & );
 }

@@ -13,15 +13,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
- */
+#include "RelpermDriverRunTest.hpp"
+#include "constitutive/relativePermeability/TableRelativePermeability.hpp"
 
-#include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity >(
-  constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity &, arrayView2d< real64 > const & );
+template void RelpermDriver::runTest< geos::constitutive::TableRelativePermeability >( geos::constitutive::TableRelativePermeability &, arrayView2d< real64 > const & );
 }
