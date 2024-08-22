@@ -123,7 +123,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreUtils.cpp
           interfaces/hypre/HypreVector.cpp )
 
-    list( APPEND tplDependencyList hypre umpire )
+    list( APPEND tplDependencyList hypre )
 
 endif()
 
