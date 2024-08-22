@@ -7,6 +7,10 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 
+PR #3283 (2024-08-22)
+======================
+Reuse computeSinglePhaseFlux. Rebaseline due to minor numerical diffs. 
+
 
 PR #3249 (2024-08-14)
 ======================
