@@ -242,6 +242,10 @@ private:
 
   real64 const m_slidingCheckTolerance = 0.05;
 
+  bool m_simultaneous = false;
+  
+  bool m_symmetric = false;
+
 };
 
 } /* namespace geos */

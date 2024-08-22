@@ -18,6 +18,7 @@ set( physicsSolvers_headers
      contact/SolidMechanicsAugmentedLagrangianContact.hpp
      contact/SolidMechanicsALMKernelsBase.hpp
      contact/SolidMechanicsALMKernels.hpp
+     contact/SolidMechanicsALMSimultaneousKernels.hpp
      contact/SolidMechanicsALMKernelsHelper.hpp
      contact/SolidMechanicsALMJumpUpdateKernels.hpp
      contact/SolidMechanicsALMBubbleKernels.hpp

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SolidMechanicsALMKernels.hpp
+ * @file SolidMechanicsALMSimultaneousKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELS_HPP_
-#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMSIMULTANEOUSKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMSIMULTANEOUSKERNELS_HPP_
 
 #include "SolidMechanicsALMKernelsBase.hpp"
 
@@ -32,7 +32,7 @@ namespace solidMechanicsALMKernels
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ALM :
+class ALMSimultaneous :
   public ALMKernelsBase< CONSTITUTIVE_TYPE,
                          FE_TYPE >
 {
@@ -51,7 +51,6 @@ public:
   using Base::m_elemsToFaces;
   using Base::m_faceToNodes;
   using Base::m_finiteElementSpace;
-  using Base::m_constitutiveUpdate;
   using Base::m_dofNumber;
   using Base::m_bDofNumber;
   using Base::m_dofRankOffset;
@@ -67,21 +66,20 @@ public:
    * @brief Constructor
    * @copydoc geos::finiteElement::InterfaceKernelBase::InterfaceKernelBase
    */
-  ALM( NodeManager const & nodeManager,
-       EdgeManager const & edgeManager,
-       FaceManager const & faceManager,
-       localIndex const targetRegionIndex,
-       FaceElementSubRegion & elementSubRegion,
-       FE_TYPE const & finiteElementSpace,
-       CONSTITUTIVE_TYPE & inputConstitutiveType,
-       arrayView1d< globalIndex const > const uDofNumber,
-       arrayView1d< globalIndex const > const bDofNumber,
-       globalIndex const rankOffset,
-       CRSMatrixView< real64, globalIndex const > const inputMatrix,
-       arrayView1d< real64 > const inputRhs,
-       real64 const inputDt,
-       arrayView1d< localIndex const > const & faceElementList,
-       bool const isSymmetric ):
+  ALMSimultaneous( NodeManager const & nodeManager,
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   localIndex const targetRegionIndex,
+                   FaceElementSubRegion & elementSubRegion,
+                   FE_TYPE const & finiteElementSpace,
+                   CONSTITUTIVE_TYPE & inputConstitutiveType,
+                   arrayView1d< globalIndex const > const uDofNumber,
+                   arrayView1d< globalIndex const > const bDofNumber,
+                   globalIndex const rankOffset,
+                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                   arrayView1d< real64 > const inputRhs,
+                   real64 const inputDt,
+                   arrayView1d< localIndex const > const & faceElementList ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -96,8 +94,7 @@ public:
           inputRhs,
           inputDt,
           faceElementList ),
-    m_traction( elementSubRegion.getField< fields::contact::traction >().toViewConst()),
-    m_symmetric( isSymmetric)
+    m_traction( elementSubRegion.getField< fields::contact::traction >().toViewConst())
   {}
 
   //***************************************************************************
@@ -225,6 +222,14 @@ public:
       }
     }
 
+    // The minus sign is consistent with the sign of the Jacobian
+    stack.localPenalty[0][0] = -m_penalty( k, 0 );
+
+    stack.localPenalty[1][1] = -m_penalty( k, 2 );
+    stack.localPenalty[2][2] = -m_penalty( k, 3 );
+    stack.localPenalty[1][2] = -m_penalty( k, 4 );
+    stack.localPenalty[2][1] = -m_penalty( k, 4 );
+
     for( int i=0; i<numTdofs; ++i )
     {
       stack.tLocal[i] = m_traction( k, i );
@@ -249,8 +254,8 @@ public:
                    StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( k );
-    constexpr real64 zero = 1.e-10;
-    
+    //constexpr real64 zero = 1.e-10;
+
     constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
     constexpr int numBdofs = 3*2;
@@ -258,115 +263,31 @@ public:
     real64 matRRtAtu[3][numUdofs], matDRtAtu[3][numUdofs];
     real64 matRRtAtb[3][numBdofs], matDRtAtb[3][numBdofs];
 
+    //real64 dispJumpR[numUdofs];
+    //real64 oldDispJumpR[numUdofs];
     real64 tractionR[numUdofs];
+    //real64 dispJumpRb[numBdofs];
+    //real64 oldDispJumpRb[numBdofs];
     real64 tractionRb[numBdofs];
 
+
     real64 tractionNew[3];
-    real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-    real64 limitTau = 0.0;
 
     // Compute the trial traction
-    real64 tractionTrial[ 3 ];
-    tractionTrial[ 0 ] = stack.tLocal[0] + m_penalty(k, 0) * stack.dispJumpLocal[0];
-    tractionTrial[ 1 ] = stack.tLocal[1] + m_penalty(k, 1) * (stack.dispJumpLocal[1] - stack.oldDispJumpLocal[1]);
-    tractionTrial[ 2 ] = stack.tLocal[2] + m_penalty(k, 1) * (stack.dispJumpLocal[2] - stack.oldDispJumpLocal[2]);
+    real64 dispJump[ 3 ];
+    dispJump[0] = stack.dispJumpLocal[0];
+    dispJump[1] = stack.dispJumpLocal[1] - stack.oldDispJumpLocal[1];
+    dispJump[2] = stack.dispJumpLocal[2] - stack.oldDispJumpLocal[2];
 
-    // Compute tangential trial traction norm
-    real64 const tractionTrialNorm = std::sqrt( std::pow(tractionTrial[1], 2) +
-                                                 std::pow(tractionTrial[2], 2));
-                                      
+    LvArray::tensorOps::scaledCopy< 3 >( tractionNew, stack.tLocal, -1.0 );
+    LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( tractionNew, stack.localPenalty, dispJump );
+
     // If normal tangential trial is positive (opening)
-    if (tractionTrial[ 0 ] > zero)
-    {
-      tractionNew[0] = 0.0;
-      stack.localPenalty[0][0] = 0.0;
-    }
-    else 
-    {
-      tractionNew[0] = tractionTrial[0];
-      stack.localPenalty[0][0] = -m_penalty( k, 0 );
-    }
-
-    // Compute limit Tau
-    if (m_symmetric)
-    {
-      limitTau = m_constitutiveUpdate.computeLimitTangentialTractionNorm( m_traction(k, 0),
-                                                                        dLimitTangentialTractionNorm_dTraction );
-    }
-    else
-    {
-      limitTau = m_constitutiveUpdate.computeLimitTangentialTractionNorm( tractionNew[0],
-                                                                        dLimitTangentialTractionNorm_dTraction );
-    }
-
-    if (tractionTrialNorm <= zero) 
-    {
-      // It is needed for the first iteration (both t and u are equal to zero)  
-      stack.localPenalty[1][1] = -m_penalty( k, 1);
-      stack.localPenalty[2][2] = -m_penalty( k, 1);
-
-      tractionNew[1] = tractionTrial[1];
-      tractionNew[2] = tractionTrial[2];
-    }
-    else if (limitTau <= zero) 
-    {
-      stack.localPenalty[1][1] = 0.0;
-      stack.localPenalty[2][2] = 0.0;
-
-      tractionNew[1] = (m_symmetric) ? tractionTrial[1] : 0.0;
-      tractionNew[2] = (m_symmetric) ? tractionTrial[2] : 0.0;
-    }
-    
-    else
-    {
-      // Compute psi and dpsi
-      //real64 const psi = std::tanh( tractionTrialNorm/limitTau );
-      //real64 const dpsi = 1.0-std::pow(psi,2);
-      real64 const psi = ( tractionTrialNorm > limitTau) ? 1.0 : tractionTrialNorm/limitTau;
-      real64 const dpsi = ( tractionTrialNorm > limitTau) ? 0.0 : 1.0;
-
-      // Two symmetric 2x2 matrices
-      real64 dNormTTdgT[ 3 ];
-      dNormTTdgT[ 0 ] = tractionTrial[ 1 ] * tractionTrial[ 1 ];
-      dNormTTdgT[ 1 ] = tractionTrial[ 2 ] * tractionTrial[ 2 ];
-      dNormTTdgT[ 2 ] = tractionTrial[ 1 ] * tractionTrial[ 2 ];
-   
-      real64 dTdgT[ 3 ];
-      dTdgT[ 0 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[0]); 
-      dTdgT[ 1 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[1]);
-      dTdgT[ 2 ] = - dNormTTdgT[2];
-   
-      LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow(tractionTrialNorm, 2) );
-      LvArray::tensorOps::scale< 3 >( dTdgT, 1. / std::pow( tractionTrialNorm, 3 )  );
-
-      // Compute dTdDispJump
-      stack.localPenalty[1][1] = -m_penalty( k, 1) * ( 
-           dpsi * dNormTTdgT[0] +
-            psi * dTdgT[0] * limitTau ); 
-      stack.localPenalty[2][2] = -m_penalty( k, 1) * ( 
-           dpsi * dNormTTdgT[1] +
-            psi * dTdgT[1] * limitTau ); 
-      stack.localPenalty[1][2] = -m_penalty( k, 1) * ( 
-           dpsi * dNormTTdgT[2] +
-            psi * dTdgT[2] * limitTau ); 
-      stack.localPenalty[2][1] =  stack.localPenalty[1][2];
-   
-      if (!m_symmetric)
-      {
-        // Nonsymetric term
-        //real64 const friction = m_constitutiveUpdate.frictionCoefficient();
-        real64 const friction = (std::abs(tractionNew[0]) > zero) ? - limitTau / tractionNew[0] : 0.0;
-        stack.localPenalty[1][0] = -stack.localPenalty[0][0] * friction * 
-          tractionTrial[1] * (psi/tractionTrialNorm - dpsi/limitTau);
-        stack.localPenalty[2][0] = -stack.localPenalty[0][0] * friction  * 
-          tractionTrial[2] * (psi/tractionTrialNorm - dpsi/limitTau);
-      }
-
-      tensorOps::scale< 3 >( tractionTrial, (psi * limitTau)/tractionTrialNorm );
-      tractionNew[1] = tractionTrial[1];
-      tractionNew[2] = tractionTrial[2];
-    }
-    
+    //if (tractionNew[ 0 ] < -zero)
+    //{
+    //  tractionNew[0] = 0.0;
+    //  stack.localPenalty[0][0] = 0.0;
+    //}
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix,
@@ -409,9 +330,18 @@ public:
                                                                 matRRtAtb );
 
     // Compute the local residuals
-    LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, tractionR, -1 );
+    //LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( dispJumpR, matDRtAtu, stack.dispJumpLocal );
+    //LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( oldDispJumpR, matDRtAtu, stack.oldDispJumpLocal );
+    //LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( dispJumpRb, matDRtAtb, stack.dispJumpLocal );
+    //LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( oldDispJumpRb, matDRtAtb, stack.oldDispJumpLocal );
 
-    LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, tractionRb, -1 );
+    LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, tractionR, 1 );
+    //LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, dispJumpR, 1 );
+    //LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, oldDispJumpR, -1 );
+
+    LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, tractionRb, 1 );
+    //LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, dispJumpRb, 1 );
+    //LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, oldDispJumpRb, -1 );
 
     for( localIndex i=0; i < numUdofs; ++i )
     {
@@ -461,21 +391,55 @@ public:
 protected:
 
   arrayView2d< real64 const > const m_traction;
-
-  bool const m_symmetric;
-
 };
 
 /// The factory used to construct the kernel.
-using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
+using ALMSimultaneousFactory = finiteElement::InterfaceKernelFactory< ALMSimultaneous,
                                                           arrayView1d< globalIndex const > const,
                                                           arrayView1d< globalIndex const > const,
                                                           globalIndex const,
                                                           CRSMatrixView< real64, globalIndex const > const,
                                                           arrayView1d< real64 > const,
                                                           real64 const,
-                                                          arrayView1d< localIndex const > const,
-                                                          bool const >;
+                                                          arrayView1d< localIndex const > const>;
+
+/**
+ * @brief A struct to compute the traction after nonlinear solve
+ */
+struct ComputeTractionSimultaneousKernel
+{
+
+  /**
+   * @brief Launch the kernel function to comute rotation matrices
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @param[in] size the size of the subregion
+   * @param[in] penalty the array containing the tangential penalty matrix
+   * @param[in] traction the array containing the current traction
+   * @param[in] dispJump the array containing the displacement jump
+   * @param[in] deltaDispJump the array containing the delta displacement jump
+   * @param[out] traction_new the array containing the new traction
+   */
+  template< typename POLICY >
+  static void
+  launch( localIndex const size,
+          arrayView2d< real64 const > const & penalty,
+          arrayView2d< real64 const > const & traction,
+          arrayView2d< real64 const > const & dispJump,
+          arrayView2d< real64 const > const & deltaDispJump,
+          arrayView2d< real64 > const & traction_new )
+  {
+
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      traction_new[kfe][0] = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
+      traction_new[kfe][1] = traction[kfe][1] + penalty[kfe][2] * deltaDispJump[kfe][1] +
+                                                penalty[kfe][4] * deltaDispJump[kfe][2];
+      traction_new[kfe][2] = traction[kfe][2] + penalty[kfe][3] * deltaDispJump[kfe][2] +
+                                                  penalty[kfe][4] * deltaDispJump[kfe][1];
+    } );
+  }
+
+};
 
 } // namespace SolidMechanicsALMKernels
 
