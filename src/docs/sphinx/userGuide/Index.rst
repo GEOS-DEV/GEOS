@@ -27,7 +27,7 @@ Welcome to the GEOS user guide.
 
    /coreComponents/functions/docs/FunctionManager
 
-   /coreComponents/physicsSolvers/multiphysics/docs/Initialization.rst
+   /coreComponents/physicsPackages/multiphysics/docs/Initialization.rst
 
    /coreComponents/linearAlgebra/docs/LinearSolvers.rst
 

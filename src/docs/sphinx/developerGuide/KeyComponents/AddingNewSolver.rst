@@ -1,9 +1,9 @@
 .. _AddingNewSolver:
 
-Adding a new Physics Solver
+Adding a new Physics Package
 ###########################
 
-In this tutorial, you will learn how to construct a new GEOS Physics Solver class.
+In this tutorial, you will learn how to construct a new GEOS Physics Package class.
 We will use *LaplaceFEM* solver, computing the solution of the Laplace problem in
 a specified material, as a starting point.
 
@@ -33,7 +33,7 @@ Declaration file (reference)
 The included header is ``physicsPackages/simplePDE/LaplaceBaseH1.hpp`` which declares the base class ``LaplaceBaseH1``, shared by all Laplace solvers. Moreover, ``physicsPackage/simplePDE/LaplaceBaseH1.hpp`` includes the following headers:
 
  - ``common/EnumStrings.hpp`` which includes facilities for enum-string conversion (useful for reading enum values from input);
- - ``physicsPackage/PhysicsPackageBase.hpp`` which declares the abstraction class shared by all physics solvers.
+ - ``physicsPackage/PhysicsPackageBase.hpp`` which declares the abstraction class shared by all physics packages.
  - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain.
 
 Let us jump forward to the class enum and variable as they contain the data used

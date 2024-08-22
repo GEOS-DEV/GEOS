@@ -50,7 +50,7 @@ public:
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
    * @param[in] numLinearIterations the number of linear iterations done by the linear solver
-   * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
+   * @detail This function is well suited for Newton's method, or for single-physics packages in sequential schemes
    */
   void logNonlinearIteration( integer const numLinearIterations );
 

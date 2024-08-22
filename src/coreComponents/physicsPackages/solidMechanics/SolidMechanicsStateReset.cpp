@@ -62,7 +62,7 @@ void SolidMechanicsStateReset::postInputInitialization()
   Group & physicsPackageManager = problemManager.getGroup( "Solvers" );
 
   GEOS_THROW_IF( !physicsPackageManager.hasGroup( m_solidSolverName ),
-                 GEOS_FMT( "Task {}: physics solver named {} not found",
+                 GEOS_FMT( "Task {}: physics package named {} not found",
                            getDataContext(), m_solidSolverName ),
                  InputError );
 
@@ -83,7 +83,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics package `{}` is resetting total displacement and velocity to zero",
                                           getName(), time_n, m_solidSolverName ) );
 
       NodeManager & nodeManager = mesh.getNodeManager();

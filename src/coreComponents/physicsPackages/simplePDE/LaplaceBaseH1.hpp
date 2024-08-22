@@ -17,13 +17,13 @@
 #define GEOS_PHYSICSPACKAGES_SIMPLEPDE_LAPLACE_BASE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
-#include "physicsPackages/PhysicsPackageBase.hpp"  // an abstraction class shared by all physics solvers
+#include "physicsPackages/PhysicsPackageBase.hpp"  // an abstraction class shared by all physics packages
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
 namespace geos
 {
 
-// Like most physics solvers, the Laplace solver derives from a generic PhysicsPackageBase class.
+// Like most physics packages, the Laplace solver derives from a generic PhysicsPackageBase class.
 // The base class is densely Doxygen-commented and worth a look if you have not done so already.
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the PhysicsPackageBase class level and can thus be used in Laplace without needing reimplementation.

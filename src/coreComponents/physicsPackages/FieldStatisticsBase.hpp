@@ -110,7 +110,7 @@ protected:
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
-  /// Pointer to the physics solver
+  /// Pointer to the physics package
   SOLVER * m_solver;
 
   // Output directory

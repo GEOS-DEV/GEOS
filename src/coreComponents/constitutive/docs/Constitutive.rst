@@ -24,7 +24,7 @@ These models are grouped together based on their input/output interface.
 In an input XML file, constitutive models are listed in the ``<Constitutive>`` block.
 Each parameterized model has its own XML tag, and each must be assigned a unique name via the ``name`` attribute.
 Names are used to assign models to regions of the physical domain via the ``materialList`` attribute of the ``<CellElementRegion>`` node (see :ref:`XML_ElementRegions`).
-In some cases, physics solvers must also be assigned specific constitutive models to use (see :ref:`Solvers`).
+In some cases, physics packages must also be assigned specific constitutive models to use (see :ref:`Solvers`).
 
 A typical ``<Constitutive>`` and ``<ElementRegions>`` block will look like:
 

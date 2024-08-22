@@ -30,7 +30,7 @@ class MeshLevel;
 /**
  * @class ParticleSubRegion
  * Class specializing the particle subregion for a cell particle.
- * This is the class used in the physics solvers to represent a collection of mesh cell particles
+ * This is the class used in the physics packages to represent a collection of mesh cell particles
  */
 class ParticleSubRegion : public ParticleSubRegionBase
 {

@@ -340,7 +340,7 @@ private:
    * @return A tuple containing the number of quadrature points for every
    *   MeshBody/region/subregion combination.
    *
-   * Checks all physics solvers for targetRegions and constitutive models to
+   * Checks all physics packages for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
    */
   map< std::tuple< string, string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );

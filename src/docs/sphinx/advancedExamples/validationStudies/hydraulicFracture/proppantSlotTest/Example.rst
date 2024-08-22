@@ -78,14 +78,14 @@ This mesh is defined as a cell block with the name ``cb1``.
 Proppant transport solver
 ---------------------------
 
-GEOS is a multi-physics platform. Different combinations of physics solvers available in the code can be applied in different regions of the domain and be functional at different stages of the simulation. The ``Solvers`` tag in the XML file is used to define these solvers.
+GEOS is a multi-physics platform. Different combinations of physics packages available in the code can be applied in different regions of the domain and be functional at different stages of the simulation. The ``Solvers`` tag in the XML file is used to define these solvers.
 
-To specify a coupling between two different solvers, we define and characterize each single-physics solver separately.
+To specify a coupling between two different solvers, we define and characterize each single-physics package separately.
 Then, we customize a *coupling solver* between these single-physics
 solvers as an additional solver.
-This approach allows for generality and flexibility in constructing multi-physics solvers.
+This approach allows for generality and flexibility in constructing multi-physics packages.
 The order of specifying these solvers is not restricted in GEOS.
-Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOS will recognize these single-physics solvers based on their customized names and create user-expected coupling.
+Note that end-users should give each single-physics package a meaningful and distinct name, as GEOS will recognize these single-physics packages based on their customized names and create user-expected coupling.
 
 As demonstrated in this example, to setup a coupled proppant transport solver, we need to define three different solvers in the XML file:
 
@@ -105,7 +105,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
   :end-before: <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
 
 
-- the coupling solver (``FlowProppantTransport``) that binds the two single-physics solvers above, which is named as ``FlowProppantTransport``
+- the coupling solver (``FlowProppantTransport``) that binds the two single-physics packages above, which is named as ``FlowProppantTransport``
 
 .. literalinclude:: ../../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
@@ -114,7 +114,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 
 In this example, let us focus on the coupling solver.
-This solver (``FlowProppantTransport``) describes the coupling process between proppant and flow transport within the ``Fracture`` region. In this way, the two single-physics solvers (``ProppantTransport`` and ``SinglePhaseFVM``) are sequentially called to solve the sub-problems (proppant transport and pressure problem, respectively) involved in this test case.
+This solver (``FlowProppantTransport``) describes the coupling process between proppant and flow transport within the ``Fracture`` region. In this way, the two single-physics packages (``ProppantTransport`` and ``SinglePhaseFVM``) are sequentially called to solve the sub-problems (proppant transport and pressure problem, respectively) involved in this test case.
 
 
 ------------------------------

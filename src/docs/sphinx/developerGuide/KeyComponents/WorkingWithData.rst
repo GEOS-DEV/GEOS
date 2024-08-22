@@ -39,7 +39,7 @@ two categories:
   ``Fields`` or ``Extrinsic``.
   ``Field`` data is never a member of the mesh object, and is typically
   registered on the mesh object outside of the definition of the mesh object
-  (i.e. from a physics solver).
+  (i.e. from a physics package).
 
 
 Registering Intrinsic data on a Mesh Object

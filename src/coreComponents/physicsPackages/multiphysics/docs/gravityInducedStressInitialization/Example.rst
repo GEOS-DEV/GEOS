@@ -25,7 +25,7 @@ A Python script for post-processing the simulation results is provided:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
+  src/coreComponents/physicsPackages/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
 
 
 ------------------------------------------------------------------
@@ -219,7 +219,7 @@ The following figure shows the final gradient of pressure and of the effective v
 
 The figure below shows the comparison between the total stress computed by GEOS(marks) and with an analytical solutions (solid lines). Note that, because of the use of an isotropic model, the minimum and maximul horizontal stresses are equal.
 
-.. plot:: coreComponents/physicsSolvers/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
+.. plot:: coreComponents/physicsPackages/multiphysics/docs/gravityInducedStressInitialization/gravityInitializationFigure.py
 
 
 ------------------------------------------------------------------

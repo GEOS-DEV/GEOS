@@ -1,10 +1,10 @@
 .. _Solvers:
 
-Physics Solvers
+Physics Packages
 ============================================
 
 The ``<Solvers>`` section of the input file specifies one or several
-physics solvers to be included in the simulation.
+physics packages to be included in the simulation.
 
 .. toctree::
    :maxdepth: 2

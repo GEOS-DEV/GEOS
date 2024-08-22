@@ -32,7 +32,7 @@ class MeshLevel;
 /**
  * @class CellElementSubRegion
  * Class specializing the element subregion for a cell element.
- * This is the class used in the physics solvers to represent a collection of mesh cell elements
+ * This is the class used in the physics packages to represent a collection of mesh cell elements
  */
 class CellElementSubRegion : public ElementSubRegionBase
 {

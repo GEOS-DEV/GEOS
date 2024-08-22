@@ -408,7 +408,7 @@ real64 PhysicsPackageBase::linearImplicitStep( real64 const & time_n,
                                                integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                DomainPartition & domain )
 {
-  // call setup for physics solver. Pre step allocations etc.
+  // call setup for physics package. Pre step allocations etc.
   // TODO: Nonlinear step does not call its own setup, need to decide on consistent behavior
   implicitStepSetup( time_n, dt, domain );
 

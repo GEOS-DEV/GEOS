@@ -31,7 +31,7 @@ Last, a Python script for post-processing the results is provided:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/docs/userTableStressInitialization/tableInitializationFigure.py
+  src/coreComponents/physicsPackages/multiphysics/docs/userTableStressInitialization/tableInitializationFigure.py
 
 
 -------------------------------------
@@ -63,7 +63,7 @@ A Python script to generate these files is provided:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/docs/userTableStressInitialization/genetrateTable.py
+  src/coreComponents/physicsPackages/multiphysics/docs/userTableStressInitialization/genetrateTable.py
 
 In addition to generating the files listed above, the script prints out the corresponding fluid density and rock density based on the model parameters provided. These values are then input into the ``defaultDensity`` parameter of the ``CompressibleSinglePhaseFluid`` and ``ElasticIsotropic`` tags respectively, as shown below:
 
@@ -103,7 +103,7 @@ The following figure shows the final gradient of pressure and of the effective v
 
 The figure below shows the comparisons between the numerical predictions (marks) and the corresponding user-provided stress gradients. Note that anisotropic horizontal stresses are obtained through this intialization procedure; however, mechanical equilibrium might not be guaranteed, especially for the heterogeneous models.
 
-.. plot:: coreComponents/physicsSolvers/multiphysics/docs/userTableStressInitialization/tableInitializationFigure.py
+.. plot:: coreComponents/physicsPackages/multiphysics/docs/userTableStressInitialization/tableInitializationFigure.py
 
 
 ------------------------------------------------------------------

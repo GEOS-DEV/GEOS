@@ -924,7 +924,7 @@ void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const 
   }
   else
   {
-    //TODO: Revisit this part such that is coherent across physics solver
+    //TODO: Revisit this part such that is coherent across physics package
     //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
   }
 }

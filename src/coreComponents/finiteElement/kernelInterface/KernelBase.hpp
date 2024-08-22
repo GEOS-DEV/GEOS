@@ -68,7 +68,7 @@ namespace finiteElement
  *
  * The template parameters of KernelBase should be duplicated as part of the
  * interface, EXCEPT for @p NUM_DOF_PER_TEST_SP and @p NUM_DOF_PER_TRIAL_SP.
- * These values should be set internally by the physics solver since each
+ * These values should be set internally by the physics package since each
  * physics discretization will have a constant intrinsic value for these
  * quantities. For example, when solving or the heat equation with scalar
  * temperature as the primary variable at the support point, these will have

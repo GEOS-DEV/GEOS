@@ -3,7 +3,7 @@
 ==================================================== ======== =========== =============================================================== 
 Name                                                 Type     Default     Description                                                     
 ==================================================== ======== =========== =============================================================== 
-gravityVector                                        R1Tensor {0,0,-9.81} Gravity vector used in the physics solvers                      
+gravityVector                                        R1Tensor {0,0,-9.81} Gravity vector used in the physics packages                      
 AcousticElasticSEM                                   node                 :ref:`XML_AcousticElasticSEM`                                   
 AcousticFirstOrderSEM                                node                 :ref:`XML_AcousticFirstOrderSEM`                                
 AcousticSEM                                          node                 :ref:`XML_AcousticSEM`                                          

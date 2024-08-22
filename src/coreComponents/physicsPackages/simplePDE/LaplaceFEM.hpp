@@ -21,7 +21,7 @@
 namespace geos
 {
 
-// Like most physics solvers, the Laplace solver derives from a generic PhysicsPackageBase class.
+// Like most physics packages, the Laplace solver derives from a generic PhysicsPackageBase class.
 // The base class is densely Doxygen-commented and worth a look if you have not done so already.
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
 // are implemented at the PhysicsPackageBase class level and can thus be used in Laplace without needing reimplementation.

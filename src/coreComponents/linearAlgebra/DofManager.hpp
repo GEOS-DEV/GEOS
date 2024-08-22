@@ -179,7 +179,7 @@ public:
   /**
    * @copydoc addField(string const &, FieldLocation, integer, std::vector< FieldSupport > const &)
    *
-   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics solvers.
+   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics packages.
    */
   void addField( string const & fieldName,
                  FieldLocation location,

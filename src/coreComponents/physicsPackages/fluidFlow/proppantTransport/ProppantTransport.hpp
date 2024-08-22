@@ -44,7 +44,7 @@ class ProppantTransport : public FlowPackageBase
 {
 public:
 
-  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  /// String used to form the solverName used to register single-physics packages in CoupledSolver
   static string coupledSolverAttributePrefix() { return "proppant"; }
 
   /**

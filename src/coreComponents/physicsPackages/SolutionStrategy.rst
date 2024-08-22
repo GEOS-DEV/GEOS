@@ -5,7 +5,7 @@
 Solution Strategy
 #####################################
 
-All  physics solvers share a common solution strategy for nonlinear time-dependent
+All  physics packages share a common solution strategy for nonlinear time-dependent
 problems. Here, we briefly describe the nonlinear solver and the timestepping
 strategy employed.
 
@@ -17,7 +17,7 @@ At each time-step, the nonlinear system of discrete residual equations, i.e.
     r(x) = 0
 
 is solved by employing the Newton-Raphson method. Here, :math:`x` is the vector of
-primary unknowns. Thus, each physics solver is responsible for assembling
+primary unknowns. Thus, each physics package is responsible for assembling
 the Jacobian matrix :math:`J` containing the analytical derivatives of the residual
 vector :math:`r` with respect to the primary variables. Then, at each Newton iteration
 :math:`\nu`, the following linear system is solved
@@ -54,7 +54,7 @@ Timestepping Strategy
 
 The actual timestep size employed is determined by a combination of several factors.
 In particular, specific output events may have timestep requirements that force a
-specific timestep to be used. However, physics solvers do have the possibility of
+specific timestep to be used. However, physics packages do have the possibility of
 requesting a specific timestep size to the event manager based on their specific
 requirements. In particular, in case of fast convergence indicated by a small number of
 Newton iterations, i.e.
@@ -62,14 +62,14 @@ Newton iterations, i.e.
 .. math::
      \text{numIterations} < \text{dtIncIterLimit} \cdot \text{newtonMaxIter},
 
-the physics solver will require to double the timestep size. On the other hand,
+the physics package will require to double the timestep size. On the other hand,
 if a large number of nonlinear iterations are necessary to
 find the solution at timestep :math:`n`
 
 .. math::
      \text{numIterations} > \text{dtCutIterLimit} \cdot \text{newtonMaxIter},
 
-the physics solver will request the next timestep, :math:`n+1`, to be half the size of timestep :math:`n`.
+the physics package will request the next timestep, :math:`n+1`, to be half the size of timestep :math:`n`.
 Here,
 
 Additionally, in case the nonlinear solver fails to converge with the timestep provided by the
@@ -85,7 +85,7 @@ Parameters
 ============================
 
 All parameters defining the behavior of the nonlinear solver and determining the
-timestep size requested by the physics solver are defined in the NonlinearSolverParameters
+timestep size requested by the physics package are defined in the NonlinearSolverParameters
 and are presented in the following table.
 
 .. include:: /coreComponents/schema/docs/NonlinearSolverParameters.rst

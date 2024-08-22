@@ -194,7 +194,7 @@ correspond to the attribute ``name`` of the **Constitutive** block.
 Constitutive models
 ---------------------
 
-For a simulation performed with the **CompositionalMultiphaseFVM** physics solver,
+For a simulation performed with the **CompositionalMultiphaseFVM** physics package,
 at least four types of constitutive models must be specified in the **Constitutive** XML block:
 
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
@@ -226,7 +226,7 @@ This step is similar to what is described in the previous examples
 
 We remind the reader that the attribute ``name`` of the constitutive models defined here
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
-regions and the physics solvers to their respective constitutive models.
+regions and the physics packages to their respective constitutive models.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml

@@ -97,16 +97,16 @@ Solid mechanics solver
 --------------------------
 
 GEOS is a multi-physics platform. Different combinations of
-physics solvers available in the code can be applied
+physics packages available in the code can be applied
 in different regions of the domain and be functional at different stages of the simulation.
 The ``Solvers`` tag in the XML file is used to list and parameterize these solvers.
 
-To specify a coupling between two different solvers, we define and characterize each single-physics solver separately.
+To specify a coupling between two different solvers, we define and characterize each single-physics package separately.
 Then, we customize a *coupling solver* between these single-physics
 solvers as an additional solver.
-This approach allows for generality and flexibility in constructing multi-physics solvers.
+This approach allows for generality and flexibility in constructing multi-physics packages.
 The order of specifying these solvers is not restricted in GEOS.
-Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOS will recognize these single-physics solvers based on their customized names and create user-expected coupling.
+Note that end-users should give each single-physics package a meaningful and distinct name, as GEOS will recognize these single-physics packages based on their customized names and create user-expected coupling.
 
 As demonstrated in this example, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
 
@@ -126,7 +126,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM_END -->
 
 
-- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``PoromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
+- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics packages above, which is named as ``PoromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
 
 .. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
   :language: xml
@@ -134,17 +134,17 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER_END -->
 
 
-The two single-physics solvers are parameterized as explained
+The two single-physics packages are parameterized as explained
 in their corresponding documents. 
 
 In this example, let us focus on the coupling solver.
 This solver (``PoromechanicsSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
 These solvers are forced to interact through the ``porousMaterialNames="{porousRock}"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
-More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the wellbore problem here.
+More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics packages will be simultaneously called and executed for solving the wellbore problem here.
 
 ------------------------------------------------
-Discretization methods for multiphysics solvers
+Discretization methods for multiphysics packages
 ------------------------------------------------
 
 Numerical methods in multiphysics settings are similar to single physics numerical methods. In this problem, we use finite volume for flow and finite elements for solid mechanics. All necessary parameters for these methods are defined in the ``NumericalMethods`` section.
@@ -349,5 +349,5 @@ For any feedback on this example, please submit a `GitHub issue on the project's
 **For more details**
 
   - More on plasticity models, please see :ref:`DruckerPragerExtended`.
-  - More on multiphysics solvers, please see :ref:`PoroelasticSolver`.
+  - More on multiphysics packages, please see :ref:`PoroelasticSolver`.
 

@@ -36,7 +36,7 @@ PhysicsPackageManager::PhysicsPackageManager( string const & name,
   this->registerWrapper( viewKeyStruct::gravityVectorString(), &m_gravityVector ).
     setDefaultValue( m_gravityVector ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Gravity vector used in the physics solvers" );
+    setDescription( "Gravity vector used in the physics packages" );
 }
 
 PhysicsPackageManager::~PhysicsPackageManager()

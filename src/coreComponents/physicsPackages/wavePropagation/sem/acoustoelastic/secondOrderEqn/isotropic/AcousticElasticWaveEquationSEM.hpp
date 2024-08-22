@@ -87,10 +87,10 @@ public:
 
 protected:
 
-  /// Pointers of the single-physics solvers
+  /// Pointers of the single-physics packages
   std::tuple< SOLVERS *... > m_solvers;
 
-  /// Names of the single-physics solvers
+  /// Names of the single-physics packages
   std::array< string, sizeof...( SOLVERS ) > m_names;
 };
 
