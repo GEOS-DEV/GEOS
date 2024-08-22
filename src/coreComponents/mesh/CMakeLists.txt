@@ -150,7 +150,7 @@ set( mesh_sources
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp )
 
-set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
+set( dependencyList ${parallelDeps} schema constitutive finiteElement parmetis metis )
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")
@@ -182,11 +182,16 @@ if( ENABLE_SCOTCH )
     list( APPEND dependencyList ptscotch )
 endif()
 
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
 blt_add_library( NAME       mesh
                  SOURCES    ${mesh_sources}
                  HEADERS    ${mesh_headers}
-                 DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOS_BUILD_OBJ_LIBS} )
+                 DEPENDS_ON ${decoratedDependencies}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
+               )
 
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
