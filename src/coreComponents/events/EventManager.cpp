@@ -21,7 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "events/EventBase.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -166,7 +166,7 @@ bool EventManager::run( DomainPartition & domain )
 #ifdef GEOS_USE_MPI
       // Find the min dt across processes
       real64 dt_global;
-      MPI_Allreduce( &m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX );
+      MPI_Allreduce( &m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOS );
       m_dt = dt_global;
 #endif
     }

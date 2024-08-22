@@ -446,7 +446,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
     } );
   } );
 
-  return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
+  return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOS ), m_minScalingFactor );
 }
 
 bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition & domain,
@@ -494,7 +494,7 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition & 
     } );
   } );
 
-  return MpiWrapper::min( localCheck, MPI_COMM_GEOSX );
+  return MpiWrapper::min( localCheck, MPI_COMM_GEOS );
 }
 
 void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const & dofManager,
