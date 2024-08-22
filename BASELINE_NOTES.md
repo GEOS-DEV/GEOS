@@ -7,6 +7,11 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 
+PR #3135 (2024-08-22)
+======================
+Temperature dependent single phase thermal conductivity. Rebaseline all thermal cases. 
+
+
 PR #3283 (2024-08-22)
 ======================
 Reuse computeSinglePhaseFlux. Rebaseline due to minor numerical diffs. 
