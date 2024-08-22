@@ -164,8 +164,6 @@ First, using a terminal, create the ``codes`` directory wherever you like.
 
 Inside this directory, we can clone the GEOS repository.
 We will also use some Git commands to initialize and download the submodules (e.g. ``LvArray``).
-Note that most users will not have access to our integrated tests repository, and so we "deinit" (deactivate) this submodule.
-Developers who will be working with the integratedTests repository should skip this line.
 
 .. code-block:: sh
 
@@ -173,7 +171,6 @@ Developers who will be working with the integratedTests repository should skip t
    cd GEOS
    git lfs install
    git submodule init
-   git submodule deinit integratedTests
    git submodule update
    cd ..
 
@@ -181,10 +178,10 @@ If all goes well, you should have a complete copy of the GEOS source at this poi
 The most common errors people encounter here have to do with Github not recognizing their authentication settings and/or repository permissions.
 See the previous section for tips on ensuring your SSH is working properly.
 
-*Note*: The integratedTests submodule is not publicly available, with access limited to the core development team.
-This may cause the ``git submodule update`` command to fail
-if you forget the ``git submodule deinit integratedTests`` step above.
-This submodule is not required for building GEOS. If you see an error message here, however, you may need to initialize and update the submodules manually:
+*Note*: Previous versions of GEOS also imported the integratedTests submodule, which is not publicly available (access is limited to the core development team).
+This may cause the ``git submodule update`` command to fail.
+In that case, run ``git submodule deinit integratedTests`` before ``git submodule update``.
+This submodule is not required for building GEOS.
 
 .. code-block:: sh
 
@@ -236,71 +233,27 @@ If something goes wrong, the first thing the support team will ask you for is th
 
 Here, you may need to replace ``cpp`` with the full path to the C++ compiler you would like to use, depending on how your path and any aliases are configured.
 
-Defining a host-config file
+Defining a Host-Config File
 ---------------------------
-GEOS compilations are driven by a cmake ``host-config`` file, which tells the build system about the compilers you are using, where various packages reside, and what options you want to enable.
-We have created a number of default hostconfig files for common systems.
-You should browse them to see if any are close to your needs:
 
-.. code-block:: sh
+GEOS compilations are driven by a CMake ``host-config`` file, which informs the build system about the compilers you are using, where various packages reside, and what options you want to enable. 
 
-   cd GEOS/host-configs
+A template for creating a simple ``host-config`` is provided in ``host-configs/quick-start-template.cmake``.
 
-We maintain host configs (ending in ``.cmake``) for HPC systems at various institutions, as well as ones for common personal systems.
-If you cannot find one that matches your needs, we suggest beginning with one of the shorter ones and modifying as needed.
-A typical one may look like:
+.. literalinclude:: ../../host-configs/quick-start-template.cmake
+   :language: sh
 
-.. code-block:: sh
+To begin, make a copy of the template file and modify the paths according to the installation locations on your system. The various ``set()`` commands are used to set variables that control the build.
 
-  # file: your-platform.cmake
-
-  # detect host and name the configuration file
-  site_name(HOST_NAME)
-  set(CONFIG_NAME "your-platform" CACHE PATH "")
-  message("CONFIG_NAME = ${CONFIG_NAME}")
-
-  # set paths to C, C++, and Fortran compilers. Note that while GEOS does not contain any Fortran code,
-  # some of the third-party libraries do contain Fortran code. Thus a Fortran compiler must be specified.
-  set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
-  set(CMAKE_CXX_COMPILER "/usr/bin/clang++" CACHE PATH "")
-  set(CMAKE_Fortran_COMPILER "/usr/local/bin/gfortran" CACHE PATH "")
-  set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
-
-  # enable MPI and set paths to compilers and executable.
-  # Note that the MPI compilers are wrappers around standard serial compilers.
-  # Therefore, the MPI compilers must wrap the appropriate serial compilers specified
-  # in CMAKE_C_COMPILER, CMAKE_CXX_COMPILER, and CMAKE_Fortran_COMPILER.
-  set(ENABLE_MPI ON CACHE BOOL "")
-  set(MPI_C_COMPILER "/usr/local/bin/mpicc" CACHE PATH "")
-  set(MPI_CXX_COMPILER "/usr/local/bin/mpicxx" CACHE PATH "")
-  set(MPI_Fortran_COMPILER "/usr/local/bin/mpifort" CACHE PATH "")
-  set(MPIEXEC "/usr/local/bin/mpirun" CACHE PATH "")
-
-  # disable CUDA and OpenMP
-  set(ENABLE_CUDA OFF CACHE BOOL "" FORCE)
-  set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
-
-  # enable PVTPackage
-  set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
-
-  # enable tests
-  set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
-
-  # define the path to your compiled installation directory
-  set(GEOS_TPL_DIR "/path/to/your/TPL/installation/dir" CACHE PATH "")
-  # let GEOS define some third party libraries information for you
-  include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)
-
-The various ``set()`` commands are used to set environment variables that control the build.
-You will see in the above example that we set the C++ compiler to ``/user/bin/clang++`` and so forth.
-We also disable CUDA and OpenMP, but enable PVTPackage.
-The final line is related to our unit test suite.  See the :ref:`BuildGuide` for more details on available options.
+We have created a number of default host-config files for common systems. You should browse them to see if any are close to your needs:
+We maintain host configuration files (ending in ``.cmake``) for HPC systems at various institutions, as well as for common personal systems. 
+If you cannot find one that matches your needs, we suggest starting with one of the shorter ones and modifying it as needed. 
 
 .. note::
    If you develop a new ``host-config`` for a particular platform that may be useful for other users, please consider sharing it with the developer team.
 
 Compilation
-==================
+===========
 
 The configuration process for both the third-party libraries (TPLs) and GEOS is managed through a Python script called ``config-build.py``. This script simplifies and automates the setup by configuring the build ad install directories and by running CMake based on the options set in the host-config file 
 which is passed as a command-lne argument. The ``config-build.py`` script has several command-line options. Here, we will only use some basic options and rely on default values for many others. During this build process there wil be automatically generated build and install directories for both the TPLs and the main code,
