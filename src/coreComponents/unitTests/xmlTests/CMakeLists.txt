@@ -15,12 +15,22 @@ set( multi_files
      multifile_input/outputs.xml
      multifile_input/solver.xml )
 
-set( tplDependencyList ${parallelDeps} gtest )
+# Add gtest C++ based tests
+set( dependencyList ${parallelDeps} gtest optionparser HDF5::HDF5 )
 
-set( dependencyList mainInterface )
+if ( GEOS_BUILD_SHARED_LIBS )
+  list( APPEND dependencyList geosx_core HDF5::HDF5 )
+else()
+  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
+endif()
 
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+if (TARGET pugixml::pugixml)
+  set( dependencyList ${dependencyList} pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  set( dependencyList ${dependencyList} pugixml )
+endif()
 
 # create test executables
 foreach(test ${gtest_geosx_tests} ${gtest_tests_with_input})
@@ -28,7 +38,7 @@ foreach(test ${gtest_geosx_tests} ${gtest_tests_with_input})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} "-lz" )
+                        DEPENDS_ON ${dependencyList} "-lz" )
 endforeach()
 
 # add tests that don't require input files

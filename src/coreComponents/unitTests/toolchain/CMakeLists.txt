@@ -2,10 +2,7 @@
 set( gtest_geosx_tests testToolchain.cpp )
 
 # NOTE: we explicitly depend on internal libraries in order to check for the spurious addition of -DNDEBUG flag
-set( dependencyList ${parallelDeps}  physicsSolvers )
-set( tplDependencyList ${parallelDeps} gtest HDF5::HDF5 optionparser )
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+set( dependencyList ${parallelDeps} gtest physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser HDF5::HDF5  )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
@@ -14,7 +11,7 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+                        DEPENDS_ON ${dependencyList} )
 
     geos_add_test( NAME ${test_name}
                    COMMAND ${test_name} )

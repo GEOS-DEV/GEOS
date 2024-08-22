@@ -20,7 +20,6 @@
 #define GEOS_LINEARALGEBRA_INTERFACES_COMMON_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/logger/Logger.hpp"
 
 /**
  * Whether to check preconditions at runtime in LAI functions

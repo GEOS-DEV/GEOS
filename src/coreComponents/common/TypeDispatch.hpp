@@ -23,7 +23,6 @@
 #define GEOS_COMMON_TYPEDISPATCH_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/logger/Logger.hpp"
 
 #include <camp/camp.hpp>
 

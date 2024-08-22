@@ -46,20 +46,20 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Volumic fields to be imported from the external mesh file" );
 
-  registerWrapper( viewKeyStruct::volumicFieldsInGEOSString(), &m_volumicFieldsInGEOS ).
+  registerWrapper( viewKeyStruct::volumicFieldsInGEOSXString(), &m_volumicFieldsInGEOSX ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of the volumic fields in GEOS to import into" );
+    setDescription( "Names of the volumic fields in GEOSX to import into" );
 
   registerWrapper( viewKeyStruct::surfacicFieldsToImportString(), &m_surfacicFieldsToImport ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Surfacic fields to be imported from the external mesh file" );
 
-  registerWrapper( viewKeyStruct::surfacicFieldsInGEOSString(), &m_surfacicFieldsInGEOS ).
+  registerWrapper( viewKeyStruct::surfacicFieldsInGEOSXString(), &m_surfacicFieldsInGEOSX ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of the surfacic fields in GEOS to import into" );
+    setDescription( "Names of the surfacic fields in GEOSX to import into" );
 }
 
 void ExternalMeshGeneratorBase::postInputInitialization()
@@ -73,8 +73,8 @@ void ExternalMeshGeneratorBase::postInputInitialization()
                           " must contain the same number of values.",
                           InputError );
   };
-  checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSString() );
-  checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSString() );
+  checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
+  checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
 
   auto const checkDuplicates = [this]( arrayView1d< string const > v, string const & key )
   {
@@ -86,8 +86,8 @@ void ExternalMeshGeneratorBase::postInputInitialization()
                    "' already present in list of fields to import.",
                    InputError );
   };
-  checkDuplicates( m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsInGEOSString() );
-  checkDuplicates( m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsInGEOSString() );
+  checkDuplicates( m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsInGEOSXString() );
+  checkDuplicates( m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsInGEOSXString() );
 
   // Building the fields mapping from the two separated input/output vectors.
   auto const buildMapping = [&]( arrayView1d< string const > from,
@@ -101,8 +101,8 @@ void ExternalMeshGeneratorBase::postInputInitialization()
     return mapping;
   };
 
-  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport.toViewConst(), m_volumicFieldsInGEOS.toViewConst() );
-  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOS.toViewConst() );
+  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport.toViewConst(), m_volumicFieldsInGEOSX.toViewConst() );
+  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOSX.toViewConst() );
 }
 
 } // namespace geos

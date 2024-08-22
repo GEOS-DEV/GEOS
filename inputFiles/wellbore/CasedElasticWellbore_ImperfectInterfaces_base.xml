@@ -74,7 +74,9 @@
     <Coulomb
       name="fractureContact"
       cohesion="0"
-      frictionCoefficient="0.5"/>
+      frictionCoefficient="0.5"
+      penaltyStiffness="1.0e8"
+      apertureTableName="apertureTable"/>
     <!-- SPHINX_MaterialContactEnd --> 
   
     <ElasticIsotropic
@@ -173,6 +175,10 @@
       inputVarNames="{ time }"
       coordinates="{ 0.0, 0.5, 2.0 }"
       values="{ 0.0, -1.0, 1.0 }"/>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1e-4, 1e-3 }"/> 
   </Functions>
   <!-- SPHINX_TableFunctionEnd -->
 

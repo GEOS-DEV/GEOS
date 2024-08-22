@@ -36,7 +36,7 @@ class TableFunction;
 class TractionBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecificationBase(string const &, Group *)
   TractionBoundaryCondition( string const & name, Group * parent );
 
   /// deleted default constructor

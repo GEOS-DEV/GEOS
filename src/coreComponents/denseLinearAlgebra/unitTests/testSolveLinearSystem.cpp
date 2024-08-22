@@ -19,7 +19,6 @@
 
 // Source includes
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
-#include "common/logger/Logger.hpp"
 
 #include "gtest/gtest.h"
 

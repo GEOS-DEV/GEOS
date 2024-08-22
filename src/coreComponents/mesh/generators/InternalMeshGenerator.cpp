@@ -606,7 +606,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                            elemCenterCoords[dim].data(),
                            m_numElemsTotal[dim],
                            MPI_MAX,
-                           MPI_COMM_GEOS );
+                           MPI_COMM_GEOSX );
   }
 
   // Find starting/ending index

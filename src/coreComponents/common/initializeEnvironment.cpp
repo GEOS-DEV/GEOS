@@ -18,7 +18,9 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-#include "common/format/table/TableFormatter.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
 #include <umpire/TypedAllocator.hpp>
@@ -63,7 +65,7 @@ namespace geos
 void setupLogger()
 {
 #ifdef GEOS_USE_MPI
-  logger::InitializeLogger( MPI_COMM_GEOS );
+  logger::InitializeLogger( MPI_COMM_GEOSX );
 #else
   logger::InitializeLogger();
 #endif
@@ -124,19 +126,19 @@ void setupMPI( int argc, char * argv[] )
     MpiWrapper::init( &argc, &argv );
   }
 
-  MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );
+  MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
 
-  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
     // Can't use logging macros prior to logger init
-    std::cout << "Num ranks: " << MpiWrapper::commSize( MPI_COMM_GEOS ) << std::endl;
+    std::cout << "Num ranks: " << MpiWrapper::commSize( MPI_COMM_GEOSX ) << std::endl;
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeMPI()
 {
-  MpiWrapper::commFree( MPI_COMM_GEOS );
+  MpiWrapper::commFree( MPI_COMM_GEOSX );
   MpiWrapper::finalize();
 }
 
@@ -152,7 +154,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 
 #if defined( GEOS_USE_ADIAK )
 #if defined( GEOS_USE_MPI )
-  adiak::init( &MPI_COMM_GEOS );
+  adiak::init( &MPI_COMM_GEOSX );
 #else
   adiak::init( nullptr );
 #endif
@@ -287,7 +289,7 @@ static void addUmpireHighWaterMarks()
     string allocatorNameMinChars = string( MAX_NAME_LENGTH, '\0' );
 
     // Make sure that each rank is looking at the same allocator.
-    MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOS );
+    MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
     if( allocatorNameFixedSize != allocatorNameMinChars )
     {
       GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );

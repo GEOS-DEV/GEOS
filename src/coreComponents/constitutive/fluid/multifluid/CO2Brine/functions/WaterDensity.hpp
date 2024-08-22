@@ -118,7 +118,7 @@ void WaterDensityUpdate::compute( real64 const & pressure,
 {
   GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition, useMass );
 
-  using Deriv = constitutive::multifluid::DerivativeOffset;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2]{};

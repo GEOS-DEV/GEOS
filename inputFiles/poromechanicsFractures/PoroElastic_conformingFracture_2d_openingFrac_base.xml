@@ -24,7 +24,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="FractureSubRegion"
-      materialList="{ water, fractureFilling, frictionLaw, hApertureModel }"
+      materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -78,13 +78,10 @@
       name="fracturePerm"/>
 
     <Coulomb
-      name="frictionLaw"
+      name="fractureContact"
       cohesion="0.0"
-      frictionCoefficient="0.577350269"/>
-
-    <HydraulicApertureTable
-      name="hApertureModel"
-      apertureTableName="apertureTable"/>    
+      frictionCoefficient="0.577350269"
+      apertureTableName="apertureTable"/>
   </Constitutive>
 
   <Functions>

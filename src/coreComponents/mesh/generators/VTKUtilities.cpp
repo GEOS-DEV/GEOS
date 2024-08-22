@@ -72,7 +72,6 @@
 
 namespace geos
 {
-using namespace dataRepository;
 
 namespace vtk
 {
@@ -143,7 +142,7 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
 {
   // Exchange the sizes of the data across all ranks.
   array1d< int > dataSizes( MpiWrapper::commSize() );
-  MpiWrapper::allGather( LvArray::integerConversion< int >( data.size() ), dataSizes, MPI_COMM_GEOS );
+  MpiWrapper::allGather( LvArray::integerConversion< int >( data.size() ), dataSizes, MPI_COMM_GEOSX );
   // `totalDataSize` contains the total data size across all the MPI ranks.
   int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
 
@@ -154,7 +153,7 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
   // `displacements` is the offset (relative to the receive buffer) to store the data for each rank.
   std::vector< int > displacements( MpiWrapper::commSize(), 0 );
   std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, displacements.begin() + 1 );
-  MpiWrapper::allgatherv( data.data(), data.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOS );
+  MpiWrapper::allgatherv( data.data(), data.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOSX );
 
   // Finalizing by sorting, removing duplicates and trimming the result vector at the proper size.
   std::sort( allData.begin(), allData.end() );
@@ -405,7 +404,7 @@ vtkSmartPointer< vtkMultiProcessController > getController()
 {
 #ifdef GEOS_USE_MPI
   vtkNew< vtkMPIController > controller;
-  vtkMPICommunicatorOpaqueComm vtkGeosxComm( &MPI_COMM_GEOS );
+  vtkMPICommunicatorOpaqueComm vtkGeosxComm( &MPI_COMM_GEOSX );
   vtkNew< vtkMPICommunicator > communicator;
   communicator->InitializeExternal( &vtkGeosxComm );
   controller->SetCommunicator( communicator );
@@ -678,13 +677,13 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
 
   // First for the main 3d mesh...
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( input.getMainMesh(), numRanks, newPartitions.toViewConst() );
-  vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
+  vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
   // ... and then for the fractures.
   std::map< string, vtkSmartPointer< vtkDataSet > > finalFractures;
   for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
   {
     vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( fracture, numRanks, newFracturePartitions[fractureName].toViewConst() );
-    vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOS );
+    vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOSX );
     finalFractures[fractureName] = finalFracMesh;
   }
 
@@ -747,7 +746,7 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     // Add global ids on the fly if needed
     int const me = hasGlobalIds( mesh );
     int everyone;
-    MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOS );
+    MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOSX );
 
     if( everyone and not me )
     {
@@ -892,7 +891,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
                       "\nWarning! We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks \n" );
 
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
-  return vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
+  return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
 }
 
 
@@ -2114,8 +2113,8 @@ real64 writeNodes( integer const logLevel,
     bb.GetMaxPoint( xMax );
   }
 
-  MpiWrapper::min< real64 >( xMin, xMin, MPI_COMM_GEOS );
-  MpiWrapper::max< real64 >( xMax, xMax, MPI_COMM_GEOS );
+  MpiWrapper::min< real64 >( xMin, xMin, MPI_COMM_GEOSX );
+  MpiWrapper::max< real64 >( xMax, xMax, MPI_COMM_GEOSX );
   LvArray::tensorOps::subtract< 3 >( xMax, xMin );
   return LvArray::tensorOps::l2Norm< 3 >( xMax );
 }

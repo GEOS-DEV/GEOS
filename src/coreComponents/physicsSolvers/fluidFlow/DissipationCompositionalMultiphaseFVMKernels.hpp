@@ -30,6 +30,8 @@ namespace geos
 namespace dissipationCompositionalMultiphaseFVMKernels
 {
 
+using namespace constitutive;
+
 static constexpr integer newtonContinuationCutoffIteration = 5;
 static constexpr real64 initialDirectionalCoef = 100;
 static constexpr real64 multiplierDirectionalCoef = 1000;
@@ -83,9 +85,9 @@ public:
                       fields::elementVolume >;
 
   using PorosityAccessors =
-    StencilMaterialAccessors< constitutive::PorosityBase, fields::porosity::porosity_n >;
+    StencilMaterialAccessors< PorosityBase, fields::porosity::porosity_n >;
 
-  using Deriv = constitutive::multifluid::DerivativeOffset;
+  using Deriv = multifluid::DerivativeOffset;
 
   /**
    * @brief Constructor for the kernel interface

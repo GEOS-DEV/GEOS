@@ -29,8 +29,7 @@
       name="fractureMechSolver"
       targetRegions="{ RockMatrix, Fracture }"
       timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      contactPenaltyStiffness="4.0e9"/>
+      discretization="FE1"/>
 
     <SinglePhaseFVM
       name="flowSolver"
@@ -73,7 +72,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, fractureContact, thermalCond, hApertureModel }"
+      materialList="{ water, fractureFilling, fractureContact, thermalCond }"
       defaultAperture="1.e-4"/>
   </ElementRegions>
 </Problem>

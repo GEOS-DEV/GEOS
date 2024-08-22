@@ -3,22 +3,43 @@ set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
      testThermalCompMultiphaseFlow.cpp
      testThermalSinglePhaseFlow.cpp
-     testFlowStatistics.cpp
-     testTransmissibility.cpp )
+     testFlowStatistics.cpp )
+
+set( dependencyList ${parallelDeps} gtest )
+
+if ( GEOS_BUILD_SHARED_LIBS )
+  list( APPEND dependencyList geosx_core HDF5::HDF5 )
+else()
+  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
+  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
+endif()
+
+set( dependencyList testingUtilities )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
           testCompMultiphaseFlowHybrid.cpp
           testReactiveCompositionalMultiphaseOBL.cpp )
+
+    list( APPEND dependencyList PVTPackage )
 endif()
 
-set( tplDependencyList ${parallelDeps} gtest )
+if (TARGET pugixml::pugixml)
+  list( APPEND dependencyList pugixml::pugixml )
+endif()
 
-set( dependencyList mainInterface testingUtilities )
+if (TARGET pugixml)
+  list( APPEND dependencyList pugixml )
+endif()
 
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+if (TARGET fmt::fmt-header-only)
+  list( APPEND dependencyList fmt::fmt-header-only )
+endif()
+
+if (TARGET fmt)
+  list( APPEND dependencyList fmt )
+endif()
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
@@ -27,7 +48,7 @@ foreach(test ${gtest_geosx_tests})
   blt_add_executable( NAME ${test_name}
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+                      DEPENDS_ON ${dependencyList} )
 
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} )

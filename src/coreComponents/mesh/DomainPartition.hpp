@@ -116,12 +116,6 @@ public:
   void addNeighbors( const unsigned int idim,
                      MPI_Comm & cartcomm,
                      int * ncoords );
-
-  /**
-   * @brief Outputs information about the partitioning of the domain.
-   */
-  void outputPartitionInformation() const;
-
   ///@}
 
 

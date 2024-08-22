@@ -33,6 +33,9 @@
 
 namespace geos
 {
+
+using namespace dataRepository;
+
 namespace vtk
 {
 
@@ -219,7 +222,7 @@ string buildCellBlockName( ElementType const type, int const regionId );
  */
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
-                          dataRepository::WrapperBase & wrapper );
+                          WrapperBase & wrapper );
 
 /**
  * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, only for @p cellIds
@@ -229,7 +232,7 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
  */
 void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
-                         dataRepository::WrapperBase & wrapper );
+                         WrapperBase & wrapper );
 
 /**
  * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, for all the elements/cells of the provided wrapper.
@@ -237,7 +240,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
  * @param wrapper The destination.
  */
 void importRegularField( vtkDataArray * vtkArray,
-                         dataRepository::WrapperBase & wrapper );
+                         WrapperBase & wrapper );
 
 
 } // namespace vtk

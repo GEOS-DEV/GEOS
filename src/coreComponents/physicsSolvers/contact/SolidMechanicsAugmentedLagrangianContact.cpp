@@ -211,10 +211,10 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   localMatrix.setName( this->getName() + "/localMatrix" );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
 }
 
@@ -286,7 +286,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                localRhs );
 
   //ParallelMatrix parallel_matrix;
-  //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix.write("mech.mtx");
   //abort();
 
@@ -466,8 +466,8 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     } );
     real64 const localResidualNorm[2] = { localSum.get(), SolidMechanicsLagrangianFEM::getMaxForce() };
 
-    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOS );
-    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
+    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
     array1d< real64 > globalValues( numRanks * 2 );
 
     // Everything is done on rank 0
@@ -476,7 +476,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
                         globalValues.data(),
                         2,
                         0,
-                        MPI_COMM_GEOS );
+                        MPI_COMM_GEOSX );
 
     if( rank==0 )
     {
@@ -488,7 +488,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
       }
     }
 
-    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOS );
+    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
   } );
 
   real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
@@ -723,7 +723,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                          &hasConfigurationConvergedGlobally,
                          1,
                          MPI_LAND,
-                         MPI_COMM_GEOS );
+                         MPI_COMM_GEOSX );
 
   return hasConfigurationConvergedGlobally;
 

@@ -37,7 +37,7 @@ namespace constitutive
 {
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
+void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< DeadOilFluid,
@@ -59,7 +59,7 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
 }
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
+void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< DeadOilFluid,
@@ -117,7 +117,7 @@ struct ComponentSelector< camp::idx_seq< Is ... > >
 }
 
 template< bool THERMAL = false, typename LAMBDA = NoOpFunc >
-void constitutiveComponentUpdatePassThru( constitutive::MultiFluidBase & fluidBase,
+void constitutiveComponentUpdatePassThru( MultiFluidBase & fluidBase,
                                           integer const numComps,
                                           LAMBDA && lambda )
 {

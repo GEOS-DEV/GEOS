@@ -1,12 +1,13 @@
 # Specify list of tests
 set( geosx_fileio_tests testHDFFile.cpp )
 
-set( tplDependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest HDF5::HDF5 )
 
-set( dependencyList mainInterface )
-
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+if ( GEOS_BUILD_SHARED_LIBS )
+  list( APPEND dependencyList geosx_core )
+else()
+  list( APPEND dependencyList ${geosx_core_libs} )
+endif()
 
 # Add gtest C++ based tests
 foreach(test ${geosx_fileio_tests})
@@ -14,7 +15,7 @@ foreach(test ${geosx_fileio_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+                        DEPENDS_ON ${dependencyList} )
 
     geos_add_test( NAME ${test_name}
                    COMMAND ${test_name} )
@@ -31,7 +32,7 @@ if ( ENABLE_MPI )
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+                        DEPENDS_ON ${dependencyList} )
 
     geos_add_test( NAME ${test_name}
                    COMMAND ${test_name}

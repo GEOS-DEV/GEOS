@@ -139,7 +139,7 @@ int NeighborCommunicator::postSizeRecv( int const commID,
                             1,
                             m_neighborRank,
                             recvTag,
-                            MPI_COMM_GEOS,
+                            MPI_COMM_GEOSX,
                             &mpiRecvSizeRequest );
 }
 
@@ -151,7 +151,7 @@ int NeighborCommunicator::postSizeSend( int const commID,
                             1,
                             m_neighborRank,
                             sendTag,
-                            MPI_COMM_GEOS,
+                            MPI_COMM_GEOSX,
                             &mpiSendSizeRequest );
 }
 
@@ -164,7 +164,7 @@ int NeighborCommunicator::postRecv( int const commID,
                             m_receiveBufferSize[commID],
                             m_neighborRank,
                             recvTag,
-                            MPI_COMM_GEOS,
+                            MPI_COMM_GEOSX,
                             &mpRecvRequest );
 }
 
@@ -176,7 +176,7 @@ int NeighborCommunicator::postSend( int const commID,
                             m_sendBufferSize[commID],
                             m_neighborRank,
                             sendTag,
-                            MPI_COMM_GEOS,
+                            MPI_COMM_GEOSX,
                             &mpiSendRequest );
 }
 

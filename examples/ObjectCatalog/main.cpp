@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-#include "common/logger/Logger.hpp"
+#include "common/Logger.hpp"
 #include "Base.hpp"
 #include "Derived1.hpp"
 

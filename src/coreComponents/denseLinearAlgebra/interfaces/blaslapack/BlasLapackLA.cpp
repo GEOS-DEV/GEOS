@@ -23,8 +23,6 @@
 // BLAS and LAPACK function declaration
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackFunctions.h"
 
-#include "common/logger/Logger.hpp"
-
 #include <random>
 
 // Put everything under the geos namespace.

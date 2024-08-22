@@ -29,6 +29,8 @@
 
 #define QUADRATIC_DISSIPATION 0
 
+using namespace LvArray;
+
 namespace geos
 {
 namespace constitutive

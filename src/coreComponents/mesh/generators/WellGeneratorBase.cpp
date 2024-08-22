@@ -18,8 +18,10 @@
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-#include "common/format/table/TableFormatter.hpp"
-#include "common/format/Format.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
+#include "common/Format.hpp"
 namespace geos
 {
 using namespace dataRepository;
@@ -456,7 +458,7 @@ void WellGeneratorBase::checkPerforationLocationsValidity()
   // merge perforations to make sure that no well element is shared between two MPI domains
   // TODO: instead of merging perforations, split the well elements and do not change the physical location of the
   // perforation
-  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
   if( mpiSize > 1 )
   {
     mergePerforations( elemToPerfMap );

@@ -416,7 +416,7 @@ protected:
    *
    * This function enables derived solvers to substitute SingleFluidBase for a different,
    * unrelated fluid class, and customize property extraction. For example, it is used by
-   * SinglePhaseProppantBase to allow using  constitutive::SlurryFluidBase, which does not inherit from
+   * SinglePhaseProppantBase to allow using SlurryFluidBase, which does not inherit from
    * SingleFluidBase currently (but this design may need to be revised).
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;

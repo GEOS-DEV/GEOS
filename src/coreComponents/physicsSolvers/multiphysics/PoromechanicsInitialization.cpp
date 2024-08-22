@@ -25,6 +25,7 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
@@ -67,8 +68,8 @@ void
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 postInputInitialization()
 {
-  Group & problemManager = this->getGroupByPath( "/Problem" );
-  Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
+  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
+  PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
                  GEOS_FMT( "{}: {} solver named {} not found",
@@ -81,7 +82,7 @@ postInputInitialization()
 
   if( !m_solidMechanicsStatisticsName.empty())
   {
-    TasksManager & tasksManager = problemManager.getGroup< TasksManager >( "Tasks" );
+    TasksManager & tasksManager = problemManager.getTasksManager();
 
     GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
                    GEOS_FMT( "{}: statistics task named {} not found",

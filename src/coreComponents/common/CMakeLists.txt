@@ -3,19 +3,15 @@
 #
 set( common_headers
      ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
-     format/table/TableLayout.hpp
-     format/table/TableFormatter.hpp
-     format/table/TableData.hpp
-     format/Format.hpp
-     format/StringUtilities.hpp
-     logger/Logger.hpp
      BufferAllocator.hpp
      DataLayouts.hpp
      DataTypes.hpp
      FieldSpecificationOps.hpp
+     Format.hpp
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
      MemoryInfos.hpp
+     Logger.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
@@ -43,13 +39,10 @@ endif( )
 # Specify all sources
 #
 set( common_sources
-     format/table/TableLayout.cpp
-     format/table/TableFormatter.cpp
-     format/table/TableData.cpp
-     format/StringUtilities.cpp
-     logger/Logger.cpp
      BufferAllocator.cpp
+     DataTypes.cpp
      MemoryInfos.cpp
+     Logger.cpp
      MpiWrapper.cpp
      Path.cpp
      initializeEnvironment.cpp
@@ -94,12 +87,13 @@ if( ENABLE_CALIPER )
   endif()
 endif()
 
+set( dependencyList ${dependencyList} fileIO codingUtilities )
+
 blt_add_library( NAME       common
                  SOURCES    ${common_sources}
                  HEADERS    ${common_headers}
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
-                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
@@ -107,6 +101,4 @@ target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
-  add_subdirectory( format/table/unitTests )
-  add_subdirectory( format/unitTests )
 endif()

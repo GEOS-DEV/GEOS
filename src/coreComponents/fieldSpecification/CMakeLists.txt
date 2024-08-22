@@ -26,17 +26,13 @@ set( fieldSpecification_sources
      PerfectlyMatchedLayer.cpp
    )
 
-set( dependencyList ${parallelDeps} linearAlgebra )
-
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+set( dependencyList ${parallelDeps} functions linearAlgebra )
 
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}
                  HEADERS    ${fieldSpecification_headers}
-                 DEPENDS_ON ${decoratedDependencies}
+                 DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
-                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( fieldSpecification PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

@@ -28,6 +28,9 @@ namespace geos
 namespace thermalSinglePhasePoromechanicsConformingFracturesKernels
 {
 
+using namespace fluxKernelsHelper;
+using namespace constitutive;
+
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >
 {
@@ -47,7 +50,7 @@ public:
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = SinglePhaseFVMAbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
                                                                   fields::permeability::dPerm_dDispJump >;
   using SinglePhaseFVMAbstractBase::m_dt;
   using SinglePhaseFVMAbstractBase::m_rankOffset;
@@ -75,14 +78,14 @@ public:
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
+    StencilMaterialAccessors< SingleFluidBase,
                               fields::singlefluid::dDensity_dTemperature,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy_dPressure,
                               fields::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
+    StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
 
@@ -205,25 +208,25 @@ public:
       real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
       real64 dMassFlux_dT[2]{};
 
-      fluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
-                                              trans,
-                                              m_enthalpy,
-                                              m_dEnthalpy_dPres,
-                                              m_dEnthalpy_dTemp,
-                                              m_gravCoef,
-                                              m_dDens_dTemp,
-                                              m_dMob_dTemp,
-                                              alpha,
-                                              mobility,
-                                              potGrad,
-                                              massFlux,
-                                              dMassFlux_dTrans,
-                                              dMassFlux_dP,
-                                              dMassFlux_dT,
-                                              stack.energyFlux,
-                                              stack.dEnergyFlux_dTrans,
-                                              stack.dEnergyFlux_dP,
-                                              stack.dEnergyFlux_dT );
+      computeEnthalpyFlux( seri, sesri, sei,
+                           trans,
+                           m_enthalpy,
+                           m_dEnthalpy_dPres,
+                           m_dEnthalpy_dTemp,
+                           m_gravCoef,
+                           m_dDens_dTemp,
+                           m_dMob_dTemp,
+                           alpha,
+                           mobility,
+                           potGrad,
+                           massFlux,
+                           dMassFlux_dTrans,
+                           dMassFlux_dP,
+                           dMassFlux_dT,
+                           stack.energyFlux,
+                           stack.dEnergyFlux_dTrans,
+                           stack.dEnergyFlux_dP,
+                           stack.dEnergyFlux_dT );
 
       // add dMassFlux_dT to localFluxJacobian
       for( integer ke = 0; ke < 2; ++ke )
@@ -260,7 +263,7 @@ public:
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // Step 2: compute temperature difference at the interface
-        fluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
+        computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;

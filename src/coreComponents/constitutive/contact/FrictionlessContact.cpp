@@ -29,15 +29,24 @@ namespace constitutive
 
 FrictionlessContact::FrictionlessContact( string const & name,
                                           Group * const parent ):
-  FrictionBase( name, parent )
+  ContactBase( name, parent )
 {}
 
 FrictionlessContact::~FrictionlessContact()
 {}
 
+void FrictionlessContact::allocateConstitutiveData( Group & parent,
+                                                    localIndex const numConstitutivePointsPerParentIndex )
+{
+  ContactBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+}
+
 FrictionlessContactUpdates FrictionlessContact::createKernelWrapper() const
 {
-  return FrictionlessContactUpdates( m_displacementJumpThreshold );
+  return FrictionlessContactUpdates( m_penaltyStiffness,
+                                     m_shearStiffness,
+                                     m_displacementJumpThreshold,
+                                     *m_apertureTable );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FrictionlessContact, string const &, Group * const )

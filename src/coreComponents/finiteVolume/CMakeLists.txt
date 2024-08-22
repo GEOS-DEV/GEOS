@@ -40,17 +40,13 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-set( dependencyList ${parallelDeps} mesh fieldSpecification )
-
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+set( dependencyList ${parallelDeps} mesh codingUtilities fieldSpecification )
 
 blt_add_library( NAME       finiteVolume
                  SOURCES    ${finiteVolume_sources}
                  HEADERS    ${finiteVolume_headers}
-                 DEPENDS_ON ${decoratedDependencies}
+                 DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
-                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

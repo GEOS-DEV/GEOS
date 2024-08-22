@@ -26,6 +26,8 @@
 namespace geos
 {
 
+using namespace dataRepository;
+
 /**
  * @class HistoryCollection
  *

@@ -18,7 +18,7 @@
  */
 
 #include "LinearSolverParameters.hpp"
-#include "common/format/table/TableFormatter.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 
 namespace geos
 {

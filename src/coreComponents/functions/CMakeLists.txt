@@ -27,21 +27,17 @@ if( ENABLE_MATHPRESSO )
 endif()
 
 
-set( dependencyList ${parallelDeps} dataRepository )
+set( dependencyList ${parallelDeps} codingUtilities dataRepository fileIO )
 
 if( ENABLE_MATHPRESSO )
    list( APPEND dependencyList mathpresso )
 endif()
 
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
-
 blt_add_library( NAME       functions
                  SOURCES    ${functions_sources}
                  HEADERS    ${functions_headers}
-                 DEPENDS_ON ${decoratedDependencies}
+                 DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
-                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

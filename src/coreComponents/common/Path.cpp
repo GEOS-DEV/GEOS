@@ -14,7 +14,7 @@
  */
 
 #include "Path.hpp"
-#include "logger/Logger.hpp"
+#include "Logger.hpp"
 
 #include <unistd.h>
 #include <sys/stat.h>

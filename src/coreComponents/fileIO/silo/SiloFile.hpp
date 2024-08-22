@@ -122,7 +122,7 @@ public:
    */
   void makeSubDirectory( string const & subdir, string const & rootdir )
   {
-    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
     // char dirname[100];
     if( rank == 0 )

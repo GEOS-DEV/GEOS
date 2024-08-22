@@ -27,8 +27,8 @@
  * of a
  */
 
-#include "common/logger/Logger.hpp"
-#include "common/format/StringUtilities.hpp"
+#include "common/Logger.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "LvArray/src/system.hpp"
 
 #include <iostream>

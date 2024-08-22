@@ -16,6 +16,7 @@
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
       targetRegions="{ Fracture }"
+      contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">
       <NonlinearSolverParameters
@@ -37,8 +38,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact"
-      contactPenaltyStiffness="1.0e0">
+      contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters

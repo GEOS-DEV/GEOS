@@ -42,15 +42,11 @@ set( finiteElement_sources
 
 set( dependencyList ${parallelDeps} dataRepository )
 
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
-
 blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}
                  HEADERS    ${finiteElement_headers}
-                 DEPENDS_ON ${decoratedDependencies}
+                 DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
-                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

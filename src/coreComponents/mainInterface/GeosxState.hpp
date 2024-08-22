@@ -22,7 +22,6 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "common/logger/Logger.hpp"
 
 // System includes
 #include <functional>

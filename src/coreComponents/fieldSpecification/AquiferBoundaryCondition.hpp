@@ -118,7 +118,7 @@ private:
 
   };
 
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecificationBase(string const &, Group *)
   AquiferBoundaryCondition( string const & name, Group * parent );
 
   /// deleted default constructor

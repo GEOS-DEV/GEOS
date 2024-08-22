@@ -14,7 +14,8 @@
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
-      targetRegions="{ Fracture }">
+      targetRegions="{ Fracture }"
+      contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="50"
@@ -28,8 +29,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact"
-      contactPenaltyStiffness="0.0e8"/>
+      contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"

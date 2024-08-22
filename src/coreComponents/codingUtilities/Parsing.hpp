@@ -21,7 +21,6 @@
 #define GEOS_CODINGUTILITIES_PARSING_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/logger/Logger.hpp"
 
 #include <fstream>
 

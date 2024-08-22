@@ -32,6 +32,8 @@ namespace geos
 namespace surfaceGenerationKernels
 {
 
+using namespace surfaceGenerationKernelsHelpers;
+
 class NodalForceKernel
 {
 
@@ -74,11 +76,11 @@ public:
     {
       real64 const quadratureStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
       real64 const dNdX[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( m_dNdX[er][esr][ei][q][targetNode] );
-      surfaceGenerationKernelsHelpers::computeNodalForce( quadratureStress, dNdX, m_detJ[er][esr][ei][q], force );
+      computeNodalForce( quadratureStress, dNdX, m_detJ[er][esr][ei][q], force );
     }
 
     //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-    surfaceGenerationKernelsHelpers::scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
+    scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
   }
 
 protected:
@@ -140,11 +142,11 @@ public:
       /// TODO: make it work for the thermal case as well
       LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -m_biotCoefficient[er][esr][m_porosityMaterialFullIndex[er]][ei] * m_pressure[er][esr][ei] );
 
-      surfaceGenerationKernelsHelpers::computeNodalForce( totalStress, dNdX, m_detJ[er][esr][ei][q], force );
+      computeNodalForce( totalStress, dNdX, m_detJ[er][esr][ei][q], force );
     }
 
     //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-    surfaceGenerationKernelsHelpers::scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
+    scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
   }
 
 private:

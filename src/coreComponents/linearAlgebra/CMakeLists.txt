@@ -48,16 +48,15 @@ set( linearAlgebra_sources
      utilities/ReverseCutHillMcKeeOrdering.cpp )
 
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
-set( tplDependencyList "" )
 
 list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
 list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
-list( APPEND tplDependencyList suitesparse )
+list( APPEND dependencyList suitesparse )
 
 if( ENABLE_SUPERLU_DIST )
       list( APPEND linearAlgebra_headers interfaces/direct/SuperLUDist.hpp )
       list( APPEND linearAlgebra_sources interfaces/direct/SuperLUDist.cpp )
-      list( APPEND tplDependencyList superlu_dist )
+      list( APPEND dependencyList superlu_dist )
 endif( )
 
 if( ENABLE_TRILINOS )
@@ -79,7 +78,7 @@ if( ENABLE_TRILINOS )
           interfaces/trilinos/TrilinosPreconditioner.cpp
           interfaces/trilinos/TrilinosSolver.cpp )
 
-    list( APPEND tplDependencyList trilinos )
+    list( APPEND dependencyList trilinos )
 
 endif()
 
@@ -123,7 +122,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreUtils.cpp
           interfaces/hypre/HypreVector.cpp )
 
-    list( APPEND tplDependencyList hypre umpire )
+    list( APPEND dependencyList hypre umpire )
 
 endif()
 
@@ -146,19 +145,15 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscSolver.cpp
           interfaces/petsc/PetscVector.cpp )
 
-    list( APPEND tplDependencyList petsc )
+    list( APPEND dependencyList petsc )
 
 endif()
-
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       linearAlgebra
                  SOURCES    ${linearAlgebra_sources}
                  HEADERS    ${linearAlgebra_headers}
-                 DEPENDS_ON ${decoratedDependencies} ${tplDependencyList}
+                 DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
-                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )

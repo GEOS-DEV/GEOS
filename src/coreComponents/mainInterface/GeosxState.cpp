@@ -166,7 +166,7 @@ void GeosxState::applyInitialConditions()
   }
 
   m_state = State::READY_TO_RUN;
-  MpiWrapper::barrier( MPI_COMM_GEOS );
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

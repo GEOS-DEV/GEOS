@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_HPP_
 
+#include "constitutive/contact/ContactBase.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geos
@@ -330,10 +331,10 @@ struct StateUpdateKernel
    * @param[out] fractureTraction the fracture traction
    * @param[out] dFractureTraction_dPressure the derivative of the fracture traction wrt pressure
    */
-  template< typename POLICY, typename POROUS_WRAPPER, typename CONTACT_WRAPPER >
+  template< typename POLICY, typename POROUS_WRAPPER >
   static void
   launch( localIndex const size,
-          CONTACT_WRAPPER const & contactWrapper,
+          constitutive::ContactBase::KernelWrapper const & contactWrapper,
           POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const > const & dispJump,
           arrayView1d< real64 const > const & pressure,
@@ -351,18 +352,16 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dHydraulicAperture_dNormalJump = 0.0;
-      real64 dHydraulicAperture_dNormalTraction = 0.0;
+      real64 dHydraulicAperture_dNormalJump = 0;
       hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
-                                                                      fractureTraction[k][0],
-                                                                      dHydraulicAperture_dNormalJump,
-                                                                      dHydraulicAperture_dNormalTraction );
+                                                                      dHydraulicAperture_dNormalJump );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
       // traction on the fracture to include the pressure contribution
-      fractureTraction[k][0] -= pressure[k];
-      dFractureTraction_dPressure[k] = -1.0;
+      contactWrapper.addPressureToTraction( pressure[k],
+                                            fractureTraction[k],
+                                            dFractureTraction_dPressure[k] );
 
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
       real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );

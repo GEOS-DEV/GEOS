@@ -18,7 +18,7 @@
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -169,10 +169,10 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -495,38 +495,33 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< fields::flow::pressure >();
 
-      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
-      HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
+      string const & contactRelationName = subRegion.template getReference< string >( ContactSolverBase::viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+
+      ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
 
       string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &hydraulicApertureModel] ( auto & castedPorousSolid )
+      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
       {
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        constitutiveUpdatePassThru( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
-        {
+        poromechanicsEFEMKernels::StateUpdateKernel::
+          launch< parallelDevicePolicy<> >( subRegion.size(),
+                                            contactWrapper,
+                                            porousMaterialWrapper,
+                                            dispJump,
+                                            pressure,
+                                            area,
+                                            volume,
+                                            deltaVolume,
+                                            aperture,
+                                            oldHydraulicAperture,
+                                            hydraulicAperture,
+                                            fractureTraction,
+                                            dTdpf );
 
-          using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
-          typename HydraulicApertureModelType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
-
-          poromechanicsEFEMKernels::StateUpdateKernel::
-            launch< parallelDevicePolicy<> >( subRegion.size(),
-                                              hydraulicApertureModelWrapper,
-                                              porousMaterialWrapper,
-                                              dispJump,
-                                              pressure,
-                                              area,
-                                              volume,
-                                              deltaVolume,
-                                              aperture,
-                                              oldHydraulicAperture,
-                                              hydraulicAperture,
-                                              fractureTraction,
-                                              dTdpf );
-
-        } );
       } );
 
       // update the stencil weights using the updated hydraulic aperture

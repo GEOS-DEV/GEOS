@@ -13,15 +13,11 @@ set( dependencyList ${parallelDeps} finiteVolume )
 set( mainInterface_sources
      NumericalMethodsManager.cpp )
 
-geos_decorate_link_dependencies( LIST decoratedDependencies
-     DEPENDENCIES ${dependencyList} )
-
 blt_add_library( NAME       discretizationMethods
                  SOURCES    ${mainInterface_sources}
                  HEADERS    ${mainInterface_headers}
-                 DEPENDS_ON ${decoratedDependencies}
+                 DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
-                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( discretizationMethods PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

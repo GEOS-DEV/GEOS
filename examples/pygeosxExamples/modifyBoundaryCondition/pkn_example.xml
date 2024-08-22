@@ -22,6 +22,7 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       logLevel="1"
+      contactRelationName="fractureContact"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"      
       targetRegions="{ Domain, Fracture }">
@@ -38,8 +39,8 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       name="lagsolve"
-      targetRegions="{ Domain, Fracture }"
-      contactPenaltyStiffness="1.0e0">
+      contactRelationName="fractureContact"
+      targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
@@ -76,7 +77,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid, hApertureTable }"/>
+      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -111,11 +112,9 @@
       compressibility="0.0"/>
 
     <FrictionlessContact
-      name="fractureContact"/>
-
-    <HydraulicApertureTable
-      name="hApertureTable"
-      apertureTableName="apertureTable"/>  
+      name="fractureContact"
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>

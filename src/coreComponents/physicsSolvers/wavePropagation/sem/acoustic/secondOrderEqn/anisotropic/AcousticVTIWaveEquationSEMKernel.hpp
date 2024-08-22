@@ -27,6 +27,7 @@
 
 namespace geos
 {
+using namespace fields;
 
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticVTIWaveEquationSEMKernels
@@ -39,43 +40,38 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] baseFacesToNodes face to node map
-   * @param[in] baseNodeCoords coordinates of the nodes
-   * @param[in] baseNodeLocalToGlobal local to global index map for nodes
-   * @param[in] elementLocalToGlobal local to global index map for elements
-   * @param[in] baseNodesToElements node to element map for the base mesh
-   * @param[in] baseElemsToNodes element to node map for the base mesh
-   * @param[in] elemGhostRank rank of the ghost element
+   * @param[in] numFacesPerElem number of faces per element
+   * @param[in] nodeCoords coordinates of the nodes
+   * @param[in] elemGhostRank the ghost ranks
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
+   * @param[in] facesToNodes map from faces to nodes
    * @param[in] elemCenter coordinates of the element centers
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceConstants constant part of the source terms
+   * @param[out] sourceNodeConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverConstants constant part of the receiver term
-   * @param[out] sourceValue value of the temporal source (eg. Ricker)
-   * @param[in] dt time-step
-   * @param[in] timeSourceFrequency the central frequency of the source
+   * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] sourceValue the value of the source
+   * @param[in] dt the time step size
+   * @param[in] timeSourceFrequency the time frequency of the source
    * @param[in] timeSourceDelay the time delay of the source
-   * @param[in] rickerOrder order of the Ricker wavelet
+   * @param[in] rickerOrder the order of the ricker
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          ArrayOfArraysView< localIndex const > const baseFacesToNodes,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const baseNodeCoords,
-          arrayView1d< globalIndex const > const baseNodeLocalToGlobal,
-          arrayView1d< globalIndex const > const elementLocalToGlobal,
-          ArrayOfArraysView< localIndex const > const baseNodesToElements,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes,
+          localIndex const numFacesPerElem,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
           arrayView2d< real64 const > const & elemCenter,
+          arrayView2d< real64 const > const faceNormal,
+          arrayView2d< real64 const > const faceCenter,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsAccessible,
           arrayView2d< localIndex > const sourceNodeIds,
@@ -110,23 +106,20 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][2] };
 
           bool const sourceFound =
-            computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
-                                                                        baseNodeCoords,
-                                                                        elemsToFaces,
-                                                                        baseFacesToNodes,
-                                                                        baseNodesToElements,
-                                                                        baseNodeLocalToGlobal,
-                                                                        elementLocalToGlobal,
-                                                                        center,
-                                                                        coords );
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
 
 
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              baseElemsToNodes[k],
-                                                                              baseNodeCoords,
+                                                                              elemsToNodes[k],
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;
@@ -160,22 +153,19 @@ struct PrecomputeSourceAndReceiverKernel
                                      receiverCoordinates[ircv][2] };
 
           real64 coordsOnRefElem[3]{};
-
           bool const receiverFound =
-            computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
-                                                                        baseNodeCoords,
-                                                                        elemsToFaces,
-                                                                        baseFacesToNodes,
-                                                                        baseNodesToElements,
-                                                                        baseNodeLocalToGlobal,
-                                                                        elementLocalToGlobal,
-                                                                        center,
-                                                                        coords );
+            WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                  center,
+                                                  faceNormal,
+                                                  faceCenter,
+                                                  elemsToFaces[k],
+                                                  coords );
+
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                              baseElemsToNodes[k],
-                                                                              baseNodeCoords,
+                                                                              elemsToNodes[k],
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
@@ -441,13 +431,13 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
-    m_p_n( nodeManager.getField< fields::acousticvtifields::Pressure_p_n >() ),
-    m_q_n( nodeManager.getField< fields::acousticvtifields::Pressure_q_n >() ),
-    m_stiffnessVector_p( nodeManager.getField< fields::acousticvtifields::StiffnessVector_p >() ),
-    m_stiffnessVector_q( nodeManager.getField< fields::acousticvtifields::StiffnessVector_q >() ),
-    m_epsilon( elementSubRegion.template getField< fields::acousticvtifields::Epsilon >() ),
-    m_delta( elementSubRegion.template getField< fields::acousticvtifields::Delta >() ),
-    m_vti_f( elementSubRegion.template getField< fields::acousticvtifields::F >() ),
+    m_p_n( nodeManager.getField< acousticvtifields::Pressure_p_n >() ),
+    m_q_n( nodeManager.getField< acousticvtifields::Pressure_q_n >() ),
+    m_stiffnessVector_p( nodeManager.getField< acousticvtifields::StiffnessVector_p >() ),
+    m_stiffnessVector_q( nodeManager.getField< acousticvtifields::StiffnessVector_q >() ),
+    m_epsilon( elementSubRegion.template getField< acousticvtifields::Epsilon >() ),
+    m_delta( elementSubRegion.template getField< acousticvtifields::Delta >() ),
+    m_vti_f( elementSubRegion.template getField< acousticvtifields::F >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

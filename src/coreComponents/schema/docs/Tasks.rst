@@ -3,7 +3,6 @@
 =========================================================== ==== ======= ====================================================================== 
 Name                                                        Type Default Description                                                            
 =========================================================== ==== ======= ====================================================================== 
-CellToCellDataCollection                                    node         :ref:`XML_CellToCellDataCollection`                                    
 CompositionalMultiphaseReservoirPoromechanicsInitialization node         :ref:`XML_CompositionalMultiphaseReservoirPoromechanicsInitialization` 
 CompositionalMultiphaseStatistics                           node         :ref:`XML_CompositionalMultiphaseStatistics`                           
 HydrofractureInitialization                                 node         :ref:`XML_HydrofractureInitialization`                                 

@@ -47,7 +47,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
   dataRepository::Group & commandLine =
     problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
   commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).

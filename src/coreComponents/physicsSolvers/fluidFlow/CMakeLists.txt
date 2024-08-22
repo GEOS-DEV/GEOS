@@ -40,7 +40,6 @@ set( physicsSolvers_headers
      fluidFlow/StatOutputController.hpp
      fluidFlow/StabilizedSinglePhaseFVMKernels.hpp
      fluidFlow/StencilAccessors.hpp
-     fluidFlow/StencilDataCollection.hpp
      fluidFlow/ThermalSinglePhaseBaseKernels.hpp
      fluidFlow/ThermalSinglePhaseFVMKernels.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp

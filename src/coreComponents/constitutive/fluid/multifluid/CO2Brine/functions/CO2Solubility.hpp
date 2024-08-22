@@ -42,8 +42,8 @@ class CO2SolubilityUpdate final : public FlashModelBaseUpdate
 {
 public:
 
-  using PhaseProp = MultiFluidVar< real64, 3, constitutive::multifluid::LAYOUT_PHASE, constitutive::multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, constitutive::multifluid::LAYOUT_PHASE_COMP, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >;
+  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
+  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
 
   CO2SolubilityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                        TableFunction const & CO2SolubilityTable,
@@ -167,7 +167,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
                               PhaseProp::SliceType const phaseFraction,
                               PhaseComp::SliceType const phaseCompFraction ) const
 {
-  using Deriv = constitutive::multifluid::DerivativeOffset;
+  using Deriv = multifluid::DerivativeOffset;
 
   // Solubility of CO2 is read from the tables in the form of moles of CO2 per kg of water
   // Solubility of water is read from the tables in the form of moles of water per kg of CO2

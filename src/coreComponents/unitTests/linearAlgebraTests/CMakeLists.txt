@@ -6,13 +6,29 @@ set( LAI_tests
 set( nranks 2 )
 
 # Add gtest C++ based tests
-set( tplDependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest )
 
-set( dependencyList mainInterface )
+if ( GEOS_BUILD_SHARED_LIBS )
+  list( APPEND dependencyList geosx_core HDF5::HDF5 )
+else()
+  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
+endif()
 
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+if (TARGET pugixml::pugixml)
+  set( dependencyList ${dependencyList} pugixml::pugixml )
+endif()
 
+if (TARGET pugixml)
+  set( dependencyList ${dependencyList} pugixml )
+endif()
+
+if (TARGET fmt::fmt-header-only)
+  set( dependencyList ${dependencyList} fmt::fmt-header-only )
+endif()
+
+if (TARGET fmt)
+  set( dependencyList ${dependencyList} fmt )
+endif()
 
 foreach(test ${LAI_tests})
   get_filename_component( test_name ${test} NAME_WE )
@@ -20,7 +36,7 @@ foreach(test ${LAI_tests})
   blt_add_executable( NAME ${test_name}
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON ${decoratedDependencies} ${tplDependencyList}
+                      DEPENDS_ON ${dependencyList}
                     )
 
 if ( ENABLE_MPI )

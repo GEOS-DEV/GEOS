@@ -19,7 +19,6 @@
 
 #include "EpetraMatrix.hpp"
 
-#include "codingUtilities/RTTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraUtils.hpp"
 
@@ -576,7 +575,7 @@ void EpetraMatrix::separateComponentFilter( EpetraMatrix & dst,
     }
   } );
 
-  dst.create( tempMatView.toViewConst(), numLocalCols(), MPI_COMM_GEOS );
+  dst.create( tempMatView.toViewConst(), numLocalCols(), MPI_COMM_GEOSX );
   dst.setDofManager( dofManager() );
 }
 
@@ -1043,7 +1042,7 @@ MPI_Comm EpetraMatrix::comm() const
 #ifdef GEOS_USE_MPI
   return dynamicCast< Epetra_MpiComm const & >( m_matrix->RowMap().Comm() ).Comm();
 #else
-  return MPI_COMM_GEOS;
+  return MPI_COMM_GEOSX;
 #endif
 }
 

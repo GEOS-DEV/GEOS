@@ -202,14 +202,14 @@ void ElasticFirstOrderWaveEquationSEM::postInputInitialization()
 }
 
 
-void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
-  GEOS_MARK_FUNCTION;
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView1d< globalIndex const > const nodeLocalToGlobal = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
-  ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
-  ArrayOfArraysView< localIndex const > const facesToNodes = baseMesh.getFaceManager().nodeList().toViewConst();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords = baseMesh.getNodeManager().referencePosition();
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -245,11 +245,8 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
     }
   }
 
-  mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                                localIndex const regionIndex,
-                                                                                                localIndex const esr,
-                                                                                                ElementRegionBase &,
-                                                                                                CellElementSubRegion & elementSubRegion )
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
+                                                                                        CellElementSubRegion & elementSubRegion )
   {
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
@@ -258,10 +255,8 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes = baseMesh.getElemManager().getRegion( regionIndex ).getSubRegion< CellElementSubRegion >( esr ).nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
-    arrayView1d< globalIndex const > const elemLocalToGlobal = elementSubRegion.localToGlobalMap().toViewConst();
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -269,21 +264,21 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
+      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+
       PreComputeSourcesAndReceivers::
         Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
       < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
-        facesToNodes,
-        nodeCoords,
-        nodeLocalToGlobal,
-        elemLocalToGlobal,
-        nodesToElements,
-        baseElemsToNodes,
+        numFacesPerElem,
+        X,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
         elemCenter,
+        faceNormal,
+        faceCenter,
         sourceCoordinates,
         sourceIsAccessible,
         sourceElem,
@@ -315,12 +310,11 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
-    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
+    precomputeSourceAndReceiverTerm( mesh, regionNames );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -506,7 +500,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< elasticfields::ElasticMassVector >();
     arrayView1d< real32 > const dampingx = nodeManager.getField< elasticfields::DampingVectorx >();
@@ -555,7 +549,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
           regionIndex,
-          nodeCoords,
+          X,
           elemsToNodes,
           ux_np1,
           uy_np1,
@@ -584,7 +578,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
         kernel2.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
           nodeManager.size(),
-          nodeCoords,
+          X,
           elemsToNodes,
           stressxx,
           stressyy,

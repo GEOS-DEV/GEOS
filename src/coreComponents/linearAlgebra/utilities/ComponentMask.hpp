@@ -21,7 +21,7 @@
 #define GEOS_LINEARALGEBRA_UTILITIES_COMPONENTMASK_HPP_
 
 #include "common/GeosxMacros.hpp"
-#include "common/logger/Logger.hpp"
+#include "common/Logger.hpp"
 
 #include <cstdint>
 

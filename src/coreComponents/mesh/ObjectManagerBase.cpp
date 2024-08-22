@@ -236,7 +236,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, this->getName() );
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
@@ -518,7 +518,7 @@ localIndex ObjectManagerBase::packGlobalMapsImpl( buffer_unit_type * & buffer,
                                                   arrayView1d< localIndex const > const & packList,
                                                   integer const recursive ) const
 {
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer, this->getName() );
 
@@ -580,7 +580,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
                                                 integer const recursive )
 {
   GEOS_MARK_FUNCTION;
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   localIndex unpackedSize = 0;
   string groupName;
@@ -853,7 +853,7 @@ void ObjectManagerBase::eraseObject( std::set< localIndex > const & indicesToEra
 
 void ObjectManagerBase::setMaxGlobalIndex()
 {
-  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOS );
+  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOSX );
 }
 
 void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices,

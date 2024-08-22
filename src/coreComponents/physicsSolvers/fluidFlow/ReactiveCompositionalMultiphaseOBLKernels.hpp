@@ -40,6 +40,8 @@ namespace geos
 namespace reactiveCompositionalMultiphaseOBLKernels
 {
 
+using namespace constitutive;
+
 static constexpr real64 minValueForDivision = 1e-10;
 
 
@@ -641,7 +643,7 @@ public:
                       fields::flow::OBLOperatorDerivatives >;
 
   using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
+    StencilMaterialAccessors< PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 

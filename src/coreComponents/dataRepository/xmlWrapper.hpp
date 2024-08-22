@@ -26,8 +26,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"
-#include "common/format/StringUtilities.hpp"
-#include "codingUtilities/RTTypes.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 // TPL includes
 #include <pugixml.hpp>

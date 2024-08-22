@@ -155,7 +155,7 @@ void ParticleSubRegionBase::setActiveParticleIndices()
   forAll< serialPolicy >( this->size(), [&, particleRank] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
                                                                                            // a sorted array. Parallelize with atomics?
     {
-      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOS ) )
+      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
       {
         m_activeParticleIndices.insert( p );
       }

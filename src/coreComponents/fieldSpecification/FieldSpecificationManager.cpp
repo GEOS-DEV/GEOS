@@ -15,7 +15,7 @@
 
 #include "FieldSpecificationManager.hpp"
 
-#include "common/format/StringUtilities.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 namespace geos

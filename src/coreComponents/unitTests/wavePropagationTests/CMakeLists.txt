@@ -8,12 +8,29 @@ set( gtest_geosx_tests
      testWavePropagationAttenuation.cpp
      testWavePropagationAcousticFirstOrder.cpp )
 
-set( tplDependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest )
 
-set( dependencyList mainInterface )
+if ( GEOS_BUILD_SHARED_LIBS )
+  list( APPEND dependencyList geosx_core HDF5::HDF5 )
+else()
+  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
+endif()
 
-geos_decorate_link_dependencies( LIST decoratedDependencies
-                                 DEPENDENCIES ${dependencyList} )
+if (TARGET pugixml::pugixml)
+  list( APPEND dependencyList pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  list( APPEND dependencyList pugixml )
+endif()
+
+if (TARGET fmt::fmt-header-only)
+  list( APPEND dependencyList fmt::fmt-header-only )
+endif()
+
+if (TARGET fmt)
+  list( APPEND dependencyList fmt )
+endif()
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
@@ -21,7 +38,7 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+                        DEPENDS_ON ${dependencyList} )
 
     # Guard to prevent GCC (version 8) from giving warnings due
     # to some sort of possible conversion from int to long unsigned.

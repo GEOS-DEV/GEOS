@@ -15,7 +15,7 @@
 
 #include "CommID.hpp"
 
-#include "common/logger/Logger.hpp"
+#include "common/Logger.hpp"
 
 #include <set>
 

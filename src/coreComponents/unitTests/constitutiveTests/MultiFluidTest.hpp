@@ -25,6 +25,9 @@
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
+using namespace geos::dataRepository;
+using namespace geos::constitutive;
+using namespace geos::constitutive::multifluid;
 
 namespace geos
 {
@@ -102,7 +105,7 @@ struct MultiFluidTestData
 };
 
 template< typename FLUID_TYPE, integer NUM_PHASE, integer NUM_COMP >
-class MultiFluidTest : public ConstitutiveTestBase< constitutive::MultiFluidBase >
+class MultiFluidTest : public ConstitutiveTestBase< MultiFluidBase >
 {
 public:
   static constexpr integer numPhase = NUM_PHASE;
@@ -113,16 +116,16 @@ public:
   MultiFluidTest() = default;
   ~MultiFluidTest() override = default;
 
-  constitutive::MultiFluidBase & getFluid() const { return *m_model; }
+  MultiFluidBase & getFluid() const { return *m_model; }
 
-  dataRepository::Group & getParent() { return m_parent; }
+  Group & getParent() { return m_parent; }
 
   void testValuesAgainstPreviousImplementation( typename FLUID_TYPE::KernelWrapper const & wrapper,
                                                 MultiFluidTestData< NUM_PHASE, NUM_COMP > const & testData,
                                                 real64 const relTol ) const;
 
-  void testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
-                                 dataRepository::Group * parent,
+  void testNumericalDerivatives( MultiFluidBase & fluid,
+                                 Group * parent,
                                  MultiFluidTestData< NUM_PHASE, NUM_COMP > const & testData,
                                  real64 const perturbParameter,
                                  real64 const relTol,
@@ -130,7 +133,7 @@ public:
 
 
 protected:
-  virtual void resetFluid( constitutive::MultiFluidBase & fluid ) const
+  virtual void resetFluid( MultiFluidBase & fluid ) const
   {
     GEOS_UNUSED_VAR( fluid );
   }
@@ -152,14 +155,14 @@ protected:
 
 template< typename FLUID_TYPE, integer NUM_PHASE, integer NUM_COMP >
 void MultiFluidTest< FLUID_TYPE, NUM_PHASE, NUM_COMP >::
-testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
-                          dataRepository::Group * parent,
+testNumericalDerivatives( MultiFluidBase & fluid,
+                          Group * parent,
                           MultiFluidTestData< NUM_PHASE, NUM_COMP > const & testData,
                           real64 const perturbParameter,
                           real64 const relTol,
                           real64 const absTol )
 {
-  using Deriv = constitutive::multifluid::DerivativeOffset;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer const NC = fluid.numFluidComponents();
   integer const NP = fluid.numFluidPhases();
@@ -175,13 +178,13 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
   }
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
 
-  auto const & components = fluid.getReference< string_array >( constitutive::MultiFluidBase::viewKeyStruct::componentNamesString() );
-  auto const & phases     = fluid.getReference< string_array >( constitutive::MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  auto const & components = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
 
   // create a clone of the fluid to run updates on
   string const fluidCopyName = fluid.getName() + "Copy";
-  std::unique_ptr< constitutive::ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( fluidCopyName, parent );
-  constitutive::MultiFluidBase & fluidCopy = dynamicCast< constitutive::MultiFluidBase & >( *fluidCopyPtr );
+  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( fluidCopyName, parent );
+  MultiFluidBase & fluidCopy = dynamicCast< MultiFluidBase & >( *fluidCopyPtr );
 
   fluid.allocateConstitutiveData( fluid.getParent(), 1 );
   fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
@@ -190,37 +193,37 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
   #define GET_FLUID_DATA( FLUID, TRAIT ) \
     FLUID.getReference< TRAIT::type >( TRAIT::key() )[0][0]
 
-  constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseFrac {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseFraction ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseFraction )
   };
 
-  constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseDens {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseDensity ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseDensity )
   };
 
-  constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseVisc {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseViscosity ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseViscosity )
   };
 
-  constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseEnthalpy {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseEnthalpy {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseEnthalpy ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseEnthalpy )
   };
 
-  constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseInternalEnergy {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseInternalEnergy {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseInternalEnergy ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseInternalEnergy )
   };
 
-  constitutive::MultiFluidVarSlice< real64, 2, constitutive::multifluid::USD_PHASE_COMP - 2, constitutive::multifluid::USD_PHASE_COMP_DC - 2 > phaseCompFrac {
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseCompFraction ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseCompFraction )
   };
 
-  constitutive::MultiFluidVarSlice< real64, 0, constitutive::multifluid::USD_FLUID - 2, constitutive::multifluid::USD_FLUID_DC - 2 > totalDens {
+  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
     GET_FLUID_DATA( fluid, fields::multifluid::totalDensity ),
     GET_FLUID_DATA( fluid, fields::multifluid::dTotalDensity )
   };
@@ -406,22 +409,22 @@ void MultiFluidTest< FLUID_TYPE, NUM_PHASE, NUM_COMP >::testValuesAgainstPreviou
   }
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
 
-  StackArray< real64, 3, numPhase, constitutive::multifluid::LAYOUT_PHASE > phaseFraction( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, constitutive::multifluid::LAYOUT_PHASE_DC > dPhaseFraction( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, constitutive::multifluid::LAYOUT_PHASE > phaseDensity( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, constitutive::multifluid::LAYOUT_PHASE_DC > dPhaseDensity( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, constitutive::multifluid::LAYOUT_PHASE > phaseMassDensity( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, constitutive::multifluid::LAYOUT_PHASE_DC > dPhaseMassDensity( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, constitutive::multifluid::LAYOUT_PHASE > phaseViscosity( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, constitutive::multifluid::LAYOUT_PHASE_DC > dPhaseViscosity( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, constitutive::multifluid::LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, constitutive::multifluid::LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, constitutive::multifluid::LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, constitutive::multifluid::LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numDof );
-  StackArray< real64, 4, numComp *numPhase, constitutive::multifluid::LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, numPhase, numComp );
-  StackArray< real64, 5, numDof *numComp *numPhase, constitutive::multifluid::LAYOUT_PHASE_COMP_DC > dPhaseCompFraction( 1, 1, numPhase, numComp, numDof );
-  StackArray< real64, 2, 1, constitutive::multifluid::LAYOUT_FLUID > totalDensity( 1, 1 );
-  StackArray< real64, 3, numDof, constitutive::multifluid::LAYOUT_FLUID_DC >  dTotalDensity( 1, 1, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFraction( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFraction( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseDensity( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseDensity( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseMassDensity( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseMassDensity( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseViscosity( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseViscosity( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numDof );
+  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFraction( 1, 1, numPhase, numComp, numDof );
+  StackArray< real64, 2, 1, LAYOUT_FLUID > totalDensity( 1, 1 );
+  StackArray< real64, 3, numDof, LAYOUT_FLUID_DC >  dTotalDensity( 1, 1, numDof );
 
   wrapper.compute( testData.pressure,
                    testData.temperature,

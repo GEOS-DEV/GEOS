@@ -136,7 +136,7 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
                                           arraySlice1d< real64, USD3 > const & dValue,
                                           bool useMass ) const
 {
-  using Deriv = constitutive::multifluid::DerivativeOffset;
+  using Deriv = multifluid::DerivativeOffset;
 
   // this method implements the method proposed by E. Garcia (2001)
 

@@ -81,7 +81,7 @@ void ParticleManager::setMaxGlobalIndex()
                          &m_maxGlobalIndex,
                          1,
                          MPI_MAX,
-                         MPI_COMM_GEOS );
+                         MPI_COMM_GEOSX );
 }
 
 Group * ParticleManager::createChild( string const & childKey, string const & childName )

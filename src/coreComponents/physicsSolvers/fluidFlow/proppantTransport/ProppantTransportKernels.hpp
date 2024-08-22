@@ -40,6 +40,8 @@ namespace geos
 
 namespace proppantTransportKernels
 {
+using namespace constitutive;
+
 /******************************** FluidUpdateKernel ********************************/
 
 struct FluidUpdateKernel
@@ -189,7 +191,7 @@ struct FluxKernel
                       fields::elementAperture >;
 
   using ParticleFluidAccessors =
-    StencilMaterialAccessors< constitutive::ParticleFluidBase,
+    StencilMaterialAccessors< ParticleFluidBase,
                               fields::particlefluid::settlingFactor,
                               fields::particlefluid::dSettlingFactor_dPressure,
                               fields::particlefluid::dSettlingFactor_dProppantConcentration,
@@ -198,7 +200,7 @@ struct FluxKernel
                               fields::particlefluid::dCollisionFactor_dProppantConcentration >;
 
   using SlurryFluidAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
+    StencilMaterialAccessors< SlurryFluidBase,
                               fields::singlefluid::density,
                               fields::singlefluid::dDensity_dPressure,
                               fields::slurryfluid::dDensity_dProppantConcentration,
@@ -215,12 +217,12 @@ struct FluxKernel
                               fields::slurryfluid::dFluidDensity_dComponentConcentration >;
 
   using CellBasedFluxSlurryFluidAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
+    StencilMaterialAccessors< SlurryFluidBase,
                               fields::singlefluid::density,
                               fields::singlefluid::viscosity >;
 
   using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
+    StencilMaterialAccessors< PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::permeabilityMultiplier >;
 
@@ -360,10 +362,10 @@ struct ProppantPackVolumeKernel
                       fields::proppant::isProppantBoundary >;
 
   using ParticleFluidAccessors =
-    StencilMaterialAccessors< constitutive::ParticleFluidBase, fields::particlefluid::settlingFactor >;
+    StencilMaterialAccessors< ParticleFluidBase, fields::particlefluid::settlingFactor >;
 
   using SlurryFluidAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
+    StencilMaterialAccessors< SlurryFluidBase,
                               fields::singlefluid::density,
                               fields::slurryfluid::fluidDensity,
                               fields::slurryfluid::fluidViscosity >;
