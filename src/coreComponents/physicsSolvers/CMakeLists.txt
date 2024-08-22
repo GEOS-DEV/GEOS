@@ -51,7 +51,8 @@ if( GEOS_ENABLE_WAVEPROPAGATION )
   add_subdirectory( wavePropagation )
 endif()
 
-set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
+set( dependencyList ${parallelDeps} fileIO discretizationMethods events )
+
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
   python/PySolver.hpp
@@ -61,11 +62,16 @@ if( ENABLE_PYGEOSX )
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
 blt_add_library( NAME       physicsSolvers
                  SOURCES    ${physicsSolvers_sources}
                  HEADERS    ${physicsSolvers_headers}
-                 DEPENDS_ON ${dependencyList} ${externalComponentDeps}
-                 OBJECT     ${GEOS_BUILD_OBJ_LIBS} )
+                 DEPENDS_ON ${decoratedDependencies} ${externalComponentDeps}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
+               )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( externalComponentDeps )

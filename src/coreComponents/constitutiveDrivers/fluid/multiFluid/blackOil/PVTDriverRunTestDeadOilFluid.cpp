@@ -13,11 +13,17 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriverRunTest.hpp"
-#include "BrooksCoreyRelativePermeability.hpp"
+/*
+ * PVTDriverRunTestDeadOilFluid.cpp
+ */
+
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutive/fluid/multifluid/blackOil/DeadOilFluid.hpp"
+#include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
 
 
 namespace geos
 {
-template void RelpermDriver::runTest< geos::constitutive::BrooksCoreyRelativePermeability >( geos::constitutive::BrooksCoreyRelativePermeability &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::DeadOilFluid >( constitutive::DeadOilFluid &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::BlackOilFluid >( constitutive::BlackOilFluid &, arrayView2d< real64 > const & );
 }
