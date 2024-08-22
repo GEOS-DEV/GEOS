@@ -12,8 +12,8 @@ set(MPI_CXX_COMPILER "path-to-mpi/bin/mpicxx" CACHE PATH "")
 set(MPIEXEC "path-to-mpi/bin/mpirun" CACHE PATH "")
 
 # Set paths to blas and lapack
-set( BLAS_LIBRARIES /opt/lapack/lib/libblas.dylib CACHE PATH "" FORCE )
-set( LAPACK_LIBRARIES  CACHE PATH "" FORCE )
+set( BLAS_LIBRARIES "path-to-blas" CACHE PATH "" FORCE )
+set( LAPACK_LIBRARIES  CACHE PATH "path-to-lapack" FORCE )
 
 # Cuda and openMP
 set( ENABLE_CUDA OFF CACHE PATH "" FORCE )
