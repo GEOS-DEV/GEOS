@@ -96,10 +96,4 @@ set( MKL_LIBRARIES    $ENV{MKLROOT}/lib/intel64/libmkl_rt.so
                       $ENV{GCC_PATH}/lib/gcc/x86_64-redhat-linux/12/libgomp.so
                       CACHE STRING "" )
 
-set(GEOSX_TPL_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../thirdPartyLibs/install-pangea4-gcc12.1-hpcxompi2.17.1-onemkl2023.2.0-release" CACHE PATH "" FORCE)
-if(EXISTS ${GEOSX_TPL_DIR})
-    message( "exist")
-endif()
-
-
 include( ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake )
