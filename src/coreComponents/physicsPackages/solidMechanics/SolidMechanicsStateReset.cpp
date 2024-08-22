@@ -21,7 +21,6 @@
 
 #include "physicsPackages/PhysicsPackageManager.hpp"
 #include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos
@@ -59,8 +58,8 @@ SolidMechanicsStateReset::~SolidMechanicsStateReset()
 
 void SolidMechanicsStateReset::postInputInitialization()
 {
-  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-  PhysicsPackageManager & physicsPackageManager = problemManager.getPhysicsPackageManager();
+  Group & problemManager = this->getGroupByPath( "/Problem" );
+  Group & physicsPackageManager = problemManager.getGroup( "Solvers" );
 
   GEOS_THROW_IF( !physicsPackageManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "Task {}: physics solver named {} not found",

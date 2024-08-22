@@ -323,7 +323,7 @@ public:
     LvArray::tensorOps::Rij_eq_AikBkj< nBubbleUdof, nBubbleUdof, 6 >( Abb_gauss, matBD, strainBubbleMatrix );
 
     // transp(B)DBb
-    tensorOps::transpose< nUdof, nBubbleUdof >( Aub_gauss, Abu_gauss );
+    LvArray::tensorOps::transpose< nUdof, nBubbleUdof >( Aub_gauss, Abu_gauss );
 
     // multiply by determinant and add to element matrix
     LvArray::tensorOps::scaledAdd< nBubbleUdof, nBubbleUdof >( stack.localAbb, Abb_gauss, -detJ );

@@ -25,7 +25,6 @@
 
 namespace geos
 {
-using namespace constitutive;
 
 class SolidMechanicsEmbeddedFractures : public ContactPackageBase
 {

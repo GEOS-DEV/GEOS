@@ -39,6 +39,7 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
+using namespace stabilization;
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,

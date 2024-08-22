@@ -22,7 +22,6 @@
 
 #include "events/tasks/TaskBase.hpp"
 #include "physicsPackages/PhysicsPackageManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 
@@ -84,8 +83,8 @@ protected:
 
   void postInputInitialization() override
   {
-    ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-    PhysicsPackageManager & physicsPackageManager = problemManager.getPhysicsPackageManager();
+    Group & problemManager = this->getGroupByPath( "/Problem" );
+    Group & physicsPackageManager = problemManager.getGroup( "Solvers" );
 
     m_solver = physicsPackageManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,

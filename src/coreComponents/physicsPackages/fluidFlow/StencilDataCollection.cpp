@@ -24,7 +24,6 @@
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "physicsPackages/fluidFlow/StencilAccessors.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "physicsPackages/PhysicsPackageManager.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
@@ -61,10 +60,10 @@ StencilDataCollection::StencilDataCollection( const string & name,
 
 void StencilDataCollection::postInputInitialization()
 {
-  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
+  Group & problemManager = this->getGroupByPath( "/Problem" );
 
   { // find targeted solver
-    PhysicsPackageManager & physicsPackageManager = problemManager.getPhysicsPackageManager();
+    Group & physicsPackageManager = problemManager.getGroup( "Solvers" );
 
     m_solver = physicsPackageManager.getGroupPointer< FlowPackageBase >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
@@ -75,7 +74,8 @@ void StencilDataCollection::postInputInitialization()
   }
 
   { // find mesh & discretization
-    DomainPartition & domain = problemManager.getDomainPartition();
+//    DomainPartition & domain = problemManager.getDomainPartition();
+    DomainPartition & domain = problemManager.getGroup< DomainPartition >( "domain" );
 
     MeshBody const & meshBody = domain.getMeshBody( m_meshName );
     m_meshLevel = &meshBody.getBaseDiscretization();
