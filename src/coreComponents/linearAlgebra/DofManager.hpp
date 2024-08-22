@@ -38,7 +38,7 @@ class FluxApproximationBase;
  * @class DofManager
  * @brief The DoFManager is responsible for allocating global dofs, constructing
  * sparsity patterns, and generally simplifying the interaction between
- * PhysicsSolvers and linear algebra operations.
+ * PhysicsPackages and linear algebra operations.
  */
 class DofManager
 {
@@ -179,7 +179,7 @@ public:
   /**
    * @copydoc addField(string const &, FieldLocation, integer, std::vector< FieldSupport > const &)
    *
-   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics solvers.
+   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics packages.
    */
   void addField( string const & fieldName,
                  FieldLocation location,

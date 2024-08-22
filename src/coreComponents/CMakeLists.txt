@@ -16,7 +16,7 @@ set( subdirs
      events
      constitutiveDrivers
      fileIO
-     physicsSolvers
+     physicsPackages
      mainInterface )
 
 unset( parallelDeps )

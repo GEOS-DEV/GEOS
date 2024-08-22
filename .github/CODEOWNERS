@@ -28,18 +28,18 @@
 /src/coreComponents/mainInterface                     @rrsettgast @corbett5 @wrtobin 
 /src/coreComponents/math                              @rrsettgast @corbett5 @wrtobin 
 /src/coreComponents/mesh                              @rrsettgast @wrtobin @untereiner @CusiniM 
-/src/coreComponents/physicsSolvers                    @rrsettgast @CusiniM
-/src/coreComponents/physicsSolvers/contact            @CusiniM @rrsettgast @matteofrigo5
-/src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin @klevzoff @francoishamon
-/src/coreComponents/physicsSolvers/inducedSeismicity  @CusiniM @rrsettgast
-/src/coreComponents/physicsSolvers/multiphysics       @CusiniM @paveltomin @castelletto1 @rrsettgast
-/src/coreComponents/physicsSolvers/python             @cssherman @corbett5
-/src/coreComponents/physicsSolvers/simplePDE          @castelletto1 @rrsettgast @CusiniM 
-/src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @CusiniM 
-/src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
-/src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain
+/src/coreComponents/physicsPackages                    @rrsettgast @CusiniM
+/src/coreComponents/physicsPackages/contact            @CusiniM @rrsettgast @matteofrigo5
+/src/coreComponents/physicsPackages/fluidFlow          @CusiniM @paveltomin @klevzoff @francoishamon
+/src/coreComponents/physicsPackages/inducedSeismicity  @CusiniM @rrsettgast
+/src/coreComponents/physicsPackages/multiphysics       @CusiniM @paveltomin @castelletto1 @rrsettgast
+/src/coreComponents/physicsPackages/python             @cssherman @corbett5
+/src/coreComponents/physicsPackages/simplePDE          @castelletto1 @rrsettgast @CusiniM 
+/src/coreComponents/physicsPackages/solidMechanics     @rrsettgast @castelletto1 @CusiniM 
+/src/coreComponents/physicsPackages/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
+/src/coreComponents/physicsPackages/wavePropagation    @sframba @acitrain
 /src/coreComponents/schema
-/src/coreComponents/unitTests                         @rrsettgast @corbett5 @wrtobin
+/src/coreComponents/unitTests                         @rrsettgast @CusiniM 
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
 # username           name

@@ -58,9 +58,9 @@ In GEOS, the simulation of reservoir flow with wells is set up by combining thre
 listed and parameterized in the **Solvers** XML block of the input file.
 We introduce separately a flow solver and a well solver acting on different regions of the
 domain---respectively, the reservoir region and the well regions.
-To drive the simulation and bind these single-physics solvers, we also specify a *coupling solver*
+To drive the simulation and bind these single-physics packages, we also specify a *coupling solver*
 between the reservoir flow solver and the well solver.
-This coupling of single-physics solvers is the generic approach used in GEOS to
+This coupling of single-physics packages is the generic approach used in GEOS to
 define multiphysics problems.
 It is illustrated in :ref:`TutorialPoroelasticity` for a poroelastic test case. 
 
@@ -68,10 +68,10 @@ The three solvers employed in this example are:
 
  - the single-physics reservoir flow solver, a solver of type **CompositionalMultiphaseFVM** named ``compositionalMultiphaseFlow`` (more information on this solver at :ref:`CompositionalMultiphaseFlow`),
  - the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` (more information on this solver at :ref:`CompositionalMultiphaseWell`),
- - the coupling solver that binds the two single-physics solvers above, an object of type **CompositionalMultiphaseReservoir** named ``coupledFlowAndWells``.
+ - the coupling solver that binds the two single-physics packages above, an object of type **CompositionalMultiphaseReservoir** named ``coupledFlowAndWells``.
 
 The **Solvers** XML block is shown below.
-The coupling solver points to the two single-physics solvers using the attributes
+The coupling solver points to the two single-physics packages using the attributes
 ``flowSolverName`` and ``wellSolverName``.
 These names can be chosen by the user and are not imposed by GEOS.
 The flow solver is applied to the reservoir and the well solver is applied to the wells,
@@ -81,7 +81,7 @@ The simulation is fully coupled and driven by the coupled solver. Therefore, the
 information (here, ``initialDt``, but there may be other parameters used to fine-tune the time
 stepping strategy), the nonlinear solver parameters, and the linear solver parameters must be
 specified at the level of the coupling solver.
-There is no need to specify these parameters at the level of the single-physics solvers.
+There is no need to specify these parameters at the level of the single-physics packages.
 Any solver information specified in the single-physics XML blocks will not be taken into account.
 
 .. note::
@@ -264,7 +264,7 @@ defined in the **Constitutive** XML block.
 Constitutive models
 -------------------
 
-The **CompositionalMultiphaseFVM** physics solver relies on at least four types of constitutive
+The **CompositionalMultiphaseFVM** physics package relies on at least four types of constitutive
 models listed in the **Constitutive** XML block:
 
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
@@ -292,7 +292,7 @@ We are ready to specify the reservoir initial conditions of the problem in the *
 XML block.
 The well variables do not have to be initialized here since they will be defined internally.
 
-The formulation of the **CompositionalMultiphaseFVM** physics solver (documented
+The formulation of the **CompositionalMultiphaseFVM** physics package (documented
 at :ref:`CompositionalMultiphaseFlow`) requires the definition of the initial pressure field
 and initial global component fractions.
 We define here a uniform pressure field that does not satisfy the hydrostatic equilibrium,

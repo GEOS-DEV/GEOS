@@ -21,10 +21,10 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "testFlowUtils.hpp"
 
 namespace geos

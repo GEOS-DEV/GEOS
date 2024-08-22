@@ -22,13 +22,13 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
+#include "physicsPackages/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp"
+#include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
+#include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 
 using namespace geos;
 using namespace geos::dataRepository;
@@ -472,7 +472,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoirAndWells<> >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< CompositionalMultiphaseReservoirAndWells<> >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

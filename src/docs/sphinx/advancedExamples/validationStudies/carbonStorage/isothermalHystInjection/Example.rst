@@ -106,7 +106,7 @@ It references the two coupled solvers under the tags ``flowSolverName`` and ``we
 following this coupled solver. It also defined non-linear, **NonlinearSolverParameters** and
 and linear, **LinearSolverParameters**, strategies. 
 
-The next two blocks are used to define our two coupled physics solvers ``compositionalMultiphaseFlow`` (of type **CompositionalMultiphaseFVM**)
+The next two blocks are used to define our two coupled physics packages ``compositionalMultiphaseFlow`` (of type **CompositionalMultiphaseFVM**)
 and ``compositionalMultiphaseWell`` (of type **CompositionalMultiphaseWell**).
 
 Flow solver

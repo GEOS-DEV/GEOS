@@ -26,7 +26,7 @@
 namespace geos
 {
 
-class PhysicsSolverManager;
+class PhysicsPackageManager;
 class DomainPartition;
 class GeometricObjectManager;
 class FiniteElementDiscretization;
@@ -249,26 +249,26 @@ public:
     dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
     dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
     dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
+    dataRepository::GroupKey physicsPackageManager = { "Solvers" };                        ///< Solvers key
     dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
   } groupKeys; ///< Child group viewKeys
 
   /**
-   * @brief Returns the PhysicsSolverManager
-   * @return Reference to the PhysicsSolverManager
+   * @brief Returns the PhysicsPackageManager
+   * @return Reference to the PhysicsPackageManager
    */
-  PhysicsSolverManager & getPhysicsSolverManager()
+  PhysicsPackageManager & getPhysicsPackageManager()
   {
-    return *m_physicsSolverManager;
+    return *m_physicsPackageManager;
   }
 
   /**
-   * @brief Returns the PhysicsSolverManager
-   * @return Const reference to the PhysicsSolverManager
+   * @brief Returns the PhysicsPackageManager
+   * @return Const reference to the PhysicsPackageManager
    */
-  PhysicsSolverManager const & getPhysicsSolverManager() const
+  PhysicsPackageManager const & getPhysicsPackageManager() const
   {
-    return *m_physicsSolverManager;
+    return *m_physicsPackageManager;
   }
 
   /**
@@ -340,7 +340,7 @@ private:
    * @return A tuple containing the number of quadrature points for every
    *   MeshBody/region/subregion combination.
    *
-   * Checks all physics solvers for targetRegions and constitutive models to
+   * Checks all physics packages for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
    */
   map< std::tuple< string, string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
@@ -370,8 +370,8 @@ private:
                             constitutive::ConstitutiveManager const & constitutiveManager,
                             map< std::tuple< string, string, string, string >, localIndex > const & regionQuadrature );
 
-  /// The PhysicsSolverManager
-  PhysicsSolverManager * m_physicsSolverManager;
+  /// The PhysicsPackageManager
+  PhysicsPackageManager * m_physicsPackageManager;
 
   /// The EventManager
   EventManager * m_eventManager;

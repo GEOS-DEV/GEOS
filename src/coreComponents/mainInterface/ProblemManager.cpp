@@ -45,8 +45,8 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
 // System includes
@@ -61,7 +61,7 @@ using namespace constitutive;
 
 ProblemManager::ProblemManager( conduit::Node & root ):
   dataRepository::Group( dataRepository::keys::ProblemManager, root ),
-  m_physicsSolverManager( nullptr ),
+  m_physicsPackageManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
   m_fieldSpecificationManager( nullptr )
@@ -80,7 +80,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   registerGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
-  m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
+  m_physicsPackageManager = &registerGroup< PhysicsPackageManager >( groupKeys.physicsPackageManager );
   m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
@@ -767,7 +767,7 @@ ProblemManager::getDiscretizations() const
   DomainPartition const & domain  = getDomainPartition();
   Group const & meshBodies = domain.getMeshBodies();
 
-  m_physicsSolverManager->forSubGroups< SolverBase >( [&]( SolverBase & solver )
+  m_physicsPackageManager->forSubGroups< PhysicsPackageBase >( [&]( PhysicsPackageBase & solver )
   {
 
     solver.generateMeshTargetsFromTargetRegions( meshBodies );
@@ -901,9 +901,9 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
   map< std::tuple< string, string, string, string >, localIndex > regionQuadrature;
 
-  for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
+  for( localIndex solverIndex=0; solverIndex<m_physicsPackageManager->numSubGroups(); ++solverIndex )
   {
-    SolverBase const * const solver = m_physicsSolverManager->getGroupPointer< SolverBase >( solverIndex );
+    PhysicsPackageBase const * const solver = m_physicsPackageManager->getGroupPointer< PhysicsPackageBase >( solverIndex );
 
     if( solver != nullptr )
     {

@@ -311,7 +311,7 @@ package fields {
     class transMultiplier
     note right of transMultiplier : Permeability multiplier in transmissibility calculation
   }
-  note "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" as flowN
+  note "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp" as flowN
   flowN .. flow
 }
 note top of fields : mesh/MeshFields.hpp

@@ -102,7 +102,7 @@ Solid mechanics solver
 ------------------------
 
 GEOS is a multi-physics platform. Different combinations of
-physics solvers available in the code can be applied
+physics packages available in the code can be applied
 in different regions of the domain and be functional at different stages of the simulation.
 The ``Solvers`` tag in the XML file is used to list and parameterize these solvers.
 

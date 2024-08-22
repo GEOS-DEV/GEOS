@@ -84,30 +84,30 @@ Coupled solvers
 ----------------
 
 GEOS is a multi-physics tool. Different combinations of
-physics solvers available in the code can be applied
+physics packages available in the code can be applied
 in different regions of the mesh at different moments of the simulation.
 The XML ``Solvers`` tag is used to list and parameterize these solvers.
 
 
-We define and characterize each single-physics solver separately.
+We define and characterize each single-physics package separately.
 Then, we define a *coupling solver* between these single-physics
 solvers as another, separate, solver.
 This approach allows for generality and flexibility in our multi-physics resolutions.
 The order in which these solver specifications is done is not important.
-It is important, though, to instantiate each single-physics solver
-with meaningful names. The names given to these single-physics solver instances
+It is important, though, to instantiate each single-physics package
+with meaningful names. The names given to these single-physics package instances
 will be used to recognize them and create the coupling.
 
 To define a poromechanical coupling, we will effectively define three solvers:
 
  - the single-physics flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
  - the small-stress Lagrangian mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``LinearElasticitySolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
- - the coupling solver that will bind the two single-physics solvers above, an object of type ``SinglePhasePoromechanics`` called here ``PoroelasticitySolver`` (more information at :ref:`PoroelasticSolver`).
+ - the coupling solver that will bind the two single-physics packages above, an object of type ``SinglePhasePoromechanics`` called here ``PoroelasticitySolver`` (more information at :ref:`PoroelasticSolver`).
 
 Note that the ``name`` attribute of these solvers is
 chosen by the user and is not imposed by GEOS.
 
-The two single-physics solvers are parameterized as explained
+The two single-physics packages are parameterized as explained
 in their respective documentation.
 
 Let us focus our attention on the coupling solver.
@@ -242,6 +242,6 @@ For any feedback on this example, please submit a `GitHub issue on the project's
 
 **For more details**
 
-  - More on poroelastic multiphysics solvers, please see :ref:`PoroelasticSolver`.
+  - More on poroelastic multiphysics packages, please see :ref:`PoroelasticSolver`.
   - More on numerical methods, please see :ref:`NumericalMethodsManager`.
   - More on functions, please see :ref:`FunctionManager`.

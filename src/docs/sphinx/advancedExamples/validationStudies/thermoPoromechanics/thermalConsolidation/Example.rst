@@ -69,7 +69,7 @@ As demonstrated in this example, to setup a thermoporomechanical coupling, we ne
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
 
 
-- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``thermoPoroSolver`` (more information at :ref:`PoroelasticSolver`).
+- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics packages above, which is named as ``thermoPoroSolver`` (more information at :ref:`PoroelasticSolver`).
 
 .. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_smoke_fim.xml
   :language: xml

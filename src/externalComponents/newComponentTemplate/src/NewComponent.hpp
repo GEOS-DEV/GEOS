@@ -19,7 +19,7 @@
 
 #ifndef COMPONENTS_NEWCOMPONENTTEMPLATE_SRC_NEWCOMPONENT_HPP_
 #define COMPONENTS_NEWCOMPONENTTEMPLATE_SRC_NEWCOMPONENT_HPP_
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/PhysicsPackageBase.hpp"
 
 
 namespace geos
@@ -30,7 +30,7 @@ class Group;
 }
 class DomainPartition;
 
-class NewComponent final : public SolverBase
+class NewComponent final : public PhysicsPackageBase
 {
 public:
   NewComponent( string const & name,
@@ -40,7 +40,7 @@ public:
   static string catalogName() { return "NewComponent"; }
   string getCatalogName() const override { return catalogName(); }
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SimulationStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;

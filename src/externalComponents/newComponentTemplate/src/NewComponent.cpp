@@ -24,7 +24,7 @@ namespace geos
 
 NewComponent::NewComponent( string const & name,
                             Group * const parent ):
-    SolverBase(name,parent)
+    PhysicsPackageBase(name,parent)
 {
 
 }
@@ -36,7 +36,7 @@ NewComponent::~NewComponent()
 
 
 
-real64 NewComponent::solverStep( real64 const & /*time_n*/,
+real64 NewComponent::simulationStep( real64 const & /*time_n*/,
                real64 const & /*dt*/,
                integer const /*cycleNumber*/,
                DomainPartition & /*domain*/ )
@@ -44,6 +44,6 @@ real64 NewComponent::solverStep( real64 const & /*time_n*/,
   return 0;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsPackageBase, NewComponent, string const &, dataRepository::Group * const )
 
 } /* namespace geos */

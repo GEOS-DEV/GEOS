@@ -90,15 +90,15 @@ Solid mechanics solver
 ------------------------
 
 GEOS is a multi-physics platform. Different combinations of
-physics solvers available in the code can be applied
+physics packages available in the code can be applied
 in different regions of the domain and be functional at different stages of the simulation.
 The ``Solvers`` tag in the XML file is used to list and parameterize these solvers.
 
-To specify a coupling between two different solvers, we define and characterize each single-physics solver separately.
+To specify a coupling between two different solvers, we define and characterize each single-physics package separately.
 Then, we customize a *coupling solver* between these single-physics
 solvers as an additional solver.
-This approach allows for generality and flexibility in constructing multi-physics solvers.
-Each single-physics solver should be given a meaningful and distinct name because GEOS recognizes these single-physics solvers
+This approach allows for generality and flexibility in constructing multi-physics packages.
+Each single-physics package should be given a meaningful and distinct name because GEOS recognizes these single-physics packages
 based on their given names to create the coupling.
 
 To setup a coupling between rock and fracture deformations, we define three different solvers:

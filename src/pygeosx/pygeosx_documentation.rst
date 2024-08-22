@@ -106,11 +106,11 @@ Module Classes
 
   .. py:method:: register(callback)
 
-    Register a callback on the physics solver.
+    Register a callback on the physics package.
 
     The callback should take two arguments: the CRSMatrix and the array.
 
-    Raise ``TypeError`` if the group is not the Physics solver.
+    Raise ``TypeError`` if the group is not the physics package.
 
 .. py:class:: pygeosx.Wrapper
 

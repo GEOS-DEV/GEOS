@@ -104,16 +104,16 @@ Solid mechanics solver
 ------------------------
 
 GEOS is a multi-physics platform. Different combinations of
-physics solvers available in the code can be applied
+physics packages available in the code can be applied
 in different regions of the domain and be functional at different stages of the simulation.
 The ``Solvers`` tag in the XML file is used to list and parameterize these solvers.
 
-To specify a coupling between two different solvers, we define and characterize each single-physics solver separately.
+To specify a coupling between two different solvers, we define and characterize each single-physics package separately.
 Then, we customize a *coupling solver* between these single-physics
 solvers as an additional solver.
-This approach allows for generality and flexibility in constructing multi-physics solvers.
+This approach allows for generality and flexibility in constructing multi-physics packages.
 The order of specifying these solvers is not restricted in GEOS.
-Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOS will recognize these single-physics solvers based on their customized names and create user-expected coupling.
+Note that end-users should give each single-physics package a meaningful and distinct name, as GEOS will recognize these single-physics packages based on their customized names and create user-expected coupling.
 
 As demonstrated in this example, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
 
@@ -133,7 +133,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
 
 
-- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``poroSolve`` (more information at :ref:`PoroelasticSolver`).
+- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics packages above, which is named as ``poroSolve`` (more information at :ref:`PoroelasticSolver`).
 
 .. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
   :language: xml
@@ -141,13 +141,13 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
 
-The two single-physics solvers are parameterized as explained
+The two single-physics packages are parameterized as explained
 in their corresponding documentation pages. 
 We focus on the coupling solver in this example.
 The solver ``poroSolve`` uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlow``) and solid solver (here: ``lagsolve``).
 These solvers interact through the ``porousMaterialNames="{ shale }"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Domain``).
-More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving Mandel's problem here.
+More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics packages will be simultaneously called and executed for solving Mandel's problem here.
 
 
 ------------------------------

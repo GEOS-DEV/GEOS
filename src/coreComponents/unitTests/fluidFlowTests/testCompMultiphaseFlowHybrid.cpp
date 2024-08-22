@@ -19,10 +19,10 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 using namespace geos;
@@ -270,7 +270,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseHybridFVM >( "compflow" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< CompositionalMultiphaseHybridFVM >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

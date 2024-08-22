@@ -30,7 +30,7 @@ Version v0.2.0 -- Release date 2020-06-20
       * 4-node tetrahedron
   * Cell-centered Finite Volume method with Two-point Flux Approximation (TPFA)
   * Hybrid Finite Volume method with TPFA and quasi-TPFA inner products
-* Physics Solvers
+* Physics Packages
   * Solid mechanics explicit on GPU, implicit assembly on GPU
   * Single-phase flow (assembly on GPU)
     * Classical FVM and Hybrid FVM formulations

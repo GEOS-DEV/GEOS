@@ -18,10 +18,10 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 using namespace geos;
@@ -294,7 +294,7 @@ protected:
   {
 
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

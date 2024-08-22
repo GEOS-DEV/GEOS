@@ -22,14 +22,14 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
+#include "physicsPackages/multiphysics/SinglePhaseReservoirAndWells.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWellFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellPackageBaseFields.hpp"
 
 #include "tests/meshDirName.hpp"
 
@@ -346,7 +346,7 @@ protected:
 
   void SetUp() override
   {
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells<> >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< SinglePhaseReservoirAndWells<> >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

@@ -26,7 +26,7 @@ This example requires an input xml and python script located at:
 Description of the case
 ------------------------------------------------------------------
 
-This example is derived from the sedov integrated test (`GEOS/src/coreComponents/physicsSolvers/solidMechanics/integratedTests/sedov.xml`), which looks at the propagation of elastic waves due to an initial stress field.
+This example is derived from the sedov integrated test (`GEOS/src/coreComponents/physicsPackages/solidMechanics/integratedTests/sedov.xml`), which looks at the propagation of elastic waves due to an initial stress field.
 The pygeosx interface is used to modify the initial conditions of the problem to something of our choosing.
 
 

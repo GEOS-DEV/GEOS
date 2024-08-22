@@ -86,9 +86,9 @@ both a mechanical behavior and constitutive laws that describe the
 dependency of porosity and permeability on the primary unknowns.
 
 The base class ``CoupledSolidBase`` implements some basic behaviors
-and is used to access a generic ``CoupledSolid`` in a physics solver:
+and is used to access a generic ``CoupledSolid`` in a physics package:
 
-.. literalinclude:: /coreComponents/physicsSolvers/fluidFlow/SinglePhaseBase.cpp
+.. literalinclude:: /coreComponents/physicsPackages/fluidFlow/SinglePhaseBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_COUPLEDSOLID
    :end-before: //END_SPHINX_INCLUDE_COUPLEDSOLID
@@ -101,7 +101,7 @@ templated on the types of solid, porosity, and permeability models:
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
 
-While physics solvers that need a porous material only interface with a compound model,
+While physics packages that need a porous material only interface with a compound model,
 this one has access to the standalone models needed:
 
 .. literalinclude:: /coreComponents/constitutive/solid/CoupledSolid.hpp

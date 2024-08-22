@@ -79,7 +79,7 @@ Note that the ``name`` attribute of these solvers is chosen by the user and is n
 It is important to make sure that the ``solidSolverName`` specified in the embedded fractures solver corresponds to the
 small-strain Lagrangian solver used in the matrix.
 
-The two single-physics solvers are parameterized as explained in their respective documentation, each with their own tolerances,
+The two single-physics packages are parameterized as explained in their respective documentation, each with their own tolerances,
 verbosity levels, target regions, and other solver-specific attributes.
 
 Additionally, we need to specify another solver of type, ``EmbeddedSurfaceGenerator``, which is used to discretize the fracture planes.

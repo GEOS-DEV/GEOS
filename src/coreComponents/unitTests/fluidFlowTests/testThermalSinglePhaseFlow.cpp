@@ -18,10 +18,10 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/PhysicsPackageManager.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 #include "unitTests/fluidFlowTests/testSingleFlowUtils.hpp"
 
 using namespace geos;
@@ -212,7 +212,7 @@ protected:
   {
 
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM<> >( "singleflow" );
+    solver = &state.getProblemManager().getPhysicsPackageManager().getGroup< SinglePhaseFVM<> >( "singleflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

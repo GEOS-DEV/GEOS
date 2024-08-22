@@ -57,8 +57,8 @@ if read_the_docs_build:
                   "coreComponents/managers",
                   "coreComponents/finiteElement/kernelInterface",
                   "coreComponents/mesh/MeshFields.hpp",
-                  "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
-                  "coreComponents/physicsSolvers/solidMechanics",
+                  "coreComponents/physicsPackages/simplePDE/LaplaceFEMKernels.hpp",
+                  "coreComponents/physicsPackages/solidMechanics",
                   "coreComponents/finiteVolume"]
 
     # Write correct ReadtheDocs path and input directories

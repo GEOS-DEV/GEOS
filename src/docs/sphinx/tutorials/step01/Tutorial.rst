@@ -83,7 +83,7 @@ Single-phase solver
 -------------------
 
 GEOS is a multiphysics simulator. To find the solution to different physical problems
-such as diffusion or mechanical deformation, GEOS uses one or more physics solvers.
+such as diffusion or mechanical deformation, GEOS uses one or more physics packages.
 The ``Solvers`` tag is used to define and parameterize these solvers.
 Different combinations of solvers can be applied
 in different regions of the domain at different moments of the simulation.
@@ -295,7 +295,7 @@ The ``fieldName`` attribute specifies which property will be used for flux compu
 and also specifies that for Dirichlet boundary conditions, the pressure value at the element face is used.
 The ``coefficientName`` attribute is used for the stencil transmissibility computations.
 
-Note that in GEOS, there is a difference between physics solvers and numerical methods.
+Note that in GEOS, there is a difference between physics packages and numerical methods.
 Their parameterizations are thus independent. We can have
 multiple solvers using the same numerical scheme but with different tolerances, for instance.
 

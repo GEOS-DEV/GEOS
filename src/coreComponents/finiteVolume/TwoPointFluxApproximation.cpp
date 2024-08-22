@@ -31,7 +31,7 @@
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowPackageBaseFields.hpp"
 
 #include "LvArray/src/tensorOps.hpp"
 
@@ -293,7 +293,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
     // For now, we do not filter out connections for which numElems == 1 in this function.
     // Instead, the filter takes place in the single-phase FluxKernels specialized for the SurfaceElementStencil
-    // (see physicsSolvers/multiphysics/SinglePhaseProppantFluxKernels.cpp).
+    // (see physicsPackages/multiphysics/SinglePhaseProppantFluxKernels.cpp).
     // The reason for doing the filtering there and not here is that the ProppantTransport solver
     // needs the connections numElems == 1 to produce correct results.
 

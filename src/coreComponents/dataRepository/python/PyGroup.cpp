@@ -278,8 +278,8 @@ static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const arg
 static constexpr char const * PyGroup_registerDocString =
   "register(self, callback, /)\n"
   "--\n\n"
-  "Register a callback on the physics solver.\n\n"
-  "Raise TypeError if this group is not the Physics solver.\n";
+  "Register a callback on the physics package.\n\n"
+  "Raise TypeError if this group is not the physics package.\n";
 static PyObject * PyGroup_register( PyGroup * const self, PyObject * const args )
 {
   VERIFY_NON_NULL_SELF( self );
@@ -304,7 +304,7 @@ static PyObject * PyGroup_register( PyGroup * const self, PyObject * const args 
     Py_RETURN_NONE;
   }
 
-  PyErr_SetString( PyExc_TypeError, "Group does not contain physics solver" );
+  PyErr_SetString( PyExc_TypeError, "Group does not contain physics package" );
   return nullptr;
 }
 

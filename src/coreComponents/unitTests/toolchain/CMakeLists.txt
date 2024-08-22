@@ -2,7 +2,7 @@
 set( gtest_geosx_tests testToolchain.cpp )
 
 # NOTE: we explicitly depend on internal libraries in order to check for the spurious addition of -DNDEBUG flag
-set( dependencyList ${parallelDeps}  physicsSolvers )
+set( dependencyList ${parallelDeps}  physicsPackages )
 set( tplDependencyList ${parallelDeps} gtest HDF5::HDF5 optionparser )
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
