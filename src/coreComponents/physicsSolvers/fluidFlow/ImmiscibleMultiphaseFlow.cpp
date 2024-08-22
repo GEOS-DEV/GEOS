@@ -501,7 +501,7 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                arrayView1d< real64 > const & localRhs )
 {
-  GEOS_MARK_FUNCTION; // TODO Ralph
+  GEOS_MARK_FUNCTION; 
 
   assembleAccumulationTerm( domain,
                             dofManager,
@@ -517,7 +517,7 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
 }
 
 
-// This part of the code "assembleAccumulationTerm" is added by Ammar along with the comments.
+
 
 void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domain,
                                                          DofManager const & dofManager,
@@ -560,7 +560,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 
     // The line below is to be used if we want to use the total mass flux formulation
     //BitFlags< ElementBasedAssemblyKernelFlags > m_kernelFlags = kernelFlags;
-    GEOS_MARK_FUNCTION;
+
 
     integer const numElems = subRegion.size();
     forAll< parallelDevicePolicy<> >( 
@@ -620,7 +620,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 
       // complete
       
-      integer const numRows = numofPhases + 1;
+      integer const numRows = numofPhases;
 
     for( integer i = 0; i < numRows; ++i )
     {
