@@ -128,7 +128,7 @@ public:
     {
       string const filename = tableData->getName();
       std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
+      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
                                  OutputBase::getOutputDirectory(),
                                  filename ));
 
