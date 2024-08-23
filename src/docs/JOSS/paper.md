@@ -148,13 +148,13 @@ Note that GEOS, as presented here, is a complete rewrite of the previous incarna
 
 The threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
 Carbon Capture and Storage (CCS) of CO~2~ in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals.
-Given the 2050 net-zero GHG goals, CO~2~ storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
+Given the 2050 net-zero emissions goals, CO~2~ storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
 Evaluation of reservoir performance and containment risks associated with the injection of liquefied CO~2~ in the subsurface in a reproducible and transparent manner is an important consideration when evaluating new storage sites.
 As an example of typical complexities in carbon storage reservoirs, the 11th Society of Petroleum Engineers Comparative Solution Project (SPE11) [@Nordbotten2024] provides a benchmark example for evaluating the the predictions of carbon storage simulators.
 The goal of GEOS is to provide the global community with an exascale capable open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir.
 To this end, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
-Open source projects such as OMP [@RASMUSSEN2021159], OpenGeoSys [@ogs:6.5.2], DuMux [@Kochetal2020Dumux], Darts [@Voskov2024] are example efforts that share similar objectives.
-However, GEOS stands out in two key areas: the explicit fault modeling coupled with flow and mechanical deformation, and the ability to leverage the computational power of current exascale supercomputers. 
+Open source projects such as OPM [@RASMUSSEN2021159], OpenGeoSys [@ogs:6.5.2], DuMux [@Kochetal2020Dumux], Darts [@Voskov2024] are example efforts that share similar objectives.
+However, GEOS stands out in two key areas: the explicit fault modeling coupled with flow and mechanical deformation, and the focus on  performance portability on platforms ranging from workstations to exascale supercomputers.
 
 
 
@@ -190,10 +190,13 @@ Simulations such as this will play a critical role in predicting the viability o
 
 ![Real world CO~2~ storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO~2~ injection. The CO~2~ plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
 
-As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
-The results (Figure \ref{fig:Frontier_scaling}a) show nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 MPI ranks and $81.3 \times 10^{9}$ degrees-of-freedom (close to 1/2 of Frontier).
+As an example of the weak scalability of GEOS on an exascale class system, we present two weak scaling studies on a simple wellbore geometry run on the Frontier supercomputer at Oak Ridge National Laboratory.
+Frontier is comprised of 9,472 Cray EX235a nodes that each contain a single AMD EPYC 7A53 CPU and four AMD MI250X GPU's [@frontier].
+Note that each MI250X is comprised of two Graphics Compute Dies (GCD), with each GCD appearing as a GPU to the operating system. 
+
+The weak scaling results for mechanics are presented in (Figure \ref{fig:Frontier_scaling}a) and shows nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 GPU's($81.3 \times 10^{9}$ degrees-of-freedom).
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms, this level of scaling efficiency is excellent.
-The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b shows slightly better weak scaling.
+The weak scaling results of compositional flow are presented in Figure \ref{fig:Frontier_scaling}b shows excellent scaling up to 2,048 GPU's. 
 
 ![Weak scaling results on ORNL/Frontier: average execution time per newton iteration vs number of GPUs for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](nearwell_scaling_frontier.pdf){ width=100% }
 
