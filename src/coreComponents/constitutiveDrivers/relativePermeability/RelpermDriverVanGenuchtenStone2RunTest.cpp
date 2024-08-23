@@ -14,10 +14,10 @@
  */
 
 #include "RelpermDriverRunTest.hpp"
-#include "TableRelativePermeabilityHysteresis.hpp"
+#include "constitutive/relativePermeability/VanGenuchtenStone2RelativePermeability.hpp"
 
 
 namespace geos
 {
-template void RelpermDriver::runTest< geos::constitutive::TableRelativePermeabilityHysteresis >( geos::constitutive::TableRelativePermeabilityHysteresis &, arrayView2d< real64 > const & );
+template void RelpermDriver::runTest< geos::constitutive::VanGenuchtenStone2RelativePermeability >( geos::constitutive::VanGenuchtenStone2RelativePermeability &, arrayView2d< real64 > const & );
 }
