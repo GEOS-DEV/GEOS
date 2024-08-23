@@ -1494,6 +1494,8 @@ public:
    */
   void enableLogLevelInput();
 
+  LogLevelsRegistry const & getLogLevelsRegistry() const;
+
   /**
    * @brief Set verbosity level
    * @param logLevel new verbosity level value

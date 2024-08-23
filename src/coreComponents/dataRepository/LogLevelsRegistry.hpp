@@ -45,6 +45,8 @@ public:
    */
   string buildLogLevelDescription();
 
+  std::map< integer, std::vector< std::string > > const & getLogLevelsDescriptions() const;
+
 private:
 
 
