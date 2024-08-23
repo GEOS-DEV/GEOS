@@ -21,6 +21,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
+#include "common/Units.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -251,6 +252,10 @@ bool SolverBase::execute( real64 const time_n,
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
 
+  // Keep track of substeps. It is useful to output these.
+  std::vector< real64 > subStepDt( maxSubSteps, 0.0 );
+  integer numOfSubSteps = 0;
+
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
@@ -260,6 +265,8 @@ bool SolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
+    numOfSubSteps++;
+    subStepDt[subStep] = dtAccepted;
 
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();
@@ -303,6 +310,19 @@ bool SolverBase::execute( real64 const time_n,
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( nextDt, domain );
+
+  // The formating here is a work in progress.
+  GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP END -------------------------" );
+  GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}", cycleNumber ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "    - N substeps: {}", numOfSubSteps ) );
+  std::string logMessage = "    - dt:";
+  for( integer i = 0; i < numOfSubSteps; ++i )
+  {
+    logMessage += "  " + units::TimeFormatInfo::fromSeconds( subStepDt[i] ).toString();
+  }
+  // Log the complete message once
+  GEOS_LOG_RANK_0( logMessage );
+  GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
 
   return false;
 }
