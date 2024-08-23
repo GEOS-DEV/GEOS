@@ -1691,8 +1691,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		</xsd:choice>
 		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
 		<xsd:attribute name="faceBlocks" type="groupNameRef_array" default="{}" />
-		<!--fieldNamesInGEOSX => Names of the volumic fields in GEOSX to import into-->
-		<xsd:attribute name="fieldNamesInGEOSX" type="groupNameRef_array" default="{}" />
+		<!--fieldNamesInGEOS => Names of the volumic fields in GEOS to import into-->
+		<xsd:attribute name="fieldNamesInGEOS" type="groupNameRef_array" default="{}" />
 		<!--fieldsToImport => Volumic fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="groupNameRef_array" default="{}" />
 		<!--file => Path to the mesh file-->
@@ -1711,8 +1711,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="regionAttribute" type="groupNameRef" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
-		<!--surfacicFieldsInGEOSX => Names of the surfacic fields in GEOSX to import into-->
-		<xsd:attribute name="surfacicFieldsInGEOSX" type="groupNameRef_array" default="{}" />
+		<!--surfacicFieldsInGEOS => Names of the surfacic fields in GEOS to import into-->
+		<xsd:attribute name="surfacicFieldsInGEOS" type="groupNameRef_array" default="{}" />
 		<!--surfacicFieldsToImport => Surfacic fields to be imported from the external mesh file-->
 		<xsd:attribute name="surfacicFieldsToImport" type="groupNameRef_array" default="{}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
