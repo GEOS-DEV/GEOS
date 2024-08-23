@@ -21,7 +21,7 @@
 
 #include "MultiphasePoromechanics.hpp"
 
-#include "common/LogLevelsInfo.hpp"
+#include "dataRepository/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"

@@ -19,7 +19,7 @@
 
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
-#include "common/LogLevelsInfo.hpp"
+#include "dataRepository/LogLevelsInfo.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"

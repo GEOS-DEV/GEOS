@@ -14,12 +14,13 @@
 
 /**
  * @file LogLevelsInfo.hpp
+ * This file contains all log level informations and the mecanism to ensure LOG_LEVEL_INFO structure is valid
  */
 #ifndef GEOS_COMMON_LOGLEVELSINFO_HPP
 #define GEOS_COMMON_LOGLEVELSINFO_HPP
 
-#include "DataTypes.hpp"
-#include "format/Format.hpp"
+#include "common/DataTypes.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
@@ -35,6 +36,7 @@ template< typename LOG_LEVEL_INFO >
 static constexpr bool is_log_level_info =
   std::is_same_v< int, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&
   std::is_same_v< std::string_view, decltype(LOG_LEVEL_INFO::getDescription()) >;
+
 
 /** ThOSE 3 macros would replace the ones in Logger.hpp  */
 /**
@@ -58,6 +60,10 @@ static constexpr bool is_log_level_info =
  */
 #define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
 
+/**
+ * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
+ */
+///@{
 
 /// @cond DO_NOT_DOCUMENT
 struct LineSearch
@@ -163,8 +169,25 @@ struct PoromechanicsPhaseFraction
   static constexpr std::string_view getDescription() { return "Print phase volume fraction"; }
 };
 /// @endcond
+///@}
 
 }
+
+/**
+ * @brief Verify if a log level is active
+ * @tparam LOG_LEVEL_INFO The structure containing log level information.
+ * @param level Log level to be checked.
+ * @return `true` if the log level is active, `false` otherwise.
+ * @pre `LOG_LEVEL_INFO` must satisfy `logInfo::is_log_level_info`.
+ *
+ */
+template< typename LOG_LEVEL_INFO >
+std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, bool >
+isLogLevelActive( int level )
+{
+  return level >= LOG_LEVEL_INFO::getMinLogLevel();
+}
+
 
 }
 

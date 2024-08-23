@@ -26,7 +26,7 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "common/LogLevelsInfo.hpp"
+#include "dataRepository/LogLevelsInfo.hpp"
 #include "mesh/MeshFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 

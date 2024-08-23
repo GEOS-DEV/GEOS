@@ -21,7 +21,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
-#include "common/LogLevelsInfo.hpp"
+#include "dataRepository/LogLevelsInfo.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -1187,8 +1187,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_mat",
                        "System matrix",
-                       isLogLevelActive< logInfo::ScreenLinearSystem >( getLogLevel() ),
-                       isLogLevelActive< logInfo::FileLinearSystem >( getLogLevel() ) );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 
   debugOutputLAObject( rhs,
                        time,
@@ -1196,8 +1196,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_rhs",
                        "System right-hand side",
-                       isLogLevelActive< logInfo::ScreenLinearSystem >( getLogLevel() ),
-                       isLogLevelActive< logInfo::FileLinearSystem >( getLogLevel() ) );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 void SolverBase::debugOutputSolution( real64 const & time,
@@ -1215,8 +1215,8 @@ void SolverBase::debugOutputSolution( real64 const & time,
                        nonlinearIteration,
                        getName() + "_sol",
                        "System solution",
-                       isLogLevelActive< logInfo::ScreenLinearSystem >( getLogLevel() ),
-                       isLogLevelActive< logInfo::FileLinearSystem >( getLogLevel() ) );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 real64

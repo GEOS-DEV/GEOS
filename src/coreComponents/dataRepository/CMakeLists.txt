@@ -11,6 +11,7 @@ set( dataRepository_headers
      InputFlags.hpp
      KeyIndexT.hpp
      KeyNames.hpp
+     LogLevelsInfo.hpp
      LogLevelsRegistry.hpp
      MappedVector.hpp
      ObjectCatalog.hpp

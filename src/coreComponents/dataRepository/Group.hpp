@@ -27,6 +27,7 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
+#include "LogLevelsInfo.hpp"
 #include "LogLevelsRegistry.hpp"
 
 

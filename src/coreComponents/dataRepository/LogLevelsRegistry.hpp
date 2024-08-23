@@ -19,7 +19,8 @@
 #ifndef GEOS_COMMON_LOGLEVELSREGISTRY_HPP
 #define GEOS_COMMON_LOGLEVELSREGISTRY_HPP
 
-#include "common/LogLevelsInfo.hpp"
+#include "common/DataTypes.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
@@ -53,20 +54,6 @@ private:
 
 };
 
-/**
- * @brief Verify if a log level is active
- * @tparam LOG_LEVEL_INFO The structure containing log level information.
- * @param level Log level to be checked.
- * @return `true` if the log level is active, `false` otherwise.
- * @pre `LOG_LEVEL_INFO` must satisfy `logInfo::is_log_level_info`.
- *
- */
-template< typename LOG_LEVEL_INFO >
-std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, bool >
-isLogLevelActive( int level )
-{
-  return level >= LOG_LEVEL_INFO::getMinLogLevel();
-}
 }
 
 #endif
