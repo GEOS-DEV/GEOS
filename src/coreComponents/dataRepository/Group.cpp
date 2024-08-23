@@ -250,6 +250,7 @@ void Group::postInputInitializationRecursive()
     subGroupIter.second->postInputInitializationRecursive();
   }
   postInputInitialization();
+  m_logLevelsRegistry = nullptr;
 }
 
 void Group::registerDataOnMeshRecursive( Group & meshBodies )
@@ -647,15 +648,6 @@ void Group::enableLogLevelInput()
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Log level" );
 }
-
-LogLevelsRegistry const & Group::getLogLevelsRegistry() const
-{
-
-  assert(m_logLevelsRegistry && "m_logLevelsRegistry is null!");
-  std::cout << "BLALBLA " << std::endl;
-  return *m_logLevelsRegistry;
-}
-
 
 Group const & Group::getBaseGroupByPath( string const & path ) const
 {

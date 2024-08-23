@@ -21,7 +21,6 @@
 
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
-#include "LogLevelsRegistry.hpp"
 
 namespace geos
 {
@@ -45,21 +44,21 @@ static constexpr bool is_log_level_info =
  * @param[in] logInfo Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_INFO( logInfo, msg ) GEOS_LOG_IF( isLogLevelActive< logInfo >( this->getLogLevel(), this->getLogLevelsRegistry() ), msg );
+#define GEOS_LOG_LEVEL_INFO( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] logInfo Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_INFO_RANK_0( logInfo, msg ) GEOS_LOG_RANK_0_IF( isLogLevelActive< logInfo >( this->getLogLevel(), this->getLogLevelsRegistry() ), msg );
+#define GEOS_LOG_LEVEL_INFO_RANK_0( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
 
 /**
  * @brief Output messages (with one line per rank) based on current Group's log level.
  * @param[in] logInfo Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo, msg ) GEOS_LOG_IF( isLogLevelActive< logInfo >( this->getLogLevel(), this->getLogLevelsRegistry() ), msg );
+#define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
 
 /**
  * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
@@ -184,28 +183,8 @@ struct PoromechanicsPhaseFraction
  */
 template< typename LOG_LEVEL_INFO >
 std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, bool >
-isLogLevelActive( int level, LogLevelsRegistry const & logLevelsRegistry )
+isLogLevelActive( int level )
 {
-
-  for( auto const & [_, descriptions] : m_logLevelsDescriptions )
-  {
-    std::cout << _ << std::endl;
-    if( std::find( descriptions.begin(),
-                   descriptions.end(),
-                   LOG_LEVEL_INFO::getDescription()) != descriptions.end() )
-    {
-      descriptionFound = true;
-      break;
-    }
-
-  }
-
-  if( !descriptionFound )
-  {
-    GEOS_ERROR( GEOS_FMT( "You have not added the log structures with the following description {}",
-                          LOG_LEVEL_INFO::getDescription()));
-  }
-
   return level >= LOG_LEVEL_INFO::getMinLogLevel();
 }
 

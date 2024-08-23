@@ -43,9 +43,4 @@ string LogLevelsRegistry::buildLogLevelDescription()
   return description.str();
 }
 
-std::map< integer, std::vector< std::string > > const & LogLevelsRegistry::getLogLevelsDescriptions() const
-{
-  return m_logLevelsDescriptions;
-}
-
 }
