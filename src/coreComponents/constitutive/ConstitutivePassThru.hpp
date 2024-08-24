@@ -84,7 +84,7 @@ struct ConstitutivePassThru< ElasticIsotropic >
 };
 
 /**
- * Specialization for models that derive from ConstactCoulomb.
+ * Specialization for models that derive from ContactCoulomb.
  */
 template<>
 struct ConstitutivePassThru< CoulombContact >

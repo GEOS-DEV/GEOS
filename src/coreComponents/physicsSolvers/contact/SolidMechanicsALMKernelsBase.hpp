@@ -306,6 +306,65 @@ struct ComputeRotationMatricesKernel
 
 };
 
+/**
+ * @brief A struct to check for constraint satisfaction
+ */
+struct ConstraintCheckKernel
+{
+
+  /**
+   * @brief Launch the kernel function to check the constraint satisfaction
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] traction the array containing the current traction
+   * @param[in] dispJump the array containing the displacement jump
+   * @param[in] deltaDispJump the array containing the delta displacement jump
+   * @param[in] fractureState the array containing the fracture state
+   * @param[out] condConv the array containing the convergence flag:
+   *                      0: Constraint conditions satisfied
+   *                      1: Open
+   *                      2: Compenetration
+   *                      3: Slip exceeds sliding tolerance
+   *                      4: Shear stress exceeds tauLim
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView1d< integer const > const & ghostRank,
+          arrayView2d< real64 > const & traction,
+          arrayView2d< real64 const > const & dispJump,
+          arrayView2d< real64 const > const & deltaDispJump,
+          arrayView1d< real64 const > const & normalTractionTolerance,
+          arrayView1d< real64 const > const & normalDisplacementTolerance,
+          arrayView1d< real64 const > const & slidingTolerance,
+          real64 const slidingCheckTolerance,
+          arrayView1d< real64 const > const & area,
+          arrayView1d< integer const > const & fractureState,
+          arrayView1d< integer > const & condConv )
+  {
+
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      if( ghostRank[k] < 0 )
+      {
+        std::map<std::string const, real64 const > const tolerance = {{"normalTraction", normalTractionTolerance[k]}, 
+                                                         {"normalDisplacement", normalDisplacementTolerance[k]*area[k] },
+                                                         {"sliding", slidingTolerance[k]*area[k] },
+                                                         {"slidingCheck", slidingCheckTolerance }};
+        contactWrapper.constraintCheck( dispJump[k],
+                                        deltaDispJump[k],
+                                        traction[k],
+                                        fractureState[k],
+                                        tolerance,
+                                        condConv[k] );
+      }
+
+    } );
+  }
+};
+
 } // namespace SolidMechanicsALMKernels
 
 } // namespace geos

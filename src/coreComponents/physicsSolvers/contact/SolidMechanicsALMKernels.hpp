@@ -249,7 +249,7 @@ public:
                    StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( k );
-    constexpr real64 zero = 1.e-10;
+    //constexpr real64 zero = 1.e-10;
     
     constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
@@ -262,7 +262,17 @@ public:
     real64 tractionRb[numBdofs];
 
     real64 tractionNew[3];
-    real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+
+    m_constitutiveUpdate.updateTraction( m_oldDispJump[k],
+                                         m_dispJump[k],
+                                         m_penalty[k],
+                                         m_traction[k],
+                                         m_symmetric,
+                                         stack.localPenalty,
+                                         tractionNew);
+
+
+    /*real64 dLimitTangentialTractionNorm_dTraction = 0.0;
     real64 limitTau = 0.0;
 
     // Compute the trial traction
@@ -366,6 +376,7 @@ public:
       tractionNew[1] = tractionTrial[1];
       tractionNew[2] = tractionTrial[2];
     }
+    */
     
 
     // transp(R) * Atu
@@ -476,6 +487,44 @@ using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
                                                           real64 const,
                                                           arrayView1d< localIndex const > const,
                                                           bool const >;
+
+/**
+ * @brief A struct to compute the traction after nonlinear solve
+ */
+struct ComputeTractionKernel
+{
+
+  /**
+   * @brief Launch the kernel function to compute the traction
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] penalty the array containing the tangential penalty matrix
+   * @param[in] traction the array containing the current traction
+   * @param[in] dispJump the array containing the displacement jump
+   * @param[in] deltaDispJump the array containing the delta displacement jump
+   * @param[out] tractionNew the array containing the new traction
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & penalty,
+          arrayView2d< real64 const > const & traction,
+          arrayView2d< real64 const > const & dispJump,
+          arrayView2d< real64 const > const & deltaDispJump,
+          arrayView2d< real64 > const & tractionNew )
+  {
+
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+
+      contactWrapper.updateTractionOnly( dispJump[k], deltaDispJump[k],
+                                         penalty[k], traction[k], tractionNew[k] );
+
+    } );
+  }
+};
 
 } // namespace SolidMechanicsALMKernels
 

@@ -410,14 +410,14 @@ struct ComputeTractionSimultaneousKernel
 {
 
   /**
-   * @brief Launch the kernel function to comute rotation matrices
+   * @brief Launch the kernel function to comute traction
    * @tparam POLICY the type of policy used in the kernel launch
    * @param[in] size the size of the subregion
    * @param[in] penalty the array containing the tangential penalty matrix
    * @param[in] traction the array containing the current traction
    * @param[in] dispJump the array containing the displacement jump
    * @param[in] deltaDispJump the array containing the delta displacement jump
-   * @param[out] traction_new the array containing the new traction
+   * @param[out] tractionNew the array containing the new traction
    */
   template< typename POLICY >
   static void
@@ -426,16 +426,16 @@ struct ComputeTractionSimultaneousKernel
           arrayView2d< real64 const > const & traction,
           arrayView2d< real64 const > const & dispJump,
           arrayView2d< real64 const > const & deltaDispJump,
-          arrayView2d< real64 > const & traction_new )
+          arrayView2d< real64 > const & tractionNew )
   {
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
-      traction_new[kfe][0] = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
-      traction_new[kfe][1] = traction[kfe][1] + penalty[kfe][2] * deltaDispJump[kfe][1] +
-                                                penalty[kfe][4] * deltaDispJump[kfe][2];
-      traction_new[kfe][2] = traction[kfe][2] + penalty[kfe][3] * deltaDispJump[kfe][2] +
-                                                  penalty[kfe][4] * deltaDispJump[kfe][1];
+      tractionNew[kfe][0] = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
+      tractionNew[kfe][1] = traction[kfe][1] + penalty[kfe][2] * deltaDispJump[kfe][1] +
+                                               penalty[kfe][4] * deltaDispJump[kfe][2];
+      tractionNew[kfe][2] = traction[kfe][2] + penalty[kfe][3] * deltaDispJump[kfe][2] +
+                                               penalty[kfe][4] * deltaDispJump[kfe][1];
     } );
   }
 

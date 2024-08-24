@@ -367,6 +367,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                           kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
+
       }
       else 
       {
@@ -419,6 +420,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                           subRegionFE,
                                                           SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString(),
                                                           kernelFactory );
+
         GEOS_UNUSED_VAR( maxTraction );
 
       }
@@ -729,8 +731,11 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 {
   GEOS_MARK_FUNCTION;
 
-  int hasConfigurationConverged = true;
-  int condConv = true;
+  //int hasConfigurationConverged = true;
+  //int condConv_flag = true;
+  //int condConv = true;
+  array1d< int > condConv;
+  localIndex globalCondConv[5] = {0, 0, 0, 0, 0};
 
   array2d< real64 > traction_new;
 
@@ -768,7 +773,10 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       traction_new.resize( 2, sizes );
       arrayView2d< real64 > const traction_new_v = traction_new.toView();
 
-      // Update Traction
+      condConv.resize(subRegion.size());
+      arrayView1d< int > const condConv_v = condConv.toView();
+
+      // Update the traction field based on the displacement results from the nonlinear solve
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
@@ -786,7 +794,16 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         }
         else
         {
-          forAll< parallelHostPolicy >( subRegion.size(),
+          solidMechanicsALMKernels::ComputeTractionKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              contactWrapper,
+                                              penalty,
+                                              traction,
+                                              dispJump,
+                                              deltaDispJump,
+                                              traction_new_v );
+
+          /*forAll< parallelHostPolicy >( subRegion.size(),
                                         [ traction_new_v, traction, 
                                           slidingTolerance, area,
                                           dispJump, deltaDispJump, penalty,
@@ -830,16 +847,98 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
               traction_new_v[kfe][2] *= 0.0;
             }
           } );
+          */
         } 
       } );
 
-      bool printflag = true; 
+      //bool printflag = true; 
       real64 const slidingCheckTolerance = m_slidingCheckTolerance;
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
 
+        solidMechanicsALMKernels::ConstraintCheckKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              contactWrapper,
+                                              ghostRank,
+                                              traction_new_v,
+                                              dispJump,
+                                              deltaDispJump,
+                                              normalTractionTolerance,
+                                              normalDisplacementTolerance,
+                                              slidingTolerance,
+                                              slidingCheckTolerance,
+                                              area,
+                                              fractureState,
+                                              condConv_v );
+        //for (int i=0; i<condConv_v.size(); ++i)                                      
+        //{
+        //  if (condConv_v[i]!=0)
+        //  {
+        //    condConv_flag = false;
+        //  }
+        //}
+
+        RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum[5] =
+        { RAJA::ReduceSum< parallelDeviceReduce, localIndex >(0),
+          RAJA::ReduceSum< parallelDeviceReduce, localIndex >(0),
+          RAJA::ReduceSum< parallelDeviceReduce, localIndex >(0),
+          RAJA::ReduceSum< parallelDeviceReduce, localIndex >(0),
+          RAJA::ReduceSum< parallelDeviceReduce, localIndex >(0) };
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [ localSum, ghostRank, condConv_v ] GEOS_HOST_DEVICE ( localIndex const kfe )
+        {
+          if( ghostRank[kfe] < 0 )
+          {
+            localSum[condConv_v[kfe]] += 1;
+          }
+        } );
+
+        localIndex const localConvCond[5] = { static_cast< localIndex >( localSum[0].get()), 
+                                          static_cast< localIndex >( localSum[1].get()),
+                                          static_cast< localIndex >( localSum[2].get()),
+                                          static_cast< localIndex >( localSum[3].get()),
+                                          static_cast< localIndex >( localSum[4].get()) };
+
+        int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
+        int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
+        array1d< localIndex > globalValues( numRanks * 5 );
+
+        // Everything is done on rank 0
+        MpiWrapper::gather( localConvCond,
+                            5,
+                            globalValues.data(),
+                            5,
+                            0,
+                            MPI_COMM_GEOSX );
+
+        //if ( globalValues[1]!=0 || globalValues[2]!=0 || 
+        //     globalValues[3]!=0 || globalValues[4]!=0 )
+        //{
+        //  condConv_flag = false;
+        //}
+
+        if( rank==0 )
+        {
+          for( int r=0; r<numRanks; ++r )
+          {
+            // sum/max across all ranks
+            for( int i=0; i<5; ++i )
+            {
+              globalCondConv[i] += globalValues[r*5+i];
+            }
+          }
+        }
+
+        MpiWrapper::bcast( globalCondConv, 5, 0, MPI_COMM_GEOSX );
+
+        //if ( globalCondConv[1]!=0 || globalCondConv[2]!=0 || 
+        //     globalCondConv[3]!=0 || globalCondConv[4]!=0 )
+        //{
+        //  condConv_flag = false;
+        //}
+
+        /*
         forAll< parallelHostPolicy >( subRegion.size(),
                                       [ &condConv, ghostRank, traction_new_v, 
                                         normalTractionTolerance, normalDisplacementTolerance, 
@@ -929,22 +1028,48 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
             }
           }
         } );
+        */
       } );
     } );
   } );
 
-  if( !condConv )
+  /*localIndex totCondNotConv = 0;
+  for (int i=0; i<4; ++i)
   {
-    hasConfigurationConverged = false;
+    totCondNotConv+=globalCondConv[i+1];
+    std::cout << "gCond: " << globalCondConv[i+1] << std::endl;
+  }
+  std::cout << "totNotConv: " << totCondNotConv << std::endl;
+
+  if ( globalCondConv[1]!=0 || globalCondConv[2]!=0 || 
+       globalCondConv[3]!=0 || globalCondConv[4]!=0 )
+  {
+    condConv_flag = false;
+
+  }
+  */
+
+  localIndex totCondNotConv = 0;
+  for (int i=0; i<4; ++i)
+  {
+    totCondNotConv+=globalCondConv[i+1];
   }
 
+  int hasConfigurationConvergedGlobally = (totCondNotConv == 0) ? true : false;
+  
+
+  //if( !condConv_flag )
+  //{
+  //  hasConfigurationConverged = false;
+  //}
+
   // Compute if globally the fracture state has changed
-  int hasConfigurationConvergedGlobally;
-  MpiWrapper::allReduce( &hasConfigurationConverged,
-                         &hasConfigurationConvergedGlobally,
-                         1,
-                         MPI_LAND,
-                         MPI_COMM_GEOSX );
+  //int hasConfigurationConvergedGlobally;
+  //MpiWrapper::allReduce( &hasConfigurationConverged,
+  //                       &hasConfigurationConvergedGlobally,
+  //                       1,
+  //                       MPI_LAND,
+  //                       MPI_COMM_GEOSX );
 
   if (hasConfigurationConvergedGlobally)
   {

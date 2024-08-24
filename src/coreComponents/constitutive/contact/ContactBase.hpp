@@ -103,8 +103,66 @@ public:
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
-                                    integer & fractureState ) const
-  { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
+                                    integer & fractureState,
+                                    bool useTraction = false ) const
+  { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState, useTraction ); }
+
+  /**
+   * @brief Update the trial traction vector ( return mapping ) 
+   * @param[in] oldDispJump the displacement jump of the previous time step
+   * @param[in] dispJump the displacement jump of the current time step
+   * @param[in] penalty  the penalty coefficients
+   * @param[in] traction the traction vector
+   * @param[in] symmetric flag to compute only the symmetric part of dTraction_dDispJump
+   * @param[out] dTraction_dDispJump matrix containing the derivatives of traction over the displacement jump
+   * @param[out] tractionNew the new traction vector
+   */
+  GEOS_HOST_DEVICE
+  inline
+  virtual void updateTraction( arraySlice1d< real64 const > const & oldDispJump,
+                               arraySlice1d< real64 const > const & dispJump,
+                               arraySlice1d< real64 const > const & penalty,
+                               arraySlice1d< real64 const > const & traction,
+                               bool const symmetric,
+                               real64 ( & dTraction_dDispJump )[3][3],
+                               real64 ( & tractionNew )[3] ) const 
+  { GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, dTraction_dDispJump, tractionNew ); }
+
+  /**
+   * @brief Update the traction vector only ( return mapping ) 
+   * @param[in] dispJump the displacement jump of the current time step
+   * @param[in] deltaDispJump the delta displacement jump of the current time step
+   * @param[in] penalty  the penalty coefficients
+   * @param[in] traction the traction vector
+   * @param[out] tractionNew the new traction vector
+   */
+  GEOS_HOST_DEVICE
+  inline
+  virtual void updateTractionOnly( arraySlice1d< real64 const > const & dispJump,
+                                   arraySlice1d< real64 const > const & deltaDispJump,
+                                   arraySlice1d< real64 const > const & penalty,
+                                   arraySlice1d< real64 const > const & traction,
+                                   arraySlice1d< real64 > const & tractionNew ) const 
+  { GEOS_UNUSED_VAR( dispJump, deltaDispJump, penalty, traction, tractionNew ); }
+
+  /**
+   * @brief Check for the constraint satisfaction 
+   * @param[in] dispJump the displacement jump of the current time step
+   * @param[in] deltaDispJump the delta displacement jump of the current time step
+   * @param[in] tractionVector the traction vector
+   * @param[in] fractureState the fracture check
+   * @param[in] tolerance the tolerance
+   * @param[out] condConv flag indicating the result of the check
+   */
+  GEOS_HOST_DEVICE
+  inline
+  virtual void constraintCheck( arraySlice1d< real64 const > const & dispJump,
+                                arraySlice1d< real64 const > const & deltaDispJump,
+                                arraySlice1d< real64 > const & tractionVector,
+                                integer const fractureState,
+                                std::map<std::string const, real64 const> const & tolerance,
+                                integer & condConv ) const
+  { GEOS_UNUSED_VAR( dispJump, deltaDispJump, tractionVector, fractureState, tolerance, condConv ); }
 
   /**
    * @brief Update the traction with the pressure term
