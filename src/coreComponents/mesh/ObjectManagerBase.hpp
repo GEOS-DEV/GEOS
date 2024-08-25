@@ -685,6 +685,10 @@ public:
     /// @return String key to the local->global map
     static constexpr char const * localToGlobalMapString() { return "localToGlobalMap"; }
 
+    static constexpr char const * localMaxGlobalIndexString() { return "localMaxGlobalIndex"; }
+
+    static constexpr char const * maxGlobalIndexString() { return "maxGlobalIndex"; }
+
     /// View key to external set
     dataRepository::ViewKey externalSet = { externalSetString() };
 
