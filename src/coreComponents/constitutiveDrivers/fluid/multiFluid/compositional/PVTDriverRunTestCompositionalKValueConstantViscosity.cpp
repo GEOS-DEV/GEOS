@@ -17,7 +17,7 @@
  * PVTDriverRunTestCompositionalKValueConstantViscosity.cpp
  */
 
-#include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos

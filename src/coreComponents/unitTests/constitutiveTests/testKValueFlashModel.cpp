@@ -38,11 +38,11 @@ namespace geos
 
 template< integer numPhases, integer numComps >
 using FlashData = std::tuple<
-  real64 const,                         // pressure
-  real64 const,                         // temperature
-  Feed< numComps > const,      // total composition
-  Feed< numPhases > const,     // expected phase fractions
-  Feed< 2*numPhases >   // expected phase composition (2 selected components)
+  real64 const,                 // pressure
+  real64 const,                 // temperature
+  Feed< numComps > const,       // total composition
+  Feed< numPhases > const,      // expected phase fractions
+  Feed< 2*numPhases >           // expected phase composition (2 selected components)
   >;
 
 template< int numComps >

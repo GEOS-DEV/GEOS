@@ -64,6 +64,11 @@ public:
 
   string_array m_equationsOfStateNames;
 
+  struct viewKeyStruct
+  {
+    static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
+  };
+  
 protected:
   void registerParametersImpl( MultiFluidBase * fluid ) override
   {
@@ -90,11 +95,6 @@ protected:
       EnumStrings< EquationOfStateType >::fromString( eos );
     }
   }
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
-  };
 };
 
 } // end namespace compositional
