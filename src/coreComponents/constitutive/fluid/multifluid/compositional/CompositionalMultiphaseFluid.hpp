@@ -25,6 +25,7 @@
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ModelParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
@@ -142,6 +143,15 @@ using CompositionalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFl
   compositional::NegativeTwoPhaseFlashModel,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalKValueConstantViscosity = CompositionalMultiphaseFluid<
+  compositional::KValueFlashModel< 2 >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+using CompositionalThreePhaseKValueConstantViscosity = CompositionalMultiphaseFluid<
+  compositional::KValueFlashModel< 3 >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

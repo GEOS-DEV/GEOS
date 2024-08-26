@@ -178,6 +178,13 @@ Element: CompositeFunction
 .. include:: ../../coreComponents/schema/docs/CompositeFunction.rst
 
 
+.. _XML_CompositionalKValueFluid:
+
+Element: CompositionalKValueFluid
+=================================
+.. include:: ../../coreComponents/schema/docs/CompositionalKValueFluid.rst
+
+
 .. _XML_CompositionalMultiphaseFVM:
 
 Element: CompositionalMultiphaseFVM
@@ -232,6 +239,13 @@ Element: CompositionalMultiphaseStatistics
 Element: CompositionalMultiphaseWell
 ====================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell.rst
+
+
+.. _XML_CompositionalThreePhaseKValueFluid:
+
+Element: CompositionalThreePhaseKValueFluid
+===========================================
+.. include:: ../../coreComponents/schema/docs/CompositionalThreePhaseKValueFluid.rst
 
 
 .. _XML_CompositionalTwoPhaseFluid:
@@ -1652,6 +1666,13 @@ Datastructure: CompositeFunction
 .. include:: ../../coreComponents/schema/docs/CompositeFunction_other.rst
 
 
+.. _DATASTRUCTURE_CompositionalKValueFluid:
+
+Datastructure: CompositionalKValueFluid
+=======================================
+.. include:: ../../coreComponents/schema/docs/CompositionalKValueFluid_other.rst
+
+
 .. _DATASTRUCTURE_CompositionalMultiphaseFVM:
 
 Datastructure: CompositionalMultiphaseFVM
@@ -1706,6 +1727,13 @@ Datastructure: CompositionalMultiphaseStatistics
 Datastructure: CompositionalMultiphaseWell
 ==========================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalThreePhaseKValueFluid:
+
+Datastructure: CompositionalThreePhaseKValueFluid
+=================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalThreePhaseKValueFluid_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalTwoPhaseFluid:
