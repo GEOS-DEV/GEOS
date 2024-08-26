@@ -7,6 +7,10 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 
+PR #3302
+======================
+Added restartcheks to hydrofrac cases and reduced time of cases that were too long.
+
 PR #3283 (2024-08-22)
 ======================
 Reuse computeSinglePhaseFlux. Rebaseline due to minor numerical diffs. 
