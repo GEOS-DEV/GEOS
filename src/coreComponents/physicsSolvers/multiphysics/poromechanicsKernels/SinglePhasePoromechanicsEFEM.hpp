@@ -362,6 +362,7 @@ struct StateUpdateKernel
       std::cout << "k = " << k << ", aperture = " << aperture[k] << ", hydraulicAperture = " << hydraulicAperture[k] << ", oldHydraulicAperture = " << oldHydraulicAperture[k] << ", fracture pressure = " << pressure[k] << std::endl; 
 
       // traction on the fracture to include the pressure contribution
+      // compression is negative. pressure is assumed to apply the compression force to the internal boundary.
       contactWrapper.addPressureToTraction( pressure[k],
                                             fractureTraction[k],
                                             dFractureTraction_dPressure[k] );
