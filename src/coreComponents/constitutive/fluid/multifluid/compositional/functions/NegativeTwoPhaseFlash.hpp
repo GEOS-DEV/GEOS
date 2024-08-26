@@ -257,9 +257,6 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     }
   }
 
-  bool kValueReset = true;
-  constexpr real64 boundsTolerance = 1.0e-3;
-
   if( needInitialisation )
   {
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
@@ -270,8 +267,6 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   }
 
   auto const presentComponents = componentIndices.toSliceConst();
-
-  real64 const initialVapourFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
 
   bool converged = false;
   for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
@@ -301,23 +296,9 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     }
 
     // Update K-values
-    if( (vapourPhaseMoleFraction < -boundsTolerance || 1.0-vapourPhaseMoleFraction < -boundsTolerance)
-        && 0.2 < LvArray::math::abs( vapourPhaseMoleFraction-initialVapourFraction )
-        && !kValueReset )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
-      KValueInitialization::computeConstantLiquidKvalue( numComps,
-                                                         pressure,
-                                                         temperature,
-                                                         componentProperties,
-                                                         kVapourLiquid );
-      kValueReset =  true;
-    }
-    else
-    {
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
-      }
+      kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
     }
   }
 
