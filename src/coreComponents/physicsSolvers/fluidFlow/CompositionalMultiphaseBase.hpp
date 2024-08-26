@@ -570,6 +570,8 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
 {
+  std::cout << "CompositionalMultiphaseBase::accumulationAssemblyLaunch" << std::endl;
+
   constitutive::MultiFluidBase const & fluid =
     getConstitutiveModel< constitutive::MultiFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
   constitutive::CoupledSolidBase const & solid =

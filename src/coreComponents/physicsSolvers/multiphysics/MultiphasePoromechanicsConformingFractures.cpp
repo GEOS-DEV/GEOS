@@ -141,7 +141,6 @@ void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem( 
                                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                                 arrayView1d< real64 > const & localRhs )
 {
-
   GEOS_MARK_FUNCTION;
 
   this->solidMechanicsSolver()->synchronizeFractureState( domain );
@@ -449,6 +448,8 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
 {
   GEOS_MARK_FUNCTION;
 
+  std::cout << "MultiphasePoromechanicsConformingFractures::assembleForceResidualDerivativeWrtPressure" << std::endl;
+
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -556,6 +557,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 {
   GEOS_MARK_FUNCTION;
 
+  std::cout << "MultiphasePoromechanicsConformingFractures::assembleFluidMassResidualDerivativeWrtDisplacement" << std::endl;
+
+  integer const numComp = this->flowSolver()->numFluidComponents();
+
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -590,6 +595,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
     //MultiFluidBase const & fluid = this->template getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
     //arrayView2d< real64 const > const & density = fluid.density();
 
+    arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+
     arrayView1d< globalIndex const > const & flowDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );
 
     ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
@@ -602,8 +609,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
       localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       globalIndex nodeDOF[2*3*m_maxFaceNodes];
-      globalIndex elemDOF[1];
-      elemDOF[0] = flowDofNumber[kfe];
 
       real64 Nbar[3];
       Nbar[ 0 ] = faceNormal[kf0][0] - faceNormal[kf1][0];
@@ -611,7 +616,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
       Nbar[ 2 ] = faceNormal[kf0][2] - faceNormal[kf1][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
-      stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
+      stackArray1d< real64, 2*3*m_maxFaceNodes * MultiFluidBase::MAX_NUM_COMPONENTS > dRdU( 2*3*m_maxFaceNodes * MultiFluidBase::MAX_NUM_COMPONENTS );
 
       bool const isFractureOpen = ( fractureState[kfe] == fields::contact::FractureState::Open );
 
@@ -638,20 +643,33 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
-            real64 const dAccumulationResidualdAperture = 0;//density[kfe][0] * nodalArea[a];
+            real64 const dVolume_dAperture = nodalArea[a];
             for( localIndex i=0; i<3; ++i )
             {
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
-              dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
+              for (integer ic = 0; ic < numComp; ic++)
+              {
+                dRdU( kf*3*numNodesPerFace*numComp + 3*a*numComp + i*numComp + ic ) = dVolume_dAperture * dAper_dU * compDens; // assuming poro=1
+              }
             }
           }
         }
 
-        localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
+        integer const numRows = numComp+1;
+        for( integer i = 0; i < numRows; ++i )
+        {
+          m_localRhs[stack.localRow + i] += stack.localResidual[i];
+          m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
+                                                  stack.dofIndices,
+                                                  stack.localJacobian[i],
+                                                  numDof );
+        }
 
-        if( localRow > 0 && localRow < localMatrix.numRows() )
+        localIndex const localRow = LvArray::integerConversion< localIndex >( flowDofNumber[kfe] - rankOffset );
+
+        if( localRow >= 0 && localRow < localMatrix.numRows() )
         {
 
           localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
@@ -705,7 +723,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
         if( !skipAssembly )
         {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
+          localIndex const localRow = LvArray::integerConversion< localIndex >( flowDofNumber[kfe] - rankOffset );
 
           if( localRow > 0 && localRow < localMatrix.numRows() )
           {

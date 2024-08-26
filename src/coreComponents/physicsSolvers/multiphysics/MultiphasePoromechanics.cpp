@@ -124,6 +124,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
 
+  std::cout << "MultiphasePoromechanics::assembleElementBasedTerms" << std::endl;
+
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
 
