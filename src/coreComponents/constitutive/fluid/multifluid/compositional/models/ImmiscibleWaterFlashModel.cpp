@@ -80,15 +80,14 @@ ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
                    liquidIndex,
                    vapourIndex,
                    liquidEos,
-                   vapourEos ),
+                   vapourEos,
+                   componentCriticalVolume ),
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
   m_aquoesIndex( aqueousIndex ),
   m_waterComponentIndex( waterComponentIndex )
-{
-  GEOS_UNUSED_VAR( componentCriticalVolume );
-}
+{}
 
 std::unique_ptr< ModelParameters >
 ImmiscibleWaterFlashModel::createParameters( std::unique_ptr< ModelParameters > parameters )
