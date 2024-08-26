@@ -32,14 +32,14 @@ namespace PVTProps
 namespace
 {
 
-constexpr real64 P_Pa_f = 1e+5;
-constexpr real64 P_c    = 73.773 * P_Pa_f;
-constexpr real64 T_c    = 304.1282;
-constexpr real64 Rgas   = constants::gasConstant;
-constexpr real64 V_c    = Rgas*T_c/P_c;
+inline constexpr real64 P_Pa_f = 1e+5;
+inline constexpr real64 P_c    = 73.773 * P_Pa_f;
+inline constexpr real64 T_c    = 304.1282;
+inline constexpr real64 Rgas   = constants::gasConstant;
+inline constexpr real64 V_c    = Rgas*T_c/P_c;
 
 // these coefficients are in Table (A1) of Duan and Sun (2003)
-constexpr real64 acoef[15] =
+inline constexpr real64 acoef[15] =
 { 8.99288497e-2, -4.94783127e-1, 4.77922245e-2, 1.03808883e-2, -2.82516861e-2, 9.49887563e-2, 5.20600880e-4,
   -2.93540971e-4, -1.77265112e-3, -2.51101973e-5, 8.93353441e-5, 7.88998563e-5, -1.66727022e-2, 1.398, 2.96e-2 };
 
@@ -65,7 +65,7 @@ real64 co2EOS( real64 const & T, real64 const & P, real64 const & V_r )
 real64 PWater( real64 const & T )
 {
   // these coefficients are defined in Table (B1) of Duan and Sun (2003)
-  constexpr real64 ccoef[] = { -38.640844, 5.8948420, 59.876516, 26.654627, 10.637097 };
+  static constexpr real64 ccoef[5] = { -38.640844, 5.8948420, 59.876516, 26.654627, 10.637097 };
 
   // H2O critical pressure (bars)
   real64 const P_c_w = 220.85;
@@ -178,11 +178,11 @@ void calculateCO2Solubility( string const & functionName,
                              array1d< real64 > const & values )
 {
   // Interaction parameters, see Table 2 of Duan and Sun (2003)
-  constexpr real64 mu[11] =
+  static constexpr real64 mu[11] =
   { 28.9447706, -0.0354581768, -4770.67077, 1.02782768e-5, 33.8126098, 9.04037140e-3,
     -1.14934031e-3, -0.307405726, -0.0907301486, 9.32713393e-4, 0 };
-  constexpr real64 lambda[11] = { -0.411370585, 6.07632013e-4, 97.5347708, 0, 0, 0, 0, -0.0237622469, 0.0170656236, 0, 1.41335834e-5 };
-  constexpr real64 zeta[11] = { 3.36389723e-4, -1.98298980e-5, 0, 0, 0, 0, 0, 2.12220830e-3, -5.24873303e-3, 0, 0 };
+  static constexpr real64 lambda[11] = { -0.411370585, 6.07632013e-4, 97.5347708, 0, 0, 0, 0, -0.0237622469, 0.0170656236, 0, 1.41335834e-5 };
+  static constexpr real64 zeta[11] = { 3.36389723e-4, -1.98298980e-5, 0, 0, 0, 0, 0, 2.12220830e-3, -5.24873303e-3, 0, 0 };
 
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
