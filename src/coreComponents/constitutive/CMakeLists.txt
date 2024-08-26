@@ -74,6 +74,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/ComponentProperties.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
+     fluid/multifluid/compositional/models/CriticalVolume.hpp
      fluid/multifluid/compositional/models/EquationOfState.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp
@@ -220,6 +221,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
+     fluid/multifluid/compositional/models/CriticalVolume.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
