@@ -846,7 +846,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                        integer const cycleNumber,
                                        DomainPartition & domain )
 {
-  // std::cout << "In SolverBase::solveNonlinearSystem: " << std::endl;
+  std::cout << "In SolverBase::solveNonlinearSystem: " << std::endl;
 
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
   integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
