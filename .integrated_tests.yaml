@@ -4,4 +4,4 @@ baselines:
 
 allow_fail:
   all: ''
-  streak: pknViscosityDominated_smoke_01
+  streak: 
