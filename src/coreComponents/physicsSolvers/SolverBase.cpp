@@ -311,6 +311,15 @@ bool SolverBase::execute( real64 const time_n,
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( nextDt, domain );
 
+  logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDt );
+
+  return false;
+}
+
+void SolverBase::logEndOfCycleInformation( integer const cycleNumber,
+                                           integer const numOfSubSteps,
+                                           std::vector< const real64 > const & subStepDt ) const 
+{
   // The formating here is a work in progress.
   GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP END -------------------------" );
   GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}", cycleNumber ) );
@@ -322,9 +331,7 @@ bool SolverBase::execute( real64 const time_n,
   }
   // Log the complete message once
   GEOS_LOG_RANK_0( logMessage );
-  GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
-
-  return false;
+  GEOS_LOG_RANK_0( "------------------------------------------------------------------\n" );
 }
 
 real64 SolverBase::setNextDt( real64 const & currentDt,
