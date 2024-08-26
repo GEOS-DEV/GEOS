@@ -847,7 +847,7 @@ private:
 
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< const real64 > const & subStepDt ) const;                         
+                                 std::vector< real64 > const & subStepDt ) const;
 
 };
 

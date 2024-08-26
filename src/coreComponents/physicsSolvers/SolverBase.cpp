@@ -318,7 +318,7 @@ bool SolverBase::execute( real64 const time_n,
 
 void SolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                            integer const numOfSubSteps,
-                                           std::vector< const real64 > const & subStepDt ) const 
+                                           std::vector< real64 > const & subStepDt ) const
 {
   // The formating here is a work in progress.
   GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP END -------------------------" );
