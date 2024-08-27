@@ -23,13 +23,16 @@ project(geosx)
 set( ENABLE_DOXYGEN OFF CACHE BOOL "" )
 set( ENABLE_FMT OFF CACHE BOOL "" )
 
-set( GEOS_TPL_ROOT_DIR ${GEOS_PARENT_DIR}/GEOS CACHE PATH "" FORCE )
-# Set GEOS_TPL_DIR
+# Check if GEOS_PARENT_DIR is not defined by the bash script geos builder
+if(NOT DEFINED GEOS_ROOT_DIR)
+    # Define GEOS_ROOT_DIR with respect to this directory
+    set(GEOS_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../" CACHE PATH "")
+endif()
+
+set( GEOS_TPL_ROOT_DIR ${GEOS_ROOT_DIR}/GEOS CACHE PATH "" FORCE )
 set(GEOS_TPL_DIR "${GEOS_TPL_ROOT_DIR}/tplInstall-${CONFIG_NAME}-${LOWER_CMAKE_BUILD_TYPE}" CACHE PATH "" )
 
-#message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
-#message(STATUS "GEOS_TPL_ROOT_DIR: ${GEOS_TPL_ROOT_DIR}")
-#message( FATAL_ERROR "GEOS_TPL_DIR: ${GEOS_TPL_DIR}" )
+# message(FATAL_ERROR "GEOS_TPL_DIR -- ${GEOS_TPL_DIR}" )
 
 # tplInstall-dane-clang@14-release/conduit/lib/cmake/conduit/
 set( CONDUIT_DIR ${GEOS_TPL_DIR}/conduit/ CACHE PATH "" FORCE )
