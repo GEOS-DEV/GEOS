@@ -94,12 +94,12 @@
 
     <PeriodicEvent
       name="sourcePressureCollection"
-      beginTime="0.1"
+      beginTime="0.01"
       target="/Tasks/sourcePressureCollection"/>
 
     <PeriodicEvent
       name="sourceHydraulicApertureCollection"
-      beginTime="0.1"
+      beginTime="0.01"
       target="/Tasks/sourceHydraulicApertureCollection"/>
 
     <PeriodicEvent
