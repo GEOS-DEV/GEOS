@@ -655,7 +655,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
-        if( localRow > 0 && localRow < localMatrix.numRows() )
+        if( localRow >= 0 && localRow < localMatrix.numRows() )
         {
 
           localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
