@@ -539,6 +539,10 @@
 					<xsd:selector xpath="SourceFluxStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksStatOutputControllerUniqueName">
+					<xsd:selector xpath="StatOutputController" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksTriaxialDriverUniqueName">
 					<xsd:selector xpath="TriaxialDriver" />
 					<xsd:field xpath="@name" />
@@ -3367,7 +3371,6 @@ None- Add no stabilization to mass equation
 Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
-<<<<<<< HEAD
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -3390,30 +3393,6 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="poromechanicsConformingFracturesSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-=======
-		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
-		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesReservoirType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
-		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
-		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--poromechanicsConformingFracturesSolverName => Name of the poromechanicsConformingFractures solver used by the coupled solver-->
-		<xsd:attribute name="poromechanicsConformingFracturesSolverName" type="groupNameRef" use="required" />
-		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
->>>>>>> origin/develop
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -3641,11 +3620,8 @@ Local- Add jump stabilization on interior of macro elements-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-<<<<<<< HEAD
-=======
 		<!--contactPenaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="contactPenaltyStiffness" type="real64" use="required" />
->>>>>>> origin/develop
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -3932,6 +3908,12 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
+			<xsd:element name="StatOutputController" type="StatOutputControllerType">
+				<xsd:unique name="TasksStatOutputControllerCompositionalMultiphaseStatisticsUniqueName">
+					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -4149,6 +4131,13 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => Write statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="StatOutputControllerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+		</xsd:choice>
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

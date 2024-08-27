@@ -20,6 +20,7 @@ SinglePhaseStatistics                                       node :ref:`DATASTRUC
 SolidMechanicsStateReset                                    node :ref:`DATASTRUCTURE_SolidMechanicsStateReset`                                    
 SolidMechanicsStatistics                                    node :ref:`DATASTRUCTURE_SolidMechanicsStatistics`                                    
 SourceFluxStatistics                                        node :ref:`DATASTRUCTURE_SourceFluxStatistics`                                        
+StatOutputController                                        node :ref:`DATASTRUCTURE_StatOutputController`                                        
 TriaxialDriver                                              node :ref:`DATASTRUCTURE_TriaxialDriver`                                              
 =========================================================== ==== ================================================================================ 
 

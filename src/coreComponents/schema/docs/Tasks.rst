@@ -20,6 +20,7 @@ SinglePhaseStatistics                                       node         :ref:`X
 SolidMechanicsStateReset                                    node         :ref:`XML_SolidMechanicsStateReset`                                    
 SolidMechanicsStatistics                                    node         :ref:`XML_SolidMechanicsStatistics`                                    
 SourceFluxStatistics                                        node         :ref:`XML_SourceFluxStatistics`                                        
+StatOutputController                                        node         :ref:`XML_StatOutputController`                                        
 TriaxialDriver                                              node         :ref:`XML_TriaxialDriver`                                              
 =========================================================== ==== ======= ====================================================================== 
 
