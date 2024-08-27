@@ -54,3 +54,4 @@ blt_add_library( NAME       constitutiveDrivers
                )
 
 target_include_directories( constitutiveDrivers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+install( TARGETS constitutiveDrivers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

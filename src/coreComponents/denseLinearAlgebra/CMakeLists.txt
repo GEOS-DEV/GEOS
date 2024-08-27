@@ -24,6 +24,8 @@ blt_add_library( NAME       denseLinearAlgebra
 
 target_include_directories( denseLinearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
+install( TARGETS denseLinearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )

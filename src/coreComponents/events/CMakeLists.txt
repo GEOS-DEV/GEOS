@@ -39,3 +39,4 @@ blt_add_library( NAME       events
 
 target_include_directories( events PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS events LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

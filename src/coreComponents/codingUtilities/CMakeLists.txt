@@ -36,6 +36,8 @@ set_source_files_properties( Parsing.cpp PROPERTIES LANGUAGE CXX )
 
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS codingUtilities LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory(tests)

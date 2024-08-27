@@ -41,3 +41,4 @@ blt_add_library( NAME       fieldSpecification
 
 target_include_directories( fieldSpecification PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS fieldSpecification LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

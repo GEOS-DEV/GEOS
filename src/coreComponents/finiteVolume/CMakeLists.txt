@@ -55,3 +55,4 @@ blt_add_library( NAME       finiteVolume
 
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS finiteVolume LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
