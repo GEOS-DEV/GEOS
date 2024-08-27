@@ -95,11 +95,15 @@
     <PeriodicEvent
       name="sourcePressureCollection"
       beginTime="0.01"
+      timeFrequency="0.01"
+      targetExactTimestep="0"
       target="/Tasks/sourcePressureCollection"/>
 
     <PeriodicEvent
       name="sourceHydraulicApertureCollection"
       beginTime="0.01"
+      timeFrequency="0.01"
+      targetExactTimestep="0"
       target="/Tasks/sourceHydraulicApertureCollection"/>
 
     <PeriodicEvent
