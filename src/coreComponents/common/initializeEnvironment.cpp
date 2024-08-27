@@ -72,7 +72,7 @@ void setupLogger()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeLogger()
 {
-  logger::FinalizeLogger();
+  logger.reset();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ void setupLvArray()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMKL()
 {
-#ifdef GEOS_USE_MKL
+#ifdef GEOSX_USE_MKL
   GEOS_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads() );
 #endif
 }
@@ -111,7 +111,7 @@ void setupMKL()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupOpenMP()
 {
-#ifdef GEOS_USE_OPENMP
+#ifdef GEOSX_USE_OPENMP
   GEOS_LOG_RANK_0( "Max threads: " << omp_get_max_threads() );
 #endif
 }
@@ -310,33 +310,10 @@ static void addUmpireHighWaterMarks()
     std::size_t const mark = allocator.getHighWatermark();
     std::size_t const minMark = MpiWrapper::min( mark );
     std::size_t const maxMark = MpiWrapper::max( mark );
-    std::size_t const sumMark = MpiWrapper::sum( mark );
-
-    string percentage;
-    if( memInfos.getTotalMemory() == 0 )
-    {
-      percentage = 0.0;
-      GEOS_WARNING( "umpire memory percentage could not be resolved" );
-    }
-    else
-    {
-      percentage = GEOS_FMT( "({:.1f}%)", ( 100.0f * (float)mark ) / (float)memInfos.getTotalMemory() );
-    }
-
-    string const minMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( minMark ), percentage );
-    string const maxMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( maxMark ), percentage );
-    string const avgMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( sumMark / nbRank ), percentage );
-    string const sumMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( sumMark ), percentage );
-
-    tableData.addRow( allocatorName,
-                      minMarkValue,
-                      maxMarkValue,
-                      avgMarkValue,
-                      sumMarkValue );
+    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
+                     std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
+    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
+                     std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
 
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );

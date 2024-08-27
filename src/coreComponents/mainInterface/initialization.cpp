@@ -41,7 +41,7 @@ struct Arg : public option::Arg
   static option::ArgStatus unknown( option::Option const & option, bool )
   {
     GEOS_UNUSED_VAR( option ); // unused if geos_error_if is nulld
-    GEOS_LOG_RANK( "Unknown option: " << option.name );
+    logger.rankLog( "Unknown option: ", option.name );
     return option::ARG_ILLEGAL;
   }
 
@@ -57,7 +57,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOS_LOG_RANK( "Error: " << option.name << " requires a non-empty argument!" );
+    logger.rankLog( "Error: ", option.name, " requires a non-empty argument!" );
     return option::ARG_ILLEGAL;
   }
 
@@ -75,7 +75,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOS_LOG_RANK( "Error: " << option.name << " requires a long-int argument!" );
+    logger.rankLog( "Error: ", option.name, " requires a long-int argument!" );
     return option::ARG_ILLEGAL;
   }
 };
@@ -104,6 +104,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     TRACE_DATA_MIGRATION,
     MEMORY_USAGE,
     PAUSE_FOR,
+    OVERRIDE_LOG_LEVELS,
+    RANK_LOG_FOLDER
   };
 
   const option::Descriptor usage[] =
@@ -124,6 +126,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
     { MEMORY_USAGE, 0, "m", "memory-usage", Arg::nonEmpty, "\t-m, --memory-usage, \t Minimum threshold for printing out memory allocations in a member of the data repository." },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
+    { OVERRIDE_LOG_LEVELS, 0, "l", "override-log-level", Arg::nonEmpty, "\t-l, --override-log-level, \t Overrides all xml log level settings." },
+    { RANK_LOG_FOLDER, 0, "f", "logs-folder", Arg::nonEmpty, "\t-f, --logs-folder, \t With this option, the log will be output to the specified folder. In case of a parallel launch, a specific file per rank is created." },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 
@@ -138,6 +142,15 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   bool const noXML = options[INPUT].count() == 0 && options[SCHEMA].count() == 0;
   if( parse.error() || options[HELP] || (argc == 0) || noXML )
   {
+    if( parse.error())
+    {
+      GEOS_THROW( "Bad command line arguments.\n", InputError );
+    }
+    else
+    {
+      logger.rank0Log("No command line arguments.\n");
+    }
+
     int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
     option::printUsage( fwrite, stdout, usage, columns );
 
@@ -145,8 +158,6 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     {
       throw NotAnError();
     }
-
-    GEOS_THROW( "Bad command line arguments.", InputError );
   }
 
   // Iterate over the remaining inputs
@@ -234,7 +245,31 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       {
         // we should store this in commandLineOptions and sleep in main
         integer const duration = std::stoi( opt.arg );
-        GEOS_LOG_RANK_0( "Paused for " << duration << " s" );
+        logger.rank0Log( "Paused for ", duration, " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
+      }
+      break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        logger.rank0Log( "Paused for ", duration, " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
+      }
+      break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        logger.rank0Log( "Paused for ", duration, " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
+      }
+      break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        logger.rank0Log( "Paused for ", duration, " s" );
         std::this_thread::sleep_for( std::chrono::seconds( duration ) );
       }
       break;

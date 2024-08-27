@@ -37,7 +37,7 @@ int main( int argc, char *argv[] )
 
     outputVersionInfo();
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
+    logger.rank0Log( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
 
     std::chrono::system_clock::duration initTime;
     std::chrono::system_clock::duration runTime;
@@ -61,10 +61,10 @@ int main( int argc, char *argv[] )
     std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
     std::chrono::system_clock::duration totalTime = endTime - startTime;
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "Finished at {:%Y-%m-%d %H:%M:%S}", endTime ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
+    logger.rank0Log( GEOS_FMT( "Finished at {:%Y-%m-%d %H:%M:%S}", endTime ) );
+    logger.rank0Log( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
+    logger.rank0Log( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
+    logger.rank0Log( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
 
     return 0;
   }
@@ -75,7 +75,7 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
-    GEOS_LOG( e.what() );
+    logger.stdLog( e.what() );
     LvArray::system::callErrorHandler();
     std::abort();
   }

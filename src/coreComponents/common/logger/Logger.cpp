@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2018-2024 Chevron 
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -30,37 +30,30 @@ namespace geos
  * @param originalMsg original exception message (i.e. thrown from LVARRAY_THROW or GEOS_THROW)
  * @param msgToInsert message to insert at the top of the originalMsg
  */
-std::string insertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
+std::string InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
 {
   std::string newMsg( originalMsg );
+
   size_t insertPos = 0;
   // for readability purposes, we try to insert the message after the "***** Rank N: " or after "***** " instead of at the top.
-  static string_view constexpr rankLogStart =  "***** Rank ";
-  static string_view constexpr rankLogEnd =  ": ";
-  static string_view constexpr simpleLogStart =  "***** ";
+  static auto constexpr rankLogStart =  "***** Rank ";
+  static auto constexpr rankLogEnd =  ": ";
+  static auto constexpr simpleLogStart =  "***** ";
   if( ( insertPos = newMsg.find( rankLogStart ) ) != std::string::npos )
   {
-    insertPos = newMsg.find( rankLogEnd, insertPos + rankLogStart.size() )
-                + rankLogEnd.size();
+    insertPos = newMsg.find( rankLogEnd, insertPos + stringutilities::cstrlen( rankLogStart ) )
+                + stringutilities::cstrlen( rankLogEnd );
   }
-  else if( ( insertPos = newMsg.rfind( simpleLogStart ) ) != std::string::npos )
+  else if( ( insertPos = newMsg.find_last_of( simpleLogStart ) ) != std::string::npos )
   {
-    insertPos += simpleLogStart.size();
-  }
-  else
-  {
-    insertPos = 0;
+    insertPos += stringutilities::cstrlen( simpleLogStart );
   }
   newMsg.insert( insertPos, msgToInsert );
   return newMsg;
 }
 
 InputError::InputError( std::exception const & subException, std::string const & msgToInsert ):
-  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
-{}
-
-SimulationError::SimulationError( std::exception const & subException, std::string const & msgToInsert ):
-  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
+  std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
 {}
 
 namespace logger

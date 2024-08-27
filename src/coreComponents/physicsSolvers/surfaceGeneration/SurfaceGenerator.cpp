@@ -745,7 +745,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   real64 ruptureRate = calculateRuptureRate( elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
 
-  GEOS_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate );
+  GEOS_LOG_LEVEL_RANK_0( 3, "rupture rate is ", ruptureRate );
   if( ruptureRate > 0 )
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
@@ -2127,19 +2127,19 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
           if( getLogLevel() > 1 )
           {
-            GEOS_LOG( "    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0] );
-            GEOS_LOG( "    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0] );
-            GEOS_LOG( "    faceToElementMap["<<newFaceIndex<<"][0]      = "<<faceToElementMap[newFaceIndex][0] );
-            GEOS_LOG( "    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1] );
-            GEOS_LOG( "    faceToSubRegionMap["<<newFaceIndex<<"][1] = "<<faceToSubRegionMap[newFaceIndex][1] );
-            GEOS_LOG( "    faceToElementMap["<<newFaceIndex<<"][1]      = "<<faceToElementMap[newFaceIndex][1] );
+            logger.stdLog( "    faceToRegionMap[", newFaceIndex, "][0]    = ", faceToRegionMap[newFaceIndex][0] );
+            logger.stdLog( "    faceToSubRegionMap[", newFaceIndex, "][0] = ", faceToSubRegionMap[newFaceIndex][0] );
+            logger.stdLog( "    faceToElementMap[", newFaceIndex, "][0]      = ", faceToElementMap[newFaceIndex][0] );
+            logger.stdLog( "    faceToRegionMap[", newFaceIndex, "][1]    = ", faceToRegionMap[newFaceIndex][1] );
+            logger.stdLog( "    faceToSubRegionMap[", newFaceIndex, "][1] = ", faceToSubRegionMap[newFaceIndex][1] );
+            logger.stdLog( "    faceToElementMap[", newFaceIndex, "][1]      = ", faceToElementMap[newFaceIndex][1] );
 
-            GEOS_LOG( "    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0] );
-            GEOS_LOG( "    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0] );
-            GEOS_LOG( "    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0] );
-            GEOS_LOG( "    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1] );
-            GEOS_LOG( "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
-            GEOS_LOG( "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
+            logger.stdLog( "    faceToRegionMap[", faceIndex, "][0]    = ", faceToRegionMap[faceIndex][0] );
+            logger.stdLog( "    faceToSubRegionMap[", faceIndex, "][0] = ", faceToSubRegionMap[faceIndex][0] );
+            logger.stdLog( "    faceToElementMap[", faceIndex, "][0]      = ", faceToElementMap[faceIndex][0] );
+            logger.stdLog( "    faceToRegionMap[", faceIndex, "][1]    = ", faceToRegionMap[faceIndex][1] );
+            logger.stdLog( "    faceToSubRegionMap[", faceIndex, "][1] = ", faceToSubRegionMap[faceIndex][1] );
+            logger.stdLog( "    faceToElementMap[", faceIndex, "][1]      = ", faceToElementMap[faceIndex][1] );
 
           }
 
@@ -2352,7 +2352,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
       std::set< localIndex > elemNodes;
 
 
-      GEOS_LOG( "Element " << elemIndex );
+      logger.stdLog( "Element ", elemIndex );
       std::cout << " elementToNodes = ";
       for( int a=0; a<8; ++a )
       {

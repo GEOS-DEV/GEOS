@@ -187,8 +187,8 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   if( logLevel >= 2 )
   {
-    GEOS_LOG_RANK( GEOS_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
-                             wellControlsName, currentBHP ) );
+    logger.rankLog( GEOS_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
+                              wellControlsName, currentBHP ) );
   }
 
 }
@@ -263,8 +263,8 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         fluidWrapper.update( iwelemRef, 0, surfacePres );
         if( logLevel >= 2 )
         {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
-                                   wellControlsName, surfacePres ) );
+          logger.rankLog( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
+                                    wellControlsName, surfacePres ) );
 #ifdef GEOS_USE_HIP
           GEOS_UNUSED_VAR( wellControlsName );
 #endif
@@ -521,14 +521,14 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
         if( wellControls.getControl() == WellControls::Control::BHP )
         {
           wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-          GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                        << " from BHP constraint to rate constraint" );
+          GEOS_LOG_LEVEL( 1, "Control switch for well ", subRegion.getName(),
+                          " from BHP constraint to rate constraint" );
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                        << " from rate constraint to BHP constraint" );
+          GEOS_LOG_LEVEL( 1, "Control switch for well ", subRegion.getName(),
+                          " from rate constraint to BHP constraint" );
         }
       }
 
@@ -812,7 +812,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
   real64 const residualNorm = MpiWrapper::max( localResidualNorm );
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  if( getLogLevel() >= 1 && logger.rank == 0 )
   {
     std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
   }

@@ -46,7 +46,6 @@ Group::Group( string const & name,
   m_size( 0 ),
   m_capacity( 0 ),
   m_name( name ),
-  m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
   m_conduitNode( rootNode[ name ] ),
@@ -265,23 +264,25 @@ Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                  "KeyName ("<<childKey<<") not found in Group::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
+  logger.rank0Log( "Adding Object ", childKey, " named ", childName, " from Group::Catalog." );
   return &registerGroup( childName,
                          CatalogInterface::factory( childKey, childName, this ) );
 }
 
+/// TODO : verify output
 void Group::printDataHierarchy( integer const indent ) const
 {
   GEOS_LOG( string( indent, '\t' ) << getName() << " : " << LvArray::system::demangleType( *this ) );
   for( auto & view : wrappers() )
   {
-    GEOS_LOG( string( indent, '\t' ) << "-> " << view.second->getName() << " : "
-                                     << LvArray::system::demangleType( *view.second ) );
+    logger.stdLog( string( indent, '\t' ), "-> ", view.second->getName(), " : ",
+                   LvArray::system::demangleType( *view.second ) );
   }
   GEOS_LOG( string( indent, '\t' ) );
 
   for( auto & group : m_subGroups )
   {
+    logger.stdLog( string( indent, '\t' ), group.first, ':' );
     group.second->printDataHierarchy( indent + 1 );
   }
 }
@@ -642,7 +643,7 @@ void Group::postRestartInitializationRecursive()
 void Group::enableLogLevelInput()
 {
   // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
-  registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
+  registerWrapper( viewKeyStruct::logLevelString(), &m_logger.m_logLevel ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Log level" );

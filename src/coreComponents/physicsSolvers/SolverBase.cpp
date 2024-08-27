@@ -581,7 +581,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
     applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     rhs.close();
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger.rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
@@ -655,7 +655,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
     if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "        Line search ", lineSearchIteration, ", solution check failed" );
       continue;
     }
 
@@ -678,7 +678,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     rhs.close();
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger.rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
@@ -849,11 +849,11 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   if( !isConfigurationLoopConverged )
   {
-    GEOS_LOG_RANK_0( "Convergence not achieved." );
+    logger.rank0Log( "Convergence not achieved." );
 
     if( allowNonConverged )
     {
-      GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
+      logger.rank0Log( "The accepted solution may be inaccurate." );
     }
     else
     {
@@ -1177,8 +1177,8 @@ void debugOutputLAObject( T const & obj,
   if( toScreen )
   {
     string const frame( screenName.size() + 1, '=' );
-    GEOS_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
-    GEOS_LOG( obj );
+    logger.rank0Log( frame, "\n", screenName, ":\n", frame );
+    logger.stdLog( obj );
   }
 
   if( toFile )

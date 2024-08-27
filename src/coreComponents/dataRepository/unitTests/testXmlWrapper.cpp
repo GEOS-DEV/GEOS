@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include "dataRepository/xmlWrapper.hpp"
+#include "mainInterface/initialization.hpp"
 
 using namespace geos;
 
@@ -384,13 +385,13 @@ TEST( testXmlWrapper, testGroupNamesFormats )
 
 int main( int argc, char * argv[] )
 {
-  logger::InitializeLogger();
+  geos::basicSetup( argc, argv, false );
 
   int result = 0;
   testing::InitGoogleTest( &argc, argv );
   result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
+  geos::basicCleanup();
 
   return result;
 }

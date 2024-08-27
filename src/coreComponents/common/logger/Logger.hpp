@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2018-2024 Chevron 
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -44,25 +44,6 @@
  * @details The expression to log must evaluate something that can be stream inserted.
  */
 #define GEOS_LOG_VAR( ... ) LVARRAY_LOG_VAR( __VA_ARGS__ )
-
-
-/**
- * @brief Conditionally log a message.
- * @param EXP an expression that will be evaluated as a predicate
- * @param msg a message to log (any expression that can be stream inserted)
- */
-#if defined(GEOS_DEVICE_COMPILE)
-#define GEOS_LOG_IF( EXP, msg )
-#else
-#define GEOS_LOG_IF( EXP, msg ) \
-  do { \
-    if( EXP ) \
-    { \
-      std::cout<< msg << std::endl; \
-    } \
-  } while( false )
-#endif
-
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
@@ -457,7 +438,7 @@
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_LOG_IF( this->getLogLevel() >= minLevel, msg );
+#define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
@@ -499,41 +480,11 @@ struct InputError : public std::runtime_error
   {}
 
   /**
-   * @brief Constructs an InputError from an underlying exception.
-   * @param subException The exception on which the created one is based.
-   * @param msgToInsert The error message that will be inserted in the subException error message.
+   * @brief Construct an InputError from an underlying exception.
+   * @param subException An exception to base this new one on.
+   * @param msgToInsert The error message. It will be inserted into the one inside of subException.
    */
   InputError( std::exception const & subException, std::string const & msgToInsert );
-};
-
-/**
- * @brief Exception class used to report errors in user input.
- */
-struct SimulationError : public std::runtime_error
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  SimulationError( std::string const & what ):
-    std::runtime_error( what )
-  {}
-
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  SimulationError( char const * const what ):
-    std::runtime_error( what )
-  {}
-
-  /**
-   * @brief Construct a SimulationError from an underlying exception.
-   * @param subException An exception to base this new one on.
-   * @param msgToInsert The error message.
-   * It will be inserted before the error message inside of subException.
-   */
-  SimulationError( std::exception const & subException, std::string const & msgToInsert );
 };
 
 /**

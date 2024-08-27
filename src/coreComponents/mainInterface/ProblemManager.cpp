@@ -64,7 +64,10 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
-  m_fieldSpecificationManager( nullptr )
+  m_fieldSpecificationManager( nullptr ),
+  m_globalLogLevel( Logger::defaultGlobalLogLevel ),
+  m_minLogLevel( Logger::defaultMinLogLevel ),
+  m_maxLogLevel( Logger::defaultMaxLogLevel )
 {
   // Groups that do not read from the xml
   registerGroup< DomainPartition >( groupKeys.domain );
@@ -139,6 +142,21 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
 
+
+  registerWrapper( viewKeysStruct::globalLogLevel, &m_globalLogLevel ).
+    setApplyDefaultValue( Logger::defaultGlobalLogLevel ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Global Log level for general purpose messages." );
+
+  registerWrapper( viewKeysStruct::minLogLevel, &m_minLogLevel ).
+    setApplyDefaultValue( Logger::defaultMinLogLevel ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( sdfg );
+
+  registerWrapper( viewKeysStruct::maxLogLevel, &m_maxLogLevel ).
+    setApplyDefaultValue( Logger::defaultMaxLogLevel ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( sdfgsdfg );
 }
 
 ProblemManager::~ProblemManager()
@@ -276,7 +294,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
 void ProblemManager::generateDocumentation()
 {
   // Documentation output
-  GEOS_LOG_RANK_0( "Trying to generate schema..." );
+  logger.rank0Log( "Trying to generate schema..." );
   Group & commandLine = getGroup< Group >( groupKeys.commandLine );
   string const & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
 
@@ -296,6 +314,8 @@ void ProblemManager::generateDocumentation()
 
     // Generate non-schema documentation
     schemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1 );
+
+    logger.rank0Log( "là ça va : " LOCATION );
   }
 }
 
@@ -440,6 +460,13 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
   // Extract the problem node and begin processing the user inputs
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( this->getName().c_str() );
   processInputFileRecursive( xmlDocument, xmlProblemNode );
+
+  logger.setMinLogLevel( Logger::PrioritizedLogLevel( m_globalLogLevel,
+                                                      Logger::PriorityLevel::FromInputFile ) );
+  logger.setMaxLogLevel( Logger::PrioritizedLogLevel( m_minLogLevel,
+                                                      Logger::PriorityLevel::FromInputFile ) );
+  logger.setGlobalLogLevel( Logger::PrioritizedLogLevel( m_maxLogLevel,
+                                                         Logger::PriorityLevel::FromInputFile ) );
 
   // The objects in domain are handled separately for now
   {
@@ -1043,8 +1070,8 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const regionName = std::get< 2 >( key );
     string const subRegionName = std::get< 3 >( key );
 
-    GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-                     meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
+    logger.rank0Log( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = ",
+                     meshBodyName, ", ", meshLevelName, ", ", regionName, ", ", subRegionName );
 
 
 
@@ -1081,7 +1108,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+        logger.rank0Log( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
                                    meshBodyName,
                                    meshLevelName,
                                    regionName,

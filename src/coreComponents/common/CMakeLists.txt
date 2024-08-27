@@ -6,6 +6,8 @@ set( common_headers
      format/table/TableLayout.hpp
      format/table/TableFormatter.hpp
      format/table/TableData.hpp
+     format/EnumBimap.hpp
+     format/EnumStrings.hpp
      format/Format.hpp
      format/StringUtilities.hpp
      logger/Logger.hpp

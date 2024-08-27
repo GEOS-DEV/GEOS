@@ -32,9 +32,9 @@ Regex::Regex( string_view regexStr, string_view formatDescription ):
 
 void printTypeSummary()
 {
-  GEOS_LOG_RANK_0( "real64 is alias of " <<LvArray::system::demangle( typeid(real64).name() ) );
-  GEOS_LOG_RANK_0( "localIndex is alias of " <<LvArray::system::demangle( typeid(localIndex).name() ) );
-  GEOS_LOG_RANK_0( "globalIndex is alias of "<<LvArray::system::demangle( typeid(globalIndex).name()) );
+  logger.rank0Log( "real64 is alias of ", LvArray::system::demangle( typeid(real64).name() ) );
+  logger.rank0Log( "localIndex is alias of ", LvArray::system::demangle( typeid(localIndex).name() ) );
+  logger.rank0Log( "globalIndex is alias of ", LvArray::system::demangle( typeid(globalIndex).name()) );
 }
 
 string rtTypes::getTypeName( std::type_index const key )

@@ -247,7 +247,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
 
       if( getLogLevel() >= 1 )
       {
-        GEOS_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
+        logger.rank0Log( "++ Fracture propagation. Re-entering Newton Solve." );
       }
     }
   }
@@ -918,7 +918,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & cu
     nextDt = m_surfaceGenerator->getTimestepRequest() < 1e99 ? m_surfaceGenerator->getTimestepRequest() : currentDt;
   }
 
-  GEOS_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
+  GEOS_LOG_LEVEL_RANK_0( 3, this->getName(), ": nextDt request is ", nextDt );
   return nextDt;
 }
 template< typename POROMECHANICS_SOLVER >

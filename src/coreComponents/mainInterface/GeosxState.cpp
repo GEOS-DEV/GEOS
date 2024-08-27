@@ -99,7 +99,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   string restartFileName;
   if( ProblemManager::parseRestart( restartFileName, getCommandLineOptions() ) )
   {
-    GEOS_LOG_RANK_0( "Loading restart file " << restartFileName );
+    logger.rank0Log( "Loading restart file ", restartFileName );
     dataRepository::loadTree( restartFileName, getRootConduitNode() );
   }
 
