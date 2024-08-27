@@ -150,16 +150,19 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
             BUILD_SHARED_LIBS: ON
+            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu debug (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
             CMAKE_BUILD_TYPE: Debug
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             BUILD_SHARED_LIBS: ON
+            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             BUILD_SHARED_LIBS: ON
+            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -168,6 +171,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
             BUILD_SHARED_LIBS: ON
+            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -175,6 +179,7 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
+            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -200,7 +205,7 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      RUNS_ON: ubuntu-22.04
+      RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
