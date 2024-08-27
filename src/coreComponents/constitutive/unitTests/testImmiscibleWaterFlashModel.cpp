@@ -250,7 +250,7 @@ public:
     } );
 
     // -- Composition derivatives derivative
-    real64 const dz = 1.0e-12;
+    real64 const dz = 1.0e-7;
     for( integer const ic : FluidData< numComps >::testComponents )
     {
       real64 sumZ = 0.0;
