@@ -13,10 +13,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CO2BrineEzrokhiFluid >( constitutive::CO2BrineEzrokhiFluid &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CO2BrinePhillipsThermalFluid >( constitutive::CO2BrinePhillipsThermalFluid &, arrayView2d< real64 > const & );
 }
