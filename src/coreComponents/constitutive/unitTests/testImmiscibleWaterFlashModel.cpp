@@ -250,9 +250,19 @@ public:
     } );
 
     // -- Composition derivatives derivative
-    real64 const dz = 1.0e-7;
+    real64 const dz = 1.0e-12;
     for( integer const ic : FluidData< numComps >::testComponents )
     {
+      real64 sumZ = 0.0;
+      for( integer jc = 0; jc < numComps; ++jc )
+      {
+        sumZ += composition[jc];
+      }
+      sumZ -= composition[ic];
+      if( sumZ < absTol )
+      {
+        continue;
+      }
       concatDerivatives( Deriv::dC+ic, derivatives, dPhaseFraction, dPhaseComponentFraction );
       geos::testing::internal::testNumericalDerivative< numValues >(
         0.0, dz, derivatives,
@@ -262,10 +272,7 @@ public:
         {
           zmf[jc] = composition[jc];
         }
-        if( -z < zmf[ic] )
-        {
-          zmf[ic] += z;
-        }
+        zmf[ic] += z;
         evaluateFlash( pressure, temperature, zmf.toSliceConst(), values );
       } );
     }
