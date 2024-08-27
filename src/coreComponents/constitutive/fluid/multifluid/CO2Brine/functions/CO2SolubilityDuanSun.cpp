@@ -99,15 +99,16 @@ real64 logF( real64 const & T, real64 const & P, real64 const & V_r )
   real64 const inv_V_r2 = inv_V_r*inv_V_r;
   real64 const inv_V_r3 = inv_V_r2*inv_V_r;
   real64 const inv_V_r4 = inv_V_r3*inv_V_r;
+  real64 const inv_V_r5 = inv_V_r4*inv_V_r;
 
   // fugacity coefficient of CO2, equation (A6) of Duan and Sun (2003)
   real64 const log_f = Z - 1 - log( Z ) +
                        ( acoef[0] + acoef[1]*inv_T_r2 + acoef[2]*inv_T_r3 )*inv_V_r
                        + ( acoef[3] + acoef[4]*inv_T_r2 + acoef[5]*inv_T_r3 )*0.5*inv_V_r2
-                       + ( acoef[6] + acoef[7]*inv_T_r2 + acoef[8]*inv_T_r3 )*0.25*inv_V_r3
-                       + ( acoef[9] + acoef[10]*inv_T_r2 + acoef[11]*inv_T_r3 )*inv_V_r4
+                       + ( acoef[6] + acoef[7]*inv_T_r2 + acoef[8]*inv_T_r3 )*0.25*inv_V_r4
+                       + ( acoef[9] + acoef[10]*inv_T_r2 + acoef[11]*inv_T_r3 )*0.2*inv_V_r5
                        + acoef[12]*0.5*inv_T_r3/acoef[14] * ( acoef[13] + 1.0 - (acoef[13] + 1.0 + acoef[14]*inv_V_r2) * exp( -acoef[14]*inv_V_r2 ) );
-  // This causes a divide by zero FPE when using clang14 on ruby
+  //This causes a divide by zero FPE when using clang14 on ruby
   // real64 const log_f = Z - 1 - log( Z ) +
   //                      ( acoef[0] + acoef[1]/T_r/T_r + acoef[2]/T_r/T_r/T_r )/V_r
   //                      + ( acoef[3] + acoef[4]/T_r/T_r + acoef[5]/T_r/T_r/T_r )/2.0/V_r/V_r
