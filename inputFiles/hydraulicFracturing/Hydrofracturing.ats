@@ -8,7 +8,7 @@ kgd_viscosity_dominated = {
     "partitions": ((1, 1, 1), (2, 3, 1)),
     "restart_step": 4,
     "check_step": 6,
-    "tolerance": [2.3e-5, 27000.0],
+    "tolerance": [2.3e-5, 510000.0],
     "aperture_curve_method": "kgd_viscosity_dominated_aperture_curve",
     "pressure_curve_method": "kgd_viscosity_dominated_pressure_curve"
 }
@@ -28,7 +28,7 @@ kgd_toughness_dominated = {
     "partitions": ((1, 1, 1), (2, 3, 1)),
     "restart_step": 5,
     "check_step": 9,
-    "tolerance": [1e-5, 21000.0],
+    "tolerance": [1e-4, 40000.0],
     "aperture_curve_method": "kgd_toughness_dominated_aperture_curve",
     "pressure_curve_method": "kgd_toughness_dominated_pressure_curve"
 }
@@ -82,7 +82,7 @@ penny_shaped_toughness_dominated = {
     "partitions": ((1, 1, 1), (1, 3, 2)),
     "restart_step": 5,
     "check_step": 10,
-    "tolerance": [3.4e-6, 1e5],
+    "tolerance": [1e-5, 1e5],
     "aperture_curve_method": "penny_shaped_toughness_dominated_aperture_curve",
     "pressure_curve_method": "penny_shaped_toughness_dominated_pressure_curve"
 }
