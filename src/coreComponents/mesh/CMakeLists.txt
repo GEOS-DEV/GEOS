@@ -193,6 +193,8 @@ blt_add_library( NAME       mesh
 
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS mesh LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
 if( ENABLE_VTK )
     # Avoid compiling with nvcc which sometimes segfaults in debug
     set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
