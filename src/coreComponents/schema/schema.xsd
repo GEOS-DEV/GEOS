@@ -3862,8 +3862,12 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--baseRockToughness => Base rock toughness of the solid material-->
+		<xsd:attribute name="baseRockToughness" type="real64" use="required" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--fractureOrigin => Coordinate of fracture origin-->
+		<xsd:attribute name="fractureOrigin" type="R1Tensor" default="{0,0,0}" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="groupNameRef" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -3876,10 +3880,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
 		<!--nodeBasedSIF => Flag for choosing between node or edge based criteria: 1 for node based criterion-->
 		<xsd:attribute name="nodeBasedSIF" type="integer" default="0" />
-		<!--rockToughness => Rock toughness of the solid material-->
-		<xsd:attribute name="rockToughness" type="real64" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--toughnessScalingFactor => Scaling factor for the rock toughness of the solid material-->
+		<xsd:attribute name="toughnessScalingFactor" type="real64" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
