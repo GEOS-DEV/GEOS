@@ -49,6 +49,7 @@ set( HYPRE_DIR ${GEOS_TPL_DIR}/hypre/ CACHE PATH "" FORCE )
 set( TRILINOS_DIR ${GEOS_TPL_DIR}/trilinos/ CACHE PATH "" FORCE )
 set( VTK_DIR ${GEOS_TPL_DIR}/vtk/ CACHE PATH "" FORCE )
 set( FMT_DIR ${GEOS_TPL_DIR}/fmt/ CACHE PATH "" FORCE )
+set( umpire_DIR ${GEOS_TPL_DIR}/chai/lib64/cmake/umpire/ CACHE PATH "" FORCE)
 
 # Add a raja-config.cmake to CMAKE_PREFIX_PATH
 set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${RAJA_DIR}/raja/lib/cmake/raja/")
