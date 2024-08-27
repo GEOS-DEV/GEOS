@@ -248,6 +248,7 @@ public:
       [&]( real64 const t, auto & values ) {
       evaluateFlash( pressure, t, composition.toSliceConst(), values );
     } );
+
     // -- Composition derivatives derivative
     real64 const dz = 1.0e-7;
     for( integer const ic : FluidData< numComps >::testComponents )
@@ -261,7 +262,10 @@ public:
         {
           zmf[jc] = composition[jc];
         }
-        zmf[ic] += z;
+        if( -z < zmf[ic] )
+        {
+          zmf[ic] += z;
+        }
         evaluateFlash( pressure, temperature, zmf.toSliceConst(), values );
       } );
     }
