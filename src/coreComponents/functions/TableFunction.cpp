@@ -20,6 +20,7 @@
 #include "TableFunction.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
+
 #include <algorithm>
 
 namespace geos

@@ -13,14 +13,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * PVTDriverRunTestCompositionalMultiphaseFluid.cpp
- */
-
-#include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluidPVTPackage >( constitutive::CompositionalMultiphaseFluidPVTPackage &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CO2BrinePhillipsFluid >( constitutive::CO2BrinePhillipsFluid &, arrayView2d< real64 > const & );
 }
