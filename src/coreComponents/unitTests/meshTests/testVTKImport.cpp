@@ -100,7 +100,7 @@ private:
 
   void SetUp() override
   {
-    // Disable floating point exceptions for the tests. 
+    // Disable floating point exceptions for the tests.
     // clang15 on x86_64 does throws an FPE.
     LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
     if( MpiWrapper::commRank() == 0 )
