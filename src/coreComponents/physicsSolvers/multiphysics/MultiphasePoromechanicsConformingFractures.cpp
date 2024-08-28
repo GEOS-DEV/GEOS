@@ -616,7 +616,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
       Nbar[ 2 ] = faceNormal[kf0][2] - faceNormal[kf1][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
-      stackArray1d< real64, 2*3*m_maxFaceNodes * MultiFluidBase::MAX_NUM_COMPONENTS > dRdU( 2*3*m_maxFaceNodes * MultiFluidBase::MAX_NUM_COMPONENTS );
+      stackArray2d< real64, 2*3*m_maxFaceNodes * MultiFluidBase::MAX_NUM_COMPONENTS > dRdU( MultiFluidBase::MAX_NUM_COMPONENTS, 2*3*m_maxFaceNodes );
 
       bool const isFractureOpen = ( fractureState[kfe] == fields::contact::FractureState::Open );
 
@@ -649,33 +649,25 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
-              for (integer ic = 0; ic < numComp; ic++)
+              for( integer ic = 0; ic < numComp; ic++ )
               {
-                dRdU( kf*3*numNodesPerFace*numComp + 3*a*numComp + i*numComp + ic ) = dVolume_dAperture * dAper_dU * compDens; // assuming poro=1
+                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dVolume_dAperture * dAper_dU * compDens[kfe][ic]; // assuming poro=1
               }
             }
           }
         }
 
-        integer const numRows = numComp+1;
-        for( integer i = 0; i < numRows; ++i )
-        {
-          m_localRhs[stack.localRow + i] += stack.localResidual[i];
-          m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
-                                                  stack.dofIndices,
-                                                  stack.localJacobian[i],
-                                                  numDof );
-        }
-
         localIndex const localRow = LvArray::integerConversion< localIndex >( flowDofNumber[kfe] - rankOffset );
-
         if( localRow >= 0 && localRow < localMatrix.numRows() )
         {
-
-          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                    nodeDOF,
-                                                                    dRdU.data(),
-                                                                    2 * 3 * numNodesPerFace );
+          integer const numRows = numComp;
+          for( integer i = 0; i < numRows; ++i )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow+i,
+                                                                      nodeDOF,
+                                                                      dRdU[i],
+                                                                      2 * 3 * numNodesPerFace );
+          }
         }
       }
 
@@ -716,7 +708,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
-              dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
+              for( integer ic = 0; ic < numComp; ic++ )
+              {
+                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dR_dAper * dAper_dU;
+              }
             }
           }
         }
@@ -724,13 +719,16 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         if( !skipAssembly )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( flowDofNumber[kfe] - rankOffset );
-
-          if( localRow > 0 && localRow < localMatrix.numRows() )
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
-            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                      nodeDOF,
-                                                                      dRdU.data(),
-                                                                      2 * 3 * numNodesPerFace );
+            integer const numRows = numComp;
+            for( integer i = 0; i < numRows; ++i )
+            {
+              localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow+i,
+                                                                        nodeDOF,
+                                                                        dRdU[i],
+                                                                        2 * 3 * numNodesPerFace );
+            }
           }
         }
       }

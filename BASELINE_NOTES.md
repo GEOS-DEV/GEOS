@@ -6,13 +6,26 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR 3197 (2024-08-07)
-====================
-Separation of contact and friction laws.
+
+PR #3283 (2024-08-22)
+======================
+Reuse computeSinglePhaseFlux. Rebaseline due to minor numerical diffs. 
+
+
+PR #3249 (2024-08-14)
+======================
+Two initialization options for poromechanical models. Rebaseline the corresponding cases. 
+
+
+PR #3278 (2024-08-12)
+======================
+Renamed GEOSX to GEOS in enternal mesh import, so rebaseline to change these names is the baselines. 
+
 
 PR #3202 (2024-08-03)
 ======================
 Acoustic VTI tests needed rebaselining after update in source and receiver location algorithm.
+
 
 PR #3215 (2024-07-23)
 ======================

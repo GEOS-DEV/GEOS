@@ -44,8 +44,6 @@ namespace geos
 
 namespace singlePhaseFVMKernels
 {
-using namespace fluxKernelsHelper;
-using namespace constitutive;
 
 /******************************** FaceBasedAssemblyKernelBase ********************************/
 
@@ -77,22 +75,22 @@ public:
                       fields::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::density,
                               fields::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
-    StencilMaterialAccessors< SlurryFluidBase,
+    StencilMaterialAccessors< constitutive::SlurryFluidBase,
                               fields::singlefluid::density,
                               fields::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
-    StencilMaterialAccessors< PermeabilityBase,
+    StencilMaterialAccessors< constitutive::PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 
   using ProppantPermeabilityAccessors =
-    StencilMaterialAccessors< PermeabilityBase,
+    StencilMaterialAccessors< constitutive::PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure,
                               fields::permeability::dPerm_dDispJump,
@@ -360,21 +358,21 @@ public:
         localIndex const subRegionIndex[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const elementIndex[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-        computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
-                                trans,
-                                dTrans,
-                                m_pres,
-                                m_gravCoef,
-                                m_dens,
-                                m_dDens_dPres,
-                                m_mob,
-                                m_dMob_dPres,
-                                alpha,
-                                mobility,
-                                potGrad,
-                                fluxVal,
-                                dFlux_dP,
-                                dFlux_dTrans );
+        fluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+                                                   trans,
+                                                   dTrans,
+                                                   m_pres,
+                                                   m_gravCoef,
+                                                   m_dens,
+                                                   m_dDens_dPres,
+                                                   m_mob,
+                                                   m_dMob_dPres,
+                                                   alpha,
+                                                   mobility,
+                                                   potGrad,
+                                                   fluxVal,
+                                                   dFlux_dP,
+                                                   dFlux_dTrans );
 
         // populate local flux vector and derivatives
         stack.localFlux[k[0]*numEqn] += m_dt * fluxVal;
@@ -679,7 +677,7 @@ public:
 
     // Get flow quantities on the elem/face
     real64 faceDens, faceVisc;
-    SingleFluidBaseUpdate::computeValues( m_fluidWrapper, m_facePres[kf], faceDens, faceVisc );
+    constitutive::SingleFluidBaseUpdate::computeValues( m_fluidWrapper, m_facePres[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = m_mob[er][esr][ei];
     singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
@@ -799,7 +797,7 @@ public:
                    FaceManager const & faceManager,
                    ElementRegionManager const & elemManager,
                    BoundaryStencilWrapper const & stencilWrapper,
-                   SingleFluidBase & fluidBase,
+                   constitutive::SingleFluidBase & fluidBase,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
