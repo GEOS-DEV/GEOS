@@ -505,7 +505,7 @@ private:
 
   real64 scalingToughness( R1Tensor const fractureOrigin,
                            real64 const (&faceCenter)[3],
-                           real64 const baseRockToughness, 
+                           real64 const baseRockToughness,
                            real64 const toughnessScalingFactor );
 
   /**

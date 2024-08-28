@@ -395,7 +395,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
           faceCenter[1] = faceCenters[kf][1];
           faceCenter[2] = faceCenters[kf][2];
 
-          real64 scaledToughness = scalingToughness( m_fractureOrigin, 
+          real64 scaledToughness = scalingToughness( m_fractureOrigin,
                                                      faceCenter,
                                                      m_baseRockToughness,
                                                      m_toughnessScalingFactor );
@@ -536,6 +536,8 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
 
+    FaceManager & faceManager = meshLevel.getFaceManager();
+
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
@@ -586,6 +588,23 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       permModel.initializeState();
     }
 
+    // Set value of each K_IC component for fractureSubRegion
+    arrayView1d< real64 > const K_IC_00 = fractureSubRegion.getField< surfaceGeneration::K_IC_00 >();
+    arrayView1d< real64 > const K_IC_11 = fractureSubRegion.getField< surfaceGeneration::K_IC_11 >();
+    arrayView1d< real64 > const K_IC_22 = fractureSubRegion.getField< surfaceGeneration::K_IC_22 >();
+
+    arrayView2d< real64 const > const & KIC = faceManager.getField< surfaceGeneration::K_IC >();
+
+    ArrayOfArraysView< localIndex const > const elemsToFaces = fractureSubRegion.faceList().toViewConst();
+
+    forAll< parallelHostPolicy >( fractureSubRegion.size(), [=] ( localIndex const ei )
+    {
+      localIndex const kf0 = elemsToFaces[ei][0];
+
+      K_IC_00[ei] = KIC[kf0][0];
+      K_IC_11[ei] = KIC[kf0][1];
+      K_IC_22[ei] = KIC[kf0][2];
+    } );
   } );
 
   return rval;
@@ -4607,16 +4626,16 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
 
 real64 SurfaceGenerator::scalingToughness( R1Tensor const fractureOrigin,
                                            real64 const (&faceCenter)[3],
-                                           real64 const baseRockToughness, 
+                                           real64 const baseRockToughness,
                                            real64 const toughnessScalingFactor )
 {
-  real64 const distance = sqrt( (fractureOrigin[0] - faceCenter[0])*(fractureOrigin[0] - faceCenter[0]) + 
+  real64 const distance = sqrt( (fractureOrigin[0] - faceCenter[0])*(fractureOrigin[0] - faceCenter[0]) +
                                 (fractureOrigin[1] - faceCenter[1])*(fractureOrigin[1] - faceCenter[1]) +
                                 (fractureOrigin[2] - faceCenter[2])*(fractureOrigin[2] - faceCenter[2]) );
-  
-  real64 scaledToughness = baseRockToughness*( 1 + toughnessScalingFactor*sqrt(distance) );
 
-  return scaledToughness; 
+  real64 scaledToughness = baseRockToughness*( 1 + toughnessScalingFactor*sqrt( distance ) );
+
+  return scaledToughness;
 }
 
 
