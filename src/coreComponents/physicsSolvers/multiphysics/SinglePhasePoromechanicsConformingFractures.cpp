@@ -409,7 +409,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
             // to the nodes of the adjacent cell
             localIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
 
-            if( rowIndex > 0 && rowIndex < pattern.numRows() )
+            if( rowIndex >= 0 && rowIndex < pattern.numRows() )
             {
 
               // Get fracture, face and region/subregion/element indices (for elements on both sides)
