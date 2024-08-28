@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -33,7 +34,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 
 /**
- * @namespace the geosx namespace that encapsulates the majority of the code
+ * @namespace the geos namespace that encapsulates the majority of the code
  */
 namespace geos
 {
@@ -423,7 +424,8 @@ void CompositionalMultiphaseHybridFVM::assembleStabilizedFluxTerms( real64 const
                                                                     arrayView1d< real64 > const & localRhs ) const
 {
   // stab not implemented
-  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
+  GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
+  GEOS_ERROR( "Stabilized flux not available for this flow solver" );
 }
 
 real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition & domain,
@@ -449,6 +451,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
+                                                     m_maxRelativeCompDensChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
