@@ -150,19 +150,16 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
             BUILD_SHARED_LIBS: ON
-            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu debug (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
             CMAKE_BUILD_TYPE: Debug
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             BUILD_SHARED_LIBS: ON
-            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             BUILD_SHARED_LIBS: ON
-            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -171,7 +168,6 @@ jobs:
             ENABLE_TRILINOS: OFF
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
             BUILD_SHARED_LIBS: ON
-            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -179,7 +175,6 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
-            RUNS_ON: ubuntu-22.04
 
           - name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -187,11 +182,6 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
-            RUNS_ON: streak2
-            NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
-            DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
-            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -199,13 +189,10 @@ jobs:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-      DOCKER_CERTS_DIR: ${{ matrix.DOCKER_CERTS_DIR }}
-      DOCKER_CERTS_UPDATE_COMMAND: ${{ matrix.DOCKER_CERTS_UPDATE_COMMAND }}
-      DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      RUNS_ON: ${{ matrix.RUNS_ON }}
+      RUNS_ON: ubuntu-22.04
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.

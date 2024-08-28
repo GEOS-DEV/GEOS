@@ -17,6 +17,7 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
+#include "LvArray/src/system.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/MeshManager.hpp"
@@ -40,6 +41,8 @@
 #include <conduit.hpp>
 
 #include <filesystem>
+
+#include <fenv.h>
 
 
 using namespace geos;
@@ -648,6 +651,10 @@ TEST( VTKImport, supportedElements )
 
 int main( int argc, char * * argv )
 {
+  // Disable floating point exceptions for the tests. 
+  // clang15 on x86_64 does throws an FPE.
+  LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+
   ::testing::InitGoogleTest( &argc, argv );
 
   geos::GeosxState state( geos::basicSetup( argc, argv ) );
