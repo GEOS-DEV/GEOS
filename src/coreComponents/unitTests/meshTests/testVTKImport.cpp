@@ -100,6 +100,9 @@ private:
 
   void SetUp() override
   {
+    // Disable floating point exceptions for the tests. 
+    // clang15 on x86_64 does throws an FPE.
+    LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
     if( MpiWrapper::commRank() == 0 )
     {
       namespace fs = std::filesystem;
@@ -651,10 +654,6 @@ TEST( VTKImport, supportedElements )
 
 int main( int argc, char * * argv )
 {
-  // Disable floating point exceptions for the tests. 
-  // clang15 on x86_64 does throws an FPE.
-  LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
-
   ::testing::InitGoogleTest( &argc, argv );
 
   geos::GeosxState state( geos::basicSetup( argc, argv ) );
