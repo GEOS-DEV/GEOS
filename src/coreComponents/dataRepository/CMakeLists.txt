@@ -62,6 +62,7 @@ blt_add_library( NAME       dataRepository
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+install( TARGETS dataRepository LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 
 if( GEOS_ENABLE_TESTS )
