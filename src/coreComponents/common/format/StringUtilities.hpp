@@ -81,24 +81,24 @@ string join( CONTAINER const & container, S const & delim = S() )
  * @tparam IT                type of iterator into the range of objects to join
  * @tparam S                 type of delimiter, usually char, char const * or string
  * @tparam LAMBDA            type of formatter functor, usually `[]( auto it ) -> string`
- * @param iteratorFormatter  formatter function to get a formattable value from a IT iterator
+ * @param formattingFunc     formatter function to get a formattable value from a IT iterator
  * @param first              iterator to start of the range
  * @param last               iterator past-the-end of the range
  * @param delim              delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S, typename LAMBDA >
-string joinLamda( IT first, IT last, S const & delim, LAMBDA iteratorFormatter )
+string joinLamda( IT first, IT last, S const & delim, LAMBDA formattingFunc )
 {
   if( first == last )
   {
     return {};
   }
   std::ostringstream oss;
-  oss << iteratorFormatter( first );
+  oss << formattingFunc( first );
   while( ++first != last )
   {
-    oss << delim << iteratorFormatter( first );
+    oss << delim << formattingFunc( first );
   }
   return oss.str();
 }
@@ -108,15 +108,15 @@ string joinLamda( IT first, IT last, S const & delim, LAMBDA iteratorFormatter )
  * @tparam CONTAINER         type of container to join
  * @tparam S                 type of delimiter, usually char, char const * or string
  * @tparam LAMBDA            type of formatter functor, usually `[]( auto it ) -> string`
- * @param iteratorFormatter  formatter function to get a formattable value from an iterator of the container
+ * @param formattingFunc     formatter function to get a formattable value from an iterator of the container
  * @param container          container to join
  * @param delim              delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename CONTAINER, typename S, typename LAMBDA >
-string joinLamda( CONTAINER const & container, S const & delim, LAMBDA iteratorFormatter )
+string joinLamda( CONTAINER const & container, S const & delim, LAMBDA formattingFunc )
 {
-  return joinLamda( std::begin( container ), std::end( container ), delim, iteratorFormatter );
+  return joinLamda( std::begin( container ), std::end( container ), delim, formattingFunc );
 }
 
 /**
