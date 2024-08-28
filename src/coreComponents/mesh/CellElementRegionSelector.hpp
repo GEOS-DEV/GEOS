@@ -60,6 +60,9 @@ public:
 
 private:
 
+  /// @brief The separator between the regionAttribute value and the type of the shape in a given cellBlock.
+  static constexpr string_view cellBlockTypeSeparator = "_";
+
   /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it (0 -> n).
   std::map< string, std::vector< CellElementRegion const * > > m_cellBlocksOwners;
 
@@ -106,6 +109,13 @@ private:
   void registerRegionSelection( CellElementRegion const & region,
                                 std::set< integer > const & attributeValues,
                                 std::set< string > const & cellBlockNames );
+
+  /**
+   * @return the cellBlock region attribute value in a given cellBlock name, or std::nullopt if
+   * the named did not contain any region attribute.
+   * @param cellBlockName the cellBlock name.
+   */
+  static std::optional< string > getCellBlockAttributeValue( string_view cellBlockName );
 
 };
 

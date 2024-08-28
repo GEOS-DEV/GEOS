@@ -24,11 +24,10 @@ using namespace dataRepository;
 using ViewKeys = CellElementRegion::viewKeyStruct;
 
 
-std::optional< string > getCellBlockAttributeValue( string_view cellBlockName )
+std::optional< string > CellElementRegionSelector::getCellBlockAttributeValue( string_view cellBlockName )
 {
-  static constexpr string_view separator = "_";
-  return cellBlockName.find( separator ) != string_view::npos ?
-         stringutilities::removeStringAndFollowingContent( cellBlockName, separator ) :
+  return cellBlockName.find( cellBlockTypeSeparator ) != string_view::npos ?
+         stringutilities::removeStringAndFollowingContent( cellBlockName, cellBlockTypeSeparator ) :
          std::optional< string >( std::nullopt );
 }
 
