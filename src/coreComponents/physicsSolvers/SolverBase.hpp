@@ -845,6 +845,10 @@ private:
                              integer const cycleNumber,
                              DomainPartition & domain );
 
+  void logEndOfCycleInformation( integer const cycleNumber,
+                                 integer const numOfSubSteps,
+                                 std::vector< real64 > const & subStepDt ) const;
+
 };
 
 template< typename CONSTITUTIVE_BASE_TYPE >
