@@ -200,6 +200,11 @@ if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get install -y lcov
 fi
 
+if [[ "${RUN_INTEGRATED_TESTS}" = true ]] || [[ "${RUN_UNIT_TESTS}" = true ]]; then
+  LVARRAY_BOUNDS_CHECK=ON
+else
+  LVARRAY_BOUNDS_CHECK=OFF
+fi
 
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -225,6 +230,7 @@ or_die python3 scripts/config-build.py \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
+               -DLVARRAY_BOUNDS_CHECK=${LVARRAY_BOUNDS_CHECK} \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
