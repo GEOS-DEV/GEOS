@@ -14,12 +14,12 @@
  */
 
 /**
- * @file NegativeTwoPhaseFlashModel.cpp
+ * @file ImmiscibleWaterFlashModel.cpp
  */
 
-#include "NegativeTwoPhaseFlashModel.hpp"
+#include "ImmiscibleWaterFlashModel.hpp"
+#include "ImmiscibleWaterParameters.hpp"
 #include "EquationOfState.hpp"
-#include "CriticalVolume.hpp"
 
 namespace geos
 {
@@ -31,57 +31,69 @@ namespace compositional
 {
 
 // Naming conventions
-string NegativeTwoPhaseFlashModel::catalogName()
+string ImmiscibleWaterFlashModel::catalogName()
 {
-  return "TwoPhase";
+  return "ThreePhase";
 }
 
-NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
-                                                        ComponentProperties const & componentProperties,
-                                                        ModelParameters const & modelParameters ):
+ImmiscibleWaterFlashModel::ImmiscibleWaterFlashModel( string const & name,
+                                                      ComponentProperties const & componentProperties,
+                                                      ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties ),
   m_parameters( modelParameters )
-{}
+{
+  m_waterComponentIndex = ImmiscibleWaterParameters::getWaterComponentIndex( componentProperties );
+}
 
-NegativeTwoPhaseFlashModel::KernelWrapper
-NegativeTwoPhaseFlashModel::createKernelWrapper() const
+ImmiscibleWaterFlashModel::KernelWrapper
+ImmiscibleWaterFlashModel::createKernelWrapper() const
 {
   constexpr integer liquidIndex = 0;
   constexpr integer vapourIndex = 1;
+  constexpr integer aqueousIndex = 2;
   EquationOfState const * equationOfState = m_parameters.get< EquationOfState >();
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
-  CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
+  array1d< real64 > componentCriticalVolume( m_componentProperties.getNumberOfComponents());
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
                         liquidIndex,
                         vapourIndex,
+                        aqueousIndex,
+                        m_waterComponentIndex,
                         liquidEos,
                         vapourEos,
-                        criticalVolume->m_componentCriticalVolume );
+                        componentCriticalVolume );
 }
 
-NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
+ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
   integer const numComponents,
   integer const liquidIndex,
   integer const vapourIndex,
+  integer const aqueousIndex,
+  integer const waterComponentIndex,
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
   arrayView1d< real64 const > const componentCriticalVolume ):
+  m_twoPhaseModel( numComponents,
+                   liquidIndex,
+                   vapourIndex,
+                   liquidEos,
+                   vapourEos,
+                   componentCriticalVolume ),
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
-  m_liquidEos( liquidEos ),
-  m_vapourEos( vapourEos ),
-  m_componentCriticalVolume( componentCriticalVolume )
+  m_aquoesIndex( aqueousIndex ),
+  m_waterComponentIndex( waterComponentIndex )
 {}
 
 std::unique_ptr< ModelParameters >
-NegativeTwoPhaseFlashModel::createParameters( std::unique_ptr< ModelParameters > parameters )
+ImmiscibleWaterFlashModel::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
-  std::unique_ptr< ModelParameters > params = EquationOfState::create( std::move( parameters ) );
-  params = CriticalVolume::create( std::move( params ) );
+  auto params = NegativeTwoPhaseFlashModel::createParameters( std::move( parameters ) );
+  params = ImmiscibleWaterParameters::create( std::move( params ) );
   return params;
 }
 

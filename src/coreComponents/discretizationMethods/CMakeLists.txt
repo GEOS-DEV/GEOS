@@ -26,3 +26,4 @@ blt_add_library( NAME       discretizationMethods
 
 target_include_directories( discretizationMethods PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS discretizationMethods LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
