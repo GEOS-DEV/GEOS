@@ -23,6 +23,7 @@
 
 using namespace geos;
 using namespace geos::testing;
+using namespace geos::dataRepository;
 using namespace geos::constitutive;
 
 namespace geos

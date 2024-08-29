@@ -52,7 +52,7 @@ public:
    * @param[out] kValues the k-values estimated from the stationary points
    * @return a flag indicating that 2 stationary points have been found
    */
-  template< integer USD1 >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static bool compute( integer const numComps,
                        real64 const pressure,
@@ -61,7 +61,7 @@ public:
                        ComponentProperties::KernelWrapper const & componentProperties,
                        EquationOfStateType const & equationOfState,
                        real64 & tangentPlaneDistance,
-                       arraySlice1d< real64 > const & kValues )
+                       arraySlice1d< real64, USD2 > const & kValues )
   {
     constexpr integer numTrials = 2;    // Trial compositions
     stackArray2d< real64, 4*maxNumComps > workSpace( 4, numComps );

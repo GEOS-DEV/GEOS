@@ -23,6 +23,7 @@
 #include "mainInterface/initialization.hpp"
 
 using namespace geos;
+using namespace geos::dataRepository;
 using namespace geos::testing;
 using namespace geos::constitutive;
 using namespace geos::constitutive::compositional;

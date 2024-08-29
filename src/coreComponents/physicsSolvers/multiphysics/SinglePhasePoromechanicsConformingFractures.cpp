@@ -20,12 +20,11 @@
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-//#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
@@ -123,10 +122,10 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( Do
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( numLocalRows, MPI_COMM_GEOSX );
+  rhs.create( numLocalRows, MPI_COMM_GEOS );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( numLocalRows, MPI_COMM_GEOSX );
+  solution.create( numLocalRows, MPI_COMM_GEOS );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
@@ -372,7 +371,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     // Get the finite volume method used to compute the stabilization
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
+    FluxApproximationBase const & fvDiscretization = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
     SurfaceElementRegion const & fractureRegion =
       elemManager.getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() );
@@ -391,7 +390,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
 
     ArrayOfArraysView< localIndex const > const & elemsToFaces = fractureSubRegion.faceList().toViewConst();
 
-    stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+    fvDiscretization.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
       forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
       {
@@ -406,13 +405,15 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
           for( localIndex kf = 0; kf < 2; ++kf )
           {
             // Set row DOF index
-            globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
+            // Note that the 1-kf index is intentional, as this is coupling the pressure of one face cell
+            // to the nodes of the adjacent cell
+            localIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
 
             if( rowIndex > 0 && rowIndex < pattern.numRows() )
             {
 
               // Get fracture, face and region/subregion/element indices (for elements on both sides)
-              localIndex fractureIndex = sei[iconn][kf];
+              localIndex const fractureIndex = sei[iconn][kf];
 
               // Get the number of nodes
               localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[fractureIndex][0] );
@@ -769,13 +770,13 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-      string const & contactRelationName = subRegion.template getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = subRegion.getConstitutiveModel< ContactBase >( contactRelationName );
+      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
+      HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( hydraulicApertureModel, [&] ( auto & castedHydraulicAperture )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        using HydraulicApertureType = TYPEOFREF( castedHydraulicAperture );
+        typename HydraulicApertureType::KernelWrapper hydraulicApertureWrapper = castedHydraulicAperture.createKernelWrapper();
 
         constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
         {
@@ -784,7 +785,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
           poromechanicsFracturesKernels::StateUpdateKernel::
             launch< parallelDevicePolicy<> >( subRegion.size(),
                                               porousMaterialWrapper,
-                                              contactWrapper,
+                                              hydraulicApertureWrapper,
                                               dispJump,
                                               pressure,
                                               area,

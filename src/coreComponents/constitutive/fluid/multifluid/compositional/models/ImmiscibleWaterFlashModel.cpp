@@ -18,9 +18,8 @@
  */
 
 #include "ImmiscibleWaterFlashModel.hpp"
-#include "EquationOfState.hpp"
-#include "CriticalVolume.hpp"
 #include "ImmiscibleWaterParameters.hpp"
+#include "EquationOfState.hpp"
 
 namespace geos
 {
@@ -56,7 +55,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
-  CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
+  array1d< real64 > componentCriticalVolume( m_componentProperties.getNumberOfComponents());
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
                         liquidIndex,
@@ -65,7 +64,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
                         m_waterComponentIndex,
                         liquidEos,
                         vapourEos,
-                        criticalVolume->m_componentCriticalVolume );
+                        componentCriticalVolume );
 }
 
 ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
@@ -94,33 +93,9 @@ std::unique_ptr< ModelParameters >
 ImmiscibleWaterFlashModel::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
   auto params = NegativeTwoPhaseFlashModel::createParameters( std::move( parameters ) );
-  if( params && params->get< Parameters >() != nullptr )
-  {
-    return params;
-  }
-  return std::make_unique< Parameters >( std::move( params ) );
+  params = ImmiscibleWaterParameters::create( std::move( params ) );
+  return params;
 }
-
-ImmiscibleWaterFlashModel::Parameters::Parameters( std::unique_ptr< ModelParameters > parameters ):
-  ModelParameters( std::move( parameters ) )
-{}
-
-void
-ImmiscibleWaterFlashModel::Parameters::postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
-{
-  integer const waterIndex = fluid->getWaterPhaseIndex();
-  GEOS_THROW_IF_LT_MSG( waterIndex, 0,
-                        GEOS_FMT( "{}: water phase not found '{}'", fluid->getFullName(),
-                                  MultiFluidBase::viewKeyStruct::phaseNamesString() ),
-                        InputError );
-
-  integer const h2oIndex = ImmiscibleWaterParameters::getWaterComponentIndex( componentProperties );
-  GEOS_THROW_IF_LT_MSG( h2oIndex, 0,
-                        GEOS_FMT( "{}: water component not found '{}'", fluid->getFullName(),
-                                  MultiFluidBase::viewKeyStruct::componentNamesString() ),
-                        InputError );
-}
-
 
 } // end namespace compositional
 

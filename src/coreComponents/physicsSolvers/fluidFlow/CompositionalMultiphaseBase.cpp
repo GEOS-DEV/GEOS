@@ -36,7 +36,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
-#include "fieldSpecification/SourceFluxStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
@@ -127,7 +127,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::maxRelativeCompDensChangeString(), &m_maxRelativeCompDensChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max ). // disabled by default
+    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max/1.0e100 ). // disabled by default
     setDescription( "Maximum (relative) change in a component density in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).

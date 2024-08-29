@@ -44,11 +44,9 @@ private:
   static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
 public:
 
-  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
+  using PhaseProp = NegativeTwoPhaseFlashModelUpdate::PhaseProp;
+  using PhaseComp = NegativeTwoPhaseFlashModelUpdate::PhaseComp;
   using Deriv = multifluid::DerivativeOffset;
-
-  static constexpr real64 stabilityTolerance = MultiFluidConstants::fugacityTolerance;
 
   ImmiscibleWaterFlashModelUpdate( integer const numComponents,
                                    integer const liquidIndex,
@@ -127,14 +125,6 @@ public:
 
   // Create parameters unique to this model
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
-
-  class Parameters : public ModelParameters
-  {
-public:
-    Parameters( std::unique_ptr< ModelParameters > parameters );
-protected:
-    void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
-  };
 
 private:
   ModelParameters const & m_parameters;
