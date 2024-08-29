@@ -33,13 +33,6 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 
-
-StatOutputController::StatOutputController( const string & name,
-                                            Group * const parent ):
-  TaskBase( name, parent ),
-  m_statistics( nullptr )
-{}
-
 PackCollection * generatePackCollection( TasksManager & taskManager,
                                          string const key,
                                          string_view path,
@@ -66,6 +59,12 @@ TimeHistoryOutput * generateTimeHistory( OutputManager & outputManager,
   return timeHistory;
 }
 
+StatOutputController::StatOutputController( const string & name,
+                                            Group * const parent ):
+  TaskBase( name, parent ),
+  m_statistics( nullptr )
+{}
+
 void StatOutputController::initializePreSubGroups()
 {
   Group & problemManager = this->getGroupByPath( "/Problem" );
@@ -75,9 +74,9 @@ void StatOutputController::initializePreSubGroups()
   TasksManager & taskManager = this->getGroupByPath< TasksManager >( "/Tasks" );
   OutputManager & outputManager = this->getGroupByPath< OutputManager >( "/Outputs" );
   
-  std::vector< string > groupNames = this->getSubGroupsNames();
+  std::vector< string > const groupNames = this->getSubGroupsNames();
   m_statistics = &this->getGroup< TaskBase >( groupNames[0] );
-  
+
   forSubStats( [&]( auto & statistics ) {
     using STATSTYPE = typename TYPEOFREF( statistics );
     statistics.getSolver()->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
