@@ -40,6 +40,11 @@ namespace geos
 
 void HypreInterface::initialize()
 {
+#ifdef GEOS_USE_OPENMP
+  GEOS_LOG_RANK_0_IF( omp_get_max_threads()>1,
+                      "OMP_NUM_THREADS > 1 may not be optimal for certain hypre preconditioning options. " );
+#endif
+
   HYPRE_Init();
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   HYPRE_SetExecutionPolicy( HYPRE_EXEC_DEVICE );

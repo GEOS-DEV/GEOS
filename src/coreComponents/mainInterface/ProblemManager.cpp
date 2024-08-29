@@ -139,6 +139,8 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
 
+  chai::ArrayManager::getInstance()->disableCallbacks();
+
 }
 
 ProblemManager::~ProblemManager()

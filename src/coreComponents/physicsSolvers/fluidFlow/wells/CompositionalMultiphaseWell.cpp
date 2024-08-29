@@ -88,7 +88,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   this->registerWrapper( viewKeyStruct::maxRelativeCompDensChangeString(), &m_maxRelativeCompDensChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max ). // disabled by default
+    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max/1.0e100 ). // disabled by default
     setDescription( "Maximum (relative) change in a component density between two Newton iterations" );
 
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
