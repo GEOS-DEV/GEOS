@@ -167,7 +167,7 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
 
 
-  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+  integer const numDir = 3; //m_drainageWettingNonWettingRelPermTableNames.size(0);
   integer const numPhases = m_phaseNames.size();
   
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
@@ -276,7 +276,7 @@ void TableRelativePermeabilityHysteresis::initializePreSubGroups()
 {
   RelativePermeabilityBase::initializePreSubGroups();
   
-  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+  integer const numDir = 3; //m_drainageWettingNonWettingRelPermTableNames.size(0);
 
   m_drainagePhaseMinVolFraction.resize( numDir, MAX_NUM_PHASES );
   m_imbibitionPhaseMinVolFraction.resize( numDir, 2 ); // we don't save the value of the intermediate phase, for which we neglect hysteresis
@@ -304,7 +304,7 @@ void TableRelativePermeabilityHysteresis::initializePreSubGroups()
 void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPermTables()
 {
   integer const numPhases = m_phaseNames.size();
-  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+  integer const numDir =  3; //m_drainageWettingNonWettingRelPermTableNames.size(0);
   // so the question here is should this be defined effectively every time numPhases is defined? (register vs function imbedded)
 
   // Step 1.a: take care of the two-phase case
@@ -385,7 +385,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateImbibitionRel
   integer ipNonWetting = 0;
 
   integer const numPhases = m_phaseNames.size();
-  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+  integer const numDir = 3; // m_drainageWettingNonWettingRelPermTableNames.size(0);
 
 
   if( numPhases == 2 )
@@ -500,7 +500,7 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   integer ipNonWetting = 0;
 
   integer const numPhases = m_phaseNames.size();
-  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+  integer const numDir = 3; // m_drainageWettingNonWettingRelPermTableNames.size(0);
 
   if( numPhases == 2 )
   {
@@ -561,7 +561,7 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   integer const numPhases = m_phaseNames.size();
-  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+  integer const numDir = 3; //m_drainageWettingNonWettingRelPermTableNames.size(0);
 
   // we want to make sure that the wrappers are always up-to-date, so we recreate them every time
   // need to get the ip loops for imbibition as well?

@@ -146,8 +146,9 @@ public:
     real64 dDens_dC[numComp]{};
     real64 dVisc_dC[numComp]{};
 
+    integer const numDir = phaseMob.size(1);
 
-    for( int dir = 0; dir < 1; ++dir )
+    for( int dir = 0; dir < numDir; ++dir )
     {
 
       for( integer ip = 0; ip < numPhase; ++ip )
