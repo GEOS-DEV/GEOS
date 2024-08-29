@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -19,6 +20,7 @@
 #include "TableFunction.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
+
 #include <algorithm>
 
 namespace geos
@@ -180,6 +182,77 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
                            units::formatValue( lowerBound, getDimUnit( dim ) ),
                            units::formatValue( upperBound, getDimUnit( dim ) ) ),
                  SimulationError );
+}
+
+void TableFunction::print( std::string const & filename ) const
+{
+  std::ofstream os( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
+
+  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
+
+  if( numDimensions != 2 )
+  {
+    // print header
+
+    for( integer d = 0; d < numDimensions; d++ )
+    {
+      os << units::getDescription( getDimUnit( d )) << ",";
+    }
+    os << units::getDescription( m_valueUnit ) << "\n";
+
+    // print values
+
+    // prepare dividers
+    std::vector< integer > div( numDimensions );
+    div[0] = 1;
+    for( integer d = 1; d < numDimensions; d++ )
+    {
+      div[d] = div[d-1] * m_coordinates[d-1].size();
+    }
+    // loop through all the values
+    for( integer v = 0; v < m_values.size(); v++ )
+    {
+      // find coords indices
+      std::vector< integer > idx( numDimensions );
+      integer r = v;
+      for( integer d = numDimensions-1; d >= 0; d-- )
+      {
+        idx[d] = r / div[d];
+        r = r % div[d];
+      }
+      // finally print out in right order
+      for( integer d = 0; d < numDimensions; d++ )
+      {
+        arraySlice1d< real64 const > const coords = m_coordinates[d];
+        os << coords[idx[d]] << ",";
+      }
+      os << m_values[v] << "\n";
+    }
+  }
+  else // numDimensions == 2
+  {
+    arraySlice1d< real64 const > const coordsX = m_coordinates[0];
+    arraySlice1d< real64 const > const coordsY = m_coordinates[1];
+    integer const nX = coordsX.size();
+    integer const nY = coordsY.size();
+    os<<units::getDescription( getDimUnit( 0 ));
+    for( integer j = 0; j < nY; j++ )
+    {
+      os << "," << units::getDescription( getDimUnit( 1 )) << "=" << coordsY[j];
+    }
+    os << "\n";
+    for( integer i = 0; i < nX; i++ )
+    {
+      os << coordsX[i];
+      for( integer j = 0; j < nY; j++ )
+      {
+        os << "," << m_values[ j*nX + i ];
+      }
+      os << "\n";
+    }
+  }
+
+  os.close();
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
