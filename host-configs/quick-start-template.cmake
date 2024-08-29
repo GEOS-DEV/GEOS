@@ -1,19 +1,19 @@
 set( CONFIG_NAME "quick-start" ) 
 
 # Set compilers path
-set(CMAKE_C_COMPILER "path-to-gcc/bin/gcc" CACHE PATH "")
-set(CMAKE_CXX_COMPILER "path-to-gcc/bin/g++" CACHE PATH "")
+set(CMAKE_C_COMPILER "path-to-gcc/bin/gcc" CACHE PATH "")   # This is typically something like /usr/bin/gcc ... or clang
+set(CMAKE_CXX_COMPILER "path-to-gcc/bin/g++" CACHE PATH "") # This is typically something like /usr/bin/g++ ... or clang++
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 
 # Set paths to mpi
 set(ENABLE_MPI ON CACHE PATH "")
-set(MPI_C_COMPILER "path-to-mpi/bin/mpicc" CACHE PATH "")
-set(MPI_CXX_COMPILER "path-to-mpi/bin/mpicxx" CACHE PATH "")
-set(MPIEXEC "path-to-mpi/bin/mpirun" CACHE PATH "")
+set(MPI_C_COMPILER "path-to-mpi/bin/mpicc" CACHE PATH "")    # This is typically something like /usr/bin/mpicc
+set(MPI_CXX_COMPILER "path-to-mpi/bin/mpicxx" CACHE PATH "") # This is typically something like /usr/bin/mpicxx
+set(MPIEXEC "path-to-mpi/bin/mpirun" CACHE PATH "")          # This is typically something like /usr/bin/mpirun
 
 # Set paths to blas and lapack
-set( BLAS_LIBRARIES "path-to-blas" CACHE PATH "" FORCE )
-set( LAPACK_LIBRARIES  CACHE PATH "path-to-lapack" FORCE )
+set( BLAS_LIBRARIES "path-to-blas" CACHE PATH "" FORCE )   # This is typically something like /usr/lib64/libblas.so 
+set( LAPACK_LIBRARIES  CACHE PATH "path-to-lapack" FORCE ) # This is typically something like /usr/lib64/liblapack.so
 
 # Cuda and openMP
 set( ENABLE_CUDA OFF CACHE PATH "" FORCE )
