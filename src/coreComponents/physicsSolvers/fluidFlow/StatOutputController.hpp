@@ -18,6 +18,9 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "events/tasks/TaskBase.hpp"
@@ -70,8 +73,8 @@ public:
 
   /**
    * @defgroup Tasks Interface Functions
-   *
    * This function implements the interface defined by the abstract TaskBase class
+   * Execute the computation of aggregate statistics / packCollection / TimeHistoryOutput
    */
   /**@{*/
 
@@ -84,14 +87,19 @@ public:
 
 private:
 
-  void postInputInitialization() override;
-
   void initializePreSubGroups() override;
 
-  CompositionalMultiphaseStatistics * compMultiphaseStatistics;
+  TaskBase * m_statistics;
   std::vector< TimeHistoryOutput * > m_timeHistories;
   std::vector< PackCollection * >  m_packCollections;
 
+  /**
+   * @brief Apply the lambda expression to the supported types
+   * @tparam LAMBDA The lambda type 
+   * @param lambda  The lambda to be evaluated
+   */
+  template< typename LAMBDA >
+  void forSubStats( LAMBDA lambda );
 };
 
 } /* namespace geos */
