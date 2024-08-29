@@ -1375,6 +1375,7 @@
 	<xsd:complexType name="StatOutputControllerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="TriaxialDriverType" />
