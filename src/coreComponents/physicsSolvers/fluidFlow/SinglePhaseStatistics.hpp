@@ -62,7 +62,129 @@ public:
                         DomainPartition & domain ) override;
 
   /**@}*/
+  class RegionStatistics : public dataRepository::Group
+  {
+public:
+    RegionStatistics( string const & name,
+                      Group * const parent )
+      : Group( name, parent )
+    {
+      registerWrapper( viewKeyStruct::averagePressureString(), &m_averagePressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "average region pressure" );
 
+      registerWrapper( viewKeyStruct::minPressureString(), &m_minPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "minimum region pressure" );
+
+      registerWrapper( viewKeyStruct::maxPressureString(), &m_maxPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "maximum region pressure" );
+
+      registerWrapper( viewKeyStruct::minDeltaPressureString(), &m_minDeltaPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "minimum region delta pressure" );
+
+      registerWrapper( viewKeyStruct::maxDeltaPressureString(), &m_maxDeltaPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "maximum region delta pressure" );
+
+      registerWrapper( viewKeyStruct::maxDeltaPressureString(), &m_totalMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "fluid mass" );
+
+
+      registerWrapper( viewKeyStruct::averageTemperatureString(), &m_averageTemperature ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "average region temperature" );
+
+      registerWrapper( viewKeyStruct::minTemperatureString(), &m_minTemperature ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "minimum region temperature" );
+
+      registerWrapper( viewKeyStruct::maxTemperatureString(), &m_maxTemperature ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "maximum region temperature" );
+
+
+      registerWrapper( viewKeyStruct::totalPoreVolumeString(), &m_totalPoreVolume ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "total region pore volume" );
+
+      registerWrapper( viewKeyStruct::totalUncompactedPoreVolumeString(), &m_totalUncompactedPoreVolume ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "total region uncompacted pore volume" );
+
+    }
+
+    struct viewKeyStruct
+    {
+      constexpr static char const * averagePressureString() { return "averagePressure"; }
+      constexpr static char const * minPressureString() { return "minPressure"; }
+      constexpr static char const * maxPressureString() { return "maxPressure"; }
+
+      constexpr static char const * minDeltaPressureString() { return "minDeltaPressure"; }
+      constexpr static char const * maxDeltaPressureString() { return "maxDeltaPressure"; }
+
+      constexpr static char const * totalMassString() { return "totalMass"; }
+
+      constexpr static char const * averageTemperatureString() { return "averageTemperature"; }
+      constexpr static char const * minTemperatureString() { return "minTemperature"; }
+      constexpr static char const * maxTemperatureString() { return "maxTemperature"; }
+
+      constexpr static char const * totalPoreVolumeString() { return "totalPoreVolume"; }
+      constexpr static char const * totalUncompactedPoreVolumeString() { return "totalUncompactedPoreVolume"; }
+    };
+
+
+private:
+    /// average region pressure
+    real64 m_averagePressure;
+    /// minimum region pressure
+    real64 m_minPressure;
+    /// maximum region pressure
+    real64 m_maxPressure;
+
+    /// minimum region delta pressure
+    real64 m_minDeltaPressure;
+    /// maximum region delta pressure
+    real64 m_maxDeltaPressure;
+
+    // fluid mass
+    real64 m_totalMass;
+
+    /// average region temperature
+    real64 m_averageTemperature;
+    /// minimum region temperature
+    real64 m_minTemperature;
+    /// maximum region temperature
+    real64 m_maxTemperature;
+
+    /// total region pore volume
+    real64 m_totalPoreVolume;
+    /// total region uncompacted pore volume
+    real64 m_totalUncompactedPoreVolume;
+    /// phase region phase pore volume
+    array1d< real64 > m_phasePoreVolume;
+
+  };
+
+  /**@}*/
+
+private:
+
+  using Base = FieldStatisticsBase< SinglePhaseBase >;
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
@@ -73,39 +195,6 @@ public:
     constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
   };
 
-  struct RegionStatistics
-  {
-    /// average region pressure
-    real64 averagePressure;
-    /// minimum region pressure
-    real64 minPressure;
-    /// maximum region pressure
-    real64 maxPressure;
-
-    /// minimum region delta pressure
-    real64 minDeltaPressure;
-    /// maximum region delta pressure
-    real64 maxDeltaPressure;
-
-    // fluid mass
-    real64 totalMass;
-
-    /// average region temperature
-    real64 averageTemperature;
-    /// minimum region temperature
-    real64 minTemperature;
-    /// maximum region temperature
-    real64 maxTemperature;
-
-    /// total region pore volume
-    real64 totalPoreVolume;
-    /// total region uncompacted pore volume
-    real64 totalUncompactedPoreVolume;
-  };
-
-private:
-
-  using Base = FieldStatisticsBase< SinglePhaseBase >;
 
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, etc)
@@ -114,7 +203,7 @@ private:
    */
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                arrayView1d< string const > const & regionNames );
 
 
   void registerDataOnMesh( Group & meshBodies ) override;
