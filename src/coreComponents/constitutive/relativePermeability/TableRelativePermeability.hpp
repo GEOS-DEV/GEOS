@@ -193,7 +193,9 @@ TableRelativePermeability::KernelWrapper::
                    arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   using TPT = TableRelativePermeability::TwoPhasePairPhaseType;
-  for( int dir=0; dir<3; ++dir )
+  integer const numDir = 1;
+  
+  for( int dir=0; dir<numDir; ++dir )
   {
     // water rel perm
     phaseRelPerm[ipWetting][dir] =
@@ -220,12 +222,14 @@ TableRelativePermeability::KernelWrapper::
                      arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                      arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  for( int dir=0; dir<3; ++dir )
+  integer const numDir = 1;
+  for( int dir=0; dir<numDir; ++dir )
   {
     real64 interRelPerm_wi = 0;     // oil rel perm using two-phase gas-oil data
     real64 dInterRelPerm_wi_dInterVolFrac = 0;     // derivative w.r.t to So
     real64 interRelPerm_nwi = 0;     // oil rel perm using two-phase gas-oil data
     real64 dInterRelPerm_nwi_dInterVolFrac = 0;     // derivative w.r.t to So
+    
     using TPT = TableRelativePermeability::ThreePhasePairPhaseType;
 
     // 1) Wetting and intermediate phase relative permeabilities using two-phase wetting-intermediate data
@@ -309,6 +313,8 @@ TableRelativePermeability::KernelWrapper::
   integer const ipOil   = m_phaseOrder[PT::OIL];
   integer const ipGas   = m_phaseOrder[PT::GAS];
 
+  integer const numDir = 1;
+
   if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
   {
     computeThreePhase( ipWater, // wetting
@@ -344,7 +350,7 @@ TableRelativePermeability::KernelWrapper::
                      dPhaseRelPerm_dPhaseVolFrac );
   }
 
-  for( int dir= 0; dir < 3; ++dir )
+  for( int dir= 0; dir < numDir; ++dir )
   {
 
     // update trapped phase volume fraction

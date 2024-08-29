@@ -101,10 +101,11 @@ public:
     return maxNumPointsInFlux;
   }
 
-  void getFaceNormal( localIndex const iconn, real64 (& faceNormal)[3] ) const
+  void getFaceNormal(localIndex const iconn, real64* faceNormal, std::size_t size) const
   {
-    GEOS_UNUSED_VAR( iconn, faceNormal );
+    GEOS_UNUSED_VAR(iconn, faceNormal, size);
   }
+
 
 private:
 

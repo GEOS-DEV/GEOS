@@ -35,6 +35,30 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
+
+
+/*   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "List of fluid phases" );    
+ */
+
+/*   registerWrapper( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(), &m_drainageWettingNonWettingRelPermTableNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupOfGroupNameRefArray ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "List of drainage relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
+                    "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
+                    "Note that this input is only used for two-phase flow.\n"
+                    "If you want to do a three-phase simulation, please use instead " +
+                    string( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString() ) +
+                    " and " +
+                    string( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString() ) +
+                    " to specify the table names" );
+
+
+ */
+
+
   registerWrapper( viewKeyStruct::phaseTypesString(), &m_phaseTypes ).
     setSizedFromParent( 0 );
 
@@ -49,6 +73,8 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerField( fields::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
 
 }
+
+// should probably add direction to this function
 
 void RelativePermeabilityBase::postInputInitialization()
 {
@@ -92,7 +118,11 @@ void RelativePermeabilityBase::postInputInitialization()
 void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex const numPts )
 {
   integer const numPhases = numFluidPhases();
-  integer const numDir = 3;
+  integer const numDir = 3; //m_drainageWettingNonWettingRelPermTableNames.size(0); // 1;
+  
+  integer const numDirTest = m_phaseRelPerm.size();
+
+  std::cout << "Size of prp: " << numDir << std::endl;
 
   m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
   m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );

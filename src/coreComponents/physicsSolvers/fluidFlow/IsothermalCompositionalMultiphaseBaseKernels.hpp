@@ -2031,6 +2031,7 @@ struct StatisticsKernel
                                              trappedPhaseMass,
                                              immobilePhaseMass,
                                              dissolvedComponentMass] GEOS_HOST_DEVICE ( localIndex const ei )
+    // phaseRelperm (P capitialized? made that change and one in CompositionalMultiphaseStatistics may revert second)
     {
       if( elemGhostRank[ei] >= 0 )
       {
@@ -2053,7 +2054,7 @@ struct StatisticsKernel
       subRegionMaxTemp.max( temp[ei] );
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
 
-
+      integer const numDir = phaseRelperm.size(3);
 
       for( integer ip = 0; ip < numPhases; ++ip )
       {
@@ -2065,7 +2066,7 @@ struct StatisticsKernel
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass );
-        for( int dir = 0; dir < 3; ++dir )
+        for( int dir = 0; dir < numDir; ++dir )
         {
           if( phaseRelperm[ei][0][ip][dir] < relpermThreshold )
           {

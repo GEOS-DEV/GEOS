@@ -89,7 +89,7 @@ public:
                             arraySlice1d< real64, relperm::USD_MOB - 2 > const & phaseMob,
                             arraySlice2d< real64, relperm::USD_MOB_DC - 2 > const & dPhaseMob ) {
 
-      for( int dir = 0; dir < 3; ++dir )
+      for( int dir = 0; dir < 1; ++dir )
       {
 
         // Step 1: compute the derivative of relPerm[ip] wrt temperature
@@ -403,8 +403,9 @@ public:
       //       computing the following quantities: potGrad, phaseFlux, k_up, er_up, esr_up, ei_up
 
       real64 dPhaseFlux_dT[numFluxSupportPoints]{};
+      // integer const numDir = 1;
       real64 faceNormal[3];
-      m_stencilWrapper.getFaceNormal( connectionIndex, faceNormal );
+      m_stencilWrapper.getFaceNormal( connectionIndex, faceNormal, 3 );
 
       // Step 3.1: compute the derivative of phase flux wrt temperature
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -1227,14 +1228,15 @@ public:
       //       computing the following quantities: potGrad, phaseFlux
       // It is easier to hard-code the if/else because it is difficult to address elem and face variables in a uniform way
 
-
+      // integer const numDir = 1;
       real64 faceNormal[3];
-      m_stencilWrapper.getFaceNormal( kf, faceNormal );
+      m_stencilWrapper.getFaceNormal( kf, faceNormal, 3 );
 
       if( f >= 0 )              // the element is upstream
       {
 
         // Step 3.1.a: compute the derivative of phase flux wrt temperature
+  
         real64 const dPhaseFlux_dT =
           LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * dF_dT +
           LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dT], faceNormal ) * f;

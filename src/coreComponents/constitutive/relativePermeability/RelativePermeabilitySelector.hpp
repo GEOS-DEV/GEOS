@@ -56,6 +56,8 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
                                VanGenuchtenStone2RelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
+// std::cout << "Size of prp: " << relperm << std::endl;
+
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
                                  LAMBDA && lambda )

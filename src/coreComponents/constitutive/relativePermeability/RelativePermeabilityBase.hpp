@@ -165,6 +165,10 @@ public:
   virtual arrayView2d< real64 const > getPhaseMinVolumeFraction() const = 0;
 
   std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
+
+
+  // array2d< string > m_drainageWettingNonWettingRelPermTableNames;
+
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
@@ -179,6 +183,16 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
+
+   /*  static constexpr char const * drainageWettingNonWettingRelPermTableNamesString()
+    { return "drainageWettingNonWettingRelPermTableNames"; }
+
+    static constexpr char const * drainageNonWettingIntermediateRelPermTableNamesString()
+    { return "drainageNonWettingIntermediateRelPermTableNames"; }    
+    
+    static constexpr char const * drainageWettingIntermediateRelPermTableNamesString()
+    { return "drainageWettingIntermediateRelPermTableNames"; }
+ */
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }

@@ -610,7 +610,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const denom = A + landParam * pow( ( Shy - Scrd ) / ( Smx - Scrd ), 1 + jerauldParam_b / landParam );
   Scrt = LvArray::math::max( 0.0, Scrd + numerator / denom ); // trapped critical saturation from equation 2.162
 }
-
+// pass inputs as data point
 GEOS_HOST_DEVICE
 inline
 void
@@ -795,8 +795,10 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   using TPT = TableRelativePermeabilityHysteresis::TwoPhasePairPhaseType;
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
 
+
+  integer const numDir = 3; // m_drainageRelPermKernelWrappers.size(0);
   // ---------- wetting rel perm
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
     if( !m_phaseHasHysteresis[IPT::WETTING] ||
         phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
     {
@@ -828,7 +830,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     }
   }
 
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
   // --------- non-wetting rel perm
     if( !m_phaseHasHysteresis[IPT::NONWETTING] ||
         phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
@@ -896,8 +898,10 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   using TPT = TableRelativePermeabilityHysteresis::ThreePhasePairPhaseType;
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
 
+  integer const numDir = 3; // m_drainageRelPermKernelWrappers.size(0);
+
   // 1) Wetting and intermediate phase relative permeabilities using two-phase wetting-intermediate data
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
     // ---------- wetting rel perm
     if( !m_phaseHasHysteresis[IPT::WETTING] ||
         phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
@@ -934,7 +938,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       m_drainageRelPermKernelWrappers[dir][TPT::INTERMEDIATE_WETTING].compute( &( phaseVolFraction )[ipInter],
                                                                           &dInterRelPerm_wi_dInterVolFrac );
   }
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
     // 2) Non-wetting and intermediate phase relative permeabilities using two-phase non-wetting-intermediate data
 
     // ---------- non-wetting rel perm
@@ -985,7 +989,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
       m_drainageRelPermKernelWrappers[dir][TPT::INTERMEDIATE_NONWETTING].compute( &( phaseVolFraction )[ipInter],
                                                                             &dInterRelPerm_nwi_dInterVolFrac );
   }
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
     // 3) Compute the "three-phase" oil relperm
 
     // use saturation-weighted interpolation

@@ -311,6 +311,31 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                        InputError );
       }
 
+
+
+ 
+/*          subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
+                           setPlotLevel( PlotLevel::NOPLOT ).
+                           setRestartFlags( RestartFlags::NO_WRITE ).
+                           setSizedFromParent( 0 ).
+                           setDescription( "Name of the relative permeability constitutive model to use" ).
+                           reference();
+        string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+        relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
+        RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
+
+      Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() ); 
+      string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
+      arrayView4d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
+      arrayView5d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction(); */
+
+      //const localIndex numDir = phaseRelPerm.size(3);
+      //std::cout << "Size of prp: " << numDir << std::endl;
+
+
+
+
       if( m_hasDiffusion )
       {
         subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).

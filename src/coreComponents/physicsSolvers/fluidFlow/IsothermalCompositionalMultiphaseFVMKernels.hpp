@@ -147,7 +147,7 @@ public:
     real64 dVisc_dC[numComp]{};
 
 
-    for( int dir = 0; dir < 3; ++dir )
+    for( int dir = 0; dir < 1; ++dir )
     {
 
       for( integer ip = 0; ip < numPhase; ++ip )
@@ -529,7 +529,7 @@ public:
     /// Transmissibility
     real64 transmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Derivatives of transmissibility with respect to pressure
-    real64 dTrans[numComp + 2][maxNumConns][numFluxSupportPoints]{};
+    real64 dTrans[numComp+2][maxNumConns][numFluxSupportPoints]{};
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -619,8 +619,9 @@ public:
         localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const sei[numFluxSupportPoints] = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
+        //integer const numDir = 1;
         real64 faceNormal[3];
-        m_stencilWrapper.getFaceNormal( iconn, faceNormal );
+        m_stencilWrapper.getFaceNormal( iconn, faceNormal, 3 );
 
         // clear working arrays
         real64 compFlux[numComp]{};
@@ -1936,8 +1937,9 @@ public:
     localIndex const kf = m_sei( iconn, Order::FACE );
 
     // Step 1: compute the transmissibility at the boundary face
+    
     real64 faceNormal[3];
-    m_stencilWrapper.getFaceNormal( iconn, faceNormal );
+    m_stencilWrapper.getFaceNormal( iconn, faceNormal, 3 );
 
     real64 dTrans_dPerm[3]{};
     m_stencilWrapper.computeWeights( iconn,
@@ -2043,23 +2045,29 @@ public:
       // *** upwinding ***
       // Step 3.4: upwinding based on the sign of the phase potential gradient
       // It is easier to hard-code the if/else because it is difficult to address elem and face variables in a uniform way
-
+      integer const numDir = 3; //m_phaseMob.size(4);
       if( potDif >= 0 )              // the element is upstream
       {
-
-        // compute the phase flux and derivatives using the element mobility
-        phaseFlux = LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * f;
-        dPhaseFlux_dP =
-          LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal )  * dF_dP +
-          LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dP], faceNormal ) * f;
-
-        for( integer jc = 0; jc < numComp; ++jc )
+        if (numDir == 1)
         {
-          dPhaseFlux_dC[jc] =
-            LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * dF_dC[jc] +
-            LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dC + jc], faceNormal ) * f;
+          phaseFlux = m_phaseMob[er][esr][ei][ip][0] * f;
+          dPhaseFlux_dP = m_phaseMob[er][esr][ei][ip][0] * dF_dP + m_dPhaseMob[er][esr][ei][ip][Deriv::dP][0] * f;
         }
-
+        // compute the phase flux and derivatives using the element mobility
+        else
+        {
+          phaseFlux = LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * f;
+          dPhaseFlux_dP =
+            LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal )  * dF_dP +
+            LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dP], faceNormal ) * f;
+  
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            dPhaseFlux_dC[jc] =
+              LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * dF_dC[jc] +
+              LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dC + jc], faceNormal ) * f;
+          }
+        }
         // slice some constitutive arrays to avoid too much indexing in component loop
         arraySlice1d< real64 const, multifluid::USD_PHASE_COMP - 3 > phaseCompFracSub =
           m_phaseCompFrac[er][esr][ei][0][ip];

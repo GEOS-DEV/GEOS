@@ -242,15 +242,16 @@ public:
       localIndex const esr_up_stab = sesri[k_up_stab];
       localIndex const ei_up_stab  = sei[k_up_stab];
 
+      integer const numDir = 3;
       real64 faceNormal[3];
-      m_stencilWrapper.getFaceNormal( iconn, faceNormal );
+      m_stencilWrapper.getFaceNormal( iconn, faceNormal, 3 );
 
       bool const areInSameMacroElement = stencilMacroElements[0] == stencilMacroElements[1];
       bool const isStabilizationActive = stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0;
       if( isStabilizationActive && areInSameMacroElement )
       {
 
-        for( int dir = 0; dir < 3; ++dir )
+        for( int dir = 0; dir < numDir; ++dir )
         {
 
           for( integer ic = 0; ic < numComp; ++ic )

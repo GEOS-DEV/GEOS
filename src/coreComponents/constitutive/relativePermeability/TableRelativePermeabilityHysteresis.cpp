@@ -166,7 +166,10 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
 
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
 
+
+  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
   integer const numPhases = m_phaseNames.size();
+  
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
                  GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
                            getFullName() ),
@@ -176,12 +179,13 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
 
   //initialize STONE-II only used var to avoid discrepancies in baselines
   m_waterOilMaxRelPerm = 1.;
-
-for (int dir=0; dir<3; ++dir) {
+  
+// may need to change indentations
+for (int dir=0; dir<numDir; ++dir) {
     if( numPhases == 2 )
     {
-      m_drainageWettingNonWettingRelPermTableNames.resize(3,numPhases);
-      m_drainageWettingNonWettingRelPermTableNames.resize(3,numPhases);
+      m_drainageWettingNonWettingRelPermTableNames.resize(numDir,numPhases);
+      m_drainageWettingNonWettingRelPermTableNames.resize(numDir,numPhases);
       GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames[dir][0].empty() || m_drainageWettingNonWettingRelPermTableNames[dir][1].empty(),
                     GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the relative permeability tables "
                               "for the pair (wetting phase, non-wetting phase)",
@@ -205,8 +209,8 @@ for (int dir=0; dir<3; ++dir) {
     }
     else if( numPhases == 3 )
     {
-      m_drainageWettingIntermediateRelPermTableNames.resize(3,2);
-      m_drainageNonWettingIntermediateRelPermTableNames.resize(3,2);
+      m_drainageWettingIntermediateRelPermTableNames.resize(numDir,2);
+      m_drainageNonWettingIntermediateRelPermTableNames.resize(numDir,2);
       GEOS_THROW_IF( m_drainageWettingIntermediateRelPermTableNames[dir][0].empty() || m_drainageWettingIntermediateRelPermTableNames[dir][1].empty()
                    || m_drainageNonWettingIntermediateRelPermTableNames[dir][0].empty() || m_drainageNonWettingIntermediateRelPermTableNames[dir][1].empty(),
                     GEOS_FMT( "{}: for a three-phase flow simulation, "
@@ -271,9 +275,11 @@ for (int dir=0; dir<3; ++dir) {
 void TableRelativePermeabilityHysteresis::initializePreSubGroups()
 {
   RelativePermeabilityBase::initializePreSubGroups();
+  
+  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
 
-  m_drainagePhaseMinVolFraction.resize( 3, MAX_NUM_PHASES );
-  m_imbibitionPhaseMinVolFraction.resize( 3, 2 ); // we don't save the value of the intermediate phase, for which we neglect hysteresis
+  m_drainagePhaseMinVolFraction.resize( numDir, MAX_NUM_PHASES );
+  m_imbibitionPhaseMinVolFraction.resize( numDir, 2 ); // we don't save the value of the intermediate phase, for which we neglect hysteresis
   // need to check the above line for correctness
 
   m_drainagePhaseMaxVolFraction.resize( MAX_NUM_PHASES );
@@ -298,9 +304,11 @@ void TableRelativePermeabilityHysteresis::initializePreSubGroups()
 void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPermTables()
 {
   integer const numPhases = m_phaseNames.size();
+  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+  // so the question here is should this be defined effectively every time numPhases is defined? (register vs function imbedded)
 
   // Step 1.a: take care of the two-phase case
-  for (int dir=0;dir < 3; ++dir) {
+  for (int dir=0;dir <numDir; ++dir) {
     if( numPhases == 2 )
     {
       for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames[dir].size(); ++ip )
@@ -347,7 +355,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
           m_waterOilMaxRelPerm = m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::OIL]];
         }
       }
-
+      // shoudl this have dir????????
       for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
       {
         if( ip == 0 ) // non-wetting phase is gas
@@ -377,6 +385,9 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateImbibitionRel
   integer ipNonWetting = 0;
 
   integer const numPhases = m_phaseNames.size();
+  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+
+
   if( numPhases == 2 )
   {
     ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
@@ -389,7 +400,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateImbibitionRel
   }
 
   // Step 2.a: validate wetting-phase imbibition relative permeability table
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
     if( m_phaseHasHysteresis[IPT::WETTING] )
    
     {
@@ -417,7 +428,9 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateImbibitionRel
     }
   }
     // Step 2.b: validate non-wetting-phase imbibition relative permeability table
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
+    //may need to fix this so we don't get an error when endpoints are different in different directions
+    //also should this be in the same loop as the previous
     if( m_phaseHasHysteresis[IPT::NONWETTING] )
     {
 
@@ -487,6 +500,8 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   integer ipNonWetting = 0;
 
   integer const numPhases = m_phaseNames.size();
+  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+
   if( numPhases == 2 )
   {
     ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
@@ -503,7 +518,7 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   // Step 3a: Land parameter for the wetting phase
 
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
-  for (int dir=0; dir<3; ++dir) {
+  for (int dir=0; dir<numDir; ++dir) {
     {
       real64 const Scrd = m_drainagePhaseMinVolFraction[dir][ipWetting];
       real64 const Smxd = m_drainagePhaseMaxVolFraction[ipWetting];
@@ -546,17 +561,18 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   integer const numPhases = m_phaseNames.size();
+  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
 
   // we want to make sure that the wrappers are always up-to-date, so we recreate them every time
   // need to get the ip loops for imbibition as well?
 
   m_drainageRelPermKernelWrappers.clear();
   m_imbibitionRelPermKernelWrappers.clear();
-  for (int dir=0; dir < 3; ++dir){
+  for (int dir=0; dir < numDir; ++dir){
     if( numPhases == 2 )
     {
-      m_drainageRelPermKernelWrappers.resize(3,numPhases);
-      m_imbibitionRelPermKernelWrappers.resize(3, 2);
+      m_drainageRelPermKernelWrappers.resize(numDir,numPhases);
+      m_imbibitionRelPermKernelWrappers.resize(numDir, 2);
       for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames[dir].size(); ++ip )
       {
         TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[dir][ip] );
@@ -576,8 +592,8 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
     }
     else if( numPhases == 3 )
     {
-      m_drainageRelPermKernelWrappers.resize(3,4);
-      m_imbibitionRelPermKernelWrappers.resize(3,2);
+      m_drainageRelPermKernelWrappers.resize(numDir,4);
+      m_imbibitionRelPermKernelWrappers.resize(numDir,2);
       for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames[dir].size(); ++ip )
       {
         TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[dir][ip] );
@@ -592,12 +608,12 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
       TableFunction const & imbibitionWettingRelPermTable = m_phaseHasHysteresis[IPT::WETTING]
         ? functionManager.getGroup< TableFunction >( m_imbibitionWettingRelPermTableName[dir] )
         : functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[dir][0] );
-      m_imbibitionRelPermKernelWrappers[dir][0] = imbibitionWettingRelPermTable.createKernelWrapper();
-
+      m_imbibitionRelPermKernelWrappers[dir][IPT::WETTING] = imbibitionWettingRelPermTable.createKernelWrapper();
+// change to IPT
       TableFunction const & imbibitionNonWettingRelPermTable = m_phaseHasHysteresis[IPT::NONWETTING]
         ? functionManager.getGroup< TableFunction >( m_imbibitionNonWettingRelPermTableName[dir] )
         : functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[dir][0] );
-      m_imbibitionRelPermKernelWrappers[dir][1] = imbibitionNonWettingRelPermTable.createKernelWrapper();
+      m_imbibitionRelPermKernelWrappers[dir][IPT::NONWETTING] = imbibitionNonWettingRelPermTable.createKernelWrapper();
     }
   }
 }
