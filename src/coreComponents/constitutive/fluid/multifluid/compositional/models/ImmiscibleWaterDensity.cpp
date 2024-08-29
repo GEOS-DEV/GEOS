@@ -19,6 +19,7 @@
 
 #include "ImmiscibleWaterDensity.hpp"
 #include "ImmiscibleWaterParameters.hpp"
+#include "dataRepository/InputFlags.hpp"
 
 namespace geos
 {
