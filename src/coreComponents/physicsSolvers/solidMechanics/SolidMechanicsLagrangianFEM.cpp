@@ -158,7 +158,8 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     {
       setConstitutiveNamesCallSuper( subRegion );
 
-      subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::averageStrain >( getName() ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::averageStress >( getName() ).reference().resizeDimension< 1 >( 6 );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -944,19 +945,26 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
       constitutiveRelation.saveConvergedState();
 
-      solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
+      arrayView3d < real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
+
+      solidMechanics::arrayView2dLayoutStrain avgStrain = subRegion.getField< solidMechanics::averageStrain >();
+      solidMechanics::arrayView2dLayoutAvgStress avgStress = subRegion.getField< solidMechanics::averageStress >();
 
       finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
       finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
       {
         using FE_TYPE = decltype( finiteElement );
-        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
+        AverageStressStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
                                                                                                                                   mesh.getEdgeManager(),
                                                                                                                                   mesh.getFaceManager(),
                                                                                                                                   subRegion,
                                                                                                                                   finiteElement,
                                                                                                                                   disp,
-                                                                                                                                  strain );
+                                                                                                                                  avgStrain,
+                                                                                                                                  stress,
+                                                                                                                                  avgStress );
+
+
       } );
 
 
