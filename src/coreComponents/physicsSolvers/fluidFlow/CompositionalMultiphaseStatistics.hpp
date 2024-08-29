@@ -63,162 +63,162 @@ public:
 
   class RegionStatistics : public dataRepository::Group
   {
-  public:
-      RegionStatistics( string const & name,
-                        Group * const parent )
-        : Group( name, parent )
-      {
+public:
+    RegionStatistics( string const & name,
+                      Group * const parent )
+      : Group( name, parent )
+    {
 
-        registerWrapper( viewKeyStruct::averagePressureString(), &m_averagePressure ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "average region pressure" );
+      registerWrapper( viewKeyStruct::averagePressureString(), &m_averagePressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "average region pressure" );
 
-        registerWrapper( viewKeyStruct::minPressureString(), &m_minPressure ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "minimum region pressure" );
+      registerWrapper( viewKeyStruct::minPressureString(), &m_minPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "minimum region pressure" );
 
-        registerWrapper( viewKeyStruct::maxPressureString(), &m_maxPressure ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "maximum region pressure" );
-
-
-        registerWrapper( viewKeyStruct::minDeltaPressureString(), &m_minDeltaPressure ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "minimum region delta pressure" );
-
-        registerWrapper( viewKeyStruct::maxDeltaPressureString(), &m_maxDeltaPressure ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "maximum region delta pressure" );
+      registerWrapper( viewKeyStruct::maxPressureString(), &m_maxPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "maximum region pressure" );
 
 
-        registerWrapper( viewKeyStruct::averageTemperatureString(), &m_averageTemperature ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "average region temperature" );
+      registerWrapper( viewKeyStruct::minDeltaPressureString(), &m_minDeltaPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "minimum region delta pressure" );
 
-        registerWrapper( viewKeyStruct::minTemperatureString(), &m_minTemperature ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "minimum region temperature" );
-
-        registerWrapper( viewKeyStruct::maxTemperatureString(), &m_maxTemperature ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "maximum region temperature" );
+      registerWrapper( viewKeyStruct::maxDeltaPressureString(), &m_maxDeltaPressure ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "maximum region delta pressure" );
 
 
-        registerWrapper( viewKeyStruct::totalPoreVolumeString(), &m_totalPoreVolume ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "total region pore volume" );
+      registerWrapper( viewKeyStruct::averageTemperatureString(), &m_averageTemperature ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "average region temperature" );
 
-        registerWrapper( viewKeyStruct::totalUncompactedPoreVolumeString(), &m_totalUncompactedPoreVolume ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "total region uncompacted pore volume" );
+      registerWrapper( viewKeyStruct::minTemperatureString(), &m_minTemperature ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "minimum region temperature" );
+
+      registerWrapper( viewKeyStruct::maxTemperatureString(), &m_maxTemperature ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "maximum region temperature" );
 
 
-        registerWrapper( viewKeyStruct::phasePoreVolumeString(), &m_phasePoreVolume ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "Phase region phase pore volume" );
+      registerWrapper( viewKeyStruct::totalPoreVolumeString(), &m_totalPoreVolume ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "total region pore volume" );
+
+      registerWrapper( viewKeyStruct::totalUncompactedPoreVolumeString(), &m_totalUncompactedPoreVolume ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "total region uncompacted pore volume" );
 
 
-        registerWrapper( viewKeyStruct::phaseMassString(), &m_phaseMass ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "Region phase mass (trapped and non-trapped, immobile and mobile)" );
+      registerWrapper( viewKeyStruct::phasePoreVolumeString(), &m_phasePoreVolume ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Phase region phase pore volume" );
 
-        registerWrapper( viewKeyStruct::trappedPhaseMassString(), &m_trappedPhaseMass ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "Trapped region phase mass" );
 
-        registerWrapper( viewKeyStruct::immobilePhaseMassString(), &m_immobilePhaseMass ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "Immobile region phase mass" );
+      registerWrapper( viewKeyStruct::phaseMassString(), &m_phaseMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Region phase mass (trapped and non-trapped, immobile and mobile)" );
 
-        registerWrapper( viewKeyStruct::dissolvedComponentMassString(), &m_dissolvedComponentMass ).
-          setApplyDefaultValue( 0 ).
-          //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-          setDescription( "Dissolved region component mass" );
-      }
+      registerWrapper( viewKeyStruct::trappedPhaseMassString(), &m_trappedPhaseMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Trapped region phase mass" );
 
-      struct viewKeyStruct
-      {
-        constexpr static char const * averagePressureString() { return "averagePressure"; }
-        constexpr static char const * minPressureString() { return "minPressure"; }
-        constexpr static char const * maxPressureString() { return "maxPressure"; }
+      registerWrapper( viewKeyStruct::immobilePhaseMassString(), &m_immobilePhaseMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Immobile region phase mass" );
 
-        constexpr static char const * minDeltaPressureString() { return "minDeltaPressure"; }
-        constexpr static char const * maxDeltaPressureString() { return "maxDeltaPressure"; }
+      registerWrapper( viewKeyStruct::dissolvedComponentMassString(), &m_dissolvedComponentMass ).
+        setApplyDefaultValue( 0 ).
+        //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Dissolved region component mass" );
+    }
 
-        constexpr static char const * averageTemperatureString() { return "averageTemperature"; }
-        constexpr static char const * minTemperatureString() { return "minTemperature"; }
-        constexpr static char const * maxTemperatureString() { return "maxTemperature"; }
+    struct viewKeyStruct
+    {
+      constexpr static char const * averagePressureString() { return "averagePressure"; }
+      constexpr static char const * minPressureString() { return "minPressure"; }
+      constexpr static char const * maxPressureString() { return "maxPressure"; }
 
-        constexpr static char const * totalPoreVolumeString() { return "totalPoreVolume"; }
-        constexpr static char const * totalUncompactedPoreVolumeString() { return "totalUncompactedPoreVolume"; }
+      constexpr static char const * minDeltaPressureString() { return "minDeltaPressure"; }
+      constexpr static char const * maxDeltaPressureString() { return "maxDeltaPressure"; }
 
-        constexpr static char const * phasePoreVolumeString() { return "phasePoreVolume"; }
-        constexpr static char const * phaseMassString() { return "phaseMass"; }
-        constexpr static char const * trappedPhaseMassString() { return "trappedPhaseMass"; }
-        constexpr static char const * immobilePhaseMassString() { return "immobilePhaseMass"; }
-        constexpr static char const * dissolvedComponentMassString() { return "dissolvedComponentMass"; }
-      };
+      constexpr static char const * averageTemperatureString() { return "averageTemperature"; }
+      constexpr static char const * minTemperatureString() { return "minTemperature"; }
+      constexpr static char const * maxTemperatureString() { return "maxTemperature"; }
 
-      void init( integer const numPhases, integer const numComps )
-      {
-        m_phasePoreVolume.resizeDimension< 0 >( numPhases );
-        m_phaseMass.resizeDimension< 0 >( numPhases );
-        m_trappedPhaseMass.resizeDimension< 0 >( numPhases );
-        m_immobilePhaseMass.resizeDimension< 0 >( numPhases );
-        m_dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
-      }
+      constexpr static char const * totalPoreVolumeString() { return "totalPoreVolume"; }
+      constexpr static char const * totalUncompactedPoreVolumeString() { return "totalUncompactedPoreVolume"; }
 
-  private:
-      RegionStatistics() = delete;
-      /// average region pressure
-      real64 m_averagePressure;
-      /// minimum region pressure
-      real64 m_minPressure;
-      /// maximum region pressure
-      real64 m_maxPressure;
-
-      /// minimum region delta pressure
-      real64 m_minDeltaPressure;
-      /// maximum region delta pressure
-      real64 m_maxDeltaPressure;
-
-      /// average region temperature
-      real64 m_averageTemperature;
-      /// minimum region temperature
-      real64 m_minTemperature;
-      /// maximum region temperature
-      real64 m_maxTemperature;
-
-      /// total region pore volume
-      real64 m_totalPoreVolume;
-      /// total region uncompacted pore volume
-      real64 m_totalUncompactedPoreVolume;
-      /// phase region phase pore volume
-      array1d< real64 > m_phasePoreVolume;
-
-      /// region phase mass (trapped and non-trapped, immobile and mobile)
-      array1d< real64 > m_phaseMass;
-      /// trapped region phase mass
-      array1d< real64 > m_trappedPhaseMass;
-      /// immobile region phase mass
-      array1d< real64 > m_immobilePhaseMass;
-      /// dissolved region component mass
-      array2d< real64 > m_dissolvedComponentMass;
+      constexpr static char const * phasePoreVolumeString() { return "phasePoreVolume"; }
+      constexpr static char const * phaseMassString() { return "phaseMass"; }
+      constexpr static char const * trappedPhaseMassString() { return "trappedPhaseMass"; }
+      constexpr static char const * immobilePhaseMassString() { return "immobilePhaseMass"; }
+      constexpr static char const * dissolvedComponentMassString() { return "dissolvedComponentMass"; }
     };
+
+    void init( integer const numPhases, integer const numComps )
+    {
+      m_phasePoreVolume.resizeDimension< 0 >( numPhases );
+      m_phaseMass.resizeDimension< 0 >( numPhases );
+      m_trappedPhaseMass.resizeDimension< 0 >( numPhases );
+      m_immobilePhaseMass.resizeDimension< 0 >( numPhases );
+      m_dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
+    }
+
+private:
+    RegionStatistics() = delete;
+    /// average region pressure
+    real64 m_averagePressure;
+    /// minimum region pressure
+    real64 m_minPressure;
+    /// maximum region pressure
+    real64 m_maxPressure;
+
+    /// minimum region delta pressure
+    real64 m_minDeltaPressure;
+    /// maximum region delta pressure
+    real64 m_maxDeltaPressure;
+
+    /// average region temperature
+    real64 m_averageTemperature;
+    /// minimum region temperature
+    real64 m_minTemperature;
+    /// maximum region temperature
+    real64 m_maxTemperature;
+
+    /// total region pore volume
+    real64 m_totalPoreVolume;
+    /// total region uncompacted pore volume
+    real64 m_totalUncompactedPoreVolume;
+    /// phase region phase pore volume
+    array1d< real64 > m_phasePoreVolume;
+
+    /// region phase mass (trapped and non-trapped, immobile and mobile)
+    array1d< real64 > m_phaseMass;
+    /// trapped region phase mass
+    array1d< real64 > m_trappedPhaseMass;
+    /// immobile region phase mass
+    array1d< real64 > m_immobilePhaseMass;
+    /// dissolved region component mass
+    array2d< real64 > m_dissolvedComponentMass;
+  };
 
 
   /**@}*/

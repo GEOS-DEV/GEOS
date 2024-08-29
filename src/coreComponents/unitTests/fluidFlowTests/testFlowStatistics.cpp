@@ -205,10 +205,11 @@ real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
   {
     mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
     {
-      SinglePhaseStatistics::RegionStatistics & regionStats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
-        SinglePhaseStatistics::viewKeyStruct::regionStatisticsString() );
+      SinglePhaseStatistics::RegionStatistics & regionStatistics =
+        region.getGroupByPath< SinglePhaseStatistics::RegionStatistics >( "Tasks/timeStepReservoirStats" );
+      real64 & regionTotalMass = regionStatistics.getReference< real64 >( SinglePhaseStatistics::RegionStatistics::viewKeyStruct::totalMassString());
 
-      totalMass += regionStats.totalMass;
+      totalMass += regionTotalMass;
     } );
   } );
   return totalMass;
