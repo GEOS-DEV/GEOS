@@ -127,39 +127,10 @@ public:
     return maxNumPointsInFlux;
   }
 
-  //void getFaceNormal( localIndex const iconn, real64 (& faceNormal)[3] ) const
-  //{
-  //  LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
-  //}
-  // may want to create a run time argument
-  void getFaceNormal(localIndex const iconn, real64* faceNormal, std::size_t size) const
+  void getFaceNormal( localIndex const iconn, real64 (& faceNormal)[3] ) const
   {
-      if (size == 1) 
-      {
-          faceNormal[0] = m_faceNormal[iconn][0];
-      }
-      else if (size == 3)
-      {
-          for (std::size_t i = 0; i < size; ++i)
-          {
-              faceNormal[i] = m_faceNormal[iconn][i];
-          }
-      }
-      else
-      {
-          throw std::invalid_argument("Unsupported size");
-      }
+    LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
   }
-
-
-
-
-/*   template <std::size_t N>
-  void getFaceNormal(localIndex const iconn, real64 (&faceNormal)[N]) const
-  {
-      LvArray::tensorOps::copy<N>(faceNormal, m_faceNormal[iconn]);
-  } */
-
 private:
 
   arrayView2d< real64 > m_faceNormal;

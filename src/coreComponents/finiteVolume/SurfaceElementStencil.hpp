@@ -214,11 +214,10 @@ public:
   void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
 
 
-  void getFaceNormal(localIndex const iconn, real64* faceNormal, std::size_t size) const
+  void getFaceNormal( localIndex const iconn, real64 (& faceNormal)[3] ) const
   {
-    GEOS_UNUSED_VAR(iconn, faceNormal, size);
+    GEOS_UNUSED_VAR( iconn, faceNormal );
   }
-
 
 
 
