@@ -244,7 +244,7 @@ public:
 
       integer const numDir = 3;
       real64 faceNormal[3];
-      m_stencilWrapper.getFaceNormal( iconn, faceNormal, 3 );
+      m_stencilWrapper.getFaceNormal( iconn, faceNormal );
 
       bool const areInSameMacroElement = stencilMacroElements[0] == stencilMacroElements[1];
       bool const isStabilizationActive = stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0;

@@ -405,7 +405,7 @@ public:
       real64 dPhaseFlux_dT[numFluxSupportPoints]{};
       // integer const numDir = 1;
       real64 faceNormal[3];
-      m_stencilWrapper.getFaceNormal( connectionIndex, faceNormal, 3 );
+      m_stencilWrapper.getFaceNormal( connectionIndex, faceNormal );
 
       // Step 3.1: compute the derivative of phase flux wrt temperature
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -1230,7 +1230,7 @@ public:
 
       // integer const numDir = 1;
       real64 faceNormal[3];
-      m_stencilWrapper.getFaceNormal( kf, faceNormal, 3 );
+      m_stencilWrapper.getFaceNormal( kf, faceNormal );
 
       if( f >= 0 )              // the element is upstream
       {

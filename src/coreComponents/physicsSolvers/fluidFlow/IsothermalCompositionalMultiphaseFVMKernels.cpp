@@ -207,7 +207,7 @@ CFLFluxKernel::
 
     // integer const numDir = 3;
     real64 faceNormal[3];
-    stencilWrapper.getFaceNormal( iconn, faceNormal, 3 );
+    stencilWrapper.getFaceNormal( iconn, faceNormal );
 
     CFLFluxKernel::compute< NC, numElems, maxStencilSize >( numPhases,
                                                             sei[iconn].size(),

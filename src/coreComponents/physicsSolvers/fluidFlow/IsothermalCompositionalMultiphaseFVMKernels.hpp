@@ -621,7 +621,7 @@ public:
 
         //integer const numDir = 1;
         real64 faceNormal[3];
-        m_stencilWrapper.getFaceNormal( iconn, faceNormal, 3 );
+        m_stencilWrapper.getFaceNormal( iconn, faceNormal );
 
         // clear working arrays
         real64 compFlux[numComp]{};
@@ -1939,7 +1939,7 @@ public:
     // Step 1: compute the transmissibility at the boundary face
     
     real64 faceNormal[3];
-    m_stencilWrapper.getFaceNormal( iconn, faceNormal, 3 );
+    m_stencilWrapper.getFaceNormal( iconn, faceNormal );
 
     real64 dTrans_dPerm[3]{};
     m_stencilWrapper.computeWeights( iconn,
