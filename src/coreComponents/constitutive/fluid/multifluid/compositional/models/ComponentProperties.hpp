@@ -56,6 +56,7 @@ public:
   /**
    * Data accessors
    */
+  arrayView1d< string > const & getComponentName() const { return m_componentNames; }
   arrayView1d< real64 > const & getComponentMolarWeight() const { return m_componentMolarWeight; }
   arrayView1d< real64 > const & getComponentCriticalPressure() const { return m_componentCriticalPressure; }
   arrayView1d< real64 > const & getComponentCriticalTemperature() const { return m_componentCriticalTemperature; }
