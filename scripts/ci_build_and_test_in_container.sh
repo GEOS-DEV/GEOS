@@ -302,6 +302,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
     echo "IntegratedTests passed. No rebaseline required."
     INTEGRATED_TEST_EXIT_STATUS=0
+  elif grep -q "Overall status: FAIL RUN" "$tempdir/log_check.txt"; then
+    echo "Some integratedTests failed to run. Skipping rebaseline process."
+    INTEGRATED_TEST_EXIT_STATUS=1
   else
     echo "IntegratedTests failed. Rebaseline is required."
 
