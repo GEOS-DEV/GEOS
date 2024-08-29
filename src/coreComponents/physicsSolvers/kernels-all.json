@@ -1,31 +1,37 @@
 {
-  "SolidMechanicsKernels": {
-    "vars": [
-      "SUBREGION_TYPE",
-      "CONSTITUTIVE_TYPE",
-      "FE_TYPE"
+  "doc" :
+  {
+    "comment" : "All kernel template instantiation specs need all dict keys except 'comment' and 'explicit'",
+    "vars" :
+    [
+      "This is a list of the keys in the combinations dict (keys aren't queryable in cmake)",
+      "they are also the names of the CMAKE variables which will be set to one of the values specified",
+      "in the combinations dict just prior to cmake calling configure_file() on the template file"
     ],
+    "constants" :
+    [
+      [ "key", "value" ],
+      [ "note", "All constants will be set for cmake to configure_file() for every instantiation." ]
+    ],
+    "combinations" :
+    {
+      "vars" : [ "each value in this list will be used to generate kernel template files",
+                 "combinatorally with all other value lists" ]
+    },
+    "explicit" : [ "specify a specific combination of the variables to generate",
+                   "specify by choosing one value from each variable you want generated",
+                   "and concating them with '#' (this can by modified internally at the",
+                   "generation call). Duplicate entries are unified internally" ]
+  },
+
+  "SolidMechanicsKernels": {
+    "vars": [ "SUBREGION_TYPE", "CONSTITUTIVE_TYPE", "FE_TYPE" ],
     "constants": [
-      [
-        "ExplicitSmallStrainPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ExplicitFiniteStrainPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "FixedStressThermoPoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ImplicitSmallStrainNewmarkPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ImplicitSmallStrainQuasiStaticPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "ExplicitSmallStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ExplicitFiniteStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainNewmarkPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "SUBREGION_TYPE": [
@@ -71,6 +77,7 @@
     },
     "explicit": []
   },
+
   "SolidMechanicsFixedStressThermoPoromechanicsKernels": {
     "vars": [
       "SUBREGION_TYPE",
@@ -78,26 +85,11 @@
       "FE_TYPE"
     ],
     "constants": [
-      [
-        "ExplicitSmallStrainPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ExplicitFiniteStrainPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "FixedStressThermoPoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ImplicitSmallStrainNewmarkPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ImplicitSmallStrainQuasiStaticPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "ExplicitSmallStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ExplicitFiniteStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainNewmarkPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "SUBREGION_TYPE": [
@@ -130,6 +122,7 @@
     },
     "explicit": []
   },
+
   "SolidMechanicsFixedStressThermoPoroElasticKernels": {
     "vars": [
       "SUBREGION_TYPE",
@@ -137,10 +130,7 @@
       "FE_TYPE"
     ],
     "constants": [
-      [
-        "FixedStressThermoPoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "SUBREGION_TYPE": [
@@ -173,6 +163,7 @@
     },
     "explicit": []
   },
+
   "PoromechanicsKernels": {
     "vars": [
       "SUBREGION_TYPE",
@@ -180,14 +171,8 @@
       "FE_TYPE"
     ],
     "constants": [
-      [
-        "SinglePhasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "MultiphasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "SinglePhasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "MultiphasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "SUBREGION_TYPE": [
@@ -225,6 +210,7 @@
     },
     "explicit": []
   },
+
   "PoromechanicsEFEMKernels": {
     "vars": [
       "SUBREGION_TYPE",
@@ -232,10 +218,7 @@
       "FE_TYPE"
     ],
     "constants": [
-      [
-        "SinglePhasePoromechanicsEFEMPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "SinglePhasePoromechanicsEFEMPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "SUBREGION_TYPE": [
@@ -263,6 +246,7 @@
     },
     "explicit": []
   },
+
   "ThermoPoromechanicsKernels": {
     "vars": [
       "SUBREGION_TYPE",
@@ -270,18 +254,9 @@
       "FE_TYPE"
     ],
     "constants": [
-      [
-        "ThermalMultiphasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ThermalSinglePhasePoromechanicsPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ],
-      [
-        "ThermalSinglePhasePoromechanicsEFEMPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "ThermalMultiphasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ThermalSinglePhasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ThermalSinglePhasePoromechanicsEFEMPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "SUBREGION_TYPE": [
@@ -309,6 +284,7 @@
     },
     "explicit": []
   },
+
   "SinglePhaseHybridFVMKernels": {
     "vars": [
       "NAME",
@@ -316,10 +292,7 @@
       "IP"
     ],
     "constants": [
-      [
-        "ElementBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "ElementBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "NAME": [
@@ -347,6 +320,7 @@
     },
     "explicit": []
   },
+
   "CompositionalMultiphaseHybridFVMKernels_upwinding": {
     "vars": [
       "NCOMPS",
@@ -368,6 +342,7 @@
     },
     "explicit": []
   },
+
   "CompositionalMultiphaseHybridFVMKernels_assembly": {
     "vars": [
       "NFACES",
@@ -395,6 +370,7 @@
     },
     "explicit": []
   },
+
   "CompositionalMultiphaseHybridFVMKernels_flux": {
     "vars": [
       "NFACES",
@@ -427,6 +403,7 @@
     },
     "explicit": []
   },
+
   "ReactiveCompositionalMultiphaseOBLKernels": {
     "vars": [
       "NAME",
@@ -436,10 +413,7 @@
       "STENCIL"
     ],
     "constants": [
-      [
-        "FaceBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "FaceBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "NAME": [
@@ -470,6 +444,7 @@
     },
     "explicit": []
   },
+
   "IsothermalCompositionalMultiphaseFVM_DirichletFaceBasedAssemblyKernels": {
     "vars": [
       "NAME",
@@ -477,10 +452,7 @@
       "KERNEL_TYPE"
     ],
     "constants": [
-      [
-        "DirichletFaceBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "DirichletFaceBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "NAME": [
@@ -503,6 +475,7 @@
     },
     "explicit": []
   },
+
   "ThermalCompositionalMultiphaseFVM_DirichletFaceBasedAssemblyKernels": {
     "vars": [
       "NAME",
@@ -510,10 +483,7 @@
       "KERNEL_TYPE"
     ],
     "constants": [
-      [
-        "DirichletFaceBasedAssemblyKernelPolicy",
-        "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >"
-      ]
+      [ "DirichletFaceBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "NAME": [
