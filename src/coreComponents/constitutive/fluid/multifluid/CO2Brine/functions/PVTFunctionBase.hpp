@@ -21,7 +21,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
-#include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
@@ -164,13 +163,12 @@ public:
       TableTextFormatter textFormatter;
       GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
     }
-
     if( pvtOutputOpts.writeCSV || ( pvtOutputOpts.writeInLog && tableData->numDimensions() >= 3 ) )
     {
       string const filename = tableData->getName();
-      std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
+      std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
-                                 OutputBase::getOutputDirectory(),
+                                 FunctionBase::getOutputDirectory(),
                                  filename ));
       TableCSVFormatter csvFormatter;
       logStream << csvFormatter.toString( *tableData );
