@@ -1,4 +1,5 @@
-
+Element: PorousElasticTransverseIsotropic
+=========================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

@@ -1,4 +1,5 @@
-
+Element: ExponentialDecayPermeability
+=====================================
 
 =================== ========= ======== =========================================== 
 Name                Type      Default  Description                                 

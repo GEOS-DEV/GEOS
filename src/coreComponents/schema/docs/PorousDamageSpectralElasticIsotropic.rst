@@ -1,4 +1,5 @@
-
+Element: PorousDamageSpectralElasticIsotropic
+=============================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 
