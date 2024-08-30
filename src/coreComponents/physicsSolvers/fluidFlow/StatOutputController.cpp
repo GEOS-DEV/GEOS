@@ -23,9 +23,6 @@
 #include "events/EventBase.hpp"
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsStatistics.hpp"
-
-
 namespace geos
 {
 
