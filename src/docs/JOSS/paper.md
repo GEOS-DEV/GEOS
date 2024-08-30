@@ -193,7 +193,7 @@ Simulations such as this will play a critical role in predicting the viability o
 As an example of the weak scalability of GEOS on an exascale class system, we present two weak scaling studies on a simple wellbore geometry run on the Frontier supercomputer at Oak Ridge National Laboratory.
 Frontier is comprised of 9,472 Cray EX235a nodes that each contain a single AMD EPYC 7A53 CPU and four AMD MI250X GPU's [@frontier].
 Note that each MI250X is comprised of two Graphics Compute Dies (GCD), with each GCD appearing as a GPU to the operating system. 
-A more detailed discussion and instructions to reproduce the results are available in the [Performance Benchmarks](https://geosx-geosx--3296.com.readthedocs.build/en/3296/docs/sphinx/advancedExamples/performanceBenchmarks/Index.html) of the GEOS documentation.
+A more detailed discussion and instructions to reproduce the results are available in the [Performance Benchmarks](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/advancedExamples/performanceBenchmarks/Index.html) of the GEOS documentation.
 
 The weak scaling results for mechanics are presented in (Figure \ref{fig:Frontier_scaling}a) and shows nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 GPU's($81.3 \times 10^{9}$ degrees-of-freedom).
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms, this level of scaling efficiency is excellent.
