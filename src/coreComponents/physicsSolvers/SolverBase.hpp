@@ -13,6 +13,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file SolverBase.hpp
+ */
+
 #ifndef GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
