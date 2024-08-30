@@ -11,6 +11,7 @@ build:
   - npm
   - openjdk-21-jre-headless
   - texlive
+  - doxygen
   tools:
     nodejs: "16"
     python: "3.10"
