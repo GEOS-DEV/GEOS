@@ -255,7 +255,7 @@ If you cannot find one that matches your needs, we suggest starting with one of 
 Compilation
 ===========
 
-The configuration process for both the third-party libraries (TPLs) and GEOS is managed through a Python script called ``config-build.py``. This script simplifies and automates the setup by configuring the build ad install directories and by running CMake based on the options set in the host-config file 
+The configuration process for both the third-party libraries (TPLs) and GEOS is managed through a Python script called ``config-build.py``. This script simplifies and automates the setup by configuring the build and install directories and by running CMake based on the options set in the host-config file 
 which is passed as a command-lne argument. The ``config-build.py`` script has several command-line options. Here, we will only use some basic options and rely on default values for many others. During this build process there wil be automatically generated build and install directories for both the TPLs and the main code,
 with names consistent with the name specified in the host-config by the variable ``CONFIG_NAME``, i.e. ``build-your-platform-release`` and ``install-your-platform-release``. 
 
