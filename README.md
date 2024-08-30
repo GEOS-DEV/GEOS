@@ -23,7 +23,7 @@ and applied engineering components of this effort.
 Documentation
 -------------
 
-The main documentation for GEOS is hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/latest/?).
+Please visit the [Main documentation for GEOS](https://geosx-geosx.readthedocs-hosted.com/en/latest/?).
 
 If you would like to contribute to GEOS, please see the [developer guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/developerGuide/Index.html)
 
