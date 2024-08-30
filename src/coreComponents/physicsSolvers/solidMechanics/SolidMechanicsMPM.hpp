@@ -158,7 +158,6 @@ public:
   enum struct CohesiveLawOption : integer
   {
     Uncoupled,
-    PPR,
     NeedlemanXu,
     Polymer
   };
@@ -275,7 +274,6 @@ public:
     static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
     static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
     static constexpr char const * gridParticleMappedSurfaceNormalString() { return "gridParticleMappedSurfaceNormal"; }
-    static constexpr char const * gridCohesiveTractionString() { return "gridCohesiveTraction"; }
 
     static constexpr char const * gridMassString() { return "gridMass"; }
     static constexpr char const * gridMaterialVolumeString() { return "gridMaterialVolume"; }
@@ -307,6 +305,7 @@ public:
     static constexpr char const * gridMaxMappedParticleIDString() { return "gridMaxMappedParticleIDS"; }
     static constexpr char const * gridPrincipalExplicitSurfaceNormalString() { return "gridPrincipalExplicitSurfaceNormal"; }
     static constexpr char const * gridCohesiveFieldFlagString() { return "gridCohesiveFieldFlag"; }
+    static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
     static constexpr char const * gridCohesiveForceString() { return "gridCohesiveForce"; }
     
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
@@ -388,21 +387,7 @@ public:
                                         NodeManager & nodeManager );
 
   void computeContactForces( real64 const dt,
-                             NodeManager & nodeManager,
-                             arrayView2d< real64 const > const & gridMass,
-                             arrayView2d< real64 const > const & gridMaterialVolume,
-                             arrayView2d< real64 const > const & gridDamage,
-                             arrayView2d< real64 const > const & gridMaxDamage,
-                             arrayView3d< real64 const > const & gridVelocity,
-                             arrayView3d< real64 const > const & gridMomentum,
-                             arrayView3d< real64 const > const & gridSurfaceNormal,
-                             arrayView2d< real64 const > const & gridSurfaceFieldMass,
-                             arrayView3d< real64 const > const & gridSurfacePosition,
-                             arrayView3d< real64 const > const & gridCenterOfMass,
-                             arrayView3d< real64 const > const & gridCenterOfVolume,
-                             arrayView2d< int const > const & gridCohesiveFieldFlag,
-                             arrayView2d< real64 const > const & gridSurfaceNormalWeights,
-                             arrayView3d< real64 > const & gridContactForce );
+                             NodeManager & nodeManager );
 
   void initializeFrictionCoefficients();
 
@@ -559,17 +544,20 @@ public:
   void uncoupledCohesiveLaw( real64 normalDisplacement,
                             real64 tangentialDisplacement,
                             real64 & normalStress,
-                            real64 & shearStress );
+                            real64 & shearStress,
+                            real64 & damage );
 
   void needlemanXuCohesiveLaw( real64 normalDisplacement,
                               real64 tangentialDisplacement,
                               real64 & normalStress,
-                              real64 & shearStress );
+                              real64 & shearStress,
+                              real64 & damage );
 
   void polymerCohesiveLaw( real64 normalDisplacement,
                            real64 tangentialDisplacement,
                            real64 & normalStress,
-                           real64 & shearStress );
+                           real64 & shearStress,
+                           real64 & damage );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
@@ -631,6 +619,12 @@ void interpolateTable( real64 x,
 
   void computeSurfaceFlags( ParticleManager & particleManager );
 
+  void computeSurfaceNormals( ParticleManager & particleManager,
+                              NodeManager & nodeManager );
+
+  void computeSurfacePositions( ParticleManager & particleManager,
+                                NodeManager & nodeManager );
+
   void computeSphF( ParticleManager & particleManager );
 
   // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
@@ -641,6 +635,7 @@ void interpolateTable( real64 x,
                                      real64 const & damageB,
                                      real64 const & maxDamageA,
                                      real64 const & maxDamageB,
+                                     arraySlice1d< real64 const > const damageGradient,
                                      arraySlice1d< real64 const > const xA,
                                      arraySlice1d< real64 const > const xB );
 
@@ -799,6 +794,8 @@ protected:
 
   real64 m_explicitSurfaceNormalInfluence;
   int m_computeSurfaceNormalsOnlyOnInitialization;
+  int m_computeSurfaceNormals;
+  int m_computeSurfacePositions;
 
   // Cohesive law variables
   int m_referenceCohesiveZone;
@@ -816,6 +813,16 @@ protected:
   real64 m_characteristicTangentialDisplacement;
   real64 m_maxCohesiveNormalDisplacement;
   real64 m_maxCohesiveTangentialDisplacement;
+
+  real64 m_polymerCZThickness;
+  real64 m_polymerCZBulkModulus;
+  real64 m_polymerCZShearModulus;
+  real64 m_polymerCZYieldStrength0;
+  real64 m_polymerCZR0;
+  real64 m_polymerCZR1;
+  real64 m_polymerCZR2;
+  real64 m_polymerCZGr;
+  real64 m_polymerCZMaxStretch;
 
   SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
   array2d< real64 > m_referenceCohesiveGridNodePartitioningSurfaceNormals;
@@ -987,7 +994,6 @@ ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
 
 ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
               "Uncoupled",
-              "PPR",
               "NeedlemanXu",
               "Polymer" );
 
