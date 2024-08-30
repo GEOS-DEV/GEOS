@@ -1,4 +1,5 @@
-
+Datastructure: PorousElasticTransverseIsotropic
+===============================================
 
 ==== ==== ============================ 
 Name Type Description                  

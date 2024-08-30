@@ -1,4 +1,5 @@
-
+Datastructure: FrictionlessContact
+==================================
 
 ==== ==== ============================ 
 Name Type Description                  
