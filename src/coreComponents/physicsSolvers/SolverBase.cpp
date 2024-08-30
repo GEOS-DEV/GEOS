@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
+#include "common/Units.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -251,6 +252,10 @@ bool SolverBase::execute( real64 const time_n,
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
 
+  // Keep track of substeps. It is useful to output these.
+  std::vector< real64 > subStepDt( maxSubSteps, 0.0 );
+  integer numOfSubSteps = 0;
+
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
@@ -260,6 +265,8 @@ bool SolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
+    numOfSubSteps++;
+    subStepDt[subStep] = dtAccepted;
 
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();
@@ -304,7 +311,27 @@ bool SolverBase::execute( real64 const time_n,
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( nextDt, domain );
 
+  logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDt );
+
   return false;
+}
+
+void SolverBase::logEndOfCycleInformation( integer const cycleNumber,
+                                           integer const numOfSubSteps,
+                                           std::vector< real64 > const & subStepDt ) const
+{
+  // The formating here is a work in progress.
+  GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP END -------------------------" );
+  GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}", cycleNumber ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "    - N substeps: {}", numOfSubSteps ) );
+  std::string logMessage = "    - dt:";
+  for( integer i = 0; i < numOfSubSteps; ++i )
+  {
+    logMessage += "  " + units::TimeFormatInfo::fromSeconds( subStepDt[i] ).toString();
+  }
+  // Log the complete message once
+  GEOS_LOG_RANK_0( logMessage );
+  GEOS_LOG_RANK_0( "------------------------------------------------------------------\n" );
 }
 
 real64 SolverBase::setNextDt( real64 const & currentDt,
