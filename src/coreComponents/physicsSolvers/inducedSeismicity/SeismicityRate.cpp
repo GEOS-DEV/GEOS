@@ -206,7 +206,8 @@ void SeismicityRate::computeTotalStressOnFault( arrayView1d< real64 const > cons
     // Calculate total stress on the faults
     sig[k] += pressureOnFaultNormal;
     tau[k] += pressureOnFaultShear;
-  } );
+  } );252607
+  
 }
 
 void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain ) const
