@@ -639,36 +639,80 @@ public:
                         DomainPartition & domain );
 
 
-  /*
-   * Returns the requirement for the next time-step to the event executing the solver.
+  /**
+   * @brief getter for the next timestep size
+   * @param time the current time
+   * @return the next timestep size m_nextDt
    */
   virtual real64 getTimestepRequest( real64 const GEOS_UNUSED_PARAM( time ) ) override
   {return m_nextDt;};
   /**@}*/
 
+  /**
+   * @brief getter for the next timestep size
+   * @return the next timestep size m_nextDt
+   */
   real64 getTimestepRequest()
   {return m_nextDt;};
 
+  /**
+   * @brief creates a child group of of this SolverBase instantiation
+   * @param childKey the key of the child type
+   * @param childName the name of the child
+   * @return a pointer to the child group
+   */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * @brief Type alias for catalog interface used by this class. See CatalogInterface.
+   */
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, string const &, Group * const >;
+
+  /**
+   * @brief Get the singleton catalog for SolverBase.
+   * @return reference to the catalog object
+   */
   static CatalogInterface::CatalogType & getCatalog();
 
+  /**
+   * @brief Structure to hold scoped key names
+   */
   struct viewKeyStruct
   {
+    /// @return string for the cflFactor wrapper
     static constexpr char const * cflFactorString() { return "cflFactor"; }
+
+    /// @return string for the initialDt wrapper
     static constexpr char const * initialDtString() { return "initialDt"; }
+
+    /// @return string for the maxStableDt wrapper
     static constexpr char const * maxStableDtString() { return "maxStableDt"; }
+
+    /// @return string for the discretization wrapper
     static constexpr char const * discretizationString() { return "discretization"; }
+
+    /// @return string for the nextDt targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
+
+    /// @return string for the meshTargets wrapper
     static constexpr char const * meshTargetsString() { return "meshTargets"; }
+
+    /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
   };
 
+  /**
+   * @brief Structure to hold scoped key names
+   */
   struct groupKeyStruct
   {
+    /// @return string for the linearSolverParameters wrapper
     static constexpr char const * linearSolverParametersString() { return "LinearSolverParameters"; }
+
+    /// @return string for the nonlinearSolverParameters wrapper
     static constexpr char const * nonlinearSolverParametersString() { return "NonlinearSolverParameters"; }
+
+    /// @return string for the solverStatistics wrapper
     static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
   };
 
@@ -828,6 +872,7 @@ public:
    * @brief function to set the value of m_assemblyCallback
    * @param func the function to set m_assemblyCallback to
    * @param funcType the type of the function
+   * @return true if the function was successfully set, false otherwise
    * 
    * This is used to provide a callback function for to be called in the assembly step.
    */
@@ -897,7 +942,7 @@ protected:
    *
    * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
    * @param subregion the element subregion on which the constitutive model is registered
-   * @return the name name of the constitutive model of type @p CONSTITUTIVE_BASE_TYPE registered on the @p subregion.
+   * @return the name name of the constitutive model of type CONSTITUTIVE_BASE_TYPE registered on the subregion.
    */
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ElementSubRegionBase const & subRegion );
@@ -907,7 +952,7 @@ protected:
    *
    * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
    * @param subRegion the particle subregion on which the constitutive model is registered
-   * @return the name name of the constitutive model of type @p CONSTITUTIVE_BASE_TYPE registered on the @p subregion.
+   * @return the name name of the constitutive model of type CONSTITUTIVE_BASE_TYPE registered on the subregion.
    */
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
