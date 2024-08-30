@@ -11,7 +11,7 @@ authors:
     corresponding: true
     affiliation: 1
   - name: Ryan M. Aronson
-    affiliation: 3
+    affiliation: "2,3"
   - name: Julien R. Besset
     affiliation: 7
   - name: Andrea Borio
