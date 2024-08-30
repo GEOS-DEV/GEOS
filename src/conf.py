@@ -49,22 +49,33 @@ if read_the_docs_build:
     config_src = os.path.join(docs_path, "GeosxConfig.hpp")
     config_dst = os.path.join(common_path, "GeosxConfig.hpp")
 
-    # input_dirs = ["coreComponents/common",
-    #               "coreComponents/dataRepository",
-    #               "coreComponents/fileIO",
-    #               "coreComponents/linearAlgebra",
-    #               "coreComponents/mesh",
-    #               "coreComponents/managers",
-    #               "coreComponents/finiteElement/kernelInterface",
-    #               "coreComponents/mesh/MeshFields.hpp",
-    #               "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
-    #               "coreComponents/physicsSolvers/solidMechanics",
-    #               "coreComponents/finiteVolume"]
+    input_dirs = [
+        "coreComponents/common",
+        "coreComponents/dataRepository",
+        "coreComponents/fileIO",
+        "coreComponents/linearAlgebra",
+        "coreComponents/mesh",
+        "coreComponents/finiteElement/elementFormulations",
+        "coreComponents/finiteElement/kernelInterface",
+        "coreComponents/mesh/MeshFields.hpp",
+        "coreComponents/physicsSolvers/SolverBase.hpp",
+        "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
+        "coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp",
+        "coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain.hpp",
+        "coreComponents/physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp",
+        "coreComponents/finiteVolume",
+        "coreComponents/functions",
+        "coreComponents/fieldSpecification",
+        "coreComponents/discretizationMethods",
+        "coreComponents/events",
+        "coreComponents/mainInterface"
+        ]
+        
 
     # Write correct ReadtheDocs path and input directories
     shutil.copy(doxyfile_src, doxyfile_dst)
     with open(doxyfile_dst, "a") as f:
-#        f.write("\nINPUT = %s" % " ".join(input_dirs))
+        f.write("\nINPUT = %s" % " ".join(input_dirs))
         f.write("\nOUTPUT_DIRECTORY = %s/doxygen_output" % html_path)
         f.write("\nHAVE_DOT = YES")
 
