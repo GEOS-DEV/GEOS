@@ -43,7 +43,7 @@ public:
    * @brief Construct the log level string description for a wrapper
    * @return The log level string description
    */
-  string buildLogLevelDescription();
+  string buildLogLevelDescription() const;
 
 private:
 

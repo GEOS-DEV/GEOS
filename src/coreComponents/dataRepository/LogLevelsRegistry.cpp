@@ -25,7 +25,7 @@ void LogLevelsRegistry::addEntry( integer condition, std::string_view descriptio
 /**
  * @brief Construct the log level string description for a wrapper
  */
-string LogLevelsRegistry::buildLogLevelDescription()
+string LogLevelsRegistry::buildLogLevelDescription() const
 {
   std::ostringstream description;
   description << "Sets the level of information to write in the standard output (the console typically).\n"
