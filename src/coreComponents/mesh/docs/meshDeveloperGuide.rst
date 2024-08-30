@@ -135,3 +135,9 @@ tetrahedra, one for all hexahedra, one for all wedges and one for all the pyrami
 
 Now that all the classes of the mesh hierarchy has been described, we propose to adapt the diagram
 presented in :numref:`diagMeshDevFig` to match with the example presented in :numref:`modelMeshDevFig`.
+
+Direct links to some useful class documentation:
+`ObjectManagerBase <../../doxygen_output/html/classgeos_1_1_object_manager_base.html>`_
+`MeshLevel <../../doxygen_output/html/classgeos_1_1_mesh_level.html>`_
+`NodeManager <../../doxygen_output/html/classgeos_1_1_node_manager.html>`_
+`FaceManager <../../doxygen_output/html/classgeos_1_1_face_manager.html>`_
