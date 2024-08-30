@@ -245,12 +245,12 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
 
 void Group::postInputInitializationRecursive()
 {
+  m_logLevelsRegistry = nullptr;
   for( auto const & subGroupIter : m_subGroups )
   {
     subGroupIter.second->postInputInitializationRecursive();
   }
   postInputInitialization();
-  m_logLevelsRegistry = nullptr;
 }
 
 void Group::registerDataOnMeshRecursive( Group & meshBodies )

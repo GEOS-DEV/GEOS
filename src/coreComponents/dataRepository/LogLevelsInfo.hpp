@@ -25,53 +25,6 @@
 namespace geos
 {
 
-/**
- * @brief Trait used to check whether a LOG_LEVEL_INFO structure is valid.
- * @tparam LOG_LEVEL_INFO The log level structure to check.
- */
-template< typename LOG_LEVEL_INFO >
-static constexpr bool is_log_level_info =
-  std::is_same_v< int, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&
-  std::is_same_v< std::string_view, decltype(LOG_LEVEL_INFO::getDescription()) >;
-
-/**
- * @brief Verify if a log level is active
- * @tparam LOG_LEVEL_INFO The structure containing log level information.
- * @param level Log level to be checked.
- * @return `true` if the log level is active, `false` otherwise.
- * @pre `LOG_LEVEL_INFO` must satisfy `logInfo::is_log_level_info`.
- *
- */
-template< typename LOG_LEVEL_INFO >
-std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, bool >
-isLogLevelActive( int level )
-{
-  return level >= LOG_LEVEL_INFO::getMinLogLevel();
-}
-
-/** ThOSE 3 macros would replace the ones in Logger.hpp  */
-/**
- * @brief Output messages based on current Group's log level.
- * @param[in] logInfoStruct Strut containing log level desscription
- * @param[in] msg a message to log (any expression that can be stream inserted)
- */
-#define GEOS_LOG_LEVEL_INFO( logInfoStruct, msg ) GEOS_LOG_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
-
-/**
- * @brief Output messages (only on rank 0) based on current Group's log level.
- * @param[in] logInfoStruct Strut containing log level desscription
- * @param[in] msg a message to log (any expression that can be stream inserted)
- */
-#define GEOS_LOG_LEVEL_INFO_RANK_0( logInfoStruct, msg ) GEOS_LOG_RANK_0_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
-
-/**
- * @brief Output messages (with one line per rank) based on current Group's log level.
- * @param[in] logInfoStruct Strut containing log level desscription
- * @param[in] msg a message to log (any expression that can be stream inserted)
- */
-#define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfoStruct, msg ) GEOS_LOG_RANK_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
-
-
 namespace logInfo
 {
 
@@ -187,6 +140,53 @@ struct PoromechanicsPhaseFraction
 ///@}
 
 }
+
+
+/**
+ * @brief Trait used to check whether a LOG_LEVEL_INFO structure is valid.
+ * @tparam LOG_LEVEL_INFO The log level structure to check.
+ */
+template< typename LOG_LEVEL_INFO >
+static constexpr bool is_log_level_info =
+  std::is_same_v< int, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&
+  std::is_same_v< std::string_view, decltype(LOG_LEVEL_INFO::getDescription()) >;
+
+/**
+ * @brief Verify if a log level is active
+ * @tparam LOG_LEVEL_INFO The structure containing log level information.
+ * @param level Log level to be checked.
+ * @return `true` if the log level is active, `false` otherwise.
+ * @pre `LOG_LEVEL_INFO` must satisfy `logInfo::is_log_level_info`.
+ *
+ */
+template< typename LOG_LEVEL_INFO >
+std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, bool >
+isLogLevelActive( int level )
+{
+  return level >= LOG_LEVEL_INFO::getMinLogLevel();
+}
+
+/** ThOSE 3 macros would replace the ones in Logger.hpp  */
+/**
+ * @brief Output messages based on current Group's log level.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_INFO( logInfoStruct, msg ) GEOS_LOG_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+
+/**
+ * @brief Output messages (only on rank 0) based on current Group's log level.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_INFO_RANK_0( logInfoStruct, msg ) GEOS_LOG_RANK_0_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+
+/**
+ * @brief Output messages (with one line per rank) based on current Group's log level.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfoStruct, msg ) GEOS_LOG_RANK_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
 
 }
 

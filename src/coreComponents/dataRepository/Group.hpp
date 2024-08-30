@@ -866,12 +866,13 @@ public:
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
 
   /**
-   * @brief Append a levelCondition and a log description to the description of the wrapped object given a log info struct
-   * @tparam LOG_LEVEL_INFO The log documentation to add
-   * @return void if the trait is verified
+   * @brief Append a levelCondition and a log description to the description of the wrapped object given a log info struct.
+   * Must be called in constructor.
+   * @tparam LOG_LEVEL_INFO The log documentation to add.
+   * @return void if the trait is verified.
    */
   template< typename LOG_LEVEL_INFO >
-  std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, void >
+  std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, void >
   addLogLevel();
 
   /**
@@ -1731,9 +1732,11 @@ Wrapper< T > & Group::registerWrapper( string const & name,
 }
 
 template< typename LOG_LEVEL_INFO >
-std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, void >
+std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, void >
 Group::addLogLevel()
 {
+  GEOS_ERROR_IF(m_logLevelsRegistry == nullptr, "You cannot call addLogLevel after schema generation" );
+
   Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
   if( wrapper == nullptr )
   {
