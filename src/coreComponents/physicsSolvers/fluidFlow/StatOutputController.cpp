@@ -24,7 +24,6 @@
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsStatistics.hpp"
-//#include "physicsSolvers/SolverStatistics.hpp"
 
 
 namespace geos

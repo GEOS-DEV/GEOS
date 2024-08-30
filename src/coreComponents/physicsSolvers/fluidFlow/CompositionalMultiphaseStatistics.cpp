@@ -307,7 +307,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     RegionStatistics & regionStatistics = region.getGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
     real64 & averagePressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averagePressureString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averagePressureString()).setApplyDefaultValue( averagePressure + subRegionAvgPresNumerator );
+    averagePressure += subRegionAvgPresNumerator;
     real64 & minPressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::minPressureString());
     if( subRegionMinPres < minPressure )
     {
@@ -329,7 +329,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::maxDeltaPressureString()).setApplyDefaultValue( subRegionMaxDeltaPres );
     }
     real64 & averageTemperature = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString()).setApplyDefaultValue( averageTemperature + subRegionAvgTempNumerator );
+    averageTemperature += subRegionAvgTempNumerator;
     real64 & minTemperature = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::minTemperatureString());
     if( subRegionMinTemp < minTemperature )
     {
@@ -341,7 +341,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::maxTemperatureString()).setApplyDefaultValue( subRegionMaxTemp );
     }
     real64 & totalUncompactedPoreVolume = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::totalUncompactedPoreVolumeString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::totalUncompactedPoreVolumeString()).setApplyDefaultValue( totalUncompactedPoreVolume + subRegionTotalUncompactedPoreVol );
+    totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVol;
     for( integer ip = 0; ip < numPhases; ++ip )
     {
       regionStatistics.getReference< array1d< real64 > >( RegionStatistics::viewKeyStruct::phasePoreVolumeString())[ip] += subRegionPhaseDynamicPoreVol[ip];
@@ -406,26 +406,22 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     }
     regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::totalPoreVolumeString()).setApplyDefaultValue( totalPoreVolume );
 
-    real64 averagePressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averagePressureString() );
+    real64 & averagePressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averagePressureString() );
     averagePressure = MpiWrapper::sum( averagePressure );
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averagePressureString() ).setApplyDefaultValue( averagePressure );
 
-    real64 averageTemperature = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString() );
+    real64 & averageTemperature = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString() );
     averageTemperature = MpiWrapper::sum( averageTemperature );
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString() ).setApplyDefaultValue( averageTemperature );
 
     if( totalUncompactedPoreVolume > 0 )
     {
       float invTotalUncompactedPoreVolume = 1.0 / totalUncompactedPoreVolume;
       averagePressure *= invTotalUncompactedPoreVolume;
-      regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averagePressureString() ).setApplyDefaultValue( averagePressure );
       averageTemperature *= invTotalUncompactedPoreVolume;
-      regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString() ).setApplyDefaultValue( averageTemperature );
     }
     else
     {
-      regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averagePressureString() ).setApplyDefaultValue( 0.0 );
-      regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString() ).setApplyDefaultValue( 0.0 );
+      averagePressure =  0.0;
+      averageTemperature = 0.0;
       GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                           << ": Cannot compute average pressure because region pore volume is zero." );
     }

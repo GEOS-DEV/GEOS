@@ -182,7 +182,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
     real64 & averagePressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averagePressureString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averagePressureString()).setApplyDefaultValue( averagePressure + subRegionAvgPresNumerator );
+    averagePressure += subRegionAvgPresNumerator;
     real64 & minPressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::minPressureString());
     if( subRegionMinPres < minPressure )
     {
@@ -204,7 +204,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
       regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::maxDeltaPressureString()).setApplyDefaultValue( subRegionMaxDeltaPres );
     }
     real64 & averageTemperature = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averageTemperatureString()).setApplyDefaultValue( averageTemperature + subRegionAvgTempNumerator );
+    averageTemperature += subRegionAvgTempNumerator;
     real64 & minTemperature = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::minTemperatureString());
     if( subRegionMinTemp < minTemperature )
     {
@@ -217,11 +217,11 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     }
 
     real64 & totalUncompactedPoreVolume = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::totalPoreVolumeString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::totalPoreVolumeString()).setApplyDefaultValue( totalUncompactedPoreVolume + subRegionAvgPresNumerator );
+    totalUncompactedPoreVolume += subRegionAvgPresNumerator;
     real64 & totalPoreVolume = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::totalUncompactedPoreVolumeString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::totalUncompactedPoreVolumeString()).setApplyDefaultValue( totalPoreVolume + subRegionTotalPoreVol );
+    totalPoreVolume += subRegionTotalPoreVol;
     real64 & totalMass = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::totalMassString());
-    regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::totalMassString()).setApplyDefaultValue( totalMass + subRegionTotalMass );
+    totalMass += subRegionTotalMass;
   } );
 
   // Step 3: synchronize the results over the MPI ranks
@@ -256,21 +256,6 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::totalPoreVolumeString()).setApplyDefaultValue( totalPoreVolume );
     real64 totalMass = MpiWrapper::sum( regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::totalMassString()) );
     regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::totalMassString()).setApplyDefaultValue( totalMass );
-
-    // regionStatistics.minPressure = MpiWrapper::min( regionStatistics.minPressure );
-    // regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
-    // regionStatistics.maxPressure = MpiWrapper::max( regionStatistics.maxPressure );
-
-    // regionStatistics.minDeltaPressure = MpiWrapper::min( regionStatistics.minDeltaPressure );
-    // regionStatistics.maxDeltaPressure = MpiWrapper::max( regionStatistics.maxDeltaPressure );
-
-    // regionStatistics.minTemperature = MpiWrapper::min( regionStatistics.minTemperature );
-    // regionStatistics.averageTemperature = MpiWrapper::sum( regionStatistics.averageTemperature );
-    // regionStatistics.maxTemperature = MpiWrapper::max( regionStatistics.maxTemperature );
-
-    // regionStatistics.totalUncompactedPoreVolume = MpiWrapper::sum( regionStatistics.totalUncompactedPoreVolume );
-    // regionStatistics.totalPoreVolume = MpiWrapper::sum( regionStatistics.totalPoreVolume );
-    // regionStatistics.totalMass = MpiWrapper::sum( regionStatistics.totalMass );
 
     if( totalUncompactedPoreVolume > 0 )
     {

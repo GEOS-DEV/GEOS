@@ -13,6 +13,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file StatOutputController.hpp
+ */
+
 #ifndef GEOS_PHYSICSSOLVERS_STATOUTPUTCONTROLLER_HPP_
 #define GEOS_PHYSICSSOLVERS_STATOUTPUTCONTROLLER_HPP_
 #include "physicsSolvers/SolverBase.hpp"
@@ -34,7 +38,11 @@
 
 namespace geos
 {
-
+/**
+ * @brief StatOutputController
+ * Class responsible for creating components to output regions statistics in hdf file
+ * Class in charge of creating component 
+ */
 class StatOutputController : public TaskBase
 {
 
@@ -95,8 +103,8 @@ private:
 
   /**
    * @brief Apply the lambda expression to the supported types
-   * @tparam LAMBDA The lambda type 
-   * @param lambda  The lambda to be evaluated
+   * @tparam LAMBDA The lambda type
+   * @param lambda The lambda to be evaluated
    */
   template< typename LAMBDA >
   void forSubStats( LAMBDA lambda );
