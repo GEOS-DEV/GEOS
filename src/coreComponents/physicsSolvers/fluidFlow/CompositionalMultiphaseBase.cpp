@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -35,7 +36,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
-#include "fieldSpecification/SourceFluxStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
@@ -126,7 +127,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::maxRelativeCompDensChangeString(), &m_maxRelativeCompDensChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max ). // disabled by default
+    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max/1.0e100 ). // disabled by default
     setDescription( "Maximum (relative) change in a component density in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
@@ -172,9 +173,9 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setDescription( "Minimum value for solution scaling factor" );
 }
 
-void CompositionalMultiphaseBase::postProcessInput()
+void CompositionalMultiphaseBase::postInputInitialization()
 {
-  FlowSolverBase::postProcessInput();
+  FlowSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
@@ -583,18 +584,15 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       compareMultiphaseModels( fluid, referenceFluid );
       compareMulticomponentModels( fluid, referenceFluid );
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        bool const isFluidModelThermal = castedFluid.isThermal();
-        GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-        GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-      } );
+      bool const isFluidModelThermal = fluid.isThermal();
+      GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError );
+      GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
@@ -2587,9 +2585,6 @@ void CompositionalMultiphaseBase::saveSequentialIterationState( DomainPartition 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  if( m_keepFlowVariablesConstantDuringInitStep )
-    return;
 
   real64 maxDeltaPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

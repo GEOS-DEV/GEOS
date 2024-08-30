@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -25,7 +26,7 @@
 #include "physicsSolvers/contact/SolidMechanicsALMBubbleKernels.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/FrictionSelector.hpp"
 
 namespace geos
 {
@@ -215,10 +216,10 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   localMatrix.setName( this->getName() + "/localMatrix" );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
 }
 
@@ -319,7 +320,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                localRhs );
 
   //ParallelMatrix parallel_matrix;
-  //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
   //parallel_matrix.write("mech.mtx");
 
   // Loop for assembling contributes from interface elements (Aut*eps^-1*Atu and Aub*eps^-1*Abu)
@@ -359,11 +360,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombContact >( mesh,
+                               constitutive::CoulombFriction >( mesh,
                                                           fractureRegionName,
                                                           faceElementList,
                                                           subRegionFE,
-                                                          SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString(),
+                                                          viewKeyStruct::frictionLawNameString(),
                                                           kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
@@ -383,11 +384,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombContact >( mesh,
+                               constitutive::CoulombFriction >( mesh,
                                                           fractureRegionName,
                                                           faceElementList,
                                                           subRegionFE,
-                                                          SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString(),
+                                                          viewKeyStruct::frictionLawNameString(),
                                                           kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
@@ -414,11 +415,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombContact >( mesh,
+                               constitutive::CoulombFriction >( mesh,
                                                           fractureRegionName,
                                                           faceElementList,
                                                           subRegionFE,
-                                                          SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString(),
+                                                          viewKeyStruct::frictionLawNameString(),
                                                           kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
@@ -438,11 +439,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombContact >( mesh,
+                               constitutive::CoulombFriction >( mesh,
                                                           fractureRegionName,
                                                           faceElementList,
                                                           subRegionFE,
-                                                          SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString(),
+                                                          viewKeyStruct::frictionLawNameString(),
                                                           kernelFactory );
      
         GEOS_UNUSED_VAR( maxTraction );
@@ -587,8 +588,8 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     } );
     real64 const localResidualNorm[2] = { localSum.get(), SolidMechanicsLagrangianFEM::getMaxForce() };
 
-    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOS );
+    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
     array1d< real64 > globalValues( numRanks * 2 );
 
     // Everything is done on rank 0
@@ -597,7 +598,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
                         globalValues.data(),
                         2,
                         0,
-                        MPI_COMM_GEOSX );
+                        MPI_COMM_GEOS );
 
     if( rank==0 )
     {
@@ -609,7 +610,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
       }
     }
 
-    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
+    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOS );
   } );
 
   real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
@@ -749,8 +750,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                                                                 FaceElementSubRegion & subRegion )
     {
 
-      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const traction = subRegion.getField< contact::traction >();
@@ -777,10 +778,10 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       arrayView1d< int > const condConv_v = condConv.toView();
 
       // Update the traction field based on the displacement results from the nonlinear solve
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
+        using FrictionType = TYPEOFREF( castedFrictionLaw );
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
         if (m_simultaneous)
         {
@@ -796,7 +797,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         {
           solidMechanicsALMKernels::ComputeTractionKernel::
             launch< parallelDevicePolicy<> >( subRegion.size(),
-                                              contactWrapper,
+                                              frictionWrapper,
                                               penalty,
                                               traction,
                                               dispJump,
@@ -853,14 +854,15 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
       //bool printflag = true; 
       real64 const slidingCheckTolerance = m_slidingCheckTolerance;
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
+        using FrictionType = TYPEOFREF( castedFrictionLaw );
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
         solidMechanicsALMKernels::ConstraintCheckKernel::
             launch< parallelDevicePolicy<> >( subRegion.size(),
-                                              contactWrapper,
+                                              frictionWrapper,
                                               ghostRank,
                                               traction_new_v,
                                               dispJump,
@@ -900,8 +902,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                           static_cast< localIndex >( localSum[3].get()),
                                           static_cast< localIndex >( localSum[4].get()) };
 
-        int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
-        int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
+        int const rank     = MpiWrapper::commRank( MPI_COMM_GEOS );
+        int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
         array1d< localIndex > globalValues( numRanks * 5 );
 
         // Everything is done on rank 0
@@ -910,7 +912,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                             globalValues.data(),
                             5,
                             0,
-                            MPI_COMM_GEOSX );
+                            MPI_COMM_GEOS );
 
         //if ( globalValues[1]!=0 || globalValues[2]!=0 || 
         //     globalValues[3]!=0 || globalValues[4]!=0 )
@@ -930,7 +932,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           }
         }
 
-        MpiWrapper::bcast( globalCondConv, 5, 0, MPI_COMM_GEOSX );
+        MpiWrapper::bcast( globalCondConv, 5, 0, MPI_COMM_GEOS );
 
         //if ( globalCondConv[1]!=0 || globalCondConv[2]!=0 || 
         //     globalCondConv[3]!=0 || globalCondConv[4]!=0 )
@@ -1108,8 +1110,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                                                                   FaceElementSubRegion & subRegion )
       {
  
-        string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-        ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+        string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+        FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
  
         arrayView2d< real64 > const traction_new_v = traction_new.toView();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
@@ -1148,12 +1150,12 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         } );
 
         real64 const slidingCheckTolerance = m_slidingCheckTolerance;
-        constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+        constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
         {
-          using ContactType = TYPEOFREF( castedContact );
-          typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelUpdates();
+          using FrictionType = TYPEOFREF( castedFrictionLaw );
+          typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
  
-          forAll< parallelHostPolicy >( subRegion.size(), [ contactWrapper, 
+          forAll< parallelHostPolicy >( subRegion.size(), [ frictionWrapper, 
                                                             normalTractionTolerance, slidingTolerance,
                                                             normalDisplacementTolerance,
                                                             slidingCheckTolerance,
@@ -1225,7 +1227,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                 
                 real64 dLimitTangentialTractionNorm_dTraction = 0.0;
                 real64 const limitTau =
-                  contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                  frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
                                                                      dLimitTangentialTractionNorm_dTraction );
                 
                 real64 psi = currentTau / limitTau;

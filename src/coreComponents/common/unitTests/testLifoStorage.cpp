@@ -1,3 +1,18 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 #include "mainInterface/initialization.hpp"
 #define LIFO_DISABLE_CALIPER
 #include "common/LifoStorage.hpp"
@@ -58,8 +73,8 @@ struct RAJAHelper< parallelHostPolicy >
 template< unsigned long THREADS_PER_BLOCK >
 using devicePolicy = RAJA::cuda_exec< THREADS_PER_BLOCK >;
 
-template< typename X, typename Y, size_t BLOCK_SIZE, bool ASYNC >
-struct RAJAHelper< RAJA::policy::cuda::cuda_exec_explicit< X, Y, BLOCK_SIZE, ASYNC > >
+template< typename X, typename Y, typename C, size_t BLOCK_SIZE, bool ASYNC >
+struct RAJAHelper< RAJA::policy::cuda::cuda_exec_explicit< X, Y, C, BLOCK_SIZE, ASYNC > >
 {
   using ReducePolicy = RAJA::cuda_reduce;
   using AtomicPolicy = RAJA::cuda_atomic;
