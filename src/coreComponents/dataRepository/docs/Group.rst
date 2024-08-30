@@ -124,4 +124,4 @@ Looping Interface
 Doxygen API documentation
 -------------------------
 
-`Group <../../../doxygen_output/html/classgeos_1_1data_repository_1_1_group.html>`_
+`Group API <../../../doxygen_output/html/classgeos_1_1data_repository_1_1_group.html>`_

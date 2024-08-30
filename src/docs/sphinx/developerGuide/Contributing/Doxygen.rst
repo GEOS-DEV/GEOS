@@ -242,9 +242,15 @@ Current Doxygen
 `Link to Doxygen Class directory <../../../../doxygen_output/html/classes.html>`__
 
 Direct links to some useful class documentation:
-`Group <../../doxygen_output/html/classgeos_1_1data_repository_1_1_group.html>`_
-`Wrapper <../../doxygen_output/html/classgeos_1_1data_repository_1_1_wrapper.html>`_
-`ObjectManagerBase <../../doxygen_output/html/classgeos_1_1_object_manager_base.html>`_
-`MeshLevel <../../doxygen_output/html/classgeos_1_1_mesh_level.html>`_
-`NodeManager <../../doxygen_output/html/classgeos_1_1_node_manager.html>`_
-`FaceManager <../../doxygen_output/html/classgeos_1_1_face_manager.html>`_
+
+`Group API <../../../../doxygen_output/html/classgeos_1_1data_repository_1_1_group.html>`_
+
+`Wrapper API <../../../../doxygen_output/html/classgeos_1_1data_repository_1_1_wrapper.html>`_
+
+`ObjectManagerBase API <../../../../doxygen_output/html/classgeos_1_1_object_manager_base.html>`_
+
+`MeshLevel API <../../../../doxygen_output/html/classgeos_1_1_mesh_level.html>`_
+
+`NodeManager API <../../../../doxygen_output/html/classgeos_1_1_node_manager.html>`_
+
+`FaceManager API <../../../../doxygen_output/html/classgeos_1_1_face_manager.html>`_
