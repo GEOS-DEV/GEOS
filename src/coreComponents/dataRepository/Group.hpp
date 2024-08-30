@@ -1735,7 +1735,7 @@ template< typename LOG_LEVEL_INFO >
 std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, void >
 Group::addLogLevel()
 {
-  GEOS_ERROR_IF(m_logLevelsRegistry == nullptr, "You cannot call addLogLevel after schema generation" );
+  GEOS_ERROR_IF( m_logLevelsRegistry == nullptr, "You cannot call addLogLevel after schema generation" );
 
   Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
   if( wrapper == nullptr )
