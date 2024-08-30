@@ -140,7 +140,7 @@ bibliography: paper.bib
 GEOS is a simulation framework focused on solving tightly coupled multi-physics problems with an initial emphasis on subsurface reservoir applications.
 Currently, GEOS supports capabilities for studying carbon sequestration, geothermal energy, hydrogen storage, and related subsurface applications.
 The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to simulate tightly coupled compositional flow, poromechanics, fault slip, fracture propagation, and thermal effects, etc.
-Extensive documentation is available on Read the Docs [@GEOS_RTD].
+Extensive documentation is available on the [GEOS documentation pages]() [@GEOS_RTD].
 Note that GEOS, as presented here, is a complete rewrite of the previous incarnation of the GEOS referred to in [@Settgast:2017].
 <!--Additionally, this project has no relation to the computational geometry tool bearing the same name [@libgeos].-->
 
@@ -162,7 +162,7 @@ However, GEOS stands out in two key areas: the explicit fault modeling coupled w
 # GEOS Components
 
 The core C++17 infrastructure provides common computer science capabilities typically required for solving differential equations using a spatially discrete method.
-The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a mesh based MPI communications interface, degree-of-freedom management, IO services, and a physics package interface.
+The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a mesh-based MPI communications interface, degree-of-freedom management, IO services, and a physics package interface.
 
 By design, GEOS is intended to be a generic multi-physics simulation platform.
 The physics package interface in GEOS is intended to encapsulate the development of numerical methods applied to the solution of governing equations relevant to a problem.
@@ -193,6 +193,7 @@ Simulations such as this will play a critical role in predicting the viability o
 As an example of the weak scalability of GEOS on an exascale class system, we present two weak scaling studies on a simple wellbore geometry run on the Frontier supercomputer at Oak Ridge National Laboratory.
 Frontier is comprised of 9,472 Cray EX235a nodes that each contain a single AMD EPYC 7A53 CPU and four AMD MI250X GPU's [@frontier].
 Note that each MI250X is comprised of two Graphics Compute Dies (GCD), with each GCD appearing as a GPU to the operating system. 
+A more detailed discussion and instructions to reproduce the results are available in the [Performance Benchmarks](https://geosx-geosx--3296.com.readthedocs.build/en/3296/docs/sphinx/advancedExamples/performanceBenchmarks/Index.html) of the GEOS documentation.
 
 The weak scaling results for mechanics are presented in (Figure \ref{fig:Frontier_scaling}a) and shows nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 GPU's($81.3 \times 10^{9}$ degrees-of-freedom).
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms, this level of scaling efficiency is excellent.
