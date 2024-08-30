@@ -8,7 +8,7 @@ Performance Benchmarks
 Wellbore problem scaling on Frontier
 ====================================
 .. _wellboreProblemScaling:
-The simple wellbore problem described here was used to test the weak scaling of GEOS on the `Frontier supercomputer <https://www.olcf.ornl.gov/frontier/>` at Oak Ridge National Laboratory.
+The simple wellbore problem described here was used to test the weak scaling of GEOS on the `Frontier supercomputer <https://www.olcf.ornl.gov/frontier/>`_ at Oak Ridge National Laboratory.
 The hardware details of the Frontier system are described in the `Frontier User Guide <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html>`_.
 
 The wellbore problem consists of a single wellbore with an internal radius of 0.057m, a casing thickness of 0.006m, with varying length and number elements depending level in the scaling study.
@@ -41,7 +41,7 @@ An image of the wellbore geometry is give below:
 
 The scaling results for mechanics, and separately compositional flow applied to the wellbore problem are shown below.
 
-.. figure::  GEOS_Frontier_Scaling.svg
+.. figure::  GEOS_Frontier_scaling.svg
    :align: center
    :width: 500
    :figclass: align-center
