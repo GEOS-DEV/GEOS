@@ -290,6 +290,7 @@ public:
    * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
+   * @param scaleFactor the scaling factor to apply to the solution
    * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
    * @return return true if line search succeeded, false otherwise
    *
@@ -313,14 +314,16 @@ public:
   /**
    * @brief Function to perform line search using a parabolic interpolation to find the scaling factor.
    * @param time_n time at the beginning of the step
-   * @param dt the perscribed timestep
+   * @param dt the prescribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
+   * @param scaleFactor the scaling factor to apply to the solution
    * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
+   * @param residualNormT the residual norm at the end of the line search
    * @return return true if line search succeeded, false otherwise
    *
    */
@@ -375,6 +378,7 @@ public:
 
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
+   * @param domain the domain containing the mesh and fields
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
   virtual void
@@ -388,6 +392,7 @@ public:
    * @param localMatrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
+   * @param setSparsity flag to indicate if the sparsity pattern should be set
    *
    * @note While the function is virtual, the base class implementation should be
    *       sufficient for most single-physics solvers.
@@ -407,8 +412,7 @@ public:
    * @param domain the domain partition
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @return the residual for convergence evaluation
+   * @param localRhs the system right-hand side vector
    *
    * This function assembles the residual and the jacobian of the residual wrt the primary
    * variables. In a stand alone physics solver, this function will fill a single block in the
@@ -434,7 +438,7 @@ public:
    * @param domain the domain partition
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @param localRhs the system right-hand side vector
    *
    * This function applies all boundary conditions to the linear system. This is essentially a
    * completion of the system assembly, but is separated for use in coupled solvers.
@@ -515,12 +519,10 @@ public:
 
   /**
    * @brief Function to check system solution for physical consistency and constraint violation
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
+   * @param domain the domain partition
    * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localSolution the solution vector
    * @param scalingFactor factor to scale the solution prior to application
-   * @param objectManager the object manager that holds the fields we wish to apply the solution to
    * @return true if solution can be safely applied without violating physical constraints, false otherwise
    *
    * @note This function must be overridden in the derived physics solver in order to use an implict
@@ -537,7 +539,7 @@ public:
    * @brief Function to determine if the solution vector should be scaled back in order to maintain a known constraint.
    * @param[in] domain The domain partition.
    * @param[in] dofManager degree-of-freedom manager associated with the linear system
-   * @param[in] solution the solution vector
+   * @param[in] localSolution the solution vector
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
@@ -547,12 +549,11 @@ public:
 
   /**
    * @brief Function to apply the solution vector to the state
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
    * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localSolution the solution vector
    * @param scalingFactor factor to scale the solution prior to application
-   * @param objectManager the object manager that holds the fields we wish to apply the solution to
+   * @param dt the timestep
+   * @param domain the domain partition
    *
    * This function performs 2 operations:
    * 1) extract the solution vector for the "blockSystem" parameter, and applies the
@@ -594,8 +595,9 @@ public:
   virtual void resetConfigurationToBeginningOfStep( DomainPartition & domain );
 
   /**
-   * @brief set the simplest configuration state.
+   * @brief resets the configuration to the default value.
    * @param domain the domain containing the mesh and fields
+   * @return a bool that states whether the configuration was reset or not.
    */
   virtual bool resetConfigurationToDefault( DomainPartition & domain ) const;
 
@@ -622,7 +624,7 @@ public:
 
   /**
    * @brief perform cleanup for implicit timestep
-   * @param time_n the time at the beginning of the step
+   * @param time the time at the beginning of the step
    * @param dt the desired timestep
    * @param domain the domain partition
    *
@@ -641,10 +643,9 @@ public:
 
   /**
    * @brief getter for the next timestep size
-   * @param time the current time
    * @return the next timestep size m_nextDt
    */
-  virtual real64 getTimestepRequest( real64 const GEOS_UNUSED_PARAM( time ) ) override
+  virtual real64 getTimestepRequest( real64 const  ) override
   {return m_nextDt;};
   /**@}*/
 
@@ -941,7 +942,7 @@ protected:
    * @brief Get the Constitutive Name object
    *
    * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
-   * @param subregion the element subregion on which the constitutive model is registered
+   * @param subRegion the element subregion on which the constitutive model is registered
    * @return the name name of the constitutive model of type CONSTITUTIVE_BASE_TYPE registered on the subregion.
    */
   template< typename CONSTITUTIVE_BASE_TYPE >
@@ -975,7 +976,11 @@ protected:
    * @return the constitutive model of type @p BASETYPE registered on the @p dataGroup with the key @p key.
    */
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
-  static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
+  static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
+  {
+    dataRepository::Group const & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+    return constitutiveModels.getGroup< BASETYPE >( key );
+  }
 
   /** 
    * @brief Get the Constitutive Model object
@@ -986,7 +991,12 @@ protected:
    * @return the constitutive model of type @p BASETYPE registered on the @p dataGroup with the key @p key.
    */
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
-  static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
+  static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
+  {
+  dataRepository::Group & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+  return constitutiveModels.getGroup< BASETYPE >( key );
+  }
+
 
 
   /// Courant–Friedrichs–Lewy factor for the timestep
@@ -1111,21 +1121,6 @@ string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion 
   return validName;
 }
 
-template< typename BASETYPE, typename LOOKUP_TYPE >
-BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
-{
-  dataRepository::Group const & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
-
-  return constitutiveModels.getGroup< BASETYPE >( key );
-}
-
-template< typename BASETYPE, typename LOOKUP_TYPE >
-BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
-{
-  Group & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
-
-  return constitutiveModels.getGroup< BASETYPE >( key );
-}
 
 } // namespace geos
 
