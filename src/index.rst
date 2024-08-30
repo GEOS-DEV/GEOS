@@ -160,6 +160,8 @@ Table of Contents
    
    docs/sphinx/userGuide/Index
 
+   `Reporting Issues <https://github.com/GEOS-DEV/GEOS/issues/new/choose>`_
+
    docs/sphinx/developerGuide/Index
 
    docs/sphinx/Doxygen
