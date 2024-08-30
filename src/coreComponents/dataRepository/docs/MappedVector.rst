@@ -44,4 +44,4 @@ The type iterated over is a key-pointer pair (provided as `value_type` alias).
 Doxygen API documentation
 -------------------------
 
-`MappedVector <../../../doxygen_output/html/classgeos_1_1_mapped_vector.html>`_
+`MappedVector  API <../../../doxygen_output/html/classgeos_1_1_mapped_vector.html>`_

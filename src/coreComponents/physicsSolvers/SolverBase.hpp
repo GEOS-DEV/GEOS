@@ -34,20 +34,54 @@ namespace geos
 
 class DomainPartition;
 
+/**
+ * @class SolverBase
+ * @brief Base class for all physics solvers
+ *
+ * This class provides the base interface for all physics solvers. It provides the basic
+ * functionality for setting up and solving a linear system, as well as the interface for
+ * performing a timestep.
+ */
 class SolverBase : public ExecutableGroup
 {
 public:
 
+  /**
+   * @brief Constructor for SolverBase
+   * @param name the name of this instantiation of SolverBase
+   * @param parent the parent group of this instantiation of SolverBase
+   */
   explicit SolverBase( string const & name,
                        Group * const parent );
 
+  /**
+   * @brief Move constructor for SolverBase
+   */
   SolverBase( SolverBase && ) = default;
 
+  /**
+   * @brief Destructor for SolverBase
+   */
   virtual ~SolverBase() override;
 
+  /**
+   * @brief Deleted constructor
+   */
   SolverBase() = delete;
+
+  /**
+   * @brief Deleted copy constructor
+   */
   SolverBase( SolverBase const & ) = delete;
+
+  /**
+   * @brief Deleted copy assignment operator
+   */
   SolverBase & operator=( SolverBase const & ) = delete;
+
+  /**
+   * @brief Deleted move assignment operator
+   */
   SolverBase & operator=( SolverBase && ) = delete;
 
   /**
@@ -56,12 +90,26 @@ public:
   virtual string getCatalogName() const = 0;
 
 
+  /**
+   * @brief Register wrappers that contain data on the mesh objects
+   * @param MeshBodies the group of mesh bodies
+   */
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
+  /**
+   * @brief Initialization tasks after mesh generation is completed.
+   */
   virtual void initialize_postMeshGeneration() override;
 
+  /**
+   * @brief Generate mesh targets from target regions
+   * @param meshBodies the group of mesh bodies
+   */
   void generateMeshTargetsFromTargetRegions( Group const & meshBodies );
 
+  /**
+   * @copydoc ExecutableGroup::cleanup
+   */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -69,7 +117,7 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * This method is called when its host event is triggered
+   * @copydoc ExecutableGroup::execute
    */
   virtual bool execute( real64 const time_n,
                         real64 const dt,
@@ -83,6 +131,11 @@ public:
    * @return a reference to linear system matrix of this solver
    */
   ParallelMatrix & getSystemMatrix() { return m_matrix; }
+
+  /**
+   * @brief Getter for system rhs vector
+   * @return a reference to linear system right-hand side of this solver
+   */
   ParallelMatrix const & getSystemMatrix() const { return m_matrix; }
 
   /**
@@ -90,6 +143,11 @@ public:
    * @return a reference to linear system right-hand side of this solver
    */
   ParallelVector & getSystemRhs() { return m_rhs; }
+
+  /**
+   * @brief Getter for system rhs vector
+   * @return a reference to linear system right-hand side of this solver
+   */
   ParallelVector const & getSystemRhs() const { return m_rhs; }
 
   /**
@@ -97,6 +155,11 @@ public:
    * @return a reference to solution vector of this solver
    */
   ParallelVector & getSystemSolution() { return m_solution; }
+
+  /**
+   * @brief Getter for system solution vector
+   * @return a reference to solution vector of this solver
+   */
   ParallelVector const & getSystemSolution() const { return m_solution; }
 
   /**
@@ -104,6 +167,11 @@ public:
    * @return a reference to degree-of-freedom manager of this solver
    */
   DofManager & getDofManager() { return m_dofManager; }
+
+  /**
+   * @brief Getter for degree-of-freedom manager
+   * @return a reference to degree-of-freedom manager of this solver
+   */
   DofManager const & getDofManager() const { return m_dofManager; }
 
   /**
@@ -111,6 +179,11 @@ public:
    * @return a reference to linear system matrix of this solver
    */
   CRSMatrix< real64, globalIndex > & getLocalMatrix() { return m_localMatrix; }
+
+  /**
+   * @brief Getter for local matrix
+   * @return a reference to linear system matrix of this solver
+   */
   CRSMatrixView< real64 const, globalIndex const > getLocalMatrix() const { return m_localMatrix.toViewConst(); }
 
   /**
@@ -624,8 +697,17 @@ public:
    */
   R1Tensor const gravityVector() const;
 
+  /**
+   * @brief Check if the solution increments are ok to use
+   * @param domain the domain partition
+   * @return true if the solution increments are ok to use, false otherwise
+   */
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const;
 
+  /**
+   * @brief Save the state of the solver for sequential iteration
+   * @param domain the domain partition
+   */
   virtual void saveSequentialIterationState( DomainPartition & domain );
 
   /**
@@ -664,6 +746,9 @@ public:
     return m_nonlinearSolverParameters;
   }
 
+  /**
+   * @brief syncronize the nonlinear solver parameters.
+   */
   virtual void
   synchronizeNonlinearSolverParameters()
   { /* empty here, overriden in CoupledSolver */ }
@@ -729,28 +814,76 @@ public:
     }
   }
 
-
+  /**
+   * @brief return the name of the discretization object
+   * @return the name of the discretization object
+   */
   string getDiscretizationName() const {return m_discretizationName;}
 
+  /**
+   * @brief function to set the value of m_assemblyCallback
+   * @param func the function to set m_assemblyCallback to
+   * @param funcType the type of the function
+   * 
+   * This is used to provide a callback function for to be called in the assembly step.
+   */
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
+  /**
+   * @brief accessor for the solver statistics.
+   * @return reference to m_solverStatistics
+   */
   SolverStatistics & getSolverStatistics() { return m_solverStatistics; }
+
+  /**
+   * @brief const accessor for the solver statistics.
+   * @return reference to m_solverStatistics
+   */
   SolverStatistics const & getSolverStatistics() const { return m_solverStatistics; }
 
+#if defined(GEOS_USE_PYGEOSX)
   /**
    * @brief Return PySolver type.
    * @return Return PySolver type.
    */
-#if defined(GEOS_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
+  /**
+   * @brief accessor for m_meshTargets
+   * @return reference to m_meshTargets
+   */
   map< std::pair< string, string >, array1d< string > > const & getMeshTargets() const
   {
     return m_meshTargets;
   }
 protected:
 
+  /**
+   * @brief Eisenstat-Walker adaptive tolerance
+   *
+   * This method enables an inexact-Newton method is which the linear solver
+   * tolerance is chosen based on the nonlinear solver convergence behavior.
+   * In early Newton iterations, the search direction is usually imprecise, and
+   * therefore a weak linear convergence tolerance can be chosen to minimize
+   * computational cost.  As the search gets closer to the true solution, however,
+   * more stringent linear tolerances are necessary to maintain quadratic convergence
+   * behavior.
+   *
+   * The user can set the weakest tolerance allowed, with a default of 1e-3.
+   * Even weaker values (e.g. 1e-2,1e-1) can be used for further speedup, but may
+   * occasionally cause convergence problems.  Use this parameter with caution.  The
+   * most stringent tolerance is hardcoded to 1e-8, which is sufficient for
+   * most problems.
+   *
+   * See Eisenstat, S.C. and Walker, H.F., 1996. Choosing the forcing terms in an
+   * inexact Newton method. SIAM Journal on Scientific Computing, 17(1), pp.16-32.
+   *
+   * @param newNewtonNorm Residual norm at current iteration
+   * @param oldNewtonNorm Residual norm at previous iteration
+   * @param weakestTol Weakest tolerance allowed (default 1e-3).
+   * @return Adaptive tolerance recommendation
+   */
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
@@ -765,6 +898,13 @@ protected:
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ElementSubRegionBase const & subRegion );
 
+  /**
+   * @brief Get the Constitutive Name object
+   *
+   * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
+   * @param subRegion the particle subregion on which the constitutive model is registered
+   * @return the name name of the constitutive model of type @p CONSTITUTIVE_BASE_TYPE registered on the @p subregion.
+   */
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
 
@@ -776,14 +916,37 @@ protected:
    */
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
+
+  /** 
+   * @brief Get the Constitutive Model object
+   * @tparam BASETYPE the base type of the constitutive model.
+   * @tparam LOOKUP_TYPE the type of the key used to look up the constitutive model.
+   * @param dataGroup the data group containing the constitutive models.
+   * @param key the key used to look up the constitutive model.
+   * @return the constitutive model of type @p BASETYPE registered on the @p dataGroup with the key @p key.
+   */
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
 
+  /** 
+   * @brief Get the Constitutive Model object
+   * @tparam BASETYPE the base type of the constitutive model.
+   * @tparam LOOKUP_TYPE the type of the key used to look up the constitutive model.
+   * @param dataGroup the data group containing the constitutive models.
+   * @param key the key used to look up the constitutive model.
+   * @return the constitutive model of type @p BASETYPE registered on the @p dataGroup with the key @p key.
+   */
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
 
+
+  /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
+
+  /// maximum stable time step
   real64 m_maxStableDt;
+
+  /// timestep of the next cycle
   real64 m_nextDt;
 
   /// name of the FV discretization object in the data repository
@@ -792,9 +955,13 @@ protected:
   /// Data structure to handle degrees of freedom
   DofManager m_dofManager;
 
-  /// System matrix, rhs and solution
+  /// System matrix
   ParallelMatrix m_matrix;
+
+  /// System right-hand side vector
   ParallelVector m_rhs;
+
+  /// System solution vector
   ParallelVector m_solution;
 
   /// Local system matrix and rhs
@@ -821,8 +988,10 @@ protected:
   /// Timestamp of the last call to setup system
   Timestamp m_systemSetupTimestamp;
 
+  /// Callback function for assembly step
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
+  /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
@@ -840,11 +1009,25 @@ private:
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
+  /**
+   * @brief Solve a nonlinear system using a Newton method
+   * @param time_n the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain partition
+   * @return true if the nonlinear system was solved, false otherwise
+   */
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain );
 
+  /**
+   * @brief output information about the cycle to the log
+   * @param cycleNumber the current cycle number
+   * @param numOfSubSteps the number of substeps taken
+   * @param subStepDt the time step size for each substep
+   */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
                                  std::vector< real64 > const & subStepDt ) const;
