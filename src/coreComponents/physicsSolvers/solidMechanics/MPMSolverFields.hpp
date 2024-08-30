@@ -343,7 +343,15 @@ DECLARE_FIELD( particleCopyFlag,
                -1,
                LEVEL_1,
                WRITE_AND_READ,
-               "particleCopyFlag" );        
+               "particleCopyFlag" );
+
+DECLARE_FIELD( particleDomainScaledFlag, 
+               "particleDomainScaledFlag", 
+               array1d< int >,
+               -1,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleDomainScaledFlag" );            
 }
 
 }
