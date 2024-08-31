@@ -97,8 +97,11 @@ public:
                                arraySlice1d< real64 const > const & penalty,
                                arraySlice1d< real64 const > const & traction,
                                bool const symmetric,
+                               bool const fixedLimitTau,
                                real64 ( & dTraction_dDispJump )[3][3],
-                               real64 ( & tractionNew )[3] ) const override final;
+                               real64 ( & tractionNew )[3],
+                               integer & fractureState ) const override final;
+
 
   GEOS_HOST_DEVICE
   inline
@@ -335,9 +338,13 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                                                     arraySlice1d< real64 const > const & penalty,
                                                     arraySlice1d< real64 const > const & traction,
                                                     bool const symmetric,
+                                                    bool const fixedLimitTau,
                                                     real64 ( & dTraction_dDispJump )[3][3],
-                                                    real64 ( & tractionNew ) [3] ) const
+                                                    real64 ( & tractionNew ) [3],
+                                                    integer & fractureState ) const
 {
+
+  using namespace fields::contact;
 
   // TODO: Pass this tol as an argument or define a new class member
   constexpr real64 zero = 1.e-10;
@@ -356,10 +363,12 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
   real64 const tractionTrialNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
   // If normal tangential trial is positive (opening)
+  fractureState = FractureState::Stick;
   if (tractionTrial[ 0 ] > zero)
   {
     tractionNew[0] = 0.0;
     dTraction_dDispJump[0][0] = 0.0;
+    fractureState = FractureState::Open;
   }
   else 
   {
@@ -368,7 +377,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
   }
 
   // Compute limit Tau
-  if (symmetric)
+  if (fixedLimitTau)
   {
     limitTau = computeLimitTangentialTractionNorm( traction[0],
                                                    dLimitTangentialTractionNorm_dTraction );
@@ -387,14 +396,18 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
 
     tractionNew[1] = tractionTrial[1];
     tractionNew[2] = tractionTrial[2];
+
+    if ( fractureState != FractureState::Open ) fractureState =  FractureState::Stick;
   }
   else if (limitTau <= zero) 
   {
     dTraction_dDispJump[1][1] = 0.0;
     dTraction_dDispJump[2][2] = 0.0;
 
-    tractionNew[1] = (symmetric) ? tractionTrial[1] : 0.0;
-    tractionNew[2] = (symmetric) ? tractionTrial[2] : 0.0;
+    tractionNew[1] = (fixedLimitTau) ? tractionTrial[1] : 0.0;
+    tractionNew[2] = (fixedLimitTau) ? tractionTrial[2] : 0.0;
+
+    if ( fractureState != FractureState::Open ) fractureState =  FractureState::Slip;
   }
   else
   {
@@ -403,6 +416,11 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     //real64 const dpsi = 1.0-std::pow(psi,2);
     real64 const psi = ( tractionTrialNorm > limitTau) ? 1.0 : tractionTrialNorm/limitTau;
     real64 const dpsi = ( tractionTrialNorm > limitTau) ? 0.0 : 1.0;
+
+    if ( fractureState != FractureState::Open ) 
+    {
+      fractureState = ( tractionTrialNorm > limitTau) ? FractureState::Slip : FractureState::Stick;
+    }
 
     // Two symmetric 2x2 matrices
     real64 dNormTTdgT[ 3 ];

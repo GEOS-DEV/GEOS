@@ -264,13 +264,16 @@ public:
 
     real64 tractionNew[3];
 
+    integer fractureState;
     m_constitutiveUpdate.updateTraction( m_oldDispJump[k],
                                          m_dispJump[k],
                                          m_penalty[k],
                                          m_traction[k],
                                          m_symmetric,
+                                         m_symmetric,
                                          stack.localPenalty,
-                                         tractionNew);
+                                         tractionNew,
+                                         fractureState);
 
 
     /*real64 dLimitTangentialTractionNorm_dTraction = 0.0;

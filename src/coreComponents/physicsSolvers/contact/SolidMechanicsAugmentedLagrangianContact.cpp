@@ -1091,9 +1091,10 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
  
         forAll< parallelDevicePolicy<> >( subRegion.size(), [ traction, traction_new_v ] ( localIndex const kfe )
         {
-          traction[kfe][0] = traction_new_v( kfe, 0 );
-          traction[kfe][1] = traction_new_v( kfe, 1 );
-          traction[kfe][2] = traction_new_v( kfe, 2 );
+          //traction[kfe][0] = traction_new_v( kfe, 0 );
+          //traction[kfe][1] = traction_new_v( kfe, 1 );
+          //traction[kfe][2] = traction_new_v( kfe, 2 );
+          LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
         } );
       } );
     } );

@@ -106,9 +106,12 @@ public:
                                arraySlice1d< real64 const > const & penalty,
                                arraySlice1d< real64 const > const & traction,
                                bool const symmetric,
+                               bool const fixedLimitTau,
                                real64 ( & dTraction_dDispJump )[3][3],
-                               real64 ( & tractionNew )[3] ) const 
-  { GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, dTraction_dDispJump, tractionNew ); }
+                               real64 ( & tractionNew )[3], 
+                               integer & fractureState ) const
+  { GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, fixedLimitTau,
+                     dTraction_dDispJump, tractionNew, fractureState ); }
 
   /**
    * @brief Update the traction vector only ( return mapping ) 
