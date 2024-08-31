@@ -1,10 +1,12 @@
+#!/opt/cray/pe/python/3.11.5/bin/python
+
 import argparse
 import os
 import sys
 
 def main(args):
   parser = argparse.ArgumentParser()
-  parser.add_argument('-a','--account',default="geo143")
+  parser.add_argument('-a','--account',required=True)
   parser.add_argument('-b','--binary',required=True)
   parser.add_argument('-c','--caliper',default="")
   parser.add_argument('-p','--problem',required=True)
