@@ -12,8 +12,8 @@ set(MPI_CXX_COMPILER "path-to-mpi/bin/mpicxx" CACHE PATH "") # This is typically
 set(MPIEXEC "path-to-mpi/bin/mpirun" CACHE PATH "")          # This is typically something like /usr/bin/mpirun
 
 # Set paths to blas and lapack
-set( BLAS_LIBRARIES "path-to-blas" CACHE PATH "" FORCE )   # This is typically something like /usr/lib64/libblas.so 
-set( LAPACK_LIBRARIES  CACHE PATH "path-to-lapack" FORCE ) # This is typically something like /usr/lib64/liblapack.so
+set( BLAS_LIBRARIES "path-to-blas" CACHE PATH "" FORCE )     # This is typically something like /usr/lib64/libblas.so 
+set( LAPACK_LIBRARIES "path-to-lapack" CACHE PATH "" FORCE ) # This is typically something like /usr/lib64/liblapack.so
 
 # Cuda and openMP
 set( ENABLE_CUDA OFF CACHE PATH "" FORCE )
