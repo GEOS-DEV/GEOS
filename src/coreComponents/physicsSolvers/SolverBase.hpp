@@ -645,7 +645,7 @@ public:
    * @brief getter for the next timestep size
    * @return the next timestep size m_nextDt
    */
-  virtual real64 getTimestepRequest( real64 const  ) override
+  virtual real64 getTimestepRequest( real64 const ) override
   {return m_nextDt;};
   /**@}*/
 
@@ -874,7 +874,7 @@ public:
    * @param func the function to set m_assemblyCallback to
    * @param funcType the type of the function
    * @return true if the function was successfully set, false otherwise
-   * 
+   *
    * This is used to provide a callback function for to be called in the assembly step.
    */
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
@@ -967,7 +967,7 @@ protected:
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
 
-  /** 
+  /**
    * @brief Get the Constitutive Model object
    * @tparam BASETYPE the base type of the constitutive model.
    * @tparam LOOKUP_TYPE the type of the key used to look up the constitutive model.
@@ -982,7 +982,7 @@ protected:
     return constitutiveModels.getGroup< BASETYPE >( key );
   }
 
-  /** 
+  /**
    * @brief Get the Constitutive Model object
    * @tparam BASETYPE the base type of the constitutive model.
    * @tparam LOOKUP_TYPE the type of the key used to look up the constitutive model.
@@ -993,8 +993,8 @@ protected:
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
   {
-  dataRepository::Group & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
-  return constitutiveModels.getGroup< BASETYPE >( key );
+    dataRepository::Group & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+    return constitutiveModels.getGroup< BASETYPE >( key );
   }
 
 
