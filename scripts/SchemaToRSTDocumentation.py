@@ -13,7 +13,10 @@ class TreeBuilderWithComments(etree.TreeBuilder):
         self.end(etree.Comment)
 
 
-def writeTableRST(file_name, values):
+def writeTableRST(type_name, file_name, title_prefix, values):
+
+    element_header = '%s: %s' % (title_prefix, type_name)
+
     L = [[len(x) for x in row] for row in values]
     #  M = tuple(np.amax(np.array(L), axis=0))
 
@@ -55,7 +58,9 @@ def writeTableRST(file_name, values):
 
     # Build table
     with open(file_name, 'w') as f:
-        f.write('\n\n')
+        f.write('%s\n' % (element_header))
+        f.write('=' * len(element_header) + '\n')
+        f.write('\n')
         f.write(boundary)
         f.write(formatted_lines[0])
         f.write(boundary)
@@ -276,14 +281,11 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
     for type_name in sorted(input_attribute_map.keys()):
         # Write the individual tables
         table_values = buildTableValues(input_attribute_map[type_name])
-        writeTableRST('%s/%s.rst' % (output_folder, type_name), table_values)
+        writeTableRST( type_name, '%s/%s.rst' % (output_folder, type_name), 'Element', table_values)
         touched_files.append('%s.rst' % (type_name))
 
         # Write to the master list
-        element_header = 'Element: %s' % (type_name)
         output_handle.write('\n.. _XML_%s:\n\n' % (type_name))
-        output_handle.write('%s\n' % (element_header))
-        output_handle.write('=' * len(element_header) + '\n')
         output_handle.write('.. include:: %s/%s.rst\n\n' % (sphinx_path, type_name))
 
     # Parse the non-input schema definitions
@@ -296,14 +298,11 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
         table_values = buildTableValues(other_attribute_map[type_name],
                                         link_string='DATASTRUCTURE',
                                         include_defaults=False)
-        writeTableRST('%s/%s_other.rst' % (output_folder, type_name), table_values)
+        writeTableRST( type_name, '%s/%s_other.rst' % (output_folder, type_name), 'Datastructure', table_values)
         touched_files.append('%s_other.rst' % (type_name))
 
         # Write to the master list
-        element_header = 'Datastructure: %s' % (type_name)
         output_handle.write('\n.. _DATASTRUCTURE_%s:\n\n' % (type_name))
-        output_handle.write('%s\n' % (element_header))
-        output_handle.write('=' * len(element_header) + '\n')
         output_handle.write('.. include:: %s/%s_other.rst\n\n' % (sphinx_path, type_name))
 
 # Check for any untouched tables

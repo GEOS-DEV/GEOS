@@ -35,9 +35,9 @@ template< std::ptrdiff_t N >
 class LinearSystem
 {
 public:
-  real64 matrix[N][N];
-  real64 solution[N];
-  real64 rhs[N];
+  real64 matrix[N][N] = {0};
+  real64 solution[N] = {0};
+  real64 rhs[N] = {0};
 };
 
 template< std::ptrdiff_t N >
