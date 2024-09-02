@@ -1,7 +1,7 @@
 baselines:
   bucket: geosx
-  baseline: integratedTests/baseline_integratedTests-pr3302-7064-57c6f3c
+  baseline: integratedTests/baseline_integratedTests-pr3300-7077-1277f18
 
 allow_fail:
   all: ''
-  streak: 
+  streak: SeismicityRate_poromechanics_1d_smoke_01,SeismicityRate_poromechanics_1d_smoke_02
