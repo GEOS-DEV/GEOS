@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -28,7 +28,6 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -116,6 +115,11 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setApplyDefaultValue( viewKeyStruct::noContactRelationNameString() ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
+
+  registerWrapper( viewKeyStruct::contactPenaltyStiffnessString(), &m_contactPenaltyStiffness ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
     setInputFlag( InputFlags::FALSE ).
@@ -522,7 +526,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                &globallyFractured,
                                1,
                                MPI_MAX,
-                               MPI_COMM_GEOSX );
+                               MPI_COMM_GEOS );
       }
       if( globallyFractured == 0 )
       {
@@ -733,7 +737,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                         3,
                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
                         0,
-                        MPI_COMM_GEOSX );
+                        MPI_COMM_GEOS );
 
     if( MpiWrapper::commRank() == 0 )
     {
@@ -1256,8 +1260,8 @@ SolidMechanicsLagrangianFEM::
     // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
     real64 globalResidualNorm[2] = {0, 0};
 
-    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+    int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
     array1d< real64 > globalValues( size * 2 );
 
     // Everything is done on rank 0
@@ -1266,7 +1270,7 @@ SolidMechanicsLagrangianFEM::
                         globalValues.data(),
                         2,
                         0,
-                        MPI_COMM_GEOSX );
+                        MPI_COMM_GEOS );
 
     if( rank==0 )
     {
@@ -1278,7 +1282,7 @@ SolidMechanicsLagrangianFEM::
       }
     }
 
-    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
+    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOS );
 
 
     real64 const residual = sqrt( globalResidualNorm[0] ) / ( globalResidualNorm[1] + 1 ); // the + 1 is for the first
@@ -1393,9 +1397,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
-        ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
-
-        real64 const contactStiffness = contact.stiffness();
+        real64 const contactStiffness = m_contactPenaltyStiffness;
 
         arrayView1d< real64 > const area = subRegion.getElementArea();
         ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();

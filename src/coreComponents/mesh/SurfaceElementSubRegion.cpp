@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -58,11 +58,6 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
   registerWrapper( viewKeyStruct::surfaceElementsToCellIndexString(), &m_2dElemToElems.m_toElementIndex ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
-
-  registerWrapper< real64_array >( viewKeyStruct::creationMassString() ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
-    setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
 
   registerField( fields::elementAperture{}, &m_elementAperture );
 
