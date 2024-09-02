@@ -143,7 +143,7 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< Group, string const &, Group * const >;
 
   /**
-   * @brief Get the singleton catalog for this class.
+   * @brief Get the singleton catalog for this Group.
    * @return reference to the catalog object
    */
   static CatalogInterface::CatalogType & getCatalog();
