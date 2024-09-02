@@ -77,6 +77,8 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/CriticalVolume.hpp
      fluid/multifluid/compositional/models/EquationOfState.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
+     fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp
+     fluid/multifluid/compositional/models/ImmiscibleWaterParameters.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosityImpl.hpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
@@ -220,6 +222,8 @@ set( constitutive_sources
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/CriticalVolume.cpp
+     fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.cpp
+     fluid/multifluid/compositional/models/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
@@ -314,6 +318,8 @@ blt_add_library( NAME       constitutive
                )
 
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
