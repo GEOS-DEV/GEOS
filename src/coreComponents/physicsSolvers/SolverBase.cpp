@@ -703,31 +703,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
   return lineSearchSuccess;
 }
 
-/**
- * @brief Eisenstat-Walker adaptive tolerance
- *
- * This method enables an inexact-Newton method is which the linear solver
- * tolerance is chosen based on the nonlinear solver convergence behavior.
- * In early Newton iterations, the search direction is usually imprecise, and
- * therefore a weak linear convergence tolerance can be chosen to minimize
- * computational cost.  As the search gets closer to the true solution, however,
- * more stringent linear tolerances are necessary to maintain quadratic convergence
- * behavior.
- *
- * The user can set the weakest tolerance allowed, with a default of 1e-3.
- * Even weaker values (e.g. 1e-2,1e-1) can be used for further speedup, but may
- * occasionally cause convergence problems.  Use this parameter with caution.  The
- * most stringent tolerance is hardcoded to 1e-8, which is sufficient for
- * most problems.
- *
- * See Eisenstat, S.C. and Walker, H.F., 1996. Choosing the forcing terms in an
- * inexact Newton method. SIAM Journal on Scientific Computing, 17(1), pp.16-32.
- *
- * @param newNewtonNorm Residual norm at current iteration
- * @param oldNewtonNorm Residual norm at previous iteration
- * @param weakestTol Weakest tolerance allowed (default 1e-3).
- * @return Adaptive tolerance recommendation
- */
+
 real64 SolverBase::eisenstatWalker( real64 const newNewtonNorm,
                                     real64 const oldNewtonNorm,
                                     real64 const weakestTol )
