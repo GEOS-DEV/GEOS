@@ -250,7 +250,7 @@ void JFunctionCapillaryPressure::saveConvergedRockState( arrayView2d< real64 con
     {
       permeability = convergedPermeability[ei][0][2];
     }
-    GEOS_ERROR_IF( !isZero( permeability ), GEOS_FMT( "{}: zero permeability in J-function capillary pressure", getFullName() ));
+    GEOS_ERROR_IF( permeability < LvArray::NumericLimits<real64>::epsilon, GEOS_FMT( "{}: zero permeability in J-function capillary pressure", getFullName() ));
 
     // here we compute an average of the porosity over quadrature points
     // this average is exact for tets, regular pyramids/wedges/hexes, or for VEM
