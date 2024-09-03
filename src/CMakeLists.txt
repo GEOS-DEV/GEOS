@@ -222,8 +222,8 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-# message(WARNING "Temporarily changing the geosPythonBranch to feature/packaging")
-# set(GEOS_PYTHON_PACKAGES_BRANCH "feature/packaging" CACHE STRING "" FORCE)
+message(WARNING "Temporarily changing the geosPythonBranch to bugfix/sherman/fixNumpyProd")
+set(GEOS_PYTHON_PACKAGES_BRANCH "bugfix/sherman/fixNumpyProd" CACHE STRING "" FORCE)
 
 
 if ( Python3_EXECUTABLE )
