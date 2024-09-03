@@ -245,25 +245,6 @@ TEST_P( ImmiscibleWaterProperties3, testPropertyDerivatives )
 
 /* UNCRUSTIFY-OFF */
 
-std::vector<TestData<3>> generateData()
-{
-    const auto pressures = { 20.0, 150.0, 600.0 };
-    const auto temperatures = { 20.0, 80.0, 300.0 };
-    const std::initializer_list<std::array<real64,3>> samples = {
-        {0.3, 0.3, 0.4},
-        {0.0, 0.0, 1.0},
-        {0.2, 0.8, 0.0},
-    };
-std::vector<TestData<3>> data;
-for (const auto& s : samples)
-for (const auto& t : temperatures)
-for (const auto& p : pressures)
-{
-    data.emplace_back(TestData<3>{ 1.0e5*p, t + 273.15, s, 0.0, 0.0, 0.0 });
-}
-return data;
-}
-
 INSTANTIATE_TEST_SUITE_P(
   ImmiscibleWaterProperties, ImmiscibleWaterProperties3,
   ::testing::Values( 
