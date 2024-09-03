@@ -47,7 +47,7 @@ struct FluidData< 3 >
   static std::unique_ptr< TestFluid< 3 > > createFluid()
   {
     auto fluid = TestFluid< 3 >::create( {Fluid::C1, Fluid::C10, Fluid::H2O} );
-    std::array<real64, 3> const bics = {0.25, 0.0, 0.0};
+    std::array< real64, 3 > const bics = {0.25, 0.0, 0.0};
     fluid->setBinaryCoefficients( bics );
     return fluid;
   }
@@ -126,8 +126,8 @@ public:
     checkRelativeError( massDensity, expectedMassDensity, relTol, absTol );
     checkRelativeError( viscosity, expectedViscosity, relTol, absTol );
   }
-/****
-  void testPropertyDerivatives( ViscosityData< NC > const & data )
+
+  void testPropertyDerivatives( TestData< NC > const & data )
   {
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
@@ -179,49 +179,46 @@ public:
       values[2] *= viscosityScale;
     };
 
-    auto concatDerivatives = [&](int idof, auto & derivs){
-derivs[0] = molarDensityDerivs[idof];
-derivs[1] = massDensityDerivs[idof];
-derivs[2] = viscosityScale * viscosityDerivs[idof];
+    auto concatDerivatives = [&]( int idof ){
+      derivatives[0] = molarDensityDerivs[idof];
+      derivatives[1] = massDensityDerivs[idof];
+      derivatives[2] = viscosityScale * viscosityDerivs[idof];
     };
 
     // Compare against numerical derivatives
     // -- Pressure derivative
-    concatDerivatives(Deriv::dP, derivatives);
+    concatDerivatives( Deriv::dP );
     real64 const dp = 1.0e-4 * pressure;
-    internal::testNumericalDerivative(
-      pressure, dp, derivatives,
-      [&]( real64 const p, values ) {
-      auto vals = calculateProperties( p, temperature, phaseComposition );
-      values[0] = std::get<0>(vals);
-    } );
+    internal::testNumericalDerivative< 3 >( pressure, dp, derivatives.toSliceConst(),
+                                            [&]( real64 const p, auto & values ) {
+      calculateProperties( p, temperature, phaseComposition, values );
+    }, absTol, relTol );
 
     // -- Temperature derivative
+    concatDerivatives( Deriv::dT );
     real64 const dT = 1.0e-6 * temperature;
-    internal::testNumericalDerivative(
-      temperature, dT, scale*viscosityDerivs[Deriv::dT],
-      [&]( real64 const t ) -> real64 {
-      return scale*calculateViscosity( pressure, t, phaseComposition );
-    } );
+    internal::testNumericalDerivative< 3 >( temperature, dT, derivatives.toSliceConst(),
+                                            [&]( real64 const t, auto & values ) {
+      calculateProperties( pressure, t, phaseComposition, values );
+    }, absTol, relTol );
 
     // -- Composition derivatives derivative
     real64 const dz = 1.0e-7;
-    for( integer ic = 0; ic < 1; ++ic )
+    for( integer ic = 0; ic < NC; ++ic )
     {
-      internal::testNumericalDerivative(
-        0.0, dz, scale*viscosityDerivs[Deriv::dC + ic],
-        [&]( real64 const z ) -> real64 {
+      concatDerivatives( Deriv::dC+ic );
+      internal::testNumericalDerivative< 3 >( 0.0, dz, derivatives.toSliceConst(),
+                                              [&]( real64 const z, auto & values ) {
         stackArray1d< real64, numComps > zmf( numComps );
         for( integer jc = 0; jc < numComps; ++jc )
         {
           zmf[jc] = phaseComposition[jc];
         }
         zmf[ic] += z;
-        return scale*calculateViscosity( pressure, temperature, zmf );
-      } );
+        calculateProperties( pressure, temperature, zmf, values );
+      }, absTol, relTol );
     }
   }
-*/
 
 protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
@@ -236,12 +233,11 @@ TEST_P( ImmiscibleWaterProperties3, testProperties )
 {
   testProperties( GetParam() );
 }
-/**
+
 TEST_P( ImmiscibleWaterProperties3, testPropertyDerivatives )
 {
   testPropertyDerivatives( GetParam() );
 }
-*/
 
 //-------------------------------------------------------------------------------
 // Data
