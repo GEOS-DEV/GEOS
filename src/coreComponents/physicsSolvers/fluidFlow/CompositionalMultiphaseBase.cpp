@@ -283,7 +283,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
   // n_c components + one pressure ( + one temperature if needed )
   m_numDofPerCell = m_isThermal ? m_numComponents + 2 : m_numComponents + 1;
-  const localIndex numDir = 3;
+  // const localIndex numDir = 3;
 
   // 2. Register and resize all fields as necessary
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
@@ -314,7 +314,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
 
  
-/*          subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
+         subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
                            setPlotLevel( PlotLevel::NOPLOT ).
                            setRestartFlags( RestartFlags::NO_WRITE ).
                            setSizedFromParent( 0 ).
@@ -328,10 +328,10 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
       arrayView4d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
-      arrayView5d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction(); */
+      arrayView5d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
-      //const localIndex numDir = phaseRelPerm.size(3);
-      //std::cout << "Size of prp: " << numDir << std::endl;
+      const localIndex numDir = phaseRelPerm.size(3);
+      std::cout << "Size of prp: " << numDir << std::endl;
 
 
 

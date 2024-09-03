@@ -83,7 +83,7 @@ CFLFluxKernel::
            ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux,
            ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
 {
-  integer const numDir = 3;// phaseRelPerm.size(3);
+  integer const numDir = phaseRelPerm.size(3);
   std::cout << "Size of iso1: " << numDir << std::endl;
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
   for( integer ip = 0; ip < numPhases; ++ip )
@@ -291,7 +291,7 @@ CFLKernel::
 {
   // then, depending on the regime, apply the appropriate CFL formula
   phaseCFLNumber = 0;
-  integer const numDir = 3; // phaseRelPerm.size(1);
+  integer const numDir =  phaseRelPerm.size(1);
   std::cout << "Size of iso2: " << numDir << std::endl;
 
   for( int dir = 0; dir < numDir; ++dir )

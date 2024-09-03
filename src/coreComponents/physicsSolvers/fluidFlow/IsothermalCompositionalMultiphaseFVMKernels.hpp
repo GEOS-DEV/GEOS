@@ -2046,7 +2046,7 @@ public:
       // *** upwinding ***
       // Step 3.4: upwinding based on the sign of the phase potential gradient
       // It is easier to hard-code the if/else because it is difficult to address elem and face variables in a uniform way
-      integer const numDir = 3; //m_phaseMob.size(4);
+      integer const numDir = m_phaseMob.size(4);
       if( potDif >= 0 )              // the element is upstream
       {
         if (numDir == 1)

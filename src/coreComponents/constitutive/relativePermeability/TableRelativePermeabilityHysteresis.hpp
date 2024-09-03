@@ -796,7 +796,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
 
 
-  integer const numDir = 3; // m_drainageRelPermKernelWrappers.size(0);
+  integer const numDir =  m_drainageRelPermKernelWrappers.size(0);
   // ---------- wetting rel perm
   for (int dir=0; dir<numDir; ++dir) {
     if( !m_phaseHasHysteresis[IPT::WETTING] ||
@@ -898,7 +898,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   using TPT = TableRelativePermeabilityHysteresis::ThreePhasePairPhaseType;
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
 
-  integer const numDir = 3; // m_drainageRelPermKernelWrappers.size(0);
+  integer const numDir =  m_drainageRelPermKernelWrappers.size(0);
 
   // 1) Wetting and intermediate phase relative permeabilities using two-phase wetting-intermediate data
   for (int dir=0; dir<numDir; ++dir) {

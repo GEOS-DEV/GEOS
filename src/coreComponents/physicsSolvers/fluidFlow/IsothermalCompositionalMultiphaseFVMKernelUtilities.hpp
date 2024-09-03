@@ -357,7 +357,7 @@ struct PPUPhaseFlux
     localIndex const esr_up = sesri[k_up];
     localIndex const ei_up = sei[k_up];
 
-    integer const numDir = 3; // phaseMob[er_up][esr_up][ei_up][ip].size();    
+    integer const numDir =  phaseMob[er_up][esr_up][ei_up][ip].size();    
     // std::cout << "Size of dimension 4: " << numDir << std::endl;
 
 
@@ -513,7 +513,7 @@ struct C1PPUPhaseFlux
       gravHead += gravD;
     }
     //integer const numDir = 1; //phaseMob.size(4); 
-    integer const numDir = 3; //phaseMob[seri[0]][sesri[0]][sei[0]][ip].size();
+    integer const numDir = phaseMob[seri[0]][sesri[0]][sei[0]][ip].size();
     std::cout << "Size of utilities: " << numDir << std::endl;
     
     // *** upwinding ***
