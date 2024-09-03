@@ -90,22 +90,17 @@ void testNumericalDerivative( real64 const x,
   function( x, centreValues );
   function( x+dx, rightValues );
 
-  std::cout << std::scientific << std::setprecision( 8 );
   // Use the same space to calculate the left-sided and right sided derivatives
   for( integer i = 0; i < numValues; ++i )
   {
     // Choose from the left, central and right derivatives, the one that's nearest the analytical value
     real64 minError = LvArray::NumericLimits< real64 >::max;
     real64 selectedDerivative = 0.0;
-    std::ostringstream os;
-    os << std::scientific << std::setprecision( 8 );
-    os << std::setw( 16 ) << leftValues[i] << " " << std::setw( 16 ) << centreValues[i] << " " << std::setw( 16 ) << rightValues[i] << " ";
     for( real64 const distance : {centreValues[i] - leftValues[i],
                                   rightValues[i] - centreValues[i],
                                   0.5*(rightValues[i] - leftValues[i])} )
     {
       real64 const deriv = distance / dx;
-
       real64 const error = LvArray::math::abs( deriv - derivatives[i] );
       if( error < minError )
       {
@@ -115,11 +110,7 @@ void testNumericalDerivative( real64 const x,
     }
     checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
                         GEOS_FMT( "Numerical derivative for component {}", i ) );
-    std::cout << "DIFF: " << std::setw( 16 ) << derivatives[i] << " <> " << std::setw( 16 ) << selectedDerivative << " " << std::setw( 16 ) << derivatives[i]-selectedDerivative
-              << " {" << os.str() << "}"
-              << "\n";
   }
-  std::cout << "DIFF ---------------------------------------------------------\n";
 }
 
 }// namespace internal
