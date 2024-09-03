@@ -3,7 +3,7 @@
 <Problem>
   <Tasks>
     <PVTDriver
-      name="testblackOil"
+      name="testBlackOil"
       fluid="blackOil"
       feedComposition="{ 0.3, 0.3, 0.4 }"
       pressureControl="pressureFunction"
@@ -12,7 +12,7 @@
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_ThreePhasCompositional_blackOil.txt"
+      baseline="testPVT_ThreePhaseCompositional_blackOil.txt"
       logLevel="1"/>
   </Tasks>
 
@@ -20,7 +20,7 @@
     maxTime="1">
     <SoloEvent
       name="eventtestblackOil"
-      target="/Tasks/testtestblackOil"/>
+      target="/Tasks/testBlackOil"/>
   </Events>
 
   <Constitutive>
@@ -39,7 +39,10 @@
         { 0.25, 0.00, 0.00 },
         { 0.00, 0.00, 0.00 }
       }"
-       />
+      waterReferencePressure="215.0e5"
+      waterDensity="1020.0"
+      waterCompressibility="4.1483E-10"
+      waterViscosity="0.32929e-3" />
   </Constitutive>
 
   <Functions>

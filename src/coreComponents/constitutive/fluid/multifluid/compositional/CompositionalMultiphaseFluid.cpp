@@ -264,11 +264,11 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::findPhaseIndex( string names ) const
 {
-  auto nameContainer = stringutilities::tokenize( names, ",", true, false );
+  auto const nameContainer = stringutilities::tokenize( names, ",", true, false );
 
-  for( integer ip = 0; ip < numFluidComponents(); ++ip )
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    std::string phaseName = stringutilities::toLower( m_phaseNames[ip] );
+    std::string const phaseName = stringutilities::toLower( m_phaseNames[ip] );
     if( std::find( nameContainer.begin(), nameContainer.end(), phaseName ) != nameContainer.end())
     {
       return ip;
