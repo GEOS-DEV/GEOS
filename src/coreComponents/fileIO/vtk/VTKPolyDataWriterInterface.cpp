@@ -1108,7 +1108,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
                                                              NodeManager const & nodeManager,
                                                              EmbeddedSurfaceNodeManager const & embSurfNodeManager,
                                                              FaceManager const & faceManager,
-                                                             string const & path ) const
+                                                             string const & path )
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
   {
@@ -1304,7 +1304,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
     vtuWriter->Write();
   }
 
-  const int size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  const int size = MpiWrapper::commSize( MPI_COMM_GEOS );
   std::vector< int > globalValues( size );
 
   // Everything is done on rank 0
@@ -1313,7 +1313,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
                       globalValues.data(),
                       1,
                       0,
-                      MPI_COMM_GEOSX );
+                      MPI_COMM_GEOS );
 
   if( MpiWrapper::commRank() == 0 )
   {

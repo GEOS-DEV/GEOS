@@ -280,7 +280,7 @@ protected:
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager,
                                    FaceManager const & faceManager,
-                                   string const & path ) const;
+                                   string const & path );
 
   /**
    * @brief Writes a VTM file for the time-step \p time.
