@@ -608,6 +608,16 @@ public:
    */
   template< typename T >
   static void max( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOS );
+
+
+  /**
+   * @brief Convenience function for MPI_Gather using a MPI_MAX operation on tuple
+   * @brief Max is performed on first element of tuple
+   * @param[in] tuple the value to send into the max gather.
+   * @return Rank 0 typle containing max value of element 0 across the ranks. Rank > 0 input tuple
+   */
+  template< typename tuple_type > static tuple_type tupleMaxLoc( tuple_type tuple, MPI_Comm comm = MPI_COMM_GEOS );
+
 };
 
 namespace internal
@@ -1115,6 +1125,30 @@ void MpiWrapper::reduce( Span< T const > const src, Span< T > const dst, Reducti
   reduce( src.data(), dst.data(), LvArray::integerConversion< int >( src.size() ), getMpiOp( op ), root, comm );
 }
 
+// Mpi helper function to return  tuple containing the max value of element 0 in the tuple if rank 0
+// For rank > 0 input tuple is returned
+template< typename tuple_type >
+tuple_type
+MpiWrapper::tupleMaxLoc( tuple_type tuple, MPI_Comm comm )
+{
+  // recieve buffer
+  std::vector< tuple_type > l_rcv_buffer;
+
+  int const myRank  = MpiWrapper::commRank( comm );
+  int const numProcs = MpiWrapper::commSize( comm );
+  if( myRank == 0 )
+  {
+    l_rcv_buffer.resize( numProcs );
+  }
+  MPI_Gather( &tuple, sizeof(tuple_type), MPI_BYTE, &l_rcv_buffer[0], sizeof(tuple_type), MPI_BYTE, 0, comm );
+
+
+  if( myRank == 0 )
+  {
+    tuple= *max_element( begin( l_rcv_buffer ), end( l_rcv_buffer ), []( auto & lhs, auto & rhs ) -> integer {return std::get< 0 >( lhs )  <  std::get< 0 >( rhs ); } );
+  }
+  return tuple;
+}
 
 } /* namespace geos */
 
