@@ -313,6 +313,7 @@ If you have followed these instructions, the TPLs are installed at the default l
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
 
 An alternative is to set the path ``GEOS_TPL_DIR`` via a cmake command line option, e.g.
+
 .. code-block:: sh
 
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release -D GEOS_TPL_DIR=/full/path/to/thirdPartyLibs
