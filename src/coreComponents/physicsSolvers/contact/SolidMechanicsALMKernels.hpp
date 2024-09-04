@@ -250,7 +250,7 @@ public:
                    StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( k );
-    //constexpr real64 zero = 1.e-10;
+    constexpr real64 zero = std::numeric_limits< real64 >::epsilon();
     
     constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
@@ -271,6 +271,8 @@ public:
                                          m_traction[k],
                                          m_symmetric,
                                          m_symmetric,
+                                         zero,
+                                         zero,
                                          stack.localPenalty,
                                          tractionNew,
                                          fractureState);

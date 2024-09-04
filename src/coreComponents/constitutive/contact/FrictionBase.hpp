@@ -96,8 +96,12 @@ public:
    * @param[in] penalty  the penalty coefficients
    * @param[in] traction the traction vector
    * @param[in] symmetric flag to compute only the symmetric part of dTraction_dDispJump
+   * @param[in] fixedLimitTau flag to keep fixed the tangential stress
+   * @param[in] normalTractionTolerance normal traction tolerance (if tn > tol => fracture is open)
+   * @param[in] tangentialTractionTolerance tangential traction tolerance (if tau < tol => tau = 0)
    * @param[out] dTraction_dDispJump matrix containing the derivatives of traction over the displacement jump
    * @param[out] tractionNew the new traction vector
+   * @param[out] fractureState the fracture state
    */
   GEOS_HOST_DEVICE
   inline
@@ -107,10 +111,13 @@ public:
                                arraySlice1d< real64 const > const & traction,
                                bool const symmetric,
                                bool const fixedLimitTau,
+                               real64 const normalTractionTolerance,
+                               real64 const tangentialTractionTolerance,
                                real64 ( & dTraction_dDispJump )[3][3],
                                real64 ( & tractionNew )[3], 
                                integer & fractureState ) const
   { GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, fixedLimitTau,
+                    normalTractionTolerance, tangentialTractionTolerance,
                      dTraction_dDispJump, tractionNew, fractureState ); }
 
   /**

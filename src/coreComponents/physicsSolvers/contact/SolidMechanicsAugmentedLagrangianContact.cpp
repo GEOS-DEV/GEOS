@@ -244,6 +244,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
     ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
+    arrayView2d< real64 > const incrBubbleDisp =
+     faceManager.getField< fields::solidMechanics::incrementalBubbleDisplacement >() ;
+
     arrayView3d< real64 > const
     rotationMatrix = subRegion.getField< fields::contact::rotationMatrix >().toView();
 
@@ -284,18 +287,22 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
           penalty[k][3] = 0.0;
           penalty[k][4] = 0.0;
         }
-        LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
+        //LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
       } );
     }
-    else 
-    {
+    //else 
+    //{
       forAll< parallelDevicePolicy<> >( subRegion.size(), 
-                                        [ dispJumpUpdPenalty ] 
+                                        [ dispJumpUpdPenalty, elemsToFaces, incrBubbleDisp ] 
                                         GEOS_HOST_DEVICE ( localIndex const k )
       {
         LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
+        localIndex const kf0 = elemsToFaces[k][0];
+        localIndex const kf1 = elemsToFaces[k][1];
+        LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf0], 0.0 );
+        LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf1], 0.0 );
       } );
-    }
+    //}
   } );
 
 }
@@ -1058,6 +1065,14 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
   }
 
   int hasConfigurationConvergedGlobally = (totCondNotConv == 0) ? true : false;
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    std::cout << GEOS_FMT( "  Number of element convergence condition:"
+                           " conv: {:12} | open: {:12} | comp:  {:12} | slip:  {:12} | tau>:  {:12}\n",
+                             globalCondConv[0], globalCondConv[1], globalCondConv[2], 
+                             globalCondConv[3], globalCondConv[4] );
+  }
   
 
   //if( !condConv_flag )
@@ -1137,25 +1152,47 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
  
         arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
+        arrayView2d< real64 const > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+
         arrayView2d< real64 const > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
 
+#define KERNEL_NEW YES
+#ifndef KERNEL_NEW
         forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [ traction_new_v, traction, penalty,
-                                        dispJump, deltaDispJump ] ( localIndex const kfe )
+                                        dispJump, oldDispJump, deltaDispJump ] ( localIndex const kfe )
         {
           real64 eps_N = penalty[kfe][0];
           real64 eps_T = penalty[kfe][1];
           traction_new_v[kfe][0] = traction[kfe][0] + eps_N * dispJump[kfe][0];
           traction_new_v[kfe][1] = traction[kfe][1] + eps_T * deltaDispJump[kfe][1];
           traction_new_v[kfe][2] = traction[kfe][2] + eps_T * deltaDispJump[kfe][2];
+          //traction_new_v[kfe][1] = traction[kfe][1] + eps_T * (dispJump[kfe][1] - oldDispJump[kfe][1] );
+          //traction_new_v[kfe][2] = traction[kfe][2] + eps_T * (dispJump[kfe][2] - oldDispJump[kfe][2] ) ;
         } );
-
         real64 const slidingCheckTolerance = m_slidingCheckTolerance;
+#endif        
+
         constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
         {
           using FrictionType = TYPEOFREF( castedFrictionLaw );
           typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
- 
+
+
+#ifdef KERNEL_NEW
+          std::cout << "NEW KERNEL" << std::endl;
+          solidMechanicsALMKernels::UpdateStateKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              frictionWrapper,
+                                              oldDispJump,
+                                              dispJump,
+                                              penalty,
+                                              m_symmetric,
+                                              normalTractionTolerance,
+                                              traction,
+                                              fractureState);
+#else
+                                              
           forAll< parallelHostPolicy >( subRegion.size(), [ frictionWrapper, 
                                                             normalTractionTolerance, slidingTolerance,
                                                             normalDisplacementTolerance,
@@ -1325,7 +1362,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
               }
             }    
-          } );
+          } ); 
+#endif
         } );
 
         forAll< parallelDevicePolicy<> >( subRegion.size(), [ dispJumpUpdPenalty, 

@@ -98,6 +98,8 @@ public:
                                arraySlice1d< real64 const > const & traction,
                                bool const symmetric,
                                bool const fixedLimitTau,
+                               real64 const normalTractionTolerance,
+                               real64 const tangentialTractionTolerance,
                                real64 ( & dTraction_dDispJump )[3][3],
                                real64 ( & tractionNew )[3],
                                integer & fractureState ) const override final;
@@ -339,6 +341,8 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                                                     arraySlice1d< real64 const > const & traction,
                                                     bool const symmetric,
                                                     bool const fixedLimitTau,
+                                                    real64 const normalTractionTolerance,
+                                                    real64 const tangentialTractionTolerance,
                                                     real64 ( & dTraction_dDispJump )[3][3],
                                                     real64 ( & tractionNew ) [3],
                                                     integer & fractureState ) const
@@ -346,8 +350,6 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
 
   using namespace fields::contact;
 
-  // TODO: Pass this tol as an argument or define a new class member
-  constexpr real64 zero = 1.e-10;
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
   real64 limitTau = 0.0;
 
@@ -364,7 +366,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
 
   // If normal tangential trial is positive (opening)
   fractureState = FractureState::Stick;
-  if (tractionTrial[ 0 ] > zero)
+  if (tractionTrial[ 0 ] > normalTractionTolerance)
   {
     tractionNew[0] = 0.0;
     dTraction_dDispJump[0][0] = 0.0;
@@ -388,7 +390,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                                                    dLimitTangentialTractionNorm_dTraction );
   }
 
-  if (tractionTrialNorm <= zero) 
+  if (tractionTrialNorm <= tangentialTractionTolerance) 
   {
     // It is needed for the first iteration (both t and u are equal to zero)  
     dTraction_dDispJump[1][1] = - penalty[1];
@@ -399,7 +401,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
 
     if ( fractureState != FractureState::Open ) fractureState =  FractureState::Stick;
   }
-  else if (limitTau <= zero) 
+  else if (limitTau <= tangentialTractionTolerance) 
   {
     dTraction_dDispJump[1][1] = 0.0;
     dTraction_dDispJump[2][2] = 0.0;
@@ -473,7 +475,7 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
 {
 
   // TODO: Pass this tol as an argument or define a new class member
-  constexpr real64 zero = 1.e-10;
+  constexpr real64 zero = std::numeric_limits< real64 >::epsilon();
 
   tractionNew[0] = traction[0] + penalty[0] * dispJump[0];
   tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1];

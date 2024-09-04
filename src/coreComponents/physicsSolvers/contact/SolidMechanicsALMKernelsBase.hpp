@@ -321,6 +321,11 @@ struct ConstraintCheckKernel
    * @param[in] traction the array containing the current traction
    * @param[in] dispJump the array containing the displacement jump
    * @param[in] deltaDispJump the array containing the delta displacement jump
+   * @param[in] normalTractionTolerance Check tolerance (normal traction)
+   * @param[in] normalDisplacementTolerance Check tolerance (compenetration)
+   * @param[in] slidingTolerance Check tolerance (sliding)
+   * @param[in] slidingCheckTolerance Check tolerance (if shear strass exceeds tauLim)
+   * @param[in] area interface element area
    * @param[in] fractureState the array containing the fracture state
    * @param[out] condConv the array containing the convergence flag:
    *                      0: Constraint conditions satisfied
@@ -364,6 +369,78 @@ struct ConstraintCheckKernel
 
     } );
   }
+};
+
+/**
+ * @brief A struct to check for constraint satisfaction
+ */
+struct UpdateStateKernel
+{
+
+  /**
+   * @brief Launch the kernel function to check the constraint satisfaction
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] oldDispJump the array containing the old displacement jump (previous time step)
+   * @param[in] dispJump the array containing the displacement jump
+   * @param[in] penalty the array containing the penalty coefficients
+   * @param[in] symmetric flag to compute symmetric penalty matrix 
+   * @param[in] normalTractionTolerance Check tolerance (normal traction)
+   * @param[in] traction the array containing the current traction
+   * @param[in] fractureState the array containing the fracture state
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & oldDispJump,
+          arrayView2d< real64 const > const & dispJump,
+          arrayView2d< real64 > const & penalty,
+          bool const symmetric,
+          arrayView1d< real64 const > const & normalTractionTolerance,
+          arrayView2d< real64 > const & traction,
+          arrayView1d< integer > const & fractureState )
+
+  {
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+
+      constexpr real64 zero = 1.e-10;
+
+      real64 localPenalty[3][3]  = {};
+      real64 localTractionNew[3] = {};
+      contactWrapper.updateTraction( oldDispJump[k],
+                                     dispJump[k],
+                                     penalty[k],
+                                     traction[k],
+                                     symmetric,
+                                     false,
+                                     normalTractionTolerance[k],
+                                     zero,
+                                     localPenalty,
+                                     localTractionNew,
+                                     fractureState[k]);
+
+      if (fractureState[k] == fields::contact::FractureState::Open)
+      {
+
+        LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
+      }
+      else if (std::abs(localTractionNew[ 0 ]) < normalTractionTolerance[k] )
+      {
+        LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
+        fractureState[k] = fields::contact::FractureState::Slip;
+      }
+
+      LvArray::tensorOps::copy< 3 >( traction[k], localTractionNew );
+      penalty[k][2] = -localPenalty[1][1];
+      penalty[k][3] = -localPenalty[2][2];
+      penalty[k][4] = -localPenalty[1][2];
+      
+    } );
+  }
+
 };
 
 } // namespace SolidMechanicsALMKernels
