@@ -106,7 +106,8 @@
 
     <PeriodicEvent
       name="curveOutput"
-      timeFrequency="0.1"
+      beginTime="0.01"
+      timeFrequency="0.01"
       targetExactTimestep="0"
       target="/Outputs/curveOutput"/>
 
