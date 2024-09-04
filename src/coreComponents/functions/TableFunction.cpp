@@ -264,7 +264,7 @@ void collectValues( std::ostringstream & formatterStream,
   }
 }
 
-void TableFunction::outputPVTTableData( outputOptions const pvtOutputOpts ) const
+void TableFunction::outputPVTTableData( OutputOptions const pvtOutputOpts ) const
 {
   if( pvtOutputOpts.writeInLog &&  this->numDimensions() <= 2 )
   {

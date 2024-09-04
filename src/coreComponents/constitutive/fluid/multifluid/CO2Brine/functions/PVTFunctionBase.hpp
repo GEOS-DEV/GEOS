@@ -119,7 +119,7 @@ public:
                                                              array1d< string > const &,
                                                              array1d< string > const &,
                                                              array1d< real64 > const &,
-                                                             TableFunction::outputOptions const >;
+                                                             TableFunction::OutputOptions const >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;

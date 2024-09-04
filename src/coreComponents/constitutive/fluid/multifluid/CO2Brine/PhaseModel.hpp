@@ -62,7 +62,7 @@ struct PhaseModel
               array1d< array1d< string > > const & inputParams,
               string_array const & componentNames,
               array1d< real64 > const & componentMolarWeight,
-              TableFunction::outputOptions const pvtOutputOpts )
+              TableFunction::OutputOptions const pvtOutputOpts )
     : density( phaseModelName + "_" + Density::catalogName(),
                inputParams[InputParamOrder::DENSITY],
                componentNames,

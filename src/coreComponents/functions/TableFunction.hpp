@@ -49,7 +49,7 @@ public:
   };
 
   /// Struct containing output options
-  struct outputOptions
+  struct OutputOptions
   {
     /// Output PVT in CSV file
     bool writeCSV;
@@ -340,7 +340,7 @@ private:
    * @brief Print the table(s) in the log and/or CSV files when requested by the user.
    * @param pvtOutputOpts Struct containing output options
    */
-  void outputPVTTableData( outputOptions const pvtOutputOpts ) const;
+  void outputPVTTableData( OutputOptions const pvtOutputOpts ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper

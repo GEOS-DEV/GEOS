@@ -221,7 +221,7 @@ CO2Solubility::CO2Solubility( string const & name,
                               string_array const & phaseNames,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight,
-                              TableFunction::outputOptions const pvtOutputOpts ):
+                              TableFunction::OutputOptions const pvtOutputOpts ):
   FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )

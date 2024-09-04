@@ -331,7 +331,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   // then, we are ready to instantiate the phase models
   bool const isClone = this->isClone();
   std::cout << "GET PATH -- " << this->getPath() << std::endl;
-  TableFunction::outputOptions const pvtOutputOpts = {
+  TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
   };
@@ -367,7 +367,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         {
           if( strs[1] == FLASH::catalogName() )
           {
-            TableFunction::TableFunction::outputOptions const flashOutputOpts = {
+            TableFunction::TableFunction::OutputOptions const flashOutputOpts = {
               !isClone && m_writeCSV,// writeCSV
               !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
             };
@@ -413,7 +413,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       strs[2] = m_solubilityTables[0];
     }
 
-    TableFunction::outputOptions const flashOutputOpts = {
+    TableFunction::OutputOptions const flashOutputOpts = {
       !isClone && m_writeCSV,// writeCSV
       !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
     };
