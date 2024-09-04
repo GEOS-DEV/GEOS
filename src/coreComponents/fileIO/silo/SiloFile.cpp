@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -31,7 +31,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "constitutive/contact/ContactBase.hpp"
+#include "constitutive/contact/FrictionBase.hpp"
 #include "constitutive/NullModel.hpp"
 #include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -1468,7 +1468,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactBase >();
+      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::FrictionBase >();
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
