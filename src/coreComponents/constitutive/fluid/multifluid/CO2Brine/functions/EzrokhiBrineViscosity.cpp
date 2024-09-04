@@ -38,7 +38,7 @@ EzrokhiBrineViscosity::EzrokhiBrineViscosity( string const & name,
                                               string_array const & inputPara,
                                               string_array const & componentNames,
                                               array1d< real64 > const & componentMolarWeight,
-                                              TableOutputOptions const pvtOutputOpts ):
+                                              TableFunction::outputOptions const pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -52,7 +52,7 @@ EzrokhiBrineViscosity::EzrokhiBrineViscosity( string const & name,
   makeCoefficients( inputPara );
   m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
 
-  outputPVTTableData( m_waterViscosityTable, pvtOutputOpts );
+  m_waterViscosityTable->outputPVTTableData( pvtOutputOpts );
 }
 
 void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )
@@ -94,7 +94,7 @@ EzrokhiBrineViscosity::createKernelWrapper() const
                         m_coef2 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::TableOutputOptions const )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::outputOptions const )
 
 } // end namespace PVTProps
 

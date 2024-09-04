@@ -264,6 +264,25 @@ void collectValues( std::ostringstream & formatterStream,
   }
 }
 
+void TableFunction::outputPVTTableData( outputOptions const pvtOutputOpts ) const
+{
+  if( pvtOutputOpts.writeInLog &&  this->numDimensions() <= 2 )
+  {
+    TableTextFormatter textFormatter;
+    GEOS_LOG_RANK_0( textFormatter.toString( *this ));
+  }
+  if( pvtOutputOpts.writeCSV || ( pvtOutputOpts.writeInLog && this->numDimensions() >= 3 ) )
+  {
+    string const filename = this->getName();
+    std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
+                               FunctionBase::getOutputDirectory(),
+                               filename ));
+    TableCSVFormatter csvFormatter;
+    logStream << csvFormatter.toString( *this );
+  }
+}
+
 template<>
 string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {

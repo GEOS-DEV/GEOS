@@ -48,6 +48,15 @@ public:
     Lower
   };
 
+  /// Struct containing output options
+  struct outputOptions
+  {
+    /// Output PVT in CSV file
+    bool writeCSV;
+    /// Output PVT in log
+    bool writeInLog;
+  };
+
   /// maximum dimensions for the coordinates in the table
   static constexpr integer maxDimensions = 4;
 
@@ -326,6 +335,13 @@ private:
  */
   units::Unit getValueUnit() const { return m_valueUnit; }
 
+
+  /**
+   * @brief Print the table(s) in the log and/or CSV files when requested by the user.
+   * @param pvtOutputOpts Struct containing output options
+   */
+  void outputPVTTableData( outputOptions const pvtOutputOpts ) const;
+
   /**
    * @brief Create an instance of the kernel wrapper
    * @return the kernel wrapper
@@ -356,6 +372,7 @@ private:
    * @param[in] delimiter The delimiter used for file entries.
    */
   void readFile( string const & filename, array1d< real64 > & target );
+
 
   /// Coordinates for 1D table
   array1d< real64 > m_tableCoordinates1D;

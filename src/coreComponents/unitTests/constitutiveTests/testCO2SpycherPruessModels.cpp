@@ -83,7 +83,7 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
   // Read file parameters
   array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( fileContent );
 
-  FlashModelBase::TableOutputOptions const flashOutputOpts = {
+  TableFunction::outputOptions const flashOutputOpts = {
     false,  // writeCSV
     false,   // writeInLog
   };
