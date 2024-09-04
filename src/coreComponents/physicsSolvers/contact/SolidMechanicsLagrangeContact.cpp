@@ -168,6 +168,11 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
     } );
   }
 
+  if ( m_applyLocalYieldAcceleration )
+  {
+    initializeAccelerationVariables( domain );
+  }
+
 }
 
 void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
@@ -1583,7 +1588,7 @@ void SolidMechanicsLagrangeContact::
 
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
 
-                std::cout << "kfe = " << kfe << ", dispJump[1] = " << dispJump[kfe][1] << ", dispJump[2] = " << dispJump[kfe][2] << ", previousDispJump[1] = " << previousDispJump[kfe][1] << ", previousDispJump[2] = " << previousDispJump[kfe][2] << std::endl;
+                // std::cout << "kfe = " << kfe << ", dispJump[1] = " << dispJump[kfe][1] << ", dispJump[2] = " << dispJump[kfe][2] << ", previousDispJump[1] = " << previousDispJump[kfe][1] << ", previousDispJump[2] = " << previousDispJump[kfe][2] << std::endl;
 
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
@@ -2223,7 +2228,286 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SolidMechanicsLagrangeContact::updateConfiguration:" << std::endl;
+  bool isConfigurationLoopConverged = false;
+
+  if ( m_applyLocalYieldAcceleration )
+  {
+    isConfigurationLoopConverged = updateConfigurationWithAcceleration( domain );
+  }
+  else
+  {
+    isConfigurationLoopConverged = updateConfigurationWithoutAcceleration( domain );
+  }
+  
+  m_config_iter += 1;
+  if ( isConfigurationLoopConverged )
+  {
+    m_config_iter = 0;
+  }
+
+  return isConfigurationLoopConverged;
+
+}
+
+void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainPartition & domain )
+{
+  localIndex total_size = 0;
+  int visit = 0;
+
+  std::cout << "In initializeAccelerationVariables: " << std::endl;
+
+  using namespace fields::contact;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                FaceElementSubRegion & subRegion )
+    {
+      total_size += subRegion.size();
+      visit += 1;   
+    } );
+  } );
+
+  m_x0.resize( total_size );
+  m_x1.resize( total_size );
+  m_x1_tilde.resize( total_size );
+  m_x2.resize( total_size );
+  m_x2_tilde.resize( total_size );
+  m_omega0.resize( total_size );
+  m_omega1.resize( total_size );
+
+  std::cout << "total_size = " << total_size << ", visit = " << visit << std::endl;
+}
+
+bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainPartition & domain )
+{
+  std::cout << "In SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration:" << std::endl;
+
+  using namespace fields::contact;
+
+  real64 changedArea = 0;
+  real64 totalArea = 0;
+
+  std::cout << "Config iter = " << m_nonlinearSolverParameters.m_numConfigurationAttempts << std::endl;
+  std::cout << "Config iter = " << m_config_iter << std::endl;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                FaceElementSubRegion & subRegion )
+    {
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
+
+      arrayView1d< real64 const > const & normalTractionTolerance =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
+      arrayView1d< real64 const > const & normalDisplacementTolerance =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
+
+      RAJA::ReduceSum< parallelHostReduce, real64 > changed( 0 );
+      RAJA::ReduceSum< parallelHostReduce, real64 > total( 0 );
+
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      {
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        {
+
+          if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+          {
+            std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
+            ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
+            ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
+          }
+
+          if( ghostRank[kfe] < 0 )
+          {
+            integer const originalFractureState = fractureState[kfe];
+            if( originalFractureState == FractureState::Open )
+            {
+              // if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] ) // original 
+              if( abs(dispJump[kfe][0]) <= abs(normalDisplacementTolerance[kfe]) ) // trying comparison in absolute
+              {
+                fractureState[kfe] = FractureState::Stick;
+                if( getLogLevel() >= 10 )
+                  GEOS_LOG( GEOS_FMT( "{}: {} -> {}: dispJump = {}, normalDisplacementTolerance = {}",
+                                      kfe, originalFractureState, fractureState[kfe],
+                                      dispJump[kfe][0], normalDisplacementTolerance[kfe] ) );
+              }
+            }
+            else if( traction[kfe][0] > normalTractionTolerance[kfe] )
+            {
+              fractureState[kfe] = FractureState::Open;
+
+              std::cout << "Fracture OPEN at kfe = " << kfe << ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << 
+              ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
+
+              if( getLogLevel() >= 10 )
+                GEOS_LOG( GEOS_FMT( "{}: {} -> {}: traction = {}, normalTractionTolerance = {}",
+                                    kfe, originalFractureState, fractureState[kfe],
+                                    traction[kfe][0], normalTractionTolerance[kfe] ) );
+            }
+            else
+            {
+              real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
+
+              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              {
+                std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
+              }
+
+              real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+              real64 const limitTau =
+                contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                   dLimitTangentialTractionNorm_dTraction );
+              
+              real64 currentTau_unscaled = currentTau;
+
+              if( originalFractureState == FractureState::Stick && currentTau >= limitTau )
+              {
+                currentTau *= (1.0 - m_slidingCheckTolerance);
+              }
+              else if( originalFractureState != FractureState::Stick && currentTau <= limitTau )
+              {
+                currentTau *= (1.0 + m_slidingCheckTolerance);
+              }
+
+              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              {
+                std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << std::endl;
+              }
+
+              if( currentTau > limitTau )
+              {
+                if( originalFractureState == FractureState::Stick )
+                {
+                  fractureState[kfe] = FractureState::NewSlip;
+                  std::cout << "Fracture NEW slip at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau <<
+                   ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
+                }
+                else
+                {
+                  fractureState[kfe] = FractureState::Slip;
+                  std::cout << "Fracture slip at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << 
+                  ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
+                }
+              }
+              else
+              {
+                fractureState[kfe] = FractureState::Stick;
+
+                if ( m_config_iter == 0 )
+                {
+                  m_x0[kfe] = currentTau_unscaled - limitTau; 
+                  // std::cout << "kfe = " << kfe << ", yield at config iter = 0 is " << m_x0[kfe] << std::endl;
+                }
+                else if ( m_config_iter == 1 )
+                {
+                  m_x1_tilde[kfe] = currentTau_unscaled - limitTau;
+                  m_x1[kfe] = m_x1_tilde[kfe];
+                  m_omega0[kfe] = 1;
+                  // std::cout << "kfe = " << kfe << ", yield at config iter = 1 is " << m_x0[kfe] << std::endl;
+                }
+                else
+                {
+                  // only apply acceleration if within a fraction of the limitTau
+                  real64 acceleration_buffer = ( limitTau - currentTau ) / limitTau;
+
+                  // if (kfe == 0)
+                  // {
+                    // std::cout << "acceleration_buffer = " << acceleration_buffer << ", acc_tol = " << 1.0 / ( m_nonlinearSolverParameters.m_numConfigurationAttempts - 1 ) << std::endl;
+                  // }
+                  // std::cout << "kfe = " << kfe << ", acceleration_buffer = " << acceleration_buffer << std::endl;
+                  if ( acceleration_buffer > ( 0.1 / ( m_config_iter - 1 ) ) )
+                  // if ( acceleration_buffer > 0.1 )
+                  {
+                    // do not apply acceleration, just update previous values
+                    m_x0[kfe] = m_x1_tilde[kfe];
+                    m_x1_tilde[kfe] = currentTau_unscaled - limitTau;
+                    m_x1[kfe] = m_x1_tilde[kfe];
+                  }
+                  else
+                  {
+                    // apply acceleration
+                    m_x2_tilde[kfe] = currentTau_unscaled - limitTau;
+
+                    m_omega1[kfe] = -1.0 * m_omega0[kfe] * ( m_x1_tilde[kfe] - m_x0[kfe] ) / ( ( m_x1_tilde[kfe] - m_x0[kfe] ) - ( m_x2_tilde[kfe] - m_x1[kfe] ) );
+
+                    m_x2[kfe] = ( 1.0 - m_omega1[kfe] ) * m_x1[kfe] + m_omega1[kfe] * m_x2_tilde[kfe];
+
+                    if ( kfe == 0 )
+                    {
+                      std::cout << "kfe = " << kfe << ", x0 = " << m_x0[kfe] << ", x1_tilde = " << m_x1_tilde[kfe] << ", x1 = " << m_x1[kfe] << ", x2_tilde = " << m_x2_tilde[kfe] << ", x2 = " << m_x2[kfe] << ", w0 = " << m_omega0[kfe] << ", w1 = " << m_omega1[kfe] <<  std::endl;
+                    }
+
+                    real64 acc_currentTau_unscaled = m_x2[kfe] + limitTau;
+                    real64 acc_currentTau_scaled = acc_currentTau_unscaled * (1.0 - m_slidingCheckTolerance);
+
+                    if ( acc_currentTau_scaled > limitTau )
+                    {
+                      fractureState[kfe] = FractureState::NewSlip;
+                      std::cout << "Fracture NEW slip due to acceleration at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau <<
+                      ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
+                    }
+                    else
+                    {
+                      m_x0[kfe] = m_x1[kfe];
+                      m_x1[kfe] = m_x2[kfe];
+                      m_x1_tilde[kfe] = m_x2_tilde[kfe];
+                      m_omega0[kfe] = m_omega1[kfe];
+                    }
+                  }
+                }
+              }
+              if( getLogLevel() >= 10 && fractureState[kfe] != originalFractureState )
+                GEOS_LOG( GEOS_FMT( "{}: {} -> {}: currentTau = {}, limitTau = {}",
+                                    kfe, originalFractureState, fractureState[kfe],
+                                    currentTau, limitTau ) );
+            }
+
+            changed += faceArea[kfe] * !compareFractureStates( originalFractureState, fractureState[kfe] );
+            total += faceArea[kfe];
+          }
+        } );
+      } );
+
+      changedArea += changed.get();
+      totalArea += total.get();
+    } );
+  } );
+
+  // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
+  synchronizeFractureState( domain );
+
+  // Compute global area of changed elements
+  changedArea = MpiWrapper::sum( changedArea );
+  // and total area of fracture elements
+  totalArea = MpiWrapper::sum( totalArea );
+
+  GEOS_LOG_LEVEL_RANK_0( 2, GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
+
+  // Assume converged if changed area is below certain fraction of total area
+  return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;
+}
+
+bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( DomainPartition & domain )
+{
+  std::cout << "In SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration:" << std::endl;
 
   using namespace fields::contact;
 
@@ -2264,7 +2548,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
 
-          if ( kfe == 0 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+          if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
           {
             std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
             ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
@@ -2302,7 +2586,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
 
-              if ( kfe == 0 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
               {
                 std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
               }
@@ -2321,21 +2605,13 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
 
-              if ( kfe == 0 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
               {
                 std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << std::endl;
               }
 
               if( currentTau > limitTau )
               {
-                // std::cout << "Slipping: " << std::endl;
-                // std::cout << "kfe = " << kfe <<", dispJump[kfe][0] = " << dispJump[kfe][0] << std::endl;
-                // std::cout << "kfe = " << kfe <<", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << std::endl;
-                // std::cout << "kfe = " << kfe <<", traction[kfe][0] = " << traction[kfe][0] << std::endl;
-                // std::cout << "kfe = " << kfe <<", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-                // std::cout << "kfe = " << kfe <<", currentTau[kfe] = " << currentTau << std::endl;
-                // std::cout << "kfe = " << kfe <<", limitTau[kfe] = " << limitTau << std::endl;
-
                 if( originalFractureState == FractureState::Stick )
                 {
                   fractureState[kfe] = FractureState::NewSlip;
@@ -2403,6 +2679,70 @@ real64 SolidMechanicsLagrangeContact::setNextDt( real64 const & currentDt,
   GEOS_UNUSED_VAR( domain );
   return currentDt;
 }
+
+// real64 computeAitkenRelaxationFactor( array1d< real64 > const & s0,
+//                                       array1d< real64 > const & s1,
+//                                       array1d< real64 > const & s1_tilde,
+//                                       array1d< real64 > const & s2_tilde,
+//                                       real64 const omega0 )
+// {
+//   array1d< real64 > r1 = axpy( s1_tilde, s0, -1.0 );
+//   array1d< real64 > r2 = axpy( s2_tilde, s1, -1.0 );
+
+//   // diff = r2 - r1
+//   array1d< real64 > diff = axpy( r2, r1, -1.0 );
+
+//   real64 const denom = dot( diff, diff );
+//   real64 const numer = dot( r1, diff );
+
+//   real64 omega1 = 1.0;
+//   if( !isZero( denom ))
+//   {
+//     omega1 = -1.0 * omega0 * numer / denom;
+//   }
+//   return omega1;
+// }
+
+// array1d< real64 > computeUpdate( array1d< real64 > const & s1,
+//                                   array1d< real64 > const & s2_tilde,
+//                                   real64 const omega1 )
+// {
+//   return axpy( scale( s1, 1.0 - omega1 ),
+//                 scale( s2_tilde, omega1 ),
+//                 1.0 );
+// }
+
+// void startConfigurationIteration( integer const & iter,
+//                                   DomainPartition & domain )
+// {
+//   if( iter == 0 )
+//   {
+//     recordAverageMeanTotalStressIncrement( domain, m_s1 );
+//   }
+//   else
+//   {
+//     m_s0 = m_s1;
+//     m_s1 = m_s2;
+//     m_s1_tilde = m_s2_tilde;
+//     m_omega0 = m_omega1;
+//   }
+// }
+
+// void finishConfigurationIteration( integer const & iter,
+//                                    DomainPartition & domain )
+// {
+//   if( iter == 0 )
+//   {
+//     m_s2 = m_s2_tilde;
+//     m_omega1 = 1.0;
+//   }
+//   else
+//   {
+//     m_omega1 = computeAitkenRelaxationFactor( m_s0, m_s1, m_s1_tilde, m_s2_tilde, m_omega0 );
+//     m_s2 = computeUpdate( m_s1, m_s2_tilde, m_omega1 );
+//     applyAcceleratedAverageMeanTotalStressIncrement( domain, m_s2 );
+//   }
+// }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangeContact, string const &, Group * const )
 

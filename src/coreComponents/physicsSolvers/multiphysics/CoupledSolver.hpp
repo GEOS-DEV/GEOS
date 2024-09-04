@@ -359,6 +359,8 @@ public:
 
   virtual bool updateConfiguration( DomainPartition & domain ) override
   {
+    std::cout << "In CoupledSolver::updateConfiguration: " << std::endl;
+    
     bool result = true;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
