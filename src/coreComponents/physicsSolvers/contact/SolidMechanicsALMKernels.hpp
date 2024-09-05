@@ -98,7 +98,7 @@ public:
           inputDt,
           faceElementList ),
     m_traction( elementSubRegion.getField< fields::contact::traction >().toViewConst()),
-    m_symmetric( isSymmetric)
+    m_symmetric( isSymmetric )
   {}
 
   //***************************************************************************
@@ -251,7 +251,7 @@ public:
   {
     GEOS_UNUSED_VAR( k );
     constexpr real64 zero = std::numeric_limits< real64 >::epsilon();
-    
+
     constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
     constexpr int numBdofs = 3*2;
@@ -275,115 +275,7 @@ public:
                                          zero,
                                          stack.localPenalty,
                                          tractionNew,
-                                         fractureState);
-
-
-    /*real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-    real64 limitTau = 0.0;
-
-    // Compute the trial traction
-    real64 tractionTrial[ 3 ];
-    tractionTrial[ 0 ] = stack.tLocal[0] + m_penalty(k, 0) * stack.dispJumpLocal[0];
-    tractionTrial[ 1 ] = stack.tLocal[1] + m_penalty(k, 1) * (stack.dispJumpLocal[1] - stack.oldDispJumpLocal[1]);
-    tractionTrial[ 2 ] = stack.tLocal[2] + m_penalty(k, 1) * (stack.dispJumpLocal[2] - stack.oldDispJumpLocal[2]);
-
-    // Compute tangential trial traction norm
-    real64 const tractionTrialNorm = std::sqrt( std::pow(tractionTrial[1], 2) +
-                                                 std::pow(tractionTrial[2], 2));
-                                      
-    // If normal tangential trial is positive (opening)
-    if (tractionTrial[ 0 ] > zero)
-    {
-      tractionNew[0] = 0.0;
-      stack.localPenalty[0][0] = 0.0;
-    }
-    else 
-    {
-      tractionNew[0] = tractionTrial[0];
-      stack.localPenalty[0][0] = -m_penalty( k, 0 );
-    }
-
-    // Compute limit Tau
-    if (m_symmetric)
-    {
-      limitTau = m_constitutiveUpdate.computeLimitTangentialTractionNorm( m_traction(k, 0),
-                                                                        dLimitTangentialTractionNorm_dTraction );
-    }
-    else
-    {
-      limitTau = m_constitutiveUpdate.computeLimitTangentialTractionNorm( tractionNew[0],
-                                                                        dLimitTangentialTractionNorm_dTraction );
-    }
-
-    if (tractionTrialNorm <= zero) 
-    {
-      // It is needed for the first iteration (both t and u are equal to zero)  
-      stack.localPenalty[1][1] = -m_penalty( k, 1);
-      stack.localPenalty[2][2] = -m_penalty( k, 1);
-
-      tractionNew[1] = tractionTrial[1];
-      tractionNew[2] = tractionTrial[2];
-    }
-    else if (limitTau <= zero) 
-    {
-      stack.localPenalty[1][1] = 0.0;
-      stack.localPenalty[2][2] = 0.0;
-
-      tractionNew[1] = (m_symmetric) ? tractionTrial[1] : 0.0;
-      tractionNew[2] = (m_symmetric) ? tractionTrial[2] : 0.0;
-    }
-    
-    else
-    {
-      // Compute psi and dpsi
-      //real64 const psi = std::tanh( tractionTrialNorm/limitTau );
-      //real64 const dpsi = 1.0-std::pow(psi,2);
-      real64 const psi = ( tractionTrialNorm > limitTau) ? 1.0 : tractionTrialNorm/limitTau;
-      real64 const dpsi = ( tractionTrialNorm > limitTau) ? 0.0 : 1.0;
-
-      // Two symmetric 2x2 matrices
-      real64 dNormTTdgT[ 3 ];
-      dNormTTdgT[ 0 ] = tractionTrial[ 1 ] * tractionTrial[ 1 ];
-      dNormTTdgT[ 1 ] = tractionTrial[ 2 ] * tractionTrial[ 2 ];
-      dNormTTdgT[ 2 ] = tractionTrial[ 1 ] * tractionTrial[ 2 ];
-   
-      real64 dTdgT[ 3 ];
-      dTdgT[ 0 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[0]); 
-      dTdgT[ 1 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[1]);
-      dTdgT[ 2 ] = - dNormTTdgT[2];
-   
-      LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow(tractionTrialNorm, 2) );
-      LvArray::tensorOps::scale< 3 >( dTdgT, 1. / std::pow( tractionTrialNorm, 3 )  );
-
-      // Compute dTdDispJump
-      stack.localPenalty[1][1] = -m_penalty( k, 1) * ( 
-           dpsi * dNormTTdgT[0] +
-            psi * dTdgT[0] * limitTau ); 
-      stack.localPenalty[2][2] = -m_penalty( k, 1) * ( 
-           dpsi * dNormTTdgT[1] +
-            psi * dTdgT[1] * limitTau ); 
-      stack.localPenalty[1][2] = -m_penalty( k, 1) * ( 
-           dpsi * dNormTTdgT[2] +
-            psi * dTdgT[2] * limitTau ); 
-      stack.localPenalty[2][1] =  stack.localPenalty[1][2];
-   
-      if (!m_symmetric)
-      {
-        // Nonsymetric term
-        //real64 const friction = m_constitutiveUpdate.frictionCoefficient();
-        real64 const friction = (std::abs(tractionNew[0]) > zero) ? - limitTau / tractionNew[0] : 0.0;
-        stack.localPenalty[1][0] = -stack.localPenalty[0][0] * friction * 
-          tractionTrial[1] * (psi/tractionTrialNorm - dpsi/limitTau);
-        stack.localPenalty[2][0] = -stack.localPenalty[0][0] * friction  * 
-          tractionTrial[2] * (psi/tractionTrialNorm - dpsi/limitTau);
-      }
-
-      tensorOps::scale< 3 >( tractionTrial, (psi * limitTau)/tractionTrialNorm );
-      tractionNew[1] = tractionTrial[1];
-      tractionNew[2] = tractionTrial[2];
-    }
-    */
-    
+                                         fractureState );
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix,

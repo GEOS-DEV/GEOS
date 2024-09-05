@@ -263,11 +263,7 @@ public:
     real64 matRRtAtu[3][numUdofs], matDRtAtu[3][numUdofs];
     real64 matRRtAtb[3][numBdofs], matDRtAtb[3][numBdofs];
 
-    //real64 dispJumpR[numUdofs];
-    //real64 oldDispJumpR[numUdofs];
     real64 tractionR[numUdofs];
-    //real64 dispJumpRb[numBdofs];
-    //real64 oldDispJumpRb[numBdofs];
     real64 tractionRb[numBdofs];
 
 
@@ -330,18 +326,9 @@ public:
                                                                 matRRtAtb );
 
     // Compute the local residuals
-    //LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( dispJumpR, matDRtAtu, stack.dispJumpLocal );
-    //LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( oldDispJumpR, matDRtAtu, stack.oldDispJumpLocal );
-    //LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( dispJumpRb, matDRtAtb, stack.dispJumpLocal );
-    //LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( oldDispJumpRb, matDRtAtb, stack.oldDispJumpLocal );
-
     LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, tractionR, 1 );
-    //LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, dispJumpR, 1 );
-    //LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, oldDispJumpR, -1 );
 
     LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, tractionRb, 1 );
-    //LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, dispJumpRb, 1 );
-    //LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, oldDispJumpRb, -1 );
 
     for( localIndex i=0; i < numUdofs; ++i )
     {
@@ -395,13 +382,13 @@ protected:
 
 /// The factory used to construct the kernel.
 using ALMSimultaneousFactory = finiteElement::InterfaceKernelFactory< ALMSimultaneous,
-                                                          arrayView1d< globalIndex const > const,
-                                                          arrayView1d< globalIndex const > const,
-                                                          globalIndex const,
-                                                          CRSMatrixView< real64, globalIndex const > const,
-                                                          arrayView1d< real64 > const,
-                                                          real64 const,
-                                                          arrayView1d< localIndex const > const>;
+                                                                      arrayView1d< globalIndex const > const,
+                                                                      arrayView1d< globalIndex const > const,
+                                                                      globalIndex const,
+                                                                      CRSMatrixView< real64, globalIndex const > const,
+                                                                      arrayView1d< real64 > const,
+                                                                      real64 const,
+                                                                      arrayView1d< localIndex const > const >;
 
 /**
  * @brief A struct to compute the traction after nonlinear solve
@@ -433,9 +420,9 @@ struct ComputeTractionSimultaneousKernel
     {
       tractionNew[kfe][0] = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
       tractionNew[kfe][1] = traction[kfe][1] + penalty[kfe][2] * deltaDispJump[kfe][1] +
-                                               penalty[kfe][4] * deltaDispJump[kfe][2];
+                            penalty[kfe][4] * deltaDispJump[kfe][2];
       tractionNew[kfe][2] = traction[kfe][2] + penalty[kfe][3] * deltaDispJump[kfe][2] +
-                                               penalty[kfe][4] * deltaDispJump[kfe][1];
+                            penalty[kfe][4] * deltaDispJump[kfe][1];
     } );
   }
 

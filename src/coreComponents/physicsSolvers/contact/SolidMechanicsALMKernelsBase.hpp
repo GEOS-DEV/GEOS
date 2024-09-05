@@ -355,10 +355,10 @@ struct ConstraintCheckKernel
     {
       if( ghostRank[k] < 0 )
       {
-        std::map<std::string const, real64 const > const tolerance = {{"normalTraction", normalTractionTolerance[k]}, 
-                                                         {"normalDisplacement", normalDisplacementTolerance[k]*area[k] },
-                                                         {"sliding", slidingTolerance[k]*area[k] },
-                                                         {"slidingCheck", slidingCheckTolerance }};
+        std::map< std::string const, real64 const > const tolerance = {{"normalTraction", normalTractionTolerance[k]},
+          {"normalDisplacement", normalDisplacementTolerance[k]*area[k] },
+          {"sliding", slidingTolerance[k]*area[k] },
+          {"slidingCheck", slidingCheckTolerance }};
         contactWrapper.constraintCheck( dispJump[k],
                                         deltaDispJump[k],
                                         traction[k],
@@ -385,7 +385,7 @@ struct UpdateStateKernel
    * @param[in] oldDispJump the array containing the old displacement jump (previous time step)
    * @param[in] dispJump the array containing the displacement jump
    * @param[in] penalty the array containing the penalty coefficients
-   * @param[in] symmetric flag to compute symmetric penalty matrix 
+   * @param[in] symmetric flag to compute symmetric penalty matrix
    * @param[in] normalTractionTolerance Check tolerance (normal traction)
    * @param[in] traction the array containing the current traction
    * @param[in] fractureState the array containing the fracture state
@@ -420,14 +420,14 @@ struct UpdateStateKernel
                                      zero,
                                      localPenalty,
                                      localTractionNew,
-                                     fractureState[k]);
+                                     fractureState[k] );
 
-      if (fractureState[k] == fields::contact::FractureState::Open)
+      if( fractureState[k] == fields::contact::FractureState::Open )
       {
 
         LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
       }
-      else if (std::abs(localTractionNew[ 0 ]) < normalTractionTolerance[k] )
+      else if( std::abs( localTractionNew[ 0 ] ) < normalTractionTolerance[k] )
       {
         LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
         fractureState[k] = fields::contact::FractureState::Slip;
@@ -437,7 +437,7 @@ struct UpdateStateKernel
       penalty[k][2] = -localPenalty[1][1];
       penalty[k][3] = -localPenalty[2][2];
       penalty[k][4] = -localPenalty[1][2];
-      
+
     } );
   }
 

@@ -90,7 +90,7 @@ public:
   { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
 
   /**
-   * @brief Update the trial traction vector ( return mapping ) 
+   * @brief Update the trial traction vector ( return mapping )
    * @param[in] oldDispJump the displacement jump of the previous time step
    * @param[in] dispJump the displacement jump of the current time step
    * @param[in] penalty  the penalty coefficients
@@ -114,14 +114,16 @@ public:
                                real64 const normalTractionTolerance,
                                real64 const tangentialTractionTolerance,
                                real64 ( & dTraction_dDispJump )[3][3],
-                               real64 ( & tractionNew )[3], 
+                               real64 ( & tractionNew )[3],
                                integer & fractureState ) const
-  { GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, fixedLimitTau,
-                    normalTractionTolerance, tangentialTractionTolerance,
-                     dTraction_dDispJump, tractionNew, fractureState ); }
+  {
+    GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, fixedLimitTau,
+                     normalTractionTolerance, tangentialTractionTolerance,
+                     dTraction_dDispJump, tractionNew, fractureState );
+  }
 
   /**
-   * @brief Update the traction vector only ( return mapping ) 
+   * @brief Update the traction vector only ( return mapping )
    * @param[in] dispJump the displacement jump of the current time step
    * @param[in] deltaDispJump the delta displacement jump of the current time step
    * @param[in] penalty  the penalty coefficients
@@ -134,11 +136,11 @@ public:
                                    arraySlice1d< real64 const > const & deltaDispJump,
                                    arraySlice1d< real64 const > const & penalty,
                                    arraySlice1d< real64 const > const & traction,
-                                   arraySlice1d< real64 > const & tractionNew ) const 
+                                   arraySlice1d< real64 > const & tractionNew ) const
   { GEOS_UNUSED_VAR( dispJump, deltaDispJump, penalty, traction, tractionNew ); }
 
   /**
-   * @brief Check for the constraint satisfaction 
+   * @brief Check for the constraint satisfaction
    * @param[in] dispJump the displacement jump of the current time step
    * @param[in] deltaDispJump the delta displacement jump of the current time step
    * @param[in] tractionVector the traction vector
@@ -152,7 +154,7 @@ public:
                                 arraySlice1d< real64 const > const & deltaDispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 integer const fractureState,
-                                std::map<std::string const, real64 const> const & tolerance,
+                                std::map< std::string const, real64 const > const & tolerance,
                                 integer & condConv ) const
   { GEOS_UNUSED_VAR( dispJump, deltaDispJump, tractionVector, fractureState, tolerance, condConv ); }
 

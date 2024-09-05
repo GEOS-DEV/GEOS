@@ -109,7 +109,7 @@ public:
     {
       arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
 
-      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at(finiteElementName));
+      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
 
       lambda( finiteElementName, subRegionFE, faceElemList );
     }
@@ -129,14 +129,14 @@ public:
 
     bool const isStickState = true;
 
-    std::map< string, array1d< localIndex > > const & 
-              faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
+    std::map< string, array1d< localIndex > > const &
+    faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
       arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
 
-      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at(finiteElementName));
+      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
 
       lambda( finiteElementName, subRegionFE, faceElemList, isStickState );
     }
@@ -156,14 +156,14 @@ public:
 
     bool const isStickState = false;
 
-    std::map< string, array1d< localIndex > > const & 
-              faceTypesToFaceElements = m_faceTypesToFaceElementsSlip.at( meshName );
+    std::map< string, array1d< localIndex > > const &
+    faceTypesToFaceElements = m_faceTypesToFaceElementsSlip.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
       arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
 
-      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at(finiteElementName));
+      finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
 
       lambda( finiteElementName, subRegionFE, faceElemList, isStickState );
     }
@@ -244,7 +244,7 @@ private:
   real64 const m_slidingCheckTolerance = 0.05;
 
   bool m_simultaneous = true;
-  
+
   bool m_symmetric = true;
 
 };

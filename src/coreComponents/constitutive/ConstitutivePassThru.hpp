@@ -95,7 +95,7 @@ struct ConstitutivePassThru< CoulombFriction >
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CoulombFriction >::execute( constitutiveRelation,
-                                                              std::forward< LAMBDA >( lambda ) );
+                                                             std::forward< LAMBDA >( lambda ) );
   }
 };
 
