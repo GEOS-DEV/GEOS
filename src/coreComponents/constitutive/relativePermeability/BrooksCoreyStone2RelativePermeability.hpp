@@ -287,7 +287,7 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
                                              phaseRelPerm[ipGas][dir],
                                              dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas][dir],
                                              phaseRelPerm[ipOil][dir],
-                                             dPhaseRelPerm_dPhaseVolFrac[ipOil][dir] );
+                                             dPhaseRelPerm_dPhaseVolFrac[ipOil] );
     }
     // update trapped phase volume fraction
     if( ipWater >= 0 )

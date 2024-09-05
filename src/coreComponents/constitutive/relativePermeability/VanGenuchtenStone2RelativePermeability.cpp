@@ -76,10 +76,6 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
   integer const numDir = 1;
   m_volFracScale.resize( numDir /*ndims*/ );
 
-  std::cout << "A: " << m_volFracScale << std::endl;
-  std::cout << "B: " << m_phaseMinVolumeFraction << std::endl;
-
-
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
                  InputError );
@@ -102,7 +98,7 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
     checkInputSize( m_gasOilRelPermExponentInv, 2, viewKeyStruct::gasOilRelPermExponentInvString() );
     checkInputSize( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() );
   }
-  std::cout << "F: " << numFluidPhases() << std::endl;
+
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
     for( int dir=0; dir<numDir; ++dir )
@@ -188,7 +184,7 @@ void VanGenuchtenStone2RelativePermeability::resizeFields( localIndex const size
   //m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
   //m_phaseTrappedVolFrac.zero();
 
-  std::cout << "C: " << m_phaseRelPerm.size(3) << std::endl;
+
 }
 
 

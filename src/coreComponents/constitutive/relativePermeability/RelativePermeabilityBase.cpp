@@ -109,7 +109,7 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
   m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
   m_phaseTrappedVolFrac.zero();
 
-  std::cout << "D: " << m_phaseRelPerm.size(3) << std::endl;
+
 
 }
 

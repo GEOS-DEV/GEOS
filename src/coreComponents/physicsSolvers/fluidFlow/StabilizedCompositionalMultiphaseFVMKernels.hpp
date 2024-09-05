@@ -242,7 +242,7 @@ public:
       localIndex const esr_up_stab = sesri[k_up_stab];
       localIndex const ei_up_stab  = sei[k_up_stab];
       // I don't really know about this one and check for single direction in tensorOp:
-      integer const numDir = 1;
+      integer const numDir = 3;
       real64 faceNormal[3];
       m_stencilWrapper.getFaceNormal( iconn, faceNormal );
 

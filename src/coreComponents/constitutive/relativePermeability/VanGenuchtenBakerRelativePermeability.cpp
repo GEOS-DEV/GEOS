@@ -68,6 +68,21 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
 }
 
 
+void VanGenuchtenBakerRelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
+{
+  RelativePermeabilityBase::resizeFields( size, numPts );
+
+  integer const numPhases = 3;
+  integer const numDir = 1;
+
+
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+
+
+
+}
 
 
 
@@ -173,21 +188,6 @@ void VanGenuchtenBakerRelativePermeability::postInputInitialization()
 
 }
 
-void VanGenuchtenBakerRelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
-{
-  RelativePermeabilityBase::resizeFields( size, numPts );
-
-  integer const numPhases = 3;
-  integer const numDir = 1;
-
-
-  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
-  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
-  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
-
-
-
-}
 
 VanGenuchtenBakerRelativePermeability::KernelWrapper
 VanGenuchtenBakerRelativePermeability::createKernelWrapper()

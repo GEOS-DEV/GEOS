@@ -452,12 +452,14 @@ private:
 
 private:
 
+  virtual void resizeFields( localIndex const size,
+                             localIndex const numPts ) override;
+
   virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
 
-  virtual void resizeFields( localIndex const size,
-                             localIndex const numPts ) override;
+
 
   /**
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
@@ -1004,7 +1006,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                             interRelPerm_nwi,
                                             dInterRelPerm_nwi_dInterVolFrac,
                                             phaseRelPerm[ipInter][dir],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipInter][dir] );
+                                            dPhaseRelPerm_dPhaseVolFrac[ipInter] );
 
     }
     else// if( m_threePhaseInterpolator == ThreePhaseInterpolator::STONEII )
@@ -1022,7 +1024,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                             phaseRelPerm[ipNonWetting][dir],
                                             dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting][dir],
                                             phaseRelPerm[ipInter][dir],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipInter][dir] );
+                                            dPhaseRelPerm_dPhaseVolFrac[ipInter] );
     }
   }
 }

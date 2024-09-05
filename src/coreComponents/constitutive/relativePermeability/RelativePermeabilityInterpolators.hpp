@@ -59,25 +59,27 @@ struct Baker
            real64 const & goRelPerm,
            real64 const & dGoRelPerm_dOilVolFrac,
            real64 & threePhaseRelPerm,
-           arraySlice1d< real64, relperm::USD_RELPERM_DS - 4 > const & dThreePhaseRelPerm_dVolFrac )
+           arraySlice2d< real64, relperm::USD_RELPERM_DS - 3 > const & dThreePhaseRelPerm_dVolFrac )
   {
     using PT = RelativePermeabilityBase::PhaseType;
     integer const ipWater = phaseOrder[PT::WATER];
     integer const ipOil = phaseOrder[PT::OIL];
     integer const ipGas = phaseOrder[PT::GAS];
 
+    integer const numDir = dThreePhaseRelPerm_dVolFrac.size(1);
 
+    for (int dir=0; dir < numDir; dir++){
     // if water phase is immobile, then use the two-phase gas-oil data only
     if( shiftedWaterVolFrac <= 0.0 )
     {
       threePhaseRelPerm = goRelPerm;
-      dThreePhaseRelPerm_dVolFrac[ipOil]= dGoRelPerm_dOilVolFrac;
+      dThreePhaseRelPerm_dVolFrac[ipOil][dir]= dGoRelPerm_dOilVolFrac;
     }
     // if gas phase is immobile, then use the two-phase water-oil data only
     else if( gasVolFrac <= 0.0 )
     {
       threePhaseRelPerm= woRelPerm;
-      dThreePhaseRelPerm_dVolFrac[ipOil] = dWoRelPerm_dOilVolFrac;
+      dThreePhaseRelPerm_dVolFrac[ipOil][dir] = dWoRelPerm_dOilVolFrac;
     }
     // if both the water phase and the gas phase are mobile,
     // then use a saturation-weighted interpolation of the two-phase oil rel perms
@@ -99,13 +101,15 @@ struct Baker
       // three-phase oil rel perm
       threePhaseRelPerm = sumRelPerm * sumVolFracInv;
       // derivative w.r.t. Sw
-      dThreePhaseRelPerm_dVolFrac[ipWater]= dSumRelPerm_dWaterVolFrac * sumVolFracInv
+      dThreePhaseRelPerm_dVolFrac[ipWater][dir]= dSumRelPerm_dWaterVolFrac * sumVolFracInv
                                             + sumRelPerm * dSumVolFracInv_dWaterVolFrac;
       // derivative w.r.t. So
-      dThreePhaseRelPerm_dVolFrac[ipOil]= dSumRelPerm_dOilVolFrac * sumVolFracInv;
+      dThreePhaseRelPerm_dVolFrac[ipOil][dir]= dSumRelPerm_dOilVolFrac * sumVolFracInv;
       // derivative w.r.t. Sg
-      dThreePhaseRelPerm_dVolFrac[ipGas]= dSumRelPerm_dGasVolFrac * sumVolFracInv
+      dThreePhaseRelPerm_dVolFrac[ipGas][dir]= dSumRelPerm_dGasVolFrac * sumVolFracInv
                                           + sumRelPerm * dSumVolFracInv_dGasVolFrac;
+
+     }
     }
   }
 
@@ -148,7 +152,7 @@ struct Stone2
                        real64 const & gRelPerm,
                        real64 const & dGRelPerm_dGasVolFrac,
                        real64 & threePhaseRelPerm,
-                       arraySlice1d< real64, relperm::USD_RELPERM_DS - 4 > const & dThreePhaseRelPerm_dVolFrac )
+                       arraySlice2d< real64, relperm::USD_RELPERM_DS - 3 > const & dThreePhaseRelPerm_dVolFrac )
   {
 
     using PT = RelativePermeabilityBase::PhaseType;
@@ -156,38 +160,41 @@ struct Stone2
     integer const ipOil   = phaseOrder[PT::OIL];
     integer const ipGas   = phaseOrder[PT::GAS];
 
+    integer const numDir = dThreePhaseRelPerm_dVolFrac.size(1);
+
+    for (int dir=0; dir < numDir; dir++){
     if( gasVolFrac <= 0 )
     {
       threePhaseRelPerm = woRelPerm;
-      dThreePhaseRelPerm_dVolFrac[ipOil] = dWoRelPerm_dOilVolFrac;
+      dThreePhaseRelPerm_dVolFrac[ipOil][dir] = dWoRelPerm_dOilVolFrac;
     }
     else if( shiftedWaterVolFrac <= 0 )
     {
       threePhaseRelPerm = goRelPerm;
-      dThreePhaseRelPerm_dVolFrac[ipOil] = dGoRelPerm_dOilVolFrac;
+      dThreePhaseRelPerm_dVolFrac[ipOil][dir] = dGoRelPerm_dOilVolFrac;
     }
     else
     {
       threePhaseRelPerm = connatewoRelPerm * ((woRelPerm/connatewoRelPerm + wRelPerm)*(goRelPerm/connatewoRelPerm + gRelPerm) - (wRelPerm + gRelPerm));
       // derivative w.r.t. Sw
-      dThreePhaseRelPerm_dVolFrac[ipWater] = dWRelPerm_dWaterVolFrac * (goRelPerm + gRelPerm*connatewoRelPerm - connatewoRelPerm);
+      dThreePhaseRelPerm_dVolFrac[ipWater][dir] = dWRelPerm_dWaterVolFrac * (goRelPerm + gRelPerm*connatewoRelPerm - connatewoRelPerm);
       // derivative w.r.t. So
-      dThreePhaseRelPerm_dVolFrac[ipOil]   = dWoRelPerm_dOilVolFrac/connatewoRelPerm*goRelPerm + woRelPerm*dGoRelPerm_dOilVolFrac/connatewoRelPerm + wRelPerm*dGoRelPerm_dOilVolFrac + gRelPerm*
+      dThreePhaseRelPerm_dVolFrac[ipOil][dir]   = dWoRelPerm_dOilVolFrac/connatewoRelPerm*goRelPerm + woRelPerm*dGoRelPerm_dOilVolFrac/connatewoRelPerm + wRelPerm*dGoRelPerm_dOilVolFrac + gRelPerm*
                                              dWoRelPerm_dOilVolFrac;
       // derivative w.r.t. Sg
-      dThreePhaseRelPerm_dVolFrac[ipGas] = dGRelPerm_dGasVolFrac * (woRelPerm + wRelPerm*connatewoRelPerm - connatewoRelPerm);
+      dThreePhaseRelPerm_dVolFrac[ipGas][dir] = dGRelPerm_dGasVolFrac * (woRelPerm + wRelPerm*connatewoRelPerm - connatewoRelPerm);
       if( threePhaseRelPerm < 0 )
       {
         threePhaseRelPerm = 0;
-        dThreePhaseRelPerm_dVolFrac[ipWater] = 0;
+        dThreePhaseRelPerm_dVolFrac[ipWater][dir] = 0;
         // derivative w.r.t. So
-        dThreePhaseRelPerm_dVolFrac[ipOil]   = 0;
+        dThreePhaseRelPerm_dVolFrac[ipOil][dir]   = 0;
         // derivative w.r.t. Sg
-        dThreePhaseRelPerm_dVolFrac[ipGas] = 0;
+        dThreePhaseRelPerm_dVolFrac[ipGas][dir] = 0;
       }
     }
 
-
+    }
   }
 };
 

@@ -148,6 +148,10 @@ public:
 
 protected:
 
+
+  virtual void resizeFields( localIndex const size,
+                             localIndex const numPts ) override;
+
   virtual void postInputInitialization() override;
 
   array2d< real64 > m_phaseMinVolumeFraction;
@@ -288,7 +292,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
                                             oilRelPerm_go,
                                             dOilRelPerm_go_dOilVolFrac,
                                             phaseRelPerm[ipOil][dir],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipOil][dir] );
+                                            dPhaseRelPerm_dPhaseVolFrac[ipOil] );
     }
 
 

@@ -270,7 +270,7 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
     else
     {
       real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[dir][ipWater]);
-      std::cout << "break8 " << dPhaseRelPerm_dPhaseVolFrac << std::endl;  //crash between break 8 and break 9
+      //std::cout << "break8 " << dPhaseRelPerm_dPhaseVolFrac << std::endl;  //crash between break 8 and break 9
       // TODO: change name of the class and add template to choose interpolation
       relpermInterpolators::Baker::compute( shiftedWaterVolFrac,
                                             phaseVolFraction[ipGas],
@@ -280,9 +280,9 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
                                             oilRelPerm_go,
                                             dOilRelPerm_go_dOilVolFrac,
                                             phaseRelPerm[ipOil][dir],
-                                            dPhaseRelPerm_dPhaseVolFrac[ipOil][dir] );
+                                            dPhaseRelPerm_dPhaseVolFrac[ipOil] );
     }
-      std::cout << "break9 " << dPhaseRelPerm_dPhaseVolFrac << std::endl;
+      //std::cout << "break9 " << dPhaseRelPerm_dPhaseVolFrac << std::endl;
     // update trapped phase volume fraction
     if( ipWater >= 0 )
     {
