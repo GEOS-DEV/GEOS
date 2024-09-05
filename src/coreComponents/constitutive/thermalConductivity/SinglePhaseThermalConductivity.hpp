@@ -14,11 +14,11 @@
  */
 
 /**
- * @file SinglePhaseConstantThermalConductivity.hpp
+ * @file SinglePhaseThermalConductivity.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
-#define GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITY_HPP_
+#define GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITY_HPP_
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 
@@ -31,7 +31,7 @@ namespace constitutive
 /**
  * @brief The update class for constant thermal conductivity (does not do anything)
  */
-class SinglePhaseConstantThermalConductivityUpdate : public SinglePhaseThermalConductivityBaseUpdate
+class SinglePhaseThermalConductivityUpdate : public SinglePhaseThermalConductivityBaseUpdate
 {
 public:
 
@@ -40,8 +40,10 @@ public:
    * @param effectiveConductivity the array of cell-wise effective conductivities in the subregion
    * the subregion
    */
-  SinglePhaseConstantThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity )
-    : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity )
+  SinglePhaseThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                        arrayView3d< real64 > const & dEffectiveConductivity_dT )
+    : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity,
+                                                dEffectiveConductivity_dT )
   {}
 
   GEOS_HOST_DEVICE
@@ -55,7 +57,7 @@ public:
 /**
  * @brief The class for constant thermal conductivity
  */
-class SinglePhaseConstantThermalConductivity : public SinglePhaseThermalConductivityBase
+class SinglePhaseThermalConductivity : public SinglePhaseThermalConductivityBase
 {
 public:
 
@@ -64,7 +66,7 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  SinglePhaseConstantThermalConductivity( string const & name, Group * const parent );
+  SinglePhaseThermalConductivity( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -72,18 +74,16 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static string catalogName() { return "SinglePhaseConstantThermalConductivity"; }
+  static string catalogName() { return "SinglePhaseThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-
   virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const override final;
 
-  virtual void update( arrayView2d< real64 const > const & porosity ) const override final;
-
+  virtual void updateFromTemperature( arrayView1d< real64 const > const & temperature ) const override final;
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = SinglePhaseConstantThermalConductivityUpdate;
+  using KernelWrapper = SinglePhaseThermalConductivityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -91,12 +91,15 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_effectiveConductivity );
+    return KernelWrapper( m_effectiveConductivity,
+                          m_dEffectiveConductivity_dT );
   }
 
   struct viewKeyStruct : public SinglePhaseThermalConductivityBase::viewKeyStruct
   {
-    static constexpr char const * thermalConductivityComponentsString() { return "thermalConductivityComponents"; }
+    static constexpr char const * defaultThermalConductivityComponentsString() { return "defaultThermalConductivityComponents"; }
+    static constexpr char const * thermalConductivityGradientComponentsString() { return "thermalConductivityGradientComponents"; }
+    static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
   } viewKeys;
 
 protected:
@@ -105,8 +108,14 @@ protected:
 
 private:
 
-  /// default thermal conductivity in the subRegion
-  R1Tensor m_thermalConductivityComponents;
+  /// Default thermal conductivity components in the subRegion
+  R1Tensor m_defaultThermalConductivityComponents;
+
+  /// Thermal conductivity gradient components in the subRegion
+  R1Tensor m_thermalConductivityGradientComponents;
+
+  /// Reference temperature
+  real64 m_referenceTemperature;
 
 };
 
