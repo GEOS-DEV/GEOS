@@ -119,7 +119,10 @@ public:
                                 arraySlice1d< real64 const > const & deltaDispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 integer const fractureState,
-                                std::map< std::string const, real64 const > const & tolerance,
+                                real64 const normalTractionTolerance,
+                                real64 const normalDisplacementTolerance,
+                                real64 const slidingTolerance,
+                                real64 const slidingCheckTolerance,
                                 integer & condConv ) const override final;
 
 private:
@@ -477,7 +480,7 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
 {
 
   // TODO: Pass this tol as an argument or define a new class member
-  constexpr real64 zero = std::numeric_limits< real64 >::epsilon();
+  real64 const zero = std::numeric_limits< real64 >::epsilon();
 
   tractionNew[0] = traction[0] + penalty[0] * dispJump[0];
   tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1];
@@ -521,16 +524,14 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
                                                      arraySlice1d< real64 const > const & deltaDispJump,
                                                      arraySlice1d< real64 > const & tractionVector,
                                                      integer const fractureState,
-                                                     std::map< std::string const, real64 const > const & tolerance,
+                                                     real64 const normalTractionTolerance,
+                                                     real64 const normalDisplacementTolerance,
+                                                     real64 const slidingTolerance,
+                                                     real64 const slidingCheckTolerance,
                                                      integer & condConv ) const
 {
 
   using namespace fields::contact;
-
-  real64 const normalTractionTolerance = tolerance.at( "normalTraction" );
-  real64 const normalDisplacementTolerance = tolerance.at( "normalDisplacement" );
-  real64 const slidingTolerance = tolerance.at( "sliding" );
-  real64 const slidingCheckTolerance = tolerance.at( "slidingCheck" );
 
   // Compute the slip
   real64 const deltaDisp[2] = { deltaDispJump[1],

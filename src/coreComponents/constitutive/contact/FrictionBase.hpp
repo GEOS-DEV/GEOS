@@ -154,9 +154,16 @@ public:
                                 arraySlice1d< real64 const > const & deltaDispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 integer const fractureState,
-                                std::map< std::string const, real64 const > const & tolerance,
+                                real64 const normalTractionTolerance,
+                                real64 const normalDisplacementTolerance,
+                                real64 const slidingTolerance,
+                                real64 const slidingCheckTolerance,
                                 integer & condConv ) const
-  { GEOS_UNUSED_VAR( dispJump, deltaDispJump, tractionVector, fractureState, tolerance, condConv ); }
+  {
+    GEOS_UNUSED_VAR( dispJump, deltaDispJump, tractionVector, fractureState,
+                     normalTractionTolerance, normalDisplacementTolerance, slidingTolerance,
+                     slidingCheckTolerance, condConv );
+  }
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction

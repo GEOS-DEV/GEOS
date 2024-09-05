@@ -355,15 +355,14 @@ struct ConstraintCheckKernel
     {
       if( ghostRank[k] < 0 )
       {
-        std::map< std::string const, real64 const > const tolerance = {{"normalTraction", normalTractionTolerance[k]},
-          {"normalDisplacement", normalDisplacementTolerance[k]*area[k] },
-          {"sliding", slidingTolerance[k]*area[k] },
-          {"slidingCheck", slidingCheckTolerance }};
         contactWrapper.constraintCheck( dispJump[k],
                                         deltaDispJump[k],
                                         traction[k],
                                         fractureState[k],
-                                        tolerance,
+                                        normalTractionTolerance[k],
+                                        normalDisplacementTolerance[k]*area[k],
+                                        slidingTolerance[k]*area[k],
+                                        slidingCheckTolerance,
                                         condConv[k] );
       }
 
@@ -406,7 +405,7 @@ struct UpdateStateKernel
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
-      constexpr real64 zero = 1.e-10;
+      real64 const zero = std::numeric_limits< real64 >::epsilon();
 
       real64 localPenalty[3][3]  = {};
       real64 localTractionNew[3] = {};
