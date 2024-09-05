@@ -169,7 +169,7 @@ set( constitutive_headers
      thermalConductivity/MultiPhaseThermalConductivityFields.hpp
      thermalConductivity/MultiPhaseThermalConductivitySelector.hpp
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.hpp
-     thermalConductivity/SinglePhaseConstantThermalConductivity.hpp
+     thermalConductivity/SinglePhaseThermalConductivity.hpp
      thermalConductivity/SinglePhaseThermalConductivityBase.hpp
      thermalConductivity/SinglePhaseThermalConductivityFields.hpp
      thermalConductivity/SinglePhaseThermalConductivitySelector.hpp
@@ -285,7 +285,7 @@ set( constitutive_sources
      thermalConductivity/MultiPhaseConstantThermalConductivity.cpp
      thermalConductivity/MultiPhaseThermalConductivityBase.cpp
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp
-     thermalConductivity/SinglePhaseConstantThermalConductivity.cpp
+     thermalConductivity/SinglePhaseThermalConductivity.cpp
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 

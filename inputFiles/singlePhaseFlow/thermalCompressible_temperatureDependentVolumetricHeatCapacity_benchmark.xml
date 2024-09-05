@@ -9,7 +9,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ cb }"
-      materialList="{ fluid, rock_linear, thermalCond_linear }"/>
+      materialList="{ fluid, rock_temperatureDependentVolumetricHeatCapacity, thermalCond_linear }"/>
   </ElementRegions>
 
   <Mesh>

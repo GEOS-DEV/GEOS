@@ -9,7 +9,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ cb }"
-      materialList="{ fluid, rock_nonLinear, thermalCond }"/>
+      materialList="{ fluid, rock_temperatureDependentVolumetricHeatCapacity, thermalCond_linear }"/>
   </ElementRegions>
 
   <Mesh>
@@ -20,7 +20,7 @@
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
       nr="{ 3, 10, 50 }"
-      nt="{ 80 }"
+      nt="{ 8 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
@@ -30,10 +30,10 @@
   </Mesh>
 
   <Events
-    maxTime="1e5">
+    maxTime="3e3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e4"
+      timeFrequency="1e3"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
@@ -41,10 +41,10 @@
       maxEventDt="1e3"
       target="/Solvers/singleFlow"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e5"
-      target="/Outputs/restartOutput"/-->
+      timeFrequency="1e3"
+      target="/Outputs/restartOutput"/>
   </Events>
 
 </Problem>

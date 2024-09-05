@@ -58,15 +58,15 @@ The volumetric heat capacity of the medium around the wellbore is defined in the
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_SolidInternalEnergy -->
-  :end-before: <!-- SPHINX_SolidInternalEnergyEnd -->
+  :start-after: <!-- SPHINX_SolidInternalEnergy_linear -->
+  :end-before: <!-- SPHINX_SolidInternalEnergy_linearEnd -->
 
 The thermal conductivity of the medium around the wellbore is defined in the ``SinglePhaseConstantThermalConductivity`` XML block as  
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_SinglePhaseConstantThermalConductivity -->
-  :end-before: <!-- SPHINX_SinglePhaseConstantThermalConductivityEnd -->
+  :start-after: <!-- SPHINX_SinglePhaseThermalConductivity_linear -->
+  :end-before: <!-- SPHINX_SinglePhaseThermalConductivity_linearEnd -->
 
 The volumetric heat capacity of fluid is set to a negligible value to exclude thermal convection effect. It is defined in the ``ThermalCompressibleSinglePhaseFluid`` XML block as  
 
@@ -100,7 +100,7 @@ Results and benchmark
 A good agreement between the GEOS results and analytical results is shown in the figure below:
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/pureThermalDiffusion/pureThermalDiffusionAroundWellbore.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/linearThermalDiffusion/linearThermalDiffusion_plot.py
 
 
 ------------------------------------------------------------------
