@@ -167,9 +167,6 @@ public:
   std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
 
 
-  
-  //arrayView2d< string const > drainageWettingNonWettingRelPermTableNames() const { return m_drainageWettingNonWettingRelPermTableNames; }
-  array2d< string > m_drainageWettingNonWettingRelPermTableNames;
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step

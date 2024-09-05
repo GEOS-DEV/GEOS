@@ -107,6 +107,9 @@ private:
 
   arrayView1d< real64 const > m_volFracScale;
 
+
+  
+
 };
 
 class VanGenuchtenStone2RelativePermeability : public RelativePermeabilityBase
@@ -142,7 +145,14 @@ public:
 
 protected:
 
+  virtual void resizeFields( localIndex const size,
+                             localIndex const numPts ) override;
+
+
   virtual void postInputInitialization() override;
+
+
+  
 
   array2d< real64 > m_phaseMinVolumeFraction;
 
@@ -178,8 +188,10 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   real64 oilRelPerm_go = 0.0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_go_dOilVolFrac = 0.0; // derivative w.r.t to So
 
+  integer const numDir = 1;
+
   // this function assumes that the oil phase can always be present (i.e., ipOil > 0)
-  for( int dir=0; dir<3; ++dir )
+  for( int dir=0; dir<numDir; ++dir )
   {
     real64 const volFracScaleInv = 1.0 / m_volFracScale[dir];
     // 1) Water and oil phase relative permeabilities using water-oil data

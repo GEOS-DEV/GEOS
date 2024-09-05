@@ -491,7 +491,6 @@ private:
    */
   void computeLandCoefficient();
 
-//Seems like I need to change these
 
   // Table names
 

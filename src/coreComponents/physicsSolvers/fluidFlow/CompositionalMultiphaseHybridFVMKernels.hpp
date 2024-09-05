@@ -712,7 +712,9 @@ public:
     real64 dRelPerm_dC[numComp]{};
     real64 dVisc_dC[numComp]{};
 
-    for( int dir = 0; dir < 3; ++dir )
+    integer const numDir = dPhaseMob.size(2);
+
+    for( int dir = 0; dir < numDir; ++dir )
     {
 
       for( integer ip = 0; ip < numPhase; ++ip )

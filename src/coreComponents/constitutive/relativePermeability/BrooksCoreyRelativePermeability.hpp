@@ -109,6 +109,9 @@ public:
 
 protected:
 
+  virtual void resizeFields( localIndex const size,
+                             localIndex const numPts ) override;
+
   virtual void postInputInitialization() override;
 
 //START_SPHINX_INCLUDE_02
@@ -130,8 +133,9 @@ BrooksCoreyRelativePermeabilityUpdate::
 {
   LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
+  integer const numDir = 1;
 
-  for( int dir = 0; dir < 3; ++dir )
+  for( int dir = 0; dir < numDir; ++dir )
   {
     real64 const satScaleInv = 1.0 / m_volFracScale[dir];
 

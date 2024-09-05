@@ -145,6 +145,9 @@ private:
 
 private:
 
+  virtual void resizeFields( localIndex const size,
+                             localIndex const numPts ) override;
+
   virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
@@ -193,7 +196,7 @@ TableRelativePermeability::KernelWrapper::
                    arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   using TPT = TableRelativePermeability::TwoPhasePairPhaseType;
-  integer const numDir = 1;
+  integer const numDir = phaseRelPerm.size(1);
   
   for( int dir=0; dir<numDir; ++dir )
   {
@@ -222,7 +225,7 @@ TableRelativePermeability::KernelWrapper::
                      arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                      arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  integer const numDir = 1;
+  integer const numDir = phaseRelPerm.size(1);
   for( int dir=0; dir<numDir; ++dir )
   {
     real64 interRelPerm_wi = 0;     // oil rel perm using two-phase gas-oil data
@@ -313,7 +316,7 @@ TableRelativePermeability::KernelWrapper::
   integer const ipOil   = m_phaseOrder[PT::OIL];
   integer const ipGas   = m_phaseOrder[PT::GAS];
 
-  integer const numDir = 1;
+  integer const numDir = phaseRelPerm.size(1);
 
   if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
   {

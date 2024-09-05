@@ -89,7 +89,9 @@ public:
                             arraySlice1d< real64, relperm::USD_MOB - 2 > const & phaseMob,
                             arraySlice2d< real64, relperm::USD_MOB_DC - 2 > const & dPhaseMob ) {
 
-      for( int dir = 0; dir < 1; ++dir )
+      integer const numDir = dPhaseRelPerm_dPhaseVolFrac.size(2);
+
+      for( int dir = 0; dir < numDir; ++dir )
       {
 
         // Step 1: compute the derivative of relPerm[ip] wrt temperature

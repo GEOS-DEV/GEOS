@@ -660,6 +660,19 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
   m_phaseMinHistoricalVolFraction.resize( size, numPhases );
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
+
+
+  integer const numDir = m_drainageWettingNonWettingRelPermTableNames.size(0);
+
+
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+  //phase trapped for stats
+  m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  m_phaseTrappedVolFrac.zero();
+
+
 }
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const

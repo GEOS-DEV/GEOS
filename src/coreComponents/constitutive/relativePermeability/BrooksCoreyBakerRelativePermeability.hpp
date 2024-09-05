@@ -180,8 +180,9 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
   integer const ipOil = m_phaseOrder[PT::OIL];
   integer const ipGas = m_phaseOrder[PT::GAS];
 
+  integer const numDir = 1;
 
-  for( int dir = 0; dir < 3; ++dir )
+  for( int dir = 0; dir < numDir; ++dir )
   {
 
     real64 const volFracScaleInv = 1.0 / m_volFracScale[dir];

@@ -18,9 +18,6 @@
 
 #include "RelativePermeabilityBase.hpp"
 #include "RelativePermeabilityFields.hpp"
-#include "TableRelativePermeabilityHysteresis.hpp"
-#include "dataRepository/Group.hpp"
-//#include "dataRepository/Group.cpp"
 
 namespace geos
 {
@@ -37,27 +34,6 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
-
-
-
-/*   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "List of fluid phases" );    
- */
-
-/*   registerWrapper( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(), &zdrainageWettingNonWettingRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupOfGroupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "List of drainage relative permeability tables for the pair (wetting phase, non-wetting phase)\n" */
-/*                     "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
-                    "Note that this input is only used for two-phase flow.\n"
-                    "If you want to do a three-phase simulation, please use instead " +
-                    string( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString() ) +
-                    " and " +
-                    string( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString() ) +
-                    " to specify the table names" */ 
-
 
 
 
@@ -122,62 +98,19 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 {
 
 
-
-
-//integer numDir = zdrainageWettingNonWettingRelPermTableNames.size(0); // 1;
-  //auto const checkInputSize = [&]( auto const & array, auto const & attribute )
-  integer const numDir = 3; // checkInputSize( m_drainageWettingNonWettingRelPermTableNames, viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() );
-  //groupOfGroupNameRefArray    ( std::string const & name, dataRepository::Group * const parent  )
-/*   auto const rowSize = [&]( auto const & array, dataRepository::Group * const parent  )
-  {
-    
-    std::cout << "Size of arr: " << parent << std::endl;
-    //return array.size();
-
-      static std::string catalogName()
-  { return "TableRelativePermeabilityHysteresis"; }
-
-      virtual string getCatalogName() const override
-  { return catalogName(); }
-  }; */
-  //rowSize(  viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(), &m_drainageWettingNonWettingRelPermTableNames );
-
- //std::cout << "Size of arr: " << TableRelativePermeabilityHysteresis::viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString()<< std::endl;
-
-/*   
-  std::cout << "Size of mmmmm: " << numDir << std::endl;
-  //std::cout << "Size of ndt: " << numDirTest << std::endl;
-
-  auto const columnSize = [&](  std::string const & name,  dataRepository::Group * const parent )
-{
-   static std::string catalogName() { return "drainageWettingNonWettingRelPermTableNames"; }
-
-  virtual string getCatalogName() const override
-  { return catalogName(); }; 
-}; */
-
-//auto const rowSize = [&]( std::string const & name){
-//   std::cout << "fun size: " << dumpInputOptions() << std::endl;
-//                                        return name.size();
-//getCatalogName();
-
-                                       
-
-//owSize(TableRelativePermeabilityHysteresis::viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString());
-
-//geos::xmlWrapper::xmlDocument;
-std::cout << "sd size: " << geos::xmlWrapper::xmlDocument<< std::endl;
-
-
-
+  integer const numDir = m_phaseRelPerm.size(3);
   integer const numPhases = numFluidPhases();
 
-  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
-  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
-  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+
+  //m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  //m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  //m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
   //phase trapped for stats
   m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
   m_phaseTrappedVolFrac.zero();
+
+  std::cout << "D: " << m_phaseRelPerm.size(3) << std::endl;
+
 }
 
 void RelativePermeabilityBase::setLabels()

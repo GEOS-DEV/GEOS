@@ -65,10 +65,36 @@ BrooksCoreyStone2RelativePermeability::BrooksCoreyStone2RelativePermeability( st
 
 }
 
+
+
+void BrooksCoreyStone2RelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
+{
+  RelativePermeabilityBase::resizeFields( size, numPts );
+
+  integer const numPhases = numFluidPhases();
+  integer const numDir = m_waterOilRelPermExponent.size(0);
+
+
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+  //phase trapped for stats
+  m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  m_phaseTrappedVolFrac.zero();
+
+
+}
+
+
+
+
 void BrooksCoreyStone2RelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
-  m_volFracScale.resize( 3 /*ndims*/ );
+
+  integer const numDir = 3;
+
+  m_volFracScale.resize( numDir /*ndims*/ );
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
@@ -99,7 +125,7 @@ void BrooksCoreyStone2RelativePermeability::postInputInitialization()
     auto const errorMsg = [&]( auto const & attribute ) {
       return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
     };
-    for( int dir=0; dir<3; ++dir )
+    for( int dir=0; dir<numDir; ++dir )
     {
       checkInputSize( m_phaseMinVolumeFraction[dir], numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString() );
       m_volFracScale[dir] = 1.0;
@@ -116,7 +142,7 @@ void BrooksCoreyStone2RelativePermeability::postInputInitialization()
   }
 
 
-  for( int dir=0; dir<3; ++dir )
+  for( int dir=0; dir<numDir; ++dir )
   {
     GEOS_THROW_IF_LT_MSG( m_volFracScale[dir], 0.0,
                           GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName()),

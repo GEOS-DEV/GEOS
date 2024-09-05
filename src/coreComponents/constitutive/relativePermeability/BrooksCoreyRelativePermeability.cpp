@@ -57,10 +57,33 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
 
 }
 
+void BrooksCoreyRelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
+{
+  RelativePermeabilityBase::resizeFields( size, numPts );
+
+  integer const numPhases = numFluidPhases();
+
+
+
+  integer const numDir = m_phaseRelPermExponent.size(0);
+
+
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+  //phase trapped for stats
+  m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  m_phaseTrappedVolFrac.zero();
+
+
+}
+
 void BrooksCoreyRelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
-  m_volFracScale.resize( 3 /*ndims*/ );
+
+  integer const numDir = m_phaseRelPermExponent.size(0);
+  m_volFracScale.resize( numDir /*ndims*/ );
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute ) {
     GEOS_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
@@ -69,7 +92,7 @@ void BrooksCoreyRelativePermeability::postInputInitialization()
                           InputError );
   };
 
-  for( int dir = 0; dir < 3; ++dir )
+  for( int dir = 0; dir < numDir; ++dir )
   {
     checkInputSize( m_phaseMinVolumeFraction[dir], viewKeyStruct::phaseMinVolumeFractionString());
     m_volFracScale[dir] = 1.0;
@@ -91,7 +114,7 @@ void BrooksCoreyRelativePermeability::postInputInitialization()
     }
   }
 
-  for( int dir = 0; dir < 3; ++dir )
+  for( int dir = 0; dir < numDir; ++dir )
   {
 
     checkInputSize( m_phaseRelPermExponent[dir], viewKeyStruct::phaseRelPermExponentString());

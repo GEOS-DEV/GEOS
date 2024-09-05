@@ -68,7 +68,10 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( stri
 void BrooksCoreyBakerRelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
-  m_volFracScale.resize( 3 /*ndims*/ );
+
+  integer const numDir = 1;
+
+  m_volFracScale.resize( numDir /*ndims*/ );
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName()),
@@ -91,7 +94,7 @@ void BrooksCoreyBakerRelativePermeability::postInputInitialization()
       return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
     };
 
-    for( int dir = 0; dir < 3; ++dir )
+    for( int dir = 0; dir < numDir; ++dir )
     {
 
       checkInputSize( m_phaseMinVolumeFraction[dir], numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString());
@@ -108,7 +111,7 @@ void BrooksCoreyBakerRelativePermeability::postInputInitialization()
   }
 
 
-  for( int dir = 0; dir < 3; ++dir )
+  for( int dir = 0; dir < numDir; ++dir )
   {
     GEOS_THROW_IF_LT_MSG( m_volFracScale[dir], 0.0,
                           GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName()),

@@ -89,7 +89,7 @@ void TableRelativePermeability::postInputInitialization()
   RelativePermeabilityBase::postInputInitialization();
 
   integer const numPhases = m_phaseNames.size();
-  integer const numDir = 1;
+  integer const numDir = m_wettingNonWettingRelPermTableNames.size(0);
   //reshape Name containers
 
 
@@ -149,11 +149,30 @@ void TableRelativePermeability::postInputInitialization()
   }
 }
 
+void TableRelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
+{
+  RelativePermeabilityBase::resizeFields( size, numPts );
+
+  integer const numPhases = numFluidPhases();
+  integer const numDir = m_wettingNonWettingRelPermTableNames.size(0);
+
+
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+  //phase trapped for stats
+  //m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  //m_phaseTrappedVolFrac.zero();
+
+
+}
+
+
 void TableRelativePermeability::initializePreSubGroups()
 {
   RelativePermeabilityBase::initializePreSubGroups();
   
-  integer const numDir = 1;
+  integer const numDir = m_wettingNonWettingRelPermTableNames.size(0);
 
   integer const numPhases = m_phaseNames.size();
   m_phaseMinVolumeFraction.resize( numDir, MAX_NUM_PHASES );
@@ -265,7 +284,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   integer const numPhases = m_phaseNames.size();
-  integer const numDir = 1;
+  integer const numDir = m_wettingNonWettingRelPermTableNames.size(0);
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
 
   m_relPermKernelWrappers.clear();

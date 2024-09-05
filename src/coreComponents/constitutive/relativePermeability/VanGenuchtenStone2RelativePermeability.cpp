@@ -67,10 +67,18 @@ VanGenuchtenStone2RelativePermeability::VanGenuchtenStone2RelativePermeability( 
 
 }
 
+
 void VanGenuchtenStone2RelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
-  m_volFracScale.resize( 3 /*ndims*/ );
+
+
+  integer const numDir = 1;
+  m_volFracScale.resize( numDir /*ndims*/ );
+
+  std::cout << "A: " << m_volFracScale << std::endl;
+  std::cout << "B: " << m_phaseMinVolumeFraction << std::endl;
+
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
@@ -94,10 +102,10 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
     checkInputSize( m_gasOilRelPermExponentInv, 2, viewKeyStruct::gasOilRelPermExponentInvString() );
     checkInputSize( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() );
   }
-
+  std::cout << "F: " << numFluidPhases() << std::endl;
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    for( int dir=0; dir<3; ++dir )
+    for( int dir=0; dir<numDir; ++dir )
     {
       m_volFracScale[dir] = 1.0;
       checkInputSize( m_phaseMinVolumeFraction[dir], numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString() );
@@ -115,7 +123,7 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
     }
   }
 
-  for( int dir=0; dir<3; ++dir )
+  for( int dir=0; dir<numDir; ++dir )
   {
     GEOS_THROW_IF_LT_MSG( m_volFracScale[dir], 0.0,
                           GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName()),
@@ -163,6 +171,27 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
 
 }
 
+
+void VanGenuchtenStone2RelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
+{
+  RelativePermeabilityBase::resizeFields( size, numPts );
+
+  integer const numPhases = numFluidPhases();
+
+  integer const numDir = 1;
+
+
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+  //phase trapped for stats
+  //m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  //m_phaseTrappedVolFrac.zero();
+
+  std::cout << "C: " << m_phaseRelPerm.size(3) << std::endl;
+}
+
+
 VanGenuchtenStone2RelativePermeability::KernelWrapper
 VanGenuchtenStone2RelativePermeability::createKernelWrapper()
 {
@@ -178,6 +207,8 @@ VanGenuchtenStone2RelativePermeability::createKernelWrapper()
                         m_dPhaseRelPerm_dPhaseVolFrac,
                         m_phaseTrappedVolFrac );
 }
+
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenStone2RelativePermeability, string const &, Group * const )
 }     // namespace constitutive

@@ -67,10 +67,17 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
 
 }
 
+
+
+
+
 void VanGenuchtenBakerRelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
-  m_volFracScale.resize( 3 /*ndims*/ );
+
+  integer const numDir = 1;
+
+  m_volFracScale.resize( numDir /*ndims*/ );
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
@@ -83,7 +90,7 @@ void VanGenuchtenBakerRelativePermeability::postInputInitialization()
                           InputError );
   };
 
-  for( int dir = 0; dir < 3; ++dir )
+  for( int dir = 0; dir < numDir; ++dir )
   {
     checkInputSize( m_phaseMinVolumeFraction[dir], numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString());
     m_volFracScale[dir] = 1.0;
@@ -106,7 +113,7 @@ void VanGenuchtenBakerRelativePermeability::postInputInitialization()
                           InputError );
   }
 
-  for( int dir = 0; dir < 3; ++dir )
+  for( int dir = 0; dir < numDir; ++dir )
   {
 
     for( integer ip = 0; ip < 2; ++ip )
@@ -163,6 +170,22 @@ void VanGenuchtenBakerRelativePermeability::postInputInitialization()
       m_waterOilRelPermMaxValue[dir][WaterOilPairPhaseType::OIL] = mean;
     }
   }
+
+}
+
+void VanGenuchtenBakerRelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
+{
+  RelativePermeabilityBase::resizeFields( size, numPts );
+
+  integer const numPhases = 3;
+  integer const numDir = 1;
+
+
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
+
+
 
 }
 
