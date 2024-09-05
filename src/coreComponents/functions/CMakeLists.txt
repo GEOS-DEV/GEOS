@@ -46,6 +46,8 @@ blt_add_library( NAME       functions
 
 target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS functions LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif()
