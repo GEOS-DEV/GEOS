@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -409,7 +409,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
             // to the nodes of the adjacent cell
             localIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
 
-            if( rowIndex > 0 && rowIndex < pattern.numRows() )
+            if( rowIndex >= 0 && rowIndex < pattern.numRows() )
             {
 
               // Get fracture, face and region/subregion/element indices (for elements on both sides)
@@ -655,7 +655,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
-        if( localRow > 0 && localRow < localMatrix.numRows() )
+        if( localRow >= 0 && localRow < localMatrix.numRows() )
         {
 
           localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
@@ -711,7 +711,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
-          if( localRow > 0 && localRow < localMatrix.numRows() )
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
             localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
                                                                       nodeDOF,
