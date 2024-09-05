@@ -20,7 +20,7 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_PHASEMODEL_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_PHASEMODEL_HPP_
 
-#include "functions/PVTFunctionBase.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geos
 {

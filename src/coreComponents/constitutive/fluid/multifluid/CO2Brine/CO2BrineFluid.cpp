@@ -21,6 +21,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "common/Units.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geos
 {
