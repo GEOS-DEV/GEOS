@@ -1,5 +1,5 @@
 
-cmake_minimum_required( VERSION 3.23 )
+cmake_minimum_required( VERSION 3.26 )
 
 # At the moment we are manually passing the cuda arch flag.
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.23.0")
