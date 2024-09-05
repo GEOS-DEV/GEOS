@@ -191,13 +191,13 @@ Simulations such as this will play a critical role in predicting the viability o
 ![Real world CO~2~ storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO~2~ injection. The CO~2~ plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
 
 As an example of the weak scalability of GEOS on an exascale class system, we present two weak scaling studies on a simple wellbore geometry run on the Frontier supercomputer at Oak Ridge National Laboratory.
-Frontier is comprised of 9,472 Cray EX235a nodes that each contain a single AMD EPYC 7A53 CPU and four AMD MI250X GPU's [@frontier].
+Frontier is comprised of 9,472 Cray EX235a nodes that each contain a single AMD EPYC 7A53 CPU and four AMD MI250X GPUs [@frontier].
 Note that each MI250X is comprised of two Graphics Compute Dies (GCD), with each GCD appearing as a GPU to the operating system. 
 A more detailed discussion and instructions to reproduce the results are available in the [Performance Benchmarks](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/advancedExamples/performanceBenchmarks/Index.html) of the GEOS documentation.
 
-The weak scaling results for mechanics are presented in (Figure \ref{fig:Frontier_scaling}a) and shows nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 GPU's($81.3 \times 10^{9}$ degrees-of-freedom).
+The weak scaling results for mechanics are presented in (Figure \ref{fig:Frontier_scaling}a) and shows nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 GPUs ($81.3 \times 10^{9}$ degrees-of-freedom).
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms, this level of scaling efficiency is excellent.
-The weak scaling results of compositional flow are presented in Figure \ref{fig:Frontier_scaling}b shows excellent scaling up to 2,048 GPU's. 
+The weak scaling results of compositional flow are presented in Figure \ref{fig:Frontier_scaling}b shows excellent scaling up to 2,048 GPUs. 
 
 ![Weak scaling results on ORNL/Frontier: average execution time per newton iteration vs number of GPUs for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](nearwell_scaling_frontier.pdf){ width=100% }
 
