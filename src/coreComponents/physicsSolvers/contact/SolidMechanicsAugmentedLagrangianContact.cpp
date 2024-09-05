@@ -573,7 +573,10 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [ elemsToFaces, localRhs, localSum, bubbleDofNumber, rankOffset, ghostRank] GEOS_HOST_DEVICE ( localIndex const kfe )
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [ elemsToFaces, localRhs, localSum,
+                                        bubbleDofNumber, rankOffset, ghostRank]
+                                      GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
       if( ghostRank[kfe] < 0 )
@@ -934,21 +937,12 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
-        arrayView2d< real64 > const traction_new_v = traction_new.toView();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
 
         arrayView1d< real64 const > const normalTractionTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
 
-        arrayView1d< real64 const > const normalDisplacementTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
-
-        arrayView1d< real64 const > const slidingTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
-
         arrayView2d< real64 > const penalty = subRegion.getField< fields::contact::penalty >().toView();
-
-        arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
         arrayView2d< real64 > const dispJumpUpdPenalty =
           subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() );
