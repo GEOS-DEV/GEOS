@@ -216,16 +216,8 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1">
-				<xsd:unique name="FunctionsCompositeFunctionUniqueName">
-					<xsd:selector xpath="CompositeFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="FunctionsMultivariableTableFunctionUniqueName">
 					<xsd:selector xpath="MultivariableTableFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="FunctionsSymbolicFunctionUniqueName">
-					<xsd:selector xpath="SymbolicFunction" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="FunctionsTableFunctionUniqueName">
@@ -1322,37 +1314,13 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType">
-		<!--expression => Composite math expression-->
-		<xsd:attribute name="expression" type="string" default="" />
-		<!--functionNames => List of source functions. The order must match the variableNames argument.-->
-		<xsd:attribute name="functionNames" type="string_array" default="{}" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--variableNames => List of variables in expression-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SymbolicFunctionType">
-		<!--expression => Symbolic math expression-->
-		<xsd:attribute name="expression" type="string" use="required" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2657,7 +2625,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density between two Newton iterations-->
-		<xsd:attribute name="maxRelativeCompDensChange" type="real64" default="1.79769e+308" />
+		<xsd:attribute name="maxRelativeCompDensChange" type="real64" default="1.79769e+208" />
 		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)-->
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->

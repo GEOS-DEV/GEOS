@@ -171,13 +171,6 @@ Element: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO.rst
 
 
-.. _XML_CompositeFunction:
-
-Element: CompositeFunction
-==========================
-.. include:: ../../coreComponents/schema/docs/CompositeFunction.rst
-
-
 .. _XML_CompositionalMultiphaseFVM:
 
 Element: CompositionalMultiphaseFVM
@@ -1291,13 +1284,6 @@ Element: SurfaceGenerator
 .. include:: ../../coreComponents/schema/docs/SurfaceGenerator.rst
 
 
-.. _XML_SymbolicFunction:
-
-Element: SymbolicFunction
-=========================
-.. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
-
-
 .. _XML_TableCapillaryPressure:
 
 Element: TableCapillaryPressure
@@ -1643,13 +1629,6 @@ Datastructure: CeramicDamage
 Datastructure: ChomboIO
 =======================
 .. include:: ../../coreComponents/schema/docs/ChomboIO_other.rst
-
-
-.. _DATASTRUCTURE_CompositeFunction:
-
-Datastructure: CompositeFunction
-================================
-.. include:: ../../coreComponents/schema/docs/CompositeFunction_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseFVM:
@@ -2791,13 +2770,6 @@ Datastructure: SurfaceElementRegion
 Datastructure: SurfaceGenerator
 ===============================
 .. include:: ../../coreComponents/schema/docs/SurfaceGenerator_other.rst
-
-
-.. _DATASTRUCTURE_SymbolicFunction:
-
-Datastructure: SymbolicFunction
-===============================
-.. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
 
 
 .. _DATASTRUCTURE_TableCapillaryPressure:
