@@ -166,8 +166,6 @@ FenghourCO2Viscosity::createKernelWrapper() const
                         *m_CO2ViscosityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::OutputOptions const )
-
 } // end namespace PVTProps
 
 } // namespace constitutive

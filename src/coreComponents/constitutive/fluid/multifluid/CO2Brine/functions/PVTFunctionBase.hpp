@@ -21,7 +21,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
-#include "functions/TableFunction.hpp"
 
 namespace geos
 {
@@ -114,17 +113,6 @@ public:
 
   virtual ~PVTFunctionBase() = default;
 
-  using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase,
-                                                             string const &,
-                                                             array1d< string > const &,
-                                                             array1d< string > const &,
-                                                             array1d< real64 > const &,
-                                                             TableFunction::OutputOptions const >;
-  static typename CatalogInterface::CatalogType & getCatalog()
-  {
-    static CatalogInterface::CatalogType catalog;
-    return catalog;
-  }
 
   virtual string getCatalogName() const = 0;
 

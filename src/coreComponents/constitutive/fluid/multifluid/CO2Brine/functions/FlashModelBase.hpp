@@ -21,7 +21,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_FLASHMODELBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
-#include "functions/TableFunction.hpp"
 
 namespace geos
 {
@@ -78,18 +77,6 @@ public:
   {}
 
   virtual ~FlashModelBase() = default;
-
-  using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase,
-                                                             string const &,
-                                                             string_array const &,
-                                                             string_array const &,
-                                                             string_array const &,
-                                                             array1d< real64 > const & >;
-  static typename CatalogInterface::CatalogType & getCatalog()
-  {
-    static CatalogInterface::CatalogType catalog;
-    return catalog;
-  }
 
   virtual string getCatalogName() const = 0;
 

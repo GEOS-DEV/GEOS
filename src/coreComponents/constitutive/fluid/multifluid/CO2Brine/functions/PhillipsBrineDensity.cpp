@@ -209,8 +209,6 @@ void PhillipsBrineDensity::checkTablesParameters( real64 const pressure,
   m_brineDensityTable->checkCoord( temperature, 1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::OutputOptions const )
-
 } // namespace PVTProps
 
 } // namespace constitutive

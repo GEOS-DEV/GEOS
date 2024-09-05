@@ -307,8 +307,6 @@ SpanWagnerCO2Density::createKernelWrapper() const
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::OutputOptions const )
-
 } // namespace PVTProps
 
 } // namespace constitutive

@@ -101,8 +101,6 @@ EzrokhiBrineDensity::createKernelWrapper() const
                         m_coef2 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::OutputOptions const )
-
 } // end namespace PVTProps
 
 } // namespace constitutive

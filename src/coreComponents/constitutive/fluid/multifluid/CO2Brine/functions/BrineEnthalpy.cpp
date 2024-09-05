@@ -232,8 +232,6 @@ BrineEnthalpy::createKernelWrapper() const
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineEnthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::OutputOptions const )
-
 } // namespace PVTProps
 
 } // namespace constitutive

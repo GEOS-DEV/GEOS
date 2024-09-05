@@ -62,8 +62,6 @@ WaterDensity::createKernelWrapper() const
                         *m_waterDensityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::OutputOptions const )
-
 } // namespace PVTProps
 
 } // namespace constitutive

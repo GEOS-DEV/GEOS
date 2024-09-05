@@ -92,8 +92,6 @@ PhillipsBrineViscosity::createKernelWrapper() const
                         m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, TableFunction::OutputOptions const )
-
 } // end namespace PVTProps
 
 } // namespace constitutive
