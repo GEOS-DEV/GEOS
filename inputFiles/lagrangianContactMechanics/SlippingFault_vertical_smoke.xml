@@ -3,19 +3,19 @@
 <Problem>
 
   <Included>
-    <File name="./ALM_stickFault_base.xml"/>
+    <File name="./SlippingFault_base.xml"/>
   </Included>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -100, 0, 100 }"
+      xCoords="{ -25, 0, 25 }"
       yCoords="{ -100, 100 }"
-      zCoords="{  0, 200 }"
-      nx="{ 8, 8 }"
-      ny="{ 16 }"
-      nz="{ 16 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 5, 5 }"
+      ny="{ 40 }"
+      nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -26,7 +26,7 @@
       origin="{0.0, 0.0, 0.0}"
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 500, 200 }"/>
+      dimensions="{ 180, 10 }"/>
 
     <Rectangle
       name="core"
@@ -34,7 +34,7 @@
       origin="{0.0, 0.0, 0.0}"
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 180, 100 }"/>
+      dimensions="{ 180, 10 }"/>
     
   </Geometry>
 
@@ -56,14 +56,6 @@
       scale="1"/>
 
     <FieldSpecification
-      name="xconstraint"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="0"
-      scale="0.0"
-      setNames="{ xneg, xpos }"/>
-
-    <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
@@ -72,39 +64,46 @@
       setNames="{ xneg }"/>
 
     <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ yneg, ypos, xneg, xpos }"/>
+
+    <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ xneg }"/>
+      setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
-      name="xnormal"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
+    <FieldSpecification 
+      name="Sigmax"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
       component="0"
-      scale="-0.00001"
-      setNames="{ xpos }"
-      functionName="dispFunction"/>
+      scale="-4.25e6"/>
 
     <FieldSpecification
-      name="ytan"
+      name="shearLoad"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="1"
-      scale="-0.00001"
+      scale="0.01"
       setNames="{ xpos }"
       functionName="dispFunction"/>
-
   </FieldSpecifications>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="faultStick_vertical"/>
+      plotFileRoot="faultSlip_vertical"/>
 
     <Restart
-      name="restartOutput"/>
-  </Outputs>
+      name="restartOutput"/>      
+    </Outputs>
 </Problem>

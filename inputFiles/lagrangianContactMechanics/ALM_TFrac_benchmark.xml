@@ -7,35 +7,26 @@
 
   <Solvers
     gravityVector="{0.0, 0.0, 0.0}">
-   <!-- SPHINX_SOLVER -->
-   <SolidMechanicsLagrangeContact
-   name="lagrangiancontact"
-   timeIntegrationOption="QuasiStatic"
-   stabilizationName="TPFAstabilization"
-   logLevel="1"
-   discretization="FE1"
-   targetRegions="{ Region, Fracture }">
-   <NonlinearSolverParameters
-     newtonTol="1.0e-8"
-     logLevel="2"
-     maxNumConfigurationAttempts="10"
-     newtonMaxIter="10"
-     lineSearchAction="Require"
-     lineSearchMaxCuts="2"
-     maxTimeStepCuts="2"/>
-   <LinearSolverParameters
-     solverType="direct"
-     directParallel="0"
-     logLevel="0"/>
- </SolidMechanicsLagrangeContact>
-</Solvers>
-
-  <NumericalMethods>
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="TPFAstabilization"/>
-    </FiniteVolume>
-  </NumericalMethods>
+    <SolidMechanicsAugmentedLagrangianContact
+      name="AugmentedLagrangian"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="2"
+      discretization="FE1"
+      targetRegions="{ Region, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        logLevel="2"
+        newtonMaxIter="10"
+        maxNumConfigurationAttempts="20"
+        lineSearchAction="Require"
+        lineSearchMaxCuts="2"
+        maxTimeStepCuts="2"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+  </Solvers>
 
   <Events
     maxTime="0.2">
@@ -48,7 +39,7 @@
       beginTime="0.0"
       endTime="0.2"
       forceDt="0.2"
-      target="/Solvers/lagrangiancontact"/>  
+      target="/Solvers/AugmentedLagrangian"/>
 
     <PeriodicEvent
       name="outputs"

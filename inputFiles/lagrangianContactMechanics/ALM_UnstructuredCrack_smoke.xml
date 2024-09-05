@@ -7,32 +7,27 @@
   </Included>
 
   <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanicsLagrangeContact
-      name="lagrangiancontact"
+    gravityVector="{0.0, 0.0, 0.0}">
+    <SolidMechanicsAugmentedLagrangianContact
+      name="AugmentedLagrangian"
       timeIntegrationOption="QuasiStatic"
-      stabilizationName="TPFAstabilization"
-      logLevel="1"
+      logLevel="2"
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
+        maxNumConfigurationAttempts="20"
         lineSearchAction="Require"
-        lineSearchMaxCuts="2"/>
+        lineSearchMaxCuts="2"
+        maxTimeStepCuts="2"/>
       <LinearSolverParameters
-        directParallel="0"/>
-    </SolidMechanicsLagrangeContact>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsAugmentedLagrangianContact>
   </Solvers>
-
-  <NumericalMethods>
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="TPFAstabilization"/>
-    </FiniteVolume>
-  </NumericalMethods>
-
 
   <Events
     maxTime="2.0">
@@ -45,7 +40,7 @@
       beginTime="0.0"
       endTime="2.0"
       forceDt="1.0"
-      target="/Solvers/lagrangiancontact"/>
+      target="/Solvers/AugmentedLagrangian"/>
 
     <PeriodicEvent
       name="restarts"
@@ -58,7 +53,6 @@
       timeFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
-
   </Events>
 
 </Problem>

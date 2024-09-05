@@ -3,39 +3,31 @@
 <Problem>
   <Included>
     <File
-      name="./UnstructuredCrack_smoke.xml"/>
+      name="./SimpleCubes_smoke.xml"/>
   </Included>
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanicsLagrangeContact
-      name="lagrangiancontact"
+    <SolidMechanicsAugmentedLagrangianContact
+      name="AugmentedLagrangian"
+      logLevel="2"
       timeIntegrationOption="QuasiStatic"
-      stabilizationName="TPFAstabilization"
-      logLevel="1"
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e-6"
         logLevel="2"
+        maxNumConfigurationAttempts="25"
         newtonMaxIter="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SolidMechanicsLagrangeContact>
+    </SolidMechanicsAugmentedLagrangianContact>
   </Solvers>
 
-  <NumericalMethods>
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="TPFAstabilization"/>
-    </FiniteVolume>
-  </NumericalMethods>
-
-
   <Events
-    maxTime="2.0">
+    maxTime="10.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -43,13 +35,12 @@
     <PeriodicEvent
       name="solverApplications"
       beginTime="0.0"
-      endTime="2.0"
       forceDt="1.0"
-      target="/Solvers/lagrangiancontact"/>
+      target="/Solvers/AugmentedLagrangian"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1.0"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
 
@@ -58,7 +49,6 @@
       timeFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
-
   </Events>
 
 </Problem>

@@ -1,13 +1,14 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+ <Included>
     <File
-      name="./UnstructuredCrack_smoke.xml"/>
+      name="./Sneddon_benchmark.xml"/>
   </Included>
 
   <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
+    gravityVector="{0.0, 0.0, 0.0}">
+  <!-- SPHINX_SNEDDON_SOLVER -->
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
       timeIntegrationOption="QuasiStatic"
@@ -19,12 +20,17 @@
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"
         lineSearchAction="Require"
-        lineSearchMaxCuts="2"/>
+        lineSearchMaxCuts="2"
+        maxTimeStepCuts="2"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SolidMechanicsLagrangeContact>
   </Solvers>
+  <!-- SPHINX_SNEDDON_SOLVER_END -->
 
   <NumericalMethods>
     <FiniteVolume>
@@ -33,9 +39,9 @@
     </FiniteVolume>
   </NumericalMethods>
 
-
+  <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
-    maxTime="2.0">
+    maxTime="1.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -43,22 +49,32 @@
     <PeriodicEvent
       name="solverApplications"
       beginTime="0.0"
-      endTime="2.0"
       forceDt="1.0"
       target="/Solvers/lagrangiancontact"/>
-
+      
     <PeriodicEvent
       name="restarts"
       timeFrequency="1.0"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/>      
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1"
+      timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
-  </Events>
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Tasks/displacementJumpCollection" />
 
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
+        
+  </Events> 
+  <!-- SPHINX_SNEDDON_EVENTS_END -->
 </Problem>
