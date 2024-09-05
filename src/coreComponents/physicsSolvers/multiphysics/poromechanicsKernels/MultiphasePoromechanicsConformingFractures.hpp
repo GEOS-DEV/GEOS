@@ -445,6 +445,11 @@ public:
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
+      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
+          isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
+        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::C1PPU );
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
+        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::IHU );
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
