@@ -1,5 +1,5 @@
 ---
-title: 'GEOS-2024: A portable multi-physics simulation framework'
+title: 'GEOS: A performance portable multi-physics simulation framework for subsurface applications'
 tags:
   - reservoir simulations
   - computational mechanics
@@ -174,7 +174,7 @@ Currently, in GEOS only the hypre interface is actively maintained.
 For every multi-physics problem involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypre as presented by [@BUI:2020;@BUI:2021114111].
 
 The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA [@Beckingsale:2019], CHAI [@CHAI:2023], and Umpire [@Beckingsale:2020].
-The RAJA performance portability layer provides portable kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
+The RAJA performance portability layer provides performance portable [@PerformancePortablityOrg] kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
 The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e., host and device memory).
 Through this strategy, GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with near-optimal of performance.
 
