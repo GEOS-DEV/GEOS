@@ -134,8 +134,8 @@ DECLARE_FIELD( fractureState,
                "fractureState",
                array1d< integer >,
                FractureState::Stick,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Fracture state." );
 
 DECLARE_FIELD( oldFractureState,
