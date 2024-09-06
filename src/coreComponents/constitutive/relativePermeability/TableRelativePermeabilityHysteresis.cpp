@@ -89,17 +89,17 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   registerWrapper( viewKeyStruct::jerauldParameterAString(), &m_jerauldParam_a ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 0.1 ).
+    setApplyDefaultValue( 0.1 ).
     setDescription( "First parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation)." );
 
   registerWrapper( viewKeyStruct::jerauldParameterBString(), &m_jerauldParam_b ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 0.0 ).
+    setApplyDefaultValue( 0.0 ).
     setDescription( "Second parameter introduced by Jerauld in the Land trapping model (see RTD documentation)." );
 
   registerWrapper( viewKeyStruct::killoughCurvatureParameterString(), &m_killoughCurvatureParam ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 1.0 ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation)." );
 
   // internal class data
@@ -249,25 +249,24 @@ for (int dir=0; dir<numDir; ++dir) {
                             viewKeyStruct::imbibitionWettingRelPermTableNameString(),
                             viewKeyStruct::imbibitionNonWettingRelPermTableNameString() ),
                   InputError );
-    {
-    GEOS_THROW_IF( m_jerauldParam_a[dir] < 0,
+
+    GEOS_THROW_IF( m_jerauldParam_a < 0,
                   GEOS_FMT( "{}: the parameter {} must be positive",
                             getFullName(),
                             viewKeyStruct::jerauldParameterAString() ),
                   InputError );
 
-    GEOS_THROW_IF( m_jerauldParam_b[dir] < 0,
+    GEOS_THROW_IF( m_jerauldParam_b < 0,
                   GEOS_FMT( "{}: the paramater {} must be postitive",
                             getFullName(),
                             viewKeyStruct::jerauldParameterBString() ),
                   InputError );
 
-    GEOS_THROW_IF( m_killoughCurvatureParam[dir] < 0,
+    GEOS_THROW_IF( m_killoughCurvatureParam < 0,
                   GEOS_FMT( "{}: the paramater {} must be postitive",
                             getFullName(),
                             viewKeyStruct::killoughCurvatureParameterString() ),
-                  InputError ); 
-    }
+                  InputError );
   }
 
 }
@@ -699,9 +698,9 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
 TableRelativePermeabilityHysteresis::KernelWrapper::
   KernelWrapper( arrayView2d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
                  arrayView2d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
-                 arrayView1d< real64 const > const & jerauldParam_a,
-                 arrayView1d< real64 const > const & jerauldParam_b,
-                 arrayView1d< real64 const > const & killoughCurvatureParam,
+                 real64 const & jerauldParam_a,
+                 real64 const & jerauldParam_b,
+                 real64 const & killoughCurvatureParam,
                  arrayView1d< integer const > const & phaseHasHysteresis,
                  arrayView1d< real64 const > const & landParam,
                  arrayView2d< real64 const > const & drainagePhaseMinVolFraction,
