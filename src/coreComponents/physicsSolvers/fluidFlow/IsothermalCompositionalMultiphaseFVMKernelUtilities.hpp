@@ -56,6 +56,7 @@ struct PotGrad
             real64 const ( &dTrans_dPres )[numFluxSupportPoints],
             ElementViewConst< arrayView1d< real64 const > > const & pres,
             ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
             ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
             ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
             ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
@@ -125,10 +126,13 @@ struct PotGrad
       denom++;
     }
     densMean /= denom;
-    dDensMean_dP[i] /= denom;
-    for( integer jc = 0; jc < numComp; ++jc )
+    for( integer i = 0; i < numFluxSupportPoints; ++i )
     {
-      dDensMean_dC[i][jc] /= denom;
+      dDensMean_dP[i] /= denom;
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dDensMean_dC[i][jc] /= denom;
+      }
     }
 
     /// compute the TPFA potential difference
@@ -330,6 +334,7 @@ struct PPUPhaseFlux
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
            ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
@@ -352,7 +357,7 @@ struct PPUPhaseFlux
     real64 dGravHead_dP[numFluxSupportPoints]{};
     real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
     PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
-                                                       gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
+                                                       gravCoef, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
                                                        phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
                                                        dPresGrad_dC, dGravHead_dP, dGravHead_dC );
 
@@ -444,6 +449,7 @@ struct C1PPUPhaseFlux
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
            ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
@@ -466,7 +472,7 @@ struct C1PPUPhaseFlux
     real64 dGravHead_dP[numFluxSupportPoints]{};
     real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
     PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
-                                                       gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
+                                                       gravCoef, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
                                                        phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
                                                        dPresGrad_dC, dGravHead_dP, dGravHead_dC );
 
@@ -674,6 +680,7 @@ upwindMobilityGravity( localIndex const numPhase,
                        ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                        ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
                        ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
                        ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                        ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                        ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
@@ -708,6 +715,7 @@ upwindMobilityGravity( localIndex const numPhase,
                                                                                       dCompFrac_dCompDens,
                                                                                       phaseMassDens,
                                                                                       dPhaseMassDens,
+                                                                                      phaseVolFrac,
                                                                                       dPhaseVolFrac,
                                                                                       phaseCapPressure,
                                                                                       dPhaseCapPressure_dPhaseVolFrac,
@@ -938,6 +946,7 @@ computeFractionalFlowGravity( localIndex const numPhase,
                               ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                               ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                               ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
@@ -987,6 +996,7 @@ computeFractionalFlowGravity( localIndex const numPhase,
                                                                   dPhaseMassDens,
                                                                   phaseMob,
                                                                   dPhaseMob,
+                                                                  phaseVolFrac,
                                                                   dPhaseVolFrac,
                                                                   phaseCapPressure,
                                                                   dPhaseCapPressure_dPhaseVolFrac,
@@ -1206,6 +1216,7 @@ struct computePotentialGravity
                        ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                        ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
                        ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
                        ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const &
                        GEOS_UNUSED_PARAM( dPhaseVolFrac ),
                        ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const &
@@ -1268,10 +1279,13 @@ struct computePotentialGravity
       denom++;
     }
     densMean /= denom;
-    dDensMean_dP[i] /= denom;
-    for( integer jc = 0; jc < numComp; ++jc )
+    for( localIndex i = 0; i < numFluxSupportPoints; ++i )
     {
-      dDensMean_dC[i][jc] /= denom;
+      dDensMean_dPres[i] /= denom;
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dDensMean_dComp[i][jc] /= denom;
+      }
     }
 
     // compute potential difference MPFA-style
@@ -1384,6 +1398,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
                                            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+                                           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
                                            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                                            ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
@@ -1420,6 +1435,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                     dCompFrac_dCompDens,
                                                                                     phaseMassDens,
                                                                                     dPhaseMassDens,
+                                                                                    phaseVolFrac,
                                                                                     dPhaseVolFrac,
                                                                                     phaseCapPressure,
                                                                                     dPhaseCapPressure_dPhaseVolFrac,
@@ -1449,6 +1465,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                         dPhaseMassDens,
                                                                                         phaseMob,
                                                                                         dPhaseMob,
+                                                                                        phaseVolFrac,
                                                                                         dPhaseVolFrac,
                                                                                         phaseCapPressure,
                                                                                         dPhaseCapPressure_dPhaseVolFrac,
@@ -1482,6 +1499,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                         dCompFrac_dCompDens,
                                                                                         phaseMassDens,
                                                                                         dPhaseMassDens,
+                                                                                        phaseVolFrac,
                                                                                         dPhaseVolFrac,
                                                                                         phaseCapPressure,
                                                                                         dPhaseCapPressure_dPhaseVolFrac,
@@ -1513,6 +1531,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                      dPhaseMassDens,
                                                                                      phaseMob,
                                                                                      dPhaseMob,
+                                                                                     phaseVolFrac,
                                                                                      dPhaseVolFrac,
                                                                                      phaseCapPressure,
                                                                                      dPhaseCapPressure_dPhaseVolFrac,
@@ -1842,6 +1861,7 @@ public:
                                   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                                   ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
                                   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+                                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
                                   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                   ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                   ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
@@ -1867,6 +1887,7 @@ public:
                                                                                dCompFrac_dCompDens,
                                                                                phaseMassDens,
                                                                                dPhaseMassDens,
+                                                                               phaseVolFrac,
                                                                                dPhaseVolFrac,
                                                                                phaseCapPressure,
                                                                                dPhaseCapPressure_dPhaseVolFrac,
@@ -2064,6 +2085,7 @@ public:
                                 ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                                 ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
                                 ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+                                ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
                                 ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                 ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                 ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
@@ -2097,6 +2119,7 @@ public:
         dCompFrac_dCompDens,
         phaseMassDens,
         dPhaseMassDens,
+        phaseVolFrac,
         dPhaseVolFrac,
         phaseCapPressure,
         dPhaseCapPressure_dPhaseVolFrac,
@@ -2222,6 +2245,7 @@ struct IHUPhaseFlux
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
            ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
@@ -2264,7 +2288,7 @@ struct IHUPhaseFlux
                              trans, dTrans_dPres,
                              pres, gravCoef,
                              phaseMob, dPhaseMob,
-                             dPhaseVolFrac,
+                             phaseVolFrac, dPhaseVolFrac,
                              phaseCompFrac, dPhaseCompFrac,
                              dCompFrac_dCompDens,
                              phaseMassDens, dPhaseMassDens,
@@ -2407,6 +2431,7 @@ struct IHUPhaseFlux
       gravCoef,
       phaseMob,
       dPhaseMob,
+      phaseVolFrac,
       dPhaseVolFrac,
       dCompFrac_dCompDens,
       phaseMassDens,
