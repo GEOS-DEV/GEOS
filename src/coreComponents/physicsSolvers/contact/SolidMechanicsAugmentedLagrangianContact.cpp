@@ -574,8 +574,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [ elemsToFaces, localRhs, localSum,
-                                        bubbleDofNumber, rankOffset, ghostRank]
+                                      [ = ]
                                       GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
