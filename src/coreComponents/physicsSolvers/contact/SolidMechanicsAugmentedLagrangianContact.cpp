@@ -272,7 +272,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     {
       // Set the penalty coefficients
       forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                        [ penalty, fractureState, dispJumpUpdPenalty ]
+                                        [=]
                                         GEOS_HOST_DEVICE ( localIndex const k )
       {
         if( fractureState[k] == contact::FractureState::Stick )
