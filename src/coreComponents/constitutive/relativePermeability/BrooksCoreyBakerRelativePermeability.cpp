@@ -73,7 +73,7 @@ void BrooksCoreyBakerRelativePermeability::resizeFields( localIndex const size, 
 
 
 
-  integer const numDir = 1;
+  integer const numDir = m_waterOilRelPermExponent.size(0);
 
 
   m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
@@ -90,7 +90,7 @@ void BrooksCoreyBakerRelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
 
-  integer const numDir = 1;
+  integer const numDir = m_waterOilRelPermExponent.size(0);
 
   m_volFracScale.resize( numDir /*ndims*/ );
 
