@@ -25,13 +25,11 @@ void addColumn( std::vector< TableLayout::ColumnParam > const & columnsParam, st
 {
   for( const auto & columnParam : columnsParam )
   {
-    std::cout << "columnParam -- " << columnParam.columnName << std::endl;
     bool subColum = false;
     std::vector< TableLayout::Column > subColumnsToAdd;
     TableLayout::Column columnToAdd = {columnParam, {}, "", {}};
     for( const auto & subColumnsName: columnParam.subColumns )
     {
-      std::cout << "subColumnsParam -- " << subColumnsName <<   std::endl;
       subColum = true;
       TableLayout::Column subColumn= {subColumnsName, {}, "", {}};
       subColumnsToAdd.push_back( subColumn );

@@ -237,7 +237,6 @@ private:
    * @param sectionSeparatingLine Line separator between sections
    * @param rows A section row
    * @param nbRows Indicates the number of lines in a section
-   * @param nbSubColumns
    * @param section The section to be built
    * @note Add the ending line if there are one or more rows
    */
@@ -245,7 +244,6 @@ private:
                                             string_view sectionSeparatingLine,
                                             std::ostringstream & tableOutput,
                                             integer const nbRows,
-                                            size_t const nbSubColumns,
                                             TableLayout::Section const section ) const;
 };
 

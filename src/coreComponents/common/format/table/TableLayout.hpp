@@ -64,7 +64,7 @@ public:
     ///
     std::vector< string > subColumns;
     /// Vector containing substring column name delimited by "\n"
-    std::vector< string > splitColumnNameLines;
+    std::vector< string > splitColumnNameLines = {""};
 
     /**
      * @brief Construct a ColumnParam object with the specified name and alignment.
