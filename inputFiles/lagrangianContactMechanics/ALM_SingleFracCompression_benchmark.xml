@@ -17,10 +17,10 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        maxNumConfigurationAttempts="25"
-        newtonMaxIter="10"
-        lineSearchAction="Require"
-        lineSearchMaxCuts="2"/>
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsAugmentedLagrangianContact>

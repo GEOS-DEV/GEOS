@@ -232,7 +232,6 @@ public:
       stack.dispJumpLocal[i] = m_dispJump( k, i );
       stack.oldDispJumpLocal[i] = m_oldDispJump( k, i );
     }
-    stack.oldDispJumpLocal[0] = 0.0;
 
     for( int i=0; i<3; ++i )
     {

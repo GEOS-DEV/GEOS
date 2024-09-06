@@ -18,10 +18,10 @@
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
-        maxNumConfigurationAttempts="20"
-        lineSearchAction="Require"
-        lineSearchMaxCuts="2"
-        maxTimeStepCuts="2"/>
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"

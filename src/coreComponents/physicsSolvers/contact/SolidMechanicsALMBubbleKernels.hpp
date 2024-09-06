@@ -285,30 +285,7 @@ public:
     real64 strainBubbleMatrix[6][nBubbleUdof];
     solidMechanicsALMKernelsHelper::assembleStrainOperator< 6, nBubbleUdof, numFacesPerElem >( strainBubbleMatrix, dBubbleNdX );
 
-    // TODO: Use the following functions
-    //using namespace PDEUtilities;
-    //constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
-    //constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
-    //real64 Abb_bilinear[nBubbleUdof][nBubbleUdof];
-    //BilinearFormUtilities::compute< displacementTrialSpace,
-    //                                displacementTestSpace,
-    //                                DifferentialOperator::SymmetricGradient,
-    //                                DifferentialOperator::SymmetricGradient >
-    //(
-    //  Abb_bilinear,
-    //  dBubbleNdX,
-    //  stack.constitutiveStiffness, // fourth-order tensor handled via DiscretizationOps
-    //  dBubbleNdX,
-    //  -detJ );
-
-
-    //LinearFormUtilities::compute< displacementTestSpace,
-    //                            DifferentialOperator::Identity >
-    //(
-    //stack.localResidualMomentum,
-    //N,
-    //stack.bodyForce,
-    //detJxW );
+    // TODO: It would be nice use BilinearFormUtilities::compute
 
     real64 matBD[nBubbleUdof][6];
     real64 Abb_gauss[nBubbleUdof][nBubbleUdof], Abu_gauss[nBubbleUdof][nUdof], Aub_gauss[nUdof][nBubbleUdof];
@@ -331,6 +308,7 @@ public:
     LvArray::tensorOps::scaledAdd< nUdof, nBubbleUdof >( stack.localAub, Aub_gauss, -detJ );
 
     // Compute the initial stress
+    // The following block assumes a linear elastic constitutive model
     real64 rb_gauss[nBubbleUdof];
     real64 strain[6] = {0};
     LvArray::tensorOps::Ri_eq_AijBj< 6, nUdof >( strain, strainMatrix, stack.uLocal );
