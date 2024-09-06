@@ -511,22 +511,22 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      localSolution );
       if( subRegion.size() > 0 || subRegion.size() !=  subRegion.getNumberOfGhosts() )
       {
-      if( m_scalingType == ScalingType::Global )
-      {
-        scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
-      }
+        if( m_scalingType == ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
+        }
 
-      maxRegionDeltaPresLoc.push_back( {subRegionData.localMaxDeltaPres, localToGlobalMap[subRegionData.localMaxDeltaPresLoc]} );
-      minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
+        maxRegionDeltaPresLoc.push_back( {subRegionData.localMaxDeltaPres, localToGlobalMap[subRegionData.localMaxDeltaPresLoc]} );
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
 
-      maxRegionDeltaCompDensLoc.push_back( {subRegionData.localMaxDeltaCompDens, localToGlobalMap[subRegionData.localMaxDeltaCompDensLoc]} );
-      minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
+        maxRegionDeltaCompDensLoc.push_back( {subRegionData.localMaxDeltaCompDens, localToGlobalMap[subRegionData.localMaxDeltaCompDensLoc]} );
+        minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
 
-      if( m_isThermal )
-      {
-        maxRegionDeltaTempLoc.push_back( {subRegionData.localMaxDeltaTemp, localToGlobalMap[subRegionData.localMaxDeltaTempLoc]} );
-        minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
-      }
+        if( m_isThermal )
+        {
+          maxRegionDeltaTempLoc.push_back( {subRegionData.localMaxDeltaTemp, localToGlobalMap[subRegionData.localMaxDeltaTempLoc]} );
+          minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
+        }
       }
     } );
   } );
