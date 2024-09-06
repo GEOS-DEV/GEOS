@@ -509,7 +509,8 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      dofKey,
                                                      subRegion,
                                                      localSolution );
-
+      if( subRegion.size() > 0 || subRegion.size() !=  subRegion.getNumberOfGhosts() )
+      {
       if( m_scalingType == ScalingType::Global )
       {
         scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
@@ -526,7 +527,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
         maxRegionDeltaTempLoc.push_back( {subRegionData.localMaxDeltaTemp, localToGlobalMap[subRegionData.localMaxDeltaTempLoc]} );
         minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
       }
-
+      }
     } );
   } );
 
@@ -545,9 +546,9 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
   minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
 
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling) at global index {}",
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling) at cell {}",
                                       getName(), GEOS_FMT( "{:.{}f}", std::get< 0 >( globalMaxDeltaPres ), 3 ), std::get< 1 >( globalMaxDeltaPres ) ) );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max component density change = {} {} (before scaling) at global index {}",
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max component density change = {} {} (before scaling) at cell {}",
                                       getName(), GEOS_FMT( "{:.{}f}", std::get< 0 >( globalMaxDeltaCompDens ), 3 ), massUnit, std::get< 1 >( globalMaxDeltaCompDens )) );
 
   if( m_isThermal )
@@ -558,7 +559,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
     auto globalMaxDeltaTemp = MpiWrapper::tupleMaxLoc( std::tuple< real64, globalIndex >( localMaxDeltaTemp, localMaxDeltaTempLoc ));
 
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling) at global index {}",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling) at cell {}",
                                         getName(), GEOS_FMT( "{:.{}f}", std::get< 0 >( globalMaxDeltaTemp ), 3 ), std::get< 1 >( globalMaxDeltaTemp ) ) );
   }
 
