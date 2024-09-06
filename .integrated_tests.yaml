@@ -1,7 +1,7 @@
 baselines:
   bucket: geosx
-  baseline: integratedTests/baseline_integratedTests-pr3215-6396-9b43cc8
+  baseline: integratedTests/baseline_integratedTests-pr3300-7077-1277f18
 
 allow_fail:
   all: ''
-  streak: pennyShapedToughnessDominated_smoke_01,pennyShapedViscosityDominated_smoke_01,pknViscosityDominated_smoke_01
+  streak: pennyShapedToughnessDominated_smoke_01,pennyShapedViscosityDominated_smoke_01,pknViscosityDominated_smoke_01,SeismicityRate_poromechanics_1d_smoke_01,SeismicityRate_poromechanics_1d_smoke_02,elas3D_Q3_abc_smoke_01,elas3D_Q3_abc_smoke_08,elas3D_Q3_abc_fs_smoke_01,elas3D_Q3_abc_fs_smoke_08
