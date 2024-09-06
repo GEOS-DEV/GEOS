@@ -265,7 +265,7 @@ The next figure shows the distribution of vertical displacement (:math:`u_z(x,z,
 
 The figure below compares the results from GEOS (marks) and the corresponding analytical solution (lines) for the pore pressure along the x-direction and vertical displacement along the z-direction. GEOS reliably captures the short-term Mandel-Cryer effect and shows excellent agreement with the analytical solution at various times. 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/poromechanics/mandel/mandelFigure.py --outputDir . --geosDir ../../../../../../..
+.. plot:: docs/sphinx/advancedExamples/validationStudies/poromechanics/mandel/mandelFigure.py
 
 .. note:: The python script included above is used to generate the figure shown here. If you want to run this script to verify your results, you will need to run the script from your output directory, and modify the path to the variables `xmlFile1Path` and `xmlFile1Path` in the script to point to the location of the input files on your system. 
 
