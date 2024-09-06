@@ -300,7 +300,7 @@ jobs:
           
           # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
           - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.5)
-            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-run-unit-tests --no-install-schema"
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
