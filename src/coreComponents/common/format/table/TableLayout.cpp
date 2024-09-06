@@ -16,11 +16,43 @@
 /**
  * @file TableData.hpp
  */
-
 #include "TableLayout.hpp"
 
 namespace geos
 {
+
+void addColumn( std::vector< TableLayout::ColumnParam > const & columnsParam, std::vector< TableLayout::Column > & columns )
+{
+  for( const auto & columnParam : columnsParam )
+  {
+    std::cout << "columnParam -- " << columnParam.columnName << std::endl;
+    bool subColum = false;
+    std::vector< TableLayout::Column > subColumnsToAdd;
+    TableLayout::Column columnToAdd = {columnParam, {}, "", {}};
+    for( const auto & subColumnsName: columnParam.subColumns )
+    {
+      std::cout << "subColumnsParam -- " << subColumnsName <<   std::endl;
+      subColum = true;
+      TableLayout::Column subColumn= {subColumnsName, {}, "", {}};
+      subColumnsToAdd.push_back( subColumn );
+      columnToAdd = { columnParam, {}, "", subColumnsToAdd };
+    }
+    if( subColum )
+    {
+      columns.push_back( columnToAdd );
+    }
+    else
+    {
+      columns.push_back( { columnParam, {}, "", {}} );
+    }
+  }
+
+  for( auto const & columnt : columns )
+  {
+    std::cout <<  "regarde après le addColumn  " << columnt.m_parameter.columnName << std::endl ;
+  }
+
+}
 
 TableLayout::TableLayout( std::vector< string > const & columnNames, string const & title ):
   m_tableTitle( title )
@@ -29,20 +61,20 @@ TableLayout::TableLayout( std::vector< string > const & columnNames, string cons
   m_columns.reserve( columnNames.size() );
   for( auto const & name : columnNames )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{name}, Alignment::right, true}, {}, ""} );
+    m_columns.push_back( {TableLayout::ColumnParam{{name}, Alignment::right, true}, {}, "", {}} );
   }
 }
 
-TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title ):
+TableLayout::TableLayout( std::vector< ColumnParam > const & columnParams, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-  m_columns.reserve( columnParameters.size() );
-  for( auto const & param : columnParameters )
-  {
-    m_columns.push_back( { param, {}, ""} );
-  }
+  //m_columns.reserve( columnParams.size() );
+  std::cout << "TEST ADD COLUMN " << std::endl;
+  addColumn( columnParams, m_columns );
+
 }
+
 
 void TableLayout::setMargin( MarginValue marginValue )
 {

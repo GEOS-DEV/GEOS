@@ -161,7 +161,7 @@ private:
    * @param tableData Vector containing all rows filled with values
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
-                                 std::vector< std::vector< string > > & tableData ) const;
+                                 std::vector< std::vector< string > > const & tableData ) const;
 
   /**
    * @brief Converts a TableLayout into a formatted representation.
@@ -190,7 +190,7 @@ private:
    * @brief For each column find and set the column's longest string
    * @param columns The vector containg all columns
    */
-  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns ) const;
+  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, std::string & maxStringSize ) const;
 
   /**
    * @brief recalculate the largest string size for each columns
@@ -237,14 +237,16 @@ private:
    * @param sectionSeparatingLine Line separator between sections
    * @param rows A section row
    * @param nbRows Indicates the number of lines in a section
+   * @param nbSubColumns
    * @param section The section to be built
    * @note Add the ending line if there are one or more rows
    */
-  void outputSectionRows( std::vector< TableLayout::Column > const & columns,
-                          string_view sectionSeparatingLine,
-                          std::ostringstream & rows,
-                          integer const nbRows,
-                          TableLayout::Section const section ) const;
+  void outputSectionRows(  std::vector< TableLayout::Column > const & columns,
+                                            string_view sectionSeparatingLine,
+                                            std::ostringstream & tableOutput,
+                                            integer const nbRows,
+                                            size_t const nbSubColumns,
+                                            TableLayout::Section const section ) const;
 };
 
 /**

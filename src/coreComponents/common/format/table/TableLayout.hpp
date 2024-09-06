@@ -21,6 +21,7 @@
 #define GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP
 
 #include "common/DataTypes.hpp"
+#include <variant>
 
 namespace geos
 {
@@ -32,7 +33,6 @@ class TableLayout
 {
 
 public:
-
   /// Type of aligment for a column
   enum Alignment { right, left, center };
 
@@ -61,8 +61,18 @@ public:
     Alignment alignment = Alignment::right;
     /// A boolean to display a colummn
     bool enabled = true;
+    ///
+    std::vector< string > subColumns;
     /// Vector containing substring column name delimited by "\n"
     std::vector< string > splitColumnNameLines;
+
+    /**
+     * @brief Construct a ColumnParam object with the specified name and alignment.
+     * @param name The name of the column
+     */
+    ColumnParam( std::string const & name )
+      : columnName( name )
+    {}
 
     /**
      * @brief Construct a ColumnParam object with the specified name and alignment.
@@ -82,6 +92,16 @@ public:
     ColumnParam( std::string const & name, Alignment align, bool display )
       : columnName( name ), alignment( align ), enabled( display )
     {}
+
+    /**
+     * @brief Construct a ColumnParam object with the specified name, alignment, and display flag.
+     * @param name The name of the column
+     * @param align The alignment of the column
+     * @param display Flag indicating whether the column is enabled
+     */
+    ColumnParam( std::string const & name, Alignment align, bool display, std::vector< string > columns )
+      : columnName( name ), alignment( align ), enabled( display ), subColumns( columns )
+    {}
   };
 
   /**
@@ -95,6 +115,9 @@ public:
     std::vector< string > m_columnValues;
     /// The largest string in the column
     string m_maxStringSize;
+    //sub divison of a column
+    std::vector< Column > subColumn;
+
   };
 
   TableLayout() = default;
@@ -103,14 +126,17 @@ public:
    * @brief Construct a new Table object, all values in the table are centered by default
    * @param columnNames The names of the columns
    * @param title The table name
+   * @param subColumns
    */
-  TableLayout( std::vector< string > const & columnNames, string const & title = "" );
+  TableLayout( std::vector< string > const & columnNames,
+               string const & title = "" );
 
   /**
    * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
    * level
    * @param columnParameters List of structures to set up each colum parameters.
    * @param title The table name
+   * @param subColumns
    */
   TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title = "" );
 

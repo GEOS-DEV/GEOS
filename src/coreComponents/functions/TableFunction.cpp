@@ -317,7 +317,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
       tableData.addRow( coords[idx], values[idx] );
     }
 
-    TableLayout const tableLayout( {
+    TableLayout const tableLayout( std::vector<std::string>{
         string( units::getDescription( tableFunction.getDimUnit( 0 ))),
         string( units::getDescription( valueUnit ))
       }, filename );

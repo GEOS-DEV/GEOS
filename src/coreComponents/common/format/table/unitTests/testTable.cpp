@@ -289,6 +289,36 @@ TEST( testTable, layoutTable )
              );
 }
 
+// TEST( testTable, subColumns )
+// {
+//   {
+//     //format
+//     TableLayout const tableLayout(
+//       {TableLayout::ColumnParam{" ", TableLayout::Alignment::right}}
+//       {TableLayout::ColumnParam{"Column1", TableLayout::Alignment::right}},
+//       {TableLayout::ColumnParam{"Nodes ", TableLayout::Alignment::right, {"Local, Ghost"}}},
+//       {TableLayout::ColumnParam{"Column3", TableLayout::Alignment::right}}
+//       );
+
+//     TableData tableData;
+//     tableData.addRow( "min", "125", "375,000", 23,562, 2.0f);
+//     tableData.addRow( "max", "360", "390,150", 38,712, 10.0f );
+
+//     TableTextFormatter const tableLog( tableLayout );
+//     EXPECT_EQ( tableLog.toString( tableData ),
+//                "\n--------------------------------------------------------------------\n"
+//                "|  Remarks : some cells may be missing                             |\n"
+//                "--------------------------------------------------------------------\n"
+//                "|     Viscosity kg*s  |  Pression = 10000  |     Pression = 15000  |\n"
+//                "--------------------------------------------------------------------\n"
+//                "|  Temperature = 300  |              0.03  |                 0.02  |\n"
+//                "|  Temperature = 350  |             0.035  |                       |\n"
+//                "|  Temperature = 400  |              0.04  |  0.02666666666666667  |\n"
+//                "--------------------------------------------------------------------\n\n"
+//                );
+//   }
+// }
+
 TEST( testTable, tableSetMargin )
 {
   ////////////
