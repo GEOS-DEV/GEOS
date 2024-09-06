@@ -576,7 +576,7 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
     }
 
     // Case 4: the elastic tangential traction is greater than the limit
-    if( currentTau > (std::abs( limitTau ) * (1.0 + slidingCheckTolerance)) )
+    if( currentTau > (LvArray::math::abs( limitTau ) * (1.0 + slidingCheckTolerance)) )
     {
       condConv = 4;
     }
