@@ -407,8 +407,8 @@ struct UpdateStateKernel
 
       real64 const zero = std::numeric_limits< real64 >::epsilon();
 
-      real64 localPenalty[3][3]  = {};
-      real64 localTractionNew[3] = {};
+      real64 localPenalty[3][3]{};
+      real64 localTractionNew[3]{};
       contactWrapper.updateTraction( oldDispJump[k],
                                      dispJump[k],
                                      penalty[k],
@@ -426,7 +426,7 @@ struct UpdateStateKernel
 
         LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
       }
-      else if( std::abs( localTractionNew[ 0 ] ) < normalTractionTolerance[k] )
+      else if( LvArray::math::abs( localTractionNew[ 0 ] ) < normalTractionTolerance[k] )
       {
         LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
         fractureState[k] = fields::contact::FractureState::Slip;

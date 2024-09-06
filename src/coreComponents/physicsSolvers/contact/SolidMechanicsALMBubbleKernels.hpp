@@ -309,7 +309,7 @@ public:
 
     // Compute the initial stress
     // The following block assumes a linear elastic constitutive model
-    real64 rb_gauss[nBubbleUdof];
+    real64 rb_gauss[nBubbleUdof]{};
     real64 strain[6] = {0};
     LvArray::tensorOps::Ri_eq_AijBj< 6, nUdof >( strain, strainMatrix, stack.uLocal );
 
