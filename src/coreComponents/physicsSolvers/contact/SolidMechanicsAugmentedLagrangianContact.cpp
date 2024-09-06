@@ -832,7 +832,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                             fractureState,
                                             condConv_v );
       } );
-     
+
       RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum[5] =
       { RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
         RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
@@ -846,17 +846,17 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           localSum[condConv_v[kfe]] += 1;
         }
       } );
-     
+
       localIndex const localConvCond[5] = { static_cast< localIndex >( localSum[0].get()),
                                             static_cast< localIndex >( localSum[1].get()),
                                             static_cast< localIndex >( localSum[2].get()),
                                             static_cast< localIndex >( localSum[3].get()),
                                             static_cast< localIndex >( localSum[4].get()) };
-     
+
       int const rank     = MpiWrapper::commRank( MPI_COMM_GEOS );
       int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
       array1d< localIndex > globalValues( numRanks * 5 );
-     
+
       // Everything is done on rank 0
       MpiWrapper::gather( localConvCond,
                           5,
@@ -864,7 +864,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                           5,
                           0,
                           MPI_COMM_GEOS );
-     
+
       if( rank==0 )
       {
         for( int r=0; r<numRanks; ++r )
@@ -876,7 +876,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           }
         }
       }
-     
+
       MpiWrapper::bcast( globalCondConv, 5, 0, MPI_COMM_GEOS );
 
     } );
@@ -913,7 +913,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
         arrayView2d< real64 > const traction_new_v = traction_new.toView();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
-       
+
         forAll< parallelDevicePolicy<> >( subRegion.size(), [ traction, traction_new_v ] GEOS_HOST_DEVICE ( localIndex const kfe )
         {
           LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
