@@ -291,7 +291,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     }
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [ dispJumpUpdPenalty, elemsToFaces, incrBubbleDisp ]
+                                      [ = ]
                                       GEOS_HOST_DEVICE ( localIndex const k )
     {
       LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
