@@ -148,15 +148,20 @@ void TableTextFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Col
   // Compute index column because we will iterate through columnsValues
   for( auto & column : columns )
   {
+    ++columnWithSubColumns;
     if( column.subColumn.empty())
     {
       ++realNbColumn;
     }
     else
     {
-      ++columnWithSubColumns;
+      std::cout << " columnWithSubColumns " << columnWithSubColumns << std::endl;
+      std::cout << " realNbColumn " << realNbColumn << std::endl;
+      std::cout << " column.m_parameter.subColumns.size() " << column.m_parameter.subColumns.size() << std::endl<< std::endl;
+
       realNbColumn += columnWithSubColumns - column.m_parameter.subColumns.size();
     }
+
   }
 
   std::vector< std::vector< std::string > > subColumnValues;
@@ -164,12 +169,25 @@ void TableTextFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Col
   for( size_t idxRow = 0; idxRow < realNbColumn; idxRow++ )
   {
     auto & column = columns[idxRow];
-    if( column.subColumn.size() > 0 )
+    std::cout << " trasnform " << realNbColumn << column.m_parameter.columnName<< std::endl;
+    if( !column.subColumn.empty() )
     {
       auto startSubColumn = columnsValues.begin() + currentColumn;
       auto endSubColumn = columnsValues.begin() + currentColumn + column.m_parameter.subColumns.size();
       subColumnValues = std::vector< std::vector< std::string > >( startSubColumn, endSubColumn );
+      std::cout << " trasnform " << std::endl;
       fillTableColumnsFromRows( column.subColumn, subColumnValues );
+
+      std::vector< std::string > concatenatedValues;
+
+      std::transform( subColumnValues.begin(), subColumnValues.end(), std::back_inserter( concatenatedValues ),
+                      []( const auto & subVector ) { return std::accumulate( subVector.begin(), subVector.end(), std::string{} ); } );
+      for( const auto & value : concatenatedValues )
+      {
+        std::cout << value << " ";
+      }
+
+      column.m_columnValues = concatenatedValues;
       currentColumn += column.subColumn.size();
     }
     else
@@ -233,7 +251,7 @@ void TableTextFormatter::outputLayout( std::ostringstream & tableOutput,
   string const tableTitle = string( m_tableLayout.getTitle());
 
   splitAndSetColumnNames( columns, nbHeaderRows, splitHeaders );
-  
+
   std::string maxStringSize = " ";
   findAndSetMaxStringSize( columns, maxStringSize );
 
@@ -483,9 +501,10 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
     tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, 1 +  borderMargin );
     for( std::size_t idxColumn = 0; idxColumn < nbColumns; ++idxColumn )
     {
-      std::cout << "1" << std::endl;
       auto & column = columns[idxColumn];
       TableLayout::Column const currentColumn = column;
+
+      //il est vide car si sous colonnes, m_columnValues = { } :(
       auto const & columnContent = section == TableLayout::Section::header ?
                                    column.m_parameter.splitColumnNameLines :
                                    column.m_columnValues;
