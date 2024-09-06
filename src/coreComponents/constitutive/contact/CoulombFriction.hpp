@@ -563,7 +563,7 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
   else
   {
     // Case 2: compenetration
-    if(( std::abs( dispJump[0] ) > normalDisplacementTolerance ) &&
+    if(( LvArray::math::abs( dispJump[0] ) > normalDisplacementTolerance ) &&
        (fractureState != FractureState::Open))
     {
       condConv = 2;
