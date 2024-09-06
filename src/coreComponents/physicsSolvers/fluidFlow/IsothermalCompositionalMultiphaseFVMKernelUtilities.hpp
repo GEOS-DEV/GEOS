@@ -92,11 +92,18 @@ struct PotGrad
     real64 dProp_dC[numComp]{};
 
     // calculate quantities on primary connected cells
+    integer denom = 0;
     for( integer i = 0; i < numFluxSupportPoints; ++i )
     {
       localIndex const er  = seri[i];
       localIndex const esr = sesri[i];
       localIndex const ei  = sei[i];
+
+      bool const phaseExists = (phaseVolFrac[er][esr][ei][ip] > 0);
+      if( !phaseExists )
+      {
+        continue;
+      }
 
       // density
       real64 const density  = phaseMassDens[er][esr][ei][0][ip];
@@ -109,12 +116,19 @@ struct PotGrad
                       Deriv::dC );
 
       // average density and derivatives
-      densMean += 0.5 * density;
-      dDensMean_dP[i] = 0.5 * dDens_dP;
+      densMean += density;
+      dDensMean_dP[i] = dDens_dP;
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
+        dDensMean_dC[i][jc] = dProp_dC[jc];
       }
+      denom++;
+    }
+    densMean /= denom;
+    dDensMean_dP[i] /= denom;
+    for( integer jc = 0; jc < numComp; ++jc )
+    {
+      dDensMean_dC[i][jc] /= denom;
     }
 
     /// compute the TPFA potential difference
@@ -1221,11 +1235,18 @@ struct computePotentialGravity
     }
 
     //inner loop to get average density
+    integer denom = 0;
     for( localIndex i = 0; i < numFluxSupportPoints; ++i )
     {
       localIndex const er = seri[i];
       localIndex const esr = sesri[i];
       localIndex const ei = sei[i];
+
+      bool const phaseExists = (phaseVolFrac[er][esr][ei][ip] > 0);
+      if( !phaseExists )
+      {
+        continue;
+      }
 
       // density
       real64 const density = phaseMassDens[er][esr][ei][0][ip];
@@ -1238,12 +1259,19 @@ struct computePotentialGravity
                       Deriv::dC );
 
       // average density and derivatives
-      densMean += 0.5 * density;
-      dDensMean_dPres[i] = 0.5 * dDens_dPres;
+      densMean += density;
+      dDensMean_dPres[i] = dDens_dPres;
       for( localIndex jc = 0; jc < numComp; ++jc )
       {
-        dDensMean_dComp[i][jc] = 0.5 * dProp_dComp[jc];
+        dDensMean_dComp[i][jc] = dProp_dComp[jc];
       }
+      denom++;
+    }
+    densMean /= denom;
+    dDensMean_dP[i] /= denom;
+    for( integer jc = 0; jc < numComp; ++jc )
+    {
+      dDensMean_dC[i][jc] /= denom;
     }
 
     // compute potential difference MPFA-style
