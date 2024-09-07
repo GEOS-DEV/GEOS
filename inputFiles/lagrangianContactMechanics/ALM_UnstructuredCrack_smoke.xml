@@ -51,7 +51,8 @@
       name="outputs"
       timeFrequency="1"
       targetExactTimestep="0"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/siloOutput"/>
+
   </Events>
 
 </Problem>

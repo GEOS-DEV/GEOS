@@ -134,10 +134,9 @@
   </Functions>
 
   <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotLevel="2"
-      format="ascii"/>
+    <Silo
+      name="siloOutput"
+      plotLevel="3"/>
 
     <Restart
       name="restartOutput"/>

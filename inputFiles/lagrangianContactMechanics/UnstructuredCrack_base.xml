@@ -118,9 +118,9 @@
   </Functions>
 
   <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="vtkOutput"/>
+    <Silo
+      name="siloOutput"
+      plotLevel="3"/>
 
     <Restart
       name="restartOutput"/>
