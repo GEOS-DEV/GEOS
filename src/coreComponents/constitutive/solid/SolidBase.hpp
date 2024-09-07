@@ -53,22 +53,22 @@ protected:
    * @brief constructor
    * @param[in] newStress The new stress data from the constitutive model class.
    * @param[in] oldStress The old stress data from the constitutive model class.
-   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
-   * @param[in] disableInelasticity Flag to disable inelastic response
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient (TEC) data for each element.
+   * @param[in] dThermalExpansionCoefficient_dTemperature The derivative of TEC w.r.t. temperature.
+   * @param[in] referenceTemperature The reference temperature at which the default TEC is defined.
+   * @param[in] disableInelasticity Flag to disable inelastic response.
    */
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     real64 const & dThermalExpansionCoefficient_dTemperature,
                     real64 const & referenceTemperature,
-                    string const & drainedTECTableName,
                     const bool & disableInelasticity ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_dThermalExpansionCoefficient_dTemperature( dThermalExpansionCoefficient_dTemperature ),
     m_referenceTemperature( referenceTemperature ),
-    m_drainedTECTableName( drainedTECTableName ),
     m_disableInelasticity ( disableInelasticity )
   {}
 
@@ -109,9 +109,6 @@ public:
 
   /// The reference temperature at which default thermal expansion coefficient is defined.
   real64 m_referenceTemperature = 0;
-
-  /// The drained thermal expansion coefficient (TEC) table name.
-  string m_drainedTECTableName;
 
   /// Flag to disable inelasticity
   const bool m_disableInelasticity;
@@ -159,16 +156,6 @@ public:
   virtual real64 getReferenceTemperature() const
   {
     return m_referenceTemperature;
-  }
-
-  /**
-   * @brief Get Thermal Expansion Coefficient table name
-   * @return the Thermal Expansion Coefficient table name
-   */
-  //GEOS_HOST_DEVICE
-  virtual string getDrainedTECTableName() const
-  {
-    return m_drainedTECTableName;
   }
 
   /**
@@ -722,6 +709,16 @@ public:
 
     array1d< real64 > out;
     return out.toViewConst();
+  }
+
+  /**
+   * @brief Get Thermal Expansion Coefficient table name
+   * @return the Thermal Expansion Coefficient table name
+   */
+  //GEOS_HOST_DEVICE
+  virtual string getDrainedTECTableName() const
+  {
+    return m_drainedTECTableName;
   }
 
 protected:

@@ -56,7 +56,8 @@ public:
                       BiotPorosity const & porosityModel,
                       ConstantPermeability const & permModel
                       ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel ),
+    m_drainedTECTableName( solidModel.getDrainedTECTableName() )
   {}
 
   GEOS_HOST_DEVICE
@@ -229,6 +230,8 @@ public:
 
 private:
 
+  string m_drainedTECTableName;
+
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_permUpdate;
@@ -306,11 +309,10 @@ private:
                                      stiffness );
 
     // Add the contributions of temperature increment to the rock stress (effective stress).
-    string const drainedTECTableName = m_solidUpdate.getDrainedTECTableName();
     real64 dThermalExpansionCoefficient_dTemperature;
     real64 thermalExpansionCoefficient;
 
-    if( drainedTECTableName.empty() )
+    if( m_drainedTECTableName.empty() )
     {
       real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
       real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
@@ -321,7 +323,7 @@ private:
     else
     {
       FunctionManager & functionManager = FunctionManager::getInstance();
-      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( drainedTECTableName );
+      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( m_drainedTECTableName.c_str() );
       drainedLinearTECTable.setInterpolationMethod( TableFunction::InterpolationType::Linear );
       TableFunction::KernelWrapper TECWrapper = drainedLinearTECTable.createKernelWrapper();
 

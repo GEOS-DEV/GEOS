@@ -50,9 +50,10 @@ public:
    * @param[in] newCohesion The ArrayView holding the new cohesion data for each element.
    * @param[in] oldCohesion The ArrayView holding the old cohesion data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
-   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
-   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
+   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient (TEC) data for each element.
+   * @param[in] dThermalExpansionCoefficient_dTemperature The derivative of TEC w.r.t. temperature.
+   * @param[in] referenceTemperature The reference temperature at which the default TEC is defined.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
@@ -66,7 +67,6 @@ public:
                         arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         real64 const & dThermalExpansionCoefficient_dTemperature,
                         real64 const & referenceTemperature,
-                        string const & drainedTECTableName,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         bool const & disableInelasticity ):
@@ -75,7 +75,6 @@ public:
                              thermalExpansionCoefficient,
                              dThermalExpansionCoefficient_dTemperature,
                              referenceTemperature,
-                             drainedTECTableName,
                              newStress,
                              oldStress,
                              disableInelasticity ),
@@ -448,7 +447,6 @@ public:
                                  m_thermalExpansionCoefficient,
                                  m_dThermalExpansionCoefficient_dTemperature,
                                  m_referenceTemperature,
-                                 m_drainedTECTableName,
                                  m_newStress,
                                  m_oldStress,
                                  m_disableInelasticity );
@@ -475,7 +473,6 @@ public:
                           m_thermalExpansionCoefficient,
                           m_dThermalExpansionCoefficient_dTemperature,
                           m_referenceTemperature,
-                          m_drainedTECTableName,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );
