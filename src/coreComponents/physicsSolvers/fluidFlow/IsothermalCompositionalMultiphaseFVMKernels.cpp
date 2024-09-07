@@ -115,7 +115,7 @@ CFLFluxKernel::
       densMean += phaseMassDens[er][esr][ei][0][ip];
       denom++;
     }
-    if(denom > 0)
+    if( denom > 0 )
     {
       densMean /= denom;
     }

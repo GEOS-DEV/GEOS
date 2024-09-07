@@ -125,7 +125,7 @@ struct PotGrad
       }
       denom++;
     }
-    if(denom > 0)
+    if( denom > 0 )
     {
       densMean /= denom;
       for( integer i = 0; i < numFluxSupportPoints; ++i )
@@ -1281,7 +1281,7 @@ struct computePotentialGravity
       }
       denom++;
     }
-    if(denom > 0)
+    if( denom > 0 )
     {
       densMean /= denom;
       for( localIndex i = 0; i < numFluxSupportPoints; ++i )
