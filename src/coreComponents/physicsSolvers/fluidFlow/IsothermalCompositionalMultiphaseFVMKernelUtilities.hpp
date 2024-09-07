@@ -125,13 +125,16 @@ struct PotGrad
       }
       denom++;
     }
-    densMean /= denom;
-    for( integer i = 0; i < numFluxSupportPoints; ++i )
+    if(denom > 0)
     {
-      dDensMean_dP[i] /= denom;
-      for( integer jc = 0; jc < numComp; ++jc )
+      densMean /= denom;
+      for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
-        dDensMean_dC[i][jc] /= denom;
+        dDensMean_dP[i] /= denom;
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dDensMean_dC[i][jc] /= denom;
+        }
       }
     }
 
@@ -1278,13 +1281,16 @@ struct computePotentialGravity
       }
       denom++;
     }
-    densMean /= denom;
-    for( localIndex i = 0; i < numFluxSupportPoints; ++i )
+    if(denom > 0)
     {
-      dDensMean_dPres[i] /= denom;
-      for( integer jc = 0; jc < numComp; ++jc )
+      densMean /= denom;
+      for( localIndex i = 0; i < numFluxSupportPoints; ++i )
       {
-        dDensMean_dComp[i][jc] /= denom;
+        dDensMean_dPres[i] /= denom;
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dDensMean_dComp[i][jc] /= denom;
+        }
       }
     }
 

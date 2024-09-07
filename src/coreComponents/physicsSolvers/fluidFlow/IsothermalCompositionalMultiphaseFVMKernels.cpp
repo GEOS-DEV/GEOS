@@ -115,7 +115,10 @@ CFLFluxKernel::
       densMean += phaseMassDens[er][esr][ei][0][ip];
       denom++;
     }
-    densMean /= denom;
+    if(denom > 0)
+    {
+      densMean /= denom;
+    }
 
     //***** calculation of phase volumetric flux *****
 
