@@ -300,7 +300,7 @@ jobs:
           
           # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
           - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.5.1)
-            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+            BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
             CMAKE_BUILD_TYPE: Release
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
@@ -317,10 +317,10 @@ jobs:
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_HYPRE: ONp
+            ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-gcc8-cuda12.5
-            RUNS_ON: streak2
+            RUNS_ON: streak
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
             DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
