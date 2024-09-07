@@ -145,7 +145,7 @@ struct StressComputation
       {
 
         //Volume integral
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] GEOS_HOST_DEVICE ( int const i, int const j, real32 const dfx1, real32 const dfx2, real32 const dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [=] GEOS_HOST_DEVICE ( int const i, int const j, real32 const dfx1, real32 const dfx2, real32 const dfx3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
           auxx[j]+= dfx1*ux_np1[nodeIndex];
@@ -157,7 +157,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] GEOS_HOST_DEVICE ( int const i, int const j, real32 const dfy1, real32 const dfy2, real32 const dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [=] GEOS_HOST_DEVICE ( int const i, int const j, real32 const dfy1, real32 const dfy2, real32 const dfy3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
           auxx[j]+= dfy1*ux_np1[nodeIndex];
@@ -169,7 +169,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] GEOS_HOST_DEVICE ( int const i, int const j, real32 const dfz1, real32 const dfz2, real32 const dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [=] GEOS_HOST_DEVICE ( int const i, int const j, real32 const dfz1, real32 const dfz2, real32 const dfz3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
           auxx[j]+= dfz1*ux_np1[nodeIndex];
