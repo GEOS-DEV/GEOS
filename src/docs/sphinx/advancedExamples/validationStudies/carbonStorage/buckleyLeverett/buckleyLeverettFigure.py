@@ -134,7 +134,7 @@ def main():
     # File paths
     outputDir = args.outputDir
     geosDir = args.geosDir
-    hdf5FilePath = outputDir + "saturationHistory.hdf5"
+    hdf5FilePath = outputDir + "/saturationHistory.hdf5"
     pvdgFilePath = geosDir + "/inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvdg.txt"
     pvtwFilePath = geosDir + "/inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvtw.txt"
     xmlFile1Path = geosDir + "/inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_base.xml"

@@ -5,4 +5,4 @@ import argparse
 sys.path.append('../../../../../../../inputFiles/hydraulicFracturing/scripts')
 import hydrofractureFigure
 
-hydrofractureFigure.main( geosPath='../../../../../../..',xmlFilePrefix='kgdViscosityDominated')
+hydrofractureFigure.main( geosDir='../../../../../../..',xmlFilePrefix='kgdViscosityDominated')
