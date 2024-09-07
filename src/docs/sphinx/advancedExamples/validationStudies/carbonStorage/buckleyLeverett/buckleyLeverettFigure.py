@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
 import numpy as np
 import h5py
+import os
+import argparse
 
 
 def getMaxTime(xmlFilePath):
@@ -118,12 +120,25 @@ def computeFractionalFlow( phaseVolFrac, \
 
 def main():
 
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
+
     # File paths
-    hdf5FilePath = "saturationHistory.hdf5"
-    pvdgFilePath = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvdg.txt"
-    pvtwFilePath = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvtw.txt"
-    xmlFile1Path = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_base.xml"
-    xmlFile2Path = "../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_benchmark.xml"
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+    hdf5FilePath = outputDir + "/saturationHistory.hdf5"
+    pvdgFilePath = geosDir + "/inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvdg.txt"
+    pvtwFilePath = geosDir + "/inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_table/pvtw.txt"
+    xmlFile1Path = geosDir + "/inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_base.xml"
+    xmlFile2Path = geosDir + "/inputFiles/compositionalMultiphaseFlow/benchmarks/buckleyLeverettProblem/buckleyLeverett_benchmark.xml"
 
     # Read simulation parameters from XML file
     xMin, xMax, yMin, yMax, zMin, zMax = getDomainMaxMinCoords(xmlFile2Path)

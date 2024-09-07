@@ -43,9 +43,20 @@ def getMeshSettings(xmlFilePath):
 
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
     # Load and process GEOSX results
     # File path
-    prefix = "../../../../../../../inputFiles/hydraulicFracturing/"
+    prefix = geosDir + "/inputFiles/hydraulicFracturing/"
     hdf5File = prefix + "KGD_validation_output.hdf5"
     xmlFile1Path = prefix + "kgdValidation_base.xml"
     xmlFile2Path = prefix + "kgdValidation_benchmark.xml"

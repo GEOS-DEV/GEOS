@@ -5,6 +5,8 @@ import h5py
 import xml.etree.ElementTree as ElementTree
 import math
 from math import sin, cos, tan, exp, atan, asin
+import os
+import argparse
 
 
 class Analytical:
@@ -112,12 +114,25 @@ def dispRotation(disp, phi_x):
 
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
     # Load and process GEOSX results
     # File path
-    hdf5File1Path = "stress_history.hdf5"
-    hdf5File2Path = "displacement_history.hdf5"
-    xmlFile1Path = "../../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml"
-    xmlFile2Path = "../../../../../../../inputFiles/solidMechanics/KirschProblem_benchmark.xml"
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+    hdf5File1Path = outputDir + "/stress_history.hdf5"
+    hdf5File2Path = outputDir + "/displacement_history.hdf5"
+    xmlFile1Path = geosDir + "/inputFiles/solidMechanics/KirschProblem_base.xml"
+    xmlFile2Path = geosDir + "/inputFiles/solidMechanics/KirschProblem_benchmark.xml"
 
     # Read HDF5
     # Global Coordinate of Element Center

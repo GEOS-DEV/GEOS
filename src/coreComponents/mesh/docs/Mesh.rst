@@ -287,7 +287,7 @@ Importing surfaces
 ******************
 
 Surfaces are imported through point sets in GEOS. This feature is supported using only the ``vtk`` file format.
-In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`_.
+In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`.
 The surfaces are automatically import in GEOS if they exist in the ``vtk`` file.
 Within GEOS, the point set will have the same name than the one given in the file. This name can be used
 again to impose boundary condition. For instance, if a surface is named "Bottom" and the user wants to
