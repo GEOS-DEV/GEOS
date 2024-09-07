@@ -299,7 +299,7 @@ jobs:
           #   DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
           
           # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
-          - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.5)
+          - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.5.1)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             ENABLE_HYPRE_DEVICE: CUDA
@@ -313,7 +313,7 @@ jobs:
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
           
           # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
-          - name: Rockylinux CUDA (8, gcc 8.5, cuda 12.5)
+          - name: Rockylinux CUDA (8, gcc 8.5, cuda 12.5.1)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             ENABLE_HYPRE_DEVICE: CUDA
