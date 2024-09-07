@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
 from math import sin,cos,tan,exp,atan
 import h5py
+import os
+import argparse
 
 
 def getMechanicalParametersFromXML( xmlFilePath ):
@@ -178,11 +180,24 @@ def semiAnalytical( mechanicalParameters, imp_strain, imp_time, initialStress ):
 
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
 	# File path
-	hdf5File1Path = "displacement_history.hdf5"
-	hdf5File2Path = "stress_history.hdf5"
-	xmlFile1Path = "../../../../../../../inputFiles/solidMechanics/viscoExtendedDruckerPrager_relaxation_base.xml"
-	xmlFile2Path = "../../../../../../../inputFiles/solidMechanics/viscoExtendedDruckerPrager_relaxation_benchmark.xml"
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+	hdf5File1Path = outputDir + "/displacement_history.hdf5"
+	hdf5File2Path = outputDir + "/stress_history.hdf5"
+	xmlFile1Path = geosDir + "/inputFiles/solidMechanics/viscoExtendedDruckerPrager_relaxation_base.xml"
+	xmlFile2Path = geosDir + "/inputFiles/solidMechanics/viscoExtendedDruckerPrager_relaxation_benchmark.xml"
 
 	# Read HDF5
 	# Global Coordinate of Nodal Point

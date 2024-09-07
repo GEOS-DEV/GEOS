@@ -141,8 +141,9 @@ def getGeometryFromXML(xmlFilePath):
 
 
 def main():
+
    # Initialize the argument parser
-    parser = argparse.ArgumentParser(description="generate plots for Mandel example problem.")
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
 
     # Add arguments to accept individual file paths
     parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')

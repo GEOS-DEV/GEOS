@@ -5,6 +5,8 @@ import numpy as np
 import h5py
 from numpy import genfromtxt
 from xml.etree import ElementTree
+import os
+import argparse
 
 import analyticalResults
 
@@ -13,8 +15,21 @@ def stressRotation(stress, phi_x):
     return np.dot(np.dot(np.transpose(rotx), stress), rotx)
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+
 	# Material properties from input XML file
-	xmlFilePathPrefix = "../../../../../../../inputFiles/wellbore/ThermoPoroElasticWellbore"
+	xmlFilePathPrefix = geosDir + "/inputFiles/wellbore/ThermoPoroElasticWellbore"
 
 	xmlData = analyticalResults.getDataFromXML(xmlFilePathPrefix)
 
@@ -25,16 +40,16 @@ def main():
 
 	# Get solid stress, time and element center from GEOSX results
 	stress_field_name = 'rockSolid_stress'
-	hf_stress = h5py.File('stressHistory_rock.hdf5', 'r')
+	hf_stress = h5py.File(outputDir + '/stressHistory_rock.hdf5', 'r')
 	time = np.array( hf_stress.get(stress_field_name + ' Time') )
 	center = np.array( hf_stress.get(stress_field_name + ' elementCenter') )
 	stress = np.array( hf_stress.get(stress_field_name) )
 
 	# Get temperature and pore pressure for computing the total stress
-	hf_temperature = h5py.File('temperatureHistory_rock.hdf5', 'r')
+	hf_temperature = h5py.File(outputDir + '/temperatureHistory_rock.hdf5', 'r')
 	temperature = np.array( hf_temperature.get('temperature') )
 
-	hf_pressure = h5py.File('pressureHistory_rock.hdf5', 'r')
+	hf_pressure = h5py.File(outputDir + '/pressureHistory_rock.hdf5', 'r')
 	pressure = np.array( hf_pressure.get('pressure') )
 
 	# Compute total stress

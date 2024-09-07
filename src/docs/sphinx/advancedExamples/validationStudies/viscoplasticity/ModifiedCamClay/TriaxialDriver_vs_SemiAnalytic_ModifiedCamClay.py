@@ -3,13 +3,28 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
+import os
+import argparse
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
 	# File paths
-	path = "ModifiedCamClayResults.txt"
-	xmlFilePath = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml"
-	xmlFilePath_case = "../../../../../../../inputFiles/triaxialDriver/triaxialDriver_ModifiedCamClay.xml"
-	imposedStrainFilePath = "../../../../../../../inputFiles/triaxialDriver/tables/axialStrain.geos"
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+	path = outputDir + "/ModifiedCamClayResults.txt"
+	xmlFilePath = geosDir + "/inputFiles/triaxialDriver/triaxialDriver_base.xml"
+	xmlFilePath_case = geosDir + "/inputFiles/triaxialDriver/triaxialDriver_ModifiedCamClay.xml"
+	imposedStrainFilePath = geosDir + "/inputFiles/triaxialDriver/tables/axialStrain.geos"
 		 
 	# Load GEOSX results
 	time, ax_strain, ra_strain1, ra_strain2, ax_stress, ra_stress1, ra_stress2, newton_iter, residual_norm = np.loadtxt(

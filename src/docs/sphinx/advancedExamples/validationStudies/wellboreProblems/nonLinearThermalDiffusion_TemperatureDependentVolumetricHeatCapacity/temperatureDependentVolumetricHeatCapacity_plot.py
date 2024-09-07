@@ -1,5 +1,7 @@
 import os
 import sys
+import os
+import argparse
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -138,7 +140,18 @@ def getLoadingFromXML(xmlFilePath):
 
 def main():
 
-	xmlFilePath = "../../../../../../../inputFiles/singlePhaseFlow/"
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
+    geosDir = args.geosDir
+
+	xmlFilePath = geosDir + "/inputFiles/singlePhaseFlow/"
 	
 	Rin, Rout = getWellboreGeometryFromXML(xmlFilePath+"thermalCompressible_temperatureDependentVolumetricHeatCapacity_benchmark.xml")
 

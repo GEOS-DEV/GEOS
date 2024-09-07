@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ElementTree
 import math
 from math import sin,cos,tan,exp,atan,asin
 import csv
+import os
+import argparse
 
 
 def getHydromechanicalParametersFromXML(xmlFilePath):
@@ -50,9 +52,22 @@ def getHydromechanicalParametersFromXML(xmlFilePath):
 
 
 def main():
+
+    # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+  # Parse the command-line arguments
+  args = parser.parse_args()
+
 	# File path
-	xmlFile1Path = "../../../../../../inputFiles/initialization/gravityInducedStress_initialization_base.xml"
-	xmlFile2Path = "../../../../../../inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml"
+	outputDir = args.outputDir
+  geosDir = args.geosDir
+	xmlFile1Path = geosDir + "/inputFiles/initialization/gravityInducedStress_initialization_base.xml"
+	xmlFile2Path = geosDir + "/inputFiles/initialization/gravityInducedStress_initialization_benchmark.xml"
 
 	hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
 
@@ -67,7 +82,7 @@ def main():
 	gravity = 9.81 
 	
 	# rename this file to the name of your Paraview output file
-	file = open("simulation_result_0.csv")
+	file = open(outputDir + "/simulation_result_0.csv")
 	csvreader = csv.reader(file)
 	header = next(csvreader)
 	header_index = {column_name: index for index, column_name in enumerate(header)}

@@ -6,6 +6,8 @@ import h5py
 from xml.etree import ElementTree
 import edpWellbore_analyticalResults as edpAnal
 import elastoPlasticWellboreAnalyticalSolutions as epwAnal
+import os
+import argparse
 
 def extractDataFromXMLList(paramList):
 	# Extract data from a list in XML such as "{ 1, 2, 3}"
@@ -48,7 +50,21 @@ def stressRotation(stress, phi_x):
     return np.dot(np.dot(np.transpose(rotx), stress), rotx)
 
 def main():
-	xmlFilePathPrefix = "../../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore"
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+
+	xmlFilePathPrefix = geosDir + "/inputFiles/solidMechanics/ExtendedDruckerPragerWellbore"
 	xmlData = getDataFromXML(xmlFilePathPrefix)
 
 	# Initial wellbore radius	
@@ -81,13 +97,13 @@ def main():
 
 	# Get stress, time and element center from GEOSX results
 	stress_field_name = 'rock_stress'
-	hf_stress = h5py.File('stressHistory_rock.hdf5', 'r')
+	hf_stress = h5py.File(outputDir + '/stressHistory_rock.hdf5', 'r')
 	time = np.array( hf_stress.get(stress_field_name + ' Time') )
 	center = np.array( hf_stress.get(stress_field_name + ' elementCenter') )
 	stress = np.array( hf_stress.get(stress_field_name) )
 	
 	# Get the deformed wellbore radius
-	hf_disp = h5py.File("displacementHistory.hdf5", 'r')
+	hf_disp = h5py.File(outputDir + "/displacementHistory.hdf5", 'r')
 	displacement = np.array( hf_disp.get('totalDisplacement') )
 	node_position = np.array( hf_disp.get('totalDisplacement ReferencePosition') )
 	da = displacement[:, 0, 0]

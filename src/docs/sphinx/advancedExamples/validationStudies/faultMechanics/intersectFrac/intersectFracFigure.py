@@ -7,6 +7,8 @@ from mpmath import *
 import math
 from math import sin, cos, tan, exp, atan, asin
 from mpl_toolkits.mplot3d import axes3d
+import os
+import argparse
 
 
 class Sneddon:
@@ -87,10 +89,23 @@ def getFractureGeometryFromXML(xmlFilePath):
 
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
     # File path
-    hdf5File1Path = "traction_history.hdf5"
-    hdf5File2Path = "displacementJump_history.hdf5"
-    xmlFilePath = "../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml"
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+    hdf5File1Path = outputDir + "/traction_history.hdf5"
+    hdf5File2Path = outputDir + "/displacementJump_history.hdf5"
+    xmlFilePath = geosDir + "/inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml"
 
     # Read HDF5
     # Global Coordinate of Fracture Element Center
