@@ -267,6 +267,7 @@ The figure below compares the results from GEOS (marks) and the corresponding an
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/poromechanics/mandel/mandelFigure.py
 
+.. note:: The python script included above is used to generate the figure shown here. If you want to run this script to verify your results, you will need to run the script from your output directory, and modify the path to the variables `xmlFile1Path` and `xmlFile1Path` in the script to point to the location of the input files on your system. 
 
 
 
