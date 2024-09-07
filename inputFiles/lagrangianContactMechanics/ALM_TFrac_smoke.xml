@@ -16,7 +16,6 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
-        newtonMaxIter="10"
         maxNumConfigurationAttempts="50"
         newtonMaxIter="20"
         lineSearchAction="None"
