@@ -861,4 +861,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOS_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_ */

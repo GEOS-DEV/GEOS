@@ -145,7 +145,7 @@ void CeramicDamage::postInputInitialization()
 
 void CeramicDamage::saveConvergedState() const
 {
-  SolidBase::saveConvergedState();
+  ElasticIsotropic::saveConvergedState();
 }
 
 

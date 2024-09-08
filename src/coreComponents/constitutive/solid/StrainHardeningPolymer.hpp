@@ -390,7 +390,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 unrotatedDeformationGradient[3][3] = { { 0 } };
     LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3>( unrotatedDeformationGradient, rotationTranspose, m_deformationGradient[k] );
 
-    real64 U[6];
+    real64 U[6] = { 0.0 };
     LvArray::tensorOps::denseToSymmetric< 3 >( U, unrotatedDeformationGradient );
 
     real64 stretch[3] = { 0 };
