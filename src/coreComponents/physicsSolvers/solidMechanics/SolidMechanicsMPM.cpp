@@ -5560,7 +5560,7 @@ void SolidMechanicsMPM::updateStress( real64 dt,
     arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
 
     int hyperelasticUpdate = 0;
-    if ( solid.getCatalogName() == "HyperelasticMMS" || solid.getCatalogName() == "Hyperelastic" )
+    if ( solid.getCatalogName() == "HyperelasticMMS" || solid.getCatalogName() == "Hyperelastic" || solid.getCatalogName() == "Chiumenti" )
     {
       hyperelasticUpdate = 1;
     }
@@ -6049,7 +6049,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       bulkModulus = hyperelastic.bulkModulus();
     }
 
-    if( constitutiveModelName == "HyperelasticMMS" ){
+    if( constitutiveModelName == "HyperelasticMMS" || constitutiveModelName == "Chiumenti" ){
       const HyperelasticMMS & hyperelasticMMS = dynamic_cast< const HyperelasticMMS & >( constitutiveModel ); 
       arrayView1d< real64 const > const lambda = hyperelasticMMS.lambda();
       arrayView1d< real64 const > const shearModulus = hyperelasticMMS.shearModulus();

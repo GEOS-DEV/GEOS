@@ -163,6 +163,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/Graphite.hpp
      solid/StrainHardeningPolymer.hpp
+     solid/Chiumenti.hpp
      solid/VonMisesJ.hpp
      solid/CeramicDamage.hpp
      solid/Geomechanics.hpp
@@ -304,6 +305,7 @@ set( constitutive_sources
      solid/SolidInternalEnergy.cpp
      solid/Graphite.cpp
      solid/StrainHardeningPolymer.cpp
+     solid/Chiumenti.cpp
      solid/VonMisesJ.cpp
      solid/CeramicDamage.cpp
      solid/Geomechanics.cpp
