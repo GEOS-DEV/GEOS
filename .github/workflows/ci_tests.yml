@@ -298,7 +298,6 @@ jobs:
           #   DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
           #   DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
           
-          # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
           - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.5.1)
             BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
             CMAKE_BUILD_TYPE: Release
@@ -308,11 +307,10 @@ jobs:
             DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5
             RUNS_ON: streak
             NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia --gpus all -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
             DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
-            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
+            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust force-enable && update-ca-trust extract"
           
-          # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
           - name: Rockylinux CUDA (8, gcc 8.5, cuda 12.5.1)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
@@ -324,7 +322,7 @@ jobs:
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
             DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
-            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"  
+            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust force-enable && extractupdate-ca-trust extract"  
 
           # Below this line, jobs that deploy to Google Cloud.
 
