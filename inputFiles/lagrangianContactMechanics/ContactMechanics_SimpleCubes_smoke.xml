@@ -38,6 +38,10 @@
   <Events
     maxTime="10.0">
     <SoloEvent
+      name="initialPlot"
+      target="/Outputs/siloOutput"/>
+
+    <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
