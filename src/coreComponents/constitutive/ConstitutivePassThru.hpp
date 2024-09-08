@@ -45,6 +45,7 @@
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
 #include "solid/StrainHardeningPolymer.hpp"
+#include "solid/Chiumenti.hpp"
 #include "solid/CeramicDamage.hpp"
 #include "solid/Graphite.hpp"
 #include "solid/VonMisesJ.hpp"
@@ -184,6 +185,7 @@ struct ConstitutivePassThruMPM< ContinuumBase >
   {
     ConstitutivePassThruHandler< Graphite,
                                  CeramicDamage,
+                                 Chiumenti,
                                  StrainHardeningPolymer,
                                  PerfectlyPlastic,
                                  ElasticTransverseIsotropicPressureDependent,
