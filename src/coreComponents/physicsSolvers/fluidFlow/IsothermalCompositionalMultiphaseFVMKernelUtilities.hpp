@@ -541,20 +541,27 @@ struct C1PPUPhaseFlux
     real64 const smoMax = 0.5 * (-potGrad + tmpSqrt);
 
     
-
+    {
       real64 const dMob_dP = dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP][0];
       dPhaseFlux_dP[0] += Ttrans * potGrad * dMob_dP;
-    
+    }
         // dC
 
-
+      {
       arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 >
       dPhaseMobSub = dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][0];
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseFlux_dC[0][jc] += Ttrans * potGrad * dPhaseMobSub[Deriv::dC + jc];
       }
-      
+    }
+    real64 const tmpInv = 1.0 / tmpSqrt;
+    real64 const dSmoMax_x = 0.5 * (1.0 - potGrad * tmpInv);
+
+    // pressure gradient and mobility difference depend on all points in the stencil
+    real64 const dMobDiff_sign[numFluxSupportPoints] = {-1.0, 1.0};
+
+
 
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
@@ -619,14 +626,14 @@ struct C1PPUPhaseFlux
 
     // dP
 
-
+{
       real64 const dMob_dP = LvArray::tensorOps::AiBi< 3 >( dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP], faceNormal );
       dPhaseFlux_dP[0] += Ttrans * potGrad * dMob_dP;
-
+    }
     // dC
 
 
-
+{
       arraySlice2d< real64 const, constitutive::relperm::USD_MOB_DC - 2 >
       dPhaseMobSub = dPhaseMob[seri[0]][sesri[0]][sei[0]][ip];
       for( integer jc = 0; jc < numComp; ++jc )
@@ -688,7 +695,7 @@ struct C1PPUPhaseFlux
                                  , dPhaseFlux_dP, dPhaseFlux_dC, compFlux, dCompFlux_dP, dCompFlux_dC );
       }
     
-
+    }
 
 
 
