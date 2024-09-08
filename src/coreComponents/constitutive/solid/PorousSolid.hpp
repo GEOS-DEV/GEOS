@@ -54,8 +54,7 @@ public:
    */
   PorousSolidUpdates( SOLID_TYPE const & solidModel,
                       BiotPorosity const & porosityModel,
-                      ConstantPermeability const & permModel
-                      ):
+                      ConstantPermeability const & permModel ):
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel ),
     m_drainedTECTableName( solidModel.getDrainedTECTableName() )
   {}
@@ -230,7 +229,7 @@ public:
 
 private:
 
-  string m_drainedTECTableName;
+  char const* m_drainedTECTableName;
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;
@@ -312,7 +311,8 @@ private:
     real64 dThermalExpansionCoefficient_dTemperature;
     real64 thermalExpansionCoefficient;
 
-    if( m_drainedTECTableName.empty() )
+    //if( m_drainedTECTableName.empty() )
+    if( m_drainedTECTableName == nullptr || m_drainedTECTableName[0] == '\0' )
     {
       real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
       real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
@@ -323,7 +323,7 @@ private:
     else
     {
       FunctionManager & functionManager = FunctionManager::getInstance();
-      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( m_drainedTECTableName.c_str() );
+      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( m_drainedTECTableName );
       drainedLinearTECTable.setInterpolationMethod( TableFunction::InterpolationType::Linear );
       TableFunction::KernelWrapper TECWrapper = drainedLinearTECTable.createKernelWrapper();
 

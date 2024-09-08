@@ -715,10 +715,10 @@ public:
    * @brief Get Thermal Expansion Coefficient table name
    * @return the Thermal Expansion Coefficient table name
    */
-  //GEOS_HOST_DEVICE
-  virtual string getDrainedTECTableName() const
+  GEOS_HOST_DEVICE
+  virtual char const* getDrainedTECTableName() const
   {
-    return m_drainedTECTableName;
+    return m_drainedTECTableName.c_str();
   }
 
 protected:
