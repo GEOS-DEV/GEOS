@@ -8,7 +8,7 @@ on:
       BUILD_SHARED_LIBS:
         required: false
         type: string
-        default: 'ON'
+        default: 'OFF'
       BUILD_TYPE:
         required: false
         type: string
