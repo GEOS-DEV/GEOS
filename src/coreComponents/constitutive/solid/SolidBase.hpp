@@ -715,7 +715,7 @@ public:
    * @brief Get Thermal Expansion Coefficient table name
    * @return the Thermal Expansion Coefficient table name
    */
-  virtual char const* getDrainedTECTableName() const
+  virtual char const * getDrainedTECTableName() const
   {
     return m_drainedTECTableName.c_str();
   }

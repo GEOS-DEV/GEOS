@@ -168,19 +168,33 @@ public:
                         dTotalStress_dTemperature, // To pass something here
                         stiffness );
 
+    // Update the Thermal Expnasion Coefficient w.r.t. temperature change (TEC)
+    real64 thermalExpansionCoefficient;
+
+    if( m_drainedTECTableName == nullptr || m_drainedTECTableName[0] == '\0' )
+    {
+      real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+      real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
+
+      real64 dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
+      thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
+    }
+    else
+    {
+      real64 const tmpTemperatureArray[1] = {temperature};
+      real64 dTEC_dT[1] = {0};
+      thermalExpansionCoefficient = m_TECWrapper.compute( tmpTemperatureArray, dTEC_dT );
+    }
+
     // Compute total stress increment for the porosity update
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
-    real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
-    real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
-
-    real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
-
     real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
                                             - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
+
+    // Porosity update
     m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
   }
 
@@ -230,7 +244,7 @@ public:
 
 private:
 
-  char const* m_drainedTECTableName;
+  char const * m_drainedTECTableName;
   TableFunction::KernelWrapper m_TECWrapper;
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
@@ -313,7 +327,6 @@ private:
     real64 dThermalExpansionCoefficient_dTemperature;
     real64 thermalExpansionCoefficient;
 
-    //if( m_drainedTECTableName.empty() )
     if( m_drainedTECTableName == nullptr || m_drainedTECTableName[0] == '\0' )
     {
       real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
@@ -324,11 +337,6 @@ private:
     }
     else
     {
-      /**FunctionManager & functionManager = FunctionManager::getInstance();
-      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( m_drainedTECTableName );
-      drainedLinearTECTable.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-      TableFunction::KernelWrapper TECWrapper = drainedLinearTECTable.createKernelWrapper();*/
-
       real64 const tmpTemperatureArray[1] = {temperature};
       real64 dTEC_dT[1] = {0};
       thermalExpansionCoefficient = m_TECWrapper.compute( tmpTemperatureArray, dTEC_dT );
