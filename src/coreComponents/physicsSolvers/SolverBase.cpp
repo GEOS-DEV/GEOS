@@ -253,7 +253,10 @@ bool SolverBase::execute( real64 const time_n,
    * Reset counter indicating the number of cycles since the last timestep cut
    * when the new timestep. "-1" means that no time-step cut has ocurred.
    * */
-  if ( dt < m_nextDt ) { m_lastDtCut = -1; }
+  if( dt < m_nextDt )
+  {
+    m_lastDtCut = -1;
+  }
 
   real64 dtRemaining = dt;
   real64 nextDt = dt;
@@ -320,7 +323,10 @@ bool SolverBase::execute( real64 const time_n,
   m_nextDt = setNextDt( nextDt, domain );
 
   // Increase counter to indicate how many cycles since the last timestep cut
-  if ( m_lastDtCut >= 0 ) { m_lastDtCut++; }
+  if( m_lastDtCut >= 0 )
+  {
+    m_lastDtCut++;
+  }
 
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDt );
 
