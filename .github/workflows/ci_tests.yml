@@ -324,7 +324,7 @@ jobs:
           #   DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"  
 
           - name: Pangea 3 (AlmaLinux 8.8, gcc 9.4.0, open-mpi 4.1.2, cuda 11.5.0, openblas 0.3.10)
-            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             BUILD_GENERATOR: "--makefile"
             DOCKER_REPOSITORY: geosx/pangea3-almalinux8-gcc9.4-openmpi4.1.2-cuda11.5.0-openblas0.3.18
