@@ -342,8 +342,10 @@ protected:
   arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dGlobalCompFraction_dGlobalCompDensity;
 
   // Views on component densities
+  bool m_useMass;
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens_n;
+  arrayView1d< real64 const > m_componentMolarWeight;
 
   /// Number of components
   localIndex const m_numComponents;
