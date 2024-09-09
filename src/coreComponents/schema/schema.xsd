@@ -825,8 +825,8 @@
 					<xsd:selector xpath="ReactiveBrineThermal" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveSinglePhaseConstantThermalConductivityUniqueName">
-					<xsd:selector xpath="SinglePhaseConstantThermalConductivity" />
+				<xsd:unique name="domainConstitutiveSinglePhaseThermalConductivityUniqueName">
+					<xsd:selector xpath="SinglePhaseThermalConductivity" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveSlipDependentPermeabilityUniqueName">
@@ -4223,7 +4223,7 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
 			<xsd:element name="ReactiveBrine" type="ReactiveBrineType" />
 			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
-			<xsd:element name="SinglePhaseConstantThermalConductivity" type="SinglePhaseConstantThermalConductivityType" />
+			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
@@ -5454,9 +5454,13 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseConstantThermalConductivityType">
-		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]-->
-		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
+	<xsd:complexType name="SinglePhaseThermalConductivityType">
+		<!--defaultThermalConductivityComponents => xx, yy, and zz diagonal components of the default thermal conductivity tensor [J/(s.m.K)]-->
+		<xsd:attribute name="defaultThermalConductivityComponents" type="R1Tensor" use="required" />
+		<!--referenceTemperature => The reference temperature at which the conductivity components are equal to the default values-->
+		<xsd:attribute name="referenceTemperature" type="real64" default="0" />
+		<!--thermalConductivityGradientComponents => xx, yy, and zz diagonal components of the thermal conductivity gradient tensor w.r.t. temperature [J/(s.m.K^2)]-->
+		<xsd:attribute name="thermalConductivityGradientComponents" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

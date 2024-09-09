@@ -760,11 +760,6 @@ Input Schema Definitions
 .. include:: ../../coreComponents/schema/docs/Silo.rst
 
 
-.. _XML_SinglePhaseConstantThermalConductivity:
-
-.. include:: ../../coreComponents/schema/docs/SinglePhaseConstantThermalConductivity.rst
-
-
 .. _XML_SinglePhaseFVM:
 
 .. include:: ../../coreComponents/schema/docs/SinglePhaseFVM.rst
@@ -838,6 +833,13 @@ Input Schema Definitions
 .. _XML_SinglePhaseStatistics:
 
 .. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics.rst
+
+
+.. _XML_SinglePhaseThermalConductivity:
+
+Element: SinglePhaseThermalConductivity
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermalConductivity.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -1829,11 +1831,6 @@ Datastructure Definitions
 .. include:: ../../coreComponents/schema/docs/Silo_other.rst
 
 
-.. _DATASTRUCTURE_SinglePhaseConstantThermalConductivity:
-
-.. include:: ../../coreComponents/schema/docs/SinglePhaseConstantThermalConductivity_other.rst
-
-
 .. _DATASTRUCTURE_SinglePhaseFVM:
 
 .. include:: ../../coreComponents/schema/docs/SinglePhaseFVM_other.rst
@@ -1907,6 +1904,13 @@ Datastructure Definitions
 .. _DATASTRUCTURE_SinglePhaseStatistics:
 
 .. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseThermalConductivity:
+
+Datastructure: SinglePhaseThermalConductivity
+=============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:
