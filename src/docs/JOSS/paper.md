@@ -153,7 +153,7 @@ Evaluation of reservoir performance and containment risks associated with the in
 As an example of typical complexities in carbon storage reservoirs, the 11th Society of Petroleum Engineers Comparative Solution Project (SPE11) [@Nordbotten2024] provides a benchmark example for evaluating the the predictions of carbon storage simulators.
 The goal of GEOS is to provide the global community with an exascale capable open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir.
 To this end, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
-Open source projects such as OPM [@RASMUSSEN2021159], OpenGeoSys [@ogs:6.5.2], DuMux [@Kochetal2020Dumux], Darts [@Voskov2024] are example efforts that share similar objectives.
+Open source projects such as OPM [@RASMUSSEN2021159], OpenGeoSys [@ogs:6.5.2], DuMux [@Kochetal2020Dumux] and Darts [@Voskov2024] are example efforts that share similar objectives.
 However, GEOS stands out in two key areas: the explicit fault modeling coupled with flow and mechanical deformation, and the focus on  performance portability on platforms ranging from workstations to exascale supercomputers.
 
 
@@ -174,7 +174,7 @@ Currently, in GEOS only the hypre interface is actively maintained.
 For every multi-physics problem involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypre as presented by [@BUI:2020;@BUI:2021114111].
 
 The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA [@Beckingsale:2019], CHAI [@CHAI:2023], and Umpire [@Beckingsale:2020].
-The RAJA performance portability layer provides performance portable [@PerformancePortablityOrg] kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
+The RAJA performance portability layer provides [performance portable](https://performanceportability.org) kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
 The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e., host and device memory).
 Through this strategy, GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with near-optimal of performance.
 
