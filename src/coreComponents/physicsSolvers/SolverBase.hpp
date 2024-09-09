@@ -1012,7 +1012,7 @@ protected:
   real64 m_nextDt;
 
   /// Number of cycles since last timestep cut
-  integer m_lastDtCut;
+  integer m_numTimestepSinceLastDtCut;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
