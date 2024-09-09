@@ -340,32 +340,6 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
 
 HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix const & mat )
 {
-  GEOS_MARK_FUNCTION;
-
-  if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_params.mgr.separateComponents )
-  {
-    GEOS_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
-    HypreMatrix Pu;
-    HypreMatrix Auu;
-    {
-      Stopwatch timer( m_makeRestrictorTime );
-      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.comm(), true, Pu );
-    }
-    {
-      Stopwatch timer( m_computeAuuTime );
-      mat.multiplyPtAP( Pu, Auu );
-    }
-    {
-      Stopwatch timer( m_componentFilterTime );
-      Auu.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
-    }
-  }
-  else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
-  {
-    Stopwatch timer( m_componentFilterTime );
-    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
-    return m_precondMatrix;
-  }
   return mat;
 }
 
