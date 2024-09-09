@@ -57,7 +57,10 @@ public:
                       ConstantPermeability const & permModel ):
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel ),
     m_drainedTECTableName( solidModel.getDrainedTECTableName() ),
-    m_TECWrapper( FunctionManager::getInstance().getGroup< TableFunction >( solidModel.getDrainedTECTableName() ).createKernelWrapper() )
+    m_TECWrapper(
+      solidModel.getDrainedTECTableName() == nullptr || solidModel.getDrainedTECTableName()[0] == '\0' ?
+      TableFunction::KernelWrapper():
+      FunctionManager::getInstance().getGroup< TableFunction >( solidModel.getDrainedTECTableName()).createKernelWrapper() )
   {}
 
   GEOS_HOST_DEVICE
