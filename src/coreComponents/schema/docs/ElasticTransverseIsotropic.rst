@@ -1,5 +1,5 @@
-Element: ElasticTransverseIsotropic
-===================================
+XML Element: ElasticTransverseIsotropic
+=======================================
 
 ================================== ========= ======== ==================================================================== 
 Name                               Type      Default  Description                                                          

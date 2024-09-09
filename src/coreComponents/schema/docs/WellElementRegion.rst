@@ -1,5 +1,5 @@
-Element: WellElementRegion
-==========================
+XML Element: WellElementRegion
+==============================
 
 ============ ================== ======== =========================================== 
 Name         Type               Default  Description                                 

@@ -1,5 +1,5 @@
-Element: SolidMechanicsStatistics
-=================================
+XML Element: SolidMechanicsStatistics
+=====================================
 
 =============== ============ ======== =========================================== 
 Name            Type         Default  Description                                 

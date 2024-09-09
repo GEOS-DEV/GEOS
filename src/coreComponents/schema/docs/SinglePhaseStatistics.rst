@@ -1,5 +1,5 @@
-Element: SinglePhaseStatistics
-==============================
+XML Element: SinglePhaseStatistics
+==================================
 
 ============== ============ ======== =========================================== 
 Name           Type         Default  Description                                 

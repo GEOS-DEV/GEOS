@@ -1,5 +1,5 @@
-Element: CompressibleSolidSlipDependentPermeability
-===================================================
+XML Element: CompressibleSolidSlipDependentPermeability
+=======================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

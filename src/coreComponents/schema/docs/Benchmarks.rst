@@ -1,5 +1,5 @@
-Element: Benchmarks
-===================
+XML Element: Benchmarks
+=======================
 
 ======= ==== ======= ================== 
 Name    Type Default Description        

@@ -1,5 +1,5 @@
-Element: Cylinder
-=================
+XML Element: Cylinder
+=====================
 
 ================ ========= ======== =============================================== 
 Name             Type      Default  Description                                     

@@ -1,5 +1,5 @@
-Element: CompressibleSolidPressurePermeability
-==============================================
+XML Element: CompressibleSolidPressurePermeability
+==================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

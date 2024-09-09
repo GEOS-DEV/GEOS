@@ -1,5 +1,5 @@
-Element: PorousViscoModifiedCamClay
-===================================
+XML Element: PorousViscoModifiedCamClay
+=======================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

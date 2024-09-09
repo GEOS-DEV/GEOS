@@ -1,5 +1,5 @@
-Element: MultiphasePoromechanicsInitialization
-==============================================
+XML Element: MultiphasePoromechanicsInitialization
+==================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

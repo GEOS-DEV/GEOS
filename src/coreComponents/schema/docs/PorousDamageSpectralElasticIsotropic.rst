@@ -1,5 +1,5 @@
-Element: PorousDamageSpectralElasticIsotropic
-=============================================
+XML Element: PorousDamageSpectralElasticIsotropic
+=================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

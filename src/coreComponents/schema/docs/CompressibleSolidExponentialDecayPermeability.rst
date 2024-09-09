@@ -1,5 +1,5 @@
-Element: CompressibleSolidExponentialDecayPermeability
-======================================================
+XML Element: CompressibleSolidExponentialDecayPermeability
+==========================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

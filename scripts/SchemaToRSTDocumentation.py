@@ -281,7 +281,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
     for type_name in sorted(input_attribute_map.keys()):
         # Write the individual tables
         table_values = buildTableValues(input_attribute_map[type_name])
-        writeTableRST( type_name, '%s/%s.rst' % (output_folder, type_name), 'Element', table_values)
+        writeTableRST( type_name, '%s/%s.rst' % (output_folder, type_name), 'XML Element', table_values)
         touched_files.append('%s.rst' % (type_name))
 
         # Write to the master list

@@ -837,8 +837,6 @@ Input Schema Definitions
 
 .. _XML_SinglePhaseThermalConductivity:
 
-Element: SinglePhaseThermalConductivity
-=======================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseThermalConductivity.rst
 
 
@@ -1908,8 +1906,6 @@ Datastructure Definitions
 
 .. _DATASTRUCTURE_SinglePhaseThermalConductivity:
 
-Datastructure: SinglePhaseThermalConductivity
-=============================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseThermalConductivity_other.rst
 
 

@@ -1,5 +1,5 @@
-Element: ElementRegions
-=======================
+XML Element: ElementRegions
+===========================
 
 ==================== ==== ======= =============================== 
 Name                 Type Default Description                     

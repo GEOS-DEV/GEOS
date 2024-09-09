@@ -1,5 +1,5 @@
-Element: Problem
-================
+XML Element: Problem
+====================
 
 =================== ==== ================ ============================== 
 Name                Type Default          Description                    

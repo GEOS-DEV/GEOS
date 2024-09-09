@@ -1,5 +1,5 @@
-Element: quartz
-===============
+XML Element: quartz
+===================
 
 ==== ==== ======= ============== 
 Name Type Default Description    

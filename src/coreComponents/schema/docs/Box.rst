@@ -1,5 +1,5 @@
-Element: Box
-============
+XML Element: Box
+================
 
 ====== ========= ======== =========================================== 
 Name   Type      Default  Description                                 

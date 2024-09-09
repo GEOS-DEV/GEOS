@@ -1,5 +1,5 @@
-Element: PorousExtendedDruckerPrager
-====================================
+XML Element: PorousExtendedDruckerPrager
+========================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

@@ -1,5 +1,5 @@
-Element: lassen
-===============
+XML Element: lassen
+===================
 
 ==== ==== ======= ============== 
 Name Type Default Description    

@@ -1,5 +1,5 @@
-Element: Included
-=================
+XML Element: Included
+=====================
 
 ==== ==== ======= =============== 
 Name Type Default Description     

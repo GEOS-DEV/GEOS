@@ -1,5 +1,5 @@
-Element: ParticleRegion
-=======================
+XML Element: ParticleRegion
+===========================
 
 ============== ============ ======== =========================================== 
 Name           Type         Default  Description                                 

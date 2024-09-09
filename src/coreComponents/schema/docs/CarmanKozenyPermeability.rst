@@ -1,5 +1,5 @@
-Element: CarmanKozenyPermeability
-=================================
+XML Element: CarmanKozenyPermeability
+=====================================
 
 ================ ========= ======== ===================================================== 
 Name             Type      Default  Description                                           

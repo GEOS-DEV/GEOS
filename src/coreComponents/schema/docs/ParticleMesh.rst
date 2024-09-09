@@ -1,5 +1,5 @@
-Element: ParticleMesh
-=====================
+XML Element: ParticleMesh
+=========================
 
 ================== ============ ======== =========================================== 
 Name               Type         Default  Description                                 

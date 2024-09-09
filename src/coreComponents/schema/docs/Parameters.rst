@@ -1,5 +1,5 @@
-Element: Parameters
-===================
+XML Element: Parameters
+=======================
 
 ========= ==== ======= ==================== 
 Name      Type Default Description          

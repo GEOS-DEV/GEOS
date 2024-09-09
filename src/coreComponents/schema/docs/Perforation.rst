@@ -1,5 +1,5 @@
-Element: Perforation
-====================
+XML Element: Perforation
+========================
 
 ================ ========= ======== ================================================= 
 Name             Type      Default  Description                                       

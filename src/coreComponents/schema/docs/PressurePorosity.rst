@@ -1,5 +1,5 @@
-Element: PressurePorosity
-=========================
+XML Element: PressurePorosity
+=============================
 
 ======================== ========= ======== ============================================ 
 Name                     Type      Default  Description                                  

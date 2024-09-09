@@ -1,5 +1,5 @@
-Element: PorousElasticOrthotropic
-=================================
+XML Element: PorousElasticOrthotropic
+=====================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

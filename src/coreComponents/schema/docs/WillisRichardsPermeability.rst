@@ -1,5 +1,5 @@
-Element: WillisRichardsPermeability
-===================================
+XML Element: WillisRichardsPermeability
+=======================================
 
 =================== ========= ======== ========================================================= 
 Name                Type      Default  Description                                               

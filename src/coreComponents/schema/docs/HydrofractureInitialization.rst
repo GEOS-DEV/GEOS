@@ -1,5 +1,5 @@
-Element: HydrofractureInitialization
-====================================
+XML Element: HydrofractureInitialization
+========================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

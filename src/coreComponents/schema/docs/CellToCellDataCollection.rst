@@ -1,5 +1,5 @@
-Element: CellToCellDataCollection
-=================================
+XML Element: CellToCellDataCollection
+=====================================
 
 ============== ============ ======== =================================================== 
 Name           Type         Default  Description                                         

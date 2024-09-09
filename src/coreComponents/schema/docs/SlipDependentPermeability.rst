@@ -1,5 +1,5 @@
-Element: SlipDependentPermeability
-==================================
+XML Element: SlipDependentPermeability
+======================================
 
 =================== ========= ======== =========================================== 
 Name                Type      Default  Description                                 

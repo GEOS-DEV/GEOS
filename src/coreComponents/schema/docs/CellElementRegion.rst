@@ -1,5 +1,5 @@
-Element: CellElementRegion
-==========================
+XML Element: CellElementRegion
+==============================
 
 =============== ================== ======== =========================================== 
 Name            Type               Default  Description                                 

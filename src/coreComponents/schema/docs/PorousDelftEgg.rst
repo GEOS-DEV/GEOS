@@ -1,5 +1,5 @@
-Element: PorousDelftEgg
-=======================
+XML Element: PorousDelftEgg
+===========================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

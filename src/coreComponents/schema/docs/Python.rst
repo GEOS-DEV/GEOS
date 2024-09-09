@@ -1,5 +1,5 @@
-Element: Python
-===============
+XML Element: Python
+===================
 
 =============== ========= ======== =========================================== 
 Name            Type      Default  Description                                 

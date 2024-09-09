@@ -1,5 +1,5 @@
-Element: BrooksCoreyRelativePermeability
-========================================
+XML Element: BrooksCoreyRelativePermeability
+============================================
 
 ====================== ================== ======== =============================================================== 
 Name                   Type               Default  Description                                                     

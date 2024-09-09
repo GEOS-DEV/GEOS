@@ -1,5 +1,5 @@
-Element: Functions
-==================
+XML Element: Functions
+======================
 
 ========================== ==== ======= ===================================== 
 Name                       Type Default Description                           

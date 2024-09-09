@@ -1,5 +1,5 @@
-Element: LinearIsotropicDispersion
-==================================
+XML Element: LinearIsotropicDispersion
+======================================
 
 ======================== ========= ======== =========================================== 
 Name                     Type      Default  Description                                 

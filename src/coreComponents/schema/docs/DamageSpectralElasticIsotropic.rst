@@ -1,5 +1,5 @@
-Element: DamageSpectralElasticIsotropic
-=======================================
+XML Element: DamageSpectralElasticIsotropic
+===========================================
 
 ======================= ========= ======== ==================================================================== 
 Name                    Type      Default  Description                                                          

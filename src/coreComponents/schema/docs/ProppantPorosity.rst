@@ -1,5 +1,5 @@
-Element: ProppantPorosity
-=========================
+XML Element: ProppantPorosity
+=============================
 
 ======================== ========= ======== =========================================== 
 Name                     Type      Default  Description                                 

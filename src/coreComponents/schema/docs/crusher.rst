@@ -1,5 +1,5 @@
-Element: crusher
-================
+XML Element: crusher
+====================
 
 ==== ==== ======= ============== 
 Name Type Default Description    

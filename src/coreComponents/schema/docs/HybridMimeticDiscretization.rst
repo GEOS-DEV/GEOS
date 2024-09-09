@@ -1,5 +1,5 @@
-Element: HybridMimeticDiscretization
-====================================
+XML Element: HybridMimeticDiscretization
+========================================
 
 ================ ========= ======== =================================================== 
 Name             Type      Default  Description                                         

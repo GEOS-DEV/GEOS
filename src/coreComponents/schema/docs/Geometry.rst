@@ -1,5 +1,5 @@
-Element: Geometry
-=================
+XML Element: Geometry
+=====================
 
 ================= ==== ======= ============================ 
 Name              Type Default Description                  

@@ -1,5 +1,5 @@
-Element: ExtendedDruckerPrager
-==============================
+XML Element: ExtendedDruckerPrager
+==================================
 
 ============================ ========= ======== ==================================================================== 
 Name                         Type      Default  Description                                                          

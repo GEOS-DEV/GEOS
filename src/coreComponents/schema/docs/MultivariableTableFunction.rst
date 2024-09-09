@@ -1,5 +1,5 @@
-Element: MultivariableTableFunction
-===================================
+XML Element: MultivariableTableFunction
+=======================================
 
 ============= ================== ======== =========================================== 
 Name          Type               Default  Description                                 

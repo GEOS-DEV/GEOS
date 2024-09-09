@@ -1,5 +1,5 @@
-Element: SinglePhasePoromechanicsConformingFracturesInitialization
-==================================================================
+XML Element: SinglePhasePoromechanicsConformingFracturesInitialization
+======================================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

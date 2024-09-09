@@ -1,5 +1,5 @@
-Element: PorousElasticIsotropic
-===============================
+XML Element: PorousElasticIsotropic
+===================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

@@ -1,5 +1,5 @@
-Element: FieldSpecifications
-============================
+XML Element: FieldSpecifications
+================================
 
 ====================== ==== ======= ================================= 
 Name                   Type Default Description                       

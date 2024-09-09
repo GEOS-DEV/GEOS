@@ -1,5 +1,5 @@
-Element: SinglePhasePoromechanicsEmbeddedFracturesInitialization
-================================================================
+XML Element: SinglePhasePoromechanicsEmbeddedFracturesInitialization
+====================================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

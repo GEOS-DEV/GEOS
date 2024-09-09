@@ -1,5 +1,5 @@
-Element: ExponentialDecayPermeability
-=====================================
+XML Element: ExponentialDecayPermeability
+=========================================
 
 =================== ========= ======== =========================================== 
 Name                Type      Default  Description                                 

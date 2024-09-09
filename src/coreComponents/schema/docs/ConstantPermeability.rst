@@ -1,5 +1,5 @@
-Element: ConstantPermeability
-=============================
+XML Element: ConstantPermeability
+=================================
 
 ====================== ========= ======== =========================================================== 
 Name                   Type      Default  Description                                                 

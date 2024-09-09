@@ -1,5 +1,5 @@
-Element: CompositionalMultiphaseReservoirPoromechanicsInitialization
-====================================================================
+XML Element: CompositionalMultiphaseReservoirPoromechanicsInitialization
+========================================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

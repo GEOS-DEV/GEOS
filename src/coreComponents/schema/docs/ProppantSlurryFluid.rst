@@ -1,5 +1,5 @@
-Element: ProppantSlurryFluid
-============================
+XML Element: ProppantSlurryFluid
+================================
 
 ========================= ============ ======== ================================================ 
 Name                      Type         Default  Description                                      

@@ -1,5 +1,5 @@
-Element: PorousViscoDruckerPrager
-=================================
+XML Element: PorousViscoDruckerPrager
+=====================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

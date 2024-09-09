@@ -1,5 +1,5 @@
-Element: SinglePhaseReservoirPoromechanicsInitialization
-========================================================
+XML Element: SinglePhaseReservoirPoromechanicsInitialization
+============================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

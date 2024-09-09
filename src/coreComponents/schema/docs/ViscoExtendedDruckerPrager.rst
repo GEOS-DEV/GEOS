@@ -1,5 +1,5 @@
-Element: ViscoExtendedDruckerPrager
-===================================
+XML Element: ViscoExtendedDruckerPrager
+=======================================
 
 ============================ ========= ======== ==================================================================== 
 Name                         Type      Default  Description                                                          

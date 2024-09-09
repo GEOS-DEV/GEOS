@@ -1,5 +1,5 @@
-Element: Restart
-================
+XML Element: Restart
+====================
 
 =============== ========= ======== =========================================== 
 Name            Type      Default  Description                                 

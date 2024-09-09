@@ -1,5 +1,5 @@
-Element: TwoPointFluxApproximation
-==================================
+XML Element: TwoPointFluxApproximation
+======================================
 
 =================== ==================== ======== =============================================================== 
 Name                Type                 Default  Description                                                     

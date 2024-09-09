@@ -1,5 +1,5 @@
-Element: CompressibleSolidParallelPlatesPermeability
-====================================================
+XML Element: CompressibleSolidParallelPlatesPermeability
+========================================================
 
 ============================ ============ ======== =========================================== 
 Name                         Type         Default  Description                                 

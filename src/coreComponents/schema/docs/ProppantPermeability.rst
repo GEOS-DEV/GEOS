@@ -1,5 +1,5 @@
-Element: ProppantPermeability
-=============================
+XML Element: ProppantPermeability
+=================================
 
 ======================== ========= ======== =========================================== 
 Name                     Type      Default  Description                                 

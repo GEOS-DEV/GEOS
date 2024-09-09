@@ -1,5 +1,5 @@
-Element: Outputs
-================
+XML Element: Outputs
+====================
 
 =========== ==== ======= ====================== 
 Name        Type Default Description            

@@ -1,5 +1,5 @@
-Element: SolidMechanicsStateReset
-=================================
+XML Element: SolidMechanicsStateReset
+=====================================
 
 =================== ============ ======== ============================================ 
 Name                Type         Default  Description                                  
