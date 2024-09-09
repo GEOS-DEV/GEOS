@@ -169,25 +169,49 @@ void TableTextFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Col
   for( size_t idxRow = 0; idxRow < realNbColumn; idxRow++ )
   {
     auto & column = columns[idxRow];
-    std::cout << " trasnform " << realNbColumn << column.m_parameter.columnName<< std::endl;
     if( !column.subColumn.empty() )
     {
+      std::cout << "ezrzrezre" << std::endl;
       auto startSubColumn = columnsValues.begin() + currentColumn;
       auto endSubColumn = columnsValues.begin() + currentColumn + column.m_parameter.subColumns.size();
       subColumnValues = std::vector< std::vector< std::string > >( startSubColumn, endSubColumn );
-      std::cout << " trasnform " << std::endl;
       fillTableColumnsFromRows( column.subColumn, subColumnValues );
 
-      std::vector< std::string > concatenatedValues;
-
-      std::transform( subColumnValues.begin(), subColumnValues.end(), std::back_inserter( concatenatedValues ),
-                      []( const auto & subVector ) { return std::accumulate( subVector.begin(), subVector.end(), std::string{} ); } );
-      for( const auto & value : concatenatedValues )
+      std::vector< std::vector< std::string > > tSubColumnValues( subColumnValues[0].size(), std::vector< std::string >( subColumnValues.size()));
+      transpose( tSubColumnValues, subColumnValues );
+      for( const auto & rowValues : tSubColumnValues )
       {
-        std::cout << value << " ";
+        std::vector< std::string > concatenatedValues;
+        for( const auto & vv : rowValues )
+        {
+          concatenatedValues.push_back( vv );
+          std::cout << " push_back "<< vv << " " << std::endl;
+        }
+
+        std::string maxStringCell = std::accumulate( concatenatedValues.begin(), concatenatedValues.end(), std::string(),
+                                                     []( std::string acc, const std::string & str ) {
+          if( acc.empty())
+          {
+            std::cout << "acc.empty() " << str << std::endl;
+            return str;
+          }
+          else
+          {
+            std::cout << "!acc.empty() " << acc << "  " << str <<std::endl;
+            return acc + "     " + str;
+          }
+        } );
+        std::cout << "maxStringCell " << maxStringCell << std::endl;
+        std::cout << std::endl;
+        if( column.m_maxStringSize.length() < maxStringCell.length())
+        {
+          column.m_maxStringSize = maxStringCell;
+        }
+        std::cout << "sdfsdfds" << column.m_parameter.columnName << " " << column.m_maxStringSize << std::endl;
+        column.m_columnValues = concatenatedValues;
       }
 
-      column.m_columnValues = concatenatedValues;
+
       currentColumn += column.subColumn.size();
     }
     else
@@ -197,14 +221,6 @@ void TableTextFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Col
 
   }
 
-  for( const auto & row : columnsValues )
-  {
-    for( const auto & value : row )
-    {
-      std::cout << value << " ";
-    }
-    std::cout << std::endl;
-  }
 }
 
 string TableTextFormatter::layoutToString() const
@@ -226,6 +242,8 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
   std::vector< std::vector< string > > tableDataRows = tableData.getTableDataRows();
   std::vector< string > const & msgTableError        = tableData.getErrorMsgs();
   integer const nbValuesRows                         = tableDataRows.size();
+
+  std::cout << "V AU "<<  m_tableLayout.getTableOpts().maxTableColumns << std::endl;
   formatColumnsFromLayout( columns, tableDataRows );
 
   std::vector< std::vector< std::string > > columnsValues( tableDataRows[0].size(), std::vector< std::string >( tableDataRows.size()));
@@ -320,13 +338,13 @@ void TableTextFormatter::findAndSetMaxStringSize( std::vector< TableLayout::Colu
     auto const maxStringSizeHeader = *std::max_element( column.m_parameter.splitColumnNameLines.begin(),
                                                         column.m_parameter.splitColumnNameLines.end(),
                                                         []( const auto & a, const auto & b ) {return a.size() < b.size();} );
-    column.m_maxStringSize = maxStringSizeHeader;
+    if( column.m_maxStringSize.length() < maxStringSizeHeader.length())
+      column.m_maxStringSize = maxStringSizeHeader;
     maxStringsColumn.push_back( column.m_parameter.columnName );
   }
 
   for( auto & column : columns )
   {
-
     for( auto const & cell : column.m_columnValues )
     {
       if( column.m_maxStringSize.length() < cell.length())
@@ -482,6 +500,24 @@ void TableTextFormatter::outputTopRows( std::ostringstream & tableOutput,
   }
 }
 
+void TableTextFormatter::outputSubSection( std::vector< TableLayout::Column > const & columns,
+                                           std::ostringstream & tableOutput,
+                                           size_t idxRow
+// TableLayout::Section const section
+                                           ) const
+{
+  integer const columnMargin = m_tableLayout.getColumnMargin();
+  for( auto const & column : columns )
+  {
+    std::cout << " outputSubSection " << column.m_columnValues[idxRow] <<   std::endl;
+    tableOutput << buildCell( column.m_parameter.alignment,
+                              column.m_columnValues[idxRow],
+                              column.m_maxStringSize.length() );
+    tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
+  }
+
+}
+
 void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > const & columns,
                                             string_view sectionSeparatingLine,
                                             std::ostringstream & tableOutput,
@@ -490,34 +526,46 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
 {
   integer const columnMargin = m_tableLayout.getColumnMargin();
   integer const borderMargin = m_tableLayout.getBorderMargin();
-  size_t const nbColumns = columns.size();
+  // size_t const nbColumns = section == TableLayout::Section::header ? columns.size() :  m_tableLayout.getTableOpts().maxTableColumns;
   bool containSubColumn = false;
-
-  std::cout << " tt" << nbColumns  << std::endl;
-  std::cout << " gg" << columns.size() - 1 <<std::endl;
   for( auto idxRow = 0; idxRow< nbRows; ++idxRow )
   {
     // Append the left border
     tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, 1 +  borderMargin );
-    for( std::size_t idxColumn = 0; idxColumn < nbColumns; ++idxColumn )
+    //std::cout << "nbColumns  "<< nbColumns << std::endl;
+
+
+    for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
     {
       auto & column = columns[idxColumn];
-      TableLayout::Column const currentColumn = column;
+      std::cout << "column.m_columnValues  "<<  column.m_parameter.columnName << std::endl;
 
-      //il est vide car si sous colonnes, m_columnValues = { } :(
-      auto const & columnContent = section == TableLayout::Section::header ?
-                                   column.m_parameter.splitColumnNameLines :
-                                   column.m_columnValues;
-      string cell = columnContent.at( idxRow );
-      integer const cellSize = currentColumn.m_maxStringSize.length();
-
-      tableOutput << buildCell( currentColumn.m_parameter.alignment, cell, cellSize );
-
-      // Add space between column
-      if( idxColumn < columns.size() - 1 )
+      if( section == TableLayout::Section::values && !column.subColumn.empty()) //TODO oeut etre commenté section == //
+                                                                                // TableLayout::Section::value
       {
-        tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
+        outputSubSection( column.subColumn, tableOutput, idxRow /*TableLayout::Section::values*/ );
       }
+      else
+      {
+        TableLayout::Column const currentColumn = column;
+
+        auto const & columnContent = section == TableLayout::Section::header ?
+                                     column.m_parameter.splitColumnNameLines :
+                                     column.m_columnValues;
+        string cell = columnContent.at( idxRow );
+        integer const cellSize = currentColumn.m_maxStringSize.length();
+
+        tableOutput << buildCell( currentColumn.m_parameter.alignment, cell, cellSize );
+        //  std::cout << " tableOutput " << tableOutput.str() << std::endl;
+
+        // Add space between column
+        if( idxColumn < columns.size() - 1 )
+        {
+          tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
+        }
+      }
+
+
 
       if( !column.subColumn.empty() )
       {
@@ -554,7 +602,7 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
     }
     outputSectionRows( rowSubColumns, sectionSeparatingLine, tableOutput, 1, TableLayout::Section::header );
   }
-
+  std::cout<< "C TERMINER" << std::endl;
 }
 
 }

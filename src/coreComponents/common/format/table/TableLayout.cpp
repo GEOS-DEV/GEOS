@@ -47,7 +47,7 @@ void addColumn( std::vector< TableLayout::ColumnParam > const & columnsParam, st
 
   for( auto const & columnt : columns )
   {
-    std::cout <<  "regarde après le addColumn  " << columnt.m_parameter.columnName << std::endl ;
+    std::cout <<  "regarde après le addColumn  " << columnt.m_parameter.columnName << std::endl;
   }
 
 }
@@ -67,10 +67,24 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParams, strin
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-  //m_columns.reserve( columnParams.size() );
-  std::cout << "TEST ADD COLUMN " << std::endl;
   addColumn( columnParams, m_columns );
 
+  TableLayout::TableOpts tableOpts( {m_columns, 0} );
+
+  //TODO rename cette partie
+  for( auto & column : m_columns )
+  {
+    if( !column.subColumn.empty())
+    {
+      tableOpts.maxTableColumns += column.subColumn.size();
+    }else{
+      ++tableOpts.maxTableColumns;
+    }
+    std::cout << " realNbColumn " << tableOpts.maxTableColumns << std::endl;
+  }
+
+  m_tableOpts = tableOpts;
+  
 }
 
 
@@ -83,6 +97,11 @@ void TableLayout::setMargin( MarginValue marginValue )
 std::vector< TableLayout::Column > const & TableLayout::getColumns() const
 {
   return m_columns;
+}
+
+TableLayout::TableOpts const & TableLayout::getTableOpts() const
+{
+  return m_tableOpts;
 }
 
 string_view TableLayout::getTitle() const

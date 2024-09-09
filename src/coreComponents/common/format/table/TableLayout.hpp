@@ -104,6 +104,8 @@ public:
     {}
   };
 
+
+  //TODO ENLEVER LES _
   /**
    * @brief Struct for a column.
    */
@@ -118,6 +120,12 @@ public:
     //sub divison of a column
     std::vector< Column > subColumn;
 
+  };
+
+  struct TableOpts
+  {
+    std::vector< Column > columns;
+    size_t maxTableColumns;
   };
 
   TableLayout() = default;
@@ -143,7 +151,12 @@ public:
   /**
    * @return The columns vector
    */
+
   std::vector< Column > const & getColumns() const;
+  /**
+   * @return The columns vector
+   */
+  TableOpts const & getTableOpts() const;
 
   /**
    * @return The table name
@@ -174,6 +187,9 @@ public:
 private:
 
   std::vector< Column > m_columns;
+  TableOpts m_tableOpts;
+
+
   string m_tableTitle;
   integer m_borderMargin;
   integer m_columnMargin;
