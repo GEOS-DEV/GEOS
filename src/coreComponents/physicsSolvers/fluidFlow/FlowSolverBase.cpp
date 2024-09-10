@@ -541,10 +541,10 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
 
-  std::cout << "    newHydraulicAperture[0] = " << newHydraulicAperture[0] << std::endl;
-  std::cout << "    newHydraulicAperture[1] = " << newHydraulicAperture[1] << std::endl;
-  std::cout << "    oldHydraulicAperture[0] = " << oldHydraulicAperture[0] << std::endl;
-  std::cout << "    oldHydraulicAperture[1] = " << oldHydraulicAperture[1] << std::endl;
+  // std::cout << "    newHydraulicAperture[0] = " << newHydraulicAperture[0] << std::endl;
+  // std::cout << "    newHydraulicAperture[1] = " << newHydraulicAperture[1] << std::endl;
+  // std::cout << "    oldHydraulicAperture[0] = " << oldHydraulicAperture[0] << std::endl;
+  // std::cout << "    oldHydraulicAperture[1] = " << oldHydraulicAperture[1] << std::endl;
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( solidName );

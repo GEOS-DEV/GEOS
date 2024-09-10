@@ -593,9 +593,9 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & me
       // stencilWeights[1] = 4. * faceArea[fractureRegionIndex] / hydraulicAperture[fractureRegionIndex][0][kes];
       stencilWeights[1] = 4. * faceArea[kes] / hydraulicAperture[fractureRegionIndex][0][kes];
 
-      std::cout << "fractureRegionIndex = " << fractureRegionIndex << ", faceArea size = " << faceArea.size() << std::endl;
-      std::cout << "faceArea[kes] = " << faceArea[kes] << ", hydraulicAperture[fractureRegionIndex][0][kes] = " << hydraulicAperture[fractureRegionIndex][0][kes] <<
-       ", stencilWeights[0] = " << stencilWeights[0] << ", stencilWeights[1] = " << stencilWeights[1] << std::endl;
+      // std::cout << "fractureRegionIndex = " << fractureRegionIndex << ", faceArea size = " << faceArea.size() << std::endl;
+      // std::cout << "faceArea[kes] = " << faceArea[kes] << ", hydraulicAperture[fractureRegionIndex][0][kes] = " << hydraulicAperture[fractureRegionIndex][0][kes] <<
+      //  ", stencilWeights[0] = " << stencilWeights[0] << ", stencilWeights[1] = " << stencilWeights[1] << std::endl;
 
       edfmStencil.add( 2,
                        stencilCellsRegionIndex.data(),

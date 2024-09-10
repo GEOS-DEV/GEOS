@@ -50,6 +50,8 @@ public:
   {
     m_plasticSlip.resize(1000, 2);
     m_slip.resize(1000, 2);
+
+    std::cout << "In CoulombContactUpdates: " << std::endl;
   }
 
   /// Default copy constructor
@@ -91,6 +93,7 @@ public:
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & oldDispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
                                     integer & fractureState,
                                     real64 const pressure ) const override final;
@@ -265,10 +268,24 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
     // Compute the slip
     m_slip[k][0] = dispJump[1] - oldDispJump[1];
     m_slip[k][1] = dispJump[2] - oldDispJump[2];
+    // m_slip[k][0] = dispJump[1];
+    // m_slip[k][1] = dispJump[2];
 
 
     real64 const tau[2] = { m_shearStiffness * ( m_slip[k][0] + m_elasticSlip[k][0] ),
                             m_shearStiffness * ( m_slip[k][1] + m_elasticSlip[k][1] ) };
+    // real64 const tau[2] = { m_shearStiffness * ( m_slip[k][0] - m_plasticSlip[k][0] ),
+    //                         m_shearStiffness * ( m_slip[k][1] - m_plasticSlip[k][1] ) };
+    // real64 const tau[2] = { m_shearStiffness * m_slip[k][0],
+    //                         m_shearStiffness * m_slip[k][1] };
+
+    if ( k == 0 )
+    {
+      std::cout << "dispJump = "  << dispJump[1] << ", " << dispJump[2] << " oldDispJump = " << oldDispJump[1] << ", " << oldDispJump[2] 
+                << " elasticSlip = " << m_elasticSlip[k][0] << ", " << m_elasticSlip[k][1]  
+                << " plasticSlip = " << m_plasticSlip[k][0] << ", " << m_plasticSlip[k][1]  
+                << " tau = " << tau[0] << ", " << tau[1] << std::endl;
+    }
 
     switch( fractureState )
     {
@@ -280,10 +297,9 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
         tractionVector[2] = tau[1];
 
         dTractionVector_dJump[1][1] = m_shearStiffness;
-        dTractionVector_dJump[2][2] = m_shearStiffness;
+        dTractionVector_dJump[2][2] = m_shearStiffness; 
 
-        std::cout << "before dipljump "  << dispJump[1] << " " << dispJump[2] << " " << oldDispJump[1] << " " << oldDispJump[2] 
-        << " " << m_elasticSlip[k][0] << " " << m_elasticSlip[k][1] << std::endl; 
+        // LvArray::tensorOps::add< 2 >( m_elasticSlip[k], m_slip[k] );
 
         break;
       }
@@ -323,6 +339,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
 GEOS_HOST_DEVICE
 inline void CoulombContactUpdates::updateFractureState( localIndex const k,
                                                         arraySlice1d< real64 const > const & dispJump,
+                                                        arraySlice1d< real64 const > const & oldDispJump,
                                                         arraySlice1d< real64 const > const & tractionVector,
                                                         integer & fractureState,
                                                         real64 const pressure ) const
@@ -358,7 +375,16 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
     // real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
     //                                                             dLimitTau_dNormalTraction );
     real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0] + pressure, // pressure added to convert to effective traction, biotCoeff = 1 is assumed
-                                                           dLimitTau_dNormalTraction );
+                                                                dLimitTau_dNormalTraction );
+
+    if ( k == 0 )
+    {
+      std::cout << "limitTau using effective normal traction = " << limitTau << std::endl;
+      real64 const limitTau_using_total_traction = computeLimitTangentialTractionNorm( tractionVector[0],
+                                                                                       dLimitTau_dNormalTraction );
+      std::cout << "limitTau using total normal traction = " << limitTau_using_total_traction << std::endl;
+      std::cout << "currentTau before scaling = " << tauNorm << std::endl;
+    }
 
     real64 slidingCheckTolerance = 0.05;
     if( fractureState == FractureState::Stick && tauNorm >= limitTau )
@@ -370,17 +396,46 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
       tauNorm *= (1.0 + slidingCheckTolerance);
     }
 
+    if ( k == 0 )
+    {
+      std::cout << "currentTau after scaling = " << tauNorm << std::endl;
+    }
+
     // Yield function (not necessary but makes it clearer)
     real64 const yield = tauNorm - limitTau;
+
+    real64 const slip[2] = { dispJump[1] - oldDispJump[1],
+                             dispJump[2] - oldDispJump[2] };
 
     if (yield < 0)
     {
       // The slip is only elastic: we add the full slip to the elastic one
-      LvArray::tensorOps::add< 2 >( m_elasticSlip[k], m_slip[k] );
-      std::cout << "k = " << k << ", normal traction = " << tractionVector[0] << ", pressure " << pressure << ", normal_dispJump = " << dispJump[0] << " " << dispJump[1] << " " << dispJump[2] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau <<  ", fracture state = stick" << std::endl;
+      if ( k == 0 )
+      {
+        std::cout << "Before slip is added to elastic slip, m_slip = " << m_slip[k] << ", slip = {" << slip[0] << ", " << slip[1] << "}, elastic slip = " << m_elasticSlip[k] << std::endl;
+        std::cout << "dispJump[1] = " << dispJump[1] << ", dispJump[2] = " << dispJump[2] << std::endl;
+      }
+      LvArray::tensorOps::add< 2 >( m_elasticSlip[k], slip );
+      // std::cout << "k = " << k << ", normal traction = " << tractionVector[0] << ", pressure " << pressure << ", normal_dispJump = " << dispJump[0] << " " << dispJump[1] << " " << dispJump[2] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau <<  ", fracture state = stick" << std::endl;
+      if ( k == 0 )
+      {
+        std::cout << "After slip is added to elastic slip, m_slip = " << m_slip[k] << ", slip = {" << slip[0] << ", " << slip[1] << "}, elastic slip = " << m_elasticSlip[k] << std::endl;
+        std::cout << " tau = " << tau[0] << ", " << tau[1] << std::endl;
+      }
     }
     else
     {
+      if ( k == 0 )
+      {
+        std::cout<< " plasticSlip before added = " << m_plasticSlip[k][0] << ", " << m_plasticSlip[k][1]  << std::endl;
+      }
+      m_plasticSlip[k][0] += tractionVector[1] / m_shearStiffness;
+      m_plasticSlip[k][1] += tractionVector[2] / m_shearStiffness;
+      if ( k == 0 )
+      {
+        std::cout<< " plasticSlip after added = " << m_plasticSlip[k][0] << ", " << m_plasticSlip[k][1]  << std::endl;
+      }
+
       LvArray::tensorOps::copy< 2 >( m_elasticSlip[k], m_slip[k] );
       LvArray::tensorOps::subtract< 2 >( m_elasticSlip[k], m_plasticSlip[k] );
       std::cout << "k = " << k << ", normal traction = " << tractionVector[0] << ", pressure " << pressure << ", normal_dispJump = " << dispJump[0] <<  " " << dispJump[1] << " " << dispJump[2] << ", currentTau = " << tauNorm << ", limitTau =" << limitTau << ", fracture state = slip" << std::endl;

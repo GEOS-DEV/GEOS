@@ -72,6 +72,7 @@ public:
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & oldDispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
                                     integer & fractureState,
                                     real64 const pressure ) const override final;
@@ -169,11 +170,12 @@ inline void FrictionlessContactUpdates::computeTraction( localIndex const k,
 GEOS_HOST_DEVICE
 inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
                                                              arraySlice1d< real64 const > const & dispJump,
+                                                             arraySlice1d< real64 const > const & oldDispJump,
                                                              arraySlice1d< real64 const > const & tractionVector,
                                                              integer & fractureState,
                                                              real64 const pressure ) const
 {
-  GEOS_UNUSED_VAR( k, tractionVector, pressure );
+  GEOS_UNUSED_VAR( k, oldDispJump, tractionVector, pressure );
   using namespace fields::contact;
   fractureState = dispJump[0] > m_displacementJumpThreshold ? FractureState::Open : FractureState::Stick;
 }

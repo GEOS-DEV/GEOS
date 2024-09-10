@@ -102,10 +102,11 @@ public:
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & oldDispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
                                     integer & fractureState,
                                     real64 const pressure ) const
-  { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState, pressure ); }
+  { GEOS_UNUSED_VAR( k, dispJump, oldDispJump, tractionVector, fractureState, pressure ); }
 
   /**
    * @brief Update the traction with the pressure term
