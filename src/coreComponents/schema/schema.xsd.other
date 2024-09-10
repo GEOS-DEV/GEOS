@@ -1325,6 +1325,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CellToCellDataCollection" type="CellToCellDataCollectionType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
@@ -1343,6 +1344,16 @@
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CellToCellDataCollectionType">
+		<!--cellAGlobalId => (no description available)-->
+		<xsd:attribute name="cellAGlobalId" type="globalIndex_array" />
+		<!--cellBGlobalId => (no description available)-->
+		<xsd:attribute name="cellBGlobalId" type="globalIndex_array" />
+		<!--transmissibilityAB => (no description available)-->
+		<xsd:attribute name="transmissibilityAB" type="real64_array" />
+		<!--transmissibilityBA => (no description available)-->
+		<xsd:attribute name="transmissibilityBA" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType" />
@@ -1438,6 +1449,7 @@
 			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
+			<xsd:element name="HydraulicApertureTable" type="HydraulicApertureTableType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
 			<xsd:element name="LinearIsotropicDispersion" type="LinearIsotropicDispersionType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
@@ -1468,7 +1480,7 @@
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
 			<xsd:element name="ReactiveBrine" type="ReactiveBrineType" />
 			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
-			<xsd:element name="SinglePhaseConstantThermalConductivity" type="SinglePhaseConstantThermalConductivityType" />
+			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
@@ -2324,6 +2336,7 @@
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType" />
+	<xsd:complexType name="HydraulicApertureTableType" />
 	<xsd:complexType name="JFunctionCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => Derivative of phase capillary pressure with respect to phase volume fraction-->
 		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="real64_array4d" />
@@ -2649,7 +2662,9 @@
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseConstantThermalConductivityType">
+	<xsd:complexType name="SinglePhaseThermalConductivityType">
+		<!--dEffectiveConductivity_dT => Derivative of effective conductivity w.r.t. temperature-->
+		<xsd:attribute name="dEffectiveConductivity_dT" type="real64_array3d" />
 		<!--effectiveConductivity => Effective conductivity-->
 		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
 	</xsd:complexType>
@@ -2946,8 +2961,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="elementRegionsGroupType" />
 	<xsd:complexType name="neighborDataType" />
@@ -2970,8 +2989,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="particleRegionsGroupType" />
 	<xsd:complexType name="edgeManagerType">
@@ -2989,8 +3012,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
@@ -3009,8 +3036,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
@@ -3035,8 +3066,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--parentEdgeGlobalIndex => (no description available)-->
 		<xsd:attribute name="parentEdgeGlobalIndex" type="globalIndex_array" />
 		<!--parentEdgeIndex => Index of parent edge within the mesh object it is registered on. => EmbeddedSurfaceGenerator-->
@@ -3073,8 +3108,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
 		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
@@ -3105,8 +3144,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
 	</xsd:complexType>
@@ -3124,8 +3167,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="elementSubRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3146,8 +3193,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="WellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3163,8 +3214,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="groupNameRef" />
 		<!--wellGeneratorName => (no description available)-->
@@ -3189,8 +3244,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nextWellElementIndex => (no description available)-->
 		<xsd:attribute name="nextWellElementIndex" type="integer_array" />
 		<!--nextWellElementIndexGlobal => (no description available)-->
@@ -3226,10 +3285,14 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--location => For each perforation, physical location (x,y,z coordinates)-->
 		<xsd:attribute name="location" type="real64_array2d" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--numPerforationsGlobal => (no description available)-->
 		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
 		<!--reservoirElementIndex => For each perforation, element index of the perforated element-->
@@ -3259,8 +3322,12 @@
 		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localMaxGlobalIndex => (no description available)-->
+		<xsd:attribute name="localMaxGlobalIndex" type="globalIndex" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--maxGlobalIndex => (no description available)-->
+		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="particleSubRegionsType" />
 </xsd:schema>
