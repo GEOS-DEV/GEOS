@@ -52,10 +52,10 @@ def main():
     hf_pressure = h5py.File(outputDir + '/pressureHistory_rock.hdf5', 'r')
     pressure = np.array( hf_pressure.get('pressure') )
 
-    # Total stress
-    stress_xx_total = stress[:,:,0]
-    stress_yy_total = stress[:,:,1]
-    stress_zz_total = stress[:,:,2]
+    # Compute total stress
+    stress_xx_total = stress[:,:,0] - BiotCoefficient * pressure
+    stress_yy_total = stress[:,:,1] - BiotCoefficient * pressure
+    stress_zz_total = stress[:,:,2] - BiotCoefficient * pressure
     stress_yz_total = stress[:,:,3]
     stress_xz_total = stress[:,:,4]
     stress_xy_total = stress[:,:,5]
