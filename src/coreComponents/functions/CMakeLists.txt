@@ -1,3 +1,10 @@
+#==========================================================================
+# Package : functions
+#
+# Contains base class for interfacing arbitrary N-dimensional functions
+#
+#==========================================================================
+
 #
 # Specify all headers
 #

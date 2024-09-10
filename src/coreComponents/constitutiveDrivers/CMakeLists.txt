@@ -1,3 +1,11 @@
+#===============================================================
+# Package : constitutiveDrivers
+#
+# Contains the fluid and rock constitutive model drivers
+# to calibrate solid material parameters to experimental data
+#
+#===============================================================
+
 #
 # Specify all headers
 #

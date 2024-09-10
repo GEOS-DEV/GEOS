@@ -1,3 +1,10 @@
+#===========================================================
+# Package : math
+#
+# Contains interpolation and extrapolation math functions
+#
+#===========================================================
+
 #
 # Specify all headers
 #
@@ -6,12 +13,12 @@ set( math_headers
      extrapolation/Extrapolation.hpp)
 
 blt_add_library( NAME         math
-                 SOURCES               
+                 SOURCES
                  HEADERS      ${math_headers}
-                 DEPENDS_ON            
+                 DEPENDS_ON
                  SHARED FALSE
                )
-               
+
 target_include_directories( math INTERFACE ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS math LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

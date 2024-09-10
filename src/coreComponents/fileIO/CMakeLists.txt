@@ -1,3 +1,12 @@
+#==============================================================================
+# Package : fileIO
+#
+# Contains I/O interfaces to the three main outputs types : HDF5, VTK, Silo
+# Contains coupler for data exchange with CHOMBO
+# Contains python wrappers for Time History and VTK outputs
+#
+#==============================================================================
+
 # Specify all headers
 set( fileIO_headers
      Outputs/BlueprintOutput.hpp

@@ -1,4 +1,9 @@
-
+#==============================================================
+# Package : schema
+#
+# Contains XML schema definition and functions to generate it
+#
+#==============================================================
 
 #
 # Specify all headers

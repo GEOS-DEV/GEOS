@@ -1,3 +1,10 @@
+#=================================================================================
+# Package : common
+#
+# Contains the definition of static types : data types, messaging and formatting
+#
+#=================================================================================
+
 #
 # Specify all headers
 #

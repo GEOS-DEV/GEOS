@@ -1,3 +1,10 @@
+#====================================================
+# Package : codingUtilities
+#
+# Contains definition of runtime types and traits
+#
+#====================================================
+
 #
 # Specify all headers
 #

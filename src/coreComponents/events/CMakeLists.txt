@@ -1,3 +1,11 @@
+#=====================================
+# Package : events
+#
+# Contains the code events types
+# Manages the events and tasks
+#
+#=====================================
+
 #
 # Specify all headers
 #

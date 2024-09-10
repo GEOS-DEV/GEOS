@@ -1,3 +1,13 @@
+#==============================================================================================
+# Package : linearAlgebra
+#
+# Contains management implementations to handle all degrees of freedom associated with
+# field element on mesh elements (faces, edges, nodes)
+# Contains linear solvers implementation
+# Contains interfaces to different external linear solvers libraries (hypre, Petsc, trilinos)
+#
+#==============================================================================================
+
 # Specify all headers
 set( linearAlgebra_headers
      DofManager.hpp

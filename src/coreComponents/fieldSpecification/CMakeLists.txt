@@ -1,3 +1,11 @@
+#==================================================
+# Package : fieldSpecification
+#
+# Contains field objects definition
+# Contains an interface to manage these objects
+#
+#==================================================
+
 #
 # Specify all headers
 #

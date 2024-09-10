@@ -1,3 +1,10 @@
+#=================================================================== 
+# Package : denseLinearAlgebra
+# 
+# Contains interfaces for linear algebra BLAS and LAPACK packages
+# 
+#===================================================================
+
 # Specify all headers
 set( denseLinearAlgebra_headers
      common/layouts.hpp
