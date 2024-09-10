@@ -35,7 +35,8 @@ block.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/schema/docs/TemperatureDependentSolidVolumetricHeatCapacity.rst
+.. include:: /coreComponents/schema/docs/SolidInternalEnergy.rst
+
 
 
 Example
