@@ -81,8 +81,8 @@ if read_the_docs_build:
 
     print("********** Running Doxygen in ReadtheDocs **********")
     # Call doxygen
-    from subprocess import call
-    call(['doxygen', doxyfile_dst])
+    from subprocess import run
+    run(['doxygen', doxyfile_dst])
     print("********** Finished Running Doxygen in ReadtheDocs **********")
 
 
