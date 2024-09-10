@@ -148,36 +148,36 @@ struct StressComputation
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int const i, int const j, real32 const dfx1, real32 const dfx2, real32 const dfx3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
-          auxx[j]+= dfx1*ux_np1[nodeIndex];
-          auyy[j]+= dfx2*uy_np1[nodeIndex];
-          auzz[j]+= dfx3*uz_np1[nodeIndex];
-          auxy[j]+= dfx1*uy_np1[nodeIndex]+dfx2*ux_np1[nodeIndex];
-          auxz[j]+= dfx1*uz_np1[nodeIndex]+dfx3*ux_np1[nodeIndex];
-          auyz[j]+= dfx2*uz_np1[nodeIndex]+dfx3*uy_np1[nodeIndex];
+          auxx[j] = auxx[j] + dfx1*ux_np1[nodeIndex];
+          auyy[j] = auyy[j] + dfx2*uy_np1[nodeIndex];
+          auzz[j] = auzz[j] + dfx3*uz_np1[nodeIndex];
+          auxy[j] = auxy[j] + dfx1*uy_np1[nodeIndex]+dfx2*ux_np1[nodeIndex];
+          auxz[j] = auxz[j] + dfx1*uz_np1[nodeIndex]+dfx3*ux_np1[nodeIndex];
+          auyz[j] = auyz[j] + dfx2*uz_np1[nodeIndex]+dfx3*uy_np1[nodeIndex];
 
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int const i, int const j, real32 const dfy1, real32 const dfy2, real32 const dfy3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
-          auxx[j]+= dfy1*ux_np1[nodeIndex];
-          auyy[j]+= dfy2*uy_np1[nodeIndex];
-          auzz[j]+= dfy3*uz_np1[nodeIndex];
-          auxy[j]+= dfy1*uy_np1[nodeIndex]+dfy2*ux_np1[nodeIndex];
-          auxz[j]+= dfy1*uz_np1[nodeIndex]+dfy3*ux_np1[nodeIndex];
-          auyz[j]+= dfy2*uz_np1[nodeIndex]+dfy3*uy_np1[nodeIndex];
+          auxx[j] = auxx[j] + dfy1*ux_np1[nodeIndex];
+          auyy[j] = auyy[j] + dfy2*uy_np1[nodeIndex];
+          auzz[j] = auzz[j] + dfy3*uz_np1[nodeIndex];
+          auxy[j] = auxy[j] + dfy1*uy_np1[nodeIndex]+dfy2*ux_np1[nodeIndex];
+          auxz[j] = auxz[j] + dfy1*uz_np1[nodeIndex]+dfy3*ux_np1[nodeIndex];
+          auyz[j] = auyz[j] + dfy2*uz_np1[nodeIndex]+dfy3*uy_np1[nodeIndex];
 
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int const i, int const j, real32 const dfz1, real32 const dfz2, real32 const dfz3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
-          auxx[j]+= dfz1*ux_np1[nodeIndex];
-          auyy[j]+= dfz2*uy_np1[nodeIndex];
-          auzz[j]+= dfz3*uz_np1[nodeIndex];
-          auxy[j]+= dfz1*uy_np1[nodeIndex]+dfz2*ux_np1[nodeIndex];
-          auxz[j]+= dfz1*uz_np1[nodeIndex]+dfz3*ux_np1[nodeIndex];
-          auyz[j]+= dfz2*uz_np1[nodeIndex]+dfz3*uy_np1[nodeIndex];
+          auxx[j] = auxx[j] + dfz1*ux_np1[nodeIndex];
+          auyy[j] = auyy[j] + dfz2*uy_np1[nodeIndex];
+          auzz[j] = auzz[j] + dfz3*uz_np1[nodeIndex];
+          auxy[j] = auxy[j] + dfz1*uy_np1[nodeIndex]+dfz2*ux_np1[nodeIndex];
+          auxz[j] = auxz[j] + dfz1*uz_np1[nodeIndex]+dfz3*ux_np1[nodeIndex];
+          auyz[j] = auyz[j] + dfz2*uz_np1[nodeIndex]+dfz3*uy_np1[nodeIndex];
 
         } );
 
