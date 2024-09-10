@@ -72,23 +72,20 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxType[0]          = MGRFRelaxationType::none;
-    m_levelFRelaxIters[0]         = 0;
-
-    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
-    m_levelGlobalSmootherIters[0] = 1;
-
+    m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
+    m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]          = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
     // Level 1
     m_levelFRelaxType[1]         = MGRFRelaxationType::amgVCycle;
     m_levelFRelaxIters[1]        = 1;
-    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
     m_levelInterpType[1]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::nonGalerkin;
+    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
 
   }
 
@@ -104,21 +101,7 @@ public:
     setReduction( precond, mgrData );
 
     // Configure the BoomerAMG solver used as F-relaxation for the second level
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.6 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
-
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 1 ) );
-#else
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
-#endif
+    setDisplacementAMG( mgrData.mechSolver );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, 1 ) );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
