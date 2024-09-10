@@ -240,11 +240,23 @@ private:
    * @param section The section to be built
    * @note Add the ending line if there are one or more rows
    */
-  void outputSectionRows(  std::vector< TableLayout::Column > const & columns,
-                                            string_view sectionSeparatingLine,
-                                            std::ostringstream & tableOutput,
-                                            integer const nbRows,
-                                            TableLayout::Section const section ) const;
+  void outputSectionRows( std::vector< TableLayout::Column > const & columns,
+                          string_view sectionSeparatingLine,
+                          std::ostringstream & tableOutput,
+                          integer const nbRows,
+                          TableLayout::Section const section ) const;
+
+  /**
+   * @brief
+   *
+   * @param columns
+   * @param tableOutput
+   * @param idxRow
+   */
+  void outputSubSection( std::vector< TableLayout::Column > const & columns,
+                         std::ostringstream & tableOutput,
+                         TableLayout::Section const section,
+                         size_t const idxRow ) const;
 };
 
 /**
