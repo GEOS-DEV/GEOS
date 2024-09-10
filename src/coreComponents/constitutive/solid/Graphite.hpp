@@ -87,7 +87,7 @@ public:
                    arrayView2d< real64 > const & damage,
                    arrayView2d< real64 > const & jacobian,
                    arrayView1d< real64 > const & lengthScale,
-                   arrayView1d< real64 > const & strengthScale
+                   arrayView1d< real64 > const & strengthScale,
                    real64 const & failureStrength,
                    real64 const & crackSpeed,
                    real64 const & damagedMaterialFrictionalSlope,
