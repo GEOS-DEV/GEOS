@@ -63,6 +63,7 @@ public:
    * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
    * @param[in] materialDirection The ArrayView holding the material direction for each element/particle.
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
+   * @param[in] strengthScale The ArrayView holding the strength scale for each element.
    * @param[in] failureStrength The failure strength.
    * @param[in] crackSpeed The crack speed velocity.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
@@ -86,6 +87,7 @@ public:
                    arrayView2d< real64 > const & damage,
                    arrayView2d< real64 > const & jacobian,
                    arrayView1d< real64 > const & lengthScale,
+                   arrayView1d< real64 > const & strengthScale
                    real64 const & failureStrength,
                    real64 const & crackSpeed,
                    real64 const & damagedMaterialFrictionalSlope,
@@ -131,6 +133,7 @@ public:
     m_damage( damage ),
     m_jacobian( jacobian ),
     m_lengthScale( lengthScale ),
+    m_strengthScale( strengthScale ),
     m_failureStrength( failureStrength ),
     m_crackSpeed( crackSpeed ),
     m_damagedMaterialFrictionalSlope( damagedMaterialFrictionalSlope ),
@@ -334,6 +337,9 @@ private:
 
   /// A reference to the ArrayView holding the length scale for each element/particle.
   arrayView1d< real64 > const m_lengthScale;
+
+  /// Discretization-sized variable: The strength scale for each element/particle
+  arrayView1d< real64 > const m_strengthScale;
 
   /// The maximum theoretical strength
   real64 const m_failureStrength;
@@ -1215,6 +1221,9 @@ public:
     /// string/key for element/particle length scale
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
 
+    /// string/key for element/particle length scale
+    static constexpr char const * strengthScaleString() { return "strengthScale"; }
+
     /// string/key for maximum strength
     static constexpr char const * failureStrengthString() { return "failureStrength"; }
 
@@ -1296,6 +1305,7 @@ public:
                             m_damage,
                             m_jacobian,
                             m_lengthScale,
+                            m_strengthScale,
                             m_failureStrength,
                             m_crackSpeed,
                             m_damagedMaterialFrictionalSlope,
@@ -1348,6 +1358,7 @@ public:
                           m_damage,
                           m_jacobian,
                           m_lengthScale,
+                          m_strengthScale,
                           m_failureStrength,
                           m_crackSpeed,
                           m_damagedMaterialFrictionalSlope,
@@ -1564,6 +1575,9 @@ protected:
 
   /// Discretization-sized variable: The length scale for each element/particle
   array1d< real64 > m_lengthScale;
+
+  /// Discretization-sized variable: The strength scale for each element/particle
+  array1d< real64 > m_strengthScale;
 
   /// Material parameter: The value of the failure strength
   real64 m_failureStrength;
