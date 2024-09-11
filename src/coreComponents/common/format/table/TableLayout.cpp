@@ -44,12 +44,6 @@ void addColumn( std::vector< TableLayout::ColumnParam > const & columnsParam, st
       columns.push_back( { columnParam, {}, "", {}} );
     }
   }
-
-  for( auto const & columnt : columns )
-  {
-    std::cout <<  "regarde après le addColumn  " << columnt.m_parameter.columnName << std::endl;
-  }
-
 }
 
 TableLayout::TableLayout( std::vector< string > const & columnNames, string const & title ):
@@ -70,8 +64,6 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParams, strin
   addColumn( columnParams, m_columns );
 
   TableLayout::TableOpts tableOpts( {m_columns, 0} );
-
-  //TODO rename cette partie
   for( auto & column : m_columns )
   {
     if( !column.subColumn.empty())
@@ -80,11 +72,8 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParams, strin
     }else{
       ++tableOpts.maxTableColumns;
     }
-    std::cout << " realNbColumn " << tableOpts.maxTableColumns << std::endl;
   }
-
   m_tableOpts = tableOpts;
-  
 }
 
 
