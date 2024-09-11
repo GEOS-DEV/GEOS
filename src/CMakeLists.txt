@@ -192,6 +192,7 @@ endif()
 
 if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
+  add_dependencies( geosx_docs geosx_build_datastructure_tables )
 endif()
 
 
