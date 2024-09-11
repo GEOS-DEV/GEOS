@@ -212,8 +212,6 @@ Results and benchmark
 
 A good agreement between the GEOS results and analytical results for temperature distribution around the cased wellbore is shown in the figures below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_temperature.py
-
 .. _problemCasedThermoElasticWellbore_Temperature_Fig:
 .. figure:: temperature.png
    :align: center
