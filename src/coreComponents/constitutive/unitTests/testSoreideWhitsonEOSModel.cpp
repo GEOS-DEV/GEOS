@@ -35,7 +35,7 @@ using TestData = std::tuple<
   Feed< NC > const      // Input composition
   >;
 
-template< integer NC, SoreideWhitsonPhaseType PHASE_TYPE, typename EOS_TYPE >
+template< integer NC, typename EOS_TYPE >
 class SoreideWhitsonEOSModelTestFixture : public ::testing::TestWithParam< TestData< NC > >
 {
 public:
@@ -65,7 +65,7 @@ public:
 
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::computePureCoefficients(
+      SoreideWhitsonEOSModel< EOS_TYPE >::computePureCoefficients(
         ic,
         pressure,
         temperature,
@@ -82,13 +82,13 @@ public:
       internal::testNumericalDerivative( pressure, dp, daCoefficient_dp,
                                          [&]( real64 p ) -> real64 {
         real64 a = 0.0, b = 0.0;
-        SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::computePureCoefficients( ic, p, temperature, componentProperties, salinity, a, b );
+        SoreideWhitsonEOSModel< EOS_TYPE >::computePureCoefficients( ic, p, temperature, componentProperties, salinity, a, b );
         return a;
       }, absTol, relTol );
       internal::testNumericalDerivative( pressure, dp, dbCoefficient_dp,
                                          [&]( real64 p ) -> real64 {
         real64 a = 0.0, b = 0.0;
-        SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::computePureCoefficients( ic, p, temperature, componentProperties, salinity, a, b );
+        SoreideWhitsonEOSModel< EOS_TYPE >::computePureCoefficients( ic, p, temperature, componentProperties, salinity, a, b );
         return b;
       }, absTol, relTol );
 
@@ -96,13 +96,13 @@ public:
       internal::testNumericalDerivative( temperature, dT, daCoefficient_dt,
                                          [&]( real64 t ) -> real64 {
         real64 a = 0.0, b = 0.0;
-        SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::computePureCoefficients( ic, pressure, t, componentProperties, salinity, a, b );
+        SoreideWhitsonEOSModel< EOS_TYPE >::computePureCoefficients( ic, pressure, t, componentProperties, salinity, a, b );
         return a;
       }, absTol, relTol );
       internal::testNumericalDerivative( temperature, dT, dbCoefficient_dt,
                                          [&]( real64 t ) -> real64 {
         real64 a = 0.0, b = 0.0;
-        SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::computePureCoefficients( ic, pressure, t, componentProperties, salinity, a, b );
+        SoreideWhitsonEOSModel< EOS_TYPE >::computePureCoefficients( ic, pressure, t, componentProperties, salinity, a, b );
         return b;
       }, absTol, relTol );
     }
@@ -121,7 +121,7 @@ public:
     stackArray2d< real64, 2*numComps > pureCoefficients( 2, numComps );
     stackArray2d< real64, 2*numDof > mixtureCoefficientDerivs( 2, numDof );
 
-    SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+    SoreideWhitsonEOSModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
                                 pressure,
                                 temperature,
@@ -133,7 +133,7 @@ public:
                                 mixtureCoefficient[0],
                                 mixtureCoefficient[1] );
 
-    SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+    SoreideWhitsonEOSModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
                                 pressure,
                                 temperature,
@@ -157,7 +157,7 @@ public:
     internal::testNumericalDerivative< numValues >( pressure, dp, derivatives.toSliceConst(),
                                                     [&]( real64 const p, auto & values )
     {
-      SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+      SoreideWhitsonEOSModel< EOS_TYPE >::
       computeMixtureCoefficients( numComps,
                                   p,
                                   temperature,
@@ -177,7 +177,7 @@ public:
     internal::testNumericalDerivative< numValues >( temperature, dT, derivatives.toSliceConst(),
                                                     [&]( real64 const t, auto & values )
     {
-      SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+      SoreideWhitsonEOSModel< EOS_TYPE >::
       computeMixtureCoefficients( numComps,
                                   pressure,
                                   t,
@@ -201,7 +201,7 @@ public:
       {
         real64 const z_old = composition[kc];
         composition[kc] += z;
-        SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+        SoreideWhitsonEOSModel< EOS_TYPE >::
         computeMixtureCoefficients( numComps,
                                     pressure,
                                     temperature,
@@ -229,7 +229,7 @@ public:
     real64 compressibilityFactor = 0.0;
     stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
 
-    SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+    SoreideWhitsonEOSModel< EOS_TYPE >::
     computeCompressibilityFactor( numComps,
                                   pressure,
                                   temperature,
@@ -238,7 +238,7 @@ public:
                                   salinity,
                                   compressibilityFactor );
 
-    SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::
+    SoreideWhitsonEOSModel< EOS_TYPE >::
     computeCompressibilityFactor( numComps,
                                   pressure,
                                   temperature,
@@ -250,7 +250,7 @@ public:
 
     auto computeCompressibility = [&]( real64 p, real64 t, auto z ) -> real64 {
       real64 zfactor = 0.0;
-      SoreideWhitsonEOSModel< PHASE_TYPE, EOS_TYPE >::computeCompressibilityFactor( numComps, p, t, z, componentProperties, salinity, zfactor );
+      SoreideWhitsonEOSModel< EOS_TYPE >::computeCompressibilityFactor( numComps, p, t, z, componentProperties, salinity, zfactor );
       return zfactor;
     };
 
@@ -299,35 +299,22 @@ struct FluidData< 4 >
   }
 };
 
-template< integer NC, SoreideWhitsonPhaseType PHASE_TYPE, typename EOS_TYPE >
-SoreideWhitsonEOSModelTestFixture< NC, PHASE_TYPE, EOS_TYPE >::SoreideWhitsonEOSModelTestFixture():
+template< integer NC, typename EOS_TYPE >
+SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::SoreideWhitsonEOSModelTestFixture():
   m_fluid( FluidData< NC >::create() )
 {}
 
-using PengRobinsonAqueous4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Aqueous, PengRobinsonEOS >;
-using PengRobinsonVapour4 = SoreideWhitsonEOSModelTestFixture< 4, SoreideWhitsonPhaseType::Vapour, PengRobinsonEOS >;
+using PengRobinson4 = SoreideWhitsonEOSModelTestFixture< 4, PengRobinsonEOS >;
 
-TEST_P( PengRobinsonAqueous4, testPureCoefficients )
+TEST_P( PengRobinson4, testPureCoefficients )
 {
   testPureCoefficients( GetParam() );
 }
-TEST_P( PengRobinsonAqueous4, testMixtureCoefficients )
+TEST_P( PengRobinson4, testMixtureCoefficients )
 {
   testMixtureCoefficients( GetParam() );
 }
-TEST_P( PengRobinsonAqueous4, testCompressibilityFactor )
-{
-  testCompressibilityFactor( GetParam() );
-}
-TEST_P( PengRobinsonVapour4, testPureCoefficients )
-{
-  testPureCoefficients( GetParam() );
-}
-TEST_P( PengRobinsonVapour4, testMixtureCoefficients )
-{
-  testMixtureCoefficients( GetParam() );
-}
-TEST_P( PengRobinsonVapour4, testCompressibilityFactor )
+TEST_P( PengRobinson4, testCompressibilityFactor )
 {
   testCompressibilityFactor( GetParam() );
 }
@@ -378,8 +365,7 @@ std::vector< TestData< NC > > generateTestData()
   return testData;
 }
 
-INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSModelTest, PengRobinsonAqueous4, ::testing::ValuesIn( generateTestData< 4 >()) );
-INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSModelTest, PengRobinsonVapour4, ::testing::ValuesIn( generateTestData< 4 >()) );
+INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSModelTest, PengRobinson4, ::testing::ValuesIn( generateTestData< 4 >()) );
 
 } // namespace testing
 

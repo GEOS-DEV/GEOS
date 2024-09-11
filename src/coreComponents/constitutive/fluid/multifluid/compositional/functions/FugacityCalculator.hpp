@@ -111,7 +111,7 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
   }
   else if( equationOfState == EquationOfStateType::SoreideWhitson )
   {
-    SoreideWhitsonEOSModel< SoreideWhitsonPhaseType::Aqueous, PengRobinsonEOS >::
+    SoreideWhitsonEOSModel< PengRobinsonEOS >::
     computeLogFugacityCoefficients( numComps,
                                     pressure,
                                     temperature,
@@ -157,16 +157,16 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
   }
   else if( equationOfState == EquationOfStateType::SoreideWhitson )
   {
-    SoreideWhitsonEOSModel< SoreideWhitsonPhaseType::Aqueous, PengRobinsonEOS >::
+    SoreideWhitsonEOSModel< PengRobinsonEOS >::
     computeLogFugacityCoefficients( numComps,
                                     pressure,
                                     temperature,
                                     composition,
                                     componentProperties,
                                     0.0,
-                                                                        logFugacity,
+                                    logFugacity,
                                     logFugacityDerivs );
-  }  
+  }
 }
 
 } // namespace compositional

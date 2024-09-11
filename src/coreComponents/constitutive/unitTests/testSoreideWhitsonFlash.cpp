@@ -58,21 +58,21 @@ public:
     real64 const salinity = std::get< 2 >( testData );
     stackArray1d< real64, numComps > composition;
     TestFluid< NC >::createArray( composition, std::get< 3 >( testData ));
-    
-    GEOS_UNUSED_VAR(salinity);
 
-    stackArray2d< real64, 2*numComps > phaseComposition(2, numComps);
+    GEOS_UNUSED_VAR( salinity );
+
+    stackArray2d< real64, 2*numComps > phaseComposition( 2, numComps );
     real64 vapourFraction = -1.0;
     arraySlice1d< real64 > liquidComposition = phaseComposition[0];
     arraySlice1d< real64 > vapourComposition = phaseComposition[1];
 
-    stackArray2d< real64, numComps > kValues(1, numComps);
+    stackArray2d< real64, numComps > kValues( 1, numComps );
 
-    auto printComposition = [](auto const & mf){
+    auto printComposition = []( auto const & mf ){
       std::ostringstream os;
-      os << std::fixed << std::setprecision(5);
+      os << std::fixed << std::setprecision( 5 );
       os << "{" << mf[0];
-      for (int ic = 1; ic < numComps; ic++)
+      for( int ic = 1; ic < numComps; ic++ )
       {
         os << ", " << mf[ic];
       }
@@ -80,47 +80,47 @@ public:
       return os.str();
     };
 
-    bool flashStatus = NegativeTwoPhaseFlash::compute(numComps,
-                       pressure,
-                       temperature,
-                       composition.toSliceConst(),
-                       componentProperties,
-                       EquationOfStateType::PengRobinson,
-                       EquationOfStateType::SoreideWhitson,
-                       kValues.toSlice(),
-                       vapourFraction,
-                       liquidComposition,
-                       vapourComposition );
+    bool flashStatus = NegativeTwoPhaseFlash::compute( numComps,
+                                                       pressure,
+                                                       temperature,
+                                                       composition.toSliceConst(),
+                                                       componentProperties,
+                                                       EquationOfStateType::PengRobinson,
+                                                       EquationOfStateType::SoreideWhitson,
+                                                       kValues.toSlice(),
+                                                       vapourFraction,
+                                                       liquidComposition,
+                                                       vapourComposition );
 
     std::cout << "TestData<" << numComps << ">{"
-        << std::scientific << std::setprecision(2) << pressure << ", "
-        << std::fixed << std::setprecision(2) << temperature << ", "
-        << printComposition(composition) << ", "
-        << flashStatus << ", "
-        << std::scientific << std::setprecision(5) << vapourFraction << ", "
-        << printComposition(liquidComposition) << ", "
-        << printComposition(vapourComposition)
-        << "},\n";
-    flashStatus = NegativeTwoPhaseFlash::compute(numComps,
-                       pressure,
-                       temperature,
-                       composition.toSliceConst(),
-                       componentProperties,
-                       EquationOfStateType::PengRobinson,
-                       EquationOfStateType::PengRobinson,
-                       kValues.toSlice(),
-                       vapourFraction,
-                       liquidComposition,
-                       vapourComposition );
+              << std::scientific << std::setprecision( 2 ) << pressure << ", "
+              << std::fixed << std::setprecision( 2 ) << temperature << ", "
+              << printComposition( composition ) << ", "
+              << flashStatus << ", "
+              << std::scientific << std::setprecision( 5 ) << vapourFraction << ", "
+              << printComposition( liquidComposition ) << ", "
+              << printComposition( vapourComposition )
+              << "},\n";
+    flashStatus = NegativeTwoPhaseFlash::compute( numComps,
+                                                  pressure,
+                                                  temperature,
+                                                  composition.toSliceConst(),
+                                                  componentProperties,
+                                                  EquationOfStateType::PengRobinson,
+                                                  EquationOfStateType::PengRobinson,
+                                                  kValues.toSlice(),
+                                                  vapourFraction,
+                                                  liquidComposition,
+                                                  vapourComposition );
     std::cout << "TestData<" << numComps << ">{"
-        << std::scientific << std::setprecision(2) << pressure << ", "
-        << std::fixed << std::setprecision(2) << temperature << ", "
-        << printComposition(composition) << ", "
-        << flashStatus << ", "
-        << std::scientific << std::setprecision(5) << vapourFraction << ", "
-        << printComposition(liquidComposition) << ", "
-        << printComposition(vapourComposition)
-        << "},\n";
+              << std::scientific << std::setprecision( 2 ) << pressure << ", "
+              << std::fixed << std::setprecision( 2 ) << temperature << ", "
+              << printComposition( composition ) << ", "
+              << flashStatus << ", "
+              << std::scientific << std::setprecision( 5 ) << vapourFraction << ", "
+              << printComposition( liquidComposition ) << ", "
+              << printComposition( vapourComposition )
+              << "},\n";
     std::cout << "TestData -----------------------------------------------------\n";
   }
 
