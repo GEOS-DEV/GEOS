@@ -28,3 +28,4 @@ blt_add_library( NAME       schema
 
 target_include_directories( schema PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
+install( TARGETS schema LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

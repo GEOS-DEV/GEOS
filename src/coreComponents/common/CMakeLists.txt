@@ -113,6 +113,8 @@ blt_add_library( NAME       common
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS common LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
   add_subdirectory( format/table/unitTests )
