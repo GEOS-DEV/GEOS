@@ -43,6 +43,7 @@ Or build all docs:
 
   .. code-block:: sh
 
+   make geosx_build_datastructure_tables
    make geosx_docs
 
 Open in browser:

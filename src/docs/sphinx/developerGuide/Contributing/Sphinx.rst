@@ -11,11 +11,12 @@ Generating the documentation
 
    sudo apt install python-sphinx
 
-  Then you can generate the documentation files with the following command
+  Then you can generate the documentation files with the following commands
 
  .. code-block:: sh
 
   cd GEOS/build-your-platform-release
+  make geosx_build_datastructure_tables
   make geosx_docs
 
 - That will create a new folder
