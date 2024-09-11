@@ -33,9 +33,9 @@
       specificHeatCapacity="1.672e2"
       referenceInternalEnergy="0.001"/>
 
-    <SinglePhaseConstantThermalConductivity
+    <SinglePhaseThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1, 1, 1 }"/>
+      defaultThermalConductivityComponents="{ 1, 1, 1 }"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
@@ -68,9 +68,11 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="4.0e9"
-      apertureTableName="apertureTable"/>
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>     
   </Constitutive>
 
   <Functions>
