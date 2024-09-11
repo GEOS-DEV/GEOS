@@ -123,8 +123,6 @@ The GEOS results and analytical results for temperature distribution around the 
 
 and the radial displacement around the wellbore is shown below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedContactThermoElasticWellbore/thermoElastic_casedContactWellbore_displacement.py
-
 .. _problemCasedContactThermoElasticWellbore_Displacement_Fig:
 .. figure:: displacement.png
    :align: center
@@ -134,8 +132,6 @@ and the radial displacement around the wellbore is shown below:
    The displacement field.
 
 The total radial and hoop stress (tangential stress) components computed by GEOS and the reference results are shown in the figure below:
-
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedContactThermoElasticWellbore/thermoElastic_casedContactWellbore_stress.py
 
 .. _problemCasedContactThermoElasticWellbore_Stresses_Fig:
 .. figure:: stress.png
