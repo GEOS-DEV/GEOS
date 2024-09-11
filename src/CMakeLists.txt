@@ -169,9 +169,9 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      COMMENT "Generating XML schema"
                      )
 
-  add_custom_target( geosx_update_rst_tables
+  add_custom_target( geosx_build_datastructure_tables
                      ALL
-                     COMMAND python3 ${SCRIPT_DIR}/SchemaToRSTDocumentation.py ${SCHEMA_DIR} >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
+                     COMMAND python3 ${SCRIPT_DIR}/SchemaToRSTDocumentation.py -s ${SCHEMA_DIR}/schema.xsd -o ${CMAKE_SOURCE_DIR}/docs/sphinx >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Generating schema-dependent RST files"
@@ -181,7 +181,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      ALL
                      COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                     DEPENDS geosx_update_rst_tables
+                     DEPENDS geosx_generate_schema
                      COMMENT "Validating all XML files in the repository against the schema"
                      )
 endif()
