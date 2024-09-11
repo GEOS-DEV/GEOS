@@ -101,8 +101,9 @@ public:
     setReduction( precond, mgrData );
 
     // Configure the BoomerAMG solver used as F-relaxation for the second level
-    setDisplacementAMG( mgrData.mechSolver );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, 1 ) );
+    HyprePrecWrapper mechLevelSolver;
+    setDisplacementAMG( mechLevelSolver );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mechLevelSolver.ptr, 1 ) );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
