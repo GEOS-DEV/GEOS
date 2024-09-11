@@ -2328,7 +2328,7 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
 
-          if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+          if ( kfe == 0 || kfe == 106 || kfe == 164 )
           {
             std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
             ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
@@ -2366,7 +2366,7 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
 
-              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              if ( kfe == 0 || kfe == 106 || kfe == 164 )
               {
                 std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
               }
@@ -2387,7 +2387,7 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
 
-              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              if ( kfe == 0 || kfe == 106 || kfe == 164 )
               {
                 std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << std::endl;
               }
@@ -2548,7 +2548,7 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
 
-          if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+          if ( kfe == 0 || kfe == 106 || kfe == 164 )
           {
             std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
             ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
@@ -2586,7 +2586,7 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
 
-              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              if ( kfe == 0 || kfe == 106 || kfe == 164 )
               {
                 std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
               }
@@ -2605,7 +2605,7 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
 
-              if ( kfe == 0 || kfe == 106 || kfe == 4836 || kfe == 9671 || kfe == 2913 || kfe == 2914 || kfe == 2915 || kfe == 2916 || kfe == 2917 || kfe == 1019 )
+              if ( kfe == 0 || kfe == 106 || kfe == 164 )
               {
                 std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << std::endl;
               }

@@ -227,7 +227,7 @@ private:
   array1d< real64 > m_x2_tilde; // Unaccelerated variable @ outer iteration v + 1 ( current iteration )
   array1d< real64 > m_omega0; // Old Aitken relaxation factor
   array1d< real64 > m_omega1; // New Aitken relaxation factor
-  bool m_applyLocalYieldAcceleration = false; // flag for applying modified Aitken acceleration to yield
+  bool m_applyLocalYieldAcceleration = true; // flag for applying modified Aitken acceleration to yield
   int m_config_iter = 0;
 
   bool updateConfigurationWithoutAcceleration( DomainPartition & domain );
