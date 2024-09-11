@@ -27,7 +27,7 @@
     <CompositionalThreePhaseFluidLohrenzBrayClark
       name="blackOil"
       phaseNames="{ oil, gas, water }"
-      equationsOfState="{ pr, pr, immiscibleWater }"
+      equationsOfState="{ pr, pr, pr }"
       componentNames="{ C1, C7+, H2O }"
       componentCriticalPressure="{ 46.0421e5, 20.549e5, 220.50e5 }"
       componentCriticalTemperature="{ 190.6, 678.8, 647.0 }"
