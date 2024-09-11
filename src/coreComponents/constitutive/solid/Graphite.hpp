@@ -620,8 +620,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
     real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
 
+    real64 failureStrength = m_failureStrength * m_strengthScale[k];
+
     // increment damage, but enforce 0<=d<=1
-    if ( planeNormalStress > m_failureStrength )
+    if ( planeNormalStress > failureStrength )
     {
         real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
         m_damage[k][q] = std::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
@@ -675,8 +677,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // "distortion" shear relating sigma normal and in-plane iso"
     x1 = 0;
     x2 = m_distortionShearResponseX2;
-    y1 = m_distortionShearResponseY1;
-    y2 = m_distortionShearResponseY2;
+    y1 = m_distortionShearResponseY1 * m_strengthScale[k];
+    y2 = m_distortionShearResponseY2 * m_strengthScale[k];
     m1 = m_distortionShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
@@ -700,8 +702,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // Coupled shear response (slip on weak plane)
     x1 = 0;
     x2 = m_coupledShearResponseX2;
-    y1 = m_coupledShearResponseY1;
-    y2 = m_coupledShearResponseY2;
+    y1 = m_coupledShearResponseY1 * m_strengthScale[k];
+    y2 = m_coupledShearResponseY2 * m_strengthScale[k];
     m1 = m_coupledShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
@@ -725,8 +727,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // In-plane shear response
     x1 = 0;
     x2 = m_inPlaneShearResponseX2; 
-    y1 = m_inPlaneShearResponseY1;
-    y2 = m_inPlaneShearResponseY2;
+    y1 = m_inPlaneShearResponseY1 * m_strengthScale[k];
+    y2 = m_inPlaneShearResponseY2 * m_strengthScale[k];
     m1 = m_inPlaneShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
