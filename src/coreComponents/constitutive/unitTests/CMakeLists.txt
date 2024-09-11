@@ -16,6 +16,7 @@ set( gtest_geosx_tests
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
      testSoreideWhitsonEOSModel.cpp
+     testSoreideWhitsonFlash.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp )
