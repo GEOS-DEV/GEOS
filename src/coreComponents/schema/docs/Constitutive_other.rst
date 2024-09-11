@@ -74,7 +74,7 @@ ProppantSlurryFluid                           node :ref:`DATASTRUCTURE_ProppantS
 ProppantSolidProppantPermeability             node :ref:`DATASTRUCTURE_ProppantSolidProppantPermeability`             
 ReactiveBrine                                 node :ref:`DATASTRUCTURE_ReactiveBrine`                                 
 ReactiveBrineThermal                          node :ref:`DATASTRUCTURE_ReactiveBrineThermal`                          
-SinglePhaseConstantThermalConductivity        node :ref:`DATASTRUCTURE_SinglePhaseConstantThermalConductivity`        
+SinglePhaseThermalConductivity                node :ref:`DATASTRUCTURE_SinglePhaseThermalConductivity`                
 SlipDependentPermeability                     node :ref:`DATASTRUCTURE_SlipDependentPermeability`                     
 SolidInternalEnergy                           node :ref:`DATASTRUCTURE_SolidInternalEnergy`                           
 TableCapillaryPressure                        node :ref:`DATASTRUCTURE_TableCapillaryPressure`                        

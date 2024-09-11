@@ -1067,13 +1067,6 @@ Element: Silo
 .. include:: ../../coreComponents/schema/docs/Silo.rst
 
 
-.. _XML_SinglePhaseConstantThermalConductivity:
-
-Element: SinglePhaseConstantThermalConductivity
-===============================================
-.. include:: ../../coreComponents/schema/docs/SinglePhaseConstantThermalConductivity.rst
-
-
 .. _XML_SinglePhaseFVM:
 
 Element: SinglePhaseFVM
@@ -1177,6 +1170,13 @@ Element: SinglePhaseReservoirPoromechanicsInitialization
 Element: SinglePhaseStatistics
 ==============================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics.rst
+
+
+.. _XML_SinglePhaseThermalConductivity:
+
+Element: SinglePhaseThermalConductivity
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermalConductivity.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -2569,13 +2569,6 @@ Datastructure: Silo
 .. include:: ../../coreComponents/schema/docs/Silo_other.rst
 
 
-.. _DATASTRUCTURE_SinglePhaseConstantThermalConductivity:
-
-Datastructure: SinglePhaseConstantThermalConductivity
-=====================================================
-.. include:: ../../coreComponents/schema/docs/SinglePhaseConstantThermalConductivity_other.rst
-
-
 .. _DATASTRUCTURE_SinglePhaseFVM:
 
 Datastructure: SinglePhaseFVM
@@ -2679,6 +2672,13 @@ Datastructure: SinglePhaseReservoirPoromechanicsInitialization
 Datastructure: SinglePhaseStatistics
 ====================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseStatistics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseThermalConductivity:
+
+Datastructure: SinglePhaseThermalConductivity
+=============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:
