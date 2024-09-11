@@ -394,29 +394,6 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                              dampingx,
                                                                              dampingy,
                                                                              dampingz );
-        if( m_preComputeDt==1 )
-        {
-          elasticFirstOrderWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
-
-          dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                             nodeManager.size(),
-                                                                             nodeCoords,
-                                                                             elemsToNodes,
-                                                                             velocityVp,
-                                                                             velocityVs,
-                                                                             density,
-                                                                             lambda,
-                                                                             mu,
-                                                                             mass );
-
-
-          real64 globaldt = MpiWrapper::min( dtCompute );
-
-          printf( "dt=%f\n", globaldt );
-
-          exit( 2 );
-
-        }
       } );
     } );
   } );
