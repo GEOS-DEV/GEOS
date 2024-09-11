@@ -376,43 +376,11 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
       p[a]/= sqrt( normP );
     } );
 
-    //Step 2: Initial iteration of (M^{-1}K)p
-    stiffnessVector.zero();
+    //Step 2: Iterations of M^{-1}K)p until we found the max eigenvalues
     auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dtOut );
-
-    finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            getDiscretizationName(),
-                                                            "",
-                                                            kernelFactory );
-
-
-
-    forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      stiffnessVector[a]/= mass[a];
-    } );
-    real64 lambdaOld = lambdaNew;
-
-    //Compute lambdaNew using two dotProducts
     real64 dotProductPPaux = 0.0;
-    normP = 0.0;
-    WaveSolverUtils::dotProduct( sizeNode, p, stiffnessVector, dotProductPPaux );
-    WaveSolverUtils::dotProduct( sizeNode, p, p, normP );
-
-    lambdaNew = dotProductPPaux/normP;
-
     real64 normPaux = 0.0;
-    WaveSolverUtils::dotProduct( sizeNode, stiffnessVector, stiffnessVector, normPaux );
-    forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      p[a] = stiffnessVector[a]/( normPaux );
-    } );
-
-    //Step 3: Do previous algorithm until we found the max eigenvalues
+    real64 lambdaOld = lambdaNew;
     do
     {
       stiffnessVector.zero();
@@ -465,6 +433,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
 
+    // We use 1.99 instead of 2 to have a 5% margin error
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 
     printf( "lam=%f\n", lambdaNew );

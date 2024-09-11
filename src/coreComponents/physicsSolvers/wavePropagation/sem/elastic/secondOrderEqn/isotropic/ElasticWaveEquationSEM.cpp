@@ -521,59 +521,18 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
       uz_n[a]/= sqrt( normUtot );
     } );
 
-    //Step 2: Initial iteration of (M^{-1}K)p
-    stiffnessVectorx.zero();
-    stiffnessVectory.zero();
-    stiffnessVectorz.zero();
+    //Step 2: Iterations of M^{-1}K)p until we found the max eigenvalues
     auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dtOut );
-
-    finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            getDiscretizationName(),
-                                                            "",
-                                                            kernelFactory );
-
-
-
-    forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      stiffnessVectorx[a]/= mass[a];
-      stiffnessVectory[a]/= mass[a];
-      stiffnessVectorz[a]/= mass[a];
-    } );
     real64 lambdaOld = lambdaNew;
-
-    //Compute lambdaNew using two dotProducts
     real64 dotProductUxUxaux = 0.0;
     real64 dotProductUyUyaux = 0.0;
     real64 dotProductUzUzaux = 0.0;
-    WaveSolverUtils::dotProduct( sizeNode, ux_n, stiffnessVectorx, dotProductUxUxaux );
-    WaveSolverUtils::dotProduct( sizeNode, uy_n, stiffnessVectory, dotProductUyUyaux );
-    WaveSolverUtils::dotProduct( sizeNode, ux_n, stiffnessVectorz, dotProductUzUzaux );
     real64 dotProductUtotUtotAux = dotProductUxUxaux+dotProductUyUyaux+dotProductUzUzaux;
-
-    lambdaNew = dotProductUtotUtotAux/normUtot;
-
     real64 normUxaux = 0.0;
     real64 normUyaux = 0.0;
     real64 normUzaux = 0.0;
-    WaveSolverUtils::dotProduct( sizeNode, stiffnessVectorx, stiffnessVectorx, normUxaux );
-    WaveSolverUtils::dotProduct( sizeNode, stiffnessVectory, stiffnessVectory, normUyaux );
-    WaveSolverUtils::dotProduct( sizeNode, stiffnessVectorz, stiffnessVectorz, normUzaux );
-
     real64 normUtotAux = normUxaux+normUyaux+normUzaux;
 
-    forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      ux_n[a] = stiffnessVectorx[a]/( normUtotAux );
-      uy_n[a] = stiffnessVectory[a]/( normUtotAux );
-      uz_n[a] = stiffnessVectorz[a]/( normUtotAux );
-    } );
-
-    //Step 3: Do previous algorithm until we found the max eigenvalues
     do
     {
 
@@ -644,13 +603,10 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
 
+    //We use 1.99 instead of 2 to have a 5% margin error
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 
-    printf( "lam=%f\n", lambdaNew );
-
     dtOut = MpiWrapper::min( dt );
-
-    printf( "dtinside=%f\n", dtOut );
 
     stiffnessVectorx.zero();
     stiffnessVectory.zero();
