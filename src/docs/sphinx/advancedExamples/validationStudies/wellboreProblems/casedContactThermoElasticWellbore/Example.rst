@@ -111,8 +111,6 @@ The GEOS results of displacement jump across the casing-cement and cement-rock i
 
 The GEOS results and analytical results for temperature distribution around the cased wellbore are shown in the figures below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedContactThermoElasticWellbore/thermoElastic_casedContactWellbore_temperature.py
-
 .. _problemCasedContactThermoElasticWellbore_Temperature_Fig:
 .. figure:: temperature.png
    :align: center
