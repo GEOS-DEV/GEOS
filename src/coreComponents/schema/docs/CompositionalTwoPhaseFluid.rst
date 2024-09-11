@@ -16,7 +16,6 @@ constantPhaseViscosity       real64_array       {0}      Constant phase viscosit
 equationsOfState             string_array       required | List of equation of state types for each phase. Valid options:                                               
                                                          | * pr                                                                                                         
                                                          | * srk                                                                                                        
-                                                         | * immiscibleWater                                                                                            
 name                         groupName          required A name is required for any non-unique nodes                                                                  
 phaseNames                   groupNameRef_array required List of fluid phases                                                                                         
 ============================ ================== ======== ============================================================================================================ 
