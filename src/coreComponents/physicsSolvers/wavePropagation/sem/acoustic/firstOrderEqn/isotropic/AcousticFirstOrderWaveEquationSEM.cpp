@@ -298,8 +298,6 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
       arrayView1d< real32 const > const density = elementSubRegion.getField< acousticfields::AcousticDensity >();
 
-      real64 dtCompute=0.0;
-
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )

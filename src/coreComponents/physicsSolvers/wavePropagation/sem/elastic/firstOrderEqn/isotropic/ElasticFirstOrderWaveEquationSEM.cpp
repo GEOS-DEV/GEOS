@@ -351,8 +351,6 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                                           CellElementSubRegion & elementSubRegion )
     {
 
-      real64 dtCompute=0.0;
-
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const density = elementSubRegion.getField< elasticfields::ElasticDensity >();
