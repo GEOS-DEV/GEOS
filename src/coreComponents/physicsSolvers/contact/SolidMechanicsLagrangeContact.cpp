@@ -2261,9 +2261,9 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
 
-          std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
-          ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
-          ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
+          // std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
+          // ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
+          // ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
 
           if( ghostRank[kfe] < 0 )
           {
