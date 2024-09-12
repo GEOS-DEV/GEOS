@@ -38,8 +38,6 @@ Usage: $0
       run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
-  --eclipse
-      Use "Eclipse CDT4 - Unix Makefiles" as build system generator.
   --exchange-dir /path/to/exchange
       Folder to share data with outside of the container.
   --host-config host-config/my_config.cmake
@@ -64,8 +62,6 @@ Usage: $0
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
   --test-documentation
-  --xcode
-      Use "Xcode" as build system generator.
   -h | --help
 EOF
 exit 1
@@ -76,7 +72,7 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,eclipse,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,xcode,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -100,7 +96,7 @@ do
       RUN_UNIT_TESTS=false
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --eclipse|--ninja|--xcode)
+    --ninja)
         BUILD_GENERATOR=$1;
         shift;;
     --data-basename)
