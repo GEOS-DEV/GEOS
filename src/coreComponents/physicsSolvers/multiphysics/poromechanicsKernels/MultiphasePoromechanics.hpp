@@ -418,10 +418,10 @@ public:
     m_bulkDensity[ei][q] = 0.0;
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
-      m_bulkDensity[ei][q] += m_useMass ? m_compDens[ei][ic] : m_compDens[ei][ic] * m_componentMolarWeight[ic];
+      m_bulkDensity[ei][q] = m_bulkDensity[ei][q] + ( m_useMass ? m_compDens[ei][ic] : m_compDens[ei][ic] * m_componentMolarWeight[ic] );
     }
     m_bulkDensity[ei][q] *= m_porosity[ei][q];
-    m_bulkDensity[ei][q] += ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q];
+    m_bulkDensity[ei][q] = m_bulkDensity[ei][q] + ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q];
   }
 
   /**

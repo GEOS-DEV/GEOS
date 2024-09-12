@@ -227,7 +227,7 @@ computeBodyForce( localIndex const k,
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[k];
   for( integer ic = 0; ic < m_numComponents; ++ic )
   {
-    totalMassDensity += m_useMass ? compDens[ic] : compDens[ic] * m_componentMolarWeight[ic];
+    totalMassDensity = totalMassDensity + ( m_useMass ? compDens[ic] : compDens[ic] * m_componentMolarWeight[ic] );
     dTotalMassDensity_dComponents[ic] = m_useMass ? 1.0 : m_componentMolarWeight[ic];
   }
 
