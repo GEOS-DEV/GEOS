@@ -26,7 +26,7 @@ set( fieldSpecification_sources
      PerfectlyMatchedLayer.cpp
    )
 
-set( dependencyList ${parallelDeps} linearAlgebra )
+set( dependencyList ${parallelDeps} mesh )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
@@ -41,3 +41,4 @@ blt_add_library( NAME       fieldSpecification
 
 target_include_directories( fieldSpecification PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS fieldSpecification LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

@@ -47,7 +47,7 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )
 
-set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
+set( dependencyList ${parallelDeps} mesh denseLinearAlgebra finiteVolume )
 set( tplDependencyList "" )
 
 list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
@@ -163,6 +163,7 @@ blt_add_library( NAME       linearAlgebra
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
+install( TARGETS linearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )

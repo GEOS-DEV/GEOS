@@ -51,7 +51,7 @@ if( GEOS_ENABLE_WAVEPROPAGATION )
   add_subdirectory( wavePropagation )
 endif()
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events )
+set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
 
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
@@ -74,6 +74,9 @@ blt_add_library( NAME       physicsSolvers
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
 if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
