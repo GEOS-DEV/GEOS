@@ -36,7 +36,7 @@ The model is represented by ``<CompressibleSinglePhaseFluid>`` node in the input
 
 The following attributes are supported:
 
-.. include:: ../../../docs/sphinx/datastructure/CompressibleSinglePhaseFluid.rst
+.. include:: /docs/sphinx/datastructure/CompressibleSinglePhaseFluid.rst
 
 Example
 =========================
