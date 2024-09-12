@@ -115,8 +115,8 @@ public:
     ColumnParam m_parameter;
     /// A vector containing all column values
     std::vector< string > m_columnValues;
-    /// The largest string in the column
-    string m_maxStringSize;
+    /// The largest string(s) in the column
+    std::vector< string > m_maxStringSize;
     //sub divison of a column
     std::vector< Column > subColumn;
 

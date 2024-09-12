@@ -27,13 +27,13 @@ void addColumn( std::vector< TableLayout::ColumnParam > const & columnsParam, st
   {
     bool subColum = false;
     std::vector< TableLayout::Column > subColumnsToAdd;
-    TableLayout::Column columnToAdd = {columnParam, {}, "", {}};
+    TableLayout::Column columnToAdd = {columnParam, {}, {}, {}};
     for( const auto & subColumnsName: columnParam.subColumns )
     {
       subColum = true;
-      TableLayout::Column subColumn= {subColumnsName, {}, "", {}};
+      TableLayout::Column subColumn= {subColumnsName, {}, {}, {}};
       subColumnsToAdd.push_back( subColumn );
-      columnToAdd = { columnParam, {}, "", subColumnsToAdd };
+      columnToAdd = { columnParam, {}, {}, subColumnsToAdd };
     }
     if( subColum )
     {
@@ -41,7 +41,7 @@ void addColumn( std::vector< TableLayout::ColumnParam > const & columnsParam, st
     }
     else
     {
-      columns.push_back( { columnParam, {}, "", {}} );
+      columns.push_back( { columnParam, {}, {}, {}} );
     }
   }
 }
@@ -53,7 +53,7 @@ TableLayout::TableLayout( std::vector< string > const & columnNames, string cons
   m_columns.reserve( columnNames.size() );
   for( auto const & name : columnNames )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{name}, Alignment::right, true}, {}, "", {}} );
+    m_columns.push_back( {TableLayout::ColumnParam{{name}, Alignment::right, true}, {}, {}, {}} );
   }
 }
 

@@ -161,7 +161,8 @@ private:
    * @param tableData Vector containing all rows filled with values
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
-                                 std::vector< std::vector< string > > const & tableData ) const;
+                                 std::vector< std::vector< string > > const & tableData,
+                                 bool isSubColumn ) const;
 
   /**
    * @brief Converts a TableLayout into a formatted representation.
@@ -188,17 +189,13 @@ private:
 
   /**
    * @brief For each column find and set the column's longest string
+   *
+   *
    * @param columns The vector containg all columns
    */
-  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, std::string & maxStringSize ) const;
-
-  /**
-   * @brief recalculate the largest string size for each columns
-   * @param columns Vector containing all table columns
-   * @param extraCharacters Extra characters to be added to \p m_maxStringSize of each columns
-   */
-  void increaseColumnsSize( std::vector< TableLayout::Column > & columns,
-                            integer const extraCharacters ) const;
+  void findAndSetMaxStringSize( TableLayout::Column & columns,
+                                std::vector< std::string > & maxStringSize,
+                                integer const idxColumn ) const;
 
   /**
    * @brief Compute the max table line length, taking into account the length of : title, error, columns header and content
@@ -243,7 +240,7 @@ private:
   void outputSectionRows( std::vector< TableLayout::Column > const & columns,
                           string_view sectionSeparatingLine,
                           std::ostringstream & tableOutput,
-                          integer const nbRows,
+                          size_t const nbRows,
                           TableLayout::Section const section ) const;
 
   /**
@@ -251,12 +248,10 @@ private:
    *
    * @param columns
    * @param tableOutput
-   * @param idxRow
    */
   void outputSubSection( std::vector< TableLayout::Column > const & columns,
                          std::ostringstream & tableOutput,
-                         TableLayout::Section const section,
-                         size_t const idxRow ) const;
+                         integer idxCell ) const;
 };
 
 /**
