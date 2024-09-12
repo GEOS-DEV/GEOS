@@ -1,11 +1,10 @@
-######################
+###################
 Datastructure Index
-######################
+###################
 
-**************************
-
+************************
 Input Schema Definitions
-**************************
+************************
 
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
@@ -1479,9 +1478,9 @@ Element: quartz
 ===============
 .. include:: ../../coreComponents/schema/docs/quartz.rst
 
-********************************
+*************************
 Datastructure Definitions
-********************************
+*************************
 
 
 .. _DATASTRUCTURE_AcousticElasticSEM:
