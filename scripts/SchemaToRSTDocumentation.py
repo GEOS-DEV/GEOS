@@ -252,17 +252,24 @@ def main(schema_name='schema.xsd', output_folder='./', xsd='{http://www.w3.org/2
         print(other_repeated_keys)
         raise ValueError('Duplicate data structure names are not allowed due to .rst limitations (case-insensitive)!')
 
-    # Build documentation tables
-    with open(summary_file, 'w') as output_handle:
-        # Write the file header
-        output_handle.write('######################\n')
-        output_handle.write('Datastructure Index\n')
-        output_handle.write('######################\n\n')
+# Setup directory
+os.system('mkdir -p %s' % (output_folder))
+
+# Keep track of existing/touched files
+old_files = [f for f in os.listdir(output_folder) if '.rst' in f]
+touched_files = []
+
+# Build documentation tables
+with open('%s.rst' % (complete_output), 'w') as output_handle:
+    # Write the file header
+    output_handle.write('###################\n')
+    output_handle.write('Datastructure Index\n')
+    output_handle.write('###################\n\n')
 
         # Parse the input schema definitions
-        output_handle.write('**************************\n\n')
+        output_handle.write('************************\n')
         output_handle.write('Input Schema Definitions\n')
-        output_handle.write('**************************\n\n')
+        output_handle.write('************************\n\n')
 
         output_handle.write(':download:`XML Schema <schema.xsd>`\n\n')
 
@@ -279,9 +286,9 @@ def main(schema_name='schema.xsd', output_folder='./', xsd='{http://www.w3.org/2
             output_handle.write('.. include:: %s.rst\n\n' % (type_name))
 
         # Parse the non-input schema definitions
-        output_handle.write('********************************\n')
+        output_handle.write('*************************\n')
         output_handle.write('Datastructure Definitions\n')
-        output_handle.write('********************************\n\n')
+        output_handle.write('*************************\n\n')
 
         for type_name in sorted(other_attribute_map.keys()):
             # Write the individual tables
