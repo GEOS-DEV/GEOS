@@ -140,7 +140,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( -1. ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
-                    "when computing the next timestep." );
+                    " when computing the next timestep." );
 
   this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
     setSizedFromParent( 0 ).
