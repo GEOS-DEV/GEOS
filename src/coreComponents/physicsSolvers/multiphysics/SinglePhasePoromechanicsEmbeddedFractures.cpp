@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,7 +18,7 @@
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -50,9 +51,19 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
 {}
 
+void SinglePhasePoromechanicsEmbeddedFractures::postInputInitialization()
+{
+  Base::postInputInitialization();
+
+  GEOS_ERROR_IF( solidMechanicsSolver()->useStaticCondensation(),
+                 GEOS_FMT( "{}: {} = 1 in {} solver named {} is not supported for {}",
+                           this->getName(), SolidMechanicsEmbeddedFractures::viewKeyStruct::useStaticCondensationString(),
+                           solidMechanicsSolver()->getCatalogName(), solidMechanicsSolver()->getName(), getCatalogName() ));
+}
+
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  SinglePhasePoromechanics::registerDataOnMesh( meshBodies );
+  Base::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -69,7 +80,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups();
+  Base::initializePostInitialConditionsPreSubGroups();
 
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
@@ -158,10 +169,10 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -406,7 +417,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                         thermoPoromechanicsEFEMKernels::ThermalSinglePhasePoromechanicsEFEMKernelFactory >( mesh,
                                                                                                             dofManager,
                                                                                                             regionNames,
-                                                                                                            SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                            Base::viewKeyStruct::porousMaterialNamesString(),
                                                                                                             localMatrix,
                                                                                                             localRhs,
                                                                                                             dt );
@@ -419,7 +430,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                         poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
                                                                               dofManager,
                                                                               regionNames,
-                                                                              SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                              Base::viewKeyStruct::porousMaterialNamesString(),
                                                                               localMatrix,
                                                                               localRhs,
                                                                               dt );
@@ -438,84 +449,12 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
 }
 
-void SinglePhasePoromechanicsEmbeddedFractures::applyBoundaryConditions( real64 const time_n,
-                                                                         real64 const dt,
-                                                                         DomainPartition & domain,
-                                                                         DofManager const & dofManager,
-                                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                         arrayView1d< real64 > const & localRhs )
-{
-  solidMechanicsSolver()->applyBoundaryConditions( time_n, dt,
-                                                   domain,
-                                                   dofManager,
-                                                   localMatrix,
-                                                   localRhs );
-
-  flowSolver()->applyBoundaryConditions( time_n, dt,
-                                         domain,
-                                         dofManager,
-                                         localMatrix,
-                                         localRhs );
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
-                                                                   real64 const & dt,
-                                                                   DomainPartition & domain )
-{
-  flowSolver()->implicitStepSetup( time_n, dt, domain );
-  solidMechanicsSolver()->implicitStepSetup( time_n, dt, domain );
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_n,
-                                                                      real64 const & dt,
-                                                                      DomainPartition & domain )
-{
-  solidMechanicsSolver()->implicitStepComplete( time_n, dt, domain );
-  flowSolver()->implicitStepComplete( time_n, dt, domain );
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
-{
-  flowSolver()->resetStateToBeginningOfStep( domain );
-  solidMechanicsSolver()->resetStateToBeginningOfStep( domain );
-}
-
-
-real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( real64 const & time_n,
-                                                                         real64 const & dt,
-                                                                         DomainPartition const & domain,
-                                                                         DofManager const & dofManager,
-                                                                         arrayView1d< real64 const > const & localRhs )
-{
-  // compute norm of momentum balance residual equations
-  real64 const momentumResidualNorm = solidMechanicsSolver()->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
-
-  // compute norm of mass balance residual equations
-  real64 const massResidualNorm = flowSolver()->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
-
-  real64 const residual = sqrt( momentumResidualNorm * momentumResidualNorm + massResidualNorm * massResidualNorm );
-
-  return residual;
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
-                                                                     arrayView1d< real64 const > const & localSolution,
-                                                                     real64 const scalingFactor,
-                                                                     real64 const dt,
-                                                                     DomainPartition & domain )
-{
-  // update displacement and jump
-  solidMechanicsSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
-  // update pressure field
-  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
-}
-
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   /// 1. update the reservoir
-  SinglePhasePoromechanics::updateState( domain );
+  Base::updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
   flowSolver()->prepareStencilWeights( domain );
@@ -557,33 +496,38 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< fields::flow::pressure >();
 
-      string const & contactRelationName = subRegion.template getReference< string >( ContactSolverBase::viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
-
-      ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
+      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
+      HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
       string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &hydraulicApertureModel] ( auto & castedPorousSolid )
       {
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        poromechanicsEFEMKernels::StateUpdateKernel::
-          launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            contactWrapper,
-                                            porousMaterialWrapper,
-                                            dispJump,
-                                            pressure,
-                                            area,
-                                            volume,
-                                            deltaVolume,
-                                            aperture,
-                                            oldHydraulicAperture,
-                                            hydraulicAperture,
-                                            fractureTraction,
-                                            dTdpf );
+        constitutiveUpdatePassThru( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
+        {
 
+          using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
+          typename HydraulicApertureModelType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
+
+          poromechanicsEFEMKernels::StateUpdateKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              hydraulicApertureModelWrapper,
+                                              porousMaterialWrapper,
+                                              dispJump,
+                                              pressure,
+                                              area,
+                                              volume,
+                                              deltaVolume,
+                                              aperture,
+                                              oldHydraulicAperture,
+                                              hydraulicAperture,
+                                              fractureTraction,
+                                              dTdpf );
+
+        } );
       } );
 
       // update the stencil weights using the updated hydraulic aperture

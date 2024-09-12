@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -52,6 +53,7 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
                                 localIndex const numComponents,
                                 localIndex const numPhases,
                                 integer const useTotalMassEquation,
+                                integer const performStressInitialization,
                                 string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
@@ -71,6 +73,7 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
         numPhases,
         false, // do not use simple accumulation form
         useTotalMassEquation,
+        performStressInitialization,
         fluidModelKey ),
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
@@ -137,6 +140,7 @@ smallStrainUpdate( localIndex const k,
                                                        stack.dTotalStress_dPressure,
                                                        stack.dTotalStress_dTemperature,
                                                        stack.stiffness,
+                                                       m_performStressInitialization,
                                                        porosity,
                                                        porosity_n,
                                                        dPorosity_dVolStrain,

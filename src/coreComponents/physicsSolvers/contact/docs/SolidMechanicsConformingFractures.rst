@@ -1,8 +1,8 @@
 .. _SolidMechanicsConformingFractures:
 
-#####################################
+###########################################
 Solid mechanics conforming fractures solver
-#####################################
+###########################################
 
 Introduction
 ============

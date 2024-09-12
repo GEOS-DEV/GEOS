@@ -1,10 +1,8 @@
 
-cmake_minimum_required( VERSION 3.23 )
+cmake_minimum_required( VERSION 3.24 )
 
 # At the moment we are manually passing the cuda arch flag.
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.23.0")
-  cmake_policy(SET CMP0104 OLD) # when using nvcc populate CMAKE_CUDA_ARCHITECTURES, raise error if we can't
-endif()
+cmake_policy(SET CMP0104 OLD) # when using nvcc populate CMAKE_CUDA_ARCHITECTURES, raise error if we can't
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
 cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
@@ -106,7 +104,7 @@ install( DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . )
 # Generate version information
 ################################
 include( cmake/GeosxVersion.cmake )
-message( STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}" )
+message( STATUS "Configuring GEOSX version ${GEOS_VERSION_FULL}" )
 
 
 ################################
@@ -127,7 +125,7 @@ if( ENABLE_CUDA )
   list( APPEND extraComponentsLinkList cuda )
 endif()
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND extraComponentsLinkList CUDA::nvToolsExt )
 endif()
 
@@ -135,15 +133,10 @@ if( ENABLE_HIP )
   list( APPEND extraComponentsLinkList blt::hip )
 endif()
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  list( APPEND extraComponentsLinkList geosx_core )
-else()
-  list( APPEND extraComponentsLinkList ${geosx_core_libs} )
-endif()
-
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
-                    DEPENDS_ON ${extraComponentsLinkList}
+                    DEPENDS_ON geosx_core 
+                               ${extraComponentsLinkList}
                                ${externalComponentsLinkList} )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
@@ -151,11 +144,6 @@ if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
-# Removing all transitive link dependencies from geosx_core target to circumvent
-# the BLT behavior which imposes all dependencies to be public
-#set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
-
-target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 # To change the runtime path during installation
 set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
@@ -221,7 +209,7 @@ add_custom_target( geosx_generate_install_schema
          COMMENT "Generating XML schema to install"
          )
 
-if( NOT GEOSX_INSTALL_SCHEMA )
+if( NOT GEOS_INSTALL_SCHEMA )
   set_target_properties(geosx_generate_install_schema PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
 endif()
 
@@ -232,6 +220,10 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
+# message(WARNING "Temporarily changing the geosPythonBranch to bugfix/sherman/fixNumpyProd")
+# set(GEOS_PYTHON_PACKAGES_BRANCH "bugfix/sherman/fixNumpyProd" CACHE STRING "" FORCE)
+
+
 if ( Python3_EXECUTABLE )
     message(STATUS "Found python version ${Python3_VERSION}")
     if (${Python3_VERSION} VERSION_LESS "3.6.0")
@@ -261,19 +253,19 @@ if ( Python3_EXECUTABLE )
       set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
     endif()
 
-    set( GEOSX_PYTHON_TOOLS_BINS
+    set( GEOS_PYTHON_TOOLS_BINS
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
-    add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
+    add_custom_command( OUTPUT ${GEOS_PYTHON_TOOLS_BINS}
                         COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 
     add_custom_target( geosx_python_tools
-                       DEPENDS ${GEOSX_PYTHON_TOOLS_BINS} )
+                       DEPENDS ${GEOS_PYTHON_TOOLS_BINS} )
 
     add_custom_target( geosx_python_tools_clean
-                       COMMAND rm ${GEOSX_PYTHON_TOOLS_BINS} )
+                       COMMAND rm ${GEOS_PYTHON_TOOLS_BINS} )
 
     add_custom_target( geosx_python_tools_test
                        COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_geosx_xml_tools
