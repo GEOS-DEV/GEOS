@@ -55,6 +55,9 @@ on:
         required: false
         type: string
         default: ''
+      HOST_ARCH:
+        required: false
+        type: string
       RUNS_ON:
         required: true
         type: string
@@ -121,6 +124,12 @@ jobs:
 
     - name: Print environment
       run: printenv
+
+    - name: Setup QEMU for ${{ inputs.HOST_ARCH }} emulation
+      if: ${{ inputs.HOST_ARCH }}
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: ${{ inputs.HOST_ARCH }}
 
     - name: Build, test, deploy.
       run: |
