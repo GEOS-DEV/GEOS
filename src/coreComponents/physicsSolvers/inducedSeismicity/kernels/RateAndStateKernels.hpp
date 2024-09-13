@@ -107,7 +107,7 @@ public:
     /// Solve 2x2 system
     real64 const solution[2] = {0.0, 0.0};
 
-    denseLinearAlgebra::solveTwoByTwoSystem( stack.jacobian, stack.rhs, solution );
+    denseLinearAlgebra::solve( stack.jacobian, stack.rhs, solution );
 
     /// Update variables
     m_stateVariable[k] += solution[0];
