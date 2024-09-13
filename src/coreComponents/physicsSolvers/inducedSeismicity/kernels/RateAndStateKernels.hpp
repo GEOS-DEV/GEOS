@@ -139,13 +139,14 @@ private:
 template< typename POLICY >
 static void
 createAndLaunch( SurfaceElementSubRegion & subRegion,
-                 string const & frictionLawName,
+                 string const & frictionLawNameKey,
                  integer const maxNewtonIter, 
                  real64 const time_n,
                  real64 const dt )
 {
   GEOS_MARK_FUNCTION;
-
+  
+  string const & frictionaLawName = subRegion.getReference< string >( vfrictionLawNameKey );
   RateAndStateFrction const & frictionLaw = subRegion.getConstitutiveModel( frictionaLawName );
   RateAndStateKernel kernel( subRegion, frictionLaw );
   
