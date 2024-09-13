@@ -258,12 +258,15 @@ std::cout << " elem center = " << elemCenters[eiLocal][0] << " " << elemCenters[
         if( isPointInsideElement( subRegion, referencePosition, eiLocal, facesToNodes, elemCenter, location ) )
         {
           eiMatched = eiLocal;
+          std::cout << "found " << targetRegionIndex << " " << esr << " " << eiMatched << std::endl;
           matched = true;
           break;
         }
         // otherwise add the nodes of this element to the set of new nodes to visit
-        //std::cout << "here" << std::endl;
-        collectElementNodes( subRegion, eiLocal, nodes );
+        else
+        {
+          collectElementNodes( subRegion, eiLocal, nodes );
+        }
       }
     }
 
@@ -272,6 +275,9 @@ std::cout << " elem center = " << elemCenters[eiLocal][0] << " " << elemCenters[
       break;
     }
   }
+
+if(matched)
+std::cout << "matched" << std::endl;
 
   // if not matched, insert the new nodes
   return matched;
@@ -395,16 +401,17 @@ bool searchLocalElements( MeshLevel const & mesh,
 
       if( resElemFound || nNodes == nodes.size())
       {
+        std::cout << "resElemFound" << std::endl;
         esrMatched = esr;
         break;
       }
     }
   } );
 
-  if( resElemFound )
+//  if( resElemFound )
     std::cout << "found " << targetRegionIndex << " " << esrMatched << " " << eiMatched << std::endl;
 
-  return resElemFound;
+  return eiMatched >= 0; // resElemFound;
 }
 
 }
