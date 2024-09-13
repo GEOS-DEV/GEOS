@@ -64,7 +64,7 @@ public:
     ///
     std::vector< string > subColumns;
     /// Vector containing substring column name delimited by "\n"
-    std::vector< string > splitColumnNameLines = {""};
+    std::vector< string > splitColumnNames = {""};
 
     /**
      * @brief Construct a ColumnParam object with the specified name and alignment.
@@ -164,7 +164,7 @@ public:
   string_view getTitle() const;
 
   /**
-   * @return The border margin, number of spaces at both left and right table sides
+   * @return The border margin, number of spaces at both left and right table sides plus vertical character
    */
   integer const & getBorderMargin() const;
 
