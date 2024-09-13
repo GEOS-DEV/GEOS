@@ -69,13 +69,18 @@ minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+    std::cout << elemRegion.getName() << " " << elemRegion.numSubRegions() << std::endl;
+
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >( [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       localIndex const size = subRegion.size();
+
+      std::cout << subRegion.getName() << " size = " << size << std::endl;
+
       for( localIndex k = 0; k < size; ++k )
       {
         NUMBER const val = lambda( er, esr, k );
@@ -91,6 +96,74 @@ minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
   }
 
   return std::make_pair( minVal, std::make_tuple( minReg, minSubreg, minIndex ));
+}
+
+/**
+ * @brief @return Return the minimum location/indices for a value condition specified by @p lambda.
+ * @tparam LAMBDA The type of the lambda function to be used to specify the minimum condition.
+ * @param region The region that will have all of its elements processed by this function.
+ * @param lambda  A lambda function that returns as value that will be used in the minimum comparison.
+ */
+template< typename LAMBDA >
+auto
+minLocOverElemsInRegion( ElementRegionBase const & region, LAMBDA && lambda )
+{
+  using NUMBER = decltype( lambda( 0, 0 ) );
+
+  NUMBER minVal = std::numeric_limits< NUMBER >::max();
+  localIndex minSubreg = -1, minIndex = -1;
+
+  region.forElementSubRegionsIndex< ElementSubRegionBase >( [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+  {
+    localIndex const size = subRegion.size();
+
+    std::cout << subRegion.getName() << " size = " << size << std::endl;
+
+    for( localIndex k = 0; k < size; ++k )
+    {
+      NUMBER const val = lambda( esr, k );
+      if( val < minVal )
+      {
+        minVal = val;
+        minSubreg = esr;
+        minIndex = k;
+      }
+    }
+  } );
+
+  return std::make_pair( minVal, std::make_tuple( minSubreg, minIndex ));
+}
+
+/**
+ * @brief @return Return the minimum location/indices for a value condition specified by @p lambda.
+ * @tparam LAMBDA The type of the lambda function to be used to specify the minimum condition.
+ * @param elemRegion The region that will have all of its elements processed by this function.
+ * @param lambda  A lambda function that returns as value that will be used in the minimum comparison.
+ */
+template< typename LAMBDA >
+auto
+minLocOverElemsInSubRegion( ElementSubRegionBase const & subRegion, localIndex const esr, LAMBDA && lambda )
+{
+  using NUMBER = decltype( lambda( 0 ) );
+
+  NUMBER minVal = std::numeric_limits< NUMBER >::max();
+  localIndex minIndex = -1;
+
+  localIndex const size = subRegion.size();
+
+  std::cout << subRegion.getName() << " size = " << size << std::endl;
+
+  for( localIndex k = 0; k < size; ++k )
+  {
+    NUMBER const val = lambda( k );
+    if( val < minVal )
+    {
+      minVal = val;
+      minIndex = k;
+    }
+  }
+
+  return std::make_pair( minVal, minIndex );
 }
 
 } // namespace geos

@@ -25,7 +25,7 @@
 #include "finiteElement/Kinematics.h"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
+//#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geos
