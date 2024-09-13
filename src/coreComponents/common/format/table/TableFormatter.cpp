@@ -13,6 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+
+//TODO REAJUSTER LAPPEL DES FONCTIONS
 /**
  * @file TableFormatter.cpp
  */
@@ -139,41 +141,6 @@ TableTextFormatter::TableTextFormatter( TableLayout const & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
-void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout::Column > & columns,
-                                                       std::vector< std::vector< std::string > > const & tableDataRows,
-                                                       bool isSubColumn ) const
-{
-  size_t currentColumn = 0;
-  std::vector< std::vector< std::string > > tColumnsValues( tableDataRows[0].size(), std::vector< std::string >( tableDataRows.size()));
-  if( !isSubColumn )
-  {
-    transpose( tColumnsValues, tableDataRows );
-  }
-
-  for( auto & column : columns )
-  {
-    if( column.subColumn.empty())
-    {
-      column.m_columnValues = !isSubColumn ?
-                              tColumnsValues[currentColumn++] : tableDataRows[currentColumn++];
-    }
-    else
-    {
-      std::vector< std::vector< std::string > > subColumnValues( tColumnsValues.begin() + currentColumn,
-                                                                 tColumnsValues.begin() + currentColumn + column.m_parameter.subColumns.size());
-      populateColumnsFromTableData( column.subColumn, subColumnValues, true );
-
-      std::vector< std::vector< std::string > > tSubColumnValues( subColumnValues[0].size(), std::vector< std::string >( subColumnValues.size()) );
-      transpose( tSubColumnValues, subColumnValues );
-      for( const auto & columnValues : tSubColumnValues )
-      { // add all subcolumn values  in parent column
-        column.m_columnValues.insert( column.m_columnValues.end(), columnValues.begin(), columnValues.end() );
-      }
-      currentColumn += subColumnValues.size();
-    }
-  }
-}
-
 string TableTextFormatter::layoutToString() const
 {
   std::ostringstream tableOutput;
@@ -189,7 +156,7 @@ string TableTextFormatter::layoutToString() const
   tableOutput << '\n'; //TODO Fonction
   outputTitleRow( tableOutput, topSeparator );
   tableOutput << GEOS_FMT( "{}\n", sectionSeparatingLine );
-  
+
   outputHeaderSectionRows( columns, tableOutput, nbHeaderRows, sectionSeparatingLine );
 
   return tableOutput.str();
@@ -254,6 +221,41 @@ void TableTextFormatter::outputTable( std::ostringstream & tableOutput,
   outputValuesSectionRows( columns, tableOutput, nbValuesRows, sectionSeparatingLine );
 
   tableOutput << '\n';
+}
+
+void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout::Column > & columns,
+                                                       std::vector< std::vector< std::string > > const & tableDataRows,
+                                                       bool isSubColumn ) const
+{
+  size_t currentColumn = 0;
+  std::vector< std::vector< std::string > > tColumnsValues( tableDataRows[0].size(), std::vector< std::string >( tableDataRows.size()));
+  if( !isSubColumn )
+  {
+    transpose( tColumnsValues, tableDataRows );
+  }
+
+  for( auto & column : columns )
+  {
+    if( column.subColumn.empty())
+    {
+      column.m_columnValues = !isSubColumn ?
+                              tColumnsValues[currentColumn++] : tableDataRows[currentColumn++];
+    }
+    else
+    {
+      std::vector< std::vector< std::string > > subColumnValues( tColumnsValues.begin() + currentColumn,
+                                                                 tColumnsValues.begin() + currentColumn + column.m_parameter.subColumns.size());
+      populateColumnsFromTableData( column.subColumn, subColumnValues, true );
+
+      std::vector< std::vector< std::string > > tSubColumnValues( subColumnValues[0].size(), std::vector< std::string >( subColumnValues.size()) );
+      transpose( tSubColumnValues, subColumnValues );
+      for( const auto & columnValues : tSubColumnValues )
+      { // add all subcolumn values  in parent column
+        column.m_columnValues.insert( column.m_columnValues.end(), columnValues.begin(), columnValues.end() );
+      }
+      currentColumn += subColumnValues.size();
+    }
+  }
 }
 
 void TableTextFormatter::splitAndMergeColumnHeaders( std::vector< TableLayout::Column > & columns,
@@ -398,13 +400,6 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
   integer const topSeparatorLength = sectionSeparatingLine.size() - 2; // Adjust for border characters
   topSeparator = GEOS_FMT( "{}{:-<{}}{}", m_horizontalLine, "", topSeparatorLength, m_horizontalLine );
 }
-
-// void TableTextFormatter::outputTopRows( std::ostringstream & tableOutput,
-//                                         std::vector< string > const & msg,
-//                                         string_view topSeparator,
-//                                         TableLayout::Alignment alignment,
-//                                         string_view sectionSeparatingLine ) const
-// {}
 
 void TableTextFormatter::outputSubSection( std::vector< TableLayout::Column > const & columns,
                                            std::ostringstream & tableOutput,
