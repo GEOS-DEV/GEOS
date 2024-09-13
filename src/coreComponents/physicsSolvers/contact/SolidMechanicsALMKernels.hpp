@@ -249,7 +249,7 @@ public:
                    StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( k );
-    constexpr real64 zero = LvArray::NumericLimits< real64 >::epsilon();
+    constexpr real64 zero = LvArray::NumericLimits< real64 >::epsilon;
 
     constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
