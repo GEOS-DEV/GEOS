@@ -169,7 +169,6 @@ string TableTextFormatter::toString( TableData const & tableData ) const
 
   outputLayout( tableOutput, columns, msgTableError, sectionSeparatingLine );
   outputSectionRows( columns, sectionSeparatingLine, tableOutput, nbValuesRows, TableLayout::Section::values );
-  tableOutput << '\n';
 
   return tableOutput.str();
 }
