@@ -593,6 +593,21 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     // Step 3.2: retrieve the fluid model to compute densities
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
+    FunctionManager & functionManager = FunctionManager::getInstance();
+
+    // Creation of Wrapper in case of TemperatureVsElevationTableName
+    TableFunction::KernelWrapper tempTableWrapper;
+    bool tempTableGradient = false;
+
+    if ( !fs.getTemperatureVsElevationTableName().empty() )
+    {
+
+      tempTableGradient = true;
+      string const tempTableName = fs.getTemperatureVsElevationTableName();
+      TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
+      tempTableWrapper = tempTable.createKernelWrapper();
+    }
+
     // filter out region not in target
     Group const & region = subRegion.getParent().getParent();
     auto it = regionFilter.find( region.getName() );
@@ -640,7 +655,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // Step 3.4: create hydrostatic pressure table
 
-    FunctionManager & functionManager = FunctionManager::getInstance();
+    // FunctionManager & functionManager = FunctionManager::getInstance();
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
@@ -653,6 +668,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
     arrayView1d< real64 > const pres = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 > const temp = subRegion.getField< fields::flow::temperature >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
@@ -661,6 +677,10 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
       pres[k] = presTableWrapper.compute( &elevation );
+      if ( tempTableGradient )
+      {
+        temp[k] = tempTableWrapper.compute( &elevation );
+      }
       minPressure.min( pres[k] );
     } );
 
