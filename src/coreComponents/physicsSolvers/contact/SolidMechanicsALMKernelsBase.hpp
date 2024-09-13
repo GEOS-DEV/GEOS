@@ -405,7 +405,7 @@ struct UpdateStateKernel
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
-      real64 const zero = std::numeric_limits< real64 >::epsilon();
+      real64 const zero = LvArray::NumericLimits< real64 >::epsilon;
 
       real64 localPenalty[3][3]{};
       real64 localTractionNew[3]{};
