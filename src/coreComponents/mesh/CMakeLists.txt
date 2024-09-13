@@ -1,3 +1,15 @@
+#==================================================================================================
+# Package : mesh
+#
+# Contains classes managing data and functionalities for each topological type of the mesh
+# Contains topological objects initialization (cells, nodes, faces, line, particle) and
+#   ParMETIS, Scotch and VTK interfaces
+# Contains communication tools for mesh partition and MPI communications between ranks
+# Contains definition of geometric objects (box, plane and cylinder types)
+# Contains kernels and template functions for geometric computations, and map utilities
+#
+#==================================================================================================
+
 # Specify all headers
 set( mesh_headers
      BufferOps.hpp
@@ -77,7 +89,7 @@ set( mesh_headers
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/PlanarGeometricObject.hpp
      simpleGeometricObjects/ThickPlane.hpp
-     utilities/AverageOverQuadraturePointsKernel.hpp     
+     utilities/AverageOverQuadraturePointsKernel.hpp
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
@@ -167,7 +179,7 @@ if( ENABLE_VTK )
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
-         )    
+         )
     list( APPEND dependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       list( APPEND dependencyList VTK::IOParallelXML VTK::ParallelMPI )
