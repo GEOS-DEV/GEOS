@@ -34,11 +34,11 @@ In the preceding XML block, The `SolidMechanicsEmbeddedFractures` is specified b
 Note that the `SolidMechanicsEmbeddedFractures` always relies on the existance of a
 The following attributes are supported in the input block for `SolidMechanicsEmbeddedFractures`:
 
-.. include:: /coreComponents/schema/docs/SolidMechanicsEmbeddedFractures.rst
+.. include:: /docs/sphinx/datastructure/SolidMechanicsEmbeddedFractures.rst
 
 The following data are allocated and used by the solver:
 
-.. include:: /coreComponents/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
+.. include:: /docs/sphinx/datastructure/SolidMechanicsEmbeddedFractures_other.rst
 
 References
 ==========
