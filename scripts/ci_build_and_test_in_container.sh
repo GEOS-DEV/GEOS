@@ -38,8 +38,6 @@ Usage: $0
       run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
-  --eclipse
-      Use "Eclipse CDT4 - Unix Makefiles" as build system generator.
   --exchange-dir /path/to/exchange
       Folder to share data with outside of the container.
   --host-config host-config/my_config.cmake
@@ -64,8 +62,6 @@ Usage: $0
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
   --test-documentation
-  --xcode
-      Use "Xcode" as build system generator.
   -h | --help
 EOF
 exit 1
