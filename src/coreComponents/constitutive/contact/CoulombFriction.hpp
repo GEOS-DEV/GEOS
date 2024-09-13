@@ -480,7 +480,7 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
 {
 
   // TODO: Pass this tol as an argument or define a new class member
-  real64 const zero = std::numeric_limits< real64 >::epsilon();
+  real64 const zero = LvArray::NumericLimits< real64 >::epsilon();
 
   tractionNew[0] = traction[0] + penalty[0] * dispJump[0];
   tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1];
