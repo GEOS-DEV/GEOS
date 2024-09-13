@@ -52,7 +52,7 @@
 
     <SinglePhaseWell
       name="singlePhaseWellSolver"
-        logLevel="1"
+      logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
