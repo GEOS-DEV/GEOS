@@ -1,6 +1,6 @@
 <Problem>
   <Included>
-    <File name="./singlePhasePoromechanics_FaultModel_well_develop_base.xml"/>
+    <File name="./singlePhasePoromechanics_FaultModel_well_base.xml"/>
   </Included>
 
   <Solvers
