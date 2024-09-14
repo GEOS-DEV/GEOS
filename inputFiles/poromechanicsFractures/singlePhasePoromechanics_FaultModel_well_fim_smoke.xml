@@ -4,7 +4,7 @@
   </Included>
 
   <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
 
     <SinglePhasePoromechanicsConformingFracturesReservoir
       name="reservoirSolver"
@@ -14,6 +14,7 @@
       wellSolverName="singlePhaseWellSolver"
       logLevel="1">
       <NonlinearSolverParameters
+        lineSearchAction="None"
         maxTimeStepCuts="10"
         newtonTol="1e-3"
         newtonMaxIter="20"
@@ -41,6 +42,7 @@
     <SinglePhaseFVM 
       name="singlePhaseFlowSolver"
       logLevel="1"
+      allowNegativePressure="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Region, Fault}" />
 
@@ -50,106 +52,35 @@
       targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
-        logLevel="1"
+        logLevel="2"
         type="producer"
-        control="totalVolRate"
-        referenceElevation="12"
-        targetBHP="5e4"
-        targetTotalRate="1e-7"/>
+        control="BHP"
+        referenceElevation="-2500"
+        targetBHP="1e7"
+        targetTotalRate="1e10" />
       <WellControls
         name="wellControls2"
-        logLevel="1"
+        logLevel="2"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="12"
-        targetBHP="1e7"
-        targetTotalRateTableName="rateTable"/>
+        control="BHP"
+        referenceElevation="-2500"
+        targetBHP="10e7"
+        targetTotalRate="1e10" />
     </SinglePhaseWell>
   </Solvers>
 
-  <Functions>
-    <TableFunction
-      name="rateTable"
-      inputVarNames="{time}"
-      coordinates="{0, 2.51e4, 3.01e4,  5e4}"
-      values="{0, 1.2e-6, 0, 0}" 
-      interpolation="lower"/>
-  </Functions>
-
-  <Mesh>
-    <VTKMesh
-      name="mesh1"
-      useGlobalIds="1"
-      faceBlocks="{ fracture }"
-      file="verticalFault_ExternalMesh.vtm">
-      <InternalWell
-        name="well_producer1"
-        logLevel="1"
-        wellRegionName="wellRegion1"
-        wellControlsName="wellControls1"
-        polylineNodeCoords="{ { 5400, 5400, 0 },
-                              { 5400, 5400, -5000 } }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.1"
-        numElementsPerSegment="1">
-        <Perforation
-          name="producer1_perf1"
-          distanceFromHead="2583"/>
-      </InternalWell>
-      <InternalWell
-        name="well_injector1"
-        logLevel="1"
-        wellRegionName="wellRegion2"
-        wellControlsName="wellControls2"
-        polylineNodeCoords="{ { -1000, -1000, 0 },
-                              { -1000, -1000, -5000 } }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.1"
-        numElementsPerSegment="1">
-        <Perforation
-          name="injector1_perf1"
-          distanceFromHead="2500"/>
-      </InternalWell>
-    </VTKMesh>
-  </Mesh>
-
-  <Geometry>
-    <Box
-      name="xposFace"
-      xMin="{ 5999.99,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }"/>
-
-    <Box
-      name="xnegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{-5999.99,   6000.01,      0.01 }"/>
-
-    <Box
-      name="yposFace"
-      xMin="{-6000.01,   5999.99,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }"/>
-
-    <Box
-      name="ynegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,  -5999.99,      0.01 }"/>
-
-    <Box
-      name="zposFace"
-      xMin="{-6000.01,  -6000.01,     -0.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }"/>
-
-    <Box
-      name="znegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,  -3999.99 }"/>
-  </Geometry>
+  <Tasks>
+      <SinglePhasePoromechanicsConformingFracturesInitialization 
+        logLevel="1" 
+        name="SinglePhasePoroelasticityPreEquilibrationStep"  
+        poromechanicsSolverName="poroFractureSolver"/>
+  </Tasks>
 
   <Events
     minTime="-1e11"
     maxTime="3.0e7">
 
-    <!-- Initialization 
+    <!-- Initialization -->
     <SoloEvent 
       name="SinglePhasePoroelasticityPreEquilibrationStep" 
       targetTime="-1e11" 

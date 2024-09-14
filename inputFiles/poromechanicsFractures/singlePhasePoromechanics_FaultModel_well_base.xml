@@ -71,13 +71,6 @@
       scale="1.00"/>
 
     <FieldSpecification
-      name="prescribedFaultPressure"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fault"
-      fieldName="pressure"
-      scale="35.0e6"/>
-
-    <FieldSpecification
       name="xconstraint"
       component="0"
       fieldName="totalDisplacement"
@@ -101,35 +94,12 @@
       scale="0.0"
       setNames="{ znegFace }" /> 
 
-    <FieldSpecification
-      name="init_sigma_xx"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
-      component="0"
-      functionName="sigma_xx"
-      scale="1.0"/>
-
-    <FieldSpecification
-      name="init_sigma_yy"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
-      component="1"
-      functionName="sigma_yy"
-      scale="1.0"/>
-
-    <FieldSpecification
-      name="init_sigma_zz"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
-      component="2"
-      functionName="sigma_zz"
-      scale="1.0"/>
+    <Traction
+      name="tractionTop"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-4e7"      
+      setNames="{ zposFace }"/>
 
     <FieldSpecification
       name="init_pressure"
@@ -137,8 +107,7 @@
       setNames="{ all }"
       objectPath="ElementRegions"
       fieldName="pressure"
-      functionName="init_pressure"
-      scale="1.0"/>
+      scale="4e7"/>
   </FieldSpecifications>
 
   <ElementRegions>
@@ -177,15 +146,6 @@
     </FiniteVolume>
   </NumericalMethods>
 
-<!--
-  <Tasks>
-      <SinglePhasePoromechanicsConformingFracturesInitialization 
-        logLevel="1" 
-        name="SinglePhasePoroelasticityPreEquilibrationStep"  
-        poromechanicsSolverName="poroFractureSolver"/>
-  </Tasks>
--->
-
   <Outputs>
     <VTK
       name="vtkOutput" />
@@ -195,42 +155,80 @@
   </Outputs>
 
   <Functions>
-    <TableFunction 
-      name="sigma_xx" 
-      interpolation="linear"
-      inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_xx.csv" 
-    />
-
-    <TableFunction 
-      name="sigma_yy" 
-      interpolation="linear"
-      inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_yy.csv" 
-    />
-
-    <TableFunction 
-      name="sigma_zz" 
-      interpolation="linear"
-      inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_zz.csv" 
-    />
-
-    <TableFunction
-      name="init_pressure"
-      interpolation="linear"
-      inputVarNames="{elementCenter}"
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}"
-      voxelFile="DATATABLES/porePressure.csv"
-    />
-
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-3, 1.0e-3 }"
     />
   </Functions>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      useGlobalIds="1"
+      faceBlocks="{ fracture }"
+      file="verticalFault_ExternalMesh.vtm">
+      <InternalWell
+        name="well_producer1"
+        logLevel="1"
+        wellRegionName="wellRegion1"
+        wellControlsName="wellControls1"
+        polylineNodeCoords="{ { 5400, 5400, 0 },
+                              { 5400, 5400, -2500 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="1">
+        <Perforation
+          name="producer1_perf1"
+          distanceFromHead="2500"/>
+      </InternalWell>
+      <InternalWell
+        name="well_injector1"
+        logLevel="1"
+        wellRegionName="wellRegion2"
+        wellControlsName="wellControls2"
+        polylineNodeCoords="{ { -5400, -5400, 0 },
+                              { -5400, -5400, -2500 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="1">
+        <Perforation
+          name="injector1_perf1"
+          distanceFromHead="2500"/>
+      </InternalWell>
+    </VTKMesh>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="xposFace"
+      xMin="{ 5999.99,  -6000.01,  -4000.01 }"
+      xMax="{ 6000.01,   6000.01,      0.01 }"/>
+
+    <Box
+      name="xnegFace"
+      xMin="{-6000.01,  -6000.01,  -4000.01 }"
+      xMax="{-5999.99,   6000.01,      0.01 }"/>
+
+    <Box
+      name="yposFace"
+      xMin="{-6000.01,   5999.99,  -4000.01 }"
+      xMax="{ 6000.01,   6000.01,      0.01 }"/>
+
+    <Box
+      name="ynegFace"
+      xMin="{-6000.01,  -6000.01,  -4000.01 }"
+      xMax="{ 6000.01,  -5999.99,      0.01 }"/>
+
+    <Box
+      name="zposFace"
+      xMin="{-6000.01,  -6000.01,     -0.01 }"
+      xMax="{ 6000.01,   6000.01,      0.01 }"/>
+
+    <Box
+      name="znegFace"
+      xMin="{-6000.01,  -6000.01,  -4000.01 }"
+      xMax="{ 6000.01,   6000.01,  -3999.99 }"/>
+  </Geometry>
+
 </Problem>

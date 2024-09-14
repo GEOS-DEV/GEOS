@@ -282,6 +282,10 @@ public:
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       bool const validSinglePhysicsSolution = solver->checkSystemSolution( domain, dofManager, localSolution, scalingFactor );
+      if( !validSinglePhysicsSolution )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "      {}/{}: Solution check failed. Newton loop terminated.", getName(), solver->getName()) );
+      }
       validSolution = validSolution && validSinglePhysicsSolution;
     } );
     return validSolution;
