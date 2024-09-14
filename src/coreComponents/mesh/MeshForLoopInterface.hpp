@@ -73,13 +73,9 @@ minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
   {
     ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
-    std::cout << elemRegion.getName() << " " << elemRegion.numSubRegions() << std::endl;
-
     elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >( [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       localIndex const size = subRegion.size();
-
-      std::cout << subRegion.getName() << " size = " << size << std::endl;
 
       for( localIndex k = 0; k < size; ++k )
       {
@@ -117,8 +113,6 @@ minLocOverElemsInRegion( ElementRegionBase const & region, LAMBDA && lambda )
   {
     localIndex const size = subRegion.size();
 
-    std::cout << subRegion.getName() << " size = " << size << std::endl;
-
     for( localIndex k = 0; k < size; ++k )
     {
       NUMBER const val = lambda( esr, k );
@@ -150,8 +144,6 @@ minLocOverElemsInSubRegion( ElementSubRegionBase const & subRegion, localIndex c
   localIndex minIndex = -1;
 
   localIndex const size = subRegion.size();
-
-  std::cout << subRegion.getName() << " size = " << size << std::endl;
 
   for( localIndex k = 0; k < size; ++k )
   {

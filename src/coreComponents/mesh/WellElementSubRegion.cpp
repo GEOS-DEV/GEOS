@@ -125,7 +125,6 @@ void collectElementNodes( SUBREGION_TYPE const & subRegion,
                           localIndex ei,
                           SortedArray< localIndex > & nodes )
 {
-  //std::cout << "collectElementNodes" << std::endl;
   // get all the nodes belonging to this element
   for( localIndex a = 0; a < subRegion.numNodesPerElement(); ++a )
   {
@@ -190,8 +189,6 @@ bool visitNeighborElements( MeshLevel const & mesh,
                             SortedArray< globalIndex > & elements,
                             localIndex & eiMatched )
 {
-  //std::cout << "visitNeighborElements targetRegionIndex = " << targetRegionIndex << " " << typeid(SUBREGION_TYPE).name() << std::endl;
-
   ElementRegionManager const & elemManager = mesh.getElemManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -222,16 +219,12 @@ bool visitNeighborElements( MeshLevel const & mesh,
   // for all the nodes already visited
   for( localIndex currNode : currNodes )
   {
-    //std::cout << "currNode=" << currNode << std::endl;
     // collect the elements that have not been visited yet
     for( localIndex b = 0; b < toElementRegionList.sizeOfArray( currNode ); ++b )
     {
-      //std::cout << "b=" << b << std::endl;
       localIndex const er      = toElementRegionList[currNode][b];
       localIndex const esr     = toElementSubRegionList[currNode][b];
       localIndex const eiLocal = toElementList[currNode][b];
-
-      std::cout << "er esr eiLocal = " << er << " " << esr << " " << " " << eiLocal << std::endl;
 
       if( er != targetRegionIndex || esr != targetSubregionRegionIndex )
         continue;
@@ -251,14 +244,11 @@ bool visitNeighborElements( MeshLevel const & mesh,
                                        elemCenters[eiLocal][1],
                                        elemCenters[eiLocal][2] };
 
-std::cout << " elem center = " << elemCenters[eiLocal][0] << " " << elemCenters[eiLocal][1] << " " << elemCenters[eiLocal][2] << std::endl;
-
         // perform the test to see if the point is in this reservoir element
         // if the point is in the resevoir element, save the indices and stop the search
         if( isPointInsideElement( subRegion, referencePosition, eiLocal, facesToNodes, elemCenter, location ) )
         {
           eiMatched = eiLocal;
-          std::cout << "found " << targetRegionIndex << " " << esr << " " << eiMatched << std::endl;
           matched = true;
           break;
         }
@@ -275,9 +265,6 @@ std::cout << " elem center = " << elemCenters[eiLocal][0] << " " << elemCenters[
       break;
     }
   }
-
-if(matched)
-std::cout << "matched" << std::endl;
 
   // if not matched, insert the new nodes
   return matched;
@@ -300,8 +287,6 @@ void initializeLocalSearch( MeshLevel const & mesh,
                             localIndex const & esr,
                             localIndex & eiInit )
 {
-  std::cout << "initializeLocalSearch" << std::endl;
-
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   resElemCenter = mesh.getElemManager().constructViewAccessor< array2d< real64 >,
                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
@@ -313,8 +298,6 @@ void initializeLocalSearch( MeshLevel const & mesh,
     real64 v[3] = { location[0], location[1], location[2] };
     LvArray::tensorOps::subtract< 3 >( v, resElemCenter[targetRegionIndex][esr][ei] );
     auto dist = LvArray::tensorOps::l2Norm< 3 >( v );
-    //if( targetRegionIndex>0 && esr < 2 )
-      std::cout << ei << " dist = " << dist << " " << resElemCenter[targetRegionIndex][esr][ei] << " " << location[0] << " " << location[1] << " " << location[2] << std::endl;
     return dist;
   } );
 
@@ -345,13 +328,12 @@ bool searchLocalElements( MeshLevel const & mesh,
   // loop over the reservoir elements that are in the neighborhood of (esrInit,eiInit)
   // search locally, starting from the location of the previous perforation
   // the assumption here is that perforations have been entered in order of depth
-  bool resElemFound = false;
 
   ElementRegionBase const & region = mesh.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
 
   region.forElementSubRegionsIndex< CellElementSubRegion, SurfaceElementSubRegion >( [&] ( localIndex const esr, auto & subRegion )
   {
-    GEOS_LOG("  searching well connections with region/subregion: " << region.getName() << "/" << subRegion.getName());
+    GEOS_LOG( "  searching well connections with region/subregion: " << region.getName() << "/" << subRegion.getName());
 
     // first, we search for the reservoir element that is the *closest* from the center of well element
     // note that this reservoir element does not necessarily contain the center of the well element
@@ -360,10 +342,9 @@ bool searchLocalElements( MeshLevel const & mesh,
     localIndex eiInit     = -1;
     initializeLocalSearch( mesh, location, targetRegionIndex, esr, eiInit );
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  resElemCenter = mesh.getElemManager().constructViewAccessor< array2d< real64 >,
-                                                               arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
-    std::cout << "eiInit = " << eiInit << " " << resElemCenter[targetRegionIndex][esr][eiInit] << std::endl;
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
+    resElemCenter = mesh.getElemManager().constructViewAccessor< array2d< real64 >,
+                                                                 arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
     SortedArray< localIndex >  nodes;
     SortedArray< globalIndex > elements;
@@ -385,30 +366,22 @@ bool searchLocalElements( MeshLevel const & mesh,
     {
       localIndex nNodes = nodes.size();
 
-    std::cout << " nodes = ";
-    for( localIndex n = 0; n < nNodes; ++n )
-    {
-      std::cout << " " << nodes[n];
-    }
-    std::cout << std::endl;
-
       // search the reservoir elements that can be accessed from the set "nodes"
       // stop if a reservoir element containing the perforation is found
       // if not, enlarge the set "nodes"
 
-      resElemFound =
+      bool const resElemFound =
         visitNeighborElements< TYPEOFREF( subRegion ) >( mesh, location, targetRegionIndex, esr, nodes, elements, eiMatched );
 
       if( resElemFound || nNodes == nodes.size())
       {
-        std::cout << "resElemFound" << std::endl;
         esrMatched = esr;
         break;
       }
     }
   } );
 
-//  if( resElemFound )
+  if( eiMatched >= 0 )
     std::cout << "found " << targetRegionIndex << " " << esrMatched << " " << eiMatched << std::endl;
 
   return eiMatched >= 0; // resElemFound;
@@ -514,7 +487,7 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
                                                              arrayView1d< integer > & elemStatusGlobal ) const
 {
 
-  std::cout << "assignUnownedElementsInReservoir" << std::endl;
+  std::cout << "assignUnownedElementsInReservoir needs to be implemented" << std::endl;
 
 /*
 
@@ -855,9 +828,9 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
                                  perfCoordsGlobal[iperfGlobal][1],
                                  perfCoordsGlobal[iperfGlobal][2] };
 
-    GEOS_LOG( lineBlock.getName() << ": perforation " << iperfGlobal 
-    << " location = (" << location[0] << ", " << location[1] << ", " << location[2] << "), "
-    << "target region = " << perfTargetTegionGlobal[iperfGlobal] );
+    GEOS_LOG( lineBlock.getName() << ": perforation " << iperfGlobal
+                                  << " location = (" << location[0] << ", " << location[1] << ", " << location[2] << "), "
+                                  << "target region = " << perfTargetTegionGlobal[iperfGlobal] );
 
     // for each perforation, we have to find the reservoir element that contains the perforation
 
