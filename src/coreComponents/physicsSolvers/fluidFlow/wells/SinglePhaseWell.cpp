@@ -831,7 +831,6 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  localIndex localCheck = 1;
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer numNegativePressures = 0;
   real64 minPressure = 0.0;
