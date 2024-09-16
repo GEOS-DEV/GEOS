@@ -48,7 +48,7 @@ string TableCSVFormatter::headerToString() const
 
   for( std::size_t idxColumn = 0; idxColumn < m_tableLayout.getColumns().size(); ++idxColumn )
   {
-    oss << m_tableLayout.getColumns()[idxColumn].m_parameter.columnName;
+    oss << m_tableLayout.getColumns()[idxColumn].parameter.columnName;
     if( idxColumn < m_tableLayout.getColumns().size() - 1 )
     {
       oss << separator;
@@ -121,7 +121,7 @@ void updateVisibleColumns( std::vector< TableLayout::Column > & columns,
   integer idxColumn = 0;
   for( auto iterColumn = columns.begin(); iterColumn!=columns.end(); )
   {
-    if( !iterColumn->m_parameter.enabled )
+    if( !iterColumn->parameter.enabled )
     {
       iterColumn = columns.erase( iterColumn );
       for( auto & row : tableDataRows )
@@ -145,7 +145,6 @@ string TableTextFormatter::layoutToString() const
 {
   std::ostringstream tableOutput;
   std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
-  string const tableTitle = string( m_tableLayout.getTitle());
   size_t nbHeaderRows = 0;
   TableData tableData;
   std::string sectionSeparatingLine;
@@ -156,7 +155,6 @@ string TableTextFormatter::layoutToString() const
   tableOutput << '\n'; //TODO Fonction
   outputTitleRow( tableOutput, topSeparator );
   tableOutput << GEOS_FMT( "{}\n", sectionSeparatingLine );
-
   outputHeaderSectionRows( columns, tableOutput, nbHeaderRows, sectionSeparatingLine );
 
   return tableOutput.str();
@@ -166,7 +164,7 @@ template<>
 string TableTextFormatter::toString< TableData >( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
-  std::vector< TableLayout::Column > columns         = m_tableLayout.getColumns();
+  std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
   size_t nbHeaderRows = 0;
   std::string sectionSeparatingLine;
   std::string topSeparator;
@@ -197,7 +195,7 @@ void TableTextFormatter::prepareAndBuildTable( std::vector< TableLayout::Column 
 
   for( auto & column : columns )
   {
-    findAndSetLongestColumnString( column, column.m_maxStringSize, 0 );
+    findAndSetLongestColumnString( column, column.maxStringSize, 0 );
   }
   computeTableWidth( columns );
   buildTableSeparators( columns, sectionSeparatingLine, topSeparator );
@@ -238,20 +236,20 @@ void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout:
   {
     if( column.subColumn.empty())
     {
-      column.m_columnValues = !isSubColumn ?
+      column.columnValues = !isSubColumn ?
                               tColumnsValues[currentColumn++] : tableDataRows[currentColumn++];
     }
     else
     {
       std::vector< std::vector< std::string > > subColumnValues( tColumnsValues.begin() + currentColumn,
-                                                                 tColumnsValues.begin() + currentColumn + column.m_parameter.subColumns.size());
+                                                                 tColumnsValues.begin() + currentColumn + column.parameter.subColumns.size());
       populateColumnsFromTableData( column.subColumn, subColumnValues, true );
 
       std::vector< std::vector< std::string > > tSubColumnValues( subColumnValues[0].size(), std::vector< std::string >( subColumnValues.size()) );
       transpose( tSubColumnValues, subColumnValues );
       for( const auto & columnValues : tSubColumnValues )
       { // add all subcolumn values  in parent column
-        column.m_columnValues.insert( column.m_columnValues.end(), columnValues.begin(), columnValues.end() );
+        column.columnValues.insert( column.columnValues.end(), columnValues.begin(), columnValues.end() );
       }
       currentColumn += subColumnValues.size();
     }
@@ -268,7 +266,7 @@ void TableTextFormatter::splitAndMergeColumnHeaders( std::vector< TableLayout::C
   for( auto & column : columns )
   {
     std::vector< string > splitHeaderParts;
-    std::istringstream ss( column.m_parameter.columnName );
+    std::istringstream ss( column.parameter.columnName );
     string subColumnNames;
 
     while( getline( ss, subColumnNames, '\n' ))
@@ -295,7 +293,7 @@ void TableTextFormatter::splitAndMergeColumnHeaders( std::vector< TableLayout::C
     {
       headerParts.resize( nbHeaderRows, " " );
     }
-    columns[&headerParts - &splitHeaders[0]].m_parameter.splitColumnNames = headerParts;
+    columns[&headerParts - &splitHeaders[0]].parameter.splitColumnNames = headerParts;
   }
 
 }
@@ -304,8 +302,8 @@ void TableTextFormatter::findAndSetLongestColumnString( TableLayout::Column & co
 {
   string maxStringColumn;
   { // header case
-    auto const maxStringSizeHeader = *std::max_element( column.m_parameter.splitColumnNames.begin(),
-                                                        column.m_parameter.splitColumnNames.end(),
+    auto const maxStringSizeHeader = *std::max_element( column.parameter.splitColumnNames.begin(),
+                                                        column.parameter.splitColumnNames.end(),
                                                         []( const auto & a, const auto & b ) {return a.size() < b.size();} );
     maxStringColumn = maxStringSizeHeader;
     maxStringSize.push_back( maxStringSizeHeader );
@@ -314,8 +312,8 @@ void TableTextFormatter::findAndSetLongestColumnString( TableLayout::Column & co
   {  // values case
     if( column.subColumn.empty() )
     {
-      auto const maxStringSizeCell = *std::max_element( column.m_columnValues.begin(),
-                                                        column.m_columnValues.end(),
+      auto const maxStringSizeCell = *std::max_element( column.columnValues.begin(),
+                                                        column.columnValues.end(),
                                                         []( const auto & a, const auto & b ) {return a.size() < b.size();} );
       if( maxStringColumn.length() < maxStringSizeCell.length())
       {
@@ -334,17 +332,17 @@ void TableTextFormatter::findAndSetLongestColumnString( TableLayout::Column & co
   { // subcolumn values case
     if( !column.subColumn.empty() )
     {
-      column.m_maxStringSize.clear();
+      column.maxStringSize.clear();
       for( size_t idxSubColumn = 0; idxSubColumn < column.subColumn.size(); ++idxSubColumn )
       {
-        findAndSetLongestColumnString( column.subColumn[idxSubColumn], column.m_maxStringSize, idxSubColumn );
+        findAndSetLongestColumnString( column.subColumn[idxSubColumn], column.maxStringSize, idxSubColumn );
       }
     }
   }
 
-  if( column.m_maxStringSize.empty() )
+  if( column.maxStringSize.empty() )
   {
-    column.m_maxStringSize.push_back( maxStringColumn );
+    column.maxStringSize.push_back( maxStringColumn );
   }
 }
 
@@ -362,7 +360,7 @@ void TableTextFormatter::computeTableWidth( std::vector< TableLayout::Column > &
     sectionlineLength += std::accumulate( columns.begin(), columns.end(), 0,
                                           [&]( auto sum, auto & column ) -> auto
     {
-      std::string sumOfString = stringutilities::join( column.m_maxStringSize, spaces );
+      std::string sumOfString = stringutilities::join( column.maxStringSize, spaces );
       return static_cast< decltype(sum) >(sum + sumOfString.length());
     } );
   }
@@ -382,7 +380,7 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
   std::vector< string > maxStringsPerColumn;
   for( auto const & column : columns )
   {
-    std::for_each( column.m_maxStringSize.begin(), column.m_maxStringSize.end(), [&] ( std::string maxString ) {
+    std::for_each( column.maxStringSize.begin(), column.maxStringSize.end(), [&] ( std::string maxString ) {
       maxStringsPerColumn.push_back( string( maxString.length(), m_horizontalLine ) );
     } );
   }
@@ -408,9 +406,9 @@ void TableTextFormatter::outputSubSection( std::vector< TableLayout::Column > co
   integer const columnMargin = m_tableLayout.getColumnMargin();
   for( size_t idxCol = 0; idxCol< columns.size(); ++idxCol )
   {
-    tableOutput << buildCell( columns[idxCol].m_parameter.alignment,
-                              columns[idxCol].m_columnValues[idxRow],
-                              columns[idxCol].m_maxStringSize[0].length() );
+    tableOutput << buildCell( columns[idxCol].parameter.alignment,
+                              columns[idxCol].columnValues[idxRow],
+                              columns[idxCol].maxStringSize[0].length() );
     tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
   }
 }
@@ -439,9 +437,9 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Colu
       }
       else
       {
-        string cell = column.m_columnValues.at( idxRow );
-        std::string cellSize = stringutilities::join( column.m_maxStringSize, spaces );
-        tableOutput << buildCell( column.m_parameter.alignment, cell, cellSize.length());
+        string cell = column.columnValues.at( idxRow );
+        std::string cellSize = stringutilities::join( column.maxStringSize, spaces );
+        tableOutput << buildCell( column.parameter.alignment, cell, cellSize.length());
 
         // Add space between column
         if( idxColumn < columns.size() - 1 )
@@ -492,9 +490,9 @@ void TableTextFormatter::outputHeaderSectionRows( std::vector< TableLayout::Colu
     for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
     {
       auto const & column = columns[idxColumn];
-      string cell = column.m_parameter.splitColumnNames.at( idxRow );
-      std::string cellSize =  stringutilities::join( column.m_maxStringSize, spaces );
-      tableOutput << buildCell( column.m_parameter.alignment, cell, cellSize.length());
+      string cell = column.parameter.splitColumnNames.at( idxRow );
+      std::string cellSize =  stringutilities::join( column.maxStringSize, spaces );
+      tableOutput << buildCell( column.parameter.alignment, cell, cellSize.length());
 
       // Add space between columns
       if( idxColumn < columns.size() - 1 )
@@ -525,7 +523,7 @@ void TableTextFormatter::outputHeaderSectionRows( std::vector< TableLayout::Colu
     {
       if( column.subColumn.empty())
       {
-        rowSubColumns.push_back( {TableLayout::ColumnParam{""}, {}, column.m_maxStringSize, {}} );
+        rowSubColumns.push_back( {TableLayout::ColumnParam{""}, {}, column.maxStringSize, {}} );
       }
       else
       {

@@ -105,27 +105,20 @@ public:
   };
 
 
-  //TODO ENLEVER LES _
   /**
    * @brief Struct for a column.
    */
   struct Column
   {
     /// Structure who contains parameters for a column
-    ColumnParam m_parameter;
+    ColumnParam parameter;
     /// A vector containing all column values
-    std::vector< string > m_columnValues;
+    std::vector< string > columnValues;
     /// The largest string(s) in the column
-    std::vector< string > m_maxStringSize;
+    std::vector< string > maxStringSize;
     //sub divison of a column
     std::vector< Column > subColumn;
 
-  };
-
-  struct TableOpts
-  {
-    std::vector< Column > columns;
-    size_t maxTableColumns;
   };
 
   TableLayout() = default;
@@ -153,10 +146,6 @@ public:
    */
 
   std::vector< Column > const & getColumns() const;
-  /**
-   * @return The columns vector
-   */
-  TableOpts const & getTableOpts() const;
 
   /**
    * @return The table name
@@ -187,8 +176,6 @@ public:
 private:
 
   std::vector< Column > m_columns;
-  TableOpts m_tableOpts;
-
 
   string m_tableTitle;
   integer m_borderMargin;

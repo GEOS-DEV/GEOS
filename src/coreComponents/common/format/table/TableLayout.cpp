@@ -62,18 +62,6 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParams, strin
 {
   setMargin( MarginValue::medium );
   addColumn( columnParams, m_columns );
-
-  TableLayout::TableOpts tableOpts( {m_columns, 0} );
-  for( auto & column : m_columns )
-  {
-    if( !column.subColumn.empty())
-    {
-      tableOpts.maxTableColumns += column.subColumn.size();
-    }else{
-      ++tableOpts.maxTableColumns;
-    }
-  }
-  m_tableOpts = tableOpts;
 }
 
 
@@ -86,11 +74,6 @@ void TableLayout::setMargin( MarginValue marginValue )
 std::vector< TableLayout::Column > const & TableLayout::getColumns() const
 {
   return m_columns;
-}
-
-TableLayout::TableOpts const & TableLayout::getTableOpts() const
-{
-  return m_tableOpts;
 }
 
 string_view TableLayout::getTitle() const
