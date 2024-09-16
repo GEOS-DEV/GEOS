@@ -216,8 +216,16 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1">
+				<xsd:unique name="FunctionsCompositeFunctionUniqueName">
+					<xsd:selector xpath="CompositeFunction" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="FunctionsMultivariableTableFunctionUniqueName">
 					<xsd:selector xpath="MultivariableTableFunction" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="FunctionsSymbolicFunctionUniqueName">
+					<xsd:selector xpath="SymbolicFunction" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="FunctionsTableFunctionUniqueName">
@@ -429,10 +437,6 @@
 					<xsd:selector xpath="SinglePhaseReservoirPoromechanics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="SolversSinglePhaseReservoirPoromechanicsConformingFracturesUniqueName">
-					<xsd:selector xpath="SinglePhaseReservoirPoromechanicsConformingFractures" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseWellUniqueName">
 					<xsd:selector xpath="SinglePhaseWell" />
 					<xsd:field xpath="@name" />
@@ -513,10 +517,6 @@
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhasePoromechanicsInitializationUniqueName">
 					<xsd:selector xpath="SinglePhasePoromechanicsInitialization" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="TasksSinglePhaseReservoirPoromechanicsConformingFracturesInitializationUniqueName">
-					<xsd:selector xpath="SinglePhaseReservoirPoromechanicsConformingFracturesInitialization" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhaseReservoirPoromechanicsInitializationUniqueName">
@@ -1322,13 +1322,37 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
+			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CompositeFunctionType">
+		<!--expression => Composite math expression-->
+		<xsd:attribute name="expression" type="string" default="" />
+		<!--functionNames => List of source functions. The order must match the variableNames argument.-->
+		<xsd:attribute name="functionNames" type="string_array" default="{}" />
+		<!--inputVarNames => Name of fields are input to function.-->
+		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--variableNames => List of variables in expression-->
+		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SymbolicFunctionType">
+		<!--expression => Symbolic math expression-->
+		<xsd:attribute name="expression" type="string" use="required" />
+		<!--inputVarNames => Name of fields are input to function.-->
+		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
+		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -1556,8 +1580,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
 		<!--skinFactor => Perforation skin factor-->
 		<xsd:attribute name="skinFactor" type="real64" default="0" />
-		<!--targetRegion => Target region to connect the perforation-->
-		<xsd:attribute name="targetRegion" type="groupNameRef" default="" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2167,7 +2189,6 @@ the relative residual norm satisfies:
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanics" type="SinglePhaseReservoirPoromechanicsType" />
-			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFractures" type="SinglePhaseReservoirPoromechanicsConformingFracturesType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType">
 				<xsd:unique name="SolversSinglePhaseWellWellControlsUniqueName">
 					<xsd:selector xpath="WellControls" />
@@ -2830,7 +2851,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--sourceForce => Force of the source: 3 real values for a vector source, and 6 real values for a tensor source (in Voigt notation).The default value is { 0, 0, 0 } (no net force).-->
 		<xsd:attribute name="sourceForce" type="R1Tensor" default="{0,0,0}" />
-		<!--sourceMoment => Moment of the source: 6 real values describing a symmetric tensor in Voigt notation.The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a seismic charge).-->
+		<!--sourceMoment => Moment of the source: 6 real values describing a symmetric tensor in Voigt notation.The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion).-->
 		<xsd:attribute name="sourceMoment" type="R2SymTensor" default="{1,1,1,0,0,0}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3192,11 +3213,11 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--backgroundStressingRate => Background stressing rate (Pa/s).-->
+		<!--backgroundStressingRate => Background stressing rate-->
 		<xsd:attribute name="backgroundStressingRate" type="real64" use="required" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--directEffect => Rate-and-state friction direct effect parameter.-->
+		<!--directEffect => Rate-and-state friction direct effect parameter-->
 		<xsd:attribute name="directEffect" type="real64" use="required" />
 		<!--faultNormalDirection => Fault normal direction-->
 		<xsd:attribute name="faultNormalDirection" type="R1Tensor" default="{0,0,0}" />
@@ -3521,47 +3542,12 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseReservoirPoromechanicsConformingFracturesType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
-		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
-		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
-		<xsd:attribute name="isThermal" type="integer" default="0" />
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
-		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
-		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
-		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
-		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
-		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
-		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
-		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation 
-Global- Add jump stabilization to all faces 
-Local- Add jump stabilization on interior of macro elements-->
-		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
-		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
-		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
-		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -3913,7 +3899,6 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="SinglePhasePoromechanicsConformingFracturesInitialization" type="SinglePhasePoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFracturesInitialization" type="SinglePhasePoromechanicsEmbeddedFracturesInitializationType" />
 			<xsd:element name="SinglePhasePoromechanicsInitialization" type="SinglePhasePoromechanicsInitializationType" />
-			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesInitialization" type="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
@@ -4073,16 +4058,6 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsInitializationType">
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
-		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
-		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
