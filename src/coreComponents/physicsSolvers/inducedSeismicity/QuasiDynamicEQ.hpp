@@ -50,6 +50,8 @@ public:
     static constexpr char const * stressSolverNameString() { return "stressSolverName"; }
     /// Friction law name string
     constexpr static char const * frictionLawNameString() { return "frictionLawName"; }
+    /// Friction law name string
+    constexpr static char const * shearImpedanceString() { return "shearImpedance"; }
     /// max number of Newton iterations string
     constexpr static char const * maxNumberOfNewtonIterationsString() { return "maxNumberOfNewtonIterations"; }
   };
@@ -74,6 +76,9 @@ protected:
 
   /// max number of newton iterations for rate and state solver
   integer m_maxNewtonIterations;
+
+  /// Shear impedance
+  real64 m_shearImpedance;
 };
 
 } /* namespace geos */

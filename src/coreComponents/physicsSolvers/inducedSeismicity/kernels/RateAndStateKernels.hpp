@@ -28,7 +28,7 @@ namespace geos
 namespace rateAndStateKernels
 {
 /**
- * @class DieterichSeismicityRate
+ * @class RateAndStateKernel
  *
  * @brief 
  *
@@ -39,13 +39,15 @@ class RateAndStateKernel
 public:
 
   RateAndStateKernel( SurfaceElementSubRegion & subRegion,
-                      RateAndStateFriction const & frictionLaw ):
+                      RateAndStateFriction const & frictionLaw,
+                      real64 const shearImpedance ):
   m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
   m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
   m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable >() ),
   m_normalTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
   m_shearTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
-  m_frictionLaw( frictionLaw.createKernelWrapper()  )
+  m_frictionLaw( frictionLaw.createKernelWrapper()  ),
+  m_shearImpedance( shearImpedance )
   {}
 
   /**
@@ -82,7 +84,7 @@ public:
                                       tauFriction, 
                                       dTauFriction );
     
-    stack.rhs[0] = m_shearTraction[k] - tauFriction;
+    stack.rhs[0] = m_shearTraction[k] - tauFriction - m_shearImpedance * m_slipRate[k];
 
     // Eq 2: slip law
     stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.dStateVariabledT( m_slipRate[k], m_stateVariable[k] )
@@ -125,6 +127,8 @@ private:
  arrayView1d< real64 const > const m_normalTraction;
 
  arrayView1d< real64 const > const m_shearTraction;
+
+ real64 const m_shearImpedance;
 
  RateAndStateFriction::KernelWrapper m_frictionLaw;
   

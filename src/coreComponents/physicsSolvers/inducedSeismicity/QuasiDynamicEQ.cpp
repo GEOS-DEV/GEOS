@@ -34,12 +34,18 @@ using namespace constitutive;
 QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
-  m_stressSolver( nullptr )
+  m_stressSolver( nullptr ),
+  m_maxNewtonIterations( 10 ),
+  m_shearImpedance( 0.0 )
 {
   this->registerWrapper( viewKeyStruct::maxNumberOfNewtonIterationsString(), &m_maxNewtonIterations ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 5 ).
     setDescription( "Maximum number of Newton iterations string." );
+
+  this->registerWrapper( viewKeyStruct::shearImpedanceString(), &m_shearImpedance ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Shear impedance." );
 
   this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
     setInputFlag( InputFlags::OPTIONAL ).
