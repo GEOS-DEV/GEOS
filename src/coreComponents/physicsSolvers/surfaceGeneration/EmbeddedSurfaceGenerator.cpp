@@ -191,7 +191,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
             if( added )
             {
-              GEOS_LOG_LEVEL_RANK_0( 2, subRegion.getName() << ": element " << cellIndex << " is fractured" );
+              GEOS_LOG_LEVEL_RANK_0( 2, GEOS_FMT( "{}: element {} is fractured", subRegion.getName(), cellIndex ) );
 
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
