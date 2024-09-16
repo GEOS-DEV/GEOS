@@ -11,95 +11,128 @@ authors:
     corresponding: true
     affiliation: 1
   - name: Ryan M. Aronson
+    orcid: 0009-0004-0785-5084
     affiliation: "2,3"
   - name: Julien R. Besset
     affiliation: 7
   - name: Andrea Borio
+    orcid: 0000-0003-2016-5403
     affiliation: 5
   - name: Quan M. Bui
+    orcid: 0000-0003-2648-0586
     affiliation: 1
   - name: Thomas J. Byer
     affiliation: 1
   - name: Nicola Castelletto
+    orcid: 0000-0001-6816-6769
     affiliation: 1
   - name: Aurélien Citrain
     affiliation: 7
   - name: Benjamin C. Corbett
+    orcid: 0009-0008-7108-9651
     affiliation: 1
   - name: James Corbett
     affiliation: 1
   - name: Philippe Cordier
+    orcid: 0000-0002-6439-9263
     affiliation: 2
   - name: Matthias A. Cremon
+    orcid: 0000-0001-7458-6401
     affiliation: 1
   - name: Cameron M. Crook
+    orcid: 0000-0002-5366-6418
     affiliation: 1
   - name: Matteo Cusini
+    orcid: 0000-0002-6024-861X
     affiliation: 1
   - name: Fan Fei
+    orcid: 0000-0001-7273-4458
     affiliation: 1
   - name: Stefano Frambati
+    orcid: 0000-0003-0683-1203
     affiliation: 7
   - name: Jacques Franc
+    orcid: 0000-0002-8833-9425
     affiliation: 3
   - name: Andrea Franceschini
+    orcid: 0000-0003-4395-5125
     affiliation: 3
   - name: Matteo Frigo
+    orcid: 0000-0001-8150-1090
     affiliation: 3
   - name: Pengcheng Fu
+    orcid: 0000-0002-7408-3350
     affiliation: 1
   - name: Thomas Gazzola
+    orcid: 0000-0002-6103-4605
     affiliation: 2
   - name: Herve Gross
+    orcid: 0000-0002-1747-2018
     affiliation: 2
   - name: Francois Hamon
+    orcid: 0000-0001-8229-963X
     affiliation: 2
   - name: Brian M. Han
+    orcid: 0009-0002-8549-7644
     affiliation: 1
   - name: Rasim Hasanzade
     affiliation: "3,4"
   - name: Michael Homel
+    orcid: 0000-0002-0399-0092
     affiliation: 1
   - name: Jian Huang
+    orcid: 0000-0002-5380-2563
     affiliation: 2
   - name: Tao Jin
+    orcid: 0000-0001-6658-8941
     affiliation: 1
   - name: Isaac Ju
+    orcid: 0000-0003-4110-7472
     affiliation: 3
   - name: Dickson Kachuma
     affiliation: 2
   - name: Mohammad Karimi-Fard
+    orcid: 0000-0001-5707-165X
     affiliation: 3
   - name: Taeho Kim
     affiliation: 2
   - name: Sergey Klevtsov
+    orcid: 0000-0001-9044-1827
     affiliation: 3
   - name: Alexandre Lapene
     affiliation: 2
   - name: Victor A. P. Magri
+    orcid: 0000-0002-3389-523X
     affiliation: 1
   - name: Antoine Mazuyer
+    orcid: 0000-0002-0329-3385
     affiliation: "2,3"
   - name: Mamadou N'diaye
     affiliation: 3
   - name: Daniel Osei-Kuffuor
+    orcid: 0000-0002-6111-6205
     affiliation: 1
   - name: Stefan Povolny
     affiliation: 1
   - name: Guotong Ren
+    orcid: 0000-0002-5821-9158
     affiliation: 4
   - name: Shabnam J. Semnani
     affiliation: 6
   - name: Chris S. Sherman
+    orcid: 0000-0003-3550-0657
     affiliation: 1
   - name: Melvin Rey
     affiliation: 8
   - name: Hamdi A. Tchelepi
+    orcid: 0000-0002-3084-6635
     affiliation: 3
   - name: William R. Tobin
+    orcid: 0009-0001-3960-6064
     affiliation: 1
   - name: Pavel Tomin
     affiliation: 4
+    orchid: 0000-0003-4862-4288
   - name: Lionel Untereiner
     affiliation: 8
   - name: Arturo Vargas
@@ -109,6 +142,7 @@ authors:
   - name: Xianhuan Wen
     affiliation: 4
   - name: Joshua A. White
+    orcid: 0000-0003-3491-142X
     affiliation: 1
   - name: Hui Wu
     affiliation: 1
