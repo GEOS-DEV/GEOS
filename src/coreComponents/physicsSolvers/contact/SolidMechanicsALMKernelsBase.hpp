@@ -98,7 +98,7 @@ public:
     m_rotationMatrix( elementSubRegion.getField< fields::contact::rotationMatrix >().toViewConst()),
     m_dispJump( elementSubRegion.getField< fields::contact::dispJump >().toView() ),
     m_oldDispJump( elementSubRegion.getField< fields::contact::oldDispJump >().toViewConst() ),
-    m_penalty( elementSubRegion.getField< fields::contact::penalty >().toViewConst() )
+    m_penalty( elementSubRegion.getField< fields::contact::iterativePenalty >().toViewConst() )
   {}
 
   //***************************************************************************

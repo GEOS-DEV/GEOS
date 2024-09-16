@@ -99,8 +99,8 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
       subRegion.registerField< contact::oldDispJump >( this->getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      // Register the displacement jump
-      subRegion.registerField< contact::penalty >( this->getName() ).
+      // Register the penalty coefficients for the iterative procedure
+      subRegion.registerField< contact::iterativePenalty >( this->getName() ).
         reference().resizeDimension< 1 >( 5 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
@@ -265,27 +265,27 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() );
 
     arrayView2d< real64 > const
-    penalty = subRegion.getField< fields::contact::penalty >().toView();
+    iterativePenalty = subRegion.getField< fields::contact::iterativePenalty >().toView();
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
     if( m_simultaneous )
     {
-      // Set the penalty coefficients
+      // Set the iterative penalty coefficients
       forAll< parallelDevicePolicy<> >( subRegion.size(),
                                         [=]
                                         GEOS_HOST_DEVICE ( localIndex const k )
       {
         if( fractureState[k] == contact::FractureState::Stick )
         {
-          penalty[k][2] = penalty[k][1];
-          penalty[k][3] = penalty[k][1];
-          penalty[k][4] = 0.0;
+          iterativePenalty[k][2] = iterativePenalty[k][1];
+          iterativePenalty[k][3] = iterativePenalty[k][1];
+          iterativePenalty[k][4] = 0.0;
         }
         else
         {
-          penalty[k][2] = 0.0;
-          penalty[k][3] = 0.0;
-          penalty[k][4] = 0.0;
+          iterativePenalty[k][2] = 0.0;
+          iterativePenalty[k][3] = 0.0;
+          iterativePenalty[k][4] = 0.0;
         }
       } );
     }
@@ -759,7 +759,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
       arrayView2d< real64 const > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
-      arrayView2d< real64 const > const penalty = subRegion.getField< contact::penalty >();
+      arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
       arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
       arrayView1d< real64 const > const normalDisplacementTolerance =
@@ -788,7 +788,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         {
           solidMechanicsALMKernels::ComputeTractionSimultaneousKernel::
             launch< parallelDevicePolicy<> >( subRegion.size(),
-                                              penalty,
+                                              iterativePenalty,
                                               traction,
                                               dispJump,
                                               deltaDispJump,
@@ -799,7 +799,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           solidMechanicsALMKernels::ComputeTractionKernel::
             launch< parallelDevicePolicy<> >( subRegion.size(),
                                               frictionWrapper,
-                                              penalty,
+                                              iterativePenalty,
                                               traction,
                                               dispJump,
                                               deltaDispJump,
@@ -935,7 +935,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         arrayView1d< real64 const > const normalTractionTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
 
-        arrayView2d< real64 > const penalty = subRegion.getField< fields::contact::penalty >().toView();
+        arrayView2d< real64 > const iterativePenalty = subRegion.getField< fields::contact::iterativePenalty >().toView();
 
         arrayView2d< real64 > const dispJumpUpdPenalty =
           subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() );
@@ -958,7 +958,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               frictionWrapper,
                                               oldDispJump,
                                               dispJump,
-                                              penalty,
+                                              iterativePenalty,
                                               m_symmetric,
                                               normalTractionTolerance,
                                               traction,
@@ -1598,7 +1598,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
         arrayView2d< real64 > const
-        penalty = subRegion.getField< fields::contact::penalty >().toView();
+        iterativePenalty = subRegion.getField< fields::contact::iterativePenalty >().toView();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
@@ -1687,8 +1687,8 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
                                         pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus / 2.e+5;
           normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) *
                                          (normalDisplacementTolerance[kfe]);
-          penalty[kfe][0] = 1e+01*averageConstrainedModulus/(averageBoxSize0*area);
-          penalty[kfe][1] = 1e-01*averageConstrainedModulus/(averageBoxSize0*area);
+          iterativePenalty[kfe][0] = 1e+01*averageConstrainedModulus/(averageBoxSize0*area);
+          iterativePenalty[kfe][1] = 1e-01*averageConstrainedModulus/(averageBoxSize0*area);
 
         } );
       }
