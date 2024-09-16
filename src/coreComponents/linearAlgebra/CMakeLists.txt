@@ -1,4 +1,4 @@
-#==============================================================================================
+#==================================================================================================
 # Package : linearAlgebra
 #
 # Contains management implementations to handle all degrees of freedom associated with
@@ -6,9 +6,11 @@
 # Contains linear solvers implementation
 # Contains interfaces to different external linear solvers libraries (hypre, Petsc, trilinos)
 #
-#==============================================================================================
+#==================================================================================================
 
+#
 # Specify all headers
+#
 set( linearAlgebra_headers
      DofManager.hpp
      DofManagerHelpers.hpp
@@ -45,8 +47,9 @@ set( linearAlgebra_headers
      utilities/NormalOperator.hpp
      utilities/ReverseCutHillMcKeeOrdering.hpp
      utilities/TransposeOperator.hpp )
-
+#
 # Specify all sources
+#
 set( linearAlgebra_sources
      DofManager.cpp
      solvers/BicgstabSolver.cpp

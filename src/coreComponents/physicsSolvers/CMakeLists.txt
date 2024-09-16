@@ -10,7 +10,9 @@
 #
 #==================================================================================================
 
+#
 # Specify solver headers
+#
 set( physicsSolvers_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
@@ -21,7 +23,9 @@ set( physicsSolvers_headers
      FieldStatisticsBase.hpp
  )
 
+#
 # Specify solver sources
+#
 set( physicsSolvers_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp

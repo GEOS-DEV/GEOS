@@ -1,13 +1,15 @@
-#==============================================================================
+#==================================================================================================
 # Package : fileIO
 #
 # Contains I/O interfaces to the three main outputs types : HDF5, VTK, Silo
 # Contains coupler for data exchange with CHOMBO
 # Contains python wrappers for Time History and VTK outputs
 #
-#==============================================================================
+#==================================================================================================
 
+#
 # Specify all headers
+#
 set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
@@ -23,7 +25,9 @@ set( fileIO_headers
      timeHistory/HDFHistoryIO.hpp
      timeHistory/HistoryCollection.hpp )
 
+#
 # Specify all sources
+#
 set( fileIO_sources
      Outputs/BlueprintOutput.cpp
      Outputs/OutputBase.cpp
@@ -60,10 +64,10 @@ endif()
 
 if( ENABLE_SILO )
   list( APPEND dependencyList silo HDF5::HDF5)
-  list( APPEND fileIO_headers 
-               silo/SiloFile.hpp 
+  list( APPEND fileIO_headers
+               silo/SiloFile.hpp
                Outputs/SiloOutput.hpp )
-  list( APPEND fileIO_sources 
+  list( APPEND fileIO_sources
                silo/SiloFile.cpp
                Outputs/SiloOutput.cpp )
 endif( )

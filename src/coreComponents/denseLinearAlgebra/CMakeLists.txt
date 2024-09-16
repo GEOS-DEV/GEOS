@@ -1,18 +1,22 @@
-#=================================================================== 
+#==================================================================================================
 # Package : denseLinearAlgebra
-# 
+#
 # Contains interfaces for linear algebra BLAS and LAPACK packages
-# 
-#===================================================================
+#
+#==================================================================================================
 
+#
 # Specify all headers
+#
 set( denseLinearAlgebra_headers
      common/layouts.hpp
      denseLASolvers.hpp
      interfaces/blaslapack/BlasLapackFunctions.h
      interfaces/blaslapack/BlasLapackLA.hpp )
 
+#
 # Specify all sources
+#
 set( denseLinearAlgebra_sources
      interfaces/blaslapack/BlasLapackLA.cpp )
 
@@ -25,7 +29,7 @@ blt_add_library( NAME       denseLinearAlgebra
                  SOURCES    ${denseLinearAlgebra_sources}
                  HEADERS    ${denseLinearAlgebra_headers}
                  DEPENDS_ON ${decoratedDependencies}
-                 OBJECT     ${GEOS_BUILD_OBJ_LIBS} 
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 

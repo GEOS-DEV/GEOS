@@ -1,9 +1,9 @@
-#===================================================================================
+#==================================================================================================
 # Package : constitutive
 #
 # Contains the implementation of constitutive models for fluid and rock properties
 #
-#===================================================================================
+#==================================================================================================
 
 #
 # Specify all headers
@@ -39,7 +39,7 @@ set( constitutive_headers
      dispersion/DispersionBase.hpp
      dispersion/DispersionFields.hpp
      dispersion/DispersionSelector.hpp
-     dispersion/LinearIsotropicDispersion.hpp     
+     dispersion/LinearIsotropicDispersion.hpp
      fluid/multifluid/Layouts.hpp
      fluid/multifluid/MultiFluidSelector.hpp
      fluid/multifluid/MultiFluidBase.hpp
@@ -70,9 +70,9 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp
      fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
-     fluid/multifluid/compositional/functions/CompositionalProperties.hpp     
-     fluid/multifluid/compositional/functions/CompositionalPropertiesImpl.hpp     
-     fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
+     fluid/multifluid/compositional/functions/CompositionalProperties.hpp
+     fluid/multifluid/compositional/functions/CompositionalPropertiesImpl.hpp
+     fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/FugacityCalculator.hpp
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
@@ -153,7 +153,7 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
-     solid/PerfectlyPlastic.hpp     
+     solid/PerfectlyPlastic.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp

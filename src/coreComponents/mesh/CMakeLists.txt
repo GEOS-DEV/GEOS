@@ -10,7 +10,9 @@
 #
 #==================================================================================================
 
+#
 # Specify all headers
+#
 set( mesh_headers
      BufferOps.hpp
      CellElementRegion.hpp
@@ -95,7 +97,9 @@ set( mesh_headers
      utilities/MeshMapUtilities.hpp
      utilities/StructuredGridUtilities.hpp )
 
+#
 # Specify all sources
+#
 set( mesh_sources
      BufferOps.cpp
      CellElementRegion.cpp
