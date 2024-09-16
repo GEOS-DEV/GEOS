@@ -132,7 +132,7 @@ authors:
     affiliation: 1
   - name: Pavel Tomin
     affiliation: 4
-    orchid: 0000-0003-4862-4288
+    orcid: 0000-0003-4862-4288
   - name: Lionel Untereiner
     affiliation: 8
   - name: Arturo Vargas
