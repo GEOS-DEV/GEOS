@@ -1,8 +1,7 @@
----
 baselines:
   bucket: geosx
-  baseline: integratedTests/baseline_integratedTests-pr3105-4885-a1a85c1
+  baseline: integratedTests/baseline_integratedTests-pr3318-7578-14f13e2
 
 allow_fail:
   all: ''
-  streak: pennyShapedToughnessDominated_smoke_01,pennyShapedViscosityDominated_smoke_01,pknViscosityDominated_smoke_01
+  streak: ''

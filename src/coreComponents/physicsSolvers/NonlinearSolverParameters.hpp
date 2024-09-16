@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -82,6 +83,9 @@ public:
     m_maxTimeStepCuts = params.m_maxTimeStepCuts;
     m_timeStepCutFactor = params.m_timeStepCutFactor;
     m_maxNumConfigurationAttempts = params.m_maxNumConfigurationAttempts;
+    m_configurationTolerance = params.m_configurationTolerance;
+
+    setLogLevel( params.getLogLevel());
 
     return *this;
   }
@@ -95,7 +99,9 @@ public:
    */
   static string catalogName() { return "NonlinearSolverParameters"; }
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
+
+  void print() const;
 
   struct viewKeysStruct
   {
@@ -122,12 +128,11 @@ public:
 
     static constexpr char const * maxSubStepsString()             { return "maxSubSteps"; }
     static constexpr char const * maxTimeStepCutsString()         { return "maxTimeStepCuts"; }
-    static constexpr char const * minNumNewtonIterationsString()  { return "minNumberOfNewtonIterations"; }
     static constexpr char const * timeStepCutFactorString()       { return "timeStepCutFactor"; }
     static constexpr char const * maxAllowedResidualNormString()  { return "maxAllowedResidualNorm"; }
 
-    static constexpr char const * numConfigurationAttemptsString()    { return "numConfigurationAttempts"; }
     static constexpr char const * maxNumConfigurationAttemptsString() { return "maxNumConfigurationAttempts"; }
+    static constexpr char const * configurationToleranceString() { return "configurationTolerance"; }
 
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
@@ -316,6 +321,9 @@ public:
 
   /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
+
+  /// Configuration tolerance
+  double m_configurationTolerance;
 
   /// Type of coupling
   CouplingType m_couplingType;
