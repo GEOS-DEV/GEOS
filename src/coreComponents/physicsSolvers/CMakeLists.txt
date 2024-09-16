@@ -1,3 +1,15 @@
+#==================================================================================================
+# Package : physicsSolvers
+#
+# Contains physics solvers base and manager classes
+# Contains fields traits, solvers, kernels and utilities relative to different physics: contact
+#   mechanics, proppant transport, flow, induced seismicity rate, phase-field damage, solid
+#   mechanics MPM and Lagrangian implementations, mesh topology splitting methods and acoustic and
+#   elastic waves.
+# Contains physics solver wrapper designed for PyGEOSX interface
+#
+#==================================================================================================
+
 # Specify solver headers
 set( physicsSolvers_headers
      LinearSolverParameters.hpp
@@ -37,7 +49,7 @@ endif()
 if( GEOS_ENABLE_SIMPLEPDE )
   add_subdirectory( simplePDE )
 endif()
-  
+
 if( GEOS_ENABLE_SOLIDMECHANICS )
   add_subdirectory( solidMechanics )
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
@@ -51,7 +63,7 @@ if( GEOS_ENABLE_WAVEPROPAGATION )
   add_subdirectory( wavePropagation )
 endif()
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
+set( dependencyList ${parallelDeps} fileIO discretizationMethods events )
 
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
