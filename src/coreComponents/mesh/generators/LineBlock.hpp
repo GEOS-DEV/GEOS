@@ -164,7 +164,7 @@ public:
 
   /**
    * @brief Set the target region for the perforations.
-   * @param perfSkinFactor list of target regions for all the perforations on the well
+   * @param perfTargetRegion list of target regions for all the perforations on the well
    */
   void setPerfTargetRegion( arrayView1d< string const > perfTargetRegion ) { m_perfTargetRegion = perfTargetRegion; }
 

@@ -139,12 +139,12 @@ void collectElementNodes( SUBREGION_TYPE const & subRegion,
 }
 
 template< typename SUBREGION_TYPE >
-bool isPointInsideElement( SUBREGION_TYPE const & subRegion,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition,
-                           localIndex const & eiLocal,
-                           ArrayOfArraysView< localIndex const > const & facesToNodes,
-                           real64 const (&elemCenter)[3],
-                           real64 const (&location)[3] )
+bool isPointInsideElement( SUBREGION_TYPE const & GEOS_UNUSED_PARAM( subRegion ),
+                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOS_UNUSED_PARAM( referencePosition ),
+                           localIndex const & GEOS_UNUSED_PARAM( eiLocal ),
+                           ArrayOfArraysView< localIndex const > const & GEOS_UNUSED_PARAM( facesToNodes ),
+                           real64 const (&GEOS_UNUSED_PARAM( elemCenter ))[3],
+                           real64 const (&GEOS_UNUSED_PARAM( location ))[3] )
 {
   GEOS_ERROR( GEOS_FMT( "Well perforation for region type = {} is not yet supported", typeid(SUBREGION_TYPE).name() ) );
   return false;
