@@ -130,12 +130,11 @@ minLocOverElemsInRegion( ElementRegionBase const & region, LAMBDA && lambda )
  * @brief @return Return the minimum location/indices for a value condition specified by @p lambda.
  * @tparam LAMBDA The type of the lambda function to be used to specify the minimum condition.
  * @param subRegion The subregion that will have all of its elements processed by this function.
- * @param esr The subregion index.
  * @param lambda  A lambda function that returns as value that will be used in the minimum comparison.
  */
 template< typename LAMBDA >
 auto
-minLocOverElemsInSubRegion( ElementSubRegionBase const & subRegion, localIndex const esr, LAMBDA && lambda )
+minLocOverElemsInSubRegion( ElementSubRegionBase const & subRegion, LAMBDA && lambda )
 {
   using NUMBER = decltype( lambda( 0 ) );
 

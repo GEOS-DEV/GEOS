@@ -139,14 +139,14 @@ void collectElementNodes( SUBREGION_TYPE const & subRegion,
 }
 
 template< typename SUBREGION_TYPE >
-bool isPointInsideElement( SUBREGION_TYPE const & GEOS_UNUSED_PARAM( subRegion ),
+bool isPointInsideElement( SUBREGION_TYPE const & subRegion,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOS_UNUSED_PARAM( referencePosition ),
                            localIndex const & GEOS_UNUSED_PARAM( eiLocal ),
                            ArrayOfArraysView< localIndex const > const & GEOS_UNUSED_PARAM( facesToNodes ),
                            real64 const (&GEOS_UNUSED_PARAM( elemCenter ))[3],
                            real64 const (&GEOS_UNUSED_PARAM( location ))[3] )
 {
-  GEOS_ERROR( GEOS_FMT( "Well perforation for region type = {} is not yet supported", typeid(SUBREGION_TYPE).name() ) );
+  // only CellElementSubRegion is currently supported
   return false;
 }
 
@@ -433,8 +433,7 @@ void initializeLocalSearch( MeshLevel const & mesh,
                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
   // to initialize the local search for the reservoir element that contains "location",
   // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
-  auto ret = minLocOverElemsInSubRegion( subRegion, targetSubRegionIndex,
-                                         [&] ( localIndex const ei )
+  auto ret = minLocOverElemsInSubRegion( subRegion, [&] ( localIndex const ei )
   {
     real64 v[3] = { location[0], location[1], location[2] };
     LvArray::tensorOps::subtract< 3 >( v, resElemCenter[targetRegionIndex][targetSubRegionIndex][ei] );
@@ -1015,35 +1014,52 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
-    localIndex const targetRegionIndex = elemManager.getRegions().getIndex( perfTargetTegionGlobal[iperfGlobal] );
     real64 const location[3] = { perfCoordsGlobal[iperfGlobal][0],
                                  perfCoordsGlobal[iperfGlobal][1],
                                  perfCoordsGlobal[iperfGlobal][2] };
-    GEOS_LOG( GEOS_FMT( "{}: perforation {} location = ({}, {}, {}), target region = {}", lineBlock.getName(), iperfGlobal,
-                        location[0], location[1], location[2], perfTargetTegionGlobal[iperfGlobal] ) );
+    GEOS_LOG( GEOS_FMT( "{}: perforation {} location = ({}, {}, {})", lineBlock.getName(), iperfGlobal,
+                        location[0], location[1], location[2] ) );
+
+    localIndex erStart = -1, erEnd = -1;
+
+    localIndex const targetRegionIndex = elemManager.getRegions().getIndex( perfTargetTegionGlobal[iperfGlobal] );
+    if( targetRegionIndex >= 0 )
+    {
+      erStart = targetRegionIndex;
+      erEnd = erStart + 1;
+    }
+    else // default is all regions
+    {
+      erStart = 0;
+      erEnd = elemManager.numRegions();
+    }
 
     // for each perforation, we have to find the reservoir element that contains the perforation
-
-    // search for the reservoir element that contains the well element
-    localIndex esrMatched = -1;
-    localIndex eiMatched  = -1;
-    bool resElemFound = searchLocalElements( mesh, location, m_searchDepth, targetRegionIndex, esrMatched, eiMatched );
-
-    // if the element was found
-    if( resElemFound )
+    for( localIndex er = erStart; er < erEnd; er++ )
     {
-      // set the indices for the matched reservoir element
-      m_perforationData.getMeshElements().m_toElementRegion[iperfLocal] = targetRegionIndex;
-      m_perforationData.getMeshElements().m_toElementSubRegion[iperfLocal] = esrMatched;
-      m_perforationData.getMeshElements().m_toElementIndex[iperfLocal] = eiMatched;
+      // search for the reservoir element that contains the well element
+      localIndex esrMatched = -1;
+      localIndex eiMatched  = -1;
+      bool resElemFound = searchLocalElements( mesh, location, m_searchDepth, er, esrMatched, eiMatched );
 
-      // construct the local wellTransmissibility and location maps
-      m_perforationData.getWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
-      m_perforationData.getWellSkinFactor()[iperfLocal] = perfWellSkinFactorGlobal[iperfGlobal];
-      LvArray::tensorOps::copy< 3 >( perfLocation[iperfLocal], location );
+      // if the element was found
+      if( resElemFound )
+      {
+        // set the indices for the matched reservoir element
+        m_perforationData.getMeshElements().m_toElementRegion[iperfLocal] = er;
+        m_perforationData.getMeshElements().m_toElementSubRegion[iperfLocal] = esrMatched;
+        m_perforationData.getMeshElements().m_toElementIndex[iperfLocal] = eiMatched;
 
-      // increment the local to global map
-      m_perforationData.localToGlobalMap()[iperfLocal++] = iperfGlobal;
+        // construct the local wellTransmissibility and location maps
+        m_perforationData.getWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
+        m_perforationData.getWellSkinFactor()[iperfLocal] = perfWellSkinFactorGlobal[iperfGlobal];
+        LvArray::tensorOps::copy< 3 >( perfLocation[iperfLocal], location );
+
+        // increment the local to global map
+        m_perforationData.localToGlobalMap()[iperfLocal++] = iperfGlobal;
+
+        break;
+      }
     }
   }
 

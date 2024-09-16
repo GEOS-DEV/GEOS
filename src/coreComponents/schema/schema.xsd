@@ -1557,7 +1557,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--skinFactor => Perforation skin factor-->
 		<xsd:attribute name="skinFactor" type="real64" default="0" />
 		<!--targetRegion => Target region to connect the perforation-->
-		<xsd:attribute name="targetRegion" type="groupNameRef" use="required" />
+		<xsd:attribute name="targetRegion" type="groupNameRef" default="" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->

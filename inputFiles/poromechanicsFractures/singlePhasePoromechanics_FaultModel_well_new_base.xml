@@ -195,7 +195,6 @@
         numElementsPerSegment="1">
         <Perforation
           name="injector1_perf1"
-          targetRegion="Region"
           distanceFromHead="2500"/>
       </InternalWell>
     </VTKMesh>

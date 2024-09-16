@@ -49,7 +49,7 @@ Perforation::Perforation( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target region to connect the perforation" );
 }
 
