@@ -27,6 +27,7 @@ authors:
     orcid: 0000-0001-6816-6769
     affiliation: 1
   - name: Aurélien Citrain
+    orcid: 0009-0006-3742-1425
     affiliation: 7
   - name: Benjamin C. Corbett
     orcid: 0009-0008-7108-9651
@@ -74,6 +75,8 @@ authors:
     affiliation: 2
   - name: Brian M. Han
     orcid: 0009-0002-8549-7644
+    affiliation: 1
+  - name: Yue Hao
     affiliation: 1
   - name: Rasim Hasanzade
     affiliation: "3,4"
@@ -136,15 +139,18 @@ authors:
   - name: Lionel Untereiner
     affiliation: 8
   - name: Arturo Vargas
+    orcid: 0000-0001-8001-5517
     affiliation: 1
   - name: Sohail Waziri
     affiliation: "3,4"
   - name: Xianhuan Wen
+    orcid: 0000-0002-6055-4553 
     affiliation: 4
   - name: Joshua A. White
     orcid: 0000-0003-3491-142X
     affiliation: 1
   - name: Hui Wu
+    orcid: 0000-0002-9575-3886
     affiliation: 1
 affiliations:
   - name: Lawrence Livermore National Laboratory, USA
