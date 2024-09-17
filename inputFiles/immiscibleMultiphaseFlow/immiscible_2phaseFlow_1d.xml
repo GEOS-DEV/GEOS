@@ -84,6 +84,13 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
+    <!-- <DeadOilFluid
+      name="fluid"
+      phaseNames="{ oil, gas, water }"
+      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
+      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
+      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/> -->
+
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
