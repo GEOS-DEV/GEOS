@@ -302,6 +302,22 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     } );
   } );
 
+  // Sync iterativePenalty
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { contact::iterativePenalty::key() },
+                                     { getUniqueFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time,
@@ -1600,96 +1616,100 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
         arrayView2d< real64 > const
         iterativePenalty = subRegion.getField< fields::contact::iterativePenalty >().toView();
 
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
 
-          real64 const area = faceArea[kfe];
-          // approximation of the stiffness along coordinate directions
-          // ( first, second ) index -> ( element index, direction )
-          // 1. T -> top (index 0), B -> bottom (index 1)
-          // 2. the coordinate direction (x, y, z)
-          real64 stiffDiagApprox[ 2 ][ 3 ];
-          real64 averageYoungModulus = 0.0;
-          real64 averageConstrainedModulus = 0.0;
-          real64 averageBoxSize0 = 0.0;
-
-          for( localIndex i = 0; i < elemsToFaces.sizeOfArray( kfe ); ++i )
+          if( ghostRank[kfe] < 0 )
           {
-            localIndex const faceIndex = elemsToFaces[kfe][i];
-            localIndex const er = faceToElemRegion[faceIndex][0];
-            localIndex const esr = faceToElemSubRegion[faceIndex][0];
-            localIndex const ei = faceToElemIndex[faceIndex][0];
+            real64 const area = faceArea[kfe];
+            // approximation of the stiffness along coordinate directions
+            // ( first, second ) index -> ( element index, direction )
+            // 1. T -> top (index 0), B -> bottom (index 1)
+            // 2. the coordinate direction (x, y, z)
+            real64 stiffDiagApprox[ 2 ][ 3 ];
+            real64 averageYoungModulus = 0.0;
+            real64 averageConstrainedModulus = 0.0;
+            real64 averageBoxSize0 = 0.0;
 
-            real64 const volume = elemVolume[er][esr][ei];
-
-            // Get the "element to node" map for the specific region/subregion
-            NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
-            localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
-
-            // Compute the box size
-            real64 maxSize[3];
-            real64 minSize[3];
-            for( localIndex j = 0; j < 3; ++j )
+            for( localIndex i = 0; i < elemsToFaces.sizeOfArray( kfe ); ++i )
             {
-              maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-              minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-            }
-            for( localIndex a = 1; a < numNodesPerElem; ++a )
-            {
+              localIndex const faceIndex = elemsToFaces[kfe][i];
+              localIndex const er = faceToElemRegion[faceIndex][0];
+              localIndex const esr = faceToElemSubRegion[faceIndex][0];
+              localIndex const ei = faceToElemIndex[faceIndex][0];
+
+              real64 const volume = elemVolume[er][esr][ei];
+
+              // Get the "element to node" map for the specific region/subregion
+              NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
+              localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
+
+              // Compute the box size
+              real64 maxSize[3];
+              real64 minSize[3];
               for( localIndex j = 0; j < 3; ++j )
               {
-                maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
+                minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
               }
+              for( localIndex a = 1; a < numNodesPerElem; ++a )
+              {
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                  minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                }
+              }
+
+              real64 boxSize[3];
+              for( localIndex j = 0; j < 3; ++j )
+              {
+                boxSize[j] = maxSize[j] - minSize[j];
+              }
+
+              // Get linear elastic isotropic constitutive parameters for the element
+              real64 const K = bulkModulus[er][esr][ei];
+              real64 const G = shearModulus[er][esr][ei];
+              real64 const E = 9.0 * K * G / ( 3.0 * K + G );
+              real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
+              real64 const M = K + 4.0 / 3.0 * G;
+
+              // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
+              for( localIndex j = 0; j < 3; ++j )
+              {
+                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              }
+
+              averageYoungModulus += 0.5*E;
+              averageConstrainedModulus += 0.5*M;
+              averageBoxSize0 += 0.5*boxSize[0];
             }
 
-            real64 boxSize[3];
+            // Average the stiffness and compute the inverse
+            real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
             for( localIndex j = 0; j < 3; ++j )
             {
-              boxSize[j] = maxSize[j] - minSize[j];
+              invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
             }
 
-            // Get linear elastic isotropic constitutive parameters for the element
-            real64 const K = bulkModulus[er][esr][ei];
-            real64 const G = shearModulus[er][esr][ei];
-            real64 const E = 9.0 * K * G / ( 3.0 * K + G );
-            real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
-            real64 const M = K + 4.0 / 3.0 * G;
+            // Rotate in the local reference system, computing R^T * (invK) * R
+            real64 temp[ 3 ][ 3 ];
+            LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
+            real64 rotatedInvStiffApprox[ 3 ][ 3 ];
+            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
+            LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
-            // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
-            }
-
-            averageYoungModulus += 0.5*E;
-            averageConstrainedModulus += 0.5*M;
-            averageBoxSize0 += 0.5*boxSize[0];
+            // Finally, compute tolerances for the given fracture element
+            normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
+            slidingTolerance[kfe] = sqrt( pow( rotatedInvStiffApprox[ 1 ][ 1 ], 2 ) +
+                                          pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus / 2.e+5;
+            normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) *
+                                           (normalDisplacementTolerance[kfe]);
+            iterativePenalty[kfe][0] = 1e+01*averageConstrainedModulus/(averageBoxSize0*area);
+            iterativePenalty[kfe][1] = 1e-01*averageConstrainedModulus/(averageBoxSize0*area);
           }
-
-          // Average the stiffness and compute the inverse
-          real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
-          for( localIndex j = 0; j < 3; ++j )
-          {
-            invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
-          }
-
-          // Rotate in the local reference system, computing R^T * (invK) * R
-          real64 temp[ 3 ][ 3 ];
-          LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
-          real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
-          LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
-
-          // Finally, compute tolerances for the given fracture element
-          normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
-          slidingTolerance[kfe] = sqrt( pow( rotatedInvStiffApprox[ 1 ][ 1 ], 2 ) +
-                                        pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus / 2.e+5;
-          normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) *
-                                         (normalDisplacementTolerance[kfe]);
-          iterativePenalty[kfe][0] = 1e+01*averageConstrainedModulus/(averageBoxSize0*area);
-          iterativePenalty[kfe][1] = 1e-01*averageConstrainedModulus/(averageBoxSize0*area);
-
         } );
       }
     } );
