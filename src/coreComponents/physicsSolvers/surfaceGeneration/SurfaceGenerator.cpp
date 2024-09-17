@@ -417,6 +417,10 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
         arrayView2d< localIndex const > const & faceToSubRegionMap = faceManager.elementSubRegionList();
         arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
 
+        KIC[kf][0] = 1e99;
+        KIC[kf][1] = 1e99;
+        KIC[kf][2] = 1e99;
+
         for( localIndex k=0; k<faceToRegionMap.size( 1 ); ++k )
         {
           localIndex const er = faceToRegionMap[kf][k];
