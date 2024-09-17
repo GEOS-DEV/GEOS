@@ -77,6 +77,7 @@ authors:
     orcid: 0009-0002-8549-7644
     affiliation: 1
   - name: Yue Hao
+    orcid: 0000-0002-4543-8618
     affiliation: 1
   - name: Rasim Hasanzade
     affiliation: "3,4"
