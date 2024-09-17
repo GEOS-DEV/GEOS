@@ -1,55 +1,35 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!-- SPHINX_GEOMETRY -->
+  <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
     <Rectangle
-      name="fracture1"
+      name="fracture"
       normal="{1.0, 0.0, 0.0}"
       origin="{0.0, 0.0, 0.0}"
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 100, 200 }"/>
+      dimensions="{ 2, 10 }"/>
 
     <Rectangle
-      name="core1"
+      name="core"
       normal="{1.0, 0.0, 0.0}"
       origin="{0.0, 0.0, 0.0}"
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 100, 200 }"/>
-
-    <Rectangle
-      name="fracture2"
-      normal="{0.0, 1.0, 0.0}"
-      origin="{0.0, 50.0, 0.0}"
-      lengthVector="{1.0, 0.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 50, 200 }"/>
-
-    <Rectangle
-      name="core2"
-      normal="{0.0, 1.0, 0.0}"
-      origin="{0.0, 50.0, 0.0}"
-      lengthVector="{1.0, 0.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 50, 200 }"/>    
+      dimensions="{ 2, 10 }"/>    
   </Geometry>
-  <!-- SPHINX_GEOMETRY_END -->
-
+  <!-- SPHINX_SNEDDON_GEOMETRY_END -->
+ 
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
         order="1"/>
     </FiniteElements>
-
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="TPFAstabilization"/>
-    </FiniteVolume>
   </NumericalMethods>
 
+  <!-- SPHINX_SNEDDON_REGIONS-->
   <ElementRegions>
     <CellElementRegion
       name="Region"
@@ -62,28 +42,29 @@
       defaultAperture="1.0e-6"
       materialList="{ frictionLaw }"/>
   </ElementRegions>
+  <!-- SPHINX_SNEDDON_REGIONS_END -->
 
-  <!-- SPHINX_MATERIAL -->
+  <!-- SPHINX_SNEDDON_MATERIAL-->
   <Constitutive>
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="38.89e9"
-      defaultShearModulus="29.17e9"/>
+      defaultBulkModulus="16.66666666666666e9"
+      defaultShearModulus="1.0e10"/>
 
     <Coulomb
       name="frictionLaw"
       cohesion="0.0"
       frictionCoefficient="0.577350269"/>
   </Constitutive>
-  <!-- SPHINX_MATERIAL_END -->
+  <!-- SPHINX_SNEDDON_MATERIAL_END-->
 
-  <!-- SPHINX_BC -->
+  <!-- SPHINX_SNEDDON_BC -->
   <FieldSpecifications>
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{ fracture1, fracture2 }"
+      setNames="{ fracture }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -91,7 +72,7 @@
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{ core1, core2 }"
+      setNames="{ core }"
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -124,60 +105,32 @@
       name="NormalTraction"
       objectPath="faceManager"
       tractionType="normal"
-      scale="-1.0e8"
-      functionName="ForceTimeFunction"
-      setNames="{ core1 }"/>
-
-    <FieldSpecification 
-      name="SigmaY"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
-      component="1"
-      scale="-1.0e8"/>
+      scale="-2.0e6"
+      setNames="{ core }"/>
   </FieldSpecifications>
-  <!-- SPHINX_BC_END -->
-
-  <!-- SPHINX_TASKS -->
+  <!-- SPHINX_SNEDDON_BC_END -->
+  
+  <!-- SPHINX_SNEDDON_TASK -->
   <Tasks>
-    <PackCollection
-      name="tractionCollection"
-      objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="traction"/>
-
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="displacementJump"/>
+      fieldName="displacementJump"/>     
   </Tasks>
-  <!-- SPHINX_TASKS_END -->
-
-  <Functions>
-    <TableFunction
-      name="ForceTimeFunction"
-      inputVarNames="{ time }"
-      coordinates="{ 0.0, 1.0 }"
-      values="{ 0.0, 1.e0 }"/>
-  </Functions>
+  <!-- SPHINX_SNEDDON_TASK_END -->
 
   <Outputs>
-    <VTK
+     <VTK
       name="vtkOutput"
       plotLevel="2"
       format="ascii"/>
 
     <TimeHistory
-      name="tractionOutput"
-      sources="{/Tasks/tractionCollection}"
-      filename="traction_history" />
-
-    <TimeHistory
-      name="displacementOutput"
+      name="timeHistoryOutput"
       sources="{/Tasks/displacementJumpCollection}"
-      filename="displacementJump_history" />
+      filename="displacementJump_contactMechanics" />
       
     <Restart
-      name="restartOutput"/>  
-  </Outputs>
+      name="restartOutput"/>   
+   </Outputs>
 </Problem>

@@ -4,27 +4,6 @@
 <!-- SPHINX_SOLVER -->
   <Solvers
     gravityVector="{0.0, 0.0, 0.0}">
-    <SolidMechanicsLagrangeContact
-      name="lagrangiancontact"
-      timeIntegrationOption="QuasiStatic"
-      stabilizationName="TPFAstabilization"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Region, Fracture }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-8"
-        logLevel="2"
-        newtonMaxIter="10"
-        maxNumConfigurationAttempts="10"
-        lineSearchAction="Require"
-        lineSearchMaxCuts="2"
-        maxTimeStepCuts="2"/>
-      <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
-    </SolidMechanicsLagrangeContact>
-
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
@@ -41,11 +20,6 @@
         name="FE1"
         order="1"/>
     </FiniteElements>
-
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="TPFAstabilization"/>
-    </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
