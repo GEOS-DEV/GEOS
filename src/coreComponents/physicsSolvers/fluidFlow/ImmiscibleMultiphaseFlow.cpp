@@ -36,6 +36,8 @@
 
 #include "constitutive/ConstitutivePassThru.hpp"
 
+#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+
 #include <cmath>
 
 #if defined( __INTEL_COMPILER )
@@ -48,6 +50,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields::immiscibleMultiphaseFlow;
+using namespace immiscibleMultiphaseKernels;
 
 real64 computeDensityL ( real64 P ) {
   return (1.0e-6 * (P * P));
@@ -204,14 +207,25 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
   } );
 }
 
+
 void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
-  // arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
-  // arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
-  GEOS_UNUSED_VAR( dataGroup );
+  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
+
+  TwoPhaseFluid & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
+  constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  {
+    using FluidType = TYPEOFREF( castedFluid );
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    
+    FluidUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),fluidWrapper, pres );
+  } );
 }
+
+
 
 void ImmiscibleMultiphaseFlow::updateRelPermModel( ObjectManagerBase & dataGroup ) const
 {
@@ -518,7 +532,6 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
 
 
 
-
 void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domain,
                                                          DofManager const & dofManager,
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -537,9 +550,10 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
     {
       string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
     // The line below needs to be used once we have a fluid model
-    //  MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
     arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
@@ -552,8 +566,8 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
     arrayView2d< real64 const > const dPoro_dPres = solid.getDporosity_dPressure();
     arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac= subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
     // The two lines below need to be used once we have a fluid model
-    //arrayView3d< real64 const, immiscibleFlow::USD_PHASE > m_phaseDens = fluid.phaseDensity();
-    //arrayView4d< real64 const, immiscibleFlow::USD_PHASE_DS > m_dPhaseDens = fluid.dPhaseDensity();
+    arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseDens = fluid.phaseDensity();
+    arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseDens = fluid.dPhaseDensity();
     arrayView2d< real64 const, immiscibleFlow::USD_PHASE > phaseDens = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseDensity>();
     arrayView2d< real64 const, immiscibleFlow::USD_PHASE > dPhaseDens = subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseDensity>();
     arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const PhaseMass_n = subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();

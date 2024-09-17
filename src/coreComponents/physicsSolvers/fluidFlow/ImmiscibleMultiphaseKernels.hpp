@@ -874,7 +874,23 @@ public:
 };
 
 
-
+struct FluidUpdateKernel
+{
+  template< typename POLICY, typename FLUID_WRAPPER >
+  static void
+  launch( localIndex const size,
+          FLUID_WRAPPER const & fluidWrapper,
+          arrayView1d< real64 const > const & pres )
+  {
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+      {
+        fluidWrapper.update( k, q, pres[k] );
+      }
+    } );
+  }
+};
 
 
 } // namesace immiscible multiphasekernels
