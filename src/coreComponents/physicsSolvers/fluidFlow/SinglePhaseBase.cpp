@@ -318,29 +318,24 @@ void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
 
 void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
-  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const temperature = dataGroup.getField< fields::flow::temperature >();
 
   string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
   SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
 
   SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
 
-  thermalSinglePhaseBaseKernels::SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temp );
+  thermalSinglePhaseBaseKernels::SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temperature );
 }
 
 void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const
 {
-  //START_SPHINX_INCLUDE_COUPLEDSOLID
-  CoupledSolidBase const & porousSolid =
-    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-  //END_SPHINX_INCLUDE_COUPLEDSOLID
-
-  arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
-
   string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
   SinglePhaseThermalConductivityBase const & conductivityMaterial =
     getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
-  conductivityMaterial.update( porosity );
+
+  arrayView1d< real64 const > const & temperature = subRegion.template getField< fields::flow::temperature >();
+  conductivityMaterial.updateFromTemperature( temperature );
 }
 
 real64 SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
@@ -1133,7 +1128,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
           localRhs[massRowIndex] += rhsValue;
           massProd += rhsValue;
-          //add the value to the energey balance equation if the flux is positive (i.e., it's a producer)
+          //add the value to the energy balance equation if the flux is positive (i.e., it's a producer)
           if( rhsContributionArrayView[a] > 0.0 )
           {
             globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
