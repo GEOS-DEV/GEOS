@@ -125,7 +125,7 @@ DECLARE_FIELD( K_IC_00,
                "K_IC_00",
                array1d< real64 >,
                -1,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                ":math:`K_{IC}` on 0-plane, in 0-direction." );
 
@@ -157,7 +157,7 @@ DECLARE_FIELD( K_IC_11,
                "K_IC_11",
                array1d< real64 >,
                -1,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                ":math:`K_{IC}` on 1-plane, in 1-direction." );
 
@@ -189,7 +189,7 @@ DECLARE_FIELD( K_IC_22,
                "K_IC_22",
                array1d< real64 >,
                -1,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                ":math:`K_{IC}` on 2-plane, in 2-direction." );
 

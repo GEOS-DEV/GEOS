@@ -505,7 +505,7 @@ private:
 
   real64 scalingToughness( R1Tensor const fractureOrigin,
                            real64 const (&faceCenter)[3],
-                           real64 const baseRockToughness,
+                           real64 const initialRockToughness,
                            real64 const toughnessScalingFactor );
 
   /**
@@ -526,7 +526,7 @@ private:
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
-    constexpr static char const * baseRockToughnessString() { return "baseRockToughness"; }
+    constexpr static char const * initialRockToughnessString() { return "initialRockToughness"; }
     constexpr static char const * toughnessScalingFactorString() { return "toughnessScalingFactor"; }
     //TODO: fracture origin can be obtained from the initial fracture geometry
     constexpr static char const * fractureOriginString() { return "fractureOrigin"; }
@@ -549,7 +549,7 @@ private:
 
   int m_isPoroelastic;
 
-  real64 m_baseRockToughness;
+  real64 m_initialRockToughness;
 
   real64 m_toughnessScalingFactor;
 
