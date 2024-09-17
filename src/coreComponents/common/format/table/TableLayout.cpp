@@ -67,7 +67,7 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParams, strin
 
 void TableLayout::setMargin( MarginValue marginValue )
 {
-  m_borderMargin = marginValue + 1 ;
+  m_borderMargin = marginValue + 1;
   m_columnMargin = integer( marginValue ) * 2 + 1;
 }
 

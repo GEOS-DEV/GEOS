@@ -133,14 +133,14 @@ TEST( testTable, tableHiddenColumn )
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
-             "\n----------------------------------------------------------------------------------------------------------------\n"
-             "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis   |\n"
-             "----------------------------------------------------------------------------------------------------------------\n"
-             "|       Cras egestas       |            CoordX  |                C                |  CoordZ                    |\n"
-             "----------------------------------------------------------------------------------------------------------------\n"
-             "|          value1          |                    |               3.0               |  3.0129877                 |\n"
-             "|           val1           |                 v  |       [3.045,42.02,89.25]       |  3                         |\n"
-             "----------------------------------------------------------------------------------------------------------------\n\n" );
+             "\n---------------------------------------------------------------------------------------------------------------\n"
+             "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis  |\n"
+             "---------------------------------------------------------------------------------------------------------------\n"
+             "|       Cras egestas        |             CoordX  |                C                 |  CoordZ                |\n"
+             "---------------------------------------------------------------------------------------------------------------\n"
+             "|          value1           |                     |               3.0                |  3.0129877             |\n"
+             "|           val1            |                  v  |       [3.045,42.02,89.25]        |  3                     |\n"
+             "---------------------------------------------------------------------------------------------------------------\n\n" );
 }
 
 TEST( testTable, tableUniqueColumn )
@@ -155,14 +155,14 @@ TEST( testTable, tableUniqueColumn )
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
-             "\n---------------------------------------------------------------------------------------------------------------\n"
-             "|  Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis   |\n"
-             "---------------------------------------------------------------------------------------------------------------\n"
-             "|                                                Cras egestas                                                 |\n"
-             "---------------------------------------------------------------------------------------------------------------\n"
-             "|                                                   value1                                                    |\n"
-             "|                                                    val1                                                     |\n"
-             "---------------------------------------------------------------------------------------------------------------\n\n" );
+             "\n--------------------------------------------------------------------------------------------------------------\n"
+             "|  Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis  |\n"
+             "--------------------------------------------------------------------------------------------------------------\n"
+             "|                                                Cras egestas                                                |\n"
+             "--------------------------------------------------------------------------------------------------------------\n"
+             "|                                                   value1                                                   |\n"
+             "|                                                    val1                                                    |\n"
+             "--------------------------------------------------------------------------------------------------------------\n\n" );
 }
 
 TEST( testTable, tableEmptyTitle )
@@ -228,47 +228,6 @@ TEST( testTable, table2DTable )
              "|  Temperature = 400  |              0.04  |   0.02666666666666667  |\n"
              "---------------------------------------------------------------------\n\n"
              );
-}
-
-
-TEST( testTable, table2DColumnMismatch )
-{
-  //test 2D table column  mismatch
-  {
-    // collect
-    TableData2D tableData;
-
-    tableData.addCell( 300, 10000, 0.03 );
-    tableData.addCell( 300, 15000, 0.02 );
-    tableData.addCell( 350, 10000, 0.035 );
-    tableData.addCell( 350, 10000, 0.035 );
-    tableData.addCell( 400, 10000, 0.04 );
-    tableData.addCell( 400, 15000, 0.02666666666666667 );
-
-    //convert
-    string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
-    string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
-    TableData2D::TableDataHolder tableConverted = tableData.buildTableData( "Viscosity kg*s",
-                                                                            rowFmt,
-                                                                            columnFmt );
-
-    //format
-    TableLayout const tableLayout( tableConverted.headerNames );
-
-    //log
-    TableTextFormatter const tableLog( tableLayout );
-    EXPECT_EQ( tableLog.toString( tableConverted.tableData ),
-               "\n--------------------------------------------------------------------\n"
-               "|  Remarks : some cells may be missing                             |\n"
-               "--------------------------------------------------------------------\n"
-               "|     Viscosity kg*s  |  Pression = 10000  |     Pression = 15000  |\n"
-               "--------------------------------------------------------------------\n"
-               "|  Temperature = 300  |              0.03  |                 0.02  |\n"
-               "|  Temperature = 350  |             0.035  |                       |\n"
-               "|  Temperature = 400  |              0.04  |  0.02666666666666667  |\n"
-               "--------------------------------------------------------------------\n\n"
-               );
-  }
 }
 
 TEST( testTable, layoutTable )

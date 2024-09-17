@@ -81,6 +81,24 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 ////// Log Formatter implementation
 ///////////////////////////////////////////////////////////////////////
 
+void distributeSpaces( std::vector< std::string > & vec, int totalSpaces )
+{
+  int numElements = vec.size();
+  int baseSpaces = totalSpaces / numElements;
+  int extraSpaces = totalSpaces % numElements;
+
+  for( int i = 0; i < numElements; ++i )
+  {
+
+    vec[i] += std::string( baseSpaces, ' ' );
+
+    if( i < extraSpaces )
+    {
+      vec[i] += ' ';
+    }
+  }
+}
+
 void transpose( std::vector< std::vector< std::string > > & dest, std::vector< std::vector< std::string > > const & source )
 {
   for( size_t idxRow = 0; idxRow < source.size(); ++idxRow )
@@ -190,13 +208,13 @@ void TableTextFormatter::prepareAndBuildTable( std::vector< TableLayout::Column 
     updateVisibleColumns( columns, tableDataRows );
     populateColumnsFromTableData( columns, tableDataRows, false );
   }
-
   splitAndMergeColumnHeaders( columns, nbHeaderRows, splitHeaders );
 
   for( auto & column : columns )
   {
     findAndSetLongestColumnString( column, column.maxStringSize, 0 );
   }
+
   computeTableWidth( columns );
   buildTableSeparators( columns, sectionSeparatingLine, topSeparator );
 }
@@ -237,7 +255,7 @@ void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout:
     if( column.subColumn.empty())
     {
       column.columnValues = !isSubColumn ?
-                              tColumnsValues[currentColumn++] : tableDataRows[currentColumn++];
+                            tColumnsValues[currentColumn++] : tableDataRows[currentColumn++];
     }
     else
     {
@@ -310,7 +328,7 @@ void TableTextFormatter::findAndSetLongestColumnString( TableLayout::Column & co
   }
 
   {  // values case
-    if( column.subColumn.empty() )
+    if( column.subColumn.empty() && !column.columnValues.empty())
     {
       auto const maxStringSizeCell = *std::max_element( column.columnValues.begin(),
                                                         column.columnValues.end(),
@@ -365,8 +383,34 @@ void TableTextFormatter::computeTableWidth( std::vector< TableLayout::Column > &
     } );
   }
 
-  string::size_type maxTopLineLength =  tableTitle.length();
+  string::size_type maxTopLineLength =  tableTitle.length() + m_tableLayout.getBorderMargin() * 2;
   maxTopLineLength = std::max( {maxTopLineLength, sectionlineLength} );
+
+  if( sectionlineLength < maxTopLineLength )
+  {
+    integer const extraCharacters = maxTopLineLength - sectionlineLength;
+    increaseColumnsSize( columns, extraCharacters );
+  }
+}
+
+void TableTextFormatter::increaseColumnsSize( std::vector< TableLayout::Column > & columns,
+                                              integer const extraCharacters ) const
+{
+  integer const extraCharactersPerColumn = std::ceil( extraCharacters / columns.size() );
+  for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  {
+    if( !columns[idxColumn].subColumn.empty())
+    {
+      distributeSpaces( columns[idxColumn].maxStringSize, extraCharacters );
+      increaseColumnsSize( columns[idxColumn].subColumn, extraCharacters );
+    }
+    else
+    {
+      std::string & cell = columns[idxColumn].maxStringSize[0];
+      integer newMaxStringSize = extraCharactersPerColumn + cell.size();
+      cell = GEOS_FMT( "{:>{}}", cell, newMaxStringSize );
+    }
+  }
 }
 
 
@@ -467,7 +511,7 @@ void TableTextFormatter::outputTitleRow( std::ostringstream & tableOutput,
   {
     tableOutput << GEOS_FMT( "{}\n", topSeparator );
     tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, m_tableLayout.getBorderMargin());
-    tableOutput << buildCell( TableLayout::Alignment::left, tableTitle, (topSeparator.length() - 6));
+    tableOutput << buildCell( TableLayout::Alignment::center, tableTitle, (topSeparator.length() - 6));
     tableOutput << GEOS_FMT( "{:>{}}\n", m_verticalLine, m_tableLayout.getBorderMargin() );
   }
 }
