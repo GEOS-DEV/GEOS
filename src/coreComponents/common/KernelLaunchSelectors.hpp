@@ -46,7 +46,6 @@ void kernelLaunchSelectorCompThermSwitch( T value, bool const isThermal, LAMBDA 
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
 
-  //constexpr T a = isThermal ? std::integral_constant< T, 1 >() : std::integral_constant< T, 0 >();
   if( isThermal )
   {
     switch( value )
@@ -95,7 +94,6 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
 
-  //constexpr T a = isThermal ? std::integral_constant< T, 1 >() : std::integral_constant< T, 0 >();
   if( n_phase == 1 )
   {
     switch( value )
