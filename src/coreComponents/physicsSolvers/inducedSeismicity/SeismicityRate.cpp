@@ -28,6 +28,9 @@
 #include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+
+
 namespace geos
 {
 

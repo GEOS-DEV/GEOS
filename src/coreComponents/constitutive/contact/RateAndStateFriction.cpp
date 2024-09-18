@@ -29,11 +29,8 @@ namespace constitutive
 
 RateAndStateFriction::RateAndStateFriction( string const & name, Group * const parent ):
   FrictionBase( name, parent ),
-  m_cohesion(),
-  m_frictionCoefficient(),
-  m_elasticSlip()
-{
-}
+  m_frictionCoefficient()
+{}
 
 RateAndStateFriction::~RateAndStateFriction()
 {}
@@ -42,19 +39,17 @@ void RateAndStateFriction::postInputInitialization()
 {}
 
 void RateAndStateFriction::allocateConstitutiveData( Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
   FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-
+using RateAndStateFrictionUpdates = RateAndStateFriction::KernelWrapper;
 RateAndStateFrictionUpdates RateAndStateFriction::createKernelWrapper() const
 {
   return RateAndStateFrictionUpdates( m_displacementJumpThreshold,
-                                 m_shearStiffness,
-                                 m_cohesion,
-                                 m_frictionCoefficient,
-                                 m_elasticSlip );
+                                      m_frictionCoefficient, m_a, m_b,
+                                      m_Dc, m_V0, m_mu0 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, RateAndStateFriction, string const &, Group * const )

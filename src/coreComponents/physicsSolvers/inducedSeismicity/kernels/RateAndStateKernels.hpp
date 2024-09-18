@@ -30,24 +30,24 @@ namespace rateAndStateKernels
 /**
  * @class RateAndStateKernel
  *
- * @brief 
+ * @brief
  *
- * @details 
+ * @details
  */
 class RateAndStateKernel
 {
 public:
 
   RateAndStateKernel( SurfaceElementSubRegion & subRegion,
-                      RateAndStateFriction const & frictionLaw,
+                      constitutive::RateAndStateFriction const & frictionLaw,
                       real64 const shearImpedance ):
-  m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
-  m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
-  m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable >() ),
-  m_normalTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
-  m_shearTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
-  m_frictionLaw( frictionLaw.createKernelWrapper()  ),
-  m_shearImpedance( shearImpedance )
+    m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
+    m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
+    m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable >() ),
+    m_normalTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
+    m_shearTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
+    m_shearImpedance( shearImpedance ),
+    m_frictionLaw( frictionLaw.createKernelWrapper()  )
   {}
 
   /**
@@ -62,9 +62,9 @@ public:
     StackVariables( )
     {}
 
-  real64 jacobian[2][2]{};
+    real64 jacobian[2][2]{};
 
-  real64 rhs[2]{};  
+    real64 rhs[2]{};
 
   };
 
@@ -73,33 +73,28 @@ public:
               real64 const dt,
               StackVariables & stack ) const
   {
-    
+
     // Eq 1: shear stress balance
-    real64 tauFriction  = 0.0;
-    real64 dTauFriction[2] = {0.0, 0.0}; 
-    
-    frictionLaw.computeShearTraction( m_normalTraction[k], 
-                                      m_slipRate[k], 
-                                      m_stateVariable[k], 
-                                      tauFriction, 
-                                      dTauFriction );
-    
+    real64 const tauFriction     = m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] ) * m_normalTraction[k];
+    real64 const dTauFriction[2] = { m_frictionLaw.dfrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ) * m_normalTraction[k],
+                                     m_frictionLaw.dfrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) * m_normalTraction[k] };
+
     stack.rhs[0] = m_shearTraction[k] - tauFriction - m_shearImpedance * m_slipRate[k];
 
     // Eq 2: slip law
-    stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.dStateVariabledT( m_slipRate[k], m_stateVariable[k] )
-    real64 const dStateEvolutionLaw[0] = 1 / dt - m_frictionLaw.dStateVariabledT_dtheta( m_slipRate[k], m_stateVariable[k] )
-    real64 const dStateEvolutionLaw[1] =  - m_frictionLaw.dStateVariabledT_dSlipRate( m_slipRate[k], m_stateVariable[k] )
-        
+    stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.dStateVariabledT( k, m_slipRate[k], m_stateVariable[k] );
+    real64 const dStateEvolutionLaw[2] = { 1 / dt - m_frictionLaw.dStateVariabledT_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
+                                           -m_frictionLaw.dStateVariabledT_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) };
+
     // Assemble Jacobian matrix
     // derivative shear stress balance w.r.t. theta
-    stack.jacobian[0][0] = - dTauFriction[0]
+    stack.jacobian[0][0] = -dTauFriction[0];
     // derivative shear stress balance w.r.t. slip_velocity
-    stack.jacobian[0][1] = - dTauFriction[1]
+    stack.jacobian[0][1] = -dTauFriction[1];
     // derivative slip law w.r.t. theta
-    stack.jacobian[1][0] = dStateEvolutionLaw[0] 
+    stack.jacobian[1][0] = dStateEvolutionLaw[0];
     // derivative slip law w.r.t. slip_velocity
-    stack.jacobian[1][1] = dStateEvolutionLaw[1] 
+    stack.jacobian[1][1] = dStateEvolutionLaw[1];
   }
 
   GEOS_HOST_DEVICE
@@ -107,9 +102,9 @@ public:
               StackVariables & stack ) const
   {
     /// Solve 2x2 system
-    real64 const solution[2] = {0.0, 0.0};
+    real64 solution[2] = {0.0, 0.0};
 
-    denseLinearAlgebra::solve( stack.jacobian, stack.rhs, solution );
+    denseLinearAlgebra::solve< 2 >( stack.jacobian, stack.rhs, solution );
 
     /// Update variables
     m_stateVariable[k] += solution[0];
@@ -118,20 +113,20 @@ public:
 
 private:
 
- arrayView1d< real64 > const m_slipRate;
+  arrayView1d< real64 > const m_slipRate;
 
- arrayView1d< real64 > const m_stateVariable;
+  arrayView1d< real64 > const m_stateVariable;
 
- arrayView1d< real64 const > const m_stateVariable_n;
+  arrayView1d< real64 const > const m_stateVariable_n;
 
- arrayView1d< real64 const > const m_normalTraction;
+  arrayView1d< real64 const > const m_normalTraction;
 
- arrayView1d< real64 const > const m_shearTraction;
+  arrayView1d< real64 const > const m_shearTraction;
 
- real64 const m_shearImpedance;
+  real64 const m_shearImpedance;
 
- RateAndStateFriction::KernelWrapper m_frictionLaw;
-  
+  constitutive::RateAndStateFriction::KernelWrapper m_frictionLaw;
+
 };
 
 
@@ -144,32 +139,35 @@ template< typename POLICY >
 static void
 createAndLaunch( SurfaceElementSubRegion & subRegion,
                  string const & frictionLawNameKey,
-                 integer const maxNewtonIter, 
+                 real64 const shearImpedance,
+                 integer const maxNewtonIter,
                  real64 const time_n,
                  real64 const dt )
 {
   GEOS_MARK_FUNCTION;
-  
-  string const & frictionaLawName = subRegion.getReference< string >( vfrictionLawNameKey );
-  RateAndStateFrction const & frictionLaw = subRegion.getConstitutiveModel( frictionaLawName );
-  RateAndStateKernel kernel( subRegion, frictionLaw );
-  
+
+  GEOS_UNUSED_VAR( time_n );
+
+  string const & frictionaLawName = subRegion.getReference< string >( frictionLawNameKey );
+  constitutive::RateAndStateFriction const & frictionLaw = subRegion.getConstitutiveModel< constitutive::RateAndStateFriction >( frictionaLawName );
+  RateAndStateKernel kernel( subRegion, frictionLaw, shearImpedance );
+
   // Newton loops outside of the kernel launch
   for( integer iter = 0; iter < maxNewtonIter; iter++ )
   {
-  /// Kernel 1: Do a solver for all non converged elements
-  forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    RateAndStateKernel::StackVariables stack();
-    kernel.setup( k, dt, stack );
-    kernel.solve( k, stack );
-  } );
-  
-  /// Kernel 2: Update set of non-converged elements  
-  // forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  // {
+    /// Kernel 1: Do a solver for all non converged elements
+    forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      RateAndStateKernel::StackVariables stack;
+      kernel.setup( k, dt, stack );
+      kernel.solve( k, stack );
+    } );
 
-  // } );
+    /// Kernel 2: Update set of non-converged elements
+    // forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    // {
+
+    // } );
   }
 }
 

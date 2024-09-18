@@ -52,7 +52,7 @@ DECLARE_FIELD( slipRate_n,
                "slipRate_n",
                array1d< real64 >,
                1.0e-6,
-               NO_PLOT,
+               NOPLOT,
                WRITE_AND_READ,
                "Slip rate at previous time step" );
 
@@ -60,9 +60,9 @@ DECLARE_FIELD( stateVariable_n,
                "stateVariable_n",
                array1d< real64 >,
                0.6,
-               NO_PLOT,
+               NOPLOT,
                WRITE_AND_READ,
-               "Rate- and state-dependent friction state variable at previous time step" );                                     
+               "Rate- and state-dependent friction state variable at previous time step" );
 
 
 }

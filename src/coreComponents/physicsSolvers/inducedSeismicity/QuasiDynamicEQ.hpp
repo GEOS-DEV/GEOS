@@ -16,7 +16,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_INDUCED_QUASIDYNAMICEQ_HPP
 #define GEOS_PHYSICSSOLVERS_INDUCED_QUASIDYNAMICEQ_HPP
 
-#include "physicsSolvers/SolverBase.hpp"  
+#include "physicsSolvers/SolverBase.hpp"
 
 namespace geos
 {
@@ -61,18 +61,26 @@ public:
                              integer const cycleNumber,
                              DomainPartition & domain ) override final;
 
+private:
+
+  virtual void postInputInitialization() override;
+
+  real64 updateStresses( real64 const & time_n,
+                         real64 const & dt,
+                         const int cycleNumber,
+                         DomainPartition & domain ) const;
+
   /**
    * @brief save the old state
    * @param subRegion
    */
   void saveOldState( ElementSubRegionBase & subRegion ) const;
 
-protected:
-
-  virtual void postInputInitialization() override;
-
   /// pointer to stress solver
   SolverBase * m_stressSolver;
+
+  /// stress solver name
+  string m_stressSolverName;
 
   /// max number of newton iterations for rate and state solver
   integer m_maxNewtonIterations;

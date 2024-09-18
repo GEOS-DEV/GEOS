@@ -35,6 +35,7 @@ QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
   m_stressSolver( nullptr ),
+  m_stressSolverName( "SpringSlider" ),
   m_maxNewtonIterations( 10 ),
   m_shearImpedance( 0.0 )
 {
@@ -49,15 +50,15 @@ QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
 
   this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of solver for computing stress" );  
+    setDescription( "Name of solver for computing stress. If empty, the spring-slider model is run." );
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );  
+    setInputFlag( InputFlags::FALSE );
 }
 
 void QuasiDynamicEQ::postInputInitialization()
 {
-  
+
   // Initialize member stress solver as specified in XML input
   if( !m_stressSolverName.empty() )
   {
@@ -107,12 +108,12 @@ real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
                                                                arrayView1d< string const > const & regionNames )
 
   {
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     SurfaceElementSubRegion & subRegion )
+    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                           [&]( localIndex const,
+                                                                                SurfaceElementSubRegion & subRegion )
     {
       // solve rate and state equations.
-      rateAndStateKernels::createAndLaunch( subRegion, viewKeyStruct::frictionLawNameString(), m_maxNewtonIterations, time_n, dt );
+      rateAndStateKernels::createAndLaunch< parallelDevicePolicy<> >( subRegion, viewKeyStruct::frictionLawNameString(), m_shearImpedance, m_maxNewtonIterations, time_n, dt );
       // save old state
       saveOldState( subRegion );
     } );
@@ -158,4 +159,5 @@ void QuasiDynamicEQ::saveOldState( ElementSubRegionBase & subRegion ) const
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, QuasiDynamicEQ, string const &, dataRepository::Group * const )
+
 } // namespace geos
