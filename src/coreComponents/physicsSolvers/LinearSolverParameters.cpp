@@ -124,7 +124,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.krylov.adaptiveGamma ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Gamma parameter for adaptive method" );
-    
+
   registerWrapper( viewKeyStruct::adaptiveExponentString(), &m_parameters.krylov.adaptiveExponent ).
     setApplyDefaultValue( m_parameters.krylov.adaptiveExponent ).
     setInputFlag( InputFlags::OPTIONAL ).
