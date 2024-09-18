@@ -18,6 +18,9 @@
  */
 
 #include "DomainPartition.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -322,7 +325,6 @@ void DomainPartition::addNeighbors( const unsigned int idim,
 
 void DomainPartition::outputPartitionInformation() const
 {
-
   auto numberOfEntities = []( ObjectManagerBase const & objectManager )
   {
     return std::make_pair( objectManager.getNumberOfLocalIndices(), objectManager.getNumberOfGhosts() );
@@ -408,45 +410,33 @@ void DomainPartition::outputPartitionInformation() const
         real64 const maxElemRatio = maxRatios[3];
 
         GEOS_LOG_RANK_0( "  MeshBody: " + meshBody.getName() + " MeshLevel: " + meshLevel.getName() + "\n" );
-        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
-        GEOS_LOG_RANK_0( "  |                |             Nodes             |             Edges             |             Faces             |             Elems             |" );
-        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
-        GEOS_LOG_RANK_0( GEOS_FMT( "  |min(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ",
-                                   minNodeRatio,
-                                   minEdgeRatio,
-                                   minFaceRatio,
-                                   minElemRatio ) );
-        GEOS_LOG_RANK_0( GEOS_FMT( "  |max(local/total)|             {:4.2f}              |             {:4.2f}              |             {:4.2f}              |             {:4.2f}              | ",
-                                   maxNodeRatio,
-                                   maxEdgeRatio,
-                                   maxFaceRatio,
-                                   maxElemRatio ) );
-        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
-        GEOS_LOG_RANK_0( "  |      Rank      |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |     local     |     ghost     |" );
-        GEOS_LOG_RANK_0( "  |----------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|---------------|" );
+        TableLayout tableLayout( "Rank",
+                                 TableLayout::ColumnParam{"Nodes ", TableLayout::Alignment::center, true, {"local", "ghost"}},
+                                 TableLayout::ColumnParam{"Edges ", TableLayout::Alignment::center, true, {"local", "ghost"}},
+                                 TableLayout::ColumnParam{"Faces ", TableLayout::Alignment::center, true, {"local", "ghost"}},
+                                 TableLayout::ColumnParam{"Elems ", TableLayout::Alignment::center, true, {"local", "ghost"}} );
+        tableLayout.setMargin( TableLayout::MarginValue::large );
+        tableLayout.noWrapLine();
 
-
-        GEOS_LOG_RANK_0( GEOS_FMT( "  |            min | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} |",
-                                   addCommaSeparators( minNumLocalNodes ),
-                                   addCommaSeparators( minNumGhostNodes ),
-                                   addCommaSeparators( minNumLocalEdges ),
-                                   addCommaSeparators( minNumGhostEdges ),
-                                   addCommaSeparators( minNumLocalFaces ),
-                                   addCommaSeparators( minNumGhostFaces ),
-                                   addCommaSeparators( minNumLocalElems ),
-                                   addCommaSeparators( minNumGhostElems ) ) );
-
-        GEOS_LOG_RANK_0( GEOS_FMT( "  |            max | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} |",
-                                   addCommaSeparators( maxNumLocalNodes ),
-                                   addCommaSeparators( maxNumGhostNodes ),
-                                   addCommaSeparators( maxNumLocalEdges ),
-                                   addCommaSeparators( maxNumGhostEdges ),
-                                   addCommaSeparators( maxNumLocalFaces ),
-                                   addCommaSeparators( maxNumGhostFaces ),
-                                   addCommaSeparators( maxNumLocalElems ),
-                                   addCommaSeparators( maxNumGhostElems ) ) );
-
-        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
+        TableData tableData;
+        tableData.addRow( "min",
+                          addCommaSeparators( minNumLocalNodes ),
+                          addCommaSeparators( minNumGhostNodes ),
+                          addCommaSeparators( minNumLocalEdges ),
+                          addCommaSeparators( minNumGhostEdges ),
+                          addCommaSeparators( minNumLocalFaces ),
+                          addCommaSeparators( minNumGhostFaces ),
+                          addCommaSeparators( minNumLocalElems ),
+                          addCommaSeparators( minNumGhostElems ));
+        tableData.addRow( "max",
+                          addCommaSeparators( maxNumLocalNodes ),
+                          addCommaSeparators( maxNumGhostNodes ),
+                          addCommaSeparators( maxNumLocalEdges ),
+                          addCommaSeparators( maxNumGhostEdges ),
+                          addCommaSeparators( maxNumLocalFaces ),
+                          addCommaSeparators( maxNumGhostFaces ),
+                          addCommaSeparators( maxNumLocalElems ),
+                          addCommaSeparators( maxNumGhostElems ));
 
         // output in rank order
         int const thisRank = MpiWrapper::commRank();
@@ -454,21 +444,44 @@ void DomainPartition::outputPartitionInformation() const
         {
           if( rank == thisRank )
           {
-            GEOS_LOG( GEOS_FMT( "  | {:14} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | {:>13} | ",
-                                rank,
-                                addCommaSeparators( numLocalNodes ),
-                                addCommaSeparators( numGhostNodes ),
-                                addCommaSeparators( numLocalEdges ),
-                                addCommaSeparators( numGhostEdges ),
-                                addCommaSeparators( numLocalFaces ),
-                                addCommaSeparators( numGhostFaces ),
-                                addCommaSeparators( numLocalElems ),
-                                addCommaSeparators( numGhostElems ) ) );
+            tableData.addRow( rank,
+                              addCommaSeparators( numLocalNodes ),
+                              addCommaSeparators( numGhostNodes ),
+                              addCommaSeparators( numLocalEdges ),
+                              addCommaSeparators( numGhostEdges ),
+                              addCommaSeparators( numLocalFaces ),
+                              addCommaSeparators( numGhostFaces ),
+                              addCommaSeparators( numLocalElems ),
+                              addCommaSeparators( numGhostElems ));
           }
           MpiWrapper::barrier();
         }
         MpiWrapper::barrier();
-        GEOS_LOG_RANK_0( "  |------------------------------------------------------------------------------------------------------------------------------------------------|" );
+        TableTextFormatter tableLog( tableLayout );
+        GEOS_LOG_RANK_0( tableLog.toString( tableData ));
+
+        TableLayout tableLayoutRatio( "Rank",
+                                 "Nodes ",
+                                 "Edges ",
+                                 "Faces ",
+                                 "Elems ");
+        tableLayout.setMargin( TableLayout::MarginValue::large );
+        
+        TableData tableDataRatio;
+        tableDataRatio.addRow( "min(local/total)",
+                          minNodeRatio,
+                          minEdgeRatio,
+                          minFaceRatio,
+                          minElemRatio );
+        tableDataRatio.addRow( "min(local/total)",
+                          maxNodeRatio,
+                          maxEdgeRatio,
+                          maxFaceRatio,
+                          maxElemRatio );
+
+        tableLayout.removeSubColumn();
+        TableTextFormatter tableLogRatio( tableLayoutRatio );
+        GEOS_LOG_RANK_0( tableLogRatio.toString( tableDataRatio ));
       }
     } );
   }

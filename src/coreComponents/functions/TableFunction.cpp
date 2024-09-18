@@ -317,7 +317,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
       tableData.addRow( coords[idx], values[idx] );
     }
 
-    TableLayout const tableLayout( std::vector<std::string>{
+    TableLayout const tableLayout( std::vector< std::string >{
         string( units::getDescription( tableFunction.getDimUnit( 0 ))),
         string( units::getDescription( valueUnit ))
       }, filename );
@@ -339,7 +339,8 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                                    units::getDescription( tableFunction.getDimUnit( 0 ) ),
                                                    units::getDescription( tableFunction.getDimUnit( 1 ) ));
 
-      TableLayout tableLayout( tableConverted.headerNames, filename );
+      TableLayout tableLayout( tableConverted.headerNames );
+      tableLayout.setTitle( filename );
 
       TableTextFormatter const table2DLog( tableLayout );
       logOutput =  table2DLog.toString( tableConverted.tableData );
@@ -347,7 +348,9 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     else
     {
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
+      TableLayout tableLayoutInfos( TableLayout::ColumnParam{{log}, TableLayout::Alignment::left} );
+      tableLayoutInfos.setTitle( filename );
+
       TableTextFormatter const tableLog( tableLayoutInfos );
       logOutput = tableLog.layoutToString();
     }

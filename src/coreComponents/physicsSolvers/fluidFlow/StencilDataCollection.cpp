@@ -236,10 +236,8 @@ string formatKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnec
                       kernelIterator->m_transmissibility[0],
                       kernelIterator->m_transmissibility[1] );
   }
-  TableLayout const tableLayout{
-    { "regionId A/B", "subRegionId A/B", "elementId A/B", "transmissibilityAB", "transmissibilityBA" },
-    GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() )
-  };
+  TableLayout tableLayout = TableLayout( "regionId A/B", "subRegionId A/B", "elementId A/B", "transmissibilityAB", "transmissibilityBA" );
+  tableLayout.setTitle( GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() ));
   TableTextFormatter const tableFormatter{ tableLayout };
   return tableFormatter.toString( tableData );
 }

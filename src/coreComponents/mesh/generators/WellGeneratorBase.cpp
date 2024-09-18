@@ -551,14 +551,14 @@ void WellGeneratorBase::logInternalWell() const
   }
 
   string const wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
-  TableLayout const tableWellLayout = TableLayout( {
-      TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
-    }, wellTitle );
+  TableLayout tableWellLayout = TableLayout(
+    TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
+    TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::right},
+    TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::right},
+    TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::right},
+    TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
+    TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right} );
+  tableWellLayout.setTitle( wellTitle );
 
   TableTextFormatter const tableFormatter( tableWellLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableWellData ));
@@ -572,8 +572,8 @@ void WellGeneratorBase::logPerforationTable() const
     tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  TableLayout const tableLayoutPerfo ( {"Perforation no.", "Coordinates", "connected to"},
-                                       GEOS_FMT( "Well '{}' Perforation Table", getName() ) );
+  TableLayout const tableLayoutPerfo ( "Perforation no.", "Coordinates", "connected to" );
+  tableLayoutPerfo.setTitle( GEOS_FMT( "Well '{}' Perforation Table", getName()));
   TableTextFormatter const tablePerfoLog( tableLayoutPerfo );
   GEOS_LOG_RANK_0( tablePerfoLog.toString( tablePerfoData ));
 }
