@@ -114,4 +114,34 @@ integer const & TableLayout::getMarginTitle() const
   return m_titleMargin;
 }
 
+void TableLayout::addToColumns( const std::vector< std::string > & columnNames )
+{
+  for( const auto & columnName : columnNames )
+  {
+    addToColumns( std::string( columnName ));
+  }
+}
+
+void TableLayout::addToColumns( std::string && columnName )
+{
+  m_columns.push_back( TableLayout::ColumnParam{ {columnName} } );
+}
+
+void TableLayout::addToColumns( ColumnParam && columnParam )
+{
+  if( !columnParam.subColumns.empty())
+  {
+    std::vector< TableLayout::Column > subColumns;
+    for( const auto & subColumnsName : columnParam.subColumns )
+    {
+      subColumns.push_back( TableLayout::Column{ subColumnsName } );
+    }
+    m_columns.push_back( TableLayout::Column{ columnParam, subColumns } );
+  }
+  else
+  {
+    m_columns.push_back( TableLayout::Column{ columnParam } );
+  }
+}
+
 }

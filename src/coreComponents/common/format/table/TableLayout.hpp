@@ -119,14 +119,30 @@ public:
     //sub divison of a column
     std::vector< Column > subColumn;
 
+    /**
+     * @brief Constructs a Column with the given parameter.
+     * @param columnParam The parameters for the column.
+     */
     Column( ColumnParam columnParam )
       : parameter( columnParam )
     {}
 
+    /**
+     * @brief Constructs a Column with the given parameters.
+     * @param columnParam The parameters for the column.
+     * @param subColumnInit The values in the column.
+     */
     Column( ColumnParam columnParam, std::vector< Column > subColumnInit )
       : parameter( columnParam ), subColumn( subColumnInit )
     {}
 
+    /**
+     * @brief Constructs a Column with the given parameters.
+     * @param columnParam The parameters for the column.
+     * @param columnValuesInit The values in the column.
+     * @param maxStringSizeInit The largest string(s) in the column.
+     * @param subColumnInit The sub-columns of the column.
+     */
     Column( ColumnParam columnParam,
             std::vector< string > columnValuesInit,
             std::vector< string > maxStringSizeInit,
@@ -149,19 +165,15 @@ public:
    */
   TableLayout( std::vector< string > const & columnNames );
 
-  // /**
-  //  * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
-  //  * level
-  //  * @param columnParameters List of structures to set up each colum parameters.
-  //  * @param title The table name
-  //  * @param subColumns
-  //  */
-  // TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title = "" );
-
+  /**
+   * @brief Construct a new Table Layout object
+   * @tparam Args Process only string, vector < string > and ColumnParam type
+   * @param args Variadics to be processed
+   */
   template< typename ... Args >
   TableLayout( Args &&... args )
   {
-    setMargin( MarginValue::medium );
+    setMargin( MarginValue::large );
     processArguments( std::forward< Args >( args )... );
   }
 
@@ -182,15 +194,18 @@ public:
   void setTitle( std::string const & title );
 
   /**
-   * @brief 
+   * @brief
    */
   void noWrapLine();
 
   /**
-   * @brief 
+   * @brief Remove the line return at the end of the table
    */
   bool isLineWrapped() const;
 
+  /**
+   * @brief Remove all subcolumn in all columns
+   */
   void removeSubColumn();
 
   /**
@@ -216,46 +231,40 @@ public:
 
 private:
 
+  /**
+   * @brief Recursively processes a variable number of arguments and adds them to the table data.
+   * @tparam T The first argument
+   * @tparam Ts The remaining arguments
+   * @param arg The first argument to be processed
+   * @param args The remaining arguments to be processed
+   */
   template< typename T, typename ... Ts >
   void processArguments( T && arg, Ts &&... args )
   {
-    addToData( std::forward< T >( arg ));
+    addToColumns( std::forward< T >( arg ));
     if constexpr (sizeof...(args) > 0)
     {
       processArguments( std::forward< Ts >( args )... );
     }
   }
 
-  void addToData( const std::vector< std::string > & args )
-  {
-    for( const auto & arg : args )
-    {
-      addToData( std::string( arg ));
-    }
-  }
+  /**
+   * @brief Create and add columns to the columns vector
+   * @param columnNames The columns name
+   */
+  void addToColumns( const std::vector< std::string > & columnNames );
 
-  void addToData( std::string && arg )
-  {
-    m_columns.push_back( TableLayout::ColumnParam{{arg}} );
-  }
+/**
+ * @brief Create and add a column to the columns vector
+ * @param columnName The column name
+ */
+  void addToColumns( std::string && columnName );
 
-  void addToData( ColumnParam && arg )
-  {
-    if( !arg.subColumns.empty() )
-    {
-      std::vector< TableLayout::Column > subColumns;
-      for( const auto & subColumnsName: arg.subColumns )
-      {
-        subColumns.push_back( TableLayout::Column{subColumnsName} );
-      }
-      m_columns.push_back( TableLayout::Column{arg, subColumns} );
-    }
-    else
-    {
-      m_columns.push_back( TableLayout::Column{arg} );
-    }
-
-  }
+/**
+ * @brief Create and add a column to the columns vector given a ColumnParam
+ * @param columnParam The columnParam
+ */
+  void addToColumns( ColumnParam && columnParam );
 
   std::vector< Column > m_columns;
 
