@@ -354,7 +354,7 @@ void SolverBase::logEndOfCycleInformation( integer const cycleNumber,
 real64 SolverBase::setNextDt( real64 const & currentDt,
                               DomainPartition & domain )
 {
-  integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.m_minTimeStepIncreaseInterval;
+  integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.minTimeStepIncreaseInterval();
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on Newton iterations = {}", getName(), nextDtNewton ));
