@@ -188,14 +188,15 @@
         logLevel="1"
         wellRegionName="wellRegion2"
         wellControlsName="wellControls2"
-        polylineNodeCoords="{ { -5400, -5400, 0 },
-                              { -5400, -5400, -2500 } }"
+        polylineNodeCoords="{ { 1200, -600, 0 },
+                              { 1200, -600, -2500 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
         numElementsPerSegment="1">
         <Perforation
           name="injector1_perf1"
-          distanceFromHead="2500"/>
+          targetRegion="Fault"
+          distanceFromHead="1689"/>
       </InternalWell>
     </VTKMesh>
   </Mesh>

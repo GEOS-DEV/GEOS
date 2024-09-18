@@ -143,7 +143,6 @@ bool isPointInsideElement( SUBREGION_TYPE const & subRegion,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOS_UNUSED_PARAM( referencePosition ),
                            localIndex const & GEOS_UNUSED_PARAM( eiLocal ),
                            ArrayOfArraysView< localIndex const > const & GEOS_UNUSED_PARAM( facesToNodes ),
-                           real64 const (&GEOS_UNUSED_PARAM( elemCenter ))[3],
                            real64 const (&GEOS_UNUSED_PARAM( location ))[3] )
 {
   // only CellElementSubRegion is currently supported
@@ -154,15 +153,120 @@ bool isPointInsideElement( CellElementSubRegion const & subRegion,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition,
                            localIndex const & eiLocal,
                            ArrayOfArraysView< localIndex const > const & facesToNodes,
-                           real64 const (&elemCenter)[3],
                            real64 const (&location)[3] )
 {
   arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+  arrayView2d< real64 const > const elemCenters = subRegion.getElementCenter();
+  real64 const elemCenter[3] = { elemCenters[eiLocal][0],
+                                  elemCenters[eiLocal][1],
+                                  elemCenters[eiLocal][2] };
   return computationalGeometry::isPointInsidePolyhedron( referencePosition,
                                                          elemsToFaces[eiLocal],
                                                          facesToNodes,
                                                          elemCenter,
                                                          location );
+}
+
+bool isPointInPolygon2D(real64** polygon, integer n, real64* point) {
+    integer count = 0;
+
+    for (integer i = 0; i < n; i++) {
+        real64* p1 = polygon[i];
+        real64* p2 = polygon[(i + 1) % n];
+
+        if ((point[1] > std::min(p1[1], p2[1])) && (point[1] <= std::max(p1[1], p2[1])) && (point[0] <= std::max(p1[0], p2[0]))) {
+            real64 xIntersect = (point[1] - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]) + p1[0];
+            if (std::abs(p1[0] - p2[0]) < 1e-10 || point[0] <= xIntersect) {
+                count++;
+            }
+        }
+    }
+
+    return count % 2 == 1;
+}
+
+bool isPointInPolygon3D(real64** polygon, integer n, real64* point) {
+    // Check if the point lies in the plane of the polygon
+    real64* p0 = polygon[0];
+    real64 normal[3] = {0, 0, 0};
+    for (integer i = 1; i < n - 1; i++) {
+        real64* p1 = polygon[i];
+        real64* p2 = polygon[i + 1];
+        normal[0] += (p1[1] - p0[1]) * (p2[2] - p0[2]) - (p1[2] - p0[2]) * (p2[1] - p0[1]);
+        normal[1] += (p1[2] - p0[2]) * (p2[0] - p0[0]) - (p1[0] - p0[0]) * (p2[2] - p0[2]);
+        normal[2] += (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0]);
+    }
+
+    real64 d = -(normal[0] * p0[0] + normal[1] * p0[1] + normal[2] * p0[2]);
+    real64 dist = normal[0] * point[0] + normal[1] * point[1] + normal[2] * point[2] + d;
+
+    if (std::abs(dist) > 1e-6) {
+        return false;
+    }
+
+    // Project the polygon and the point onto a 2D plane
+    real64** projectedPolygon = new real64*[n];
+    for (integer i = 0; i < n; i++) {
+        projectedPolygon[i] = new real64[2];
+        projectedPolygon[i][0] = polygon[i][1];
+        projectedPolygon[i][1] = polygon[i][2];
+    }
+    real64 projectedPoint[2] = {point[1], point[2]};
+
+    bool result = isPointInPolygon2D(projectedPolygon, n, projectedPoint);
+
+    for (integer i = 0; i < n; i++) {
+        delete[] projectedPolygon[i];
+    }
+    delete[] projectedPolygon;
+
+    return result;
+}
+
+template< typename POINT_TYPE >
+bool isPointInsidePolygon( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                           localIndex const & eiLocal,
+                           integer const & nV,
+                           SurfaceElementSubRegion::NodeMapType const & facesToNodes,
+                           POINT_TYPE const & point_ )
+{
+  real64** polygon = new real64*[nV];
+  real64* point = new real64[3];
+  std::cout <<"checking point = ";
+    for( integer j = 0; j < 3; ++j )
+    {
+      point[j] = point_[j];
+      std::cout << point[j] << " ";
+    }
+    std::cout << " polygon = ";
+  for( integer i = 0; i < nV; ++i )
+  {
+    polygon[i] = new real64[3];
+    std::cout << "( ";
+    for( integer j = 0; j < 3; ++j )
+    {
+      polygon[i][j] = nodeCoordinates[facesToNodes( eiLocal, i )][j];
+            std::cout << polygon[i][j] << " ";
+    }
+    std::cout << ")";
+  }
+  std::cout << std::endl;
+  return isPointInPolygon3D(polygon, nV, point);
+}
+
+bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
+                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition,
+                           localIndex const & eiLocal,
+                           ArrayOfArraysView< localIndex const > const & facesToNodes,
+                           real64 const (&location)[3] )
+{
+  std::cout << eiLocal << " " << subRegion.numNodesPerElement( eiLocal ) << std::endl;
+  SurfaceElementSubRegion::NodeMapType const & nodeList = subRegion.nodeList();
+  return isPointInsidePolygon( referencePosition,
+                               eiLocal,
+                               4,//subRegion.numNodesPerElement( eiLocal ),
+                               nodeList,
+                               location );
 }
 
 /**
@@ -333,8 +437,6 @@ bool visitNeighborElements( MeshLevel const & mesh,
 
       ElementRegionBase const & region = elemManager.getRegion< ElementRegionBase >( er );
       SUBREGION_TYPE const & subRegion = region.getSubRegion< SUBREGION_TYPE >( esr );
-      arrayView2d< real64 const > const elemCenters = subRegion.getElementCenter();
-
       globalIndex const eiGlobal = subRegion.localToGlobalMap()[eiLocal];
 
       // if this element has not been visited yet, save it
@@ -342,13 +444,9 @@ bool visitNeighborElements( MeshLevel const & mesh,
       {
         elements.insert( eiGlobal );
 
-        real64 const elemCenter[3] = { elemCenters[eiLocal][0],
-                                       elemCenters[eiLocal][1],
-                                       elemCenters[eiLocal][2] };
-
         // perform the test to see if the point is in this reservoir element
         // if the point is in the resevoir element, save the indices and stop the search
-        if( isPointInsideElement( subRegion, referencePosition, eiLocal, facesToNodes, elemCenter, location ) )
+        if( isPointInsideElement( subRegion, referencePosition, eiLocal, facesToNodes, location ) )
         {
           eiMatched = eiLocal;
           matched = true;
@@ -427,7 +525,16 @@ void initializeLocalSearch( MeshLevel const & mesh,
                             localIndex const & targetSubRegionIndex,
                             localIndex & eiInit )
 {
+  {
+    mesh.getElemManager().getRegion( targetRegionIndex ).forElementSubRegionsIndex< CellElementSubRegion, FaceElementSubRegion >( [&] ( localIndex const esr, auto const & subRegion )
+    {
+      if(targetSubRegionIndex == esr)
+        subRegion.calculateElementCenters(mesh.getNodeManager().referencePosition());
+    } );
+  }
+
   ElementSubRegionBase const & subRegion = mesh.getElemManager().getRegion( targetRegionIndex ).getSubRegion( targetSubRegionIndex );
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   resElemCenter = mesh.getElemManager().constructViewAccessor< array2d< real64 >,
                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
@@ -438,12 +545,15 @@ void initializeLocalSearch( MeshLevel const & mesh,
     real64 v[3] = { location[0], location[1], location[2] };
     LvArray::tensorOps::subtract< 3 >( v, resElemCenter[targetRegionIndex][targetSubRegionIndex][ei] );
     auto dist = LvArray::tensorOps::l2Norm< 3 >( v );
+    std::cout << resElemCenter[targetRegionIndex][targetSubRegionIndex][ei] << " " << dist << std::endl;
     return dist;
   } );
 
   // save the index of the reservoir element
   // note that this reservoir element does not necessarily contains "location"
   eiInit  = ret.second;
+
+  std::cout << "init " << targetRegionIndex << " " << targetSubRegionIndex << " " << eiInit << " " << resElemCenter[targetRegionIndex][targetSubRegionIndex][eiInit] << std::endl;
 }
 
 /**

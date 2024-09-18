@@ -287,6 +287,7 @@ protected:
       }
 
       LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / numNodes );
+      //std::cout << k << " " << elementCenters[k] << std::endl;
     } );
   }
 };

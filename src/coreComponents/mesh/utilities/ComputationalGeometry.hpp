@@ -433,7 +433,6 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
   return true;
 }
 
-
 /**
  * @brief Method to perform lexicographic comparison of two nodes based on coordinates.
  * @tparam COORD_TYPE type of coordinate
