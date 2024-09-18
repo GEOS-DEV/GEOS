@@ -12,24 +12,20 @@ set( schema_headers
 set( schema_sources
      schemaUtilities.cpp )
 
-set( dependencyList dataRepository )
+set( dependencyList ${parallelDeps} dataRepository )
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       schema
                  SOURCES    ${schema_sources}
                  HEADERS    ${schema_headers}
-                 DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 DEPENDS_ON ${decoratedDependencies}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 
 target_include_directories( schema PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX schema )
+install( TARGETS schema LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

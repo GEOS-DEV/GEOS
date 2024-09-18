@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,12 +17,12 @@
  * @file ElementType.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTTYPE_HPP
-#define GEOSX_MESH_ELEMENTTYPE_HPP
+#ifndef GEOS_MESH_ELEMENTTYPE_HPP
+#define GEOS_MESH_ELEMENTTYPE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -109,6 +110,11 @@ ENUM_STRINGS( ElementType,
               "HendecagonalPrism",
               "Polyhedron" );
 
-} // namespace geosx
+/// String available for mesh errors
+inline auto constexpr generalMeshErrorAdvice = "Consider checking the validity of your mesh with "
+                                               "the `mesh_doctor` GEOS python tools (documentation at "
+                                               "https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/pythonTools/mesh_doctor.html).";
 
-#endif //GEOSX_MESH_ELEMENTTYPE_HPP
+} // namespace geos
+
+#endif //GEOS_MESH_ELEMENTTYPE_HPP

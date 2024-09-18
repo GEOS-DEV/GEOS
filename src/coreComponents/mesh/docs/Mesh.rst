@@ -5,10 +5,10 @@ Meshes
 ============
 
 The purpose of this document is to explain how users and developers interact with mesh data.
-This section describes how meshes are handled and stored in GEOSX.
+This section describes how meshes are handled and stored in GEOS.
 
 There are two possible methods for generating a mesh:
-either by using GEOSX's internal mesh generator (for Cartesian meshes only),
+either by using GEOS's internal mesh generator (for Cartesian meshes only),
 or by importing meshes from various common mesh file formats.
 This latter options allows one to work with more complex geometries,
 such as unstructured meshes comprised of a variety of element types (polyhedral elements).
@@ -23,7 +23,7 @@ Basic Example
 The Internal Mesh Generator allows one to quickly build simple cartesian grids and divide
 them into several regions.  The following attributes are supported in the input block for InternalMesh:
 
-.. include:: /coreComponents/schema/docs/InternalMesh.rst
+.. include:: /docs/sphinx/datastructure/InternalMesh.rst
 
 
 The following is an example XML ``<mesh>`` block, which will generate a vertical beam with two ``CellBlocks`` (one in red and one in blue in the following picture).
@@ -106,7 +106,7 @@ The following is an example of a mesh block along each dimension, and an image s
 Advanced Cell Block Specification
 ==================================
 It's possible to generate more complex ``CellBlock`` using the ``InternalMeshGenerator``.
-For instance, the staircase example is a model which is often used in GEOSX as an integrated
+For instance, the staircase example is a model which is often used in GEOS as an integrated
 test. It defines ``CellBlocks`` in the three directions to generate a staircase-like model
 with the following code.
 
@@ -121,15 +121,18 @@ with the following code.
                   nx="{5, 5}"
                   ny="{5, 5}"
                   nz="{3, 3, 3, 3}"
-                  cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
+                  cellBlockNames="{cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0,
+                                   cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1,
+                                   cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2,
+                                   cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3}"/>
   </Mesh>
 
   <ElementRegions>
      <CellElementRegion name="Channel"
-                    cellBlocks="{b08,b00,b01,b05,b06,b14,b15,b11}"
+                    cellBlocks="{cb-1_0_0, cb-0_0_0, cb-0_0_1, cb-0_1_1, cb-0_1_2, cb-1_1_2, cb-1_1_3, cb-1_0_3}"
                     materialList="{fluid1, rock, relperm}"/>
      <CellElementRegion name="Barrier"
-                    cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}"
+                    cellBlocks="{cb-0_1_0, cb-1_1_0, cb-1_1_1, cb-1_0_1, cb-1_0_2, cb-0_0_2, cb-0_0_3, cb-0_1_3}"
                     materialList="{}"/>
   </ElementRegions>
 
@@ -139,6 +142,7 @@ Thus, the generated mesh will be :
    :align: center
    :width: 500
 
+Note that ``CellBlocks`` are ordered following the natural IJK logic, with indices increasing first in I (x-direction), then in J (y-direction) and last in K (z-direction).
 
 .. _ExternalMeshUsage:
 
@@ -149,9 +153,9 @@ Using an External Mesh
 Supported Formats
 =================
 
-GEOSX provides features to run simulations on unstructured meshes.
+GEOS provides features to run simulations on unstructured meshes.
 It uses VTK_ to read the external meshes and its API to write
-it into the GEOSX mesh data structure.
+it into the GEOS mesh data structure.
 
 The supported mesh elements for volume elements consist of the following:
 
@@ -174,7 +178,7 @@ Importing the Mesh
 Importing regions
 *****************
 
-Several blocks are involved to import an external mesh into GEOSX, defined in the XML input file.
+Several blocks are involved to import an external mesh into GEOS, defined in the XML input file.
 These are the ``<Mesh>`` block and the ``<ElementRegions>`` block.
 
 The mesh block has the following syntax:
@@ -184,68 +188,108 @@ The mesh block has the following syntax:
   <Mesh>
     <VTKMesh
       name="MyMeshName"
+      logLevel="1"
       file="/path/to/the/mesh/file.vtk"/>
   </Mesh>
 
-We advise users to use absolute path to the mesh file.
+We advise users to use absolute path to the mesh file, and strongly recommend the use of a logLevel
+of 1 or more to obtain some information about the mesh import. This information contains for 
+example the list of regions that are imported with their names, which is particularly useful to 
+fill the ``cellBlocks`` field of the ``ElementRegions`` block (see below). Some information about the 
+imported surfaces is also provided.
 
-GEOSX uses ``ElementRegions`` to support different physics
+GEOS uses ``ElementRegions`` to support different physics
 or to define different constitutive properties.
-An ``ElementRegion`` is defined as a set of ``CellBlocks``.
+The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion`` is defined as a set of ``CellBlocks``.
 A ``CellBlock`` is an ensemble of elements with the same element geometry.
+
+The naming of the imported ``cellBlocks`` depends on whether the data array called ``regionAttribute`` is
+present in the vtu file or not. This data array is used to define regions in the vtu file and
+assign the cells to a given region. The ``regionAttribute`` is a integer and not a string
+(unfortunately).
 
 .. figure:: mesh_multi.png
    :align: center
    :width: 500
 
 In the example presented above, the mesh is is composed of two regions (*Top* and *Bot*).
-Each region contains 3 ``CellBlocks``.
+Each region contains 4 ``cellBlocks``.
 
-The ``ElementRegions`` are defined as below :
+- If the vtu file does not contain ``regionAttribute``, then all the cells are grouped in a single
+  region, and the cell block names are just constructed from the cell types (hexahedra, wedges,
+  tetrahedra, etc). Then in the exemple above, the ``ElementRegions`` can be defined as bellow:
 
 .. code-block:: xml
 
   <ElementRegions>
-    <ElementRegion
-      name="Top"
-      cellBlocks="Top_hexahedra Top_wedges Top_tetrahedra"
-      materialList="water rock"/>
-    <ElementRegion
-      name="Bot"
-      cellBlocks="Bot_hexahedra Bot_wedges Bot_tetrahedra"
-      materialList="water rock"/>
+    <CellElementRegion
+      name="cellRegion"
+      cellBlocks="{ hexahedra, wedges, tetrahedra, pyramids }"
+      materialList="{ water, rock }" />
   </ElementRegions>
 
-You have to use the following syntax to declare your ``CellBlocks`` :
+- If the vtu file contains ``regionAttribute``, then the cells are grouped by regions based on their
+  individual (numeric) ``regionAttribute``. In that case, the naming convention for the ``cellBlocks`` is
+  ``regionAttribute_elementType``. Let's assume that the top region of the exemple above is identified
+  by the ``regionAttribute`` 1, and that the bottom region is identified with 2,
+  
+  * If we want the ``CellElementRegion`` to contain all the cells, we write:
 
-.. code-block:: none
+  ..  code-block:: xml
 
-  nameOfTheRegionWithinTheMesh_typeOfTheElement
+    <ElementRegions>
+      <CellElementRegion
+        name="cellRegion"
+        cellBlocks="{ 1_hexahedra, 1_wedges, 1_tetrahedra, 1_pyramids, 3_hexahedra, 3_wedges, 3_tetrahedra, 3_pyramids }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
 
-The keywords for the element types are :
+  * If we want two CellElementRegion with the top and bottom regions separated, we write:
 
-- hexahedra
-- tetrahedra
-- wedges
-- pyramids
-- pentagonalPrisms
-- hexagonalPrisms
-- heptagonalPrisms
-- octagonalPrisms
-- nonagonalPrisms
-- decagonalPrisms
-- hendecagonalPrisms
-- polyhedra
+  .. code-block:: xml
+
+    <ElementRegions>
+      <CellElementRegion
+        name="Top"
+        cellBlocks="{ 1_hexahedra, 1_wedges, 1_tetrahedra, 1_pyramids }"
+        materialList="{ water, rock }"/>
+      <CellElementRegion
+        name="Bot"
+        cellBlocks="{ 3_hexahedra, 3_wedges, 3_tetrahedra, 3_pyramids }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
+
+.. warning::
+
+  We remind the user that **all** the imported ``cellBlocks`` must be included in one of the
+  ``CellElementRegion``. Even if some cells are meant to be inactive during the simulation,
+  they still have to be included in a ``CellElementRegion`` (this ``CellElementRegion`` should
+  simply not be included as a targetRegion of any of the solvers involved in the simulation).
+
+The keywords for the ``cellBlocks`` element types are :
+
+- `hexahedra <https://en.wikipedia.org/wiki/Hexahedron>`_
+- `tetrahedra <https://en.wikipedia.org/wiki/Tetrahedron>`_
+- `wedges <https://en.wikipedia.org/wiki/Triangular_prism>`_
+- `pyramids <https://en.wikipedia.org/wiki/Square_pyramid>`_
+- `pentagonalPrisms <https://en.wikipedia.org/wiki/Pentagonal_prism>`_
+- `hexagonalPrisms <https://en.wikipedia.org/wiki/Hexagonal_prism>`_
+- `heptagonalPrisms <https://en.wikipedia.org/wiki/Heptagonal_prism>`_
+- `octagonalPrisms <https://en.wikipedia.org/wiki/Octagonal_prism>`_
+- `nonagonalPrisms <https://en.wikipedia.org/wiki/Enneagonal_prism>`_
+- `decagonalPrisms <https://en.wikipedia.org/wiki/Decagonal_prism>`_
+- `hendecagonalPrisms <https://en.wikipedia.org/wiki/Hendecagonal_prism>`_
+- `polyhedra <https://en.wikipedia.org/wiki/Polyhedron>`_
 
 An example of a ``vtk`` file with all the physical regions defined is used in :ref:`TutorialFieldCase`.
 
 Importing surfaces
 ******************
 
-Surfaces are imported through point sets in GEOSX. This feature is supported using only the ``vtk`` file format.
-In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`_.
-The surfaces are automatically import in GEOSX if they exist in the ``vtk`` file.
-Within GEOSX, the point set will have the same name than the one given in the file. This name can be used
+Surfaces are imported through point sets in GEOS. This feature is supported using only the ``vtk`` file format.
+In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`.
+The surfaces are automatically import in GEOS if they exist in the ``vtk`` file.
+Within GEOS, the point set will have the same name than the one given in the file. This name can be used
 again to impose boundary condition. For instance, if a surface is named "Bottom" and the user wants to
 impose a Dirichlet boundary condition of 0 on it, it can be easily done using this syntax.
 

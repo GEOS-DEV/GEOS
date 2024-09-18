@@ -7,7 +7,7 @@ Poromechanics Solver
 Introduction
 ===========================================
 
-This section describes the use of the poroelasticity models implemented in GEOSX.
+This section describes the use of the poroelasticity models implemented in GEOS.
 
 Theory
 =========================
@@ -48,7 +48,7 @@ In the main solver, it requires the specification of solidSolverName, flowSolver
 
 The following attributes are supported:
 
-.. include:: /coreComponents/schema/docs/SinglePhasePoromechanics.rst
+.. include:: /docs/sphinx/datastructure/SinglePhasePoromechanics.rst
 
 * ``couplingTypeOption``: defines the coupling scheme.
 

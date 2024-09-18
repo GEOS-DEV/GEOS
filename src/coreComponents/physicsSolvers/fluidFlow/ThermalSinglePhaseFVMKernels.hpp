@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,21 +17,19 @@
  * @file ThermalSinglePhaseFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalSinglePhaseFVMKernels
 {
-using namespace constitutive;
-
 /******************************** FaceBasedAssemblyKernel ********************************/
 
 /**
@@ -39,8 +38,8 @@ using namespace constitutive;
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >
+template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -66,7 +65,7 @@ public:
   using AbstractBase::m_mob;
   using AbstractBase::m_dens;
 
-  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >;
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -82,15 +81,17 @@ public:
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::dDensity_dTemperature,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy_dPressure,
                               fields::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
-                              fields::thermalconductivity::effectiveConductivity >;
+    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
+                              fields::thermalconductivity::effectiveConductivity,
+                              fields::thermalconductivity::dEffectiveConductivity_dT >;
+
 
   /**
    * @brief Constructor for the kernel interface
@@ -134,14 +135,15 @@ public:
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
     m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
+    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
       energyFlux( 0.0 ),
@@ -157,9 +159,11 @@ public:
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
 
-    // Thermal transmissibility (for now, no derivatives)
-
+    // Thermal transmissibility
     real64 thermalTransmissibility[maxNumConns][2]{};
+
+    /// Derivatives of thermal transmissibility with respect to temperature
+    real64 dThermalTrans_dT[maxNumConns][2]{};
 
     // Energy fluxes and derivatives
 
@@ -177,7 +181,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -329,9 +333,9 @@ public:
     // We follow how the thermal compositional multi-phase solver does to update the thermal transmissibility
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
-                                     m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
+                                     m_dThermalCond_dT,
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
+                                     stack.dThermalTrans_dT );
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -341,6 +345,7 @@ public:
       for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
       {
         real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
+        real64 const dThermalTrans_dT[2] = { stack.dThermalTrans_dT[connectionIndex][0], stack.dThermalTrans_dT[connectionIndex][1] };
 
         localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
@@ -354,7 +359,7 @@ public:
           localIndex const ei  = sei[ke];
 
           stack.energyFlux += thermalTrans[ke] * m_temp[er][esr][ei];
-          stack.dEnergyFlux_dT[ke] += thermalTrans[ke];
+          stack.dEnergyFlux_dT[ke] += thermalTrans[ke] + dThermalTrans_dT[ke] * m_temp[er][esr][ei];
         }
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
@@ -381,7 +386,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -421,6 +426,9 @@ protected:
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
 
+  /// View on derivatives of thermal conductivity w.r.t. temperature
+  ElementViewConst< arrayView3d< real64 const > > m_dThermalCond_dT;
+
 };
 
 /**
@@ -455,12 +463,13 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_DOF = 2;
+    integer constexpr NUM_EQN = 2;
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using KernelType = FaceBasedAssemblyKernel< NUM_DOF, STENCILWRAPPER >;
+    using KernelType = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename KernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );
     typename KernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
@@ -483,8 +492,8 @@ public:
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_DOF, FLUIDWRAPPER >
+template< integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel : public singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >
 {
 public:
 
@@ -516,7 +525,7 @@ public:
   using AbstractBase::m_localMatrix;
   using AbstractBase::m_localRhs;
 
-  using Base = singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_DOF, FLUIDWRAPPER >;
+  using Base = singlePhaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_stencilWrapper;
@@ -531,15 +540,16 @@ public:
                       fields::flow::dMobility_dTemperature >;
 
   using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::dDensity_dTemperature,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy_dPressure,
                               fields::singlefluid::dEnthalpy_dTemperature >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
-                              fields::thermalconductivity::effectiveConductivity >;
+    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
+                              fields::thermalconductivity::effectiveConductivity,
+                              fields::thermalconductivity::dEffectiveConductivity_dT >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -591,7 +601,8 @@ public:
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
     m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
+    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
 
 
@@ -608,7 +619,7 @@ public:
      * @param[in] size size of the stencil for this connection
      * @param[in] numElems number of elements for this connection
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables( localIndex const size,
                     localIndex numElems ):
       Base::StackVariables( size,
@@ -633,7 +644,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -682,14 +693,17 @@ public:
 
       // Contribution of energy conduction through the solid phase
       real64 thermalTrans = 0.0;
-      real64 dThermalTrans_dPerm[3]{}; // not used
+      real64 dThermalTrans_dThermalCond[3]{};
       m_stencilWrapper.computeWeights( iconn,
                                        m_thermalConductivity,
                                        thermalTrans,
-                                       dThermalTrans_dPerm );
+                                       dThermalTrans_dThermalCond );
 
-      stack.energyFlux += thermalTrans * ( m_temp[er][esr][ei] - m_faceTemp[kf] );
-      stack.dEnergyFlux_dT += thermalTrans;
+      real64 const dThermalTrans_dT = LvArray::tensorOps::AiBi< 3 >( dThermalTrans_dThermalCond, m_dThermalCond_dT[er][esr][ei][0] );
+
+      real64 const deltaT = m_temp[er][esr][ei] - m_faceTemp[kf];
+      stack.energyFlux += thermalTrans * deltaT;
+      stack.dEnergyFlux_dT += thermalTrans + dThermalTrans_dT * deltaT;
 
       // Add energyFlux and its derivatives to localFlux and localFluxJacobian
       integer const localRowIndexEnergy = numEqn - 1;
@@ -706,7 +720,7 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -744,6 +758,9 @@ protected:
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
 
+  /// View on derivatives of thermal conductivity w.r.t. temperature
+  ElementViewConst< arrayView3d< real64 const > > m_dThermalCond_dT;
+
 };
 
 
@@ -776,7 +793,7 @@ public:
                    FaceManager const & faceManager,
                    ElementRegionManager const & elemManager,
                    BoundaryStencilWrapper const & stencilWrapper,
-                   SingleFluidBase & fluidBase,
+                   constitutive::SingleFluidBase & fluidBase,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -787,8 +804,9 @@ public:
       typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       integer constexpr NUM_DOF = 2;
+      integer constexpr NUM_EQN = 2;
 
-      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_DOF, typename FluidType::KernelWrapper >;
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper >;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -825,6 +843,6 @@ public:
 
 } // namespace thermalSinglePhaseFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEFVMKERNELS_HPP

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,12 +17,12 @@
  * @file SinglePhaseHybridFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
@@ -30,6 +31,8 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
@@ -38,11 +41,12 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace singlePhaseHybridFVMKernels
 {
 
+/******************************** AssemblerKernelHelper ********************************/
 /******************************** Kernel switches ********************************/
 
 namespace internal
@@ -75,11 +79,138 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
     { lambda( std::integral_constant< T, 12 >() ); return;}
     case 13:
     { lambda( std::integral_constant< T, 13 >() ); return;}
-    default: GEOSX_ERROR( "Unknown numFacesInElem value: " << value );
+    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
 
 } // namespace internal
+
+/******************************** AveragePressureGradientKernel ********************************/
+
+template< integer NUM_FACES >
+class AveragePressureGradientKernel
+{
+public:
+  AveragePressureGradientKernel( CellElementSubRegion & subRegion,
+                                 FaceManager const & faceManager )
+    :
+    // get the face-centered pressures
+    m_facePressure( faceManager.getField< fields::flow::facePressure >() ),
+    m_faceCenter( faceManager.faceCenter() ),
+    m_pres( subRegion.template getField< fields::flow::pressure >() ),
+    m_elemCenter( subRegion.getElementCenter() ),
+    m_elemsToFaces( subRegion.faceList() ),
+    m_presGradient( subRegion.template getField< fields::flow::pressureGradient >() )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
+   */
+  struct StackVariables
+  {
+
+    GEOS_HOST_DEVICE
+    StackVariables():
+      coordinates( NUM_FACES+1, 4 ),
+      pressures( NUM_FACES+1 ),
+      presGradientLocal( 4 )
+    {}
+
+    stackArray2d< real64, (NUM_FACES + 1) * 4 > coordinates;
+    stackArray1d< real64, NUM_FACES + 1 > pressures;
+    stackArray1d< real64, 4 > presGradientLocal;
+  };
+
+
+  inline
+  void compute( localIndex const elemIndex,
+                StackVariables stack ) const
+  {
+
+    for( integer dim=0; dim<3; ++dim )
+    {
+      stack.coordinates( 0, dim ) = m_elemCenter( elemIndex, dim );
+    }
+    stack.coordinates( 0, 3 ) = 1.0;
+    stack.pressures[0] = m_pres[elemIndex];
+
+    for( integer fi=0; fi<NUM_FACES; ++fi )
+    {
+      localIndex const localFaceIndex = m_elemsToFaces( elemIndex, fi );
+
+      real64 const facePresLocal = m_facePressure[localFaceIndex];
+
+      stack.pressures[fi+1] = facePresLocal;
+
+      for( integer dim=0; dim<3; ++dim )
+      {
+        real64 const faceCenterXiLocal = m_faceCenter[localFaceIndex][dim];
+
+        stack.coordinates( fi+1, dim ) = faceCenterXiLocal;
+      }
+      stack.coordinates( fi+1, 3 ) = 1.0;
+    }
+
+    BlasLapackLA::matrixLeastSquaresSolutionSolve( stack.coordinates, stack.pressures, stack.presGradientLocal );
+
+    for( integer dim=0; dim<3; ++dim )
+    {
+      m_presGradient( elemIndex, dim ) = stack.presGradientLocal[dim];
+    }
+  }
+
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+
+    forAll< POLICY >( numElems, [=] ( localIndex const ei )
+    {
+      typename KERNEL_TYPE::StackVariables stack;
+      kernelComponent.compute( ei, stack );
+    } );
+  }
+
+private:
+  /// face pressure
+  arrayView1d< real64 const > const m_facePressure;
+
+  ///  the face center coordinates
+  arrayView2d< real64 const > const m_faceCenter;
+
+  /// the cell-centered pressures
+  arrayView1d< real64 const > const m_pres;
+
+  ///  the cell center coordinates
+  arrayView2d< real64 const > const m_elemCenter;
+
+  ///  the elements to faces map
+  arrayView2d< localIndex const > const m_elemsToFaces;
+
+  /// pressure gradient in the cell
+  arrayView2d< real64 > const m_presGradient;
+
+};
+
+class AveragePressureGradientKernelFactory
+{
+public:
+
+  template< typename POLICY >
+  static void createAndLaunch( CellElementSubRegion & subRegion,
+                               FaceManager const & faceManager )
+  {
+    internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
+    {
+      AveragePressureGradientKernel< NUM_FACES > kernel( subRegion, faceManager );
+      AveragePressureGradientKernel< NUM_FACES >::template launch< POLICY >( subRegion.size(), kernel );
+    } );
+  }
+};
+
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
@@ -185,7 +316,7 @@ public:
   struct StackVariables
   {
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : transMatrix( NUM_FACE, NUM_FACE )
     {}
@@ -211,7 +342,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -229,7 +360,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeGradient( localIndex const ei,
                         StackVariables & stack ) const
   {
@@ -281,7 +412,8 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void computeFluxDivergence( localIndex const ei,
                               StackVariables & stack ) const
   {
@@ -348,12 +480,12 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 StackVariables & stack,
                 FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
   {
-    GEOSX_UNUSED_VAR( ei, stack, kernelOp );
+    GEOS_UNUSED_VAR( ei, stack, kernelOp );
 
     real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
@@ -402,7 +534,8 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -471,9 +604,9 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       typename KERNEL_TYPE::StackVariables stack;
 
@@ -619,7 +752,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -655,11 +788,13 @@ public:
                       SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                       PorosityAccessors const & porosityAccessors,
                       real64 const & defaultViscosity,
-                      real64 const & dt )
+                      real64 const dt,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_dt( dt ),
     m_regionFilter( regionFilter ),
     m_defaultViscosity( defaultViscosity ),
@@ -671,7 +806,7 @@ public:
     m_density_n( singlePhaseFluidAccessors.get( fields::singlefluid::density_n {} ) )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassNormalizer( localIndex const kf,
                               real64 & massNormalizer,
                               real64 & multiplier ) const
@@ -698,7 +833,7 @@ public:
     multiplier *= m_dt / elemCounter / m_defaultViscosity;  // average dt * mobility at the previous converged time step
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const kf,
                             LinfStackVariables & stack ) const override
   {
@@ -709,11 +844,11 @@ public:
       computeMassNormalizer( kf, massNormalizer, multiplier );
 
       // scaled residual to be in mass units (needed because element and face residuals are blended in a single norm)
-      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( minNormalizer, massNormalizer );
+      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( m_minNormalizer, massNormalizer );
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const kf,
                           L2StackVariables & stack ) const override
   {
@@ -785,14 +920,15 @@ public:
   static void
   createAndLaunch( solverBaseKernels::NormType const normType,
                    globalIndex const rankOffset,
-                   string const dofKey,
+                   string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    SortedArrayView< localIndex const > const & regionFilter,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    FaceManager const & faceManager,
-                   real64 const & defaultViscosity,
-                   real64 const & dt,
+                   real64 const defaultViscosity,
+                   real64 const dt,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
   {
@@ -805,7 +941,7 @@ public:
     typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, defaultViscosity, dt );
+                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, defaultViscosity, dt, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( faceManager.size(), kernel, residualNorm );
@@ -820,6 +956,6 @@ public:
 
 } // namespace singlePhaseHybridFVMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP

@@ -18,25 +18,21 @@ set( mainInterface_sources
      version.cpp
    )
 
-set( dependencyList physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )
+set( dependencyList ${parallelDeps} physicsSolvers constitutiveDrivers optionparser )
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}
                  HEADERS    ${mainInterface_headers}
-                 DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 DEPENDS_ON ${decoratedDependencies}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 add_dependencies( mainInterface generate_version )
 
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX mainInterface )
+install( TARGETS mainInterface LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

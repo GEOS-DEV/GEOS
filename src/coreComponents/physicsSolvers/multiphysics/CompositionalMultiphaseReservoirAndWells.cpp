@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,7 +21,7 @@
 #include "CompositionalMultiphaseReservoirAndWells.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
@@ -29,70 +30,37 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
 using namespace constitutive;
 
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER > class
-  CompositionalCatalogNames {};
-
-// Class specialization for a RESERVOIR_SOLVER set to CompositionalMultiphaseFlow
-template<> class CompositionalCatalogNames< CompositionalMultiphaseBase >
-{
-public:
-  // TODO: find a way to use the catalog name here
-  static string name() { return "CompositionalMultiphaseReservoir"; }
-};
-// Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
-template<> class CompositionalCatalogNames< MultiphasePoromechanicsSolver >
-{
-public:
-  static string name() { return MultiphasePoromechanicsSolver::catalogName()+"Reservoir"; }
-};
-
-}
-
-// provide a definition for catalogName()
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-string
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
-catalogName()
-{
-  return CompositionalCatalogNames< COMPOSITIONAL_RESERVOIR_SOLVER >::name();
-}
-
-
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 CompositionalMultiphaseReservoirAndWells( const string & name,
                                           Group * const parent )
   : Base( name, parent )
 {}
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 ~CompositionalMultiphaseReservoirAndWells()
 {}
 
 template<>
-CompositionalMultiphaseBase const *
-CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
+CompositionalMultiphaseBase *
+CompositionalMultiphaseReservoirAndWells<>::
 flowSolver() const
 {
   return this->reservoirSolver();
 }
 
 template<>
-CompositionalMultiphaseBase const *
-CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+CompositionalMultiphaseBase *
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >::
 flowSolver() const
 {
   return this->reservoirSolver()->flowSolver();
@@ -100,37 +68,41 @@ flowSolver() const
 
 template<>
 void
-CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
+CompositionalMultiphaseReservoirAndWells<>::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM )
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+    // add Reservoir
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
   }
   else
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+    // add Reservoir
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
   }
 }
 
 template<>
 void
-CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver >::
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >::
 setMGRStrategy()
 {
+  // flow solver here is indeed flow solver, not poromechanics solver
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
   {
-    GEOSX_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+    GEOS_LOG_RANK_0( "The poromechanics MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
+    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
   }
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
   Base::initializePreSubGroups();
@@ -140,30 +112,30 @@ initializePreSubGroups()
 
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
-  GEOSX_THROW_IF( useMassFlow != useMassWell,
-                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                             this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                             Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
-                  InputError );
+  GEOS_THROW_IF( useMassFlow != useMassWell,
+                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 InputError );
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePostInitialConditionsPreSubGroups()
 {
   Base::initializePostInitialConditionsPreSubGroups();
   setMGRStrategy();
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
@@ -263,9 +235,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
   } );
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,
@@ -278,6 +250,11 @@ assembleCouplingTerms( real64 const time_n,
   using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
+  GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
+                 GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
+                           this->getCatalogName(), this->getName() ),
+                 std::runtime_error );
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
@@ -344,10 +321,12 @@ assembleCouplingTerms( real64 const time_n,
       arrayView1d< localIndex const > const & resElementIndex =
         perforationData->getField< fields::perforation::reservoirElementIndex >();
 
+      bool const useTotalMassEquation = this->flowSolver()->useTotalMassEquation() > 0;
+
       RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
 
       // loop over the perforations and add the rates to the residual and jacobian
-      forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+      forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
       {
         // local working variables and arrays
         stackArray1d< localIndex, 2 * MAX_NUM_COMP > eqnRowIndices( 2 * numComps );
@@ -406,10 +385,13 @@ assembleCouplingTerms( real64 const time_n,
           }
         }
 
-        // Apply equation/variable change transformation(s)
-        stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
-        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numComps, resNumDofs*2, 2, localPerfJacobian, work );
-        shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, numComps, 2, localPerf );
+        if( useTotalMassEquation )
+        {
+          // Apply equation/variable change transformation(s)
+          stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
+          shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numComps, resNumDofs * 2, 2, localPerfJacobian, work );
+          shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, numComps, 2, localPerf );
+        }
 
         for( localIndex i = 0; i < localPerf.size(); ++i )
         {
@@ -430,10 +412,10 @@ assembleCouplingTerms( real64 const time_n,
         globalIndex const totalNumCrossflowPerforations = MpiWrapper::sum( numCrossflowPerforations.get() );
         if( totalNumCrossflowPerforations > 0 )
         {
-          GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
-                                                "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
-                                                this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
-                                                WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
+          GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
+                                              "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
+                                              this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
+                                              WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
         }
       }
     } );
@@ -445,12 +427,15 @@ assembleCouplingTerms( real64 const time_n,
   } );
 }
 
+template class CompositionalMultiphaseReservoirAndWells<>;
+template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >;
+
 namespace
 {
-typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > CompositionalMultiphaseFlowAndWells;
-typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsSolver > CompositionalMultiphasePoromechanicsAndWells;
+typedef CompositionalMultiphaseReservoirAndWells<> CompositionalMultiphaseFlowAndWells;
+typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> > CompositionalMultiphasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
 }
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -2,24 +2,25 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
+#define GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
-namespace geosx
+namespace geos
 {
 
 // Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
@@ -73,12 +74,13 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
   virtual void
-    resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+    resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
 
   virtual void
   implicitStepComplete( real64 const & time,
@@ -140,6 +142,6 @@ ENUM_STRINGS( LaplaceBaseH1::TimeIntegrationOption,
               "ImplicitTransient" );
 //END_SPHINX_INCLUDE_REGENUM
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP */
+#endif /* GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP */

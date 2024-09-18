@@ -2,24 +2,25 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
-#define GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
+#define GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -54,6 +55,42 @@ public:
   NonlinearSolverParameters( NonlinearSolverParameters && ) = default;
 
   /**
+   * @brief Copy Constructor
+   * @param The source object.
+   */
+  NonlinearSolverParameters & operator=( const NonlinearSolverParameters & params )
+  {
+    m_lineSearchAction = params.m_lineSearchAction;
+    m_lineSearchInterpType = params.m_lineSearchInterpType;
+    m_lineSearchMaxCuts = params.m_lineSearchMaxCuts;
+    m_lineSearchCutFactor = params.m_lineSearchCutFactor;
+    m_lineSearchStartingIteration = params.m_lineSearchStartingIteration;
+    m_lineSearchResidualFactor = params.m_lineSearchResidualFactor;
+
+    m_newtonTol = params.m_newtonTol;
+    m_maxIterNewton = params.m_maxIterNewton;
+    m_minIterNewton = params.m_minIterNewton;
+    m_numNewtonIterations = params.m_numNewtonIterations;
+
+    m_maxAllowedResidualNorm = params.m_maxAllowedResidualNorm;
+    m_allowNonConverged = params.m_allowNonConverged;
+
+    m_timeStepDecreaseIterLimit = params.m_timeStepDecreaseIterLimit;
+    m_timeStepIncreaseIterLimit = params.m_timeStepIncreaseIterLimit;
+    m_timeStepDecreaseFactor = params.m_timeStepDecreaseFactor;
+    m_timeStepIncreaseFactor = params.m_timeStepIncreaseFactor;
+    m_maxSubSteps = params.m_maxSubSteps;
+    m_maxTimeStepCuts = params.m_maxTimeStepCuts;
+    m_timeStepCutFactor = params.m_timeStepCutFactor;
+    m_maxNumConfigurationAttempts = params.m_maxNumConfigurationAttempts;
+    m_configurationTolerance = params.m_configurationTolerance;
+
+    setLogLevel( params.getLogLevel());
+
+    return *this;
+  }
+
+  /**
    * @brief The name of this object in the catalog.
    * @return A string containing the name of this object in the catalog.
    * The CatalogName is the string that will result in the creation of a new
@@ -62,7 +99,9 @@ public:
    */
   static string catalogName() { return "NonlinearSolverParameters"; }
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
+
+  void print() const;
 
   struct viewKeysStruct
   {
@@ -70,8 +109,11 @@ public:
     static constexpr char const * lineSearchMaxCutsString()       { return "lineSearchMaxCuts"; }
     static constexpr char const * lineSearchCutFactorString()     { return "lineSearchCutFactor"; }
     static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
+    static constexpr char const * lineSearchStartingIterationString() { return "lineSearchStartingIteration"; }
+    static constexpr char const * lineSearchResidualFactorString() { return "lineSearchResidualFactor"; }
 
     static constexpr char const * normTypeString()                { return "normType"; }
+    static constexpr char const * minNormalizerString()           { return "minNormalizer"; }
     static constexpr char const * newtonTolString()               { return "newtonTol"; }
     static constexpr char const * newtonMaxIterString()           { return "newtonMaxIter"; }
     static constexpr char const * newtonMinIterString()           { return "newtonMinIter"; }
@@ -86,17 +128,64 @@ public:
 
     static constexpr char const * maxSubStepsString()             { return "maxSubSteps"; }
     static constexpr char const * maxTimeStepCutsString()         { return "maxTimeStepCuts"; }
-    static constexpr char const * minNumNewtonIterationsString()  { return "minNumberOfNewtonIterations"; }
     static constexpr char const * timeStepCutFactorString()       { return "timeStepCutFactor"; }
     static constexpr char const * maxAllowedResidualNormString()  { return "maxAllowedResidualNorm"; }
 
-    static constexpr char const * numConfigurationAttemptsString()    { return "numConfigurationAttempts"; }
     static constexpr char const * maxNumConfigurationAttemptsString() { return "maxNumConfigurationAttempts"; }
+    static constexpr char const * configurationToleranceString() { return "configurationTolerance"; }
 
-    static constexpr char const * couplingTypeString()     { return "couplingType"; }
-    static constexpr char const * subcyclingOptionString() { return "subcycling"; }
+    static constexpr char const * couplingTypeString()                   { return "couplingType"; }
+    static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
+    static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
+    static constexpr char const * nonlinearAccelerationTypeString() { return "nonlinearAccelerationType"; }
   } viewKeys;
 
+  /**
+   * @brief Indicates the handling of line search in a Newton loop.
+   */
+  enum class LineSearchAction : integer
+  {
+    None,    ///< Do not use line search
+    Attempt, ///< Use line search. Allow exit from line search without achieving smaller residual than starting residual.
+    Require, ///< Use line search. If smaller residual than starting residual is not achieved, cut time step.
+  };
+
+  /**
+   * @brief Indicates the handling of line each interpolation strategy.
+   */
+  enum class LineSearchInterpolationType : integer
+  {
+    Linear,    ///< linear decrease of line search scaling factor.
+    Parabolic, ///< use parabolic interpolation to define line search scaling factor.
+  };
+
+  /**
+   * @brief Coupling type.
+   */
+  enum class CouplingType : integer
+  {
+    FullyImplicit,      ///< Fully-implicit coupling
+    Sequential ///< Sequential coupling
+  };
+
+  /**
+   * @brief Sequential convergence criterion
+   */
+  enum class SequentialConvergenceCriterion : integer
+  {
+    ResidualNorm, ///< convergence achieved when the residual drops below a given norm
+    NumberOfNonlinearIterations, ///< convergence achieved when the subproblems convergence is achieved in less than minNewtonIteration
+    SolutionIncrements ///< convergence achieved when the solution increments are small enough
+  };
+
+  /**
+   * @brief Nonlinear acceleration type
+   */
+  enum class NonlinearAccelerationType : integer
+  {
+    None, ///< no acceleration
+    Aitken ///< Aitken acceleration
+  };
 
   /**
    * @brief Calculates the upper limit for the number of iterations to allow a
@@ -147,38 +236,27 @@ public:
   }
 
   /**
-   * @brief Indicates the handling of line search in a Newton loop.
+   * @brief Getter for the coupling type
+   * @return the coupling type
    */
-  enum class LineSearchAction : integer
+  CouplingType couplingType() const
   {
-    None,    ///< Do not use line search
-    Attempt, ///< Use line search. Allow exit from line search without achieving smaller residual than starting residual.
-    Require, ///< Use line search. If smaller residual than starting residual is not achieved, cut time step.
-  };
+    return m_couplingType;
+  }
 
   /**
-   * @brief Indicates the handling of line each interpolation strategy.
+   * @brief Getter for the sequential convergence criterion
+   * @return the sequential convergence criterion
    */
-  enum class LineSearchInterpolationType : integer
+  SequentialConvergenceCriterion sequentialConvergenceCriterion() const
   {
-    Linear,    ///< linear decrease of line search scaling factor.
-    Parabolic, ///< use parabolic interpolation to define line search scaling factor.
-  };
-
-  /**
-   * @brief Coupling type.
-   */
-  enum class CouplingType : integer
-  {
-    FullyImplicit,      ///< Fully-implicit coupling
-    Sequential ///< Sequential coupling
-  };
-
+    return m_sequentialConvergenceCriterion;
+  }
 
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
 
-  /// Flag to pick the type of linesearch
+  /// Flag to pick the type of line search
   LineSearchInterpolationType m_lineSearchInterpType;
 
   /// The maximum number of line search cuts to attempt.
@@ -186,6 +264,12 @@ public:
 
   /// The reduction factor for each line search cut.
   real64 m_lineSearchCutFactor;
+
+  /// Iteration when line search starts
+  integer m_lineSearchStartingIteration;
+
+  /// Factor to determine residual increase
+  real64 m_lineSearchResidualFactor;
 
   /// Norm used to check the nonlinear loop convergence
   solverBaseKernels::NormType m_normType;
@@ -229,19 +313,32 @@ public:
   /// Factor by which the time step will be cut if a timestep cut is required.
   real64 m_timeStepCutFactor;
 
-  /// number of times that the time-step had to be cut
+  /// Number of times that the time-step had to be cut
   integer m_numTimeStepAttempts;
 
-  /// number of times that the configuration had to be changed
+  /// Number of times that the configuration had to be changed
   integer m_numConfigurationAttempts;
 
   /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
 
+  /// Configuration tolerance
+  double m_configurationTolerance;
+
   /// Type of coupling
   CouplingType m_couplingType;
 
+  /// Criterion used to check outer-loop convergence in sequential schemes
+  SequentialConvergenceCriterion m_sequentialConvergenceCriterion;
+
+  /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
+
+  /// Type of nonlinear acceleration for sequential solver
+  NonlinearAccelerationType m_nonlinearAccelerationType;
+
+  /// Value used to make sure that residual normalizers are not too small when computing residual norm
+  real64 m_minNormalizer = 1e-12;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
@@ -257,8 +354,15 @@ ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
               "FullyImplicit",
               "Sequential" );
 
+ENUM_STRINGS( NonlinearSolverParameters::SequentialConvergenceCriterion,
+              "ResidualNorm",
+              "NumberOfNonlinearIterations",
+              "SolutionIncrements" );
 
+ENUM_STRINGS( NonlinearSolverParameters::NonlinearAccelerationType,
+              "None",
+              "Aitken" );
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_ */

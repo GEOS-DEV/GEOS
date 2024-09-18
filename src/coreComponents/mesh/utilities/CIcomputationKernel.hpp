@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,8 +17,8 @@
 /**
  * @file CIcomputationKernel.hpp
  */
-#ifndef GEOSX_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_
-#define GEOSX_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_
+#ifndef GEOS_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_
+#define GEOS_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -28,7 +29,7 @@
 #include "mesh/ElementType.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -79,7 +80,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       xLocal(),
       samplingPointCoord()
@@ -104,9 +105,9 @@ public:
   static
   void launchCIComputationKernel( KERNEL_TYPE & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
     forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+                      [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
 
       localIndex k = kernelComponent.m_fracturedElems[i];
@@ -131,7 +132,7 @@ public:
  * @param k embedded surface index.
  * @param stack stack variables
  */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -153,7 +154,7 @@ public:
    * @param point the coordinates of a point inside the cell element
    * @return the distance
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 computeDistance( localIndex const k,
                           real64 const (&point)[3] ) const
   {
@@ -170,7 +171,7 @@ public:
    * @param np sampling point linear index
    * @param stack stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void samplingPointCoord( integer const np,
                            StackVariables & stack ) const
   {
@@ -200,12 +201,12 @@ public:
    * @param k embedded surface element index
    * @param averageDistance the average distance
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setConnectivityIndex( localIndex const k,
                              real64 const averageDistance ) const
   {
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
-    m_connectivityIndex[embSurfIndex] = m_fractureSurfaceArea[embSurfIndex] / averageDistance;
+    m_connectivityIndex[embSurfIndex] = 2. * m_fractureSurfaceArea[embSurfIndex] / averageDistance;
   }
 
 private:
@@ -243,4 +244,4 @@ private:
 
 }
 
-#endif /* GEOSX_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_ */
+#endif /* GEOS_MESH_UTILITIES_CICOMPUTATIONKERNEL_HPP_ */

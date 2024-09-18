@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,12 +17,12 @@
  * @file DofManagerHelpers.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
-#define GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
+#ifndef GEOS_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
+#define GEOS_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
 
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 // unnamed namespace to avoid needless external linkage
@@ -222,7 +223,7 @@ ObjectManagerBase const & getObjectManager( FieldLocation const loc,
   {
     manager = &getObjectManager< decltype(LOC)::value >( mesh );
   } );
-  GEOSX_ASSERT( manager != nullptr );
+  GEOS_ASSERT( manager != nullptr );
   return *manager;
 }
 
@@ -608,7 +609,7 @@ localIndex countMeshObjects( FieldLocation const location,
     FieldLocation constexpr LOC = decltype(loc)::value;
     count = countMeshObjects< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions );
   } );
-  GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast< int >( location ) );
+  GEOS_ERROR_IF( !success, "Invalid location type: " << static_cast< int >( location ) );
   return count;
 }
 
@@ -630,7 +631,7 @@ struct ArrayHelper
   create( MeshLevel & mesh,
           string const & key,
           string const & description,
-          REGIONS_CONTAINER const & GEOSX_UNUSED_PARAM( regions ) )
+          REGIONS_CONTAINER const & GEOS_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
     baseManager.registerWrapper< ArrayType >( key ).
@@ -659,7 +660,7 @@ struct ArrayHelper
   static void
   remove( MeshLevel & mesh,
           string const & key,
-          REGIONS_CONTAINER const & GEOSX_UNUSED_PARAM( regions ) )
+          REGIONS_CONTAINER const & GEOS_UNUSED_PARAM( regions ) )
   {
     getObjectManager< LOC >( mesh ).deregisterWrapper( key );
   }
@@ -731,6 +732,6 @@ struct ArrayHelper< T, FieldLocation::Elem >
 
 } // namespace
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
+#endif //GEOS_LINEARALGEBRA_DOFMANAGERHELPERS_HPP

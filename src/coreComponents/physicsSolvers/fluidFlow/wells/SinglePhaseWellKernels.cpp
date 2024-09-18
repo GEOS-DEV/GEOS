@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -21,7 +22,7 @@
 // TODO: move keys to WellControls
 #include "SinglePhaseWell.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseWellKernels
@@ -29,7 +30,8 @@ namespace singlePhaseWellKernels
 
 /******************************** ControlEquationHelper ********************************/
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
@@ -82,7 +84,8 @@ ControlEquationHelper::
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
@@ -129,7 +132,7 @@ ControlEquationHelper::
   }
   else
   {
-    GEOSX_ERROR( "This constraint is not supported in SinglePhaseWell" );
+    GEOS_ERROR( "This constraint is not supported in SinglePhaseWell" );
   }
 
   localRhs[eqnRowIndex] += controlEqn;
@@ -157,7 +160,7 @@ FluxKernel::
           arrayView1d< real64 > const & localRhs )
 {
   // loop over the well elements to compute the fluxes between elements
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     // 1) Compute the flux and its derivatives
@@ -272,7 +275,7 @@ PressureRelationKernel::
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
   // loop over the well elements to compute the pressure relations between well elements
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
@@ -351,7 +354,8 @@ PressureRelationKernel::
 
 /******************************** PerforationKernel ********************************/
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 PerforationKernel::
   compute( real64 const & resPressure,
@@ -478,7 +482,7 @@ PerforationKernel::
           arrayView2d< real64 > const & dPerfRate_dPres )
 {
 
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
 
     // get the reservoir (sub)region and element indices
@@ -525,7 +529,7 @@ AccumulationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     if( wellElemGhostRank[iwelem] >= 0 )
@@ -580,7 +584,7 @@ PresInitializationKernel::
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
   RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
 
-  forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+  forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
     // get the reservoir (sub)region and element indices
     localIndex const er = resElementRegion[iperf];
@@ -619,7 +623,7 @@ PresInitializationKernel::
     RAJA::ReduceMin< parallelDeviceReduce, real64 > localRefPres( 1e9 );
     real64 const alpha = ( isProducer ) ? 1 - initialPressureCoef : 1 + initialPressureCoef;
 
-    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
       // get the reservoir (sub)region and element indices
       localIndex const er = resElementRegion[iperf];
@@ -643,7 +647,7 @@ PresInitializationKernel::
 
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
 
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPressure[iwelem] = refPres + avgDensity * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
 
@@ -654,9 +658,9 @@ PresInitializationKernel::
   } );
 
 
-  GEOSX_THROW_IF( foundNegativePressure.get() == 1,
-                  "Invalid well initialization: negative pressure was found",
-                  InputError );
+  GEOS_THROW_IF( foundNegativePressure.get() == 1,
+                 wellControls.getDataContext() << ": Invalid well initialization, negative pressure was found.",
+                 InputError );
 }
 
 /******************************** RateInitializationKernel ********************************/
@@ -674,7 +678,7 @@ RateInitializationKernel::
   bool const isProducer = wellControls.isProducer();
 
   // Estimate the connection rates
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     if( control == WellControls::Control::BHP )
     {
@@ -699,4 +703,4 @@ RateInitializationKernel::
 
 } // end namespace singlePhaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos

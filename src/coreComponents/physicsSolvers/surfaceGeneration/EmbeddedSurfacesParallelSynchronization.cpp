@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,7 +27,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace  embeddedSurfacesParallelSynchronization
@@ -86,7 +87,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
 
   packedSize += nodeManager.packNewNodesGlobalMaps( sendBufferPtr, newNodesToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewNodes( NeighborCommunicator * const neighbor,
@@ -149,7 +150,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, EmbeddedSurfaceSubRegion & subRegion )
     {
 
-      FixedToManyElementRelation const & surfaceElementsToCells = subRegion.getToCellRelation();
+      OrderedVariableToManyElementRelation const & surfaceElementsToCells = subRegion.getToCellRelation();
 
       for( localIndex const & k : newObjects.newElements.at( {er, esr} ) )
       {
@@ -186,7 +187,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
                                                                              EmbeddedSurfaceSubRegion & subRegion )
       {
         localIndex_array & surfaceElemGhostsToSend = subRegion.getNeighborData( neighborRank ).ghostsToSend();
-        surfaceElemGhostsToSend.move( LvArray::MemorySpace::host );
+        surfaceElemGhostsToSend.move( hostMemorySpace );
 
         for( localIndex const & k : newSurfaceGhostsToSend.at( {er, esr} ) )
         {
@@ -227,7 +228,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
   packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewToGhosts( NeighborCommunicator * const neighbor,
@@ -313,7 +314,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
     {
       // we send all the ghosts
       arrayView1d< localIndex const >  const & elemsGhostsToSend = subRegion.getNeighborData( neighborRank ).ghostsToSend();
-      elemsGhostsToSend.move( LvArray::MemorySpace::host );
+      elemsGhostsToSend.move( hostMemorySpace );
       forAll< serialPolicy >( elemsGhostsToSend.size(), [=, &elemsToSendData] ( localIndex const k )
       {
         elemsToSendData[er][esr].emplace_back( elemsGhostsToSend[k] );
@@ -337,7 +338,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
 
   packedSize += elemManager.packFracturedElements( sendBufferPtr, elemsToSend, fractureRegionName );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
@@ -396,7 +397,7 @@ void synchronizeNewNodes( MeshLevel & mesh,
     neighbor.mpiISendReceiveBufferSizes( commData.commID(),
                                          commData.mpiSendBufferSizeRequest( neighborIndex ),
                                          commData.mpiRecvBufferSizeRequest( neighborIndex ),
-                                         MPI_COMM_GEOSX );
+                                         MPI_COMM_GEOS );
 
   }
 
@@ -413,7 +414,7 @@ void synchronizeNewNodes( MeshLevel & mesh,
     neighbor.mpiISendReceiveBuffers( commData.commID(),
                                      commData.mpiSendBufferRequest( neighborIndex ),
                                      commData.mpiRecvBufferRequest( neighborIndex ),
-                                     MPI_COMM_GEOSX );
+                                     MPI_COMM_GEOS );
   }
 
 
@@ -471,7 +472,7 @@ void synchronizeNewSurfaces( MeshLevel & mesh,
     neighbor.mpiISendReceiveBufferSizes( commData.commID(),
                                          commData.mpiSendBufferSizeRequest( neighborIndex ),
                                          commData.mpiRecvBufferSizeRequest( neighborIndex ),
-                                         MPI_COMM_GEOSX );
+                                         MPI_COMM_GEOS );
 
   }
 
@@ -488,7 +489,7 @@ void synchronizeNewSurfaces( MeshLevel & mesh,
     neighbor.mpiISendReceiveBuffers( commData.commID(),
                                      commData.mpiSendBufferRequest( neighborIndex ),
                                      commData.mpiRecvBufferRequest( neighborIndex ),
-                                     MPI_COMM_GEOSX );
+                                     MPI_COMM_GEOS );
   }
 
 
@@ -542,7 +543,7 @@ void synchronizeFracturedElements( MeshLevel & mesh,
     neighbor.mpiISendReceiveBufferSizes( commData.commID(),
                                          commData.mpiSendBufferSizeRequest( neighborIndex ),
                                          commData.mpiRecvBufferSizeRequest( neighborIndex ),
-                                         MPI_COMM_GEOSX );
+                                         MPI_COMM_GEOS );
 
   }
 
@@ -559,7 +560,7 @@ void synchronizeFracturedElements( MeshLevel & mesh,
     neighbor.mpiISendReceiveBuffers( commData.commID(),
                                      commData.mpiSendBufferRequest( neighborIndex ),
                                      commData.mpiRecvBufferRequest( neighborIndex ),
-                                     MPI_COMM_GEOSX );
+                                     MPI_COMM_GEOS );
   }
 
 
@@ -621,4 +622,4 @@ void sychronizeTopology( MeshLevel & mesh,
 
 } /* embeddedSurfacesParallelSynchronization */
 
-} /* namespace geosx */
+} /* namespace geos */

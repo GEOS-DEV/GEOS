@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,14 +17,14 @@
  * @file SolverBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solverBaseKernels
@@ -45,18 +46,16 @@ public:
   /// Compile time value for the number of norms to compute
   static constexpr integer numNorm = NUM_NORM;
 
-  /// Const value used to make sure that normalizers are never zero
-  static constexpr real64 minNormalizer = 1e-12;
-
-
   ResidualNormKernelBase( globalIndex const rankOffset,
                           arrayView1d< real64 const > const & localResidual,
                           arrayView1d< globalIndex const > const & dofNumber,
-                          arrayView1d< localIndex const > const & ghostRank ):
+                          arrayView1d< localIndex const > const & ghostRank,
+                          real64 const minNormalizer ):
     m_rankOffset( rankOffset ),
     m_localResidual( localResidual ),
     m_dofNumber( dofNumber ),
-    m_ghostRank( ghostRank )
+    m_ghostRank( ghostRank ),
+    m_minNormalizer( minNormalizer )
   {}
 
   /**
@@ -88,7 +87,7 @@ public:
    * @param[in] i the looping index of the element/node/face
    * @return the ghost rank of the element/node/face
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer ghostRank( localIndex const i ) const
   { return m_ghostRank( i ); }
 
@@ -97,7 +96,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void setupLinf( localIndex const i,
                           LinfStackVariables & stack ) const
   {
@@ -109,7 +108,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void setupL2( localIndex const i,
                         L2StackVariables & stack ) const
   {
@@ -122,7 +121,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const i,
                             LinfStackVariables & stack ) const = 0;
 
@@ -131,7 +130,7 @@ public:
    * @param[in] i the element/node/face index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const i,
                           L2StackVariables & stack ) const = 0;
 
@@ -151,7 +150,7 @@ public:
   {
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > localResidualNorm[numNorm]{};
 
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       if( kernelComponent.ghostRank( i ) >= 0 )
       {
@@ -193,7 +192,7 @@ public:
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localResidualNorm[numNorm]{};
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localResidualNormalizer[numNorm]{};
 
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       if( kernelComponent.ghostRank( i ) >= 0 )
       {
@@ -233,6 +232,9 @@ protected:
   /// View on the ghost ranks
   arrayView1d< integer const > const m_ghostRank;
 
+  /// Value used to make sure that normalizers are never zero
+  real64 const m_minNormalizer;
+
 };
 
 /**
@@ -269,7 +271,7 @@ public:
                            globalResidualNorm.data(),
                            localResidualNorm.size(),
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-                           MPI_COMM_GEOSX );
+                           MPI_COMM_GEOS );
   }
 };
 
@@ -311,12 +313,12 @@ public:
                            sumLocalResidualNorm.data(),
                            localResidualNorm.size(),
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                           MPI_COMM_GEOSX );
+                           MPI_COMM_GEOS );
     MpiWrapper::allReduce( localResidualNormalizer.data(),
                            sumLocalResidualNormalizer.data(),
                            localResidualNormalizer.size(),
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                           MPI_COMM_GEOSX );
+                           MPI_COMM_GEOS );
     for( integer i = 0; i < localResidualNorm.size(); ++i )
     {
       globalResidualNorm[i] = sqrt( sumLocalResidualNorm[i] ) / sqrt( sumLocalResidualNormalizer[i] );
@@ -342,6 +344,6 @@ ENUM_STRINGS( NormType,
 
 } // namespace solverBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLVERBASEKERNELS
+#endif //GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP

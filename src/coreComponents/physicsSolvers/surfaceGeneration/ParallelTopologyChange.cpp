@@ -1,3 +1,18 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 /**
  * @file ParallelTopologyChange.cpp
  */
@@ -12,7 +27,7 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -270,8 +285,8 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
-  GEOSX_ERROR_IF( bufferSize != packedSize,
-                  "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
+  GEOS_ERROR_IF( bufferSize != packedSize,
+                 "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
 
 
 }
@@ -283,7 +298,7 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
 //                                          array1d<array1d< std::set<localIndex> > > & allModifiedElements,
                                                      ModifiedObjectLists & receivedObjects )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();
@@ -400,7 +415,7 @@ void FilterNewObjectsForPackToGhosts( std::set< localIndex > const & objectList,
                                       localIndex_array & objectsToSend )
 {
 
-  ghostsToSend.move( LvArray::MemorySpace::host );
+  ghostsToSend.move( hostMemorySpace );
   //TODO this needs to be inverted since the ghostToSend list should be much longer....
   // and the objectList is a searchable set.
   for( auto const index : objectList )
@@ -422,7 +437,7 @@ void FilterModObjectsForPackToGhosts( std::set< localIndex > const & objectList,
                                       localIndex_array const & ghostsToSend,
                                       localIndex_array & objectsToSend )
 {
-  ghostsToSend.move( LvArray::MemorySpace::host );
+  ghostsToSend.move( hostMemorySpace );
   for( localIndex a=0; a<ghostsToSend.size(); ++a )
   {
     if( objectList.count( ghostsToSend[a] ) > 0 )
@@ -492,9 +507,9 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
     elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
                                                                        FaceElementSubRegion & subRegion )
     {
-      FaceElementSubRegion::FaceMapType const & faceList = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const faceList = subRegion.faceList().toViewConst();
       localIndex_array & elemGhostsToSend = subRegion.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-      elemGhostsToSend.move( LvArray::MemorySpace::host );
+      elemGhostsToSend.move( hostMemorySpace );
       for( localIndex const & k : receivedObjects.newElements.at( {er, esr} ) )
       {
         if( faceGhostsToSendSet.count( faceList( k, 0 ) ) )
@@ -589,7 +604,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += edgeManager.packParentChildMaps( sendBufferPtr, modEdgesToSend );
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, modFacesToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   waitAllDeviceEvents( packEvents );
 }
@@ -679,7 +694,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
   if( newGhostNodes.size() > 0 )
   {
-    nodeGhostsToRecv.move( LvArray::MemorySpace::host );
+    nodeGhostsToRecv.move( hostMemorySpace );
     for( localIndex a=0; a<newGhostNodes.size(); ++a )
     {
       nodeGhostsToRecv.emplace_back( newGhostNodes[a] );
@@ -688,7 +703,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
   if( newGhostEdges.size() > 0 )
   {
-    edgeGhostsToRecv.move( LvArray::MemorySpace::host );
+    edgeGhostsToRecv.move( hostMemorySpace );
     for( localIndex a=0; a<newGhostEdges.size(); ++a )
     {
       edgeGhostsToRecv.emplace_back( newGhostEdges[a] );
@@ -697,7 +712,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
   if( newGhostFaces.size() > 0 )
   {
-    faceGhostsToRecv.move( LvArray::MemorySpace::host );
+    faceGhostsToRecv.move( hostMemorySpace );
     for( localIndex a=0; a<newGhostFaces.size(); ++a )
     {
       faceGhostsToRecv.emplace_back( newGhostFaces[a] );
@@ -711,7 +726,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 
     if( newGhostElemsData[er][esr].size() > 0 )
     {
-      elemGhostsToReceive.move( LvArray::MemorySpace::host );
+      elemGhostsToReceive.move( hostMemorySpace );
 
       for( localIndex const & newElemIndex : newGhostElemsData[er][esr] )
       {
@@ -736,9 +751,9 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
 void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements,
                                   FaceElementSubRegion & faceElemSubRegion )
 {
-  ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_fractureConnectorEdgesToFaceElements;
-  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesToFractureConnectorsEdges;
-  array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_2dFaceTo2dElems;
+  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesTo2dFaces;
+  array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_2dFaceToEdge;
 
   ArrayOfArraysView< localIndex const > const facesToEdges = faceElemSubRegion.edgeList().toViewConst();
 
@@ -771,7 +786,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
       {
         connectorToElem.resizeArray( connectorIndex, numExistingCells+1 );
         connectorToElem[connectorIndex][ numExistingCells ] = kfe;
-        faceElemSubRegion.m_recalculateFractureConnectorEdges.insert( connectorIndex );
+        faceElemSubRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
       }
     }
   }
@@ -812,7 +827,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     neighbor.mpiISendReceiveBufferSizes( commData.commID(),
                                          commData.mpiSendBufferSizeRequest( neighborIndex ),
                                          commData.mpiRecvBufferSizeRequest( neighborIndex ),
-                                         MPI_COMM_GEOSX );
+                                         MPI_COMM_GEOS );
 
   }
 
@@ -830,7 +845,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     neighbor.mpiISendReceiveBuffers( commData.commID(),
                                      commData.mpiSendBufferRequest( neighborIndex ),
                                      commData.mpiRecvBufferRequest( neighborIndex ),
-                                     MPI_COMM_GEOSX );
+                                     MPI_COMM_GEOS );
   }
 
   // unpack the buffers and get lists of the new objects.
@@ -904,7 +919,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     neighbor.mpiISendReceiveBufferSizes( commData2.commID(),
                                          commData2.mpiSendBufferSizeRequest( neighborIndex ),
                                          commData2.mpiRecvBufferSizeRequest( neighborIndex ),
-                                         MPI_COMM_GEOSX );
+                                         MPI_COMM_GEOS );
 
   }
 
@@ -921,7 +936,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     neighbor.mpiISendReceiveBuffers( commData2.commID(),
                                      commData2.mpiSendBufferRequest( neighborIndex ),
                                      commData2.mpiRecvBufferRequest( neighborIndex ),
-                                     MPI_COMM_GEOSX );
+                                     MPI_COMM_GEOS );
   }
 
 
@@ -1008,4 +1023,4 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
 
 
 
-} /* namespace geosx */
+} /* namespace geos */

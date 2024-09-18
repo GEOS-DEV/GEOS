@@ -2,25 +2,26 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2020-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
-#define GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#ifndef GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#define GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
 
 #include "mesh/ElementType.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -40,6 +41,17 @@ struct ToCellRelation
    */
   ToCellRelation( T const & toBlockIndex_,
                   T const & toCellIndex_ )
+    : toBlockIndex( toBlockIndex_ ),
+    toCellIndex( toCellIndex_ )
+  { }
+
+  /**
+   * @brief Constructor from moved values.
+   * @param toBlockIndex_ Map containing a list of cell block indices for each object
+   * @param toCellIndex_ Map containing cell indices, same shape as above
+   */
+  ToCellRelation( T && toBlockIndex_,
+                  T && toCellIndex_ )
     : toBlockIndex( toBlockIndex_ ),
     toCellIndex( toCellIndex_ )
   { }
@@ -113,4 +125,4 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists, COM
 
 }
 
-#endif // GEOSX_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_
+#endif // GEOS_MESH_GENERATORS_CELLBLOCKUTILITIES_HPP_

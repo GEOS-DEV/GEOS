@@ -3,7 +3,7 @@
 #
 set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
-     EquilibriumInitialCondition.hpp     
+     EquilibriumInitialCondition.hpp
      FieldSpecificationBase.hpp
      FieldSpecificationManager.hpp
      SourceFluxBoundaryCondition.hpp
@@ -17,7 +17,7 @@ set( fieldSpecification_headers
 #
 set( fieldSpecification_sources
      DirichletBoundaryCondition.cpp
-     EquilibriumInitialCondition.cpp          
+     EquilibriumInitialCondition.cpp
      FieldSpecificationBase.cpp
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
@@ -26,19 +26,19 @@ set( fieldSpecification_sources
      PerfectlyMatchedLayer.cpp
    )
 
-set( dependencyList functions linearAlgebra )
+set( dependencyList ${parallelDeps} mesh )
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}
                  HEADERS    ${fieldSpecification_headers}
-                 DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 DEPENDS_ON ${decoratedDependencies}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( fieldSpecification PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX fieldSpecification )
+install( TARGETS fieldSpecification LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

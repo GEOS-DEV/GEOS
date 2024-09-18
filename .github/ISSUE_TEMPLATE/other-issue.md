@@ -1,8 +1,8 @@
 ---
 name: Other issue
 about: For all other issues
-title: 'Your Title'
-labels: ["type: new"]
+title: Your Title
+labels: 'type: new'
 assignees: ''
 
 ---

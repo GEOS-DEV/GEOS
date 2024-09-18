@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,7 +17,7 @@
 
 #include "mesh/generators/CellBlockUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -120,7 +121,7 @@ void CellBlock::setElementType( ElementType elementType )
     }
     default:
     {
-      GEOSX_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
+      GEOS_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getDataContext() );
     }
   }
 
@@ -129,6 +130,11 @@ void CellBlock::setElementType( ElementType elementType )
   m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
   m_elementsToEdges.resize( this->numElements(), m_numEdgesPerElement );
   m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );
+}
+
+void CellBlock::resizeNumNodes ( dataRepository::indexType const numNodes )
+{
+  m_elementsToNodes.resize( this->numElements(), numNodes );
 }
 
 void CellBlock::resize( dataRepository::indexType const numElements )
@@ -147,11 +153,11 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                                     localIndex const faceNum,
                                     Span< localIndex > const nodesInFaces ) const
 {
-  return geosx::getFaceNodes( m_elementType,
-                              cellIndex,
-                              faceNum,
-                              m_elementsToNodes,
-                              nodesInFaces );
+  return geos::getFaceNodes( m_elementType,
+                             cellIndex,
+                             faceNum,
+                             m_elementsToNodes,
+                             nodesInFaces );
 }
 
 }

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,8 +18,8 @@
  * @file EFEMKernelsHelper.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSHELPER_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSHELPER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSHELPER_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSHELPER_HPP_
 
 
 #include "common/DataTypes.hpp"
@@ -28,15 +29,15 @@
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsEFEMKernelsHelper
 {
 
 template< int NUM_NODES >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
                                real64 (& X)[NUM_NODES][3],
                                arraySlice1d< real64 const > const normalVector,
@@ -58,8 +59,8 @@ void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
 template< int I_SIZE,
           int J_SIZE,
           int NUM_NODES >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
                              real64 ( & dNdX )[NUM_NODES][3] )
 {
@@ -83,8 +84,8 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 }
 
 template< int NUM_NODES >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
                                     arraySlice1d< real64 const > const & nVec,
                                     arraySlice1d< real64 const > const & tVec1,
@@ -92,7 +93,7 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
                                     integer ( & heavisideFun )[NUM_NODES],
                                     real64 ( & dNdX )[NUM_NODES][3] )
 {
-  //GEOSX_MARK_FUNCTION;
+  //GEOS_MARK_FUNCTION;
 
   // Fill in compatibility operator
 
@@ -123,8 +124,8 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
 
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
                                   arraySlice1d< real64 const > const nVec,
                                   arraySlice1d< real64 const > const tVec1,
@@ -148,7 +149,7 @@ void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
 }
 
 }
-} // geosx
+} // geos
 
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_CONTACT_EFEMKERNELSHELPER_HPP_ */

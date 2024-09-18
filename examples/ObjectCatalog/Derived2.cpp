@@ -11,18 +11,19 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
+
 #include "Derived2.hpp"
 
 
 Derived2::Derived2( int junk, double const & junk2, Parameter& param ):
   Base( junk, junk2, param )
 {
-  GEOSX_LOG( "calling Derived2 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+  GEOS_LOG( "calling Derived2 constructor with arguments ("<<junk<<" "<<junk2<<")" );
 }
 
 Derived2::~Derived2()
 {
-  GEOSX_LOG( "calling Derived2 destructor" );
+  GEOS_LOG( "calling Derived2 destructor" );
 }
 
 REGISTER_CATALOG_ENTRY( Base, Derived2, int, double const &, Parameter& )

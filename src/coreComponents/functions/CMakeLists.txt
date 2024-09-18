@@ -27,27 +27,27 @@ if( ENABLE_MATHPRESSO )
 endif()
 
 
-set( dependencyList codingUtilities dataRepository )
+set( dependencyList ${parallelDeps} dataRepository )
 
 if( ENABLE_MATHPRESSO )
-   set( dependencyList ${dependencyList} mathpresso )
+   list( APPEND dependencyList mathpresso )
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       functions
                  SOURCES    ${functions_sources}
                  HEADERS    ${functions_headers}
-                 DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 DEPENDS_ON ${decoratedDependencies}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX functions )
+install( TARGETS functions LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()

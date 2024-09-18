@@ -1,6 +1,4 @@
-#
 # Specify all headers
-#
 set( linearAlgebra_headers
      DofManager.hpp
      DofManagerHelpers.hpp
@@ -35,12 +33,10 @@ set( linearAlgebra_headers
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
-     utilities/TransposeOperator.hpp
-   )
+     utilities/ReverseCutHillMcKeeOrdering.hpp
+     utilities/TransposeOperator.hpp )
 
-#
 # Specify all sources
-#
 set( linearAlgebra_sources
      DofManager.cpp
      solvers/BicgstabSolver.cpp
@@ -49,20 +45,20 @@ set( linearAlgebra_sources
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
-   )
+     utilities/ReverseCutHillMcKeeOrdering.cpp )
 
-set( dependencyList mesh denseLinearAlgebra )
+set( dependencyList ${parallelDeps} mesh denseLinearAlgebra finiteVolume )
+set( tplDependencyList "" )
 
+list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
+list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
+list( APPEND tplDependencyList suitesparse )
 
-list( APPEND linearAlgebra_headers
-      interfaces/direct/SuiteSparse.hpp
-      interfaces/direct/SuperLUDist.hpp )
-
-list( APPEND linearAlgebra_sources
-      interfaces/direct/SuiteSparse.cpp
-      interfaces/direct/SuperLUDist.cpp )
-
-list( APPEND dependencyList suitesparse superlu_dist )
+if( ENABLE_SUPERLU_DIST )
+      list( APPEND linearAlgebra_headers interfaces/direct/SuperLUDist.hpp )
+      list( APPEND linearAlgebra_sources interfaces/direct/SuperLUDist.cpp )
+      list( APPEND tplDependencyList superlu_dist )
+endif( )
 
 if( ENABLE_TRILINOS )
 
@@ -83,7 +79,7 @@ if( ENABLE_TRILINOS )
           interfaces/trilinos/TrilinosPreconditioner.cpp
           interfaces/trilinos/TrilinosSolver.cpp )
 
-    list( APPEND dependencyList trilinos )
+    list( APPEND tplDependencyList trilinos )
 
 endif()
 
@@ -97,7 +93,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreMatrix.hpp
           interfaces/hypre/HyprePreconditioner.hpp
           interfaces/hypre/HypreSolver.hpp
-          interfaces/hypre/HypreUtils.hpp 
+          interfaces/hypre/HypreUtils.hpp
           interfaces/hypre/HypreVector.hpp
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp
@@ -105,19 +101,17 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
-          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp      
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp
-	  interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp
-          interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
-          interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
-          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp	  
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
-	  interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
-        )
-
+          interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp
+          interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
+          interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp )
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
           interfaces/hypre/HypreInterface.cpp
@@ -127,10 +121,9 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HyprePreconditioner.cpp
           interfaces/hypre/HypreSolver.cpp
           interfaces/hypre/HypreUtils.cpp
-          interfaces/hypre/HypreVector.cpp
-        )
+          interfaces/hypre/HypreVector.cpp )
 
-    list( APPEND dependencyList hypre umpire )
+    list( APPEND tplDependencyList hypre umpire )
 
 endif()
 
@@ -143,8 +136,7 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscPreconditioner.hpp
           interfaces/petsc/PetscSolver.hpp
           interfaces/petsc/PetscUtils.hpp
-          interfaces/petsc/PetscVector.hpp
-        )
+          interfaces/petsc/PetscVector.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/petsc/PetscExport.cpp
@@ -152,30 +144,28 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscMatrix.cpp
           interfaces/petsc/PetscPreconditioner.cpp
           interfaces/petsc/PetscSolver.cpp
-          interfaces/petsc/PetscVector.cpp
-        )
+          interfaces/petsc/PetscVector.cpp )
 
-    list( APPEND dependencyList petsc )
+    list( APPEND tplDependencyList petsc )
 
 endif()
 
-if ( ENABLE_CUDA )
-    list( APPEND dependencyList cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       linearAlgebra
                  SOURCES    ${linearAlgebra_sources}
                  HEADERS    ${linearAlgebra_headers}
-                 DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 DEPENDS_ON ${decoratedDependencies} ${tplDependencyList}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
-add_subdirectory( unitTests )
+install( TARGETS linearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
-geosx_add_code_checks( PREFIX linearAlgebra )
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
+

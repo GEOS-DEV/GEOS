@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,19 +17,19 @@
  * @file SinglePhaseBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace singlePhaseBaseKernels
@@ -38,8 +39,8 @@ namespace singlePhaseBaseKernels
 
 struct MobilityKernel
 {
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & dDens_dPres,
@@ -52,8 +53,8 @@ struct MobilityKernel
     dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void
   compute( real64 const & dens,
            real64 const & visc,
@@ -71,7 +72,7 @@ struct MobilityKernel
                       arrayView1d< real64 > const & mob,
                       arrayView1d< real64 > const & dMob_dPres )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],
                dDens_dPres[a][0],
@@ -88,7 +89,7 @@ struct MobilityKernel
                       arrayView2d< real64 const > const & visc,
                       arrayView1d< real64 > const & mob )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],
                visc[a][0],
@@ -107,7 +108,7 @@ struct MobilityKernel
 struct NoOpFunc
 {
   template< typename ... Ts >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   constexpr void
   operator()( Ts && ... ) const {}
 };
@@ -151,12 +152,11 @@ public:
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
     m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_porosityNew( solid.getPorosity() ),
+    m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_density_n( fluid.density_n() ),
     m_density( fluid.density() ),
     m_dDensity_dPres( fluid.dDensity_dPressure() ),
+    m_mass_n( subRegion.template getField< fields::flow::mass_n >() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -173,9 +173,6 @@ public:
 
     /// Pore volume at time n+1
     real64 poreVolume = 0.0;
-
-    /// Pore volume at the previous converged time step
-    real64 poreVolume_n = 0.0;
 
     /// Derivative of pore volume with respect to pressure
     real64 dPoreVolume_dPres = 0.0;
@@ -201,7 +198,7 @@ public:
    * @param[in] ei the element index
    * @return the ghost rank of the element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer elemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
@@ -211,13 +208,12 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
     // initialize the pore volume
-    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
-    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
+    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosity[ei][0];
     stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
 
     // set row index and degrees of freedom indices for this element
@@ -236,13 +232,13 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack,
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - m_mass_n[ei];
 
     // Derivative of residual wrt to pressure in the cell
     stack.localJacobian[0][0] = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
@@ -256,8 +252,8 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
-  void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
+  GEOS_HOST_DEVICE
+  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
     // add contribution to global residual and jacobian (no need for atomics here)
@@ -281,9 +277,9 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.elemGhostRank( ei ) >= 0 )
       {
@@ -314,14 +310,15 @@ protected:
   arrayView1d< real64 const > const m_deltaVolume;
 
   /// Views on the porosity
-  arrayView2d< real64 const > const m_porosity_n;
-  arrayView2d< real64 const > const m_porosityNew;
+  arrayView2d< real64 const > const m_porosity;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// Views on density
-  arrayView2d< real64 const > const m_density_n;
   arrayView2d< real64 const > const m_density;
   arrayView2d< real64 const > const m_dDensity_dPres;
+
+  /// View on mass
+  arrayView1d< real64 const > const m_mass_n;
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
@@ -359,14 +356,8 @@ public:
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs )
-#if ALLOW_CREATION_MASS
-    , m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
-#endif
-  {
-#if !defined(ALLOW_CREATION_MASS)
-    static_assert( true, "must have ALLOW_CREATION_MASS defined" );
-#endif
-  }
+    , m_creationMass( subRegion.getField< fields::flow::massCreated >() )
+  {}
 
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
@@ -374,26 +365,22 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             Base::StackVariables & stack ) const
   {
     Base::computeAccumulation( ei, stack, [&] ()
     {
-#if ALLOW_CREATION_MASS
-      if( Base::m_volume[ei] * Base::m_density_n[ei][0] > 1.1 * m_creationMass[ei] )
+      if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
       {
         stack.localResidual[0] += m_creationMass[ei] * 0.25;
       }
-#endif
     } );
   }
 
 protected:
 
-#if ALLOW_CREATION_MASS
   arrayView1d< real64 const > const m_creationMass;
-#endif
 
 };
 
@@ -470,7 +457,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -480,22 +467,20 @@ public:
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< localIndex const > const & ghostRank,
                       ElementSubRegionBase const & subRegion,
-                      constitutive::SingleFluidBase const & fluid,
-                      constitutive::CoupledSolidBase const & solid )
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
-    m_volume( subRegion.getElementVolume() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_density_n( fluid.density_n() )
+            ghostRank,
+            minNormalizer ),
+    m_mass_n( subRegion.template getField< fields::flow::mass_n >() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_mass_n[ei] );
     real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
     if( valMass > stack.localValue[0] )
     {
@@ -503,11 +488,11 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_mass_n[ei] );
     stack.localValue[0] += m_localResidual[stack.localRow] * m_localResidual[stack.localRow];
     stack.localNormalizer[0] += massNormalizer;
   }
@@ -515,14 +500,8 @@ public:
 
 protected:
 
-  /// View on the volume
-  arrayView1d< real64 const > const m_volume;
-
-  /// View on porosity at the previous converged time step
-  arrayView2d< real64 const > const m_porosity_n;
-
-  /// View on total mass/molar density at the previous converged time step
-  arrayView2d< real64 const > const m_density_n;
+  /// View on mass at the previous converged time step
+  arrayView1d< real64 const > const m_mass_n;
 
 };
 
@@ -553,15 +532,14 @@ public:
                    string const dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    ElementSubRegionBase const & subRegion,
-                   constitutive::SingleFluidBase const & fluid,
-                   constitutive::CoupledSolidBase const & solid,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
@@ -579,16 +557,17 @@ public:
 struct SolutionCheckKernel
 {
   template< typename POLICY >
-  static localIndex launch( arrayView1d< real64 const > const & localSolution,
-                            globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & dofNumber,
-                            arrayView1d< integer const > const & ghostRank,
-                            arrayView1d< real64 const > const & pres,
-                            real64 const scalingFactor )
+  static std::pair< integer, real64 > launch( arrayView1d< real64 const > const & localSolution,
+                                              globalIndex const rankOffset,
+                                              arrayView1d< globalIndex const > const & dofNumber,
+                                              arrayView1d< integer const > const & ghostRank,
+                                              arrayView1d< real64 const > const & pres,
+                                              real64 const scalingFactor )
   {
-    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
       {
@@ -597,13 +576,53 @@ struct SolutionCheckKernel
 
         if( newPres < 0.0 )
         {
-          minVal.min( 0 );
+          numNegativePressures += 1;
+          minPres.min( newPres );
         }
       }
 
     } );
 
-    return minVal.get();
+    return { numNegativePressures.get(), minPres.get() };
+  }
+
+};
+
+/******************************** ScalingForSystemSolutionKernel ********************************/
+
+struct ScalingForSystemSolutionKernel
+{
+  template< typename POLICY >
+  static std::pair< real64, real64 > launch( arrayView1d< real64 const > const & localSolution,
+                                             globalIndex const rankOffset,
+                                             arrayView1d< globalIndex const > const & dofNumber,
+                                             arrayView1d< integer const > const & ghostRank,
+                                             real64 const maxAbsolutePresChange )
+  {
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
+
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei ) mutable
+    {
+      if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
+      {
+        localIndex const lid = dofNumber[ei] - rankOffset;
+
+        // compute the change in pressure
+        real64 const absPresChange = LvArray::math::abs( localSolution[lid] );
+        maxDeltaPres.max( absPresChange );
+
+        // maxAbsolutePresChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
+        if( maxAbsolutePresChange > 0.0 && absPresChange > maxAbsolutePresChange )
+        {
+          real64 const presScalingFactor = maxAbsolutePresChange / absPresChange;
+          scalingFactor.min( presScalingFactor );
+        }
+      }
+
+    } );
+
+    return { scalingFactor.get(), maxDeltaPres.get() };
   }
 
 };
@@ -612,35 +631,39 @@ struct SolutionCheckKernel
 
 struct StatisticsKernel
 {
-  template< typename POLICY >
   static void
   saveDeltaPressure( localIndex const size,
                      arrayView1d< real64 const > const & pres,
                      arrayView1d< real64 const > const & initPres,
                      arrayView1d< real64 > const & deltaPres )
   {
-    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       deltaPres[ei] = pres[ei] - initPres[ei];
     } );
   }
 
-  template< typename POLICY >
   static void
   launch( localIndex const size,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & deltaPres,
+          arrayView1d< real64 const > const & temp,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
+          arrayView2d< real64 const > const & density,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
           real64 & minDeltaPres,
           real64 & maxDeltaPres,
+          real64 & minTemp,
+          real64 & avgTempNumerator,
+          real64 & maxTemp,
           real64 & totalUncompactedPoreVol,
-          real64 & totalPoreVol )
+          real64 & totalPoreVol,
+          real64 & totalMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
@@ -649,10 +672,15 @@ struct StatisticsKernel
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinDeltaPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxDeltaPres( -LvArray::NumericLimits< real64 >::max );
 
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemp( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTempNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemp( -LvArray::NumericLimits< real64 >::max );
+
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalPoreVol( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalMass( 0.0 );
 
-    forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
       {
@@ -670,8 +698,13 @@ struct StatisticsKernel
       subRegionMinDeltaPres.min( deltaPres[ei] );
       subRegionMaxDeltaPres.max( deltaPres[ei] );
 
+      subRegionMinTemp.min( temp[ei] );
+      subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
+      subRegionMaxTemp.max( temp[ei] );
+
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
       subRegionTotalPoreVol += dynamicPoreVol;
+      subRegionTotalMass += dynamicPoreVol * density[ei][0];
     } );
 
     minPres = subRegionMinPres.get();
@@ -681,8 +714,13 @@ struct StatisticsKernel
     minDeltaPres = subRegionMinDeltaPres.get();
     maxDeltaPres = subRegionMaxDeltaPres.get();
 
+    minTemp = subRegionMinTemp.get();
+    avgTempNumerator = subRegionAvgTempNumerator.get();
+    maxTemp = subRegionMaxTemp.get();
+
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
     totalPoreVol = subRegionTotalPoreVol.get();
+    totalMass = subRegionTotalMass.get();
   }
 };
 
@@ -715,7 +753,10 @@ struct HydrostaticPressureKernel
 
     real64 dens = 0.0;
     real64 visc = 0.0;
-    fluidWrapper.compute( pres0, dens, visc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        pres0,
+                                                        dens,
+                                                        visc );
     pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
 
     // Step 3: fixed-point iteration until convergence
@@ -735,7 +776,10 @@ struct HydrostaticPressureKernel
       }
 
       // compute the density at this elevation using the previous pressure, and compute the new pressure
-      fluidWrapper.compute( pres0, dens, visc );
+      constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                          pres0,
+                                                          dens,
+                                                          visc );
       pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
     }
 
@@ -769,9 +813,10 @@ struct HydrostaticPressureKernel
     real64 datumDens = 0.0;
     real64 datumVisc = 0.0;
 
-    fluidWrapper.compute( datumPres,
-                          datumDens,
-                          datumVisc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        datumPres,
+                                                        datumDens,
+                                                        datumVisc );
 
     // Step 2: find the closest elevation to datumElevation
 
@@ -859,6 +904,6 @@ struct HydrostaticPressureKernel
 
 } // namespace singlePhaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP

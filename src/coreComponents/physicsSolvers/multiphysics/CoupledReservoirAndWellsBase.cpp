@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -19,7 +20,7 @@
 
 #include "CoupledReservoirAndWellsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
@@ -85,8 +86,8 @@ addCouplingNumNonzeros( SolverBase const * const solver,
         if( resElemGhostRank[er][esr][ei] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
 
           for( integer idof = 0; idof < resNumDof; ++idof )
           {
@@ -97,8 +98,8 @@ addCouplingNumNonzeros( SolverBase const * const solver,
         if( wellElemGhostRank[iwelem] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
 
           for( integer idof = 0; idof < wellNumDof; ++idof )
           {
@@ -149,12 +150,13 @@ bool validateWellPerforations( SolverBase const * const reservoirSolver,
 
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
-  GEOSX_THROW_IF( !badPerforation.first.empty(),
-                  GEOSX_FMT( "The well {} has a connection to the region {} which is not targeted by the solver", badPerforation.first, badPerforation.second ),
-                  std::runtime_error );
+  GEOS_THROW_IF( !badPerforation.first.empty(),
+                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the solver",
+                           wellSolver->getDataContext(), badPerforation.first, badPerforation.second ),
+                 std::runtime_error );
   return hasBadPerforations == 0;
 }
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

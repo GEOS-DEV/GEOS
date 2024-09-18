@@ -9,7 +9,7 @@ Cased ThermoElastic Wellbore Problem
 Problem description
 ------------------------------------------------------------------
 
-This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle a cased wellbore problem subjected to a uniform temperature change on the inner surface of the casing. The completed wellbore is composed of a steel casing, a cement sheath and rock formation. Isotropic linear thermoelastic behavior is assumed for all the three materials. No separation or thermal barrier is allowed for the casing-cement and cement-rock contact interfaces. Plane strain condition is also assumed.
+This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle a cased wellbore problem subject to a uniform temperature change on the inner surface of the casing. The wellbore is composed of a steel casing, a cement sheath and rock formation. Isotropic linear thermoelastic behavior is assumed for all three materials. No separation or thermal barrier is allowed for the casing-cement and cement-rock contact interfaces. Plane strain condition is assumed.
 
 .. _problemSketchCasedThermalElasticWellboreFig:
 .. figure:: sketch.png
@@ -19,13 +19,13 @@ This example uses the thermal option of the ``SinglePhasePoromechanics`` solver 
 
    Sketch of a cased thermoelastic wellbore 
 
-Solution to this axisymmetric problem can be obtained in the cylindrical coordinate system by using an implicit 1D finite difference method `(Jane and Lee 1999) <https://www.sciencedirect.com/science/article/abs/pii/S0093641399000828>`__. Results of such analysis will be considered as reference solutions to validate GEOSX results.
+Solution to this axisymmetric problem can be obtained in the cylindrical coordinate system by using an implicit 1D finite difference method `(Jane and Lee 1999) <https://www.sciencedirect.com/science/article/abs/pii/S0093641399000828>`__. Results of such analysis will be considered as reference solutions to validate GEOS results.
 
 
 **Input file**
 
 This benchmark example uses no external input files and everything required is
-contained within two GEOSX xml files that are located at:
+contained within two GEOS XML files located at:
 
 .. code-block:: console
 
@@ -44,10 +44,10 @@ The corresponding integrated test is
   inputFiles/wellbore/CasedThermoElasticWellbore_smoke.xml
 
 -----------------------------------------------------------
-Geometry and Mesh
+Geometry and mesh
 -----------------------------------------------------------
 
-The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the casing cylinder, the cement sheath cylinder and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degree to simulate the problem on a quarter of the wellbore geometry. The problem is under plane strain condition and therefore we only consider radial thermal diffusion on a single horizontal layer. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the wellbore to the far-field zone. In this example, the auto spacing option is only applied to the rock formation. The ``useCartesianOuterBoundary`` with a value 3 specified for the rock layer transforms the far-field boundary to a circular shape. The ``cellBlockNames`` and ``elementTypes`` define the regions and related element types associated to casing, cement sheath, and rock. 
+The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radii of the casing cylinder, the cement sheath cylinder and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 90 degrees to simulate the problem on a quarter of the wellbore geometry. The problem is under plane strain condition and therefore we only consider radial thermal diffusion on a single horizontal layer. The trajectory of the well is defined by ``trajectory``, which is vertical in this case. The ``autoSpaceRadialElems`` parameters allow for optimally increasing the element size from the wellbore to the far-field zone. In this example, the auto spacing option is only applied to the rock formation. The ``useCartesianOuterBoundary`` with a value 3 specified for the rock layer transforms the far-field boundary to a circular shape. The ``cellBlockNames`` and ``elementTypes`` define the regions and related element types associated to casing, cement sheath, and rock. 
  
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_benchmark.xml
   :language: xml
@@ -66,7 +66,7 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to create 
 Material properties
 -----------------------------------------------------------
 
-The bulk and shear drained elastic moduli of the materials as well as its drained linear thermal expansion coefficient relating stress change to temperature change are defined within the ``Constitution`` tag as follows:
+The bulk and shear drained elastic moduli of the materials as well as its drained linear thermal expansion coefficient relating stress change to temperature change are defined within the ``Constitutive`` tag as follows:
  
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
@@ -96,14 +96,14 @@ and
   :start-after: <!-- SPHINX_HeatCapacityProperties -->
   :end-before: <!-- SPHINX_HeatCapacityPropertiesEnd -->
 
-An ultra low permeability is defined for the three layers to simulate a thermoelastic problem without the impact of fluid flow.
+An ultra-low permeability is defined for the three layers to simulate a thermoelastic problem without the impact of fluid flow.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_PermeabilityProperties -->
   :end-before: <!-- SPHINX_PermeabilityPropertiesEnd -->
 
-Also, a negligible volumetric heat capacity is defined for fluid to completely ignore the thermal convection effect such that only thermal transfer via the diffusion phenomenon is considered.
+Also, a negligible volumetric heat capacity is defined for the fluid to completely ignore the thermal convection effect such that only thermal transfers via the diffusion phenomenon are considered.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
@@ -144,7 +144,7 @@ The initial reservoir temperature (that is also the far-field boundary temperatu
   :start-after: <!-- SPHINX_TemperatureBC -->
   :end-before: <!-- SPHINX_TemperatureBCEnd -->
 
-It is important to remark that the initial stress of each layers must be set with accordance to the initial temperature: :math:`\sigma_{0} = 3K\alpha T_{0}` where :math:`\sigma_{0}` is the initial principal stress, :math:`T_{0}` is the initial temperature, :math:`K` is the drained bulk modulus and :math:`\alpha` is the drained linear thermal expansion coefficient of the materials.
+It is important to remark that the initial effective stress of each layers must be set with accordance to the initial temperature: :math:`\sigma_{0} = 3K\alpha \delta T_{0}` where :math:`\sigma_{0}` is the initial effective principal stress, :math:`\delta T_{0}` is the initial temperature change, :math:`K` is the drained bulk modulus and :math:`\alpha` is the drained linear thermal expansion coefficient of the materials.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
@@ -210,17 +210,35 @@ Also, periodic events are required to trigger the collection of this data on the
 Results and benchmark
 ---------------------------------
 
-A good agreement between the GEOSX results and analytical results for temperature distribution around the cased wellbore is shown in the figures below:
+A good agreement between the GEOS results and analytical results for temperature distribution around the cased wellbore is shown in the figures below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_temperature.py
+.. _problemCasedThermoElasticWellbore_Temperature_Fig:
+.. figure:: temperature.png
+   :align: center
+   :width: 800
+   :figclass: align-center
+
+   Validation of the temperature.
 
 and the validation for the radial displacement around the cased wellbore is shown below:
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_displacement.py
+.. _problemCasedThermoElasticWellbore_Displacement_Fig:
+.. figure:: displacement.png
+   :align: center
+   :width: 800
+   :figclass: align-center
 
-The validations of the total radial and hoop stress (tangent stress) components computed by GEOSX against reference results are shown in the figure below:
+   Validation of the displacement.
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/casedThermoElasticWellbore/thermoElastic_casedWellbore_stress.py
+The validations of the total radial and hoop stress (tangent stress) components computed by GEOS against reference results are shown in the figure below:
+
+.. _problemCasedThermoElasticWellbore_Stresses_Fig:
+.. figure:: stress.png
+   :align: center
+   :width: 800
+   :figclass: align-center
+
+   Validation of the stresses.
 
 ------------------------------------------------------------------
 To go further
@@ -229,4 +247,4 @@ To go further
 **Feedback on this example**
 
 This concludes the cased wellbore example.
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.

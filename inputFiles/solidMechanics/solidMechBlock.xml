@@ -110,14 +110,6 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
-      name="xposconstraint"
-      objectPath="nodeManager"
-      fieldName="Force"
-      component="1"
-      scale="1.0e6"
-      functionName="timeFunction"
-      setNames="{ source }"/>
   </FieldSpecifications>
 
   <Functions>

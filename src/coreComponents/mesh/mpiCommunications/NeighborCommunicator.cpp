@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -24,7 +25,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -98,7 +99,7 @@ void NeighborCommunicator::mpiISendReceiveBuffers( int const commID,
 }
 
 
-void NeighborCommunicator::mpiWaitAll( int const GEOSX_UNUSED_PARAM( commID ),
+void NeighborCommunicator::mpiWaitAll( int const GEOS_UNUSED_PARAM( commID ),
                                        MPI_Request & mpiSendRequest,
                                        MPI_Status & mpiSendStatus,
                                        MPI_Request & mpiRecvRequest,
@@ -138,7 +139,7 @@ int NeighborCommunicator::postSizeRecv( int const commID,
                             1,
                             m_neighborRank,
                             recvTag,
-                            MPI_COMM_GEOSX,
+                            MPI_COMM_GEOS,
                             &mpiRecvSizeRequest );
 }
 
@@ -150,7 +151,7 @@ int NeighborCommunicator::postSizeSend( int const commID,
                             1,
                             m_neighborRank,
                             sendTag,
-                            MPI_COMM_GEOSX,
+                            MPI_COMM_GEOS,
                             &mpiSendSizeRequest );
 }
 
@@ -163,7 +164,7 @@ int NeighborCommunicator::postRecv( int const commID,
                             m_receiveBufferSize[commID],
                             m_neighborRank,
                             recvTag,
-                            MPI_COMM_GEOSX,
+                            MPI_COMM_GEOS,
                             &mpRecvRequest );
 }
 
@@ -175,7 +176,7 @@ int NeighborCommunicator::postSend( int const commID,
                             m_sendBufferSize[commID],
                             m_neighborRank,
                             sendTag,
-                            MPI_COMM_GEOSX,
+                            MPI_COMM_GEOS,
                             &mpiSendRequest );
 }
 
@@ -230,7 +231,7 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
   return packedSize;
 }
 
-void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
+void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( contactActive ),
                                                  integer const depth,
                                                  MeshLevel & mesh,
                                                  int const commID,
@@ -238,24 +239,23 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
                                                  MPI_Request & mpiSendSizeRequest,
                                                  MPI_Request & mpiSendRequest )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  this->postSizeRecv( commID,
-                      mpiRecvSizeRequest ); // post recv for buffer size from neighbor.
+  this->postSizeRecv( commID, mpiRecvSizeRequest ); // post recv for buffer size from neighbor.
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  localIndex_array & nodeAdjacencyList = nodeManager.getNeighborData( m_neighborRank ).adjacencyList();
-  localIndex_array & edgeAdjacencyList = edgeManager.getNeighborData( m_neighborRank ).adjacencyList();
-  localIndex_array & faceAdjacencyList = faceManager.getNeighborData( m_neighborRank ).adjacencyList();
+  array1d< localIndex > & nodeAdjacencyList = nodeManager.getNeighborData( m_neighborRank ).adjacencyList();
+  array1d< localIndex > & edgeAdjacencyList = edgeManager.getNeighborData( m_neighborRank ).adjacencyList();
+  array1d< localIndex > & faceAdjacencyList = faceManager.getNeighborData( m_neighborRank ).adjacencyList();
 
   {
     ElemAdjListRefWrapType elementAdjacencyList =
-      elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
-                                                                  std::to_string( this->m_neighborRank ) );
+      elemManager.constructReferenceAccessor< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
+                                                                       std::to_string( this->m_neighborRank ) );
 
     mesh.generateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
                                  nodeAdjacencyList,
@@ -268,15 +268,13 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
   ElemAdjListViewType const elemAdjacencyList =
     elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
                                                                                            std::to_string( this->m_neighborRank ) );
-
   int const bufferSize = GhostSize( nodeManager, nodeAdjacencyList,
                                     edgeManager, edgeAdjacencyList,
                                     faceManager, faceAdjacencyList,
                                     elemManager, elemAdjacencyList );
 
   this->resizeSendBuffer( commID, bufferSize );
-  this->postSizeSend( commID,
-                      mpiSendSizeRequest );
+  this->postSizeSend( commID, mpiSendSizeRequest );
 
   buffer_type & sendBuff = sendBuffer( commID );
   buffer_unit_type * sendBufferPtr = sendBuff.data();
@@ -287,7 +285,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
                                      faceManager, faceAdjacencyList,
                                      elemManager, elemAdjacencyList );
 
-  GEOSX_ERROR_IF_NE( bufferSize, packedSize );
+  GEOS_ERROR_IF_NE( bufferSize, packedSize );
 
   this->postSend( commID, mpiSendRequest );
 }
@@ -295,7 +293,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( 
 void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
                                          int const commID )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -338,7 +336,7 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   unpackedSize += elemManager.unpack( receiveBufferPtr, elementAdjacencyReceiveList );
   waitAllDeviceEvents( events );
 
-  GEOSX_ERROR_IF_NE( receiveBuff.size(), unpackedSize );
+  GEOS_ERROR_IF_NE( receiveBuff.size(), unpackedSize );
 
 }
 
@@ -349,7 +347,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
                                                     MPI_Request & mpiSendRequest
                                                     )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   this->postSizeRecv( commID,
                       mpiRecvSizeRequest );
@@ -434,7 +432,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
                                            localToGlobal.toSliceConst() );
   } );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   this->postSend( commID, mpiSendRequest );
 }
@@ -442,7 +440,7 @@ void NeighborCommunicator::prepareAndSendSyncLists( MeshLevel const & mesh,
 void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
                                                       int const commID )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -489,7 +487,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
                                                bool onDevice,
                                                parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -543,7 +541,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
                                                   bool onDevice,
                                                   parallelDeviceEvents & events )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -592,7 +590,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
     }
   }
 
-  GEOSX_ERROR_IF_NE( bufferSize, packedSize );
+  GEOS_ERROR_IF_NE( bufferSize, packedSize );
 }
 
 
@@ -600,9 +598,10 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
                                                 MeshLevel & mesh,
                                                 int const commID,
                                                 bool onDevice,
-                                                parallelDeviceEvents & events )
+                                                parallelDeviceEvents & events,
+                                                MPI_Op op )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   buffer_type const & receiveBuff = receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
@@ -626,7 +625,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
     {
       case FieldLocation::Node:
       {
-        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events );
+        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events, op );
         break;
       }
       case FieldLocation::Edge:
@@ -653,4 +652,4 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
 
 
 
-} /* namespace geosx */
+} /* namespace geos */

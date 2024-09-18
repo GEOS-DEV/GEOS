@@ -1,50 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    
-    <!-- SPHINX_POROMECHANICSSOLVER -->    
-    <SinglePhasePoromechanics
-      name="thermoPoroSolver"
-      solidSolverName="solidMechSolver"
-      flowSolverName="flowSolver"
-      isThermal="1"
-      logLevel="1"
-      targetRegions="{ Domain }">
-      <NonlinearSolverParameters
-        couplingType="FullyImplicit"
-        newtonMaxIter="200"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhasePoromechanics>
-    <!-- SPHINX_POROMECHANICSSOLVER_END -->
-    <!-- SPHINX_MECHANICALSOLVER -->    
-    <SolidMechanicsLagrangianSSLE
-      name="solidMechSolver"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Domain }"/>
-    <!-- SPHINX_MECHANICALSOLVER_END -->
-    <!-- SPHINX_SINGLEPHASEFVM -->    
-    <SinglePhaseFVM
-      name="flowSolver"
-      logLevel="1"
-      discretization="tpfaFlow"
-      temperature="273.0"
-      isThermal="1"
-      targetRegions="{ Domain }">
-      <NonlinearSolverParameters
-        newtonMaxIter="100"
-        newtonMinIter="0"
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhaseFVM>
-    <!-- SPHINX_SINGLEPHASEFVM_END -->    
-  </Solvers>
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -79,20 +35,21 @@
       defaultDensity="2400"
       defaultBulkModulus="1e4"
       defaultShearModulus="2.143e3"
-      defaultThermalExpansionCoefficient="3e-7"/>
+      defaultDrainedLinearTEC="3e-7"/>
     <!-- SPHINX_SOLID_END -->
 
     <!-- SPHINX_POROSITY -->    
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.2"/>
+      defaultGrainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.2"
+      defaultPorosityTEC="3e-7"/>
     <!-- SPHINX_POROSITY_END -->        
 
     <!-- SPHINX_INTERNAL_ENERGY -->            
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="1.672e5"
+      referenceVolumetricHeatCapacity="1.672e5"
       referenceTemperature="0.0"
       referenceInternalEnergy="0.0"/>
     <!-- SPHINX_INTERNAL_ENERGY_END -->        
@@ -107,7 +64,7 @@
       compressibility="0.0"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
-      volumetricHeatCapacity="1.672e2"
+      specificHeatCapacity="1.672e2"
       referenceInternalEnergy="0.001"/>
     <!-- SPHINX_FLUID_END -->                
 
@@ -116,9 +73,9 @@
       name="rockPerm"
       permeabilityComponents="{ 4.0e-9, 4.0e-9, 4.0e-9 }"/>
     
-    <SinglePhaseConstantThermalConductivity
+    <SinglePhaseThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 836, 836, 836 }"/>
+      defaultThermalConductivityComponents="{ 836, 836, 836 }"/>
     <!-- SPHINX_PERMEABILITY_CONDUCTIVITY_END -->
     
   </Constitutive>
@@ -244,7 +201,8 @@
   
   <Outputs>
     <VTK
-      name="thermoPoroVTKOutput"/>
+      name="thermoPoroVTKOutput"
+      plotFileRoot="thermoPoro_consolidation_fim"/>
 
     <TimeHistory
       name="pressureHistoryOutput"

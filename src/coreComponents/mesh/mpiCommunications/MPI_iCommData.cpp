@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -14,7 +15,7 @@
 
 #include "MPI_iCommData.hpp"
 
-namespace geosx
+namespace geos
 {
 
 MPI_iCommData::MPI_iCommData( int const inputCommID ):
@@ -35,14 +36,14 @@ MPI_iCommData::~MPI_iCommData()
 {
   for( int neighbor=0; neighbor<m_size; ++neighbor )
   {
-    GEOSX_ERROR_IF( m_mpiSendBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
-    GEOSX_ERROR_IF( m_mpiRecvBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
-    GEOSX_ERROR_IF( m_mpiSendBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
-    GEOSX_ERROR_IF( m_mpiRecvBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiSendBufferRequest[neighbor] != MPI_REQUEST_NULL,
+                   "Destroying MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiRecvBufferRequest[neighbor] != MPI_REQUEST_NULL,
+                   "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiSendBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
+                   "Destroying MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiRecvBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
+                   "Destroying MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
   }
 }
 
@@ -51,14 +52,14 @@ void MPI_iCommData::resize( localIndex numMessages )
 {
   for( int neighbor=0; neighbor<m_size; ++neighbor )
   {
-    GEOSX_ERROR_IF( m_mpiSendBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
-    GEOSX_ERROR_IF( m_mpiRecvBufferRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
-    GEOSX_ERROR_IF( m_mpiSendBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
-    GEOSX_ERROR_IF( m_mpiRecvBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
-                    "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiSendBufferRequest[neighbor] != MPI_REQUEST_NULL,
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiRecvBufferRequest[neighbor] != MPI_REQUEST_NULL,
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiSendBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiSendBufferSizeRequest for neighbor "<<neighbor );
+    GEOS_ERROR_IF( m_mpiRecvBufferSizeRequest[neighbor] != MPI_REQUEST_NULL,
+                   "resize(localIndex) called on MPI_iCommData with uncompleted m_mpiRecvBufferSizeRequest for neighbor "<<neighbor );
   }
 
   m_mpiSendBufferRequest.resize( numMessages );
@@ -81,4 +82,4 @@ void MPI_iCommData::resize( localIndex numMessages )
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

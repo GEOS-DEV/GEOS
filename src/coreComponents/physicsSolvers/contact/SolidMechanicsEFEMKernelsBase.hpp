@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,14 +18,14 @@
  * @file SolidMechanicsEFEMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsEFEMKernels
@@ -32,7 +33,7 @@ namespace solidMechanicsEFEMKernels
 
 /**
  * @brief Implements kernels for solving quasi-static equilibrium.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -70,11 +71,12 @@ public:
   using Base::m_X;
   using Base::m_disp;
   using Base::m_uhat;
+  using Base::m_dt;
 
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
   EFEMKernelsBase( NodeManager const & nodeManager,
@@ -89,6 +91,7 @@ public:
                    globalIndex const rankOffset,
                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
                    arrayView1d< real64 > const inputRhs,
+                   real64 const inputDt,
                    real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -101,6 +104,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
+          inputDt,
           inputGravityVector ),
     m_w( embeddedSurfSubRegion.getField< fields::contact::dispJump >().toView() ),
     m_tractionVec( embeddedSurfSubRegion.getField< fields::contact::traction >().toViewConst() ),
@@ -131,7 +135,7 @@ public:
     /**
      * Default constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       dispEqnRowIndices{ 0 },
       dispColIndices{ 0 },
@@ -191,7 +195,7 @@ public:
   //***************************************************************************
 
   /**
-   * @copydoc ::geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc ::geos::finiteElement::KernelBase::kernelLaunch
    *
    * @detail it uses the kernelLaunch interface of KernelBase but it only launches the kernel
    * on the set of fractured elements within the subregion.
@@ -205,15 +209,14 @@ public:
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
-
-    GEOSX_UNUSED_VAR( numElems );
+    GEOS_MARK_FUNCTION;
+    GEOS_UNUSED_VAR( numElems );
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+                      [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex k = kernelComponent.m_fracturedElems[i];
       typename KERNEL_TYPE::StackVariables stack;
@@ -230,8 +233,8 @@ public:
   }
   //END_kernelLauncher
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -323,7 +326,7 @@ protected:
 
 } // namespace SolidMechanicsEFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_ */

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -21,18 +22,20 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
-#define GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+#ifndef GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
 
-#include "StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
+#include "codingUtilities/RTTypes.hpp"
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
+#include "common/format/Format.hpp"
 
 #include <iostream>
 #include <type_traits>
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -135,9 +138,9 @@ struct EnumStrings
     auto const & strings = get();
     std::size_t size = std::distance( std::begin( strings ), std::end( strings ) );
     base_type const index = static_cast< base_type >( e );
-    GEOSX_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
-                    "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
-                    InputError );
+    GEOS_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
+                   "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
+                   InputError );
     return strings[ index ];
   }
 
@@ -150,9 +153,9 @@ struct EnumStrings
   {
     auto const & strings = get();
     auto const it = std::find( std::begin( strings ), std::end( strings ), s );
-    GEOSX_THROW_IF( it == std::end( strings ),
-                    "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
-                    InputError );
+    GEOS_THROW_IF( it == std::end( strings ),
+                   "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
+                   InputError );
     enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( std::begin( strings ), it ) ) );
     return e;
   }
@@ -173,12 +176,37 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
   /**
    * @brief @return Regex for validating enumeration inputs for @p ENUM type.
    */
-  static string get()
+  static Regex get()
   {
-    return EnumStrings< ENUM >::concat( "|" );
+    return Regex( EnumStrings< ENUM >::concat( "|" ),
+                  "Input value must be one of { " + EnumStrings< ENUM >::concat( ", " ) + "}." );
   }
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+// Formatter specialization for enums
+template< typename Enum >
+struct GEOS_FMT_NS::formatter< Enum, std::enable_if_t< std::is_enum< Enum >::value && geos::internal::HasEnumStrings< Enum >, char > >
+  : GEOS_FMT_NS::formatter< std::string >
+{
+  template< typename FormatContext >
+  auto format( Enum e, FormatContext & ctx ) const
+  {
+    return formatter< std::string >::format( toString( e ), ctx );
+  }
+};
+
+// Formatter specialization for enums
+template< typename Enum >
+struct GEOS_FMT_NS::formatter< Enum, std::enable_if_t< std::is_enum< Enum >::value && !geos::internal::HasEnumStrings< Enum >, char > >
+  : GEOS_FMT_NS::formatter< std::underlying_type_t< Enum > >
+{
+  template< typename FormatContext >
+  auto format( Enum e, FormatContext & ctx ) const
+  {
+    return GEOS_FMT_NS::formatter< std::underlying_type_t< Enum > >::format( toUnderlying( e ), ctx );
+  }
+};
+
+#endif //GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP

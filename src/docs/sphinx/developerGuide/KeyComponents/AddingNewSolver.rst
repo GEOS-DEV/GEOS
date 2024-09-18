@@ -3,7 +3,7 @@
 Adding a new Physics Solver
 ###########################
 
-In this tutorial, you will learn how to construct a new GEOSX Physics Solver class.
+In this tutorial, you will learn how to construct a new GEOS Physics Solver class.
 We will use *LaplaceFEM* solver, computing the solution of the Laplace problem in
 a specified material, as a starting point.
 
@@ -56,7 +56,7 @@ the transient state.
    :end-before: //END_SPHINX_INCLUDE_TIMEINTOPT
 
 In order to register an enumeration type with the Data Repository and have its value read from input,
-we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
+we must define stream insertion/extraction operators. This is a common task, so GEOS provides
 a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
 at the namespace scope (in this case, right after the ``LaplaceBaseH1`` class definition is complete):
 
@@ -74,7 +74,7 @@ Once explained the main variables and enum, let us start reading through the dif
 
 Start looking at the class *LaplaceFEM* constructor and destructor declarations
 shows the usual `string` ``name`` and `Group*` pointer to ``parent`` that are required
-to build the global file-system like structure of GEOSX (see :ref:`GroupPar` for details).
+to build the global file-system like structure of GEOS (see :ref:`GroupPar` for details).
 It can also be noted that the nullary constructor is deleted on purpose to avoid compiler
 automatic generation and user misuse.
 
@@ -117,7 +117,7 @@ when ``applyBoundaryConditions()`` is called in this particular class override.
 Browsing the base class ``SolverBase``, it can be noted that most of the solver interface functions are called during
 either ``SolverBase::linearImplicitStep()`` or ``SolverBase::nonlinearImplicitStep()`` depending on the solver strategy chosen.
 
-Switching to protected members, ``postProcessInput()`` is a central member function and
+Switching to protected members, ``postInputInitialization()`` is a central member function and
 will be called by ``Group`` object after input is read from XML entry file.
 It will set and dispatch solver variables from the base class ``SolverBase`` to the most derived class.
 For ``LaplaceFEM``, it will allow us to set the right time integration scheme based on the XML value
@@ -202,7 +202,7 @@ to writing our new *LaplaceDiffFEM* solver.
 
 .. note::
 
-  We might want to remove final keyword from ``postProcessInput()`` as it will prevent you from overriding it.
+  We might want to remove final keyword from ``postInputInitialization()`` as it will prevent you from overriding it.
 
 Start doing your own Physic solver
 ==================================
@@ -218,7 +218,7 @@ commented afterwards.
 
   #include "physicsSolvers/simplePDE/LaplaceFEM.hpp"
 
-  namespace geosx
+  namespace geos
   {
 
   class LaplaceDiffFEM : public LaplaceFEM
@@ -249,7 +249,7 @@ commented afterwards.
     } laplaceDiffFEMViewKeys;
 
     protected:
-    virtual void postProcessInput() override final;
+    virtual void postInputInitialization() override final;
 
   private:
     real64 m_diffusion;
@@ -268,7 +268,7 @@ Then as mentioned in :ref:`Implementation`, the diffusion coefficient is used wh
 we will have to override the ``assembleSystem()`` function as detailed below.
 
 Moreover, if we want to introduce a new binding between the input XML and the code we will have to work on the three
-``struct viewKeyStruct`` , ``postProcessInput()`` and the constructor.
+``struct viewKeyStruct`` , ``postInputInitialization()`` and the constructor.
 
 Our new solver ``viewKeyStruct`` will have its own structure inheriting from the *LaplaceFEM* one to have the ``timeIntegrationOption``
 and ``fieldName`` field. It will also create a ``diffusionCoeff`` field to be bound to the user defined homogeneous coefficient on one hand
@@ -293,13 +293,13 @@ an "input uniform diffusion coefficient for the Laplace equation".
       setDescription("input uniform diffusion coeff for the laplace equation");
   }
 
-Another important spot for binding the value of the XML read parameter to our ``m_diffusion`` is in ``postProcessInput()``.
+Another important spot for binding the value of the XML read parameter to our ``m_diffusion`` is in ``postInputInitialization()``.
 
 .. code-block:: c++
 
-  void LaplaceDiffFEM::postProcessInput()
+  void LaplaceDiffFEM::postInputInitialization()
   {
-    LaplaceFEM::postProcessInput();
+    LaplaceFEM::postInputInitialization();
 
     string sDiffCoeff = this->getReference<string>(laplaceDiffFEMViewKeys.diffusionCoeff);
     this->m_diffusion = std::stof(sDiffCoeff);
@@ -359,6 +359,6 @@ After assembling both declarations and implementations for our new solver, the f
  - add declarations to parent CMakeLists.txt (here add to ``physicsSolvers_headers`` );
  - add implementations to parent CMakeLists.txt (here add to ``physicsSolvers_sources``);
  - check that Doxygen comments are properly set in our solver class;
- - uncrustify it to match the code style;
+ - uncrustify it to match the code style by going to the build folder and running the command: make uncrustify_style;
  - write unit tests for each new features in the solver class;
  - write an integratedTests for the solver class.
