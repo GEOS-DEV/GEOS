@@ -170,7 +170,7 @@ string TableTextFormatter::layoutToString() const
 
   prepareAndBuildTable( columns, tableData, nbHeaderRows, sectionSeparatingLine, topSeparator );
 
-  tableOutput << '\n'; //TODO Fonction
+  tableOutput << '\n';
   outputTitleRow( tableOutput, topSeparator );
   tableOutput << GEOS_FMT( "{}\n", sectionSeparatingLine );
   outputHeaderSectionRows( columns, tableOutput, nbHeaderRows, sectionSeparatingLine );
@@ -202,7 +202,6 @@ void TableTextFormatter::prepareAndBuildTable( std::vector< TableLayout::Column 
 {
   std::vector< std::vector< string > > tableDataRows = tableData.getTableDataRows();
   std::vector< std::vector< string > > splitHeaders;
-
   if( !tableData.getTableDataRows().empty())
   {
     updateVisibleColumns( columns, tableDataRows );
@@ -244,6 +243,7 @@ void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout:
                                                        bool isSubColumn ) const
 {
   size_t currentColumn = 0;
+
   std::vector< std::vector< std::string > > tColumnsValues( tableDataRows[0].size(), std::vector< std::string >( tableDataRows.size()));
   if( !isSubColumn )
   {
@@ -493,8 +493,17 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Colu
       }
 
     }
-    // Append right border with line return
-    tableOutput << GEOS_FMT( "{:>{}}\n", m_verticalLine, borderMargin );
+
+    if( columns[columns.size() - 1].subColumn.empty())
+    {
+      // Append right border
+      tableOutput << GEOS_FMT( "{:>{}}", m_verticalLine, borderMargin );
+    }
+
+    if( idxRow != nbRows - 1 || !m_tableLayout.isLineWrapped())
+    {
+      tableOutput << "\n";
+    }
   }
 
   if( nbRows != 0 )

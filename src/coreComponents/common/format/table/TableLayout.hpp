@@ -119,6 +119,24 @@ public:
     //sub divison of a column
     std::vector< Column > subColumn;
 
+    Column( ColumnParam columnParam )
+      : parameter( columnParam )
+    {}
+
+    Column( ColumnParam columnParam, std::vector< Column > subColumnInit )
+      : parameter( columnParam ), subColumn( subColumnInit )
+    {}
+
+    Column( ColumnParam columnParam,
+            std::vector< string > columnValuesInit,
+            std::vector< string > maxStringSizeInit,
+            std::vector< Column > subColumnInit )
+      : parameter( columnParam ),
+      columnValues( columnValuesInit ),
+      maxStringSize( maxStringSizeInit ),
+      subColumn( subColumnInit )
+    {}
+
   };
 
   TableLayout() = default;
@@ -129,17 +147,23 @@ public:
    * @param title The table name
    * @param subColumns
    */
-  TableLayout( std::vector< string > const & columnNames,
-               string const & title = "" );
+  TableLayout( std::vector< string > const & columnNames );
 
-  /**
-   * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
-   * level
-   * @param columnParameters List of structures to set up each colum parameters.
-   * @param title The table name
-   * @param subColumns
-   */
-  TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title = "" );
+  // /**
+  //  * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
+  //  * level
+  //  * @param columnParameters List of structures to set up each colum parameters.
+  //  * @param title The table name
+  //  * @param subColumns
+  //  */
+  // TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title = "" );
+
+  template< typename ... Args >
+  TableLayout( Args &&... args )
+  {
+    setMargin( MarginValue::medium );
+    processArguments( std::forward< Args >( args )... );
+  }
 
   /**
    * @return The columns vector
@@ -151,6 +175,23 @@ public:
    * @return The table name
    */
   string_view getTitle() const;
+
+  /**
+   * @param title The table title
+   */
+  void setTitle( std::string const & title );
+
+  /**
+   * @brief 
+   */
+  void noWrapLine();
+
+  /**
+   * @brief 
+   */
+  bool isLineWrapped() const;
+
+  void removeSubColumn();
 
   /**
    * @return The border margin, number of spaces at both left and right table sides plus vertical character
@@ -175,7 +216,50 @@ public:
 
 private:
 
+  template< typename T, typename ... Ts >
+  void processArguments( T && arg, Ts &&... args )
+  {
+    addToData( std::forward< T >( arg ));
+    if constexpr (sizeof...(args) > 0)
+    {
+      processArguments( std::forward< Ts >( args )... );
+    }
+  }
+
+  void addToData( const std::vector< std::string > & args )
+  {
+    for( const auto & arg : args )
+    {
+      addToData( std::string( arg ));
+    }
+  }
+
+  void addToData( std::string && arg )
+  {
+    m_columns.push_back( TableLayout::ColumnParam{{arg}} );
+  }
+
+  void addToData( ColumnParam && arg )
+  {
+    if( !arg.subColumns.empty() )
+    {
+      std::vector< TableLayout::Column > subColumns;
+      for( const auto & subColumnsName: arg.subColumns )
+      {
+        subColumns.push_back( TableLayout::Column{subColumnsName} );
+      }
+      m_columns.push_back( TableLayout::Column{arg, subColumns} );
+    }
+    else
+    {
+      m_columns.push_back( TableLayout::Column{arg} );
+    }
+
+  }
+
   std::vector< Column > m_columns;
+
+  bool m_wrapLine = false;
 
   string m_tableTitle;
   integer m_borderMargin;

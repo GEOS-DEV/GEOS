@@ -21,49 +21,66 @@
 namespace geos
 {
 
-void addColumn( std::vector< TableLayout::ColumnParam > const & columnsParam, std::vector< TableLayout::Column > & columns )
+void addColumns( std::vector< TableLayout::ColumnParam > const & columnsParam, std::vector< TableLayout::Column > & columns )
 {
   for( const auto & columnParam : columnsParam )
   {
-    bool subColum = false;
-    std::vector< TableLayout::Column > subColumnsToAdd;
-    TableLayout::Column columnToAdd = {columnParam, {}, {}, {}};
-    for( const auto & subColumnsName: columnParam.subColumns )
+    if( !columnParam.subColumns.empty() )
     {
-      subColum = true;
-      TableLayout::Column subColumn= {subColumnsName, {}, {}, {}};
-      subColumnsToAdd.push_back( subColumn );
-      columnToAdd = { columnParam, {}, {}, subColumnsToAdd };
-    }
-    if( subColum )
-    {
-      columns.push_back( columnToAdd );
+      std::vector< TableLayout::Column > subColumns;
+      for( const auto & subColumnsName: columnParam.subColumns )
+      {
+        subColumns.push_back( TableLayout::Column{subColumnsName} );
+      }
+      columns.push_back( TableLayout::Column{columnParam, subColumns} );
     }
     else
     {
-      columns.push_back( { columnParam, {}, {}, {}} );
+      columns.push_back( TableLayout::Column{columnParam} );
     }
   }
 }
 
-TableLayout::TableLayout( std::vector< string > const & columnNames, string const & title ):
-  m_tableTitle( title )
+TableLayout::TableLayout( std::vector< string > const & columnNames )
 {
   setMargin( MarginValue::medium );
+
+  std::vector< TableLayout::ColumnParam > columnParams;
   m_columns.reserve( columnNames.size() );
+  columnParams.reserve( columnNames.size() );
+
   for( auto const & name : columnNames )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{name}, Alignment::right, true}, {}, {}, {}} );
+    columnParams.push_back( TableLayout::ColumnParam{{name}} );
+  }
+
+  addColumns( columnParams, m_columns );
+}
+
+void TableLayout::setTitle( std::string const & title )
+{
+  m_tableTitle = title;
+}
+
+void TableLayout::noWrapLine()
+{
+  m_wrapLine = false;
+}
+
+bool TableLayout::isLineWrapped() const
+{
+  return m_wrapLine;
+}
+void TableLayout::removeSubColumn()
+{
+  for( auto & column : m_columns )
+  {
+    if( !column.subColumn.empty() )
+    {
+      column.subColumn.clear();
+    }
   }
 }
-
-TableLayout::TableLayout( std::vector< ColumnParam > const & columnParams, string const & title ):
-  m_tableTitle( title )
-{
-  setMargin( MarginValue::medium );
-  addColumn( columnParams, m_columns );
-}
-
 
 void TableLayout::setMargin( MarginValue marginValue )
 {
