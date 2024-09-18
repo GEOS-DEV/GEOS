@@ -32,7 +32,7 @@ Internally, the triaxial driver uses a simple form of time-stepping to advance t
 
 The key parameters for the TriaxialDriver are:
 
-.. include:: /coreComponents/schema/docs/TriaxialDriver.rst
+.. include:: /docs/sphinx/datastructure/TriaxialDriver.rst
 
 .. note::
 
