@@ -57,20 +57,31 @@ TableLayout::TableLayout( std::vector< string > const & columnNames )
   addColumns( columnParams, m_columns );
 }
 
-void TableLayout::setTitle( std::string const & title )
+TableLayout & TableLayout::setTitle( std::string const & title )
 {
   m_tableTitle = title;
+  return *this;
 }
 
-void TableLayout::noWrapLine()
+TableLayout & TableLayout::disableLineWrap()
 {
   m_wrapLine = false;
+  return *this;
 }
 
-bool TableLayout::isLineWrapped() const
+TableLayout & TableLayout::setMargin( MarginValue marginValue )
+{
+  m_borderMargin = marginValue + 1;
+  m_columnMargin = integer( marginValue ) * 2 + 1;
+
+  return *this;
+}
+
+bool TableLayout::isLineWrapEnabled() const
 {
   return m_wrapLine;
 }
+
 void TableLayout::removeSubColumn()
 {
   for( auto & column : m_columns )
@@ -80,12 +91,6 @@ void TableLayout::removeSubColumn()
       column.subColumn.clear();
     }
   }
-}
-
-void TableLayout::setMargin( MarginValue marginValue )
-{
-  m_borderMargin = marginValue + 1;
-  m_columnMargin = integer( marginValue ) * 2 + 1;
 }
 
 std::vector< TableLayout::Column > const & TableLayout::getColumns() const

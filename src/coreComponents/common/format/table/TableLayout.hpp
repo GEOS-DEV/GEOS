@@ -104,7 +104,6 @@ public:
     {}
   };
 
-
   /**
    * @brief Struct for a column.
    */
@@ -190,18 +189,27 @@ public:
 
   /**
    * @param title The table title
+   * @return The tableLayout reference
    */
-  void setTitle( std::string const & title );
+  TableLayout & setTitle( std::string const & title );
 
   /**
-   * @brief
+   * @brief Remove the last return line a the end of the table
+   * @return The tableLayout reference
    */
-  void noWrapLine();
+  TableLayout & disableLineWrap();
+
+  /**
+   * @brief Set the minimal margin width between cell content and borders.
+   * @param marginValue The margin value
+    * @return The tableLayout reference
+   */
+  TableLayout & setMargin( MarginValue marginValue );
 
   /**
    * @brief Remove the line return at the end of the table
    */
-  bool isLineWrapped() const;
+  bool isLineWrapEnabled() const;
 
   /**
    * @brief Remove all subcolumn in all columns
@@ -222,12 +230,6 @@ public:
    * @return The margin title
    */
   integer const & getMarginTitle() const;
-
-  /**
-   * @brief Set the minimal margin width between cell content and borders.
-   * @param marginValue The margin value
-   */
-  void setMargin( MarginValue marginValue );
 
 private:
 

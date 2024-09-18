@@ -500,7 +500,7 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Colu
       tableOutput << GEOS_FMT( "{:>{}}", m_verticalLine, borderMargin );
     }
 
-    if( idxRow != nbRows - 1 || !m_tableLayout.isLineWrapped())
+    if( idxRow != nbRows - 1 || !m_tableLayout.isLineWrapEnabled())
     {
       tableOutput << "\n";
     }
@@ -520,7 +520,9 @@ void TableTextFormatter::outputTitleRow( std::ostringstream & tableOutput,
   {
     tableOutput << GEOS_FMT( "{}\n", topSeparator );
     tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, m_tableLayout.getBorderMargin());
-    tableOutput << buildCell( TableLayout::Alignment::center, tableTitle, (topSeparator.length() - 6));
+    tableOutput << buildCell( TableLayout::Alignment::center,
+                              tableTitle,
+                              (topSeparator.length() - (m_tableLayout.getBorderMargin() *  2)));
     tableOutput << GEOS_FMT( "{:>{}}\n", m_verticalLine, m_tableLayout.getBorderMargin() );
   }
 }
