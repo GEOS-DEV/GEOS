@@ -22,9 +22,8 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-//#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"           // get correct fluid model
-//#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -77,8 +76,9 @@ public:
                       fields::immiscibleMultiphaseFlow::dPhaseMobility >;   
 
   using MultiphaseFluidAccessors =
-    StencilAccessors< fields::immiscibleMultiphaseFlow::phaseDensity,
-                              fields::immiscibleMultiphaseFlow::dPhaseDensity >;                               
+    StencilMaterialAccessors< constitutive::TwoPhaseFluid,
+                              fields::twophasefluid::phaseDensity,
+                              fields::twophasefluid::dPhaseDensity >;                               
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
@@ -127,8 +127,8 @@ public:
     m_pres( multiPhaseFlowAccessors.get( fields::flow::pressure {} ) ),
     m_mob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
     m_dMob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),    
-    m_dens( fluidAccessors.get( fields::immiscibleMultiphaseFlow::phaseDensity {} ) ),
-    m_dDens_dPres( fluidAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseDensity {} ) ),
+    m_dens( fluidAccessors.get( fields::twophasefluid::phaseDensity {} ) ),
+    m_dDens_dPres( fluidAccessors.get( fields::twophasefluid::dPhaseDensity {} ) ),
     m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
     m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
     m_localMatrix( localMatrix ),

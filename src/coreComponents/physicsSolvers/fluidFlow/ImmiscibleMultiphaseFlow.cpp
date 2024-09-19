@@ -149,6 +149,12 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
+      subRegion.registerField< phaseMass >( getName() ).
+        reference().resizeDimension< 1 >( m_numPhases );
+
+      subRegion.registerField< phaseMass_n >( getName() ).
+        reference().resizeDimension< 1 >( m_numPhases );
+
       subRegion.registerField< phaseMobility >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
@@ -564,7 +570,6 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
-    // The line below needs to be used once we have a fluid model
       TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
@@ -577,11 +582,8 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
     arrayView2d< real64 const > const porosity = solid.getPorosity();
     arrayView2d< real64 const > const dPoro_dPres = solid.getDporosity_dPressure();
     arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac= subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
-    // The two lines below need to be used once we have a fluid model
-    arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseDens = fluid.phaseDensity();
-    arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseDens = fluid.dPhaseDensity();
-    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > phaseDens = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseDensity>();
-    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > dPhaseDens = subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseDensity>();
+    arrayView3d< real64 const, multifluid::USD_PHASE > phaseDens = fluid.phaseDensity();
+    arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseDens = fluid.dPhaseDensity();
     arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const PhaseMass_n = subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();
 
     // The line below is to be used if we want to use the total mass flux formulation
@@ -630,16 +632,16 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
          // dPhaseDens = computedDensitydPL ( pressure );
         //}
 
-        real64 const phaseMass = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][ip];
+        real64 const phaseMass = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
         real64 const phaseMass_n = PhaseMass_n[ei][ip];
 
         localResidual[ip] += phaseMass - phaseMass_n;
 
-        real64 const dPhaseMass_dP =  dPoreVolume_dPres * phaseVolFrac[ei][ip] * phaseDens[ei][ip]
-                                       + poreVolume * phaseVolFrac[ei][ip] * dPhaseDens[ei][ip];
+        real64 const dPhaseMass_dP =  dPoreVolume_dPres * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip]
+                                       + poreVolume * phaseVolFrac[ei][ip] * dPhaseDens[ei][0][ip][0];
         localJacobian[ip][0] += dPhaseMass_dP;
 
-        real64 const dPhaseMass_dS = poreVolume * phaseDens[ei][ip];
+        real64 const dPhaseMass_dS = poreVolume * phaseDens[ei][0][ip];
     
         localJacobian[ip][1] += dPhaseMass_dS;
       }

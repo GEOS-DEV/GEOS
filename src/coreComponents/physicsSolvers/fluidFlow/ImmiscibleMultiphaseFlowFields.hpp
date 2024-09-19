@@ -117,42 +117,6 @@ DECLARE_FIELD( phaseCFLNumber,
                LEVEL_0,
                NO_WRITE,
                "Phase CFL number" );
-
-DECLARE_FIELD( phaseDensity,
-               "phaseDensity",
-               array2dLayoutPhase,
-               1000.0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase density" );
-
-
-DECLARE_FIELD( dPhaseDensity,
-               "dPhaseDensity",
-               array2dLayoutPhase,
-               0.0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase density derivative with respect to P" );
-
-DECLARE_FIELD( phaseViscosity,
-               "phaseViscosity",
-               array2dLayoutPhase,
-               1.0e-4,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase density" );
-
-
-DECLARE_FIELD( dPhaseViscosity,
-               "dPhaseViscosity",
-               array2dLayoutPhase,
-               0.0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase density derivative with respect to P" );
-
-
 }
 }
 
