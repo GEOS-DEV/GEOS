@@ -946,8 +946,6 @@ void getBoundingBox( localIndex const elemIndex,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
                      VEC_TYPE && boxDims )
 {
-  std::cout << "getBoundingBox " << elemIndex << std::endl;
-
   // This holds the min coordinates of the set in each direction
   R1Tensor minCoords = { LvArray::NumericLimits< real64 >::max,
                          LvArray::NumericLimits< real64 >::max,
@@ -957,7 +955,6 @@ void getBoundingBox( localIndex const elemIndex,
   LvArray::tensorOps::fill< 3 >( boxDims, LvArray::NumericLimits< real64 >::lowest );
 
   // loop over all the vertices of the element to get the min and max coords
-  std::cout << pointIndices[elemIndex].size() << std::endl;
   for( localIndex a = 0; a < pointIndices[elemIndex].size(); ++a )
   {
     localIndex const id = pointIndices( elemIndex, a );
