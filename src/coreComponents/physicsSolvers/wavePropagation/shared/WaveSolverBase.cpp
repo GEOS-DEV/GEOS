@@ -195,6 +195,14 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Set to 1 to precompute the time-step using the power iteration method " );
+  
+  registerWrapper( viewKeyStruct::timeStepString(), &m_timeStep ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value" );
+
+
   registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
@@ -364,17 +372,6 @@ void WaveSolverBase::postInputInitialization()
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-  real64 dt = 0;
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
-  GEOS_THROW_IF( dt < epsilonLoc * maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -384,10 +381,6 @@ void WaveSolverBase::postInputInitialization()
   {
     m_nsamplesSeismoTrace = 0;
   }
-  localIndex const nsamples = int( (maxTime - minTime) / dt) + 1;
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 }
 

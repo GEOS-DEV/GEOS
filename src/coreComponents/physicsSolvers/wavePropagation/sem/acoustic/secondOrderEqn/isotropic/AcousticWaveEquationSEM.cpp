@@ -145,18 +145,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
-  real64 dt = 0;
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
   mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                 localIndex const er,
                                                                                                 localIndex const esr,
@@ -203,34 +191,25 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
           receiverCoordinates,
           receiverIsLocal,
           receiverNodeIds,
-          receiverConstants,
-          sourceValue,
-          dt,
-          m_timeSourceFrequency,
-          m_timeSourceDelay,
-          m_rickerOrder );
+          receiverConstants);
       }
     } );
   } );
 }
 
-void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
+void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real32 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
-
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
-                 getDataContext() << ": Too many steps compared to array size",
-                 std::runtime_error );
+  real64 const rickerValue = WaveSolverUtils::evaluateRicker(time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder);
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real32 const localIncrement = sourceConstants[isrc][inode] * rickerValue;
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
@@ -330,6 +309,15 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
   } );
+
+  if(m_preComputeDt==1)                                                         
+  {                                                                             
+    real64 dtOut = 0.0;                                                        
+    computeTimeStep(dtOut);                                                    
+    m_preComputeDt = 0;                                                        
+    m_timeStep=dtOut;                                                          
+  }                                                                             
+
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
@@ -445,7 +433,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     stiffnessVector.zero();
     p.zero();
   } );
-  return dtOut;
+  return m_timeStep;
 }
 
 
@@ -870,9 +858,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      bool computeGradient )
 {
-  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-
-  printf( "dtOut=%f\n", dtOut );
+  real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -941,7 +927,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
     prepareNextTimestep( mesh );
   } );
 
-  return dtOut;
+  return dtCompute;
 }
 
 
@@ -951,7 +937,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       DomainPartition & domain,
                                                       bool computeGradient )
 {
-  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
@@ -1023,7 +1009,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     prepareNextTimestep( mesh );
   } );
 
-  return dtOut;
+  return dtCompute;
 }
 
 void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
@@ -1072,7 +1058,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
   auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
-  printf( "dtlowlevel=%f\n", dt );
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,
@@ -1085,7 +1070,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
-  addSourceToRightHandSide( cycleForSource, rhs );
+  addSourceToRightHandSide( time_n, rhs );
 
   /// calculate your time integrators
   real64 const dt2 = pow( dt, 2 );
@@ -1216,30 +1201,18 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  // real64 dtCompute;
-  // if(m_preComputeDt==1)
-  // {
-  //    real64 dtOut = 0.0;
-  //    computeTimeStep(dtOut);
-  //    m_preComputeDt = 0;
-  //    printf("dt=%f\n",dtOut);
-  //    dtCompute=dtOut;
-  //    return dtCompute;
-  // }
-  // else
-  // {
-  //   dtCompute=dt;
-  // }
-
+  real64 dtCompute;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
-    synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    localIndex nSubSteps = (int) ceil(dt/m_timeStep);
+    dtCompute = dt/nSubSteps;
+    computeUnknowns( time_n, dtCompute, cycleNumber, domain, mesh, regionNames );
+    synchronizeUnknowns( time_n, dtCompute, cycleNumber, domain, mesh, regionNames );
   } );
 
-  return dt;
+  return dtCompute;
 }
 
 void AcousticWaveEquationSEM::cleanup( real64 const time_n,

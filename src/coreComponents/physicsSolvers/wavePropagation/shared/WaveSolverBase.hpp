@@ -124,6 +124,7 @@ public:
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
 
     static constexpr char const * preComputeDtString() { return "preComputeDt"; }
+    static constexpr char const * timeStepString() { return "timeStep"; }
 
     static constexpr char const * attenuationTypeString() { return "attenuationType"; }
     static constexpr char const * slsReferenceAngularFrequenciesString() { return "slsReferenceAngularFrequencies"; }
@@ -324,6 +325,9 @@ protected:
   /// usage:  the time-step is computed then the code exit and you can
   /// copy paste the time-step inside the XML then deactivate the option
   integer m_preComputeDt;
+
+  //Time step computed with power iteration
+  real64 m_timeStep;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
