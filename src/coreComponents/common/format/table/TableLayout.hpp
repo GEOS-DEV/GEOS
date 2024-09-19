@@ -157,14 +157,6 @@ public:
   TableLayout() = default;
 
   /**
-   * @brief Construct a new Table object, all values in the table are centered by default
-   * @param columnNames The names of the columns
-   * @param title The table name
-   * @param subColumns
-   */
-  TableLayout( std::vector< string > const & columnNames );
-
-  /**
    * @brief Construct a new Table Layout object
    * @tparam Args Process only string, vector < string > and ColumnParam type
    * @param args Variadics to be processed
@@ -202,12 +194,13 @@ public:
   /**
    * @brief Set the minimal margin width between cell content and borders.
    * @param marginValue The margin value
-    * @return The tableLayout reference
+   * @return The tableLayout reference
    */
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
-   * @brief Remove the line return at the end of the table
+   * @brief Check whether we have a line return at the end of the table or not 
+   *
    */
   bool isLineWrapEnabled() const;
 
@@ -233,6 +226,8 @@ public:
 
 private:
 
+  void addColumns( std::vector< TableLayout::ColumnParam > & columnsParam );
+
   /**
    * @brief Recursively processes a variable number of arguments and adds them to the table data.
    * @tparam T The first argument
@@ -250,14 +245,21 @@ private:
     }
   }
 
+  // Fonction générique pour ajouter une ou plusieurs colonnes
+  template< typename T >
+  void addSingleColumn( T && column )
+  {
+    m_columns.push_back( TableLayout::Column{std::forward< T >( column )} );
+  }
+
   /**
-   * @brief Create and add columns to the columns vector
+   * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
   void addToColumns( const std::vector< std::string > & columnNames );
 
 /**
- * @brief Create and add a column to the columns vector
+ * @brief Create and add a column to the columns vector given a string
  * @param columnName The column name
  */
   void addToColumns( std::string && columnName );

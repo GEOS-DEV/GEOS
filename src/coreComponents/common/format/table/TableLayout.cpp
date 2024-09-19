@@ -21,40 +21,42 @@
 namespace geos
 {
 
-void addColumns( std::vector< TableLayout::ColumnParam > const & columnsParam, std::vector< TableLayout::Column > & columns )
+void TableLayout::addColumns( std::vector< TableLayout::ColumnParam > & columnsParam )
 {
-  for( const auto & columnParam : columnsParam )
+  for( auto && columnParam : columnsParam )
   {
-    if( !columnParam.subColumns.empty() )
-    {
-      std::vector< TableLayout::Column > subColumns;
-      for( const auto & subColumnsName: columnParam.subColumns )
-      {
-        subColumns.push_back( TableLayout::Column{subColumnsName} );
-      }
-      columns.push_back( TableLayout::Column{columnParam, subColumns} );
-    }
-    else
-    {
-      columns.push_back( TableLayout::Column{columnParam} );
-    }
+    addToColumns( std::move( columnParam ) );
   }
 }
 
-TableLayout::TableLayout( std::vector< string > const & columnNames )
+void TableLayout::addToColumns( const std::vector< std::string > & columnNames )
 {
-  setMargin( MarginValue::medium );
-
-  std::vector< TableLayout::ColumnParam > columnParams;
-  m_columns.reserve( columnNames.size() );
-  columnParams.reserve( columnNames.size() );
-
-  for( auto const & name : columnNames )
+  for( const auto & columnName : columnNames )
   {
-    columnParams.push_back( TableLayout::ColumnParam{{name}} );
+    addToColumns( std::string( columnName ) );
   }
+}
 
-  addColumns( columnParams, m_columns );
+void TableLayout::addToColumns( std::string && columnName )
+{
+  m_columns.push_back( TableLayout::ColumnParam{ {columnName} } );
+}
+
+void TableLayout::addToColumns( ColumnParam && columnParam )
+{
+  if( !columnParam.subColumns.empty())
+  {
+    std::vector< TableLayout::Column > subColumns;
+    for( const auto & subColumnsName : columnParam.subColumns )
+    {
+      subColumns.push_back( TableLayout::Column{ subColumnsName } );
+    }
+    m_columns.push_back( TableLayout::Column{ columnParam, subColumns } );
+  }
+  else
+  {
+    m_columns.push_back( TableLayout::Column{ columnParam } );
+  }
 }
 
 TableLayout & TableLayout::setTitle( std::string const & title )
@@ -103,7 +105,6 @@ string_view TableLayout::getTitle() const
   return m_tableTitle;
 }
 
-
 integer const & TableLayout::getBorderMargin() const
 {
   return m_borderMargin;
@@ -117,36 +118,6 @@ integer const & TableLayout::getColumnMargin() const
 integer const & TableLayout::getMarginTitle() const
 {
   return m_titleMargin;
-}
-
-void TableLayout::addToColumns( const std::vector< std::string > & columnNames )
-{
-  for( const auto & columnName : columnNames )
-  {
-    addToColumns( std::string( columnName ));
-  }
-}
-
-void TableLayout::addToColumns( std::string && columnName )
-{
-  m_columns.push_back( TableLayout::ColumnParam{ {columnName} } );
-}
-
-void TableLayout::addToColumns( ColumnParam && columnParam )
-{
-  if( !columnParam.subColumns.empty())
-  {
-    std::vector< TableLayout::Column > subColumns;
-    for( const auto & subColumnsName : columnParam.subColumns )
-    {
-      subColumns.push_back( TableLayout::Column{ subColumnsName } );
-    }
-    m_columns.push_back( TableLayout::Column{ columnParam, subColumns } );
-  }
-  else
-  {
-    m_columns.push_back( TableLayout::Column{ columnParam } );
-  }
 }
 
 }
