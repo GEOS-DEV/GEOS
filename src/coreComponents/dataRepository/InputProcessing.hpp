@@ -42,7 +42,14 @@ struct NameAttrAsIdentity
   template < typename NodeType >
   string operator()( NodeType & docNode )
   {
-    return docNode.attribute("name").value();
+    if ( docNode.attribute("name").empty() )
+    {
+      return string(docNode.name());
+    }
+    else
+    {
+      return docNode.attribute("name").value();
+    }
   }
 };
 
@@ -195,7 +202,7 @@ protected:
   std::set< string > const m_allowedDeviations;
 };
 
-template < typename DocumentType, typename DataNode, typename... Phases >
+template < typename DocumentType, typename DataNode, typename... InputPhase >
 class InputProcessor
 {
 public:
@@ -203,11 +210,11 @@ public:
   using data_node = DataNode;
   using document_node = typename document_type::node_type;
 
-  static_assert((std::is_base_of< InputProcessingPhase< document_type, data_node >, Phases >::value && ...),
+  static_assert((std::is_base_of< InputProcessingPhase< document_type, data_node >, InputPhase >::value && ...),
                 "All Phases must be subclasses of InputProcessingPhase< DocumentType, DataNode >");
 
   explicit InputProcessor( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations )
-    : m_phases( makePhases( document, mergableNodes, allowedDeviations, std::index_sequence_for<Phases...>{} ) )
+    : m_phases( makePhases( document, mergableNodes, allowedDeviations, std::index_sequence_for<InputPhase...>{} ) )
   { }
 
   void execute( data_node & dataRoot, document_node & documentRoot )
@@ -232,17 +239,17 @@ public:
   // Get the number of registered phases
   static constexpr std::size_t getNumberOfPhases()
   {
-    return sizeof...(Phases);
+    return sizeof...(InputPhase);
   }
 
 private:
   template<std::size_t... Is>
-  static std::tuple< Phases... > makePhases( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations, std::index_sequence<Is...> )
+  static std::tuple< InputPhase... > makePhases( document_type & document, std::set< string > & mergableNodes, std::set< string > & allowedDeviations, std::index_sequence<Is...> )
   {
-    return std::make_tuple( Phases( document, mergableNodes, allowedDeviations )... );
+    return std::make_tuple( InputPhase( document, mergableNodes, allowedDeviations )... );
   }
 
-  std::tuple< Phases... > m_phases;
+  std::tuple< InputPhase... > m_phases;
 };
 
 // Declaration: handles the initial processing of the document, applying input extension rules from internal Groups as encountered (e.g. deprecation)
@@ -373,7 +380,7 @@ protected:
     });
 
     // Check for unused attributes and throw if any are found
-    for (auto attribute : docNode.attributes())
+    for ( auto attribute : docNode.attributes() )
     {
       string attributeName = attribute.name();
       if ( ! inputParsing::isDocMetadataAttribute< DocumentType >( attributeName ) && processedAttributes.count( attributeName ) == 0)

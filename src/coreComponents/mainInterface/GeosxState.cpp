@@ -161,6 +161,7 @@ bool GeosxState::initializeInputParsing()
   }
 
   parseInputFiles();
+  return false;
 
   if (m_commandLineOptions->preprocessOnly)
   {
@@ -174,25 +175,26 @@ bool GeosxState::initializeInputParsing()
 void GeosxState::parseInputFiles()
 {
   using namespace dataRepository::inputProcessing;
-  using document_type = typename inputParsing::input_document_type;
+  using document_type = inputParsing::input_document_type;
   auto & problemManager = getProblemManager();
 
   // Locate mergable Groups
-  GEOS_LOG_RANK_0( " -- generating skeleton" );
-  problemManager.generateDataStructureSkeleton( 0 );
-  GEOS_LOG_RANK_0( " -- skeleton generated" );
-  std::vector< dataRepository::Group const * > containerGroups;
-  problemManager.discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
-  GEOS_LOG_RANK_0( " -- containers identified" );
+  // GEOS_LOG_RANK_0( " -- generating skeleton" );
+  // problemManager.generateDataStructureSkeleton( 0 );
+  // GEOS_LOG_RANK_0( " -- skeleton generated" );
+  // std::vector< dataRepository::Group const * > containerGroups;
+  // problemManager.discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
+  // GEOS_LOG_RANK_0( " -- containers identified" );
   std::set< string > mergableNodes;
-  for( dataRepository::Group const * group : containerGroups )
-  {
-    mergableNodes.insert( group->getCatalogName() );
-  }
-  containerGroups.clear( );
-  GEOS_LOG_RANK_0( " -- names stored" );
-  // problemManager.deregisterAllRecursive( );
-  GEOS_LOG_RANK_0( " -- skeleton destroyed" );
+  // for( dataRepository::Group const * group : containerGroups )
+  // {
+  //   std::cout << group->getName() << std::endl;
+  //   mergableNodes.insert( group->getCatalogName() );
+  // }
+  // containerGroups.clear( );
+  // GEOS_LOG_RANK_0( " -- names stored" );
+  // // problemManager.deregisterAllRecursive( );
+  // GEOS_LOG_RANK_0( " -- skeleton destroyed" );
 
   std::set< string > allowedDeviations = { DomainPartition::groupKeysStruct::constitutiveManagerString(), MeshLevel::groupStructKeys::elemManagerString(), MeshLevel::groupStructKeys::particleManagerString() };
 

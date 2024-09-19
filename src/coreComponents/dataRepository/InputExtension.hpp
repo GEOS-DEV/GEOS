@@ -125,7 +125,7 @@ namespace singletonParsingContext
   auto isValid()
   {
     return [] ( StaticParsingContext< DocNode, ContextPolicy > & context ) { return context.scope() == 1; };
-  };
+  }
 
   template <typename DocNode = default_document_node, template <typename> class ContextPolicy = SingleNodePolicy>
   auto isNamed(const std::string & name)
@@ -134,7 +134,7 @@ namespace singletonParsingContext
     {
       return (context.scope() == 1) && context.getNode(0).name() == name;
     };
-  };
+  }
 
   template <typename DocNode = default_document_node, template <typename> class ContextPolicy = SingleNodePolicy, typename... Names>
   auto hasAttributes( Names... names )
@@ -143,7 +143,7 @@ namespace singletonParsingContext
     {
       return (context.scope() == 1) && (context.getNode(0).has_attribute(names) && ...);
     };
-  };
+  }
 
   template < typename DocNode = default_document_node, template <typename> class ContextPolicy = SingleNodePolicy >
   auto root()
@@ -156,7 +156,7 @@ namespace singletonParsingContext
       }
       return context.getNode(0).root();
     };
-  };
+  }
 
   template < typename DocNode = default_document_node, template <typename> class ContextPolicy = SingleNodePolicy >
   auto thisNode()
@@ -169,7 +169,7 @@ namespace singletonParsingContext
       }
       return context.getNode(0);
     };
-  };
+  }
 
   template < typename DocNode = default_document_node, template <typename> class ContextPolicy = SingleNodePolicy >
   auto thisNodesParent()
@@ -182,7 +182,7 @@ namespace singletonParsingContext
       }
       return context.getNode(0).parent();
     };
-  };
+  }
 
   template < typename DocNode = default_document_node, template <typename> class ContextPolicy = SingleNodePolicy >
   auto thisNodesChild( std::string const & name )
@@ -203,7 +203,7 @@ namespace singletonParsingContext
       GEOS_ERROR( GEOS_FMT( "Child node '{}' for extension not found!", name ) );
       return context.getNode(0); // never reached, prevents compilation failure
     };
-  };
+  }
 }
 
 template < typename DocNode = default_document_node, typename FlagType = int >

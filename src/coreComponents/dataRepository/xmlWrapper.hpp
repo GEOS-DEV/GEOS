@@ -461,6 +461,7 @@ readAttributeAsType( T & rval,
   {
     // parse the string/attribute into a value
     stringToInputVariable( rval, xmlatt.value(), regex );
+    std::cout << name << " input attribute set to " << xmlatt.value() << std::endl;
     return true;
   }
   else

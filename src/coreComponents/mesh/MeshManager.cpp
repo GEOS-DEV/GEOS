@@ -83,6 +83,7 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
   this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
     string const & meshName = meshGen.getName();
+    std::cout << meshName << std::endl;
     domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString() );
   } );
 }

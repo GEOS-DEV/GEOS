@@ -425,8 +425,10 @@ void ProblemManager::processSchemaDeviations( xmlWrapper::xmlDocument & document
   for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
   {
     string const regionName = regionNode.attribute( "name" ).value();
+    std::cout << regionName << std::endl;
     try
     {
+      std::cout << regionNode.attribute( "meshBody" ).value() << std::endl;
       string const regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies, regionNode.attribute( "meshBody" ).value() );
       MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
