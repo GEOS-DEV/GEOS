@@ -113,23 +113,7 @@ DECLARE_FIELD( phaseVolumeFraction_n,
                NOPLOT,
                WRITE_AND_READ,
                "Phase volume fraction at the previous converged time step" );
-/*
-   DECLARE_FIELD( dCurrentBHP,
-               "dCurrentBHP",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of current BHP with respect to pressure, temperature, and global component density" );
 
-   DECLARE_FIELD( dCurrentPhaseVolRate,
-               "dCurrentPhaseVolRate",
-               array2dLayoutPhase,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of current phase volume rate with respect to pressure, temperature, and global component density" );
- */
 DECLARE_FIELD( totalMassDensity,
                "totalMassDensity",
                array1d< real64 >,

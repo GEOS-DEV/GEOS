@@ -34,18 +34,27 @@ namespace mgr
  * @brief ThermalCompositionalMultiphaseReservoirFVM strategy.
  *
  * Labels description stored in point_marker_array
- *               0 = pressure
- *               1 = density
- *             ... = densities
- *   numLabels - 2 = last density
- *   numLabels - 1 = temperature
+ *               0 = reservoir pressure
+ *               1 = reservoir density (component 1 )
+ *             ... = reservoir densities (# components , NC)
+ *          NC + 1 = reservoir temperature
  *
- * 2-level MGR reduction strategy
- *   - 1st level: eliminate the reservoir density associated with the volume constraint
- *   - 2nd level: eliminate the other reservoir densities
+ * numResLabels - 1 = reservoir temperature
+ *     numResLabels = well pressure
+ * numResLabels + 1 = well density
+ *              ... = ... (well densities)
+ * numResLabels + numWellLabels - 3 = last well density
+ * numResLabels + numWellLabels - 2 = well rate
+ * numResLabels + numWellLabels - 1 = well temperature
+ *
+ * 3-level MGR reduction strategy
+ *   - 1st level: eliminate the well block
+ *   - 2nd level: eliminate the reservoir density associated with the volume constraint
+ *   - 3rd level: eliminate the remaining the reservoir densities
  *   - The coarse grid (pressure and temperature system) is solved with BoomerAMG with numFunctions==2.
  *
  */
+
 class ThermalCompositionalMultiphaseReservoirFVM : public MGRStrategyBase< 3 >
 {
 public:

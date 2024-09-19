@@ -24,6 +24,49 @@ namespace geos
 namespace internal
 {
 
+template< typename S, typename T, typename LAMBDA >
+void invokePhaseDispatchLambda ( S val, T numPhases, LAMBDA && lambda )
+{
+  if( numPhases == 1 )
+  {
+    lambda( val, std::integral_constant< T, 1 >());
+    return;
+  }
+  else if( numPhases == 2 )
+  {
+    lambda( val, std::integral_constant< T, 2 >());
+    return;
+  }
+  else if( numPhases == 3 )
+  {
+    lambda( val, std::integral_constant< T, 3 >());
+    return;
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported state: " << numPhases );
+  }
+};
+
+template< typename S, typename T, typename LAMBDA >
+void invokeThermalDispatchLambda ( S val, T isThermal, LAMBDA && lambda )
+{
+  if( isThermal == 1 )
+  {
+    lambda( val, std::integral_constant< T, 1 >());
+    return;
+  }
+  else if( isThermal == 0 )
+  {
+    lambda( val, std::integral_constant< T, 0 >());
+    return;
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported state: " << isThermal );
+  }
+};
+
 template< typename T, typename LAMBDA >
 void kernelLaunchSelectorThermalSwitch( T value, LAMBDA && lambda )
 {
@@ -32,12 +75,19 @@ void kernelLaunchSelectorThermalSwitch( T value, LAMBDA && lambda )
   switch( value )
   {
     case 0:
-    { lambda( std::integral_constant< T, 0 >() ); return; }
+    {
+      lambda( std::integral_constant< T, 0 >() );
+      return;
+    }
     case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
-
+    {
+      lambda( std::integral_constant< T, 1 >() );
+      return;
+    }
     default:
-    { GEOS_ERROR( "Unsupported thermal state: " << value ); }
+    {
+      GEOS_ERROR( "Unsupported thermal state: " << value );
+    }
   }
 }
 
@@ -46,120 +96,77 @@ void kernelLaunchSelectorCompThermSwitch( T value, bool const isThermal, LAMBDA 
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
 
-  if( isThermal )
+
+  switch( value )
   {
-    switch( value )
+    case 1:
     {
-      case 1:
-      {
-        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 1 >() ); return;
-      }
-      case 2:
-      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 1 >() ); return; }
-      case 3:
-      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 1 >() ); return; }
-      case 4:
-      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 1 >() ); return; }
-      case 5:
-      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 1 >()); return; }
-      default:
-      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+      invokeThermalDispatchLambda( std::integral_constant< T, 1 >(), isThermal, lambda );  return;
     }
-  }
-  else
-  {
-    switch( value )
+    case 2:
     {
-      case 1:
-      {
-        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 0 >() ); return;
-      }
-      case 2:
-      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 0 >() ); return; }
-      case 3:
-      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 0 >() ); return; }
-      case 4:
-      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 0 >() ); return; }
-      case 5:
-      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 0 >() ); return; }
-      default:
-      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+      invokeThermalDispatchLambda( std::integral_constant< T, 2 >(), isThermal, lambda );
+      return;
+    }
+    case 3:
+    {
+      invokeThermalDispatchLambda( std::integral_constant< T, 3 >(), isThermal, lambda );
+      return;
+    }
+    case 4:
+    {
+      invokeThermalDispatchLambda( std::integral_constant< T, 4 >(), isThermal, lambda );
+      return;
+    }
+    case 5:
+    {
+      invokeThermalDispatchLambda( std::integral_constant< T, 5 >(), isThermal, lambda );
+      return;
+    }
+    default:
+    {
+      GEOS_ERROR( "Unsupported number of components: " << value );
     }
   }
 }
-
 
 template< typename T, typename LAMBDA >
 void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
-
-  if( n_phase == 1 )
+  switch( value )
   {
-    switch( value )
+    case 1:
     {
-      case 1:
-      {
-        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 1 >() ); return;
-      }
-      case 2:
-      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 1 >() ); return; }
-      case 3:
-      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 1 >() ); return; }
-      case 4:
-      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 1 >() ); return; }
-      case 5:
-      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 1 >() ); return; }
-      default:
-      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+      invokePhaseDispatchLambda( std::integral_constant< T, 1 >(), n_phase, lambda );
+      return;
     }
-  }
-  else if( n_phase == 2 )
-  {
-    switch( value )
+    case 2:
     {
-      case 1:
-      {
-        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 2 >() ); return;
-      }
-      case 2:
-      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 2 >() ); return; }
-      case 3:
-      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 2 >() ); return; }
-      case 4:
-      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 2 >() ); return; }
-      case 5:
-      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 2 >() ); return; }
-      default:
-      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+      invokePhaseDispatchLambda( std::integral_constant< T, 2 >(), n_phase, lambda );
+      return;
     }
-
-  }
-  else if( n_phase == 3 )
-  {
-    switch( value )
+    case 3:
     {
-      case 1:
-      {
-        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 3 >()  ); return;
-      }
-      case 2:
-      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 3 >()  ); return; }
-      case 3:
-      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 3 >()  ); return; }
-      case 4:
-      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 3 >() ); return; }
-      case 5:
-      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 3 >() ); return; }
-      default:
-      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+      invokePhaseDispatchLambda( std::integral_constant< T, 3 >(), n_phase, lambda );
+      return;
     }
-  }
-  else
-  {
-    { GEOS_ERROR( "Unsupported number of phases: " << n_phase ); }
+    case 4:
+    {
+      invokePhaseDispatchLambda( std::integral_constant< T, 4 >(), n_phase, lambda );
+      return;
+    }
+    case 5:
+    {
+      invokePhaseDispatchLambda( std::integral_constant< T, 5 >(), n_phase, lambda );
+      return;
+    }
+    default:
+    { GEOS_ERROR( "Unsupported number of components: " << value ); }
   }
 }
+
+
 } // end namspace internal
 } // end namespace geos
 

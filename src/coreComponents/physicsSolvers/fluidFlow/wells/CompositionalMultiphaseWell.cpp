@@ -593,7 +593,6 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
   geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
   {
-    //integer constexpr NUM_COMP = NC();
     integer constexpr IS_THERMAL = ISTHERMAL();
     GEOS_UNUSED_VAR( NC );
     // bring everything back to host, capture the scalars by reference
@@ -1914,8 +1913,6 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
         bool controlHasSwitched = false;
         isothermalCompositionalMultiphaseBaseKernels::
           KernelLaunchSelectorCompTherm< PressureRelationKernel >( numFluidComponents(), isThermal,
-                                                                   //isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1<
-                                                                   // PressureRelationKernel >( numFluidComponents(),
                                                                    subRegion.size(),
                                                                    dofManager.rankOffset(),
                                                                    subRegion.isLocallyOwned(),

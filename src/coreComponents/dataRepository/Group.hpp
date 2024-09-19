@@ -30,7 +30,6 @@
 
 
 #include <iostream>
-#include <typeinfo>
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
 /// macro definition to enable/disable char * lookups
@@ -880,6 +879,7 @@ public:
 
     for( auto const & subGroupIter : m_subGroups )
     {
+      std::cout << indent << subGroupIter.second->getName() << std::endl;
       subGroupIter.second->generateDataStructureSkeleton( level + 1 );
     }
   }
