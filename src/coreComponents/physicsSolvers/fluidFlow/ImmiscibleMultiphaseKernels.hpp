@@ -22,8 +22,9 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"           // get correct fluid model
-#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+//#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"           // get correct fluid model
+//#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -743,13 +744,14 @@ public:
    * @param[in] fluid the fluid model
    * @param[in] relperm the relperm model
    */
-  PhaseMobilityKernel( ObjectManagerBase & subRegion,                       
+  PhaseMobilityKernel( ObjectManagerBase & subRegion,
+                       TwoPhaseFluid const & fluid,
                        RelativePermeabilityBase const & relperm )
     :     
-    m_phaseDens( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseDensity >() ),
-    m_dPhaseDens( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseDensity>() ),
-    m_phaseVisc( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseViscosity >() ),
-    m_dPhaseVisc( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseViscosity >() ),
+    m_phaseDens( fluid.phaseDensity() ),
+    m_dPhaseDens( fluid.dPhaseDensity() ),
+    m_phaseVisc( fluid.phaseViscosity() ),
+    m_dPhaseVisc( fluid.dPhaseViscosity() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
     m_phaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMobility >() ),
@@ -792,10 +794,10 @@ public:
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
-      real64 const density = m_phaseDens[ei][ip];
-      real64 const dDens_dP = m_dPhaseDens[ei][ip];
-      real64 const viscosity = m_phaseVisc[ei][ip];
-      real64 const dVisc_dP = m_dPhaseVisc[ei][ip];
+      real64 const density = m_phaseDens[ei][0][ip];
+      real64 const dDens_dP = m_dPhaseDens[ei][0][ip][0];
+      real64 const viscosity = m_phaseVisc[ei][0][ip];
+      real64 const dVisc_dP = m_dPhaseVisc[ei][0][ip][0];
 
       real64 const relPerm = m_phaseRelPerm[ei][0][ip];    
 
@@ -821,12 +823,17 @@ protected:
   // inputs
 
   /// Views on the phase densities
-  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_phaseDens;
-  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_dPhaseDens;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_phaseDens;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dPhaseDens;
+
+  //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_phaseDens;
+  //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_dPhaseDens;
 
   /// Views on the phase viscosities
-  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_phaseVisc;
-  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_dPhaseVisc;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_phaseVisc;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dPhaseVisc;  
+  //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_phaseVisc;
+  //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_dPhaseVisc;
 
   /// Views on the phase relative permeabilities
   arrayView3d< real64 const, relperm::USD_RELPERM > m_phaseRelPerm;
@@ -856,21 +863,16 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( integer const numPhase,
-                   ObjectManagerBase & subRegion,                   
+                   ObjectManagerBase & subRegion,
+                   TwoPhaseFluid const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
     if( numPhase == 2 )
     {      
-      PhaseMobilityKernel< 2 > kernel( subRegion, relperm );
+      PhaseMobilityKernel< 2 > kernel( subRegion, fluid, relperm );
       PhaseMobilityKernel< 2 >::template launch< POLICY >( subRegion.size(), kernel );
-    }    
-    else if( numPhase == 3 )
-    {      
-      PhaseMobilityKernel< 3 > kernel( subRegion, relperm );
-      PhaseMobilityKernel< 3 >::template launch< POLICY >( subRegion.size(), kernel );
-    } 
+    }
   }
-
 };
 
 

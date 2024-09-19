@@ -24,7 +24,7 @@
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseKernels.hpp"
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"  // should be removed eventually
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+//#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
@@ -166,6 +166,15 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
 void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
+
+  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidName = getConstitutiveName< TwoPhaseFluid >( subRegion );
+  GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                                              getDataContext(), subRegion.getName() ) );
+
+
+
+
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
                            setPlotLevel( PlotLevel::NOPLOT ).
                            setRestartFlags( RestartFlags::NO_WRITE ).
@@ -231,6 +240,7 @@ void ImmiscibleMultiphaseFlow::updateRelPermModel( ObjectManagerBase & dataGroup
 {
   GEOS_MARK_FUNCTION;
 
+
   GEOS_UNUSED_VAR( dataGroup );
 
   arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
@@ -291,16 +301,18 @@ void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGrou
   GEOS_MARK_FUNCTION;
 
   // note that the phase mobility computed here also includes phase density
+  string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
+  TwoPhaseFluid  const & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, fluidName );
+
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
 
   immiscibleMultiphaseKernels::
       PhaseMobilityKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                 dataGroup,                                                 
-                                                 relperm );  
-  
-}
+                                                 dataGroup,
+                                                 fluid,
+                                                 relperm );  }
 
 void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
                                                      DomainPartition & GEOS_UNUSED_PARAM( domain ),
@@ -317,7 +329,7 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     updateFluidModel( subRegion );
 
   } );
-
+  
   // for some reason CUDA does not want the host_device lambda to be defined inside the generic lambda
   // I need the exact type of the subRegion for updateSolidflowProperties to work well.
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion,

@@ -72,11 +72,39 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
 
+
+
+    <Functions>
+       <TableFunction
+         name="densityTablePhase1"
+         coordinates="{ 0.0}"
+         values="{ 1000 }" />
+       <TableFunction
+         name="densityTablePhase2"
+         coordinates="{ 0.0 }"
+         values="{ 1000 }" />
+       <TableFunction
+         name="viscosityTablePhase1"
+         coordinates="{ 0.0}"
+         values="{ 0.001 }" />                  
+       <TableFunction
+         name="viscosityTablePhase2"
+         coordinates="{ 0.0 }"
+         values="{ 0.001 }" />
+    </Functions>
+
+
   <Constitutive>
-    <CompressibleSinglePhaseFluid
+   <TwoPhaseFluid
+           name="fluid"
+           phaseNames="{water22, gas22}"
+           densityTableNames="{densityTablePhase1, densityTablePhase2}"    
+           viscosityTableNames="{viscosityTablePhase1, viscosityTablePhase2}" />
+
+    <!-- <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
@@ -84,7 +112,7 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <!-- <DeadOilFluid
+    <DeadOilFluid
       name="fluid"
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
