@@ -239,7 +239,7 @@ real64 SolverBase::solverStep( real64 const & time_n,
   return dt_return;
 }
 
-bool SolverBase::execute( real64 const time_n,
+real64 SolverBase::execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const GEOS_UNUSED_PARAM( eventCounter ),
@@ -247,69 +247,17 @@ bool SolverBase::execute( real64 const time_n,
                           DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  real64 dtRemaining = dt;
-  real64 nextDt = dt;
 
-  integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
+  real64 const dtAchieved = solverStep( time_n,
+                                        dt,
+                                        cycleNumber,
+                                        domain );
 
-  // Keep track of substeps. It is useful to output these.
-  std::vector< real64 > subStepDt( maxSubSteps, 0.0 );
-  integer numOfSubSteps = 0;
-
-  for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
-  {
-    // reset number of nonlinear and linear iterations
-    m_solverStatistics.initializeTimeStepStatistics();
-
-    real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
-                                          nextDt,
-                                          cycleNumber,
-                                          domain );
-    numOfSubSteps++;
-    subStepDt[subStep] = dtAccepted;
-
-    // increment the cumulative number of nonlinear and linear iterations
-    m_solverStatistics.saveTimeStepStatistics();
-
-    /*
-     * Let us check convergence history of previous solve:
-     * - number of nonlinear iter.
-     * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
-     * */
-    dtRemaining -= dtAccepted;
-
-    if( dtRemaining > 0.0 )
-    {
-      nextDt = setNextDt( dtAccepted, domain );
-      if( nextDt < dtRemaining )
-      {
-        // better to do two equal steps than one big and one small (even potentially tiny)
-        if( nextDt * 2 > dtRemaining )
-        {
-          nextDt = dtRemaining / 2;
-          if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-            GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to cover remaining time {} in two steps", getName(), nextDt, dtRemaining ));
-        }
-      }
-      else
-      {
-        nextDt = dtRemaining;
-        if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-          GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to match remaining time", getName(), nextDt ));
-      }
-    }
-
-    if( getLogLevel() >= 1 && dtRemaining > 0.0 )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
-    }
-  }
-
-  GEOS_ERROR_IF( dtRemaining > 0.0, getDataContext() << ": Maximum allowed number of sub-steps"
-                                                        " reached. Consider increasing maxSubSteps." );
+  // increment the cumulative number of nonlinear and linear iterations
+  m_solverStatistics.saveTimeStepStatistics();
 
   // Decide what to do with the next Dt for the event running the solver.
-  m_nextDt = setNextDt( nextDt, domain );
+  m_nextDt = setNextDt( dtAchieved, domain );
 
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDt );
 
