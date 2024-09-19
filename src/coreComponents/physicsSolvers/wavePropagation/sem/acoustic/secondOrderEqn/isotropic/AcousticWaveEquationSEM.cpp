@@ -1067,9 +1067,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                           "",
                                                           kernelFactory );
   //Modification of cycleNember useful when minTime < 0
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-  integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
   addSourceToRightHandSide( time_n, rhs );
 
   /// calculate your time integrators
