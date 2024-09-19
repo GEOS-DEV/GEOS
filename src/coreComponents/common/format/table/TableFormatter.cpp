@@ -227,7 +227,7 @@ void TableTextFormatter::outputTable( std::ostringstream & tableOutput,
 {
   integer const nbValuesRows = tableData.getTableDataRows().size();
 
-  tableOutput << '\n'; //TODO Fonction
+  tableOutput << '\n';
   outputTitleRow( tableOutput, topSeparator );
   tableOutput << GEOS_FMT( "{}\n", sectionSeparatingLine );
 
@@ -481,8 +481,8 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Colu
       }
       else
       {
-        string cell = column.columnValues.at( idxRow );
-        std::string cellSize = stringutilities::join( column.maxStringSize, spaces );
+        string const cell = column.columnValues.at( idxRow );
+        std::string const cellSize = stringutilities::join( column.maxStringSize, spaces );
         tableOutput << buildCell( column.parameter.alignment, cell, cellSize.length());
 
         // Add space between column
