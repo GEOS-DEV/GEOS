@@ -122,11 +122,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   localIndex const kfe = subRegion.size() - 1;
   ruptureTime( kfe ) = time_np1;
 
-//std::cout << kfe << " " << elemCenter[ kfe ] << " " << faceCenter[ faceIndices[ 0 ] ] << std::endl;
-
   LvArray::tensorOps::copy< 3 >( elemCenter[ kfe ], faceCenter[ faceIndices[ 0 ] ] );
-
-//std::cout << kfe << " " << elemCenter[ kfe ] << " " << faceCenter[ faceIndices[ 0 ] ] << std::endl;
 
   faceMap.resizeArray( kfe, 2 );
   faceMap[kfe][0] = faceIndices[0];
