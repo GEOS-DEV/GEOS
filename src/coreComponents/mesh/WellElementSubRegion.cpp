@@ -21,6 +21,7 @@
 #include "common/MpiWrapper.hpp"
 #include "LvArray/src/output.hpp"
 
+#include <unordered_set>
 
 namespace geos
 {
@@ -158,8 +159,8 @@ bool isPointInsideElement( CellElementSubRegion const & subRegion,
   arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
   arrayView2d< real64 const > const elemCenters = subRegion.getElementCenter();
   real64 const elemCenter[3] = { elemCenters[eiLocal][0],
-                                  elemCenters[eiLocal][1],
-                                  elemCenters[eiLocal][2] };
+                                 elemCenters[eiLocal][1],
+                                 elemCenters[eiLocal][2] };
   return computationalGeometry::isPointInsidePolyhedron( referencePosition,
                                                          elemsToFaces[eiLocal],
                                                          facesToNodes,
@@ -167,92 +168,28 @@ bool isPointInsideElement( CellElementSubRegion const & subRegion,
                                                          location );
 }
 
-bool isPointInPolygon2D(real64** polygon, integer n, real64* point) {
-    integer count = 0;
-
-    for (integer i = 0; i < n; i++) {
-        real64* p1 = polygon[i];
-        real64* p2 = polygon[(i + 1) % n];
-
-        if ((point[1] > std::min(p1[1], p2[1])) && (point[1] <= std::max(p1[1], p2[1])) && (point[0] <= std::max(p1[0], p2[0]))) {
-            real64 xIntersect = (point[1] - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]) + p1[0];
-            if (std::abs(p1[0] - p2[0]) < 1e-10 || point[0] <= xIntersect) {
-                count++;
-            }
-        }
-    }
-
-    return count % 2 == 1;
-}
-
-bool isPointInPolygon3D(real64** polygon, integer n, real64* point) {
-    // Check if the point lies in the plane of the polygon
-    real64* p0 = polygon[0];
-    real64 normal[3] = {0, 0, 0};
-    for (integer i = 1; i < n - 1; i++) {
-        real64* p1 = polygon[i];
-        real64* p2 = polygon[i + 1];
-        normal[0] += (p1[1] - p0[1]) * (p2[2] - p0[2]) - (p1[2] - p0[2]) * (p2[1] - p0[1]);
-        normal[1] += (p1[2] - p0[2]) * (p2[0] - p0[0]) - (p1[0] - p0[0]) * (p2[2] - p0[2]);
-        normal[2] += (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0]);
-    }
-
-    real64 d = -(normal[0] * p0[0] + normal[1] * p0[1] + normal[2] * p0[2]);
-    real64 dist = normal[0] * point[0] + normal[1] * point[1] + normal[2] * point[2] + d;
-
-    if (std::abs(dist) > 1e-6) {
-        return false;
-    }
-
-    // Project the polygon and the point onto a 2D plane
-    real64** projectedPolygon = new real64*[n];
-    for (integer i = 0; i < n; i++) {
-        projectedPolygon[i] = new real64[2];
-        projectedPolygon[i][0] = polygon[i][1];
-        projectedPolygon[i][1] = polygon[i][2];
-    }
-    real64 projectedPoint[2] = {point[1], point[2]};
-
-    bool result = isPointInPolygon2D(projectedPolygon, n, projectedPoint);
-
-    for (integer i = 0; i < n; i++) {
-        delete[] projectedPolygon[i];
-    }
-    delete[] projectedPolygon;
-
-    return result;
-}
-
+// Define a hash function
 template< typename POINT_TYPE >
-bool isPointInsidePolygon( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
-                           localIndex const & eiLocal,
-                           integer const & nV,
-                           SurfaceElementSubRegion::NodeMapType const & facesToNodes,
-                           POINT_TYPE const & point_ )
+struct PointHash
 {
-  real64** polygon = new real64*[nV];
-  real64* point = new real64[3];
-  std::cout <<"checking point = ";
-    for( integer j = 0; j < 3; ++j )
-    {
-      point[j] = point_[j];
-      std::cout << point[j] << " ";
-    }
-    std::cout << " polygon = ";
-  for( integer i = 0; i < nV; ++i )
+  std::size_t operator()( POINT_TYPE const point ) const
   {
-    polygon[i] = new real64[3];
-    std::cout << "( ";
-    for( integer j = 0; j < 3; ++j )
-    {
-      polygon[i][j] = nodeCoordinates[facesToNodes( eiLocal, i )][j];
-            std::cout << polygon[i][j] << " ";
-    }
-    std::cout << ")";
+    std::size_t h1 = std::hash< real64 >()( point[0] );
+    std::size_t h2 = std::hash< real64 >()( point[1] );
+    std::size_t h3 = std::hash< real64 >()( point[2] );
+    return h1 ^ (h2 << 1) ^ (h3 << 2);
   }
-  std::cout << std::endl;
-  return isPointInPolygon3D(polygon, nV, point);
-}
+};
+
+// Define equality operator
+template< typename POINT_TYPE >
+struct PointsEqual
+{
+  bool operator()( POINT_TYPE const & p1, POINT_TYPE const & p2 ) const
+  {
+    return (std::abs( p1[0] - p2[0] ) < 1e-10) && (std::abs( p1[1] - p2[1] ) < 1e-10) && (std::abs( p1[2] - p2[2] ) < 1e-10);
+  }
+};
 
 bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition,
@@ -260,13 +197,27 @@ bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
                            ArrayOfArraysView< localIndex const > const & facesToNodes,
                            real64 const (&location)[3] )
 {
-  std::cout << eiLocal << " " << subRegion.numNodesPerElement( eiLocal ) << std::endl;
+  typedef std::array< real64, 3 > Point3d;
+
+  // collect element nodes
+  integer const nV = subRegion.numNodesPerElement( eiLocal );
   SurfaceElementSubRegion::NodeMapType const & nodeList = subRegion.nodeList();
-  return isPointInsidePolygon( referencePosition,
-                               eiLocal,
-                               4,//subRegion.numNodesPerElement( eiLocal ),
-                               nodeList,
-                               location );
+  std::vector< Point3d > polygon( nV );
+  for( integer i = 0; i < nV; ++i )
+  {
+    for( integer j = 0; j < 3; ++j )
+    {
+      polygon[i][j] = referencePosition[nodeList( eiLocal, i )][j];
+    }
+  }
+
+  // remove duplicates
+  std::unordered_set< Point3d, PointHash< Point3d >, PointsEqual< Point3d > >
+  unique_points( polygon.begin(), polygon.end());
+  polygon.clear();
+  std::copy( unique_points.begin(), unique_points.end(), std::back_inserter( polygon ));
+
+  return computationalGeometry::isPointInPolygon3d( polygon, polygon.size(), location );
 }
 
 /**
@@ -528,8 +479,8 @@ void initializeLocalSearch( MeshLevel const & mesh,
   {
     mesh.getElemManager().getRegion( targetRegionIndex ).forElementSubRegionsIndex< CellElementSubRegion, FaceElementSubRegion >( [&] ( localIndex const esr, auto const & subRegion )
     {
-      if(targetSubRegionIndex == esr)
-        subRegion.calculateElementCenters(mesh.getNodeManager().referencePosition());
+      if( targetSubRegionIndex == esr )
+        subRegion.calculateElementCenters( mesh.getNodeManager().referencePosition());
     } );
   }
 
@@ -545,15 +496,12 @@ void initializeLocalSearch( MeshLevel const & mesh,
     real64 v[3] = { location[0], location[1], location[2] };
     LvArray::tensorOps::subtract< 3 >( v, resElemCenter[targetRegionIndex][targetSubRegionIndex][ei] );
     auto dist = LvArray::tensorOps::l2Norm< 3 >( v );
-    std::cout << resElemCenter[targetRegionIndex][targetSubRegionIndex][ei] << " " << dist << std::endl;
     return dist;
   } );
 
   // save the index of the reservoir element
   // note that this reservoir element does not necessarily contains "location"
   eiInit  = ret.second;
-
-  std::cout << "init " << targetRegionIndex << " " << targetSubRegionIndex << " " << eiInit << " " << resElemCenter[targetRegionIndex][targetSubRegionIndex][eiInit] << std::endl;
 }
 
 /**
