@@ -77,7 +77,7 @@ struct PreComputeSourcesAndReceivers
                                        arrayView2d< real64 const > const receiverCoordinates,
                                        arrayView1d< localIndex > const receiverIsLocal,
                                        arrayView2d< localIndex > const receiverNodeIds,
-                                       arrayView2d< real64 > const receiverConstants)
+                                       arrayView2d< real64 > const receiverConstants )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 

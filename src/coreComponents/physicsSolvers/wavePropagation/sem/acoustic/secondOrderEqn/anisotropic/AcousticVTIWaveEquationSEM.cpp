@@ -210,7 +210,7 @@ void AcousticVTIWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  real64 const rickerValue = WaveSolverUtils::evaluateRicker(time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder);
+  real64 const rickerValue = WaveSolverUtils::evaluateRicker( time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
