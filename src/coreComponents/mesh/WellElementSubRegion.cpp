@@ -476,14 +476,6 @@ void initializeLocalSearch( MeshLevel const & mesh,
                             localIndex const & targetSubRegionIndex,
                             localIndex & eiInit )
 {
-  {
-    mesh.getElemManager().getRegion( targetRegionIndex ).forElementSubRegionsIndex< CellElementSubRegion, FaceElementSubRegion >( [&] ( localIndex const esr, auto const & subRegion )
-    {
-      if( targetSubRegionIndex == esr )
-        subRegion.calculateElementCenters( mesh.getNodeManager().referencePosition());
-    } );
-  }
-
   ElementSubRegionBase const & subRegion = mesh.getElemManager().getRegion( targetRegionIndex ).getSubRegion( targetSubRegionIndex );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
