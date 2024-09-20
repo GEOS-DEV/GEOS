@@ -2173,18 +2173,18 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
 
-  real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
+  real64 const nextDtPressure = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
                                 / std::max( eps, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on pressure change = {}", getName(), nextDtPressure ));
-  real64 const nextDtPhaseVolFrac = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
+  real64 const nextDtPhaseVolFrac = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
                                     / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on phase volume fraction change = {}", getName(), nextDtPhaseVolFrac ));
   real64 nextDtCompDens = LvArray::NumericLimits< real64 >::max;
   if( m_targetRelativeCompDensChange < LvArray::NumericLimits< real64 >::max )
   {
-    nextDtCompDens = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeCompDensChange
+    nextDtCompDens = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeCompDensChange
                      / std::max( eps, maxRelativeCompDensChange + m_solutionChangeScalingFactor * m_targetRelativeCompDensChange );
     if( m_nonlinearSolverParameters.getLogLevel() > 0 )
       GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on component density change = {}", getName(), nextDtCompDens ));
@@ -2211,8 +2211,8 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnCFL( const geos::real64 & cu
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max phase CFL number = {}", getName(), maxPhaseCFL ) );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max component CFL number = {} ", getName(), maxCompCFL ) );
 
-  return std::min( m_targetFlowCFL*currentDt/maxCompCFL, m_targetFlowCFL*currentDt/maxPhaseCFL );
-
+  return std::min( m_targetFlowCFL * currentDt / maxCompCFL,
+                   m_targetFlowCFL * currentDt / maxPhaseCFL );
 }
 
 void CompositionalMultiphaseBase::computeCFLNumbers( geos::DomainPartition & domain, const geos::real64 & dt,
