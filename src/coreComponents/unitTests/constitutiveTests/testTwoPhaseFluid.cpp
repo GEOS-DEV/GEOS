@@ -92,11 +92,6 @@ public:
   {
     auto const & phaseNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::phaseNamesString() );
 
-    arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > phaseDensity;
-    arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > phaseViscosity;
-    arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > dPhaseDensity_dPressure;
-    arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > dPhaseViscosity_dPressure;
-
     // create a clone of the fluid to run updates on
     string const fluidCopyName = fluid.getName() + "Copy";
     std::unique_ptr< constitutive::ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( fluidCopyName, parent );
@@ -250,7 +245,7 @@ using TwoPhaseFluidTestFromTables = TwoPhaseFluidTest< true >;
 TEST_F( TwoPhaseFluidTestFromTables, testNumericalDerivative_initFromTables )
 {
   auto & fluid = getFluid();
-  real64 constexpr eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon());
   real64 constexpr relTol = 1.0e-8;
   real64 constexpr absTol = 1.0e-8;
 
@@ -264,7 +259,7 @@ TEST_F( TwoPhaseFluidTestFromTables, testNumericalDerivative_initFromTables )
 TEST_F( TwoPhaseFluidTestFromFiles, testNumericalDerivative_initFromFiles )
 {
   auto & fluid = getFluid();
-  real64 constexpr eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon());
   real64 constexpr relTol = 1.0e-8;
   real64 constexpr absTol = 1.0e-8;
 
