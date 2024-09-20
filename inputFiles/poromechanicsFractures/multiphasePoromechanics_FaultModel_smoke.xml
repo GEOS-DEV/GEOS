@@ -14,9 +14,10 @@
       solidSolverName="fractureMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
-        maxTimeStepCuts="1"
-        newtonTol="1e0"
-        newtonMaxIter="10"
+        lineSearchAction="None"
+        maxTimeStepCuts="10"
+        newtonTol="1e-2"
+        newtonMaxIter="20"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
         solverType="direct"
@@ -35,9 +36,12 @@
     <CompositionalMultiphaseFVM 
       name="flowSolver"
       logLevel="1"
+      useMass="1"
+      scalingType="Local"
       discretization="TPFA"
       targetRegions="{ Region, Fault}"
-      temperature="297.15"/>
+      temperature="297.15">
+    </CompositionalMultiphaseFVM>
   </Solvers>
 
   <Mesh>
@@ -49,6 +53,11 @@
   </Mesh>
 
   <Geometry>
+    <Box
+        name="source"
+        xMin="{ -1800, -1800, -2000 }"
+        xMax="{ 600, 600, -2500 }"/>
+
     <Box
       name="xposFace"
       xMin="{ 5999.99,  -6000.01,  -4000.01 }"
@@ -81,14 +90,14 @@
   </Geometry>
 
   <Events
-    minTime="-1e11"
-    maxTime="3.0e7">
+    minTime="-1"
+    maxTime="1.0e6">
 
     <!-- Initialization -->
     <SoloEvent 
       name="poroelasticityPreEquilibrationStep" 
-      targetTime="-1e11" 
-      beginTime="-1e11" 
+      targetTime="-1" 
+      beginTime="-1" 
       target="/Tasks/poroelasticityPreEquilibrationStep"
     />
     <!-- Injection -->
@@ -101,20 +110,20 @@
     <PeriodicEvent
       name="outputs"
       beginTime="0.0"
-      endTime="3.0e7"
-      forceDt="3.0e7"
+      endTime="1.0e6"
+      forceDt="0.5e5"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplication"
-      endTime="3.0e7"
-      forceDt="3.0e7"
+      endTime="1.0e6"
+      forceDt="0.5e5"
       target="/Solvers/poroFractureSolver"/>
 
     <PeriodicEvent
       name="restarts"
       beginTime="0.0"
-      endTime="3.0e7"
+      endTime="1.0e6"
       target="/Outputs/restartOutput"/>
   </Events>
 </Problem>

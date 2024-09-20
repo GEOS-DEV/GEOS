@@ -28,7 +28,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }" />
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }" />
       <!-- Material inside the fault -->
     <CompressibleSolidParallelPlatesPermeability
       name="faultFilling"
@@ -75,15 +75,6 @@
       fieldName="fracturePorosity_porosity"
       scale="1.00"/>
 
-<!--
-    <FieldSpecification
-      name="prescribedFaultPressure"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fault"
-      fieldName="pressure"
-      scale="35.0e6"/>
--->
-
     <FieldSpecification
       name="xconstraint"
       component="0"
@@ -108,62 +99,30 @@
       scale="0.0"
       setNames="{ znegFace }" /> 
 
-    <FieldSpecification
-      name="init_sigma_xx"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
+    <Traction
+      name="tractionTop"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-1e7"      
+      setNames="{ zposFace }"/>
+
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"      
+      datumElevation="-2000"
+      datumPressure="2e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions"
       component="0"
-      functionName="sigma_xx"
-      scale="1.0"/>
-
-    <FieldSpecification
-      name="init_sigma_yy"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
-      component="1"
-      functionName="sigma_yy"
-      scale="1.0"/>
-
-    <FieldSpecification
-      name="init_sigma_zz"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
-      component="2"
-      functionName="sigma_zz"
-      scale="1.0"/>
-
-    <FieldSpecification
-      name="init_pressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="pressure"
-      functionName="init_pressure"
-      scale="1.0"/>
-
-    <FieldSpecification
-      name="initialComposition_co2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.005"/>
-
-    <FieldSpecification
-      name="initialComposition_water"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.995"/>
+      scale="-1e5"
+      setNames="{ source }"/>
 
   </FieldSpecifications>
 
@@ -212,37 +171,21 @@
   </Outputs>
 
   <Functions>
-    <TableFunction 
-      name="sigma_xx" 
-      interpolation="linear"
-      inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_xx.csv" 
-    />
-
-    <TableFunction 
-      name="sigma_yy" 
-      interpolation="linear"
-      inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_yy.csv" 
-    />
-
-    <TableFunction 
-      name="sigma_zz" 
-      interpolation="linear"
-      inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_zz.csv" 
-    />
 
     <TableFunction
-      name="init_pressure"
-      interpolation="linear"
-      inputVarNames="{elementCenter}"
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}"
-      voxelFile="DATATABLES/porePressure.csv"
-    />
+      name="initCO2CompFracTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initCO2CompFrac.txt"/>
+
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initWaterCompFrac.txt"/>       
+    
+    <TableFunction
+      name="initTempTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initTemp.txt"/>        
 
     <TableFunction
       name="apertureTable"
