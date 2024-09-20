@@ -24,7 +24,7 @@
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/VTKHierarchicalDataRepository.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-
+#include "mesh/generators/Region.hpp"
 #include <vtkDataSet.h>
 
 namespace geos
@@ -46,10 +46,10 @@ public:
   VTKMeshGenerator( const string & name,
                     Group * const parent );
 
-/**
- * @brief Return the name of the VTKMeshGenerator in object Catalog.
- * @return string that contains the key name to VTKMeshGenerator in the Catalog
- */
+  /**
+   * @brief Return the name of the VTKMeshGenerator in object Catalog.
+   * @return string that contains the key name to VTKMeshGenerator in the Catalog
+   */
   static string catalogName() { return "VTKMesh"; }
 
   /**
@@ -117,6 +117,11 @@ private:
     constexpr static char const * repositoryString() { return "repositoryName"; }
     constexpr static char const * meshPathString() { return "meshPath"; }
   };
+
+  struct groupKeyStruct
+  {
+    constexpr static char const * regionString() { return "VTKRegion"; }
+  };
   /// @endcond
 
   void importVolumicFieldOnArray( string const & cellBlockName,
@@ -170,6 +175,7 @@ private:
 
   /// Repository of VTK objects
   VTKHierarchicalDataRepository * m_repository;
+
 };
 
 } // namespace geos

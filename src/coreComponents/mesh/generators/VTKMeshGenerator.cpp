@@ -25,12 +25,12 @@
 #include "mesh/generators/CellBlockManager.hpp"
 #include "common/DataTypes.hpp"
 
+
 #include <vtkXMLUnstructuredGridWriter.h>
 
 namespace geos
 {
 using namespace dataRepository;
-
 
 VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
@@ -266,6 +266,7 @@ void VTKMeshGenerator::freeResources()
   m_cellMap.clear();
   m_faceBlockMeshes.clear();
 }
+
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
 

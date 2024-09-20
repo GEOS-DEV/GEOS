@@ -391,6 +391,7 @@
 	<xsd:complexType name="InternalMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="Region" type="RegionType" />
 			<xsd:element name="VTKWell" type="VTKWellType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
@@ -401,6 +402,7 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
+	<xsd:complexType name="RegionType" />
 	<xsd:complexType name="VTKWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
@@ -409,6 +411,7 @@
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="Region" type="RegionType" />
 			<xsd:element name="VTKWell" type="VTKWellType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
@@ -429,6 +432,7 @@
 	<xsd:complexType name="VTKMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="Region" type="RegionType" />
 			<xsd:element name="VTKWell" type="VTKWellType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>

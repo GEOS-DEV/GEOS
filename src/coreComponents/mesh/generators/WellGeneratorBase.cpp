@@ -25,7 +25,7 @@ namespace geos
 using namespace dataRepository;
 
 WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent ):
-  WellGeneratorABC( name, parent )
+  MeshComponentBase( name, parent )
   , m_numPerforations( 0 )
   , m_numElemsPerSegment( 0 )
   , m_minSegmentLength( 1e-2 )
@@ -97,11 +97,11 @@ void WellGeneratorBase::expandObjectCatalogs()
   createChild( viewKeyStruct::perforationString(), viewKeyStruct::perforationString() );
 }
 
-WellGeneratorBase::CatalogInterface::CatalogType & WellGeneratorBase::getCatalog()
-{
-  static WellGeneratorBase::CatalogInterface::CatalogType catalog;
-  return catalog;
-}
+// WellGeneratorBase::CatalogInterface::CatalogType & WellGeneratorBase::getCatalog()
+// {
+//   static WellGeneratorBase::CatalogInterface::CatalogType catalog;
+//   return catalog;
+// }
 
 void WellGeneratorBase::generateWellGeometry( )
 {
