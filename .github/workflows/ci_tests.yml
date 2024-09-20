@@ -261,7 +261,7 @@ jobs:
   #     - run: sysctl -n machdep.cpu.brand_string
 
 
-  temp_build_extract_tag:
+  temp_builds_extract_tag:
     # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
     # to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-22.04
@@ -284,19 +284,7 @@ jobs:
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
  
  temp_builds:
-    - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v4.1.7
-      with:
-        sparse-checkout: |
-          .devcontainer/devcontainer.json
-        sparse-checkout-cone-mode: false
-        submodules: false
-        lfs: false
-        fetch-depth: 1
-    - name: Extract docker image tag
-      id: extract_docker_image_tag
-      run: |
-        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
+    needs: [temp_builds_extract_tag]
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
