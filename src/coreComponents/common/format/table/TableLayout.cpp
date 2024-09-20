@@ -39,7 +39,7 @@ void TableLayout::addToColumns( const std::vector< std::string > & columnNames )
 
 void TableLayout::addToColumns( std::string && columnName )
 {
-  m_columns.push_back( TableLayout::ColumnParam{ {columnName} } );
+  m_columns.emplace_back( TableLayout::ColumnParam{ {columnName} } );
 }
 
 void TableLayout::addToColumns( ColumnParam && columnParam )
@@ -49,13 +49,13 @@ void TableLayout::addToColumns( ColumnParam && columnParam )
     std::vector< TableLayout::Column > subColumns;
     for( const auto & subColumnsName : columnParam.subColumns )
     {
-      subColumns.push_back( TableLayout::Column{ subColumnsName } );
+      subColumns.emplace_back( TableLayout::Column{ subColumnsName } );
     }
-    m_columns.push_back( TableLayout::Column{ columnParam, subColumns } );
+    m_columns.emplace_back( TableLayout::Column{ columnParam, subColumns } );
   }
   else
   {
-    m_columns.push_back( TableLayout::Column{ columnParam } );
+    m_columns.emplace_back( TableLayout::Column{ columnParam } );
   }
 }
 

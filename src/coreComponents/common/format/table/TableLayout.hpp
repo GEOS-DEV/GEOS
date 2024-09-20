@@ -164,8 +164,16 @@ public:
   template< typename ... Args >
   TableLayout( Args &&... args )
   {
-    setMargin( MarginValue::large );
+    setMargin( MarginValue::medium );
     processArguments( std::forward< Args >( args )... );
+  }
+
+  TableLayout( std::string const & title,
+               std::initializer_list< std::variant< std::string, TableLayout::ColumnParam > > args )
+  {
+    setMargin( MarginValue::medium );
+    setTitle( title );
+    processArguments( args );
   }
 
   /**
@@ -199,7 +207,7 @@ public:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
-   * @brief Check whether we have a line return at the end of the table or not 
+   * @brief Check whether we have a line return at the end of the table or not
    *
    */
   bool isLineWrapEnabled() const;
@@ -227,6 +235,26 @@ public:
 private:
 
   void addColumns( std::vector< TableLayout::ColumnParam > & columnsParam );
+
+  void processArguments( std::initializer_list< std::variant< std::string, TableLayout::ColumnParam > > args )
+  {
+    for( const auto & arg : args )
+    {
+      std::visit( [this]( auto && value ) {
+        // Si c'est un ColumnParam, on crée une copie locale et on la déplace
+        if constexpr (std::is_same_v< std::decay_t< decltype(value) >, TableLayout::ColumnParam >)
+        {
+          auto local_copy = value;
+          addToColumns( std::move( local_copy ) );
+        }
+        else
+        {
+          addToColumns( std::forward< decltype(value) >( value ) );
+        }
+      }, arg );
+
+    }
+  }
 
   /**
    * @brief Recursively processes a variable number of arguments and adds them to the table data.
@@ -256,7 +284,7 @@ private:
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
-  void addToColumns( const std::vector< std::string > & columnNames );
+  void addToColumns( std::vector< std::string > const & columnNames );
 
 /**
  * @brief Create and add a column to the columns vector given a string
