@@ -433,6 +433,15 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
   return true;
 }
 
+/**
+ * @brief Check if a point is inside a polygon (2D version)
+ * @tparam POLYGON_TYPE type of @p polygon
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] polygon array of ploygon nodes coordinates
+ * @param[in] n number of polygon nodes
+ * @param[in] point coordinates of the query point
+ * @return whether the point is inside
+ */
 template< typename POLYGON_TYPE, typename POINT_TYPE >
 bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE const & point )
 {
@@ -458,6 +467,15 @@ bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE con
   return count % 2 == 1;
 }
 
+/**
+ * @brief Check if a point is inside a polygon (3D version)
+ * @tparam POLYGON_TYPE type of @p polygon
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] polygon array of ploygon nodes coordinates
+ * @param[in] n number of polygon nodes
+ * @param[in] point coordinates of the query point
+ * @return whether the point is inside
+ */
 template< typename POLYGON_TYPE, typename POINT_TYPE >
 bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TYPE const & point )
 {
