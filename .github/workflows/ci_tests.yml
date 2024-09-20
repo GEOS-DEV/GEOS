@@ -261,14 +261,48 @@ jobs:
   #     - run: sysctl -n machdep.cpu.brand_string
 
 
-  # If the 'ci: run CUDA builds' PR label is found, the cuda jobs run immediately along side linux jobs.
-  # Note: CUDA jobs should only be run if PR is ready to merge.
-  temp_builds:
+  temp_build_extract_tag:
+    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
+    # to ensure maximum support of google cloud's sdk.
+    runs-on: ubuntu-22.04
+    outputs:
+      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
+    steps:
+    # The TPL tag is contained in the codespaces configuration to avoid duplications.
+    - name: Checkout .devcontainer/devcontainer.json
+      uses: actions/checkout@v4.1.7
+      with:
+        sparse-checkout: |
+          .devcontainer/devcontainer.json
+        sparse-checkout-cone-mode: false
+        submodules: false
+        lfs: false
+        fetch-depth: 1
+    - name: Extract docker image tag
+      id: extract_docker_image_tag
+      run: |
+        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
+ 
+ temp_builds:
+    - name: Checkout .devcontainer/devcontainer.json
+      uses: actions/checkout@v4.1.7
+      with:
+        sparse-checkout: |
+          .devcontainer/devcontainer.json
+        sparse-checkout-cone-mode: false
+        submodules: false
+        lfs: false
+        fetch-depth: 1
+    - name: Extract docker image tag
+      id: extract_docker_image_tag
+      run: |
+        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
       matrix:
         include:
+    # The TPL tag is contained in the codespaces configuration to avoid duplications.
           - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.5.1)
             BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
             CMAKE_BUILD_TYPE: Release
