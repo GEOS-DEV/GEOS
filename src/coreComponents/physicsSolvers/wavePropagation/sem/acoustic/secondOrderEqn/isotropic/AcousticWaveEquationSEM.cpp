@@ -858,7 +858,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      bool computeGradient )
 {
-  real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  real64 dtCompute = explicitStepInternal( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -937,7 +937,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       DomainPartition & domain,
                                                       bool computeGradient )
 {
-  real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  real64 dtCompute = explicitStepInternal( time_n, dt, domain );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
@@ -1038,7 +1038,6 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                real64 const & dt,
-                                               integer cycleNumber,
                                                DomainPartition & domain,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
@@ -1145,7 +1144,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
 void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                    real64 const & dt,
-                                                   integer const,
                                                    DomainPartition & domain,
                                                    MeshLevel & mesh,
                                                    arrayView1d< string const > const & )
@@ -1191,7 +1189,6 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 
 real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       real64 const & dt,
-                                                      integer const cycleNumber,
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -1205,8 +1202,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   {
     localIndex nSubSteps = (int) ceil( dt/m_timeStep );
     dtCompute = dt/nSubSteps;
-    computeUnknowns( time_n, dtCompute, cycleNumber, domain, mesh, regionNames );
-    synchronizeUnknowns( time_n, dtCompute, cycleNumber, domain, mesh, regionNames );
+    computeUnknowns( time_n, dtCompute, domain, mesh, regionNames );
+    synchronizeUnknowns( time_n, dtCompute, domain, mesh, regionNames );
   } );
 
   return dtCompute;
