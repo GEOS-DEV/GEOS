@@ -686,6 +686,9 @@ public:
     /// @return string for the initialDt wrapper
     static constexpr char const * initialDtString() { return "initialDt"; }
 
+    /// @return string for the minDtIncreaseInterval wrapper
+    static constexpr char const * minDtIncreaseIntervalString() { return "minDtIncreaseInterval"; }
+
     /// @return string for the maxStableDt wrapper
     static constexpr char const * maxStableDtString() { return "maxStableDt"; }
 
@@ -1008,6 +1011,9 @@ protected:
 
   /// timestep of the next cycle
   real64 m_nextDt;
+
+  /// Number of cycles since last timestep cut
+  integer m_numTimestepsSinceLastDtCut;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;

@@ -39,6 +39,7 @@ SolverBase::SolverBase( string const & name,
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
+  m_numTimestepsSinceLastDtCut( -1 ),
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
@@ -247,6 +248,16 @@ bool SolverBase::execute( real64 const time_n,
                           DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  /*
+   * Reset counter indicating the number of cycles since the last timestep cut
+   * when the new timestep. "-1" means that no time-step cut has ocurred.
+   * */
+  if( dt < m_nextDt )
+  {
+    m_numTimestepsSinceLastDtCut = -1;
+  }
+
   real64 dtRemaining = dt;
   real64 nextDt = dt;
 
@@ -311,6 +322,12 @@ bool SolverBase::execute( real64 const time_n,
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( nextDt, domain );
 
+  // Increase counter to indicate how many cycles since the last timestep cut
+  if( m_numTimestepsSinceLastDtCut >= 0 )
+  {
+    m_numTimestepsSinceLastDtCut++;
+  }
+
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDt );
 
   return false;
@@ -337,12 +354,20 @@ void SolverBase::logEndOfCycleInformation( integer const cycleNumber,
 real64 SolverBase::setNextDt( real64 const & currentDt,
                               DomainPartition & domain )
 {
+  integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.minTimeStepIncreaseInterval();
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on Newton iterations = {}", getName(), nextDtNewton ));
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
+
+  if( ( m_numTimestepsSinceLastDtCut >= 0 ) && ( m_numTimestepsSinceLastDtCut < minTimeStepIncreaseInterval ) )
+  {
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step size will be kept the same since it's been {} cycles since last cut.",
+                                        getName(), m_numTimestepsSinceLastDtCut ) );
+    return currentDt;
+  }
 
   if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
   {
@@ -818,6 +843,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
+      m_numTimestepsSinceLastDtCut = 0;
       GEOS_LOG_LEVEL_RANK_0 ( 1, GEOS_FMT( "New dt = {}", stepDt ) );
 
       // notify the solver statistics counter that this is a time step cut
