@@ -639,8 +639,6 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
 {
-  std::cout << "SolidMechanicsLagrangeContact::assembleContact" << std::endl;
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )

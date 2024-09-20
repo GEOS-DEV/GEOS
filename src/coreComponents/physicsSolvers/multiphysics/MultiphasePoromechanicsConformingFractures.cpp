@@ -448,8 +448,6 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "MultiphasePoromechanicsConformingFractures::assembleForceResidualDerivativeWrtPressure" << std::endl;
-
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -556,8 +554,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_MARK_FUNCTION;
-
-  std::cout << "MultiphasePoromechanicsConformingFractures::assembleFluidMassResidualDerivativeWrtDisplacement" << std::endl;
 
   integer const numComp = this->flowSolver()->numFluidComponents();
 
