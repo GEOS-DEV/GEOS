@@ -116,20 +116,22 @@ struct ConstitutivePassThru< SolidBase >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
-                                 DamageVolDev< ElasticIsotropic >,
-                                 Damage< ElasticIsotropic >,
-                                 DuvautLionsSolid< DruckerPrager >,
-                                 DuvautLionsSolid< DruckerPragerExtended >,
-                                 DuvautLionsSolid< ModifiedCamClay >,
-                                 DruckerPragerExtended,
-                                 ModifiedCamClay,
-                                 DelftEgg,
-                                 DruckerPrager,
-                                 ElasticIsotropic,
-                                 ElasticTransverseIsotropic,
-                                 ElasticIsotropicPressureDependent,
-                                 ElasticOrthotropic >::execute( constitutiveRelation,
+    ConstitutivePassThruHandler< 
+    //DamageSpectral< ElasticIsotropic >,
+    //                              DamageVolDev< ElasticIsotropic >,
+    //                              Damage< ElasticIsotropic >,
+    //                              DuvautLionsSolid< DruckerPrager >,
+    //                              DuvautLionsSolid< DruckerPragerExtended >,
+    //                              DuvautLionsSolid< ModifiedCamClay >,
+    //                              DruckerPragerExtended,
+    //                              ModifiedCamClay,
+    //                              DelftEgg,
+    //                              DruckerPrager,
+                                 ElasticIsotropic
+                                //  ElasticTransverseIsotropic,
+                                //  ElasticIsotropicPressureDependent,
+                                //  ElasticOrthotropic 
+                                 >::execute( constitutiveRelation,
                                                                 std::forward< LAMBDA >( lambda ) );
   }
 };

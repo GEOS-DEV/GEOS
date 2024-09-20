@@ -626,9 +626,11 @@ void ProblemManager::generateMesh()
     }
   } );
 
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupBaseLevelMeshGlobalInfo();
+#endif
 
   // setup the MeshLevel associated with the discretizations
   for( auto const & discretizationPair: discretizations )
@@ -682,7 +684,9 @@ void ProblemManager::generateMesh()
     }
   }
 
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   domain.setupCommunications( useNonblockingMPI );
+#endif
   domain.outputPartitionInformation();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
@@ -697,6 +701,7 @@ void ProblemManager::generateMesh()
       meshBody.deregisterCellBlockManager();
     }
 
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
       FaceManager & faceManager = meshLevel.getFaceManager();
@@ -722,6 +727,7 @@ void ProblemManager::generateMesh()
       faceManager.setIsExternal();
       edgeManager.setIsExternal( faceManager );
     } );
+#endif
   } );
 
 }
@@ -832,18 +838,24 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
   elemRegionManager.generateMesh( cellBlockManager );
   nodeManager.setGeometricalRelations( cellBlockManager, elemRegionManager, isBaseMeshLevel );
+
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   edgeManager.setGeometricalRelations( cellBlockManager, isBaseMeshLevel );
   faceManager.setGeometricalRelations( cellBlockManager, elemRegionManager, nodeManager, isBaseMeshLevel );
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
+#endif
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
   nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   edgeManager.buildSets( nodeManager );
   faceManager.buildSets( nodeManager );
+#endif
   elemRegionManager.buildSets( nodeManager );
   // The edge manager do not hold any information related to the regions nor the elements.
   // This is why the element region manager is not provided.
   nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemRegionManager );
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
   faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemRegionManager );
   // Node and edge managers rely on the boundary information provided by the face manager.
@@ -851,6 +863,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   faceManager.setDomainBoundaryObjects( elemRegionManager );
   edgeManager.setDomainBoundaryObjects( faceManager );
   nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
+#endif
 
   meshLevel.generateSets();
 
@@ -983,9 +996,11 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL )
+#if !defined( CALC_FEM_SHAPE_IN_KERNEL )
                   feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
-//#endif
+#else
+                  GEOS_UNUSED_VAR( X );
+#endif
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               meshLevel.getName(),

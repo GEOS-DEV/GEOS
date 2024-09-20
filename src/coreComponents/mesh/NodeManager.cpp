@@ -44,6 +44,7 @@ NodeManager::NodeManager( string const & name,
 {
   registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
   //END_SPHINX_REFPOS_REG
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
   this->registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
   this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
@@ -55,16 +56,19 @@ NodeManager::NodeManager( string const & name,
                                 viewKeyStruct::elementRegionListString(),
                                 viewKeyStruct::elementSubRegionListString(),
                                 viewKeyStruct::elementListString() } );
+#endif
 }
 
 
 void NodeManager::resize( localIndex const newSize )
 {
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
   m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
   m_toElements.m_toElementSubRegion.resize( newSize, 2 * getElemMapOverAllocation() );
   m_toElements.m_toElementIndex.resize( newSize, 2 * getElemMapOverAllocation() );
+#endif
   ObjectManagerBase::resize( newSize );
 }
 
@@ -158,6 +162,7 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
   m_referencePosition = cellBlockManager.getNodePositions();
 
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
@@ -192,6 +197,10 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   };
   // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
   elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connectNodesTo2dElements );
+
+#else
+  GEOS_UNUSED_VAR( cellBlockManager, elemRegionManager );
+#endif
 }
 
 void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,

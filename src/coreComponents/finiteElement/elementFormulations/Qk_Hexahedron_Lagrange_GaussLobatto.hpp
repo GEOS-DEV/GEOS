@@ -63,6 +63,12 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
 
+  /// The number of vertices per element.
+  constexpr static localIndex numVertices = 8;
+
+  /// The maximum number of vertices per element.
+  constexpr static localIndex maxVertices = 8;
+
   /**
    * @brief The linear index associated to the given one-dimensional indices in the three directions
    * @param qa The index in the first direction
@@ -171,6 +177,13 @@ public:
     return numNodes;
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  static localIndex getNumVertices( StackVariables const & stack )
+  {
+    GEOS_UNUSED_VAR( stack );
+    return numVertices;
+  }
 
   /**
    * @brief Calculate shape functions values at a single point.

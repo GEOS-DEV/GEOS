@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 #include "testFiniteElementHelpers.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/Format.hpp"
 #include <chrono>
 
 
@@ -29,6 +30,7 @@ using namespace finiteElement;
 
 class TestFiniteElementBase final : public FiniteElementBase
 {
+public:
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override {return 8;};
   GEOS_HOST_DEVICE
@@ -96,8 +98,7 @@ TEST( FiniteElementBase, test_setDetJView )
   }
 }
 
-//***** TEST getGradN *****************************************************************************
-TEST( FiniteElementBase, test_capture )
+void test_capture()
 {
   TestFiniteElementBase feBase;
   array4d< real64 > gradN( 4, 8, 8, 3 );
@@ -108,41 +109,34 @@ TEST( FiniteElementBase, test_capture )
 
   array1d< localIndex > gradNDims( 4 );
   array1d< localIndex > detJDims( 2 );
-  arrayView1d< localIndex > gradNDimsView = gradNDims.toView();
-  arrayView1d< localIndex > detJDimsView = detJDims.toView();
+  arrayView1d< localIndex > const gradNDimsView = gradNDims.toView();
+  arrayView1d< localIndex > const detJDimsView = detJDims.toView();
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
 
-  forAll< parallelDevicePolicy<> >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const i )
+  arrayView4d< real64 const > const gradNView = feBase.getGradNView();
+  arrayView2d< real64 const > const detJView = feBase.getDetJView();
+
+  forAll< geos::parallelDevicePolicy<> >( 1, [ gradNView, detJView, gradNDimsView, detJDimsView ] GEOS_HOST_DEVICE ( int const )
   {
-    gradNDimsView[0] = feBase.getGradNView().size( 0 );
-    gradNDimsView[1] = feBase.getGradNView().size( 1 );
-    gradNDimsView[2] = feBase.getGradNView().size( 2 );
-    gradNDimsView[3] = feBase.getGradNView().size( 3 );
-    detJDimsView[0] = feBase.getDetJView().size( 0 );
-    detJDimsView[1] = feBase.getDetJView().size( 1 );
-
-    printf( "gradNDimsView = { %ld, %ld, %ld, %ld }\n",
-            gradNDimsView[0],
-            gradNDimsView[1],
-            gradNDimsView[2],
-            gradNDimsView[3] );
-
-    printf( "detJDimsView = { %ld, %ld }\n",
-            detJDimsView[0],
-            detJDimsView[1] );
+    gradNDimsView[0] = gradNView.size( 0 );
+    gradNDimsView[1] = gradNView.size( 1 );
+    gradNDimsView[2] = gradNView.size( 2 );
+    gradNDimsView[3] = gradNView.size( 3 );
+    detJDimsView[0] = detJView.size( 0 );
+    detJDimsView[1] = detJView.size( 1 );
   } );
 
-  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const i )
+  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const )
   {} );
 
-  EXPECT_EQ( gradNDimsView[0], 0 );
-  EXPECT_EQ( gradNDimsView[1], 0 );
-  EXPECT_EQ( gradNDimsView[2], 0 );
-  EXPECT_EQ( gradNDimsView[3], 0 );
+  EXPECT_EQ( gradNDimsView[0], 4 );
+  EXPECT_EQ( gradNDimsView[1], 8 );
+  EXPECT_EQ( gradNDimsView[2], 8 );
+  EXPECT_EQ( gradNDimsView[3], 3 );
 
-  EXPECT_EQ( detJDimsView[0], 0 );
-  EXPECT_EQ( detJDimsView[1], 0 );
+  EXPECT_EQ( detJDimsView[0], 4 );
+  EXPECT_EQ( detJDimsView[1], 8 );
 #endif
 
 
@@ -165,8 +159,12 @@ TEST( FiniteElementBase, test_capture )
   EXPECT_EQ( detJDimsView[0], detJ.size( 0 ) );
   EXPECT_EQ( detJDimsView[1], detJ.size( 1 ) );
 
+}
 
-
+//***** TEST getGradN *****************************************************************************
+TEST( FiniteElementBase, test_capture )
+{
+  test_capture();
 }
 
 //***** TEST value() ******************************************************************************

@@ -1,0 +1,8 @@
+  # FLOP counters
+  pmc : SQ_INSTS_VALU_ADD_F64 SQ_INSTS_VALU_MUL_F64 SQ_INSTS_VALU_TRANS_F64 SQ_INSTS_VALU_FMA_F64 SQ_INSTS_VALU_MFMA_MOPS_F64
+  pmc : TCC_EA_RDREQ_32B_sum TCC_EA_RDREQ_sum TCC_EA_WRREQ_sum TCC_EA_WRREQ_64B_sum
+  # Filter by dispatches range, GPU index and kernel names
+  # supported range formats: "3:9", "3:", "3"
+  # range:
+  # gpu: 0
+  kernel: SmallStrainResidual

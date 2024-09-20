@@ -74,13 +74,13 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      stack.xLocal[ a ][ i ] = m_X( nodeIndex, i );
 #endif
 
 #if UPDATE_STRESS==2
-      stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
+      stack.varLocal[ a ][ i ] = m_vel( nodeIndex, i ) * m_dt;
 #else
-      stack.varLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
+      stack.varLocal[ a ][ i ] = m_u( nodeIndex, i );
 #endif
     }
   }

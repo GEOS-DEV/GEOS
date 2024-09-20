@@ -582,7 +582,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   SortedArray< localIndex > & yposNodes = nodeSets["ypos"];
   SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
   SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   SortedArray< localIndex > & allNodes = nodeSets["all"];
+#endif
 
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
@@ -785,7 +787,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           {
             zposNodes.insert( localNodeIndex );
           }
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
           allNodes.insert( localNodeIndex );
+#endif
 
           ++localNodeIndex;
         }
@@ -963,7 +967,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   coordinateTransformation( X, nodeSets );
 
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   cellBlockManager.buildMaps();
+#endif
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );

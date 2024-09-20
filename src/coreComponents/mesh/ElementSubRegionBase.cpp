@@ -41,12 +41,14 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::numFacesPerElementString(), &m_numFacesPerElement );
 
+//#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   registerWrapper( viewKeyStruct::elementCenterString(), &m_elementCenter ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
+//#endif
 }
 
 ElementSubRegionBase::~ElementSubRegionBase()

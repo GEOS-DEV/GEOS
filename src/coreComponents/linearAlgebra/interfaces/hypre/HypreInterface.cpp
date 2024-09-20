@@ -50,6 +50,9 @@ void HypreInterface::initialize()
   HYPRE_SetExecutionPolicy( HYPRE_EXEC_DEVICE );
   HYPRE_SetSpGemmUseVendor( 0 );
   HYPRE_DeviceInitialize();
+  HYPRE_SetUmpireUMPoolSize( 0 );
+  HYPRE_SetUmpireDevicePoolSize( 0 );
+
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
   HYPRE_SetPrintErrorMode( 1 );

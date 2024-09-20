@@ -334,7 +334,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     EdgeManager const & edgeManager = mesh.getEdgeManager();
     arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
     mass.zero(); // assign to zero so that accumulation below works properly
-
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition();
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
     // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
@@ -374,12 +374,11 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           "SolidMechanicsLagrangianFEM::m_elemsNotAttachedToSendOrReceiveNodes["
           + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
 
-        arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
+        finiteElement::FiniteElementDispatchHandler< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >::dispatch3D( fe,
                                                                                  [&] ( auto const finiteElement )
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
@@ -392,28 +391,44 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                                                                                    elementSubRegion,
                                                                                    meshData );
 
+          //constexpr localIndex maxVertices = FE_TYPE::maxVertices;
           constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
           real64 N[maxSupportPoints];
+          real64 xLocal[maxSupportPoints][3];
+
+
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
             typename FE_TYPE::StackVariables feStack;
             finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
-            localIndex const numSupportPoints =
-              finiteElement.template numSupportPoints< FE_TYPE >( feStack );
+            //localIndex const numVertices = FE_TYPE::getNumVertices( feStack );
+            localIndex const numSupportPoints = FE_TYPE::getNumSupportPoints( feStack );
 
-//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
+            for( localIndex a=0; a< numSupportPoints; ++a )
+            {
+              for( localIndex i=0; i<3; ++i )
+              {
+                xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              }
+            }
+
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
+              real64 dNdXLocal[maxSupportPoints][3];
+              real64 const detJW = finiteElement.calcGradN( q, xLocal, feStack, dNdXLocal );
               FE_TYPE::calcN( q, feStack, N );
 
               for( localIndex a=0; a< numSupportPoints; ++a )
               {
-                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
+#if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
+                mass[elemsToNodes[k][a]] += rho[k][q] * detJW * N[a];
+#else
+                mass[elemsToNodes[k][a]] += 1 * detJW * N[a];
+#endif
               }
             }
-//#endif
 
             bool isAttachedToGhostNode = false;
             for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )

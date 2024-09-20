@@ -52,6 +52,13 @@ public:
     m_diagInv.reciprocal();
   }
 
+  virtual void  setup( Vector const & inputVec ) override
+  {
+    GEOS_LAI_ASSERT( inputVec.ready() );
+    m_diagInv.createWithLocalSize( inputVec.numLocalRows(), inputVec.comm() );
+  }
+
+
   /**
    * @brief Clean up the preconditioner setup.
    *

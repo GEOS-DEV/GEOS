@@ -34,10 +34,10 @@
 #include "LvArray/src/system.hpp"
 
 #define FE_1_TYPES \
-  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
-  finiteElement::H1_Wedge_Lagrange1_Gauss6, \
+  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2
+/*  finiteElement::H1_Wedge_Lagrange1_Gauss6, \
   finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
-  finiteElement::H1_Pyramid_Lagrange1_Gauss5
+  finiteElement::H1_Pyramid_Lagrange1_Gauss5 */
 
 #define GL_FE_TYPES \
   finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \

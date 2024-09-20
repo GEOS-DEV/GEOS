@@ -82,12 +82,12 @@ setup( localIndex const k,
   stack.numRows =  3 * numSupportPoints;
   stack.numCols = stack.numRows;
 
-  // #pragma unroll
+  //RAJA_UNROLL
   for( localIndex a = 0; a < numSupportPoints; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-    // #pragma unroll
+    RAJA_UNROLL
     for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -132,7 +132,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   m_constitutiveUpdate.smallStrainUpdate( k, q, m_dt, strainInc, stress, stiffness );
 
   stressModifier( stress );
-  // #pragma unroll
+  RAJA_UNROLL
   for( localIndex i=0; i<6; ++i )
   {
     stress[i] *= -detJxW;
@@ -179,10 +179,10 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
 #endif
   localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
 
-  // #pragma unroll
+  //RAJA_UNROLL
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
-    // #pragma unroll
+    RAJA_UNROLL
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
