@@ -371,7 +371,6 @@ void WaveSolverBase::postInputInitialization()
 
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
 
   if( m_dtSeismoTrace > 0 )
   {
