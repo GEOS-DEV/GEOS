@@ -325,6 +325,7 @@ real64 AcousticVTIWaveEquationSEM::computeTimeStep( real64 & dtOut )
   return dtOut;
 }
 
+
 void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
 {
   real64 const time = 0.0;
@@ -486,7 +487,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                         DomainPartition & domain,
                                                         bool computeGradient )
 {
-  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -547,7 +548,6 @@ real64 AcousticVTIWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNU
 
 real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                          real64 const & dt,
-                                                         integer cycleNumber,
                                                          DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
