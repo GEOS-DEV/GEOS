@@ -261,29 +261,6 @@ jobs:
   #     - run: sysctl -n machdep.cpu.brand_string
 
 
-  temp_builds_extract_tag:
-    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
-    # to ensure maximum support of google cloud's sdk.
-    runs-on: ubuntu-22.04
-    outputs:
-      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
-    steps:
-    # The TPL tag is contained in the codespaces configuration to avoid duplications.
-    - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v4.1.7
-      with:
-        sparse-checkout: |
-          .devcontainer/devcontainer.json
-        sparse-checkout-cone-mode: false
-        submodules: false
-        lfs: false
-        fetch-depth: 1
-    - name: Extract docker image tag
-      id: extract_docker_image_tag
-      run: |
-        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
-
-
   temp_builds:
     name: ${{ matrix.name }}
     needs:
@@ -300,7 +277,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5
+            DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5:257-513
             RUNS_ON: streak
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia --gpus all -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
