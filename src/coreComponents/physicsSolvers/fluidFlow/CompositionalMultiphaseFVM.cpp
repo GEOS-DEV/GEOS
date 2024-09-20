@@ -1117,8 +1117,6 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << "CompositionalMultiphaseFVM::assembleHydrofracFluxTerms" << std::endl;
-
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
