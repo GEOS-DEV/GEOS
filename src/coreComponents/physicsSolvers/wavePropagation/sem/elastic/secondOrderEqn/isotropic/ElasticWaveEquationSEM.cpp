@@ -254,19 +254,6 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   receiverConstants.setValues< EXEC_POLICY >( 0 );
   receiverIsLocal.zero();
 
-  arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
-
-  real64 dt = 0;
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
   mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                 localIndex const er,
                                                                                                 localIndex const esr,
@@ -315,11 +302,6 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
         receiverIsLocal,
         receiverNodeIds,
         receiverConstants,
-        sourceValue,
-        dt,
-        m_timeSourceFrequency,
-        m_timeSourceDelay,
-        m_rickerOrder,
         m_useDAS,
         m_linearDASSamples,
         m_linearDASGeometry.toViewConst(),
@@ -329,7 +311,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   } );
 }
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber,
+void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n,
                                                        arrayView1d< real32 > const rhsx,
                                                        arrayView1d< real32 > const rhsy,
                                                        arrayView1d< real32 > const rhsz )
@@ -340,20 +322,18 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   arrayView2d< real64 const > const sourceConstantsz   = m_sourceConstantsz.toViewConst();
 
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
-
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), getDataContext() << ": Too many steps compared to array size", std::runtime_error );
+  real64 const rickerValue = WaveSolverUtils::evaluateRicker( time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder );
   forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstantsx.size( 1 ); ++inode )
       {
-        real32 const localIncrementx = sourceConstantsx[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real32 const localIncrementx = sourceConstantsx[isrc][inode] * rickerValue;
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhsx[sourceNodeIds[isrc][inode]], localIncrementx );
-        real32 const localIncrementy = sourceConstantsy[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real32 const localIncrementy = sourceConstantsy[isrc][inode] * rickerValue;
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhsy[sourceNodeIds[isrc][inode]], localIncrementy );
-        real32 const localIncrementz = sourceConstantsz[isrc][inode] * sourceValue[cycleNumber][isrc];
+        real32 const localIncrementz = sourceConstantsz[isrc][inode] * rickerValue;
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhsz[sourceNodeIds[isrc][inode]], localIncrementz );
       }
     }
@@ -462,6 +442,14 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     }
 
   } );
+
+  if( m_preComputeDt==1 )                                                       
+  {                                                                             
+    real64 dtOut = 0.0;                                                         
+    computeTimeStep( dtOut );                                                   
+    m_preComputeDt = 0;                                                         
+    m_timeStep=dtOut;                                                           
+  } 
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
   WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
@@ -616,7 +604,7 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     uy_n.zero();
     uz_n.zero();
   } );
-  return dtOut;
+  return m_timeStep;
 }
 
 real32 ElasticWaveEquationSEM::computeGlobalMinQFactor()
@@ -723,8 +711,8 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                     DomainPartition & domain,
                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  return dtOut;
+  real64 dtCompute = explicitStepInternal( time_n, dt, domain );
+  return dtCompute;
 }
 
 
@@ -736,13 +724,12 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( getDataContext() << ": Backward propagation for the elastic wave propagator not yet implemented" );
-  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  real64 dtOut = explicitStepInternal( time_n, dt, domain );
   return dtOut;
 }
 
-void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
+void ElasticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const cycleNumber,
                                               DomainPartition &,
                                               MeshLevel & mesh,
                                               arrayView1d< string const > const & regionNames )
@@ -809,12 +796,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                                             kernelFactory );
   }
 
-  //Modification of cycleNember useful when minTime < 0
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-  integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
-
-  addSourceToRightHandSide( cycleForSource, rhsx, rhsy, rhsz );
+  addSourceToRightHandSide( time_n, rhsx, rhsy, rhsz );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
   if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
@@ -844,7 +826,6 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 
 void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                   real64 const & dt,
-                                                  integer const,
                                                   DomainPartition & domain,
                                                   MeshLevel & mesh,
                                                   arrayView1d< string const > const & )
@@ -947,23 +928,25 @@ void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 
 real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                      real64 const & dt,
-                                                     integer const cycleNumber,
                                                      DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
+  real64 dtCompute;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
-    synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    localIndex nSubSteps = (int) ceil( dt/m_timeStep );
+    dtCompute = dt/nSubSteps;
+    computeUnknowns( time_n, dtCompute, domain, mesh, regionNames );
+    synchronizeUnknowns( time_n, dtCompute, domain, mesh, regionNames );
     prepareNextTimestep( mesh );
   } );
 
-  return dt;
+  return dtCompute;
 }
 
 void ElasticWaveEquationSEM::cleanup( real64 const time_n,

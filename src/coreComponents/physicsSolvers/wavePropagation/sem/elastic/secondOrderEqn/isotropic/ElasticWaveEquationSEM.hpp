@@ -88,7 +88,7 @@ public:
    * @param rhsy the right hand side vector to be computed (y-component)
    * @param rhsz the right hand side vector to be computed (z-component)
    */
-  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
+  void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
   /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
@@ -141,19 +141,16 @@ public:
    */
   real64 explicitStepInternal( real64 const & time_n,
                                real64 const & dt,
-                               integer const cycleNumber,
                                DomainPartition & domain );
 
   void computeUnknowns( real64 const & time_n,
                         real64 const & dt,
-                        integer const cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
                         arrayView1d< string const > const & regionNames );
 
   void synchronizeUnknowns( real64 const & time_n,
                             real64 const & dt,
-                            integer const cycleNumber,
                             DomainPartition & domain,
                             MeshLevel & mesh,
                             arrayView1d< string const > const & regionNames );
