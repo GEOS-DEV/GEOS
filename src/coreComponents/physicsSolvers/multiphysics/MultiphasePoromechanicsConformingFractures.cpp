@@ -38,14 +38,23 @@ MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::MultiphasePoromechani
                                                                                                        Group * const parent )
   : Base( name, parent )
 {
-  // TODO
-/*
-   LinearSolverParameters & params = this->m_linearSolverParameters.get();
-   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsConformingFractures;
-   params.mgr.separateComponents = false;
-   params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-   params.dofsPerNode = 3;
- */
+  // TODO: MGR recipe
+  // LinearSolverParameters & params = this->m_linearSolverParameters.get();
+  // params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsConformingFractures;
+  // params.mgr.separateComponents = false;
+  // params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  // params.dofsPerNode = 3;
+}
+
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::postInputInitialization()
+{
+  Base::postInputInitialization();
+  
+  if( this->flowSolver()->isThermal() )
+  {
+    GEOS_ERROR( "Thermal flow is not yet supported for multiphase poromechanics conforming fractures" );
+  }
 }
 
 template< typename FLOW_SOLVER >

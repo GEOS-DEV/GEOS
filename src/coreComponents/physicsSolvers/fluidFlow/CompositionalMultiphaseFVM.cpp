@@ -1174,18 +1174,7 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
 
       if( m_isThermal )
       {
-/* TODO
-        thermalSinglePhasePoromechanicsConformingFracturesKernels::
-          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                          elemDofKey,
-                                                                                          this->getName(),
-                                                                                          mesh.getElemManager(),
-                                                                                          stencilWrapper,
-                                                                                          dt,
-                                                                                          localMatrix.toViewConstSizes(),
-                                                                                          localRhs.toView(),
-                                                                                          dR_dAper );
- */
+        GEOS_ERROR("Thermal not yet supported in CompositionalMultiphaseFVM::assembleHydrofracFluxTerms");
       }
       else
       {

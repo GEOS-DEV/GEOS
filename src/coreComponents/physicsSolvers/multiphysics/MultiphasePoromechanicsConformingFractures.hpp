@@ -101,6 +101,10 @@ public:
 
   /**@}*/
 
+protected:
+
+  virtual void postInputInitialization() override;
+
 private:
 
   struct viewKeyStruct : public Base::viewKeyStruct
