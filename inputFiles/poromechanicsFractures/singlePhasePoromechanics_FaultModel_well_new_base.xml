@@ -29,7 +29,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }" />
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }" />
       <!-- Material inside the fault -->
     <CompressibleSolidParallelPlatesPermeability
       name="faultFilling"
