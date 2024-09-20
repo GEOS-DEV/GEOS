@@ -263,8 +263,6 @@ jobs:
 
   temp_builds:
     name: ${{ matrix.name }}
-    needs:
-      - temp_builds_extract_tag
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
