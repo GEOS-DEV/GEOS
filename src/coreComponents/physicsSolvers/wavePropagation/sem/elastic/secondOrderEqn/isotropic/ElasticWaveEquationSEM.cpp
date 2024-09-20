@@ -707,7 +707,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
 
 real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                     real64 const & dt,
-                                                    integer cycleNumber,
+                                                    integer,
                                                     DomainPartition & domain,
                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
@@ -719,7 +719,7 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
 real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      real64 const & dt,
-                                                     integer cycleNumber,
+                                                     integer,
                                                      DomainPartition & domain,
                                                      bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
