@@ -795,9 +795,9 @@ public:
     for( integer ip = 0; ip < numPhase; ++ip )
     {
       real64 const density = m_phaseDens[ei][0][ip];
-      real64 const dDens_dP = m_dPhaseDens[ei][0][ip][0];
+      real64 const dDens_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
       real64 const viscosity = m_phaseVisc[ei][0][ip];
-      real64 const dVisc_dP = m_dPhaseVisc[ei][0][ip][0];
+      real64 const dVisc_dP = m_dPhaseVisc[ei][0][ip][Deriv::dP];
 
       real64 const relPerm = m_phaseRelPerm[ei][0][ip];    
 
@@ -806,7 +806,7 @@ public:
       phaseMob[ip] = mobility;
       dPhaseMob[ip][Deriv::dP] = mobility * (dDens_dP / density - dVisc_dP / viscosity);        
 
-      for( integer jp = 0; jp < numPhase; ++jp )                                                  // check if we need numPhase or numPhase-1 derivatives
+      for( integer jp = 0; jp < numPhase-1; ++jp )
       {
         real64 const dRelPerm_dS = m_dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][jp];        
         dPhaseMob[ip][Deriv::dS+jp] = dRelPerm_dS * density / viscosity;                                      
