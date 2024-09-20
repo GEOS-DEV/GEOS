@@ -50,7 +50,7 @@ if( GEOS_ENABLE_WAVEPROPAGATION )
   add_subdirectory( wavePropagation )
 endif()
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events )
+set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
 
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers

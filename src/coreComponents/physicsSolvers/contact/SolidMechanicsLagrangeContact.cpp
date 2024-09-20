@@ -1478,7 +1478,7 @@ void SolidMechanicsLagrangeContact::
     constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
     {
       using FrictionType = TYPEOFREF( castedFrictionLaw );
-      typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelWrapper();
+      typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -2252,7 +2252,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
         using FrictionType = TYPEOFREF( castedFrictionLaw );
-        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelWrapper();
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
