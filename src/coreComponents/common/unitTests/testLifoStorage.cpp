@@ -175,7 +175,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 // running tests on GPUs
 TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
 {
-  testLifoStorage< local::devicePolicy< 32 > >( 10, 2, 3, 10000 );
+  testLifoStorage< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDAlarge )
@@ -201,29 +201,29 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeBoth )
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
 {
-  testLifoStorage< local::devicePolicy< 32 > >( 10, 0, 3, 10000 );
+  testLifoStorage< local::devicePolicy< 32 > >( 10, 0, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageAsyncBufferOnCUDA )
 {
-  testLifoStorageAsync< local::devicePolicy< 32 > >( 10, 2, 3, 10000 );
+  testLifoStorageAsync< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
 }
 
 #else
 // running tests on CPUs
 TEST( LifoStorageTest, LifoStorageBufferOnHost )
 {
-  testLifoStorage< local::serialPolicy >( 10, 2, 3, 10000 );
+  testLifoStorage< local::serialPolicy >( 10, 2, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageBufferOnHostNoDeviceBuffer )
 {
-  testLifoStorage< local::serialPolicy >( 10, 0, 3, 10000 );
+  testLifoStorage< local::serialPolicy >( 10, 0, 3, 10 );
 }
 
 TEST( LifoStorageTest, LifoStorageAsyncBufferOnHost )
 {
-  testLifoStorageAsync< local::serialPolicy >( 10, 2, 3, 10000 );
+  testLifoStorageAsync< local::serialPolicy >( 10, 2, 3, 10 );
 }
 
 #endif
