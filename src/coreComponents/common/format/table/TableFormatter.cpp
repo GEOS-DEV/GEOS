@@ -377,7 +377,7 @@ void TableTextFormatter::computeTableWidth( std::vector< TableLayout::Column > &
   { // Compute total length of all columns with margins
     sectionlineLength += std::accumulate( columns.begin(), columns.end(), 0,
                                           [&]( auto sum, auto & column ) -> auto
-    {
+    { // take into account subColumn
       std::string sumOfString = stringutilities::join( column.maxStringSize, spaces );
       return static_cast< decltype(sum) >(sum + sumOfString.length());
     } );
@@ -385,34 +385,35 @@ void TableTextFormatter::computeTableWidth( std::vector< TableLayout::Column > &
 
   string::size_type maxTopLineLength =  tableTitle.length() + m_tableLayout.getBorderMargin() * 2;
   maxTopLineLength = std::max( {maxTopLineLength, sectionlineLength} );
-
   if( sectionlineLength < maxTopLineLength )
   {
-    integer const extraCharacters = maxTopLineLength - sectionlineLength;
+    real64 const extraCharacters = maxTopLineLength - sectionlineLength;
     increaseColumnsSize( columns, extraCharacters );
   }
 }
 
 void TableTextFormatter::increaseColumnsSize( std::vector< TableLayout::Column > & columns,
-                                              integer const extraCharacters ) const
+                                              real64 const extraCharacters ) const
 {
-  integer const extraCharactersPerColumn = std::ceil( extraCharacters / columns.size() );
+  real64 const extraCharactersPerColumn = std::floor( (extraCharacters) / columns.size() );
+  integer rest = extraCharacters - (extraCharactersPerColumn *  columns.size() ) ;
   for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
     if( !columns[idxColumn].subColumn.empty())
     {
-      distributeSpaces( columns[idxColumn].maxStringSize, extraCharacters );
-      increaseColumnsSize( columns[idxColumn].subColumn, extraCharacters );
+      distributeSpaces( columns[idxColumn].maxStringSize, (int)extraCharactersPerColumn );
+      increaseColumnsSize( columns[idxColumn].subColumn, extraCharactersPerColumn );
     }
     else
     {
       std::string & cell = columns[idxColumn].maxStringSize[0];
-      integer newMaxStringSize = extraCharactersPerColumn + cell.size();
+      integer newMaxStringSize = idxColumn == 0 ?
+                                 extraCharactersPerColumn + cell.size() + rest :
+                                 extraCharactersPerColumn + cell.size();
       cell = GEOS_FMT( "{:>{}}", cell, newMaxStringSize );
     }
   }
 }
-
 
 void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column > const & columns,
                                                std::string & sectionSeparatingLine,
@@ -430,8 +431,8 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
   }
 
   std::string const patternBetweenColumns = GEOS_FMT( "{:-^{}}", m_horizontalLine, columnMargin );
-  std::string const leftBorder = GEOS_FMT( "{}{:-<{}}", m_horizontalLine, "", borderMargin - 1 );
-  std::string const rightBorder = GEOS_FMT( "{}{:-<{}}", m_horizontalLine, "", borderMargin - 1 );
+  std::string const leftBorder = GEOS_FMT( "{:-<{}}", m_horizontalLine, borderMargin );
+  std::string const rightBorder = GEOS_FMT( "{:-<{}}", m_horizontalLine, borderMargin );
 
   // Join all parts to form the section separating line
   std::string const columnJoin = stringutilities::join( maxStringsPerColumn, patternBetweenColumns );
@@ -439,7 +440,7 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
   oss << leftBorder << columnJoin << rightBorder;
   sectionSeparatingLine = oss.str();
 
-  integer const topSeparatorLength = sectionSeparatingLine.size() - 2; // Adjust for border characters
+  integer const topSeparatorLength = sectionSeparatingLine.size() -2; // Adjust for border characters
   topSeparator = GEOS_FMT( "{}{:-<{}}{}", m_horizontalLine, "", topSeparatorLength, m_horizontalLine );
 }
 

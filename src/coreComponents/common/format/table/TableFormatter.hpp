@@ -233,7 +233,7 @@ private:
    * @param extraCharacters ExtraCharacters to be distributed between each columns
    */
   void increaseColumnsSize( std::vector< TableLayout::Column > & columns,
-                            integer const extraCharacters ) const;
+                            real64 const extraCharacters ) const;
 
   /**
    * @brief Builds the table's separating lines based on the content length of the columns.
