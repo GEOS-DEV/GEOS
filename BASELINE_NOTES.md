@@ -8,7 +8,7 @@ These notes should be in reverse-chronological order, and use the following time
 
 PR #3338 (2024-09-19)
 ======================
-Updated time-stepping logic with. Rebaseline due to new input parameter and minor numerical diffs.
+Updated time-stepping logic. Rebaseline due to new input parameter and minor numerical diffs.
 
 
 PR #3217 (2024-09-16)
