@@ -256,8 +256,9 @@ fi
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die cmake --build . -j $NPROC --target geosx
 else
-  or_die cmake --build . -j $NPROC
+  or_die cmake --build . -j $NPROC --target testLifoStorage
   or_die cmake --install .
+  or_die ./tests/testLifoStorage
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
