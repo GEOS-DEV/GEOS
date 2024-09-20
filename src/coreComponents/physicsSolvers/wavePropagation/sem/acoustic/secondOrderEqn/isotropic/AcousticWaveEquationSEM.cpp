@@ -425,11 +425,8 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     // We use 1.99 instead of 2 to have a 5% margin error
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 
-    printf( "lam=%f\n", lambdaNew );
-
     dtOut = MpiWrapper::min( dt );
 
-    printf( "dtinside=%f\n", dtOut );
     stiffnessVector.zero();
     p.zero();
   } );
