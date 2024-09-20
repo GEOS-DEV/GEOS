@@ -50,7 +50,7 @@ template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::postInputInitialization()
 {
   Base::postInputInitialization();
-  
+
   if( this->flowSolver()->isThermal() )
   {
     GEOS_ERROR( "Thermal flow is not yet supported for multiphase poromechanics conforming fractures" );
@@ -595,11 +595,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-    //string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
-    //
-    //MultiFluidBase const & fluid = this->template getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    //arrayView2d< real64 const > const & density = fluid.density();
-
     arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
 
     arrayView1d< globalIndex const > const & flowDofNumber = subRegion.getReference< array1d< globalIndex > >( flowDofKey );

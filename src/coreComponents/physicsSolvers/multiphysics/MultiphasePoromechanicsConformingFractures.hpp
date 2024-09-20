@@ -194,7 +194,7 @@ private:
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
-  string const m_flowDofKey = CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); // TODO
+  string const m_flowDofKey = CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString();
 
 };
 

@@ -29,8 +29,6 @@ namespace geos
 namespace multiphasePoromechanicsConformingFracturesKernels
 {
 
-using namespace constitutive;
-
 template< integer NUM_EQN, integer NUM_DOF >
 class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
@@ -51,12 +49,10 @@ public:
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
+  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
                                                                   fields::permeability::dPerm_dDispJump >;
 
-// TODO
   using AbstractBase::m_dt;
-  using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_pres;
