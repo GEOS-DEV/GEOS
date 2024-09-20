@@ -194,7 +194,7 @@ struct PointsEqual
 bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition,
                            localIndex const & eiLocal,
-                           ArrayOfArraysView< localIndex const > const & facesToNodes,
+                           ArrayOfArraysView< localIndex const > const & GEOS_UNUSED_PARAM( facesToNodes ),
                            real64 const (&location)[3] )
 {
   typedef std::array< real64, 3 > Point3d;
