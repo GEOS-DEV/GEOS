@@ -107,8 +107,8 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOS_HOST_DEVICE ( int i )
     {
-      printf("testing %f vs. %f\n", dataPointer[i], (float)(totalNumberOfBuffers-j-1)*elemCnt+i);
-      printf("with totalNumberOfBuffers=%i, j=%i, elemCnt=%i, i=%i\n",totalNumberOfBuffers,j,elemCnt,i);
+      //printf("testing %f vs. %f\n", dataPointer[i], (float)(totalNumberOfBuffers-j-1)*elemCnt+i);
+      //printf("with totalNumberOfBuffers=%i, j=%i, elemCnt=%i, i=%i\n",totalNumberOfBuffers,j,elemCnt,i);
       PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
     } );
   }
