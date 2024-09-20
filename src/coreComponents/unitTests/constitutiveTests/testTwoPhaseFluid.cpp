@@ -13,9 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/initialization.hpp"
-
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
 
@@ -274,9 +271,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geos::GeosxState state( geos::basicSetup( argc, argv ) );
+  conduit::Node conduitNode;
+  dataRepository::Group rootNode( "root", conduitNode );
+  FunctionManager functionManager( "FunctionManager", &rootNode );
+
   int const result = RUN_ALL_TESTS();
-  geos::basicCleanup();
 
   return result;
 }
