@@ -282,15 +282,17 @@ jobs:
       id: extract_docker_image_tag
       run: |
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
- 
+
+
  temp_builds:
-    needs: [temp_builds_extract_tag]
+    name: ${{ matrix.name }}
+    needs:
+      - temp_builds_extract_tag
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
       matrix:
         include:
-    # The TPL tag is contained in the codespaces configuration to avoid duplications.
           - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.5.1)
             BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
             CMAKE_BUILD_TYPE: Release
