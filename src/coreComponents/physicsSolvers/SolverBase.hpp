@@ -934,12 +934,14 @@ protected:
    *
    * @param newNewtonNorm Residual norm at current iteration
    * @param oldNewtonNorm Residual norm at previous iteration
-   * @param weakestTol Weakest tolerance allowed (default 1e-3).
+   * @param krylovParams Linear solver parameters
+   * @param logLevel Log level
    * @return Adaptive tolerance recommendation
    */
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
-                                 real64 const weakestTol );
+                                 LinearSolverParameters::Krylov const & krylovParams,
+                                 integer const logLevel );
 
   /**
    * @brief Get the Constitutive Name object
