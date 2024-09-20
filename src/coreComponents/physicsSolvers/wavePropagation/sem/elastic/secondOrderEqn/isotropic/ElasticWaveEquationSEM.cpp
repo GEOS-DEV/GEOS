@@ -443,13 +443,13 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   } );
 
-  if( m_preComputeDt==1 )                                                       
-  {                                                                             
-    real64 dtOut = 0.0;                                                         
-    computeTimeStep( dtOut );                                                   
-    m_preComputeDt = 0;                                                         
-    m_timeStep=dtOut;                                                           
-  } 
+  if( m_preComputeDt==1 )
+  {
+    real64 dtOut = 0.0;
+    computeTimeStep( dtOut );
+    m_preComputeDt = 0;
+    m_timeStep=dtOut;
+  }
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
   WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
