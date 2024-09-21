@@ -35,7 +35,7 @@ namespace computationalGeometry
 {
 
 /// Machine epsilon for double-precision calculations
-constexpr real64 machinePrecision = std::numeric_limits< real64 >::epsilon();
+constexpr real64 machinePrecision = LvArray::NumericLimits< real64 >::epsilon;
 
 /**
  * @brief Calculate the intersection between a line and a plane.
