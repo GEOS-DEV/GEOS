@@ -2293,7 +2293,6 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               {
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
-
               if( currentTau > limitTau )
               {
                 if( originalFractureState == FractureState::Stick )
