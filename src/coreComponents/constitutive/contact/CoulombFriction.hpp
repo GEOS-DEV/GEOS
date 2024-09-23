@@ -48,8 +48,8 @@ public:
     m_elasticSlip( elasticSlip )
   {
     // TODO
-    m_plasticSlip.resize(1000, 2);
-    m_slip.resize(1000, 2);
+    m_plasticSlip.resize( 1000, 2 );
+    m_slip.resize( 1000, 2 );
   }
 
   /// Default copy constructor
@@ -351,7 +351,7 @@ inline void CoulombFrictionUpdates::updateFractureState( localIndex const k,
 
     real64 const slip[2] = { dispJump[1] - oldDispJump[1],
                              dispJump[2] - oldDispJump[2] };
-    if (yield < 0)
+    if( yield < 0 )
     {
       // The slip is only elastic: we add the full slip to the elastic one
       LvArray::tensorOps::add< 2 >( m_elasticSlip[k], slip );
