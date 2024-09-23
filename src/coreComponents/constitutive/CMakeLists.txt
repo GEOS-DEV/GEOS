@@ -1,7 +1,7 @@
 #==================================================================================================
-# Package : constitutive
+# Package: constitutive
 #
-# Contains the implementation of constitutive models for fluid and rock properties
+# Contains the implementation of constitutive models for fluid and rock properties.
 #
 #==================================================================================================
 

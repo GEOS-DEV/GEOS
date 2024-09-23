@@ -1,8 +1,8 @@
 #==================================================================================================
-# Package : constitutiveDrivers
+# Package: constitutiveDrivers
 #
-# Contains the fluid and rock constitutive model drivers
-# to calibrate solid material parameters to experimental data
+# Contains fluid and rock constitutive model tests to calibrate constitutive model parameters to
+# experimental data.
 #
 #==================================================================================================
 

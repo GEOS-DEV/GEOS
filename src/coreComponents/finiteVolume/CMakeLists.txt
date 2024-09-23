@@ -1,8 +1,9 @@
 #==================================================================================================
-# Package : finiteVolume
+# Package: finiteVolume
 #
-# Contains wrappers and managements implementation for stencils involved in finite volume method
-# Contains implementations of mimetic inner product for hybrid finite volume method solvers
+# Contains:
+#  - wrappers and managements implementation for stencils involved in finite volume method.
+#  - implementations of mimetic inner product for hybrid finite volume method solvers.
 #
 #==================================================================================================
 

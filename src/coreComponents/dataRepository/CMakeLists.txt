@@ -1,8 +1,8 @@
 #==================================================================================================
-# Package : dataRepository
+# Package: dataRepository
 #
-# Provides the building blocks for the code structure
-# Also contains a wrapper to process entries from an xml file into data types
+# Provides the building blocks for the code structure.
+# Also contains a wrapper to process entries from an xml file into data types.
 #
 #==================================================================================================
 

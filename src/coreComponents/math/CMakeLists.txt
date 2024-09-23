@@ -1,7 +1,7 @@
 #==================================================================================================
 # Package : math
 #
-# Contains interpolation and extrapolation math functions
+# Contains interpolation and extrapolation math functions.
 #
 #==================================================================================================
 

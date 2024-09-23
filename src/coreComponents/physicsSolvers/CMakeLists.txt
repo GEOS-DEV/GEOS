@@ -1,12 +1,10 @@
 #==================================================================================================
-# Package : physicsSolvers
+# Package: physicsSolvers
 #
-# Contains physics solvers base and manager classes
-# Contains fields traits, solvers, kernels and utilities relative to different physics: contact
-#   mechanics, proppant transport, flow, induced seismicity rate, phase-field damage, solid
-#   mechanics MPM and Lagrangian implementations, mesh topology splitting methods and acoustic and
-#   elastic waves.
-# Contains physics solver wrapper designed for PyGEOSX interface
+# Contains:
+#  - physics solvers base and manager classes.
+#  - implementations of different physics models.
+#  - physics solver wrapper designed for PyGEOSX interface.
 #
 #==================================================================================================
 

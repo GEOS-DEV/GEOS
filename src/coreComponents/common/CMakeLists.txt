@@ -1,7 +1,7 @@
 #==================================================================================================
-# Package : common
+# Package: common
 #
-# Contains the definition of static types : data types, messaging and formatting
+# Contains the definition of static types : data types, messaging and formatting.
 #
 #==================================================================================================
 

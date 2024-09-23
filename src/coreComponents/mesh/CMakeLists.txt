@@ -1,12 +1,11 @@
 #==================================================================================================
-# Package : mesh
+# Package: mesh
 #
-# Contains classes managing data and functionalities for each topological type of the mesh
-# Contains topological objects initialization (cells, nodes, faces, line, particle) and
-#   ParMETIS, Scotch and VTK interfaces
-# Contains communication tools for mesh partition and MPI communications between ranks
-# Contains definition of geometric objects (box, plane and cylinder types)
-# Contains kernels and template functions for geometric computations, and map utilities
+# Contains:
+#  - components allowing to import, store and access the mesh.
+#  - partitioning and communication tools (ParMETIS, Scotch and VTK interfaces).
+#  - GEOS components defining simple geometric objects.
+#  - basic geometric and mesh utilities.
 #
 #==================================================================================================
 

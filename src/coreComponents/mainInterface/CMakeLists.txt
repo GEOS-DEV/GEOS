@@ -1,8 +1,9 @@
 #==================================================================================================
-# Package : mainInterface
+# Package: mainInterface
 #
-# Contains the class managing the operation flow of the problem being ran in GEOS
-# Contains basic initialization and environment setup routines
+# Contains:
+#  - the class managing the operation flow of the problem being ran in GEOS.
+#  - basic initialization and environment setup routines.
 #
 #==================================================================================================
 

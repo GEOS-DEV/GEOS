@@ -1,7 +1,7 @@
 #==================================================================================================
-# Package : codingUtilities
+# Package: codingUtilities
 #
-# Contains definition of runtime types and traits
+# Contains definition of runtime types and traits.
 #
 #==================================================================================================
 

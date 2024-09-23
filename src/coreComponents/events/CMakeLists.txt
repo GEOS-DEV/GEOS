@@ -1,8 +1,8 @@
 #==================================================================================================
-# Package : events
+# Package: events
 #
-# Contains the code events types
-# Manages the events and tasks
+# Contains GEOS event types.
+# Manages the events and tasks.
 #
 #==================================================================================================
 

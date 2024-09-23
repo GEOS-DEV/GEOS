@@ -1,7 +1,7 @@
 #==================================================================================================
-# Package : schema
+# Package: schema
 #
-# Contains XML schema definition and functions to generate it
+# Contains XML schema definition and functions to generate it.
 #
 #==================================================================================================
 
