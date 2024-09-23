@@ -169,7 +169,7 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
     } );
   }
 
-  if ( m_applyLocalYieldAcceleration )
+  if( m_applyLocalYieldAcceleration )
   {
     initializeAccelerationVariables( domain );
   }
@@ -1587,8 +1587,6 @@ void SolidMechanicsLagrangeContact::
 
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
 
-                // std::cout << "kfe = " << kfe << ", dispJump[1] = " << dispJump[kfe][1] << ", dispJump[2] = " << dispJump[kfe][2] << ", previousDispJump[1] = " << previousDispJump[kfe][1] << ", previousDispJump[2] = " << previousDispJump[kfe][2] << std::endl;
-
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
                 if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == contact::FractureState::NewSlip ) )
@@ -2226,7 +2224,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
   bool isConfigurationLoopConverged = false;
 
-  if ( m_applyLocalYieldAcceleration )
+  if( m_applyLocalYieldAcceleration )
   {
     isConfigurationLoopConverged = updateConfigurationWithAcceleration( domain );
   }
@@ -2234,9 +2232,9 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   {
     isConfigurationLoopConverged = updateConfigurationWithoutAcceleration( domain );
   }
-  
+
   m_config_iter += 1;
-  if ( isConfigurationLoopConverged )
+  if( isConfigurationLoopConverged )
   {
     m_config_iter = 0;
   }
@@ -2250,8 +2248,6 @@ void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainParti
   localIndex total_size = 0;
   int visit = 0;
 
-  std::cout << "In initializeAccelerationVariables: " << std::endl;
-
   using namespace fields::contact;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -2263,7 +2259,7 @@ void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainParti
                                                                                 FaceElementSubRegion & subRegion )
     {
       total_size += subRegion.size();
-      visit += 1;   
+      visit += 1;
     } );
   } );
 
@@ -2274,21 +2270,14 @@ void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainParti
   m_x2_tilde.resize( total_size );
   m_omega0.resize( total_size );
   m_omega1.resize( total_size );
-
-  std::cout << "total_size = " << total_size << ", visit = " << visit << std::endl;
 }
 
 bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainPartition & domain )
 {
-  std::cout << "In SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration:" << std::endl;
-
   using namespace fields::contact;
 
   real64 changedArea = 0;
   real64 totalArea = 0;
-
-  std::cout << "Config iter = " << m_nonlinearSolverParameters.m_numConfigurationAttempts << std::endl;
-  std::cout << "Config iter = " << m_config_iter << std::endl;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -2323,21 +2312,13 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-
-          if ( kfe == 0 || kfe == 106 || kfe == 164 )
-          {
-            std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
-            ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
-            ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-          }
-
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
             if( originalFractureState == FractureState::Open )
             {
-              // if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] ) // original 
-              if( abs(dispJump[kfe][0]) <= abs(normalDisplacementTolerance[kfe]) ) // trying comparison in absolute
+              // if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] ) // original
+              if( abs( dispJump[kfe][0] ) <= abs( normalDisplacementTolerance[kfe] ) ) // trying comparison in absolute
               {
                 fractureState[kfe] = FractureState::Stick;
                 if( getLogLevel() >= 10 )
@@ -2350,9 +2331,6 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
             {
               fractureState[kfe] = FractureState::Open;
 
-              std::cout << "Fracture OPEN at kfe = " << kfe << ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << 
-              ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-
               if( getLogLevel() >= 10 )
                 GEOS_LOG( GEOS_FMT( "{}: {} -> {}: traction = {}, normalTractionTolerance = {}",
                                     kfe, originalFractureState, fractureState[kfe],
@@ -2362,16 +2340,11 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
 
-              if ( kfe == 0 || kfe == 106 || kfe == 164 )
-              {
-                std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
-              }
-
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
                 contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
                                                                    dLimitTangentialTractionNorm_dTraction );
-              
+
               real64 currentTau_unscaled = currentTau;
 
               if( originalFractureState == FractureState::Stick && currentTau >= limitTau )
@@ -2383,54 +2356,37 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
 
-              if ( kfe == 0 || kfe == 106 || kfe == 164 )
-              {
-                std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << std::endl;
-              }
-
               if( currentTau > limitTau )
               {
                 if( originalFractureState == FractureState::Stick )
                 {
                   fractureState[kfe] = FractureState::NewSlip;
-                  std::cout << "Fracture NEW slip at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau <<
-                   ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
                 }
                 else
                 {
                   fractureState[kfe] = FractureState::Slip;
-                  std::cout << "Fracture slip at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << 
-                  ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
                 }
               }
               else
               {
                 fractureState[kfe] = FractureState::Stick;
 
-                if ( m_config_iter == 0 )
+                if( m_config_iter == 0 )
                 {
-                  m_x0[kfe] = currentTau_unscaled - limitTau; 
-                  // std::cout << "kfe = " << kfe << ", yield at config iter = 0 is " << m_x0[kfe] << std::endl;
+                  m_x0[kfe] = currentTau_unscaled - limitTau;
                 }
-                else if ( m_config_iter == 1 )
+                else if( m_config_iter == 1 )
                 {
                   m_x1_tilde[kfe] = currentTau_unscaled - limitTau;
                   m_x1[kfe] = m_x1_tilde[kfe];
                   m_omega0[kfe] = 1;
-                  // std::cout << "kfe = " << kfe << ", yield at config iter = 1 is " << m_x0[kfe] << std::endl;
                 }
                 else
                 {
                   // only apply acceleration if within a fraction of the limitTau
                   real64 acceleration_buffer = ( limitTau - currentTau ) / limitTau;
 
-                  // if (kfe == 0)
-                  // {
-                    // std::cout << "acceleration_buffer = " << acceleration_buffer << ", acc_tol = " << 1.0 / ( m_nonlinearSolverParameters.m_numConfigurationAttempts - 1 ) << std::endl;
-                  // }
-                  // std::cout << "kfe = " << kfe << ", acceleration_buffer = " << acceleration_buffer << std::endl;
-                  if ( acceleration_buffer > ( 0.1 / ( m_config_iter - 1 ) ) )
-                  // if ( acceleration_buffer > 0.1 )
+                  if( acceleration_buffer > ( 0.1 / ( m_config_iter - 1 ) ) )
                   {
                     // do not apply acceleration, just update previous values
                     m_x0[kfe] = m_x1_tilde[kfe];
@@ -2446,19 +2402,12 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
 
                     m_x2[kfe] = ( 1.0 - m_omega1[kfe] ) * m_x1[kfe] + m_omega1[kfe] * m_x2_tilde[kfe];
 
-                    if ( kfe == 0 )
-                    {
-                      std::cout << "kfe = " << kfe << ", x0 = " << m_x0[kfe] << ", x1_tilde = " << m_x1_tilde[kfe] << ", x1 = " << m_x1[kfe] << ", x2_tilde = " << m_x2_tilde[kfe] << ", x2 = " << m_x2[kfe] << ", w0 = " << m_omega0[kfe] << ", w1 = " << m_omega1[kfe] <<  std::endl;
-                    }
-
                     real64 acc_currentTau_unscaled = m_x2[kfe] + limitTau;
                     real64 acc_currentTau_scaled = acc_currentTau_unscaled * (1.0 - m_slidingCheckTolerance);
 
-                    if ( acc_currentTau_scaled > limitTau )
+                    if( acc_currentTau_scaled > limitTau )
                     {
                       fractureState[kfe] = FractureState::NewSlip;
-                      std::cout << "Fracture NEW slip due to acceleration at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau <<
-                      ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
                     }
                     else
                     {
@@ -2503,8 +2452,6 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
 
 bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( DomainPartition & domain )
 {
-  std::cout << "In SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration:" << std::endl;
-
   using namespace fields::contact;
 
   real64 changedArea = 0;
@@ -2562,9 +2509,6 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
             {
               fractureState[kfe] = FractureState::Open;
 
-              std::cout << "Fracture OPEN at kfe = " << kfe << ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << 
-              ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-
               if( getLogLevel() >= 10 )
                 GEOS_LOG( GEOS_FMT( "{}: {} -> {}: traction = {}, normalTractionTolerance = {}",
                                     kfe, originalFractureState, fractureState[kfe],
@@ -2592,14 +2536,10 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
                 if( originalFractureState == FractureState::Stick )
                 {
                   fractureState[kfe] = FractureState::NewSlip;
-                  std::cout << "Fracture NEW slip at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau <<
-                   ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
                 }
                 else
                 {
                   fractureState[kfe] = FractureState::Slip;
-                  std::cout << "Fracture slip at kfe = " << kfe << ", currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << 
-                  ", normal dispJump = " << dispJump[kfe][0] << ", normal traction = " << traction[kfe][0] << std::endl;
                 }
               }
               else

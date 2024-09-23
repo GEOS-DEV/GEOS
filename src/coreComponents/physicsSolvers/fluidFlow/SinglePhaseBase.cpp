@@ -726,13 +726,14 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
     //                                                                                          SurfaceElementSubRegion & subRegion )
     // {
     //   // std::cout << "In SinglePhaseBase::implicitStepSetup -> FaceElementSubregion 2" << std::endl;
-      
+
     //   arrayView1d< real64 const > const aper = subRegion.getField< fields::flow::hydraulicAperture >();
     //   arrayView1d< real64 > const aper0 = subRegion.getField< fields::flow::aperture0 >();
     //   aper0.setValues< parallelDevicePolicy<> >( aper );
 
     //   // Needed coz faceElems don't exist when initializing.
-    //   CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+    //   CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >(
+    // viewKeyStruct::solidNamesString() ) );
     //   porousSolid.saveConvergedState();
 
     //   saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
