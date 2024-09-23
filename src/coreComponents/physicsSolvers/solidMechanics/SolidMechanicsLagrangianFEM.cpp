@@ -50,7 +50,7 @@ using namespace fields;
 
 SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
                                                           Group * const parent ):
-  PhysicsSolverBase(name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_newmarkGamma( 0.5 ),
   m_newmarkBeta( 0.25 ),
   m_massDamping( 0.0 ),

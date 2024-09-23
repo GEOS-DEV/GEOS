@@ -40,8 +40,8 @@ using namespace dataRepository;
 
 WaveSolverBase::WaveSolverBase( const std::string & name,
                                 Group * const parent ):
-  PhysicsSolverBase(name,
-              parent )
+  PhysicsSolverBase( name,
+                     parent )
 {
 
   registerWrapper( viewKeyStruct::sourceCoordinatesString(), &m_sourceCoordinates ).

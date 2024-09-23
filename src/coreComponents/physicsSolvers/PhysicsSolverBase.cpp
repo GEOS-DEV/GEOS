@@ -33,7 +33,7 @@ namespace geos
 using namespace dataRepository;
 
 PhysicsSolverBase::PhysicsSolverBase( string const & name,
-                        Group * const parent )
+                                      Group * const parent )
   :
   ExecutableGroup( name, parent ),
   m_cflFactor(),
@@ -214,9 +214,9 @@ bool PhysicsSolverBase::registerCallback( void * func, const std::type_info & fu
 }
 
 real64 PhysicsSolverBase::solverStep( real64 const & time_n,
-                               real64 const & dt,
-                               const integer cycleNumber,
-                               DomainPartition & domain )
+                                      real64 const & dt,
+                                      const integer cycleNumber,
+                                      DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -241,11 +241,11 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
 }
 
 bool PhysicsSolverBase::execute( real64 const time_n,
-                          real64 const dt,
-                          integer const cycleNumber,
-                          integer const GEOS_UNUSED_PARAM( eventCounter ),
-                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                          DomainPartition & domain )
+                                 real64 const dt,
+                                 integer const cycleNumber,
+                                 integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                 real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                 DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -334,8 +334,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 }
 
 void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
-                                           integer const numOfSubSteps,
-                                           std::vector< real64 > const & subStepDt ) const
+                                                  integer const numOfSubSteps,
+                                                  std::vector< real64 > const & subStepDt ) const
 {
   // The formating here is a work in progress.
   GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP END -------------------------" );
@@ -352,7 +352,7 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & currentDt,
-                              DomainPartition & domain )
+                                     DomainPartition & domain )
 {
   integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.minTimeStepIncreaseInterval();
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
@@ -410,7 +410,7 @@ real64 PhysicsSolverBase::setNextDt( real64 const & currentDt,
 }
 
 real64 PhysicsSolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,
-                                                DomainPartition & domain )
+                                                       DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( currentDt, domain );
   return LvArray::NumericLimits< real64 >::max; // i.e., not implemented
@@ -456,9 +456,9 @@ real64 PhysicsSolverBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, g
 
 
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
-                                       real64 const & dt,
-                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                       DomainPartition & domain )
+                                              real64 const & dt,
+                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                              DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
   // TODO: Nonlinear step does not call its own setup, need to decide on consistent behavior
@@ -552,15 +552,15 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
 
 
 bool PhysicsSolverBase::lineSearch( real64 const & time_n,
-                             real64 const & dt,
-                             integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                             DomainPartition & domain,
-                             DofManager const & dofManager,
-                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                             ParallelVector & rhs,
-                             ParallelVector & solution,
-                             real64 const scaleFactor,
-                             real64 & lastResidual )
+                                    real64 const & dt,
+                                    integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                    DomainPartition & domain,
+                                    DofManager const & dofManager,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    ParallelVector & rhs,
+                                    ParallelVector & solution,
+                                    real64 const scaleFactor,
+                                    real64 & lastResidual )
 {
   Timer timer( m_timers["line search"] );
 
@@ -629,16 +629,16 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
 }
 
 bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                                       DomainPartition & domain,
-                                                       DofManager const & dofManager,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       ParallelVector & rhs,
-                                                       ParallelVector & solution,
-                                                       real64 const scaleFactor,
-                                                       real64 & lastResidual,
-                                                       real64 & residualNormT )
+                                                              real64 const & dt,
+                                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                                              DomainPartition & domain,
+                                                              DofManager const & dofManager,
+                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              ParallelVector & rhs,
+                                                              ParallelVector & solution,
+                                                              real64 const scaleFactor,
+                                                              real64 & lastResidual,
+                                                              real64 & residualNormT )
 {
   Timer timer( m_timers["line search"] );
 
@@ -730,9 +730,9 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
 
 
 real64 PhysicsSolverBase::eisenstatWalker( real64 const newNewtonNorm,
-                                    real64 const oldNewtonNorm,
-                                    LinearSolverParameters::Krylov const & krylovParams,
-                                    integer const logLevel )
+                                           real64 const oldNewtonNorm,
+                                           LinearSolverParameters::Krylov const & krylovParams,
+                                           integer const logLevel )
 {
   real64 normRatio = std::min( newNewtonNorm / oldNewtonNorm, 1.0 );
   real64 newKrylovTol = krylovParams.adaptiveGamma * std::pow( normRatio, krylovParams.adaptiveExponent );
@@ -754,9 +754,9 @@ real64 PhysicsSolverBase::eisenstatWalker( real64 const newNewtonNorm,
 }
 
 real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
-                                          real64 const & dt,
-                                          integer const cycleNumber,
-                                          DomainPartition & domain )
+                                                 real64 const & dt,
+                                                 integer const cycleNumber,
+                                                 DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
@@ -870,9 +870,9 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 }
 
 bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
-                                       real64 const & stepDt,
-                                       integer const cycleNumber,
-                                       DomainPartition & domain )
+                                              real64 const & stepDt,
+                                              integer const cycleNumber,
+                                              DomainPartition & domain )
 {
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
   integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
@@ -1084,33 +1084,33 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 }
 
 real64 PhysicsSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                 real64 const & GEOS_UNUSED_PARAM( dt ),
-                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                 DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_THROW( "PhysicsSolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
   return 0;
 }
 
 void PhysicsSolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                    real64 const & GEOS_UNUSED_PARAM( dt ),
-                                    DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+                                           real64 const & GEOS_UNUSED_PARAM( dt ),
+                                           DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_THROW( "PhysicsSolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
 }
 
 void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
-                            DofManager & GEOS_UNUSED_PARAM( dofManager ) ) const
+                                   DofManager & GEOS_UNUSED_PARAM( dofManager ) ) const
 {
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
 }
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,
-                              DofManager & dofManager,
-                              CRSMatrix< real64, globalIndex > & localMatrix,
-                              ParallelVector & rhs,
-                              ParallelVector & solution,
-                              bool const setSparsity )
+                                     DofManager & dofManager,
+                                     CRSMatrix< real64, globalIndex > & localMatrix,
+                                     ParallelVector & rhs,
+                                     ParallelVector & solution,
+                                     bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1135,21 +1135,21 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
 }
 
 void PhysicsSolverBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
-                                 real64 const GEOS_UNUSED_PARAM( dt ),
-                                 DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                 CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                 arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
+                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::Assemble called!. Should be overridden." );
 }
 
 void PhysicsSolverBase::applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time ),
-                                          real64 const GEOS_UNUSED_PARAM( dt ),
-                                          DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                          DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                          CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                          arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
+                                                 real64 const GEOS_UNUSED_PARAM( dt ),
+                                                 DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                 CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                 arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::applyBoundaryConditions called!. Should be overridden." );
 }
@@ -1196,10 +1196,10 @@ void debugOutputLAObject( T const & obj,
 }
 
 void PhysicsSolverBase::debugOutputSystem( real64 const & time,
-                                    integer const cycleNumber,
-                                    integer const nonlinearIteration,
-                                    ParallelMatrix const & matrix,
-                                    ParallelVector const & rhs ) const
+                                           integer const cycleNumber,
+                                           integer const nonlinearIteration,
+                                           ParallelMatrix const & matrix,
+                                           ParallelVector const & rhs ) const
 {
   // special case when flag value > 2
   if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
@@ -1225,9 +1225,9 @@ void PhysicsSolverBase::debugOutputSystem( real64 const & time,
 }
 
 void PhysicsSolverBase::debugOutputSolution( real64 const & time,
-                                      integer const cycleNumber,
-                                      integer const nonlinearIteration,
-                                      ParallelVector const & solution ) const
+                                             integer const cycleNumber,
+                                             integer const nonlinearIteration,
+                                             ParallelVector const & solution ) const
 {
   // special case when flag value > 2
   if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
@@ -1245,19 +1245,19 @@ void PhysicsSolverBase::debugOutputSolution( real64 const & time,
 
 real64
 PhysicsSolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
-                                   real64 const & GEOS_UNUSED_PARAM( dt ),
-                                   DomainPartition const & GEOS_UNUSED_PARAM( domain ),
-                                   DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                   arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) )
+                                          real64 const & GEOS_UNUSED_PARAM( dt ),
+                                          DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                                          DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                          arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::calculateResidualNorm called!. Should be overridden." );
   return 0;
 }
 
 void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
-                                    ParallelMatrix & matrix,
-                                    ParallelVector & rhs,
-                                    ParallelVector & solution )
+                                           ParallelMatrix & matrix,
+                                           ParallelVector & rhs,
+                                           ParallelVector & solution )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1309,25 +1309,25 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 }
 
 bool PhysicsSolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                      DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                      arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
-                                      real64 const GEOS_UNUSED_PARAM( scalingFactor ) )
+                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                                             real64 const GEOS_UNUSED_PARAM( scalingFactor ) )
 {
   return true;
 }
 
 real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
+                                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
 {
   return 1.0;
 }
 
 void PhysicsSolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                      arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
-                                      real64 const GEOS_UNUSED_PARAM( scalingFactor ),
-                                      real64 const GEOS_UNUSED_PARAM( dt ),
-                                      DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+                                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                                             real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                                             real64 const GEOS_UNUSED_PARAM( dt ),
+                                             DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::applySystemSolution called!. Should be overridden." );
 }
@@ -1364,17 +1364,17 @@ bool PhysicsSolverBase::resetConfigurationToDefault( DomainPartition & GEOS_UNUS
 }
 
 void PhysicsSolverBase::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time ),
-                                       real64 const & GEOS_UNUSED_PARAM( dt ),
-                                       DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+                                              real64 const & GEOS_UNUSED_PARAM( dt ),
+                                              DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
 void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
-                          integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                          integer const GEOS_UNUSED_PARAM( eventCounter ),
-                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                          DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                 integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                 real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                 DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   m_solverStatistics.outputStatistics();
 

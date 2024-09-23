@@ -64,7 +64,7 @@ void NewObjectLists::insert( NewObjectLists const & newObjects )
 
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
-  PhysicsSolverBase(name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_fractureRegionName(),
   m_mpiCommOrder( 0 )
 {

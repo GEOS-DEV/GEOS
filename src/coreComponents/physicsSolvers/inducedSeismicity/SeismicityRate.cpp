@@ -35,7 +35,7 @@ using namespace constitutive;
 
 SeismicityRate::SeismicityRate( const string & name,
                                 Group * const parent ):
-  PhysicsSolverBase(name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_stressSolver( nullptr )
 {
   this->registerWrapper( viewKeyStruct::directEffectString(), &m_directEffect ).

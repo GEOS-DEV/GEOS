@@ -32,7 +32,7 @@ using namespace dataRepository;
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 LaplaceBaseH1::LaplaceBaseH1( const string & name,
                               Group * const parent ):
-  PhysicsSolverBase(name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_fieldName( "primaryField" ),
   m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
 {

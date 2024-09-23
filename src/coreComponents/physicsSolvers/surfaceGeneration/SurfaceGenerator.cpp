@@ -174,7 +174,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 
 SurfaceGenerator::SurfaceGenerator( const string & name,
                                     Group * const parent ):
-  PhysicsSolverBase(name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_failCriterion( 1 ),
 //  m_maxTurnAngle(91.0),
   m_nodeBasedSIF( 1 ),

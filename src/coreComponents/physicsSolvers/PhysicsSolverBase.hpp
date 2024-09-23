@@ -56,7 +56,7 @@ public:
    * @param parent the parent group of this instantiation of PhysicsSolverBase
    */
   explicit PhysicsSolverBase( string const & name,
-                       Group * const parent );
+                              Group * const parent );
 
   /**
    * @brief Move constructor for PhysicsSolverBase
