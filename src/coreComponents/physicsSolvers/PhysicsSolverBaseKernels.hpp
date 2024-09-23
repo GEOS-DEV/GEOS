@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SolverBaseKernels.hpp
+ * @file PhysicsSolverBaseKernels.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_SOLVERBASEKERNELS_HPP

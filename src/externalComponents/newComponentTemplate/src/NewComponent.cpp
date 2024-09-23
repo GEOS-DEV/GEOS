@@ -24,7 +24,7 @@ namespace geos
 
 NewComponent::NewComponent( string const & name,
                             Group * const parent ):
-    SolverBase(name,parent)
+    PhysicsSolverBase(name,parent)
 {
 
 }
