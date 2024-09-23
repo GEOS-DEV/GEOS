@@ -2288,8 +2288,8 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+      string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, fricitonLawName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
@@ -2305,10 +2305,10 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
       RAJA::ReduceSum< parallelHostReduce, real64 > changed( 0 );
       RAJA::ReduceSum< parallelHostReduce, real64 > total( 0 );
 
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        using FrictionType = TYPEOFREF( castedFrictionLaw );
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
@@ -2342,8 +2342,8 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
 
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
-                contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
-                                                                   dLimitTangentialTractionNorm_dTraction );
+                frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                    dLimitTangentialTractionNorm_dTraction );
 
               real64 currentTau_unscaled = currentTau;
 
