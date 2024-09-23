@@ -196,7 +196,7 @@ To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is 
     // --------------------------------
     // childKey = "XmlNameOfMySolver" (string)
     // childName = "nameOfThisSolverInstance" (string)
-    // SolverBase::CatalogInterface = the Catalog attached to the base Solver class
+    // PhysicsSolverBase::CatalogInterface = the Catalog attached to the base Solver class
     // hasKeyName = bool method to test if the childKey string is present in the Catalog
     // registerGroup = method to create a new instance of the solver and add it to the group tree
 

@@ -40,7 +40,7 @@ using namespace dataRepository;
 
 WaveSolverBase::WaveSolverBase( const std::string & name,
                                 Group * const parent ):
-  SolverBase( name,
+  PhysicsSolverBase(name,
               parent )
 {
 
@@ -259,7 +259,7 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
 
 void WaveSolverBase::initializePreSubGroups()
 {
-  SolverBase::initializePreSubGroups();
+  PhysicsSolverBase::initializePreSubGroups();
 
   localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
 
@@ -277,7 +277,7 @@ void WaveSolverBase::initializePreSubGroups()
 
 void WaveSolverBase::postInputInitialization()
 {
-  SolverBase::postInputInitialization();
+  PhysicsSolverBase::postInputInitialization();
 
   /// set flag PML to one if a PML field is specified in the xml
   /// if counter>1, an error will be thrown as one single PML field is allowed

@@ -31,12 +31,14 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
                                                       Group * const parent ):
   Base( name, parent )
 {
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+  std::cout<<"breakpoint 1"<<std::endl;
+  getWrapperBase( Group::viewKeyStruct::logLevelString() ).
     appendDescription( GEOS_FMT( "\n- Log Level 1 outputs the sum of all {0}(s) produced rate & mass,\n"
                                  "- Log Level 2 details values for each {0},\n"
                                  "- Log Level 3 details values for each region.",
                                  SourceFluxBoundaryCondition::catalogName() ) );
 
+  std::cout<<"breakpoint 2"<<std::endl;
   registerWrapper( viewKeyStruct::fluxNamesString().data(), &m_fluxNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -45,6 +47,8 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
     setDescription( GEOS_FMT( "Name(s) array of the {0}(s) for which we want the statistics. "
                               "Use \"*\" to target all {0}.",
                               SourceFluxBoundaryCondition::catalogName() ) );
+  std::cout<<"breakpoint 3"<<std::endl;
+
 }
 
 void SourceFluxStatsAggregator::postInputInitialization()

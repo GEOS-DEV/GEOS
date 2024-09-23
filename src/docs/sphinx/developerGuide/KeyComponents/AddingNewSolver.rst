@@ -115,7 +115,7 @@ Eventually, ``applyDirichletBCImplicit()`` is the working specialized member fun
 when ``applyBoundaryConditions()`` is called in this particular class override.
 
 Browsing the base class ``SolverBase``, it can be noted that most of the solver interface functions are called during
-either ``SolverBase::linearImplicitStep()`` or ``SolverBase::nonlinearImplicitStep()`` depending on the solver strategy chosen.
+either ``PhysicsSolverBase::linearImplicitStep()`` or ``PhysicsSolverBase::nonlinearImplicitStep()`` depending on the solver strategy chosen.
 
 Switching to protected members, ``postInputInitialization()`` is a central member function and
 will be called by ``Group`` object after input is read from XML entry file.

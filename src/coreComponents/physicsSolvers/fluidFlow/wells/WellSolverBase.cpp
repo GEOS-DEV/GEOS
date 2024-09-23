@@ -37,7 +37,7 @@ using namespace constitutive;
 
 WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
-  : SolverBase( name, parent ),
+  : PhysicsSolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) )
@@ -61,7 +61,7 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
   }
   else
   {
-    SolverBase::createChild( childKey, childName );
+    PhysicsSolverBase::createChild( childKey, childName );
   }
   return rval;
 }
@@ -76,7 +76,7 @@ WellSolverBase::~WellSolverBase() = default;
 
 void WellSolverBase::postInputInitialization()
 {
-  SolverBase::postInputInitialization();
+  PhysicsSolverBase::postInputInitialization();
 
   // create dir for rates output
   if( m_writeCSV > 0 )
@@ -92,7 +92,7 @@ void WellSolverBase::postInputInitialization()
 
 void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 {
-  SolverBase::registerDataOnMesh( meshBodies );
+  PhysicsSolverBase::registerDataOnMesh( meshBodies );
 
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -143,7 +143,7 @@ void WellSolverBase::initializePostSubGroups()
 
 void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
-  SolverBase::setConstitutiveNamesCallSuper( subRegion );
+  PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
   subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -235,7 +235,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
 
 void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
-  SolverBase::initializePostInitialConditionsPreSubGroups();
+  PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 

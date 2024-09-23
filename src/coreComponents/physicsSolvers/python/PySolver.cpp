@@ -40,7 +40,7 @@ struct PySolver
   static constexpr char const * docString =
     "A Python interface to geos::SolverBase.";
 
-  geos::SolverBase * group;
+  geos::PhysicsSolverBase *group;
 };
 
 
