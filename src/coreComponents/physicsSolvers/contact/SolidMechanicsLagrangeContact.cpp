@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,12 +17,12 @@
  * @file SolidMechanicsLagrangeContact.cpp
  *
  */
-#define GEOSX_DISPATCH_VEM
+#define GEOS_DISPATCH_VEM
 #include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -200,8 +201,6 @@ void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
                                                        real64 const & dt,
                                                        DomainPartition & domain )
 {
-  // std::cout << "In SolidMechanicsLagrangeContact::implicitStepSetup: " << std::endl;
-
   computeRotationMatrices( domain );
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
@@ -1464,8 +1463,8 @@ void SolidMechanicsLagrangeContact::
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-    string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+    string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+    FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
@@ -1479,10 +1478,10 @@ void SolidMechanicsLagrangeContact::
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
-    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+    constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
     {
-      using ContactType = TYPEOFREF( castedContact );
-      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+      using FrictionType = TYPEOFREF( castedFrictionLaw );
+      typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -1583,8 +1582,8 @@ void SolidMechanicsLagrangeContact::
                 }
 
                 real64 dLimitTau_dNormalTraction = 0;
-                real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
-                                                                                           dLimitTau_dNormalTraction );
+                real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                                            dLimitTau_dNormalTraction );
 
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
 
@@ -2187,9 +2186,6 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
 void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  // std::cout << " In SolidMechanicsLagrangeContact::updateState: " << std::endl;
-
   computeFaceDisplacementJump( domain );
 }
 
@@ -2523,8 +2519,8 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+      string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, fricitonLawName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
@@ -2540,28 +2536,20 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
       RAJA::ReduceSum< parallelHostReduce, real64 > changed( 0 );
       RAJA::ReduceSum< parallelHostReduce, real64 > total( 0 );
 
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        using FrictionType = TYPEOFREF( castedFrictionLaw );
+        typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-
-          if ( kfe == 0 || kfe == 106 || kfe == 164 )
-          {
-            std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
-            ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
-            ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-          }
-
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
             if( originalFractureState == FractureState::Open )
             {
-              // if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] ) // original 
-              if( abs(dispJump[kfe][0]) <= abs(normalDisplacementTolerance[kfe]) ) // trying comparison in absolute
+              if( LvArray::math::abs( dispJump[kfe][0] ) <= LvArray::math::abs( normalDisplacementTolerance[kfe] ) ) // trying comparison in
+                                                                                                                     // absolute
               {
                 fractureState[kfe] = FractureState::Stick;
                 if( getLogLevel() >= 10 )
@@ -2586,15 +2574,10 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
 
-              if ( kfe == 0 || kfe == 106 || kfe == 164 )
-              {
-                std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
-              }
-
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
-                contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
-                                                                   dLimitTangentialTractionNorm_dTraction );
+                frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                    dLimitTangentialTractionNorm_dTraction );
 
               if( originalFractureState == FractureState::Stick && currentTau >= limitTau )
               {
@@ -2604,12 +2587,6 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithoutAcceleration( Doma
               {
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
-
-              if ( kfe == 0 || kfe == 106 || kfe == 164 )
-              {
-                std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << ", limitTau[kfe] = " << limitTau << std::endl;
-              }
-
               if( currentTau > limitTau )
               {
                 if( originalFractureState == FractureState::Stick )

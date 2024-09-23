@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -32,15 +33,12 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   ConstantPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                              arrayView3d< real64 > const & dPerm_dPressure,
-                              arrayView4d< real64 > const & dPerm_dDispJump )
-    : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dDispJump( dPerm_dDispJump )
+                              arrayView3d< real64 > const & dPerm_dPressure )
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
 private:
 
-  arrayView4d< real64 > m_dPerm_dDispJump;
 };
 
 
@@ -70,8 +68,7 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_permeability,
-                          m_dPerm_dPressure,
-                          m_dPerm_dDispJump );
+                          m_dPerm_dPressure );
   }
 
 
@@ -87,9 +84,6 @@ protected:
   virtual void postInputInitialization() override;
 
 private:
-
-  /// Derivative of fracture permeability w.r.t. displacement jump
-  array4d< real64 > m_dPerm_dDispJump;
 
   R1Tensor m_permeabilityComponents;
 

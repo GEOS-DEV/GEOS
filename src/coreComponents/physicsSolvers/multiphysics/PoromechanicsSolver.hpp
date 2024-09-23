@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,12 +27,10 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
-
-// #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
-// #include "constitutive/contact/ContactSelector.hpp"
 
 namespace geos
 {
@@ -51,10 +50,6 @@ ENUM_STRINGS( StabilizationType,
               "Local" );
 }
 
-using namespace stabilization;
-using namespace fields;
-using namespace constitutive;
-using namespace dataRepository;
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
@@ -100,9 +95,9 @@ public:
     this->registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setDescription( "StabilizationType. Options are:\n" +
-                      toString( StabilizationType::None ) + "- Add no stabilization to mass equation \n" +
-                      toString( StabilizationType::Global ) + "- Add jump stabilization to all faces \n" +
-                      toString( StabilizationType::Local ) + "- Add jump stabilization on interior of macro elements" );
+                      toString( stabilization::StabilizationType::None ) + "- Add no stabilization to mass equation \n" +
+                      toString( stabilization::StabilizationType::Global ) + "- Add jump stabilization to all faces \n" +
+                      toString( stabilization::StabilizationType::Local ) + "- Add jump stabilization on interior of macro elements" );
 
     this->registerWrapper( viewKeyStruct::stabilizationRegionNamesString(), &m_stabilizationRegionNames ).
       setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
@@ -125,11 +120,28 @@ public:
                    InputError );
   }
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
+  {
+    if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
+    {
+      subRegion.registerWrapper< string >( viewKeyStruct::hydraulicApertureRelationNameString() ).
+        setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+        setSizedFromParent( 0 );
+
+      string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
+      hydraulicApertureModelName = SolverBase::getConstitutiveName< constitutive::HydraulicApertureBase >( subRegion );
+      GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
+                                                                   this->getDataContext(), subRegion.getDataContext() ) );
+    }
+
+  }
+
   virtual void initializePreSubGroups() override
   {
     Base::initializePreSubGroups();
 
-    GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,
+    GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
                    this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                    ": Local stabilization has been temporarily disabled",
                    InputError );
@@ -181,7 +193,7 @@ public:
       flowSolver()->enableFixedStressPoromechanicsUpdate();
     }
 
-    if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
+    if( m_stabilizationType == stabilization::StabilizationType::Global || m_stabilizationType == stabilization::StabilizationType::Local )
     {
       flowSolver()->enableJumpStabilization();
     }
@@ -214,7 +226,7 @@ public:
           subRegion.registerField< fields::poromechanics::bulkDensity >( this->getName() );
         }
 
-        if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
+        if( m_stabilizationType == stabilization::StabilizationType::Global || m_stabilizationType == stabilization::StabilizationType::Local )
         {
           subRegion.registerField< fields::flow::macroElementIndex >( this->getName());
           subRegion.registerField< fields::flow::elementStabConstant >( this->getName());
@@ -227,11 +239,9 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override
   {
-    // std::cout << "In PoromechanicsSolver::implicitStepSetup: " << std::endl;
-    
     flowSolver()->setKeepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
-    if( this->m_stabilizationType == StabilizationType::Global || this->m_stabilizationType == StabilizationType::Local )
+    if( this->m_stabilizationType == stabilization::StabilizationType::Global || this->m_stabilizationType == stabilization::StabilizationType::Local )
     {
       this->updateStabilizationParameters( domain );
     }
@@ -315,6 +325,10 @@ public:
 
     /// Multiplier on stabilization strength
     constexpr static const char * stabilizationMultiplierString() {return "stabilizationMultiplier"; }
+
+    /// Name of the hydraulicApertureRelationName
+    static constexpr char const * hydraulicApertureRelationNameString() {return "hydraulicApertureRelationName"; }
+
   };
 
   void updateStabilizationParameters( DomainPartition & domain ) const
@@ -504,8 +518,6 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    // std::cout << "In PoromechanicsSolver::mapSolutionBetweenSolvers " << std::endl;
-
     /// After the flow solver
     if( solverType == static_cast< integer >( SolverType::Flow ) )
     {
@@ -529,9 +541,6 @@ protected:
     if( solverType == static_cast< integer >( SolverType::SolidMechanics )
         && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
-      // std::cout << "In PoromechanicsSolver::mapSolutionBetweenSolvers after mechanics solve: " << std::endl;
-      // updateHydraulicAperture( domain );
-
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
 
@@ -559,64 +568,6 @@ protected:
       recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
     }
   }
-
-  // void updateHydraulicAperture( DomainPartition & domain )
-  // {
-  //   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-  //                                                                       MeshLevel & mesh,
-  //                                                                       arrayView1d< string const > const & regionNames )
-  //   {
-  //     ElementRegionManager & elemManager = mesh.getElemManager();
-
-  //     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-  //                                                               [&]( localIndex const,
-  //                                                                   FaceElementSubRegion & subRegion )
-  //     {
-  //       arrayView2d< real64 const > const dispJump           = subRegion.getField< contact::dispJump >();
-  //       arrayView1d< real64 const > const area               = subRegion.getElementArea();
-  //       arrayView1d< real64 const > const volume             = subRegion.getElementVolume();
-  //       arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
-  //       arrayView1d< real64 const > const pressure           = subRegion.getField< fields::flow::pressure >();
-  //       arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
-
-  //       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
-  //       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
-  //       arrayView1d< real64 > const deltaVolume              = subRegion.getField< flow::deltaVolume >();
-
-  //       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
-  //       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
-
-  //       string const & contactRelationName = subRegion.template getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString() );
-  //       ContactBase const & contact = subRegion.getConstitutiveModel< ContactBase >( contactRelationName );
-
-  //       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
-  //       {
-  //         using ContactType = TYPEOFREF( castedContact );
-  //         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
-
-  //         constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
-  //         {
-  //           typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
-
-  //           poromechanicsFracturesKernels::StateUpdateKernel::
-  //             launch< parallelDevicePolicy<> >( subRegion.size(),
-  //                                               porousMaterialWrapper,
-  //                                               contactWrapper,
-  //                                               dispJump,
-  //                                               pressure,
-  //                                               area,
-  //                                               volume,
-  //                                               deltaVolume,
-  //                                               aperture,
-  //                                               oldHydraulicAperture,
-  //                                               hydraulicAperture,
-  //                                               fractureTraction );
-
-  //         } );
-  //       } );
-  //     } );
-  //   } );
-  // }
 
   /**
    * @brief Helper function to average the mean total stress increment over quadrature points
@@ -667,7 +618,7 @@ protected:
 
   virtual void validateNonlinearAcceleration() override
   {
-    if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 )
+    if( MpiWrapper::commSize( MPI_COMM_GEOS ) > 1 )
     {
       GEOS_ERROR( "Nonlinear acceleration is not implemented for MPI runs" );
     }

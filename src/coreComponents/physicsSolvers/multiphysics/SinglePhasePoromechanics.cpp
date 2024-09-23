@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,7 +17,7 @@
  * @file SinglePhasePoromechanics.cpp
  */
 
-#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+#define GEOS_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 #include "SinglePhasePoromechanics.hpp"
 
@@ -38,6 +39,7 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
+using namespace stabilization;
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
@@ -81,8 +83,6 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
                                                                              ParallelVector & solution,
                                                                              bool const setSparsity )
 {
-  // std::cout << "In SinglePhasePoromechanics setupSystem: " << std::endl;
-  
   if( this->m_precond )
   {
     this->m_precond->clear();
@@ -295,8 +295,6 @@ template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  // std::cout << "In SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState: " << std::endl;
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,

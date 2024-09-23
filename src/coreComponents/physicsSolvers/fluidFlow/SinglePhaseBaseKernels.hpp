@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -244,13 +245,6 @@ public:
 
     // Customize the kernel with this lambda
     kernelOp();
-
-    // if ( ei == 0 || ei == 1 )
-    // {
-    //   std::cout << "In ElementBasedAssemblyKernel computeAccumulation:" << std::endl;
-    //   std::cout << "accumulation = " << stack.localResidual[0] << std::endl;
-    //   std::cout << "dAcc_dP = " << stack.localJacobian[0][0] << std::endl;
-    // } 
   }
 
   /**
@@ -362,7 +356,7 @@ public:
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs )
-    , m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
+    , m_creationMass( subRegion.getField< fields::flow::massCreated >() )
   {}
 
   /**
@@ -375,26 +369,13 @@ public:
   void computeAccumulation( localIndex const ei,
                             Base::StackVariables & stack ) const
   {
-    // if ( ei == 0 || ei == 1 )
-    // {
-    //   std::cout << "In SurfaceElementBasedAssemblyKernel computeAccumulation:" << std::endl;
-    //   std::cout << "Before accumulation added: accumulation = " << stack.localResidual[0] << std::endl;
-    // } 
-
     Base::computeAccumulation( ei, stack, [&] ()
     {
       if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
       {
         stack.localResidual[0] += m_creationMass[ei] * 0.25;
-        // std::cout << "Creation mass added at [" << ei << "]: mass added = " << m_creationMass[ei] * 0.25 << std::endl;
       }
     } );
-
-    // if ( ei == 0 || ei == 1 )
-    // {
-    //   std::cout << "After accumulation added: accumulation = " << stack.localResidual[0] << std::endl;
-    // } 
-
   }
 
 protected:
@@ -595,8 +576,6 @@ struct SolutionCheckKernel
 
         if( newPres < 0.0 )
         {
-          // std::cout << "Neg pres at [" << ei << "], pres = " << newPres << ", pres_k = " << pres[ei] << ", size = " << dofNumber.size() << std::endl;
-
           numNegativePressures += 1;
           minPres.min( newPres );
         }

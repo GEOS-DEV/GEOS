@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,7 +18,7 @@
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -79,8 +80,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups: " << std::endl;
-
   Base::initializePostInitialConditionsPreSubGroups();
 
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
@@ -131,8 +130,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 
   GEOS_MARK_FUNCTION;
 
-  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::setupSystem :" << std::endl;
-
   GEOS_UNUSED_VAR( setSparsity );
 
   dofManager.setDomain( domain );
@@ -167,20 +164,15 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
-  // for( localIndex localRow = 0; localRow < rowLengths.size(); ++localRow )
-  // {
-  //   std::cout << "row = " << localRow << ", row length = " << rowLengths[localRow] << std::endl;
-  // }
-
   // Finally, steal the pattern into a CRS matrix
   localMatrix.setName( this->getName() + "/localMatrix" );
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
   rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
   solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -412,9 +404,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
   //updateState( domain );
 
-  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::assembleSystem " << std::endl;
-  // std::cout << "size of localrhs = " << localRhs.size() << std::endl;
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -464,8 +453,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
-  // std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::updateState:" << std::endl;
-
   /// 1. update the reservoir
   Base::updateState( domain );
 
@@ -509,33 +496,38 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< fields::flow::pressure >();
 
-      string const & contactRelationName = subRegion.template getReference< string >( ContactSolverBase::viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
-
-      ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
+      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
+      HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
       string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &hydraulicApertureModel] ( auto & castedPorousSolid )
       {
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        poromechanicsEFEMKernels::StateUpdateKernel::
-          launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            contactWrapper,
-                                            porousMaterialWrapper,
-                                            dispJump,
-                                            pressure,
-                                            area,
-                                            volume,
-                                            deltaVolume,
-                                            aperture,
-                                            oldHydraulicAperture,
-                                            hydraulicAperture,
-                                            fractureTraction,
-                                            dTdpf );
+        constitutiveUpdatePassThru( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
+        {
 
+          using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
+          typename HydraulicApertureModelType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
+
+          poromechanicsEFEMKernels::StateUpdateKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              hydraulicApertureModelWrapper,
+                                              porousMaterialWrapper,
+                                              dispJump,
+                                              pressure,
+                                              area,
+                                              volume,
+                                              deltaVolume,
+                                              aperture,
+                                              oldHydraulicAperture,
+                                              hydraulicAperture,
+                                              fractureTraction,
+                                              dTdpf );
+
+        } );
       } );
 
       // update the stencil weights using the updated hydraulic aperture

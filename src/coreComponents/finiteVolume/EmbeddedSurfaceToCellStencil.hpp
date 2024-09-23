@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -215,8 +216,6 @@ EmbeddedSurfaceToCellStencilWrapper::
                   real64 ( & weight )[1][2],
                   real64 ( & dWeight_dVar )[1][2] ) const
 {
-  // std::cout << "In EmbeddedSurfaceToCellStencilWrapper::computeWeights 1: " << std::endl;
-
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
@@ -235,14 +234,6 @@ EmbeddedSurfaceToCellStencilWrapper::
 
   weight[0][0] = value;
   weight[0][1] = -value;
-
-  // std::cout << "iconn = " << iconn << ", m_weights[iconn][0] = " << m_weights[iconn][0] << std::endl; // rm laterrrr
-  // std::cout << "iconn = " << iconn << ", m_weights[iconn][1] = " << m_weights[iconn][1] << std::endl; // rm laterrrr
-  // std::cout << "iconn = " << iconn << ", coefficient[er0][esr0][ei0][0] = " << coefficient[er0][esr0][ei0][0] << std::endl; // rm laterrrr
-  // std::cout << "iconn = " << iconn << ", coefficient[er1][esr1][ei1][0][2] = " << coefficient[er1][esr1][ei1][0][2] << std::endl; // rm laterrrr
-  // std::cout << "iconn = " << iconn << ", t0 = " << t0 << std::endl; // rm laterrrr
-  // std::cout << "iconn = " << iconn << ", t1 = " << t1 << std::endl; // rm laterrrr
-  // std::cout << "iconn = " << iconn << ", trans = " << value << std::endl; // rm laterrrr
 
   // We consider the 3rd component of the permeability which is the normal one.
   real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
