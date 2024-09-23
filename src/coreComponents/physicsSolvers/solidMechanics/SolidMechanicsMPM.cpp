@@ -5539,6 +5539,17 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
         constitutiveJacobian[p][0] = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] ); 
       } );
     }
+
+    if(  constitutiveModel.hasWrapper( "surfaceFlag" ) )
+    {
+      arrayView1d< int const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+      arrayView1d< int > const constitutiveSurfaceFlag = constitutiveModel.getReference< array1d< int > >( "surfaceFlag" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        constitutiveSurfaceFlag[p] = particleSurfaceFlag[p]; 
+      } );
+    }
   } );
 }
 
@@ -9046,6 +9057,17 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       {
         localIndex const p = activeParticleIndices[pp];
         particleWavespeed[p] = constitutiveWavespeed[p][0]; 
+      } );
+    }
+
+    if(  constitutiveModel.hasWrapper( "surfaceFlag" ) )
+    {
+      arrayView1d< int > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+      arrayView1d< int const > const constitutiveSurfaceFlag = constitutiveModel.getReference< array1d< int > >( "surfaceFlag" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleSurfaceFlag[p] = constitutiveSurfaceFlag[p]; 
       } );
     }
   } );

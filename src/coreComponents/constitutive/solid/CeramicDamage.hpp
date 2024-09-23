@@ -85,6 +85,11 @@ public:
                         int const & thirdInvariantDependence,
                         arrayView3d< real64 > const & velocityGradient,
                         arrayView3d< real64 > const & plasticStrain,
+                        int const & enableEnergyFailureCriterion,
+                        real64 const & fractureEnergyReleaseRate,
+                        arrayView1d< real64 > const & accumulatedModeIWork,
+                        arrayView1d< real64 > const & accumulatedModeIIWork,
+                        arrayView1d< int > const & surfaceFlag,
                         arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
                         arrayView1d< real64 const > const & thermalExpansionCoefficient,
@@ -114,7 +119,12 @@ public:
     m_damagedMaterialFrictionSlope( damagedMaterialFrictionSlope ),
     m_thirdInvariantDependence( thirdInvariantDependence ),
     m_velocityGradient( velocityGradient ),
-    m_plasticStrain( plasticStrain )
+    m_plasticStrain( plasticStrain ),
+    m_enableEnergyFailureCriterion( enableEnergyFailureCriterion ),
+    m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
+    m_accumulatedModeIWork( accumulatedModeIWork ),
+    m_accumulatedModeIIWork( accumulatedModeIIWork ),
+    m_surfaceFlag( surfaceFlag )
   {}
 
   /// Default copy constructor
@@ -176,6 +186,7 @@ public:
                                 real64 const timeIncrement,
                                 real64 const ( & beginningRotation )[3][3],
                                 real64 const ( & endRotation )[3][3],
+                                real64 const ( &strainIncrement )[6],
                                 real64 ( &stress )[6] ) const;
 
   GEOS_HOST_DEVICE
@@ -188,37 +199,45 @@ public:
                       const real64 Yt0,         // Tensile parameter
                       const real64 Ymax ) const; // Max strength
 
-GEOS_HOST_DEVICE
-real64 ceramicY10( const real64 pLocal,   // pressure
-                                         const real64 dLocal,   // damage,
-                                         const real64 muLocal,  // friction slope
-                                         const real64 Yt0Local, // tensile strength parameter
-                                         const real64 YcLocal ) const;
+  GEOS_HOST_DEVICE
+  real64 ceramicY10( const real64 pLocal,   // pressure
+                                          const real64 dLocal,   // damage,
+                                          const real64 muLocal,  // friction slope
+                                          const real64 Yt0Local, // tensile strength parameter
+                                          const real64 YcLocal ) const;
 
-GEOS_HOST_DEVICE
-real64 ceramicdY10dp(const real64 d, // damage,
-                                const real64 mu, // friction slope
-                                const real64 Yc, // unconfined compressive strength
-                                const real64 Yt0 ) const; // unconfined tensile strength before 3rd invariant scaling
+  GEOS_HOST_DEVICE
+  real64 ceramicdY10dp(const real64 d, // damage,
+                                  const real64 mu, // friction slope
+                                  const real64 Yc, // unconfined compressive strength
+                                  const real64 Yt0 ) const; // unconfined tensile strength before 3rd invariant scaling
 
-GEOS_HOST_DEVICE
-real64 ceramicdY20dp(const real64 p, // pressure
-                                const real64 d,   // damage,
-                                const real64 mu,  // friction slope
-                                const real64 Yc,  // unconfined compressive strength
-                                const real64 Yt0,  // unconfined tensile strength before 3rd invariant scaling
-                                const real64 Ymax ) const; // max shear stress
+  GEOS_HOST_DEVICE
+  real64 ceramicdY20dp(const real64 p, // pressure
+                                  const real64 d,   // damage,
+                                  const real64 mu,  // friction slope
+                                  const real64 Yc,  // unconfined compressive strength
+                                  const real64 Yt0,  // unconfined tensile strength before 3rd invariant scaling
+                                  const real64 Ymax ) const; // max shear stress
 
-GEOS_HOST_DEVICE
-real64 smoothStep(const real64 x,
-                             const real64 xmin,
-                             const real64 xmax) const;
+  GEOS_HOST_DEVICE
+  real64 smoothStep(const real64 x,
+                              const real64 xmin,
+                              const real64 xmax) const;
 
-GEOS_HOST_DEVICE
-real64 thirdInvariantStrengthScaling( const real64 J2,
-                                      const real64 J3,
-                                      const real64 dfdp ) const;
+  GEOS_HOST_DEVICE
+  real64 thirdInvariantStrengthScaling( const real64 J2,
+                                        const real64 J3,
+                                        const real64 dfdp ) const;
 
+
+  GEOS_HOST_DEVICE
+  void computePlasticStrainIncrement ( localIndex const k,
+                                       localIndex const q,
+                                       const real64 timeIncrement,
+                                       real64 const ( &strainIncrement )[6],
+                                       real64 const ( &stressIncrement )[6],
+                                       real64 ( & plasticStrainIncrement )[6] ) const;
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -270,6 +289,21 @@ private:
 
   /// State variable: The plastic strain values for each quadrature point
   arrayView3d< real64 > const m_plasticStrain;
+
+  /// Model parameter: Flag to enable kinematic damage using energy criterion
+  int const m_enableEnergyFailureCriterion;
+
+  ///Material parameter: The fracture energy release rate
+  real64 const m_fractureEnergyReleaseRate;
+
+  ///State variable: The accumulated work for Mode I fracture for each quadrature point
+  arrayView1d< real64 > const m_accumulatedModeIWork;
+
+  ///State variable: The accumulated work for Mode II fracture for each quadrature point
+  arrayView1d< real64 > const m_accumulatedModeIIWork;
+
+  ///State variable: The particle surface flag
+  arrayView1d< int > const m_surfaceFlag;
 };
 
 
@@ -310,7 +344,8 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                                  q, 
                                                  timeIncrement, 
                                                  beginningRotation, 
-                                                 endRotation, 
+                                                 endRotation,
+                                                 strainIncrement,
                                                  stress );
 
   // It doesn't make sense to modify stiffness with this model
@@ -386,6 +421,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                  timeIncrement,
                                                  beginningRotation, 
                                                  endRotation, 
+                                                 strainIncrement,
                                                  stress );
 
   // Save new stress and return
@@ -400,10 +436,14 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     real64 const timeIncrement,
                                                     real64 const ( & beginningRotation )[3][3],
                                                     real64 const ( & endRotation )[3][3],
+                                                    real64 const ( &strainIncrement )[6],
                                                     real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( beginningRotation );
   GEOS_UNUSED_VAR( endRotation );
+
+  real64 elastic_trial_stress[6] = { 0 };
+  LvArray::tensorOps::copy< 6 >( elastic_trial_stress, stress );
 
   // cohesion slope
   real64 mu = m_damagedMaterialFrictionSlope;
@@ -486,21 +526,88 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // Increment damage and get new associated yield surface
     real64 newDeviatorMagnitude = vonMises;
+    bool yielding = false;
     if( vonMises > strength )
     {
-      if( pressure <= brittleDuctileTransitionPressure )
+      if( pressure < brittleDuctileTransitionPressure )
       {
         m_damage[k][q] = fmin( m_damage[k][q] + timeIncrement / tFail, 1.0 );
         strength = CeramicDamageUpdates::getStrength( m_damage[k][q], pressure, J2, J3, mu, Yc, Yt0, Ycmax );
       }
+      else
+      {
+        yielding = true;
+      }
       newDeviatorMagnitude = strength;
-    }
 
-    // Radial return
-    twoInvariant::stressRecomposition( -pressure,
-                                       newDeviatorMagnitude,
-                                       deviator,
-                                       stress );
+      // Radial return
+      twoInvariant::stressRecomposition( -pressure,
+                                         newDeviatorMagnitude,
+                                         deviator,
+                                         stress );
+
+      real64 stressIncrement[6] = { 0 };
+      LvArray::tensorOps::copy< 6 >( stressIncrement, elastic_trial_stress);
+      LvArray::tensorOps::subtract< 6 >( stressIncrement, stress);
+
+      if(yielding)
+      {
+        // Compute plastic strain increment
+        real64 plasticStrainIncrement[6] = {0};
+        computePlasticStrainIncrement( k,
+                                       q,
+                                       timeIncrement,           
+                                       strainIncrement,
+                                       stressIncrement,
+                                       plasticStrainIncrement );
+
+        // Increment plastic strain
+        real64 oldPlasticStrain[6] = { 0 };
+        LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
+        oldPlasticStrain[3] *= 0.5;
+        oldPlasticStrain[4] *= 0.5;
+        oldPlasticStrain[5] *= 0.5;
+
+        real64 unrotatedOldPlasticStrain[6] = { 0 };
+        real64 rotationTranspose[3][3] = { { 0 } };
+        LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
+        LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
+
+        unrotatedOldPlasticStrain[3] *= 2.0;
+        unrotatedOldPlasticStrain[4] *= 2.0;
+        unrotatedOldPlasticStrain[5] *= 2.0;
+
+        real64 unrotatedNewPlasticStrain[6] = { 0 };
+        LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
+        LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
+
+        unrotatedNewPlasticStrain[3] *= 0.5;
+        unrotatedNewPlasticStrain[4] *= 0.5;
+        unrotatedNewPlasticStrain[5] *= 0.5;
+        real64 newPlasticStrain[6] = { 0 };
+        LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
+        newPlasticStrain[3] *= 2.0;
+        newPlasticStrain[4] *= 2.0;
+        newPlasticStrain[5] *= 2.0;
+
+        LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
+      } else if(m_enableEnergyFailureCriterion == 1) 
+      {
+        // Alteration to support introduction of surface flags if new energy damage criterion is met
+        m_accumulatedModeIWork[k] += LvArray::tensorOps::AiBi< 6 >( elastic_trial_stress, strainIncrement);
+
+        // Temporarily make the the same until we decide how to partition energy between different modes
+        m_accumulatedModeIIWork[k] = m_accumulatedModeIWork[k];
+
+        real64 totalWork = sqrt(pow(m_accumulatedModeIWork[k],2) + pow(m_accumulatedModeIIWork[k],2));
+
+        // Only overwrite the surface flags of interior particles, if they already have a surface flag leave it
+        if( totalWork >= m_fractureEnergyReleaseRate/m_lengthScale[k] && m_surfaceFlag[k] == 0)
+        {
+          m_surfaceFlag[k] = 2; 
+        }
+      }
+    }    
   }
 }
 
@@ -650,6 +757,55 @@ real64 CeramicDamageUpdates::thirdInvariantStrengthScaling( const real64 J2,    
   return oneOverGamma;
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void CeramicDamageUpdates::computePlasticStrainIncrement ( localIndex const k,
+                                                           localIndex const q,
+                                                           const real64 timeIncrement,
+                                                           real64 const ( & strainIncrement )[6],
+                                                           real64 const ( & stressIncrement )[6],
+                                                           real64 ( & plasticStrainIncrement )[6] ) const
+{ 
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  
+  // For hypo-elastic models we compute the increment in plastic strain assuming
+  // for some increment in total strain and stress and elastic properties.
+
+  // Isotroptic-deviatoric decomposition;
+  real64 trialP;
+  real64 trialQ;
+  real64 stressIncrementDeviator[6];
+  twoInvariant::stressDecomposition( stressIncrement,
+                                     trialP,
+                                     trialQ,
+                                     stressIncrementDeviator );
+
+  real64 stressIncrementIsostatic[6] = {0};
+  stressIncrementIsostatic[0] = trialP;
+  stressIncrementIsostatic[1] = trialP;
+  stressIncrementIsostatic[2] = trialP;
+
+  // For damage or softening it there may be cases where bulk or shear are approx 0, 
+  // so we need to be careful that we compute this
+  real64 elasticStrainIncrement[6] = {0};
+  for( int i = 0; i < 6; ++i )
+  {
+    if (m_bulkModulus[k] > 1.0e-12)
+    {
+      // CC: off diagonal elements need x2 for strain
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * stressIncrementIsostatic[i] * 1.0/3.0/m_bulkModulus[k];
+    }
+    if (m_shearModulus[k] > 1.0e-12)
+    {
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+    }
+  }
+
+  LvArray::tensorOps::copy< 6 >( plasticStrainIncrement, strainIncrement);
+  LvArray::tensorOps::subtract< 6 >( plasticStrainIncrement, elasticStrainIncrement);
+}
+
 /**
  * @class CeramicDamage
  *
@@ -743,6 +899,21 @@ public:
 
     /// string/key for quadrature point plasticStrain value 
     static constexpr char const * plasticStrainString() { return "plasticStrain"; }
+
+    /// string/key for energy criterion flag
+    static constexpr char const * enableEnergyFailureCriterionString() { return "enableEnergyFailureCriterion"; }
+
+    /// string/key for fracture energy release rate mode I
+    static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
+
+    /// string/key for accumulated mode I work
+    static constexpr char const * accumulatedModeIWorkString() { return "accumulatedModeIWork"; }
+
+    /// string/key for accumulated mode II work
+    static constexpr char const * accumulatedModeIIWorkString() { return "accumulatedModeIIWork"; }
+
+    /// string/key for surface flag
+    static constexpr char const * surfaceFlagString() { return "surfaceFlag"; }
   };
 
   /**
@@ -765,6 +936,11 @@ public:
                                  m_thirdInvariantDependence,
                                  m_velocityGradient,
                                  m_plasticStrain,
+                                 m_enableEnergyFailureCriterion,
+                                 m_fractureEnergyReleaseRate,
+                                 m_accumulatedModeIWork,
+                                 m_accumulatedModeIIWork,
+                                 m_surfaceFlag,
                                  m_bulkModulus,
                                  m_shearModulus,
                                  m_thermalExpansionCoefficient,
@@ -800,6 +976,11 @@ public:
                           m_thirdInvariantDependence,
                           m_velocityGradient,
                           m_plasticStrain,
+                          m_enableEnergyFailureCriterion,
+                          m_fractureEnergyReleaseRate,
+                          m_accumulatedModeIWork,
+                          m_accumulatedModeIIWork,
+                          m_surfaceFlag,
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
@@ -855,6 +1036,21 @@ protected:
 
   ///State variable: The plastic strain values for each quadrature point
   array3d< real64 > m_plasticStrain;
+
+  /// Model parameter: Flag to enable kinematic damage using energy criterion
+  int m_enableEnergyFailureCriterion;
+
+  ///Material parameter: The fracture energy release rate
+  real64 m_fractureEnergyReleaseRate;
+
+  ///State variable: The accumulated work for Mode I fracture for each quadrature point
+  array1d< real64 > m_accumulatedModeIWork;
+
+  ///State variable: The accumulated work for Mode II fracture for each quadrature point
+  array1d< real64 > m_accumulatedModeIIWork;
+
+  ///State variable: The particle surface flag
+  array1d< int > m_surfaceFlag;
 };
 
 } /* namespace constitutive */

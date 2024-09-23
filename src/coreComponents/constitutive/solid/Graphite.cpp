@@ -183,7 +183,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
 
-registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
+  registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point jacobian values" );
