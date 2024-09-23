@@ -2178,7 +2178,6 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
 void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
   computeFaceDisplacementJump( domain );
 }
 
