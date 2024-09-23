@@ -722,31 +722,27 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 
     } );
 
-    // mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
-    //                                                                                          SurfaceElementSubRegion & subRegion )
-    // {
-    //   // std::cout << "In SinglePhaseBase::implicitStepSetup -> FaceElementSubregion 2" << std::endl;
+    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                             SurfaceElementSubRegion & subRegion )
+    {
+      arrayView1d< real64 const > const aper = subRegion.getField< fields::flow::hydraulicAperture >();
+      arrayView1d< real64 > const aper0 = subRegion.getField< fields::flow::aperture0 >();
+      aper0.setValues< parallelDevicePolicy<> >( aper );
 
-    //   arrayView1d< real64 const > const aper = subRegion.getField< fields::flow::hydraulicAperture >();
-    //   arrayView1d< real64 > const aper0 = subRegion.getField< fields::flow::aperture0 >();
-    //   aper0.setValues< parallelDevicePolicy<> >( aper );
+      // Needed coz faceElems don't exist when initializing.
+      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+      porousSolid.saveConvergedState();
 
-    //   // Needed coz faceElems don't exist when initializing.
-    //   CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >(
-    // viewKeyStruct::solidNamesString() ) );
-    //   porousSolid.saveConvergedState();
+      saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
+      updatePorosityAndPermeability( subRegion );
+      updateFluidState( subRegion );
 
-    //   saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
-    //   updatePorosityAndPermeability( subRegion );
-    //   updateFluidState( subRegion );
+      // This call is required by the proppant solver, but should not be here
+      SingleFluidBase const & fluid =
+        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      fluid.saveConvergedState();
 
-    //   // This call is required by the proppant solver, but should not be here
-    //   SingleFluidBase const & fluid =
-    //     getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-    //   fluid.saveConvergedState();
-
-    // } );
-
+    } );
   } );
 }
 

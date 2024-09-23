@@ -209,16 +209,11 @@ private:
     constexpr static char const * stabilizationScalingCoefficientString() { return "stabilizationScalingCoefficient"; }
   };
 
+  bool updateConfigurationWithoutAcceleration( DomainPartition & domain );
 
-  // array1d< real64 > computeUpdate( array1d< real64 > const & s1,
-  //                                  array1d< real64 > const & s2_tilde,
-  //                                  real64 const omega1 );
+  bool updateConfigurationWithAcceleration( DomainPartition & domain );
 
-  // void startConfigurationIteration( integer const & iter,
-  //                                   DomainPartition & domain );
-
-  // void finishConfigurationIteration( integer const & iter,
-  //                                    DomainPartition & domain );
+  void initializeAccelerationVariables( DomainPartition & domain );
 
   /// Member variables needed for Nonlinear Acceleration ( Aitken ). Naming convention follows ( Jiang & Tchelepi, 2019 )
   array1d< real64 > m_x0; // Accelerated variable @ outer iteration v ( two iterations ago )
@@ -230,12 +225,6 @@ private:
   array1d< real64 > m_omega1; // New Aitken relaxation factor
   bool m_applyLocalYieldAcceleration = true; // flag for applying modified Aitken acceleration to yield
   int m_config_iter = 0;
-
-  bool updateConfigurationWithoutAcceleration( DomainPartition & domain );
-
-  bool updateConfigurationWithAcceleration( DomainPartition & domain );
-
-  void initializeAccelerationVariables( DomainPartition & domain );
 
 };
 
