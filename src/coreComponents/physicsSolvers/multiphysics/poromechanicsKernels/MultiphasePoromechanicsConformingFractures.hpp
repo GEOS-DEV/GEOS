@@ -133,13 +133,14 @@ public:
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
       localColIndices( numElems ),
-      dFlux_dAperture( numElems, size )
+      // TODO
+      dFlux_dAperture( numComp, numElems, size )
     {}
 
     stackArray1d< localIndex, maxNumElems > localColIndices;
 
-// TODO
-    stackArray2d< real64, maxNumElems * maxStencilSize > dFlux_dAperture;
+    // TODO
+    stackArray3d< real64, numEqn * maxNumElems * maxStencilSize > dFlux_dAperture;
 
     /// Derivatives of transmissibility with respect to the dispJump
     real64 dTrans_dDispJump[maxNumConns][2][3]{};
@@ -178,9 +179,7 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
-
   {
-
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
                                      m_dPerm_dPres,
@@ -224,7 +223,6 @@ public:
 
           localIndex k_up = -1;
 
-// TODO dCompFlux_dTrans
           isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
             ( m_numPhases,
             ip,
@@ -282,17 +280,16 @@ public:
           }
         }
 
-// TODO
         for( integer ic = 0; ic < numComp; ++ic )
         {
           real64 dFlux_dAper[2] = {0.0, 0.0};
           dFlux_dAper[0] =  m_dt * dCompFlux_dTrans[ic] * stack.dTrans_dDispJump[connectionIndex][0][0];
           dFlux_dAper[1] = -m_dt * dCompFlux_dTrans[ic] * stack.dTrans_dDispJump[connectionIndex][1][0];
 
-          stack.dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
-          stack.dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
-          stack.dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
-          stack.dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
+          stack.dFlux_dAperture[ic][k[0]][k[0]] += dFlux_dAper[0];
+          stack.dFlux_dAperture[ic][k[0]][k[1]] += dFlux_dAper[1];
+          stack.dFlux_dAperture[ic][k[1]][k[0]] -= dFlux_dAper[0];
+          stack.dFlux_dAperture[ic][k[1]][k[1]] -= dFlux_dAper[1];
         }
 //
         connectionIndex++;
@@ -316,14 +313,18 @@ public:
     Base::complete( iconn, stack, [&] ( integer const i,
                                         localIndex const localRow )
     {
+      // TODO
+      localIndex const ei = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        localIndex const row = ei * numComp + ic;
 
-      localIndex const row = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
+        m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
+                                                                stack.localColIndices.data(),
+                                                                stack.dFlux_dAperture[ic][i].dataIfContiguous(),
+                                                                stack.stencilSize );
+      }
 
-// TODO
-      m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
-                                                               stack.localColIndices.data(),
-                                                               stack.dFlux_dAperture[i].dataIfContiguous(),
-                                                               stack.stencilSize );
       // call the lambda to assemble additional terms, such as thermal terms
       kernelOp( i, localRow );
     } );

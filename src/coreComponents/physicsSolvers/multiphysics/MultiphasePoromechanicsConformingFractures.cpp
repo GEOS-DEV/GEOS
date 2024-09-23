@@ -250,6 +250,7 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
       {
         numRows += subRegion.size();
       } );
+      // TODO
       numRows *= numComp;
 
       derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
@@ -284,9 +285,9 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
         {
           for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
-            for (integer ic = 0; ic < numComp; ic++)
+            for( integer ic = 0; ic < numComp; ic++ )
             {
-// TODO
+              // TODO
               derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1] * numComp + ic, 0.0 );
             }
           }
@@ -679,7 +680,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         }
       }
 
-// TODO
+      // TODO
       // flux derivative
       bool skipAssembly = true;
       localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
@@ -688,7 +689,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
       skipAssembly &= !isFractureOpen;
 
-      for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
+      for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
       {
         real64 const dR_dAper = values[kfe1];
         localIndex const kfe2 = columns[kfe1];
@@ -696,7 +697,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         bool const isOpen = ( fractureState[kfe2] == fields::contact::FractureState::Open );
         skipAssembly &= !isOpen;
 
-        for( localIndex kf=0; kf<2; ++kf )
+        for( localIndex kf = 0; kf < 2; ++kf )
         {
           //TODO: We should avoid allocating LvArrays inside kernel
           stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
@@ -719,7 +720,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
               for( integer ic = 0; ic < numComp; ic++ )
               {
-                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dR_dAper * dAper_dU;
+                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dR_dAper[ic] * dAper_dU;
               }
             }
           }
