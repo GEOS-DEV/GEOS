@@ -21,14 +21,6 @@
 namespace geos
 {
 
-void TableLayout::addColumns( std::vector< TableLayout::ColumnParam > & columnsParam )
-{
-  for( auto && columnParam : columnsParam )
-  {
-    addToColumns( std::move( columnParam ) );
-  }
-}
-
 void TableLayout::addToColumns( const std::vector< std::string > & columnNames )
 {
   for( const auto & columnName : columnNames )
@@ -37,25 +29,25 @@ void TableLayout::addToColumns( const std::vector< std::string > & columnNames )
   }
 }
 
-void TableLayout::addToColumns( std::string && columnName )
+void TableLayout::addToColumns( std::string const &  columnName )
 {
-  m_columns.emplace_back( TableLayout::ColumnParam{ {columnName} } );
+  m_columns.push_back( TableLayout::ColumnParam{ columnName } );
 }
 
-void TableLayout::addToColumns( ColumnParam && columnParam )
+void TableLayout::addToColumns( ColumnParam const & columnParam )
 {
   if( !columnParam.subColumns.empty())
   {
     std::vector< TableLayout::Column > subColumns;
     for( const auto & subColumnsName : columnParam.subColumns )
     {
-      subColumns.emplace_back( TableLayout::Column{ subColumnsName } );
+      subColumns.push_back( TableLayout::Column{ TableLayout::ColumnParam{subColumnsName, columnParam.alignment}  } );
     }
-    m_columns.emplace_back( TableLayout::Column{ columnParam, subColumns } );
+    m_columns.push_back( TableLayout::Column{ columnParam, subColumns } );
   }
   else
   {
-    m_columns.emplace_back( TableLayout::Column{ columnParam } );
+    m_columns.push_back( TableLayout::Column{ columnParam } );
   }
 }
 
@@ -73,9 +65,16 @@ TableLayout & TableLayout::disableLineWrap()
 
 TableLayout & TableLayout::setMargin( MarginValue marginValue )
 {
-  m_borderMargin = marginValue + 1;
+  m_marginValue = marginValue; 
+  m_borderMargin = marginValue + 1; // margin + border character
   m_columnMargin = integer( marginValue ) * 2 + 1;
 
+  return *this;
+}
+
+TableLayout & TableLayout::setAlignment( TableLayout::Alignment alignment )
+{
+  m_defaultAlignment = alignment;
   return *this;
 }
 
@@ -115,9 +114,19 @@ integer const & TableLayout::getColumnMargin() const
   return m_columnMargin;
 }
 
+integer const & TableLayout::getMarginValue() const
+{
+  return m_marginValue;
+}
+
 integer const & TableLayout::getMarginTitle() const
 {
   return m_titleMargin;
+}
+
+TableLayout::Alignment TableLayout::getDefaultAlignment() const
+{
+  return m_defaultAlignment;
 }
 
 }

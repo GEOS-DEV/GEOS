@@ -137,7 +137,7 @@ void updateVisibleColumns( std::vector< TableLayout::Column > & columns,
                            std::vector< std::vector< string > > & tableDataRows )
 {
   integer idxColumn = 0;
-  for( auto iterColumn = columns.begin(); iterColumn!=columns.end(); )
+  for( auto iterColumn = columns.begin(); iterColumn != columns.end(); )
   {
     if( !iterColumn->parameter.enabled )
     {
@@ -396,7 +396,7 @@ void TableTextFormatter::increaseColumnsSize( std::vector< TableLayout::Column >
                                               real64 const extraCharacters ) const
 {
   real64 const extraCharactersPerColumn = std::floor( (extraCharacters) / columns.size() );
-  integer rest = extraCharacters - (extraCharactersPerColumn *  columns.size() ) ;
+  integer rest = extraCharacters - (extraCharactersPerColumn *  columns.size() );
   for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
     if( !columns[idxColumn].subColumn.empty())
@@ -465,7 +465,7 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Colu
 {
   integer const columnMargin = m_tableLayout.getColumnMargin();
   integer const borderMargin = m_tableLayout.getBorderMargin();
-  string const spaces =  std::string( columnMargin, ' ' );
+  string const spaces =  std::string( columnMargin - 1, ' ' );
 
   for( size_t idxRow = 0; idxRow < nbRows; ++idxRow )
   {

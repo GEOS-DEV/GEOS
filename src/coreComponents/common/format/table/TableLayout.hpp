@@ -58,10 +58,10 @@ public:
     /// Name for a column
     string columnName;
     /// Alignment for a column. By default aligned to the right side
-    Alignment alignment = Alignment::right;
+    Alignment alignment;
     /// A boolean to display a colummn
     bool enabled = true;
-    ///
+    /// Vector containing sub columns name
     std::vector< string > subColumns;
     /// Vector containing substring column name delimited by "\n"
     std::vector< string > splitColumnNames = {""};
@@ -81,6 +81,15 @@ public:
      */
     ColumnParam( std::string const & name, Alignment align )
       : columnName( name ), alignment( align )
+    {}
+
+    /**
+     * @brief Construct a ColumnParam object with the specified name and alignment.
+     * @param name The name of the column
+     * @param align The alignment of the column
+     */
+    ColumnParam( std::string const & name, std::vector< string > subsColumns )
+      : columnName( name ), subColumns( subsColumns )
     {}
 
     /**
@@ -164,6 +173,7 @@ public:
   template< typename ... Args >
   TableLayout( Args &&... args )
   {
+    setAlignment( Alignment::center );
     setMargin( MarginValue::medium );
     processArguments( std::forward< Args >( args )... );
   }
@@ -171,6 +181,7 @@ public:
   TableLayout( std::string const & title,
                std::initializer_list< std::variant< std::string, TableLayout::ColumnParam > > args )
   {
+    setAlignment( Alignment::center );
     setMargin( MarginValue::medium );
     setTitle( title );
     processArguments( args );
@@ -207,8 +218,14 @@ public:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
+   * @brief Set the default table alignment
+   * @param marginValue The table alignment
+   * @return The tableLayout reference
+   */
+  TableLayout & setAlignment( Alignment alignment );
+
+  /**
    * @brief Check whether we have a line return at the end of the table or not
-   *
    */
   bool isLineWrapEnabled() const;
 
@@ -223,36 +240,38 @@ public:
   integer const & getBorderMargin() const;
 
   /**
-   * @return The column margin, numbers of spaces separating both left and right side from each column content
+   * @return The column margin, numbers of spaces separating both left and right side from a vertical line
    */
   integer const & getColumnMargin() const;
+
+  /**
+   * @return The table margin value
+   */
+  integer const & getMarginValue() const;
 
   /**
    * @return The margin title
    */
   integer const & getMarginTitle() const;
 
+  /**
+   * @brief Get the table default aligment
+   */
+  TableLayout::Alignment getDefaultAlignment() const;
+
 private:
 
-  void addColumns( std::vector< TableLayout::ColumnParam > & columnsParam );
-
+  /**
+   * @brief Add a column to the table given an initializer_list of string & ColumnParam
+   * @param args An initializer_list containing either string or columnParam
+   */
   void processArguments( std::initializer_list< std::variant< std::string, TableLayout::ColumnParam > > args )
   {
-    for( const auto & arg : args )
+    for( auto const & arg : args )
     {
-      std::visit( [this]( auto && value ) {
-        // Si c'est un ColumnParam, on crée une copie locale et on la déplace
-        if constexpr (std::is_same_v< std::decay_t< decltype(value) >, TableLayout::ColumnParam >)
-        {
-          auto local_copy = value;
-          addToColumns( std::move( local_copy ) );
-        }
-        else
-        {
-          addToColumns( std::forward< decltype(value) >( value ) );
-        }
+      std::visit( [this]( auto const & value ) {
+        addToColumns( value );
       }, arg );
-
     }
   }
 
@@ -273,38 +292,32 @@ private:
     }
   }
 
-  // Fonction générique pour ajouter une ou plusieurs colonnes
-  template< typename T >
-  void addSingleColumn( T && column )
-  {
-    m_columns.push_back( TableLayout::Column{std::forward< T >( column )} );
-  }
-
   /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
   void addToColumns( std::vector< std::string > const & columnNames );
 
-/**
- * @brief Create and add a column to the columns vector given a string
- * @param columnName The column name
- */
-  void addToColumns( std::string && columnName );
+  /**
+   * @brief Create and add a column to the columns vector given a string
+   * @param columnName The column name
+   */
+  void addToColumns( std::string const & columnName );
 
 /**
  * @brief Create and add a column to the columns vector given a ColumnParam
  * @param columnParam The columnParam
  */
-  void addToColumns( ColumnParam && columnParam );
+  void addToColumns( ColumnParam const & columnParam );
 
   std::vector< Column > m_columns;
 
   bool m_wrapLine = false;
-
+  TableLayout::Alignment m_defaultAlignment = TableLayout::Alignment::right;
   string m_tableTitle;
   integer m_borderMargin;
   integer m_columnMargin;
+  integer m_marginValue;
   integer m_titleMargin = 2;
 
 };
