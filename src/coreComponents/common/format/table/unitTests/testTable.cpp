@@ -157,14 +157,14 @@ TEST( testTable, tableUniqueColumn )
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
-             "\n--------------------------------------------------------------------------------------------------------------\n"
-             "|  Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis  |\n"
-             "--------------------------------------------------------------------------------------------------------------\n"
-             "|                                                Cras egestas                                                |\n"
-             "--------------------------------------------------------------------------------------------------------------\n"
-             "|                                                   value1                                                   |\n"
-             "|                                                    val1                                                    |\n"
-             "--------------------------------------------------------------------------------------------------------------\n\n" );
+             "\n---------------------------------------------------------------------------------------------------------------\n"
+             "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis  |\n"
+             "---------------------------------------------------------------------------------------------------------------\n"
+             "|                                                Cras egestas                                                 |\n"
+             "---------------------------------------------------------------------------------------------------------------\n"
+             "|                                                   value1                                                    |\n"
+             "|                                                    val1                                                     |\n"
+             "---------------------------------------------------------------------------------------------------------------\n\n" );
 }
 
 TEST( testTable, tableEmptyTitle )
@@ -276,41 +276,34 @@ TEST( testTable, subColumns )
   }
 }
 
-TEST( testTable, tableSetMargin )
+TEST( testTable, variadicTest )
 {
-  ////////////
-  //////// If setMargin used elsewhere make it public and remove comments for this test
-  ////////////
-  //test with tiny margin
-  // {
-  //   TableLayout tableLayout( {
-  //     TableLayout::ColumnParam{{"Colonne 1"}, TableLayout::Alignment::center},
-  //     TableLayout::ColumnParam{{"Colonne 2"}, TableLayout::Alignment::center},
-  //     TableLayout::ColumnParam{{"Colonne 3"}, TableLayout::Alignment::right},
-  //     TableLayout::ColumnParam{{"Colonne 4"}, TableLayout::Alignment::right},
-  //     TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::right},
-  //     TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::right},
-  //   }, "InternalWellGenerator well_injector1" );
+  {
+    TableLayout const layoutTest( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis nascetur ridiculus mus",
+                                  { "Rank",
+                                    TableLayout::ColumnParam{"Nodes", TableLayout::Alignment::center, true, {"local", "ghost"}},
+                                    "Edge",
+                                    TableLayout::ColumnParam{"Faces", TableLayout::Alignment::center, true, {"local", "ghost"}},
+                                    TableLayout::ColumnParam{"Elems", TableLayout::Alignment::center, true, {"local", "ghost"}} } );
 
-  //   //tableLayout.setMargin( TableLayout::MarginValue::tiny );
-
-  //   TableData tableData;
-  //   tableData.addRow( "value 1", "long value 1", "3.0034", 3.0129877, "" , 1 );
-  //   tableData.addRow(  "value 1", "long value 2", "100.45", 4.0129877, 1 , 2 );
-
-  //   TableTextFormatter const tableText( tableLayout );
-  //   EXPECT_EQ( tableText.toString( tableData ),
-// "\n------------------------------------------------------------\n"
-// "|           InternalWellGenerator well_injector1           |\n"
-// "------------------------------------------------------------\n"
-// "|Colonne 1| Colonne 2  |Colonne 3|Colonne 4|   Prev|   Next|\n"
-// "|         |            |         |         |element|element|\n"
-// "------------------------------------------------------------\n"
-// "| value 1 |long value 1|   3.0034|3.0129877|       |      1|\n"
-// "| value 1 |long value 2|   100.45|4.0129877|      1|      2|\n"
-// "------------------------------------------------------------\n\n"
-//              );
-// }
+    TableData data;
+    data.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
+    data.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
+    TableTextFormatter log( layoutTest );
+    std::cout << " alors bon " <<  log.toString( data ) << std::endl;
+    EXPECT_EQ( log.toString( data ),
+               "\n--------------------------------------------------------------------------------------------------------------------------------------\n"
+               "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis nascetur ridiculus mus  |\n"
+               "--------------------------------------------------------------------------------------------------------------------------------------\n"
+               "|                         Rank  |           Nodes           |      Edge      |           Faces           |           Elems           |\n"
+               "--------------------------------------------------------------------------------------------------------------------------------------\n"
+               "|                               |    local    |    ghost    |                |    local    |    ghost    |    local    |    ghost    |\n"
+               "--------------------------------------------------------------------------------------------------------------------------------------\n"
+               "|             min(local/total)  |      1      |      2      |       3        |      4      |      5      |      6      |      7      |\n"
+               "|             min(local/total)  |      1      |      2      |       3        |      4      |      5      |      6      |      7      |\n"
+               "--------------------------------------------------------------------------------------------------------------------------------------\n\n"
+               );
+  }
 }
 
 int main( int argc, char * * argv )

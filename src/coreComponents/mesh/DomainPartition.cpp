@@ -347,7 +347,6 @@ void DomainPartition::outputPartitionInformation() const
 
   GEOS_LOG_RANK_0( "MPI Partition information:" );
 
-
   forMeshBodies( [&]( MeshBody const & meshBody )
   {
     meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
@@ -410,12 +409,14 @@ void DomainPartition::outputPartitionInformation() const
         real64 const maxElemRatio = maxRatios[3];
 
         GEOS_LOG_RANK_0( "  MeshBody: " + meshBody.getName() + " MeshLevel: " + meshLevel.getName() + "\n" );
+
         TableLayout tableLayout( "Rank",
-                                 TableLayout::ColumnParam{"Nodes ", TableLayout::Alignment::center, true, {"local", "ghost"}},
-                                 TableLayout::ColumnParam{"Edges ", TableLayout::Alignment::center, true, {"local", "ghost"}},
-                                 TableLayout::ColumnParam{"Faces ", TableLayout::Alignment::center, true, {"local", "ghost"}},
-                                 TableLayout::ColumnParam{"Elems ", TableLayout::Alignment::center, true, {"local", "ghost"}} );
-        tableLayout.setMargin( TableLayout::MarginValue::large );
+                                 TableLayout::ColumnParam{"Nodes", {"local", "ghost"}},
+                                 TableLayout::ColumnParam{"Edges", {"local", "ghost"}},
+                                 TableLayout::ColumnParam{"Faces", {"local", "ghost"}},
+                                 TableLayout::ColumnParam{"Elems", {"local", "ghost"}} );
+        tableLayout.setMargin( TableLayout::MarginValue::large )
+          .setAlignment( TableLayout::Alignment::center );
         tableLayout.disableLineWrap();
 
         TableData tableData;
@@ -460,24 +461,20 @@ void DomainPartition::outputPartitionInformation() const
         TableTextFormatter tableLog( tableLayout );
         GEOS_LOG_RANK_0( tableLog.toString( tableData ));
 
-        TableLayout tableLayoutRatio( "Rank",
-                                 "Nodes ",
-                                 "Edges ",
-                                 "Faces ",
-                                 "Elems ");
+        TableLayout tableLayoutRatio( "Rank", "Nodes ", "Edges ", "Faces ", "Elems " );
         tableLayout.setMargin( TableLayout::MarginValue::large );
-        
+
         TableData tableDataRatio;
         tableDataRatio.addRow( "min(local/total)",
-                          minNodeRatio,
-                          minEdgeRatio,
-                          minFaceRatio,
-                          minElemRatio );
+                               minNodeRatio,
+                               minEdgeRatio,
+                               minFaceRatio,
+                               minElemRatio );
         tableDataRatio.addRow( "min(local/total)",
-                          maxNodeRatio,
-                          maxEdgeRatio,
-                          maxFaceRatio,
-                          maxElemRatio );
+                               maxNodeRatio,
+                               maxEdgeRatio,
+                               maxFaceRatio,
+                               maxElemRatio );
 
         tableLayout.removeSubColumn();
         TableTextFormatter tableLogRatio( tableLayoutRatio );
@@ -485,7 +482,6 @@ void DomainPartition::outputPartitionInformation() const
       }
     } );
   }
-
                  );
 
 }
