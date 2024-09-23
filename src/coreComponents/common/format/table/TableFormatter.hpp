@@ -166,13 +166,13 @@ private:
   void prepareAndBuildTable( std::vector< TableLayout::Column > & columns,
                              TableData const & tableData,
                              size_t & nbHeaderRows,
-                             std::string & sectionSeparatingLine,
-                             std::string & topSeparator ) const;
+                             string & sectionSeparatingLine,
+                             string & topSeparator ) const;
 /**
  * @brief Displays the complete table
  * @param tableOutput The output stream
- * @param columns The vector containg all columns
- * @param tableData Vector containing all rows filled with values
+ * @param columns Tector containg all columns
+ * @param tableData Vector conhe vtaining all rows filled with values
  * @param nbHeaderRows A variable to be calculated which will contain the number of header lines to be displayed
  * @param sectionSeparatingLine Separator string used between sections of the table
  * @param topSeparator The top table separator
@@ -181,16 +181,14 @@ private:
                     std::vector< TableLayout::Column > & columns,
                     TableData const & tableData,
                     size_t & nbHeaderRows,
-                    std::string const & sectionSeparatingLine,
-                    std::string const & topSeparator ) const;
+                    string_view sectionSeparatingLine,
+                    string_view topSeparator ) const;
 
   /**
-   * @brief Populate all the column values  with values extracted from the table data.
+   * @brief Populate all the column values with values extracted from the table data.
    * @param columns Vector of columns to populate.
    * @param tableData Vector containing all rows filled with values
    * @param isSubColumn Boolean indicating if the current column is a subcolumn
-   *
-   * @note Use transposition for populating column with no subColumn
    */
   void populateColumnsFromTableData( std::vector< TableLayout::Column > & columns,
                                      std::vector< std::vector< string > > const & tableData,
@@ -217,7 +215,7 @@ private:
    * If the column contains subcolumns, it recursively applies the same logic to them
    */
   void findAndSetLongestColumnString( TableLayout::Column & column,
-                                      std::vector< std::string > & maxStringSize,
+                                      std::vector< string > & maxStringSize,
                                       integer const idxColumn ) const;
 
   /**
@@ -242,8 +240,8 @@ private:
    * @param topSeparator The top table separator
    */
   void buildTableSeparators( std::vector< TableLayout::Column > const & columns,
-                             std::string & sectionSeparatingLine,
-                             std::string & topSeparator ) const;
+                             string & sectionSeparatingLine,
+                             string & topSeparator ) const;
 
   /**
    * @brief Output the values rows in the table
@@ -255,14 +253,14 @@ private:
   void outputValuesSectionRows( std::vector< TableLayout::Column > const & columns,
                                 std::ostringstream & tableOutput,
                                 size_t const nbRows,
-                                std::string const & sectionSeparatingLine ) const;
+                                string_view sectionSeparatingLine ) const;
 
   /**
    * @brief Output the title row in the table
    * @param topSeparator The top separator string
    */
   void outputTitleRow( std::ostringstream & tableOutput,
-                       std::string const & topSeparator ) const;
+                       string_view topSeparator ) const;
 
   /**
    * @brief Output the header rows in the table
@@ -274,7 +272,7 @@ private:
   void outputHeaderSectionRows( std::vector< TableLayout::Column > const & columns,
                                 std::ostringstream & tableOutput,
                                 size_t const nbRows,
-                                std::string const & sectionSeparatingLine ) const;
+                                string_view sectionSeparatingLine ) const;
 
   /**
    * @brief Outputs subcolumns for the given row in the table.

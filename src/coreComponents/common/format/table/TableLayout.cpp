@@ -21,15 +21,15 @@
 namespace geos
 {
 
-void TableLayout::addToColumns( const std::vector< std::string > & columnNames )
+void TableLayout::addToColumns( const std::vector< string > & columnNames )
 {
   for( const auto & columnName : columnNames )
   {
-    addToColumns( std::string( columnName ) );
+    addToColumns( string( columnName ) );
   }
 }
 
-void TableLayout::addToColumns( std::string const &  columnName )
+void TableLayout::addToColumns( string_view columnName )
 {
   m_columns.push_back( TableLayout::ColumnParam{ columnName } );
 }
@@ -51,7 +51,7 @@ void TableLayout::addToColumns( ColumnParam const & columnParam )
   }
 }
 
-TableLayout & TableLayout::setTitle( std::string const & title )
+TableLayout & TableLayout::setTitle( string_view title )
 {
   m_tableTitle = title;
   return *this;
@@ -65,7 +65,7 @@ TableLayout & TableLayout::disableLineWrap()
 
 TableLayout & TableLayout::setMargin( MarginValue marginValue )
 {
-  m_marginValue = marginValue; 
+  m_marginValue = marginValue;
   m_borderMargin = marginValue + 1; // margin + border character
   m_columnMargin = integer( marginValue ) * 2 + 1;
 
