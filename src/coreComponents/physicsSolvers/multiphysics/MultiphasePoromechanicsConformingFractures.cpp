@@ -161,6 +161,7 @@ void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem( 
                                      localMatrix,
                                      localRhs );
 
+// TODO
   // Assemble fluxes 3D/2D and get dFluidResidualDAperture
   this->flowSolver()->assembleHydrofracFluxTerms( time_n,
                                                   dt,
@@ -234,6 +235,8 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                             CRSMatrix< real64, globalIndex > & localMatrix )
 {
+  integer const numComp = this->flowSolver()->numFluidComponents();
+
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
                                                                       arrayView1d< string const > const & regionNames )
@@ -247,6 +250,7 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
       {
         numRows += subRegion.size();
       } );
+      numRows *= numComp;
 
       derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
       derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
@@ -259,7 +263,7 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
         maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
       }
       // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
-      for( localIndex row = 0; row < numRows; ++row )
+      for( localIndex row = 0; row < numRows * numComp; ++row )
       {
         derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
       }
@@ -280,7 +284,11 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
         {
           for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
-            derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+            for (integer ic = 0; ic < numComp; ic++)
+            {
+// TODO
+              derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1] * numComp + ic, 0.0 );
+            }
           }
         }
       }
@@ -671,6 +679,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         }
       }
 
+// TODO
       // flux derivative
       bool skipAssembly = true;
       localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );

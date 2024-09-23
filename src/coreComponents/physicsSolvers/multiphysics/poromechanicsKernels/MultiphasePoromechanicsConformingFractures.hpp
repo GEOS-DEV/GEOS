@@ -138,6 +138,7 @@ public:
 
     stackArray1d< localIndex, maxNumElems > localColIndices;
 
+// TODO
     stackArray2d< real64, maxNumElems * maxStencilSize > dFlux_dAperture;
 
     /// Derivatives of transmissibility with respect to the dispJump
@@ -203,7 +204,7 @@ public:
         real64 compFlux[numComp]{};
         real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
         real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
-        //real64 dCompFlux_dTrans[numComp]{};
+        real64 dCompFlux_dTrans[numComp]{};
 
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };
@@ -223,84 +224,31 @@ public:
 
           localIndex k_up = -1;
 
-          if( m_kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::C1PPU ) )
-          {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ),
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
-          }
-          else if( m_kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::IHU ) )
-          {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ),
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
-          }
-          else
-          {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ),
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
-          }
+// TODO dCompFlux_dTrans
+          isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+            ( m_numPhases,
+            ip,
+            m_kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ),
+            seri, sesri, sei,
+            trans,
+            dTrans_dPres,
+            m_pres,
+            m_gravCoef,
+            m_phaseMob, m_dPhaseMob,
+            m_dPhaseVolFrac,
+            m_phaseCompFrac, m_dPhaseCompFrac,
+            m_dCompFrac_dCompDens,
+            m_phaseMassDens, m_dPhaseMassDens,
+            m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+            k_up,
+            potGrad,
+            phaseFlux,
+            dPhaseFlux_dP,
+            dPhaseFlux_dC,
+            compFlux,
+            dCompFlux_dP,
+            dCompFlux_dC,
+            dCompFlux_dTrans );
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
@@ -335,19 +283,18 @@ public:
         }
 
 // TODO
-/*
-        for( integer jc = 0; jc < numComp; ++jc )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           real64 dFlux_dAper[2] = {0.0, 0.0};
-          dFlux_dAper[0] =  m_dt * dCompFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][0][0];
-          dFlux_dAper[1] = -m_dt * dCompFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][1][0];
+          dFlux_dAper[0] =  m_dt * dCompFlux_dTrans[ic] * stack.dTrans_dDispJump[connectionIndex][0][0];
+          dFlux_dAper[1] = -m_dt * dCompFlux_dTrans[ic] * stack.dTrans_dDispJump[connectionIndex][1][0];
 
           stack.dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
           stack.dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
           stack.dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
           stack.dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
         }
- */
+//
         connectionIndex++;
       }
     }
@@ -372,6 +319,7 @@ public:
 
       localIndex const row = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
 
+// TODO
       m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
                                                                stack.localColIndices.data(),
                                                                stack.dFlux_dAperture[i].dataIfContiguous(),
@@ -441,11 +389,6 @@ public:
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
-      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
-          isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
-        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::C1PPU );
-      else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
-        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::IHU );
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
