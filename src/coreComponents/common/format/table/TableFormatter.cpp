@@ -454,7 +454,10 @@ void TableTextFormatter::outputSubSection( std::vector< TableLayout::Column > co
     tableOutput << buildCell( columns[idxCol].parameter.alignment,
                               columns[idxCol].columnValues[idxRow],
                               columns[idxCol].maxStringSize[0].length() );
-    tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
+    if( idxCol < columns.size() - 1 )
+    {
+      tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
+    }
   }
 }
 
@@ -485,21 +488,17 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Colu
         string const cell = column.columnValues.at( idxRow );
         std::string const cellSize = stringutilities::join( column.maxStringSize, spaces );
         tableOutput << buildCell( column.parameter.alignment, cell, cellSize.length());
-
-        // Add space between column
-        if( idxColumn < columns.size() - 1 )
-        {
-          tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
-        }
+      }
+      
+      if( idxColumn < columns.size() - 1 )
+      {
+        tableOutput << GEOS_FMT( "{:^{}}", m_verticalLine, columnMargin );
       }
 
     }
 
-    if( columns[columns.size() - 1].subColumn.empty())
-    {
-      // Append right border
-      tableOutput << GEOS_FMT( "{:>{}}", m_verticalLine, borderMargin );
-    }
+    // Append right border
+    tableOutput << GEOS_FMT( "{:>{}}", m_verticalLine, borderMargin );
 
     if( idxRow != nbRows - 1 || !m_tableLayout.isLineWrapEnabled())
     {
