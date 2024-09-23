@@ -80,8 +80,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups: " << std::endl;
-
   Base::initializePostInitialConditionsPreSubGroups();
 
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
@@ -132,8 +130,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 
   GEOS_MARK_FUNCTION;
 
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::setupSystem :" << std::endl;
-
   GEOS_UNUSED_VAR( setSparsity );
 
   dofManager.setDomain( domain );
@@ -167,11 +163,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  // for( localIndex localRow = 0; localRow < rowLengths.size(); ++localRow )
-  // {
-  //   std::cout << "row = " << localRow << ", row length = " << rowLengths[localRow] << std::endl;
-  // }
 
   // Finally, steal the pattern into a CRS matrix
   localMatrix.setName( this->getName() + "/localMatrix" );
@@ -413,9 +404,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
   //updateState( domain );
 
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::assembleSystem " << std::endl;
-  std::cout << "size of localrhs = " << localRhs.size() << std::endl;
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -464,8 +452,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::updateState:" << std::endl;
 
   /// 1. update the reservoir
   Base::updateState( domain );

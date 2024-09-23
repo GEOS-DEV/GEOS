@@ -166,11 +166,6 @@ public:
                                      stack.dTrans_dPres,
                                      stack.dTrans_dDispJump );
 
-    // std::cout << "iconn = " << iconn << std::endl;
-    // std::cout << "Trans = { " << stack.transmissibility[0][0] << ", " << stack.transmissibility[0][1] << " }" << std::endl;
-    // std::cout << "dTrans_dP = { " << stack.dTrans_dPres[0][0] << ", " << stack.dTrans_dPres[0][0] << " }" << std::endl;
-
-
 
     real64 fluxVal = 0.0;
     real64 dFlux_dTrans = 0.0;
@@ -207,15 +202,11 @@ public:
     stack.localFlux[0] =  m_dt * fluxVal;
     stack.localFlux[1] = -m_dt * fluxVal;
 
-    // std::cout << "stack.localFlux[0] = " << stack.localFlux[0] << std::endl;
-
     real64 dFlux_dDispJump[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
     for( localIndex i=0; i < 3; i++ )
     {
       dFlux_dDispJump[0][i] =   dFlux_dTrans * stack.dTrans_dDispJump[0][0][i];
       dFlux_dDispJump[1][i] = -dFlux_dTrans * stack.dTrans_dDispJump[0][1][i];
-      // dFlux_dDispJump[0][i] =   0;
-      // dFlux_dDispJump[1][i] = 0;
     }
     for( localIndex ke = 0; ke < 2; ++ke )
     {
@@ -281,7 +272,6 @@ public:
     integer constexpr NUM_DOF = 4; // pressure + jumps
     integer constexpr NUM_EQN = 1; // pressure + jumps
 
-    // std::cout << "In ConnectorBasedAssemblyKernelFactory::createAndLaunch, stencilWrapper.size() = " << stencilWrapper.size() << std::endl;
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > pressureDofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );

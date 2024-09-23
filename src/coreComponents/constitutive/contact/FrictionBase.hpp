@@ -85,7 +85,9 @@ public:
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & oldDispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
+                                    real64 const pressure,
                                     integer & fractureState ) const
   { GEOS_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
 

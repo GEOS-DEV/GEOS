@@ -19,8 +19,6 @@
 
 #include "ConstantPermeability.hpp"
 
-#include "constitutive/permeability/PermeabilityFields.hpp"
-
 namespace geos
 {
 
@@ -37,8 +35,6 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "xx, yy and zz components of a diagonal permeability tensor." );
-
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -51,9 +47,6 @@ ConstantPermeability::deliverClone( string const & name,
 void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
-
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   integer const numQuad = 1; // NOTE: enforcing 1 quadrature point

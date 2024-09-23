@@ -309,7 +309,6 @@ SurfaceElementStencilWrapper::
                   real64 ( & weight )[maxNumConnections][2],
                   real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
-  // std::cout << "In SurfaceElementStencilWrapper::computeWeights 1: " << std::endl;
 
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
@@ -346,12 +345,6 @@ SurfaceElementStencilWrapper::
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
 
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][0] = " << m_weights[iconn][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][1] = " << m_weights[iconn][1] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", coefficient[er0][esr0][ei0][0][0] = " << coefficient[er0][esr0][ei0][0][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", coefficient[er1][esr1][ei1][0][0] = " << coefficient[er1][esr1][ei1][0][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", trans = " << value << std::endl; // rm laterrrr
-
       real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
       real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
 
@@ -378,7 +371,6 @@ SurfaceElementStencilWrapper::
                   real64 ( & weight )[maxNumConnections][2],
                   real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
-  // std::cout << "In SurfaceElementStencilWrapper::computeWeights 2: " << std::endl;
 
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
@@ -402,10 +394,6 @@ SurfaceElementStencilWrapper::
 
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
-
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][0] = " << m_weights[iconn][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][1] = " << m_weights[iconn][1] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", trans = " << value << std::endl; // rm laterrrr
 
       real64 const dt0 = m_weights[iconn][0];
       real64 const dt1 = m_weights[iconn][1];
@@ -439,8 +427,6 @@ SurfaceElementStencilWrapper::
                   real64 (& dWeight_dVar1 )[maxNumConnections][2],
                   real64 (& dWeight_dVar2 )[maxNumConnections][2][3] ) const
 {
-  // std::cout << "In SurfaceElementStencilWrapper::computeWeights 3: " << std::endl;
-  
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
@@ -465,9 +451,6 @@ SurfaceElementStencilWrapper::
       localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
       localIndex const ei1  =  m_elementIndices[iconn][k[1]];
 
-      // std::cout << "m_weights[iconn][0] = " << m_weights[iconn][0] << ", m_weights[iconn][1] = " << m_weights[iconn][1] << std::endl;
-      // std::cout << "coefficient[er0][esr0][ei0][0][0] = " << coefficient[er0][esr0][ei0][0][0] << ", coefficient[er1][esr1][ei1][0][0] = " << coefficient[er1][esr1][ei1][0][0] << std::endl;
-
       real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
       real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
@@ -478,12 +461,6 @@ SurfaceElementStencilWrapper::
 
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
-
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][0] = " << m_weights[iconn][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][1] = " << m_weights[iconn][1] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", coefficient[er0][esr0][ei0][0][0] = " << coefficient[er0][esr0][ei0][0][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", coefficient[er1][esr1][ei1][0][0] = " << coefficient[er1][esr1][ei1][0][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", trans = " << value << std::endl; // rm laterrrr
 
       real64 const dt0_dvar1 = m_weights[iconn][0] * dCoeff_dVar1[er0][esr0][ei0][0][0];
       real64 const dt1_dvar1 = m_weights[iconn][1] * dCoeff_dVar1[er1][esr1][ei1][0][0];
@@ -527,8 +504,6 @@ SurfaceElementStencilWrapper::
                   R1Tensor const & gravityVector,
                   real64 (& weight)[maxNumConnections][2] ) const
 {
-  // std::cout << "In SurfaceElementStencilWrapper::computeWeights 4: " << std::endl;
-
   // TODO: this should become star-delta method
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
@@ -574,12 +549,6 @@ SurfaceElementStencilWrapper::
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
 
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][0] = " << m_weights[iconn][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", m_weights[iconn][1] = " << m_weights[iconn][1] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", coefficient[er0][esr0][ei0][0][0] = " << coefficient[er0][esr0][ei0][0][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", coefficient[er1][esr1][ei1][0][0] = " << coefficient[er1][esr1][ei1][0][0] << std::endl; // rm laterrrr
-      // std::cout << "iconn = " << iconn << ", trans = " << value << std::endl; // rm laterrrr
-
       connectionIndex++;
     }
   }
@@ -597,8 +566,6 @@ SurfaceElementStencilWrapper::
                   real64 ( & weight2 )[maxNumPointsInFlux],
                   real64 ( & geometricWeight )[maxNumPointsInFlux] ) const
 {
-  // std::cout << "In SurfaceElementStencilWrapper::computeWeights 5: " << std::endl;
-
   real64 sumOfGeometricWeights = 0.0;
 
   for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )

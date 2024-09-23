@@ -73,12 +73,6 @@ public:
   {
     GEOS_UNUSED_VAR( q );
 
-    if (k == 0 && q == 0)
-    {
-      std::cout << "In ParallelPlatesPerm, k = 0, q = 0, oldHydraulicAperture = " << oldHydraulicAperture << std::endl;
-      std::cout << "In ParallelPlatesPerm, k = 0, q = 0, newHydraulicAperture = " << newHydraulicAperture << std::endl;
-    }
-
     compute( oldHydraulicAperture,
              newHydraulicAperture,
              dHydraulicAperture_dNormalJump,

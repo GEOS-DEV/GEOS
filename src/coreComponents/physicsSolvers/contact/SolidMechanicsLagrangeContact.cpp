@@ -196,8 +196,6 @@ void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
                                                        real64 const & dt,
                                                        DomainPartition & domain )
 {
-  std::cout << "In SolidMechanicsLagrangeContact::implicitStepSetup: " << std::endl;
-
   computeRotationMatrices( domain );
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
@@ -2181,8 +2179,6 @@ void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
-  std::cout << " In SolidMechanicsLagrangeContact::updateState: " << std::endl;
-
   computeFaceDisplacementJump( domain );
 }
 
@@ -2220,8 +2216,6 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
 bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  std::cout << "In SolidMechanicsLagrangeContact::updateConfiguration:" << std::endl;
 
   using namespace fields::contact;
 
@@ -2261,18 +2255,12 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-
-          // std::cout << "kfe = " << kfe <<", fractureState[kfe] = " << fractureState[kfe] << ", dispJump[kfe][0] = " << dispJump[kfe][0] << 
-          // ", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << ", traction[kfe][0] = " << traction[kfe][0] << 
-          // ", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
             if( originalFractureState == FractureState::Open )
             {
-              // if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] ) // original 
-              if( abs(dispJump[kfe][0]) <= abs(normalDisplacementTolerance[kfe]) ) // trying comparison in absolute
+              if( LvArray::math::abs(dispJump[kfe][0]) <= LvArray::math::abs(normalDisplacementTolerance[kfe]) ) // trying comparison in absolute
               {
                 fractureState[kfe] = FractureState::Stick;
                 if( getLogLevel() >= 10 )
@@ -2293,8 +2281,6 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
 
-              std::cout << "kfe = " << kfe << ", Before slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
-
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
                 frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
@@ -2309,22 +2295,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
 
-              // if (kfe == 0)
-              // {
-                std::cout << "kfe = " << kfe <<", After slidingCheckTolerance scaling, currentTau[kfe] = " << currentTau << std::endl;
-                std::cout << "kfe = " << kfe <<", limitTau[kfe] = " << limitTau << std::endl;
-              // }
-
               if( currentTau > limitTau )
               {
-                // std::cout << "Slipping: " << std::endl;
-                // std::cout << "kfe = " << kfe <<", dispJump[kfe][0] = " << dispJump[kfe][0] << std::endl;
-                // std::cout << "kfe = " << kfe <<", normalDisplacementTolerance[kfe] = " << normalDisplacementTolerance[kfe] << std::endl;
-                // std::cout << "kfe = " << kfe <<", traction[kfe][0] = " << traction[kfe][0] << std::endl;
-                // std::cout << "kfe = " << kfe <<", normalTractionTolerance[kfe] = " << normalTractionTolerance[kfe] << std::endl;
-                // std::cout << "kfe = " << kfe <<", currentTau[kfe] = " << currentTau << std::endl;
-                // std::cout << "kfe = " << kfe <<", limitTau[kfe] = " << limitTau << std::endl;
-
                 if( originalFractureState == FractureState::Stick )
                 {
                   fractureState[kfe] = FractureState::NewSlip;

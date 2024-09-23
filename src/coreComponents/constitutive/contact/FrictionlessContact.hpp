@@ -62,8 +62,8 @@ public:
                                     arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & oldDispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
-                                    integer & fractureState,
-                                    real64 const pressure ) const override final;
+                                    real64 const pressure,
+                                    integer & fractureState ) const override final;
 
 
   /**
@@ -138,8 +138,8 @@ inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
                                                              arraySlice1d< real64 const > const & dispJump,
                                                              arraySlice1d< real64 const > const & oldDispJump,
                                                              arraySlice1d< real64 const > const & tractionVector,
-                                                             integer & fractureState,
-                                                             real64 const pressure ) const
+                                                             real64 const pressure,
+                                                             integer & fractureState ) const
 {
   GEOS_UNUSED_VAR( k, oldDispJump, tractionVector, pressure );
   using namespace fields::contact;

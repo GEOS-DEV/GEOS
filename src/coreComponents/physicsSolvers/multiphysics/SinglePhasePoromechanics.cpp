@@ -83,8 +83,6 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
                                                                              ParallelVector & solution,
                                                                              bool const setSparsity )
 {
-  std::cout << "In SinglePhasePoromechanics setupSystem: " << std::endl;
-  
   if( this->m_precond )
   {
     this->m_precond->clear();
@@ -297,8 +295,6 @@ template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  std::cout << "In SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState: " << std::endl;
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,

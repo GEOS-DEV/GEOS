@@ -832,7 +832,6 @@ SolidMechanicsLagrangianFEM::
                      real64 const & dt,
                      DomainPartition & domain )
 {
-  std::cout << "In SolidMechanicsLagrangianFEM::implicitStepSetup:" << std::endl;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -901,8 +900,6 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
                                                         real64 const & dt,
                                                         DomainPartition & domain )
 {
-  std::cout << "In SolidMechanicsLagrangianFEM::implicitStepComplete:" << std::endl;
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -991,9 +988,6 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
-
-  std::cout << "In SolidMechanicsLagrangianFEM::setupSystem : " << std::endl;
-
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),

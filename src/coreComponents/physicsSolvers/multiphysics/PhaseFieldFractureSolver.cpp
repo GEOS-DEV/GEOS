@@ -54,7 +54,6 @@ void PhaseFieldFractureSolver::postInputInitialization()
 
 void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
-  std::cout << "In PhaseFieldFractureSolver::mapSolutionBetweenSolvers " << std::endl;
 
   GEOS_MARK_FUNCTION;
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )

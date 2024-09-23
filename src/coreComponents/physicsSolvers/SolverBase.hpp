@@ -466,12 +466,6 @@ public:
                      ParallelMatrix const & matrix,
                      ParallelVector const & rhs ) const;
 
-  // void
-  // debugOutputJacobian( real64 const & time,
-  //                      integer const cycleNumber,
-  //                      integer const nonlinearIteration,
-  //                      ParallelMatrix const & matrix ) const;
-
   /**
    * @brief Output the linear system solution for debug purposes.
    * @param time beginning-of-step time

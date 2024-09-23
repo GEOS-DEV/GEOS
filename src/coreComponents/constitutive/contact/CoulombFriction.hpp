@@ -91,7 +91,9 @@ public:
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & oldDispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
+                                    real64 const pressure,
                                     integer & fractureState ) const override final;
 
   GEOS_HOST_DEVICE
@@ -260,8 +262,8 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
   m_slip[k][1] = dispJump[2] - oldDispJump[2];
 
 
-  real64 const tau[2] = { m_shearStiffness * ( m_slip[0] + m_elasticSlip[k][0] ),
-                          m_shearStiffness * ( m_slip[1] + m_elasticSlip[k][1] ) };
+  real64 const tau[2] = { m_shearStiffness * ( m_slip[k][0] + m_elasticSlip[k][0] ),
+                          m_shearStiffness * ( m_slip[k][1] + m_elasticSlip[k][1] ) };
 
   switch( fractureState )
   {
@@ -320,7 +322,7 @@ inline void CoulombFrictionUpdates::updateFractureState( localIndex const k,
                                                          arraySlice1d< real64 const > const & dispJump,
                                                          arraySlice1d< real64 const > const & oldDispJump,
                                                          arraySlice1d< real64 const > const & tractionVector,
-                                                         real64 const & pressure,
+                                                         real64 const pressure,
                                                          integer & fractureState ) const
 {
   using namespace fields::contact;
