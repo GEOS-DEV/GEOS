@@ -580,23 +580,25 @@ AllMeshes loadAllMeshes( Path const & filePath,
 }
 
 //TODO handle more general cases: multiple partitions
-AllMeshes loadPartitions( vtkSmartPointer< vtkPartitionedDataSet > & partitions )
-{
+// AllMeshes loadPartitions( std::vector<vtkSmartPointer< vtkPartitionedDataSet >> & partitions )
+// {
 
-  if( MpiWrapper::commRank() == 0 )
-  {
-    std::map< string, vtkSmartPointer< vtkDataSet > > faces;
+//   if( MpiWrapper::commRank() == 0 )
+//   {
+//     std::map< string, vtkSmartPointer< vtkDataSet > > faces;
 
-    vtkDataObject * block = partitions->GetPartition( 0 );
-    if( block->IsA( "vtkDataSet" ) )
-    {
-      vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
-      return AllMeshes( mesh, faces );
-    }
-  }
+//     for(auto & p : partitions)
+//     {
+//       vtkDataObject * block = partitions->GetPartition( 0 );
+//       if( block->IsA( "vtkDataSet" ) )
+//       {
+//         vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
+//         return AllMeshes( mesh, faces );
+//       }
+//   }
 
-  return AllMeshes();
-}
+//   return AllMeshes();
+// }
 
 
 /**

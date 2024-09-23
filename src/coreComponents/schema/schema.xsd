@@ -1726,8 +1726,6 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mainBlockName => For multi-block files, name of the 3d mesh block.-->
 		<xsd:attribute name="mainBlockName" type="groupNameRef" default="main" />
-		<!--meshPath => path of the VTK mesh in the repository-->
-		<xsd:attribute name="meshPath" type="string" default="" />
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="groupNameRef_array" default="{}" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
