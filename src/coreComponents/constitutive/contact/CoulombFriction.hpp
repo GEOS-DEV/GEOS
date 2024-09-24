@@ -40,17 +40,17 @@ public:
                           real64 const & shearStiffness,
                           real64 const & cohesion,
                           real64 const & frictionCoefficient,
-                          arrayView2d< real64 > const & elasticSlip )
+                          arrayView2d< real64 > const & slip,
+                          arrayView2d< real64 > const & elasticSlip,
+                          arrayView2d< real64 > const & plasticSlip )
     : FrictionBaseUpdates( displacementJumpThreshold ),
     m_shearStiffness( shearStiffness ),
     m_cohesion( cohesion ),
     m_frictionCoefficient( frictionCoefficient ),
-    m_elasticSlip( elasticSlip )
-  {
-    // TODO
-    m_plasticSlip.resize( 1000, 2 );
-    m_slip.resize( 1000, 2 );
-  }
+    m_slip( slip ),
+    m_elasticSlip( elasticSlip ),
+    m_plasticSlip( plasticSlip )
+  {}
 
   /// Default copy constructor
   CoulombFrictionUpdates( CoulombFrictionUpdates const & ) = default;
@@ -141,10 +141,11 @@ private:
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
   real64 m_frictionCoefficient;
 
+  arrayView2d< real64 > m_slip;
+
   arrayView2d< real64 > m_elasticSlip;
 
-  // TODO
-  array2d< real64 > m_plasticSlip, m_slip;
+  arrayView2d< real64 > m_plasticSlip;
 };
 
 
@@ -216,8 +217,14 @@ private:
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
   real64 m_frictionCoefficient;
 
+  /// Slip
+  array2d< real64 > m_slip;
+
   /// Elastic slip
   array2d< real64 > m_elasticSlip;
+
+  /// Plastic slip
+  array2d< real64 > m_plasticSlip;
 
 /**
  * @struct Set of "char const *" and keys for data specified in this class.
