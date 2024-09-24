@@ -40,17 +40,15 @@ public:
                           real64 const & shearStiffness,
                           real64 const & cohesion,
                           real64 const & frictionCoefficient,
-                          arrayView2d< real64 > const & elasticSlip )
+                          arrayView2d< real64 > const & elasticSlip,
+                          arrayView2d< real64 > const & plasticSlip )
     : FrictionBaseUpdates( displacementJumpThreshold ),
     m_shearStiffness( shearStiffness ),
     m_cohesion( cohesion ),
     m_frictionCoefficient( frictionCoefficient ),
-    m_elasticSlip( elasticSlip )
-  {
-    // TODO
-    m_plasticSlip.resize( 1000, 2 );
-    m_slip.resize( 1000, 2 );
-  }
+    m_elasticSlip( elasticSlip ),
+    m_plasticSlip( plasticSlip )
+  {}
 
   /// Default copy constructor
   CoulombFrictionUpdates( CoulombFrictionUpdates const & ) = default;
@@ -143,8 +141,7 @@ private:
 
   arrayView2d< real64 > m_elasticSlip;
 
-  // TODO
-  array2d< real64 > m_plasticSlip, m_slip;
+  arrayView2d< real64 > m_plasticSlip;
 };
 
 
@@ -219,6 +216,9 @@ private:
   /// Elastic slip
   array2d< real64 > m_elasticSlip;
 
+  /// Plastic slip
+  array2d< real64 > m_plasticSlip;
+
 /**
  * @struct Set of "char const *" and keys for data specified in this class.
  */
@@ -235,6 +235,9 @@ private:
 
     /// string/key for the elastic slip
     static constexpr char const * elasticSlipString() { return "elasticSlip"; }
+
+    /// string/key for the plastic slip
+    static constexpr char const * plasticSlipString() { return "plasticSlip"; }
   };
 
 };
@@ -258,12 +261,11 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
                                                           arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
   // Compute the slip
-  m_slip[k][0] = dispJump[1] - oldDispJump[1];
-  m_slip[k][1] = dispJump[2] - oldDispJump[2];
+  real64 const slip[2] = { dispJump[1] - oldDispJump[1],
+                           dispJump[2] - oldDispJump[2] };
 
-
-  real64 const tau[2] = { m_shearStiffness * ( m_slip[k][0] + m_elasticSlip[k][0] ),
-                          m_shearStiffness * ( m_slip[k][1] + m_elasticSlip[k][1] ) };
+  real64 const tau[2] = { m_shearStiffness * ( slip[0] + m_elasticSlip[k][0] ),
+                          m_shearStiffness * ( slip[1] + m_elasticSlip[k][1] ) };
 
   switch( fractureState )
   {
@@ -291,19 +293,19 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
       // dLimitTau_dNormalTraction from the function above has a wrong sign, flip it
       dLimitTau_dNormalTraction = -dLimitTau_dNormalTraction;
 
-      real64 const slipNorm = LvArray::tensorOps::l2Norm< 2 >( m_slip[k] );
+      real64 const slipNorm = LvArray::tensorOps::l2Norm< 2 >( slip );
 
       // Tangential components of the traction computed based on the limitTau
-      tractionVector[1] = limitTau * m_slip[k][0] / slipNorm;
-      tractionVector[2] = limitTau * m_slip[k][1] / slipNorm;
+      tractionVector[1] = limitTau * slip[0] / slipNorm;
+      tractionVector[2] = limitTau * slip[1] / slipNorm;
 
-      dTractionVector_dJump[1][0] = dTractionVector_dJump[0][0] * dLimitTau_dNormalTraction * m_slip[k][0] / slipNorm;
-      dTractionVector_dJump[1][1] = limitTau * pow( m_slip[k][1], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( m_slip[k] ), 1.5 );
-      dTractionVector_dJump[1][2] = -limitTau * m_slip[k][0] * m_slip[k][1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( m_slip[k] ), 1.5 );
+      dTractionVector_dJump[1][0] = dTractionVector_dJump[0][0] * dLimitTau_dNormalTraction * slip[0] / slipNorm;
+      dTractionVector_dJump[1][1] = limitTau * pow( slip[1], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
+      dTractionVector_dJump[1][2] = -limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
 
-      dTractionVector_dJump[2][0] = dTractionVector_dJump[0][0] * dLimitTau_dNormalTraction * m_slip[k][1] / slipNorm;
-      dTractionVector_dJump[2][1] = -limitTau * m_slip[k][0] * m_slip[k][1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( m_slip[k] ), 1.5 );
-      dTractionVector_dJump[2][2] = limitTau * pow( m_slip[k][0], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( m_slip[k] ), 1.5 );
+      dTractionVector_dJump[2][0] = dTractionVector_dJump[0][0] * dLimitTau_dNormalTraction * slip[1] / slipNorm;
+      dTractionVector_dJump[2][1] = -limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
+      dTractionVector_dJump[2][2] = limitTau * pow( slip[0], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
 
       // Compute elastic component of the slip for this case
       m_plasticSlip[k][0] = tractionVector[1] / m_shearStiffness;
@@ -361,8 +363,8 @@ inline void CoulombFrictionUpdates::updateFractureState( localIndex const k,
       m_plasticSlip[k][0] += tractionVector[1] / m_shearStiffness;
       m_plasticSlip[k][1] += tractionVector[2] / m_shearStiffness;
 
-      LvArray::tensorOps::copy< 2 >( m_elasticSlip[k], m_slip[k] );
-      LvArray::tensorOps::subtract< 2 >( m_elasticSlip[k], m_plasticSlip[k] );
+      LvArray::tensorOps::copy< 2 >( m_elasticSlip[k], slip );
+      LvArray::tensorOps::subtract< 2 >( m_plasticSlip[k], m_plasticSlip[k] );
     }
   }
 }
@@ -433,7 +435,9 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     tractionNew[2] = tractionTrial[2];
 
     if( fractureState != FractureState::Open )
+    {
       fractureState =  FractureState::Stick;
+    }
   }
   else if( limitTau <= tangentialTractionTolerance )
   {
@@ -444,7 +448,9 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     tractionNew[2] = (fixedLimitTau) ? tractionTrial[2] : 0.0;
 
     if( fractureState != FractureState::Open )
+    {
       fractureState =  FractureState::Slip;
+    }
   }
   else
   {
