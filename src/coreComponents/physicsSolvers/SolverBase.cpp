@@ -803,7 +803,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
       if( isNewtonConverged )
       {
-        isConfigurationLoopConverged = updateConfiguration( domain );
+        isConfigurationLoopConverged = updateConfiguration( domain, configurationLoopIter );
 
         if( isConfigurationLoopConverged )
         {
@@ -1337,7 +1337,8 @@ void SolverBase::updateState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
   GEOS_ERROR( "SolverBase::updateState called!. Should be overridden." );
 }
 
-bool SolverBase::updateConfiguration( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+bool SolverBase::updateConfiguration( DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                      integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
   return true;
 }
