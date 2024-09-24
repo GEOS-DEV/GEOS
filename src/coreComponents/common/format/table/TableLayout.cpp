@@ -31,7 +31,7 @@ void TableLayout::addToColumns( const std::vector< string > & columnNames )
 
 void TableLayout::addToColumns( string_view columnName )
 {
-  m_columns.push_back( TableLayout::ColumnParam{ columnName } );
+  m_columns.push_back( TableLayout::ColumnParam{ columnName, getDefaultAlignment() } );
 }
 
 void TableLayout::addToColumns( ColumnParam const & columnParam )

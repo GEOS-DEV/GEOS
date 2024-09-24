@@ -227,15 +227,18 @@ void TableTextFormatter::outputTable( std::ostringstream & tableOutput,
 {
   integer const nbValuesRows = tableData.getTableDataRows().size();
 
-  tableOutput << '\n';
+  if( m_tableLayout.isLineWrapEnabled()){
+    tableOutput << '\n';
+  }
   outputTitleRow( tableOutput, topSeparator );
   tableOutput << GEOS_FMT( "{}\n", sectionSeparatingLine );
 
   outputHeaderSectionRows( columns, tableOutput, nbHeaderRows, sectionSeparatingLine );
 
   outputValuesSectionRows( columns, tableOutput, nbValuesRows, sectionSeparatingLine );
-
-  tableOutput << '\n';
+  if( m_tableLayout.isLineWrapEnabled()){
+    tableOutput << '\n';
+  }
 }
 
 void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout::Column > & columns,
@@ -508,10 +511,9 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Colu
     // Append right border
     tableOutput << GEOS_FMT( "{:>{}}", m_verticalLine, borderMargin );
 
-    if( idxRow != nbRows - 1 || !m_tableLayout.isLineWrapEnabled())
-    {
+ 
       tableOutput << "\n";
-    }
+    
   }
 
   if( nbRows != 0 )

@@ -290,20 +290,41 @@ TEST( testTable, variadicTest )
     data.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
     data.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
     TableTextFormatter log( layoutTest );
-    std::cout << " alors bon " <<  log.toString( data ) << std::endl;
     EXPECT_EQ( log.toString( data ),
                "\n--------------------------------------------------------------------------------------------------------------------------------------\n"
                "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis nascetur ridiculus mus  |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|                         Rank  |           Nodes           |      Edge      |           Faces           |           Elems           |\n"
+               "|                         Rank  |           Nodes           |          Edge  |           Faces           |           Elems           |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n"
                "|                               |    local    |    ghost    |                |    local    |    ghost    |    local    |    ghost    |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|             min(local/total)  |      1      |      2      |       3        |      4      |      5      |      6      |      7      |\n"
-               "|             min(local/total)  |      1      |      2      |       3        |      4      |      5      |      6      |      7      |\n"
+               "|             min(local/total)  |      1      |      2      |             3  |      4      |      5      |      6      |      7      |\n"
+               "|             min(local/total)  |      1      |      2      |             3  |      4      |      5      |      6      |      7      |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n\n"
                );
   }
+}
+TEST( testTable, testLineWrap )
+{
+  TableLayout tableLayout( "Cras egestas", "CoordX", "C", "CoordZ", "Prev\nelement", "Next\nelement" );
+  tableLayout.setTitle( "title" ).setMargin( TableLayout::MarginValue::tiny ).disableLineWrap();
+
+  TableData tableData;
+  tableData.addRow( "1", "2", "3.0", 3.0129877, 2.0f, 1 );
+  tableData.addRow( "1", "2", "3.0", 3.0129877, 2.0f, 1 );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "---------------------------------------------------\n"
+             "|                      title                      |\n"
+             "---------------------------------------------------\n"
+             "|Cras egestas|CoordX|  C|   CoordZ|   Prev|   Next|\n"
+             "|            |      |   |         |element|element|\n"
+             "---------------------------------------------------\n"
+             "|           1|     2|3.0|3.0129877|      2|      1|\n"
+             "|           1|     2|3.0|3.0129877|      2|      1|\n"
+             "---------------------------------------------------\n"
+             );
 }
 
 int main( int argc, char * * argv )

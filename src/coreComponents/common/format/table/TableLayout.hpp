@@ -174,7 +174,7 @@ public:
   template< typename ... Args >
   TableLayout( Args &&... args )
   {
-    setAlignment( Alignment::center );
+    setAlignment( Alignment::right );
     setMargin( MarginValue::medium );
     processArguments( std::forward< Args >( args )... );
   }
@@ -187,7 +187,7 @@ public:
   TableLayout( string_view title,
                std::initializer_list< std::variant< string, TableLayout::ColumnParam > > args )
   {
-    setAlignment( Alignment::center );
+    setAlignment( Alignment::right );
     setMargin( MarginValue::medium );
     setTitle( title );
     processArguments( args );
@@ -237,6 +237,7 @@ public:
 
   /**
    * @brief Remove all subcolumn in all columns
+   * Can be used if we want to reuse a TableLayout without keep subcolumns
    */
   void removeSubColumn();
 
@@ -318,7 +319,7 @@ private:
 
   std::vector< Column > m_columns;
 
-  bool m_wrapLine = false;
+  bool m_wrapLine = true;
   TableLayout::Alignment m_defaultAlignment = TableLayout::Alignment::right;
   string m_tableTitle;
   integer m_borderMargin;
