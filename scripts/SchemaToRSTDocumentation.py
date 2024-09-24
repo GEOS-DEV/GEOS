@@ -276,9 +276,9 @@ def main(schema_name='schema.xsd', output_folder='./', xsd='{http://www.w3.org/2
             table_values = buildTableValues(input_attribute_map[type_name])
             writeTableRST( type_name, '%s/%s.rst' % (datastructure_folder, type_name), 'XML Element', table_values)
 
-        # Write to the master list
-        output_handle.write('\n.. _XML_%s:\n\n' % (type_name))
-        output_handle.write('.. include:: %s.rst\n\n' % (type_name))
+            # Write to the master list
+            output_handle.write('\n.. _XML_%s:\n\n' % (type_name))
+            output_handle.write('.. include:: %s.rst\n\n' % (type_name))
 
         # Parse the non-input schema definitions
         output_handle.write('*************************\n')
