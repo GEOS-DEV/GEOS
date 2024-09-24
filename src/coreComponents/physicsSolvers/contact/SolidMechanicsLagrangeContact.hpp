@@ -138,7 +138,8 @@ public:
 
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
-  bool updateConfiguration( DomainPartition & domain ) override final;
+  bool updateConfiguration( DomainPartition & domain,
+                            integer const configurationLoopIter ) override final;
 
   bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
 
@@ -207,11 +208,14 @@ private:
     constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
 
     constexpr static char const * stabilizationScalingCoefficientString() { return "stabilizationScalingCoefficient"; }
+
+    constexpr static char const * useLocalYieldAccelerationString() { return "useLocalYieldAcceleration"; }
   };
 
   bool updateConfigurationWithoutAcceleration( DomainPartition & domain );
 
-  bool updateConfigurationWithAcceleration( DomainPartition & domain );
+  bool updateConfigurationWithAcceleration( DomainPartition & domain,
+                                            integer const configurationLoopIter );
 
   void initializeAccelerationVariables( DomainPartition & domain );
 
@@ -223,8 +227,7 @@ private:
   array1d< real64 > m_x2_tilde; // Unaccelerated variable @ outer iteration v + 1 ( current iteration )
   array1d< real64 > m_omega0; // Old Aitken relaxation factor
   array1d< real64 > m_omega1; // New Aitken relaxation factor
-  bool m_applyLocalYieldAcceleration = true; // flag for applying modified Aitken acceleration to yield
-  int m_config_iter = 0;
+  integer m_useLocalYieldAcceleration; // flag for applying modified Aitken acceleration to yield
 
 };
 

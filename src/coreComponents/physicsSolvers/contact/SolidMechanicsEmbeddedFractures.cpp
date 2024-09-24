@@ -758,7 +758,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   } );
 }
 
-bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain,
+                                                           integer const configurationLoopIter )
 {
   int hasConfigurationConverged = true;
 

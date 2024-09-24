@@ -71,6 +71,11 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setApplyDefaultValue( 1.0 ).
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
 
+  registerWrapper( viewKeyStruct::useLocalYieldAccelerationString(), &m_useLocalYieldAcceleration ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to enable local acceleration for yield (to accelerate configuration loop convergence)." );
+
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
@@ -169,7 +174,7 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
     } );
   }
 
-  if( m_applyLocalYieldAcceleration )
+  if( m_useLocalYieldAcceleration )
   {
     initializeAccelerationVariables( domain );
   }
@@ -2218,51 +2223,38 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
   return false;
 }
 
-bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domain,
+                                                         integer const configurationLoopIter )
 {
   GEOS_MARK_FUNCTION;
 
-  bool isConfigurationLoopConverged = false;
-
-  if( m_applyLocalYieldAcceleration )
+  if( m_useLocalYieldAcceleration )
   {
-    isConfigurationLoopConverged = updateConfigurationWithAcceleration( domain );
+    return updateConfigurationWithAcceleration( domain, configurationLoopIter );
   }
   else
   {
-    isConfigurationLoopConverged = updateConfigurationWithoutAcceleration( domain );
+    return updateConfigurationWithoutAcceleration( domain );
   }
-
-  m_config_iter += 1;
-  if( isConfigurationLoopConverged )
-  {
-    m_config_iter = 0;
-  }
-
-  return isConfigurationLoopConverged;
-
 }
 
 void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainPartition & domain )
 {
+  // calculate total number of face elements
   localIndex total_size = 0;
-  int visit = 0;
-
-  using namespace fields::contact;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
-
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
       total_size += subRegion.size();
-      visit += 1;
     } );
   } );
 
+  // allocate arrays
   m_x0.resize( total_size );
   m_x1.resize( total_size );
   m_x1_tilde.resize( total_size );
@@ -2272,7 +2264,8 @@ void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainParti
   m_omega1.resize( total_size );
 }
 
-bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainPartition & domain )
+bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainPartition & domain,
+                                                                         integer const configurationLoopIter )
 {
   using namespace fields::contact;
 
@@ -2371,11 +2364,11 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
               {
                 fractureState[kfe] = FractureState::Stick;
 
-                if( m_config_iter == 0 )
+                if( configurationLoopIter == 0 )
                 {
                   m_x0[kfe] = currentTau_unscaled - limitTau;
                 }
-                else if( m_config_iter == 1 )
+                else if( configurationLoopIter == 1 )
                 {
                   m_x1_tilde[kfe] = currentTau_unscaled - limitTau;
                   m_x1[kfe] = m_x1_tilde[kfe];
@@ -2386,7 +2379,7 @@ bool SolidMechanicsLagrangeContact::updateConfigurationWithAcceleration( DomainP
                   // only apply acceleration if within a fraction of the limitTau
                   real64 acceleration_buffer = ( limitTau - currentTau ) / limitTau;
 
-                  if( acceleration_buffer > ( 0.1 / ( m_config_iter - 1 ) ) )
+                  if( acceleration_buffer > ( 0.1 / ( configurationLoopIter - 1 ) ) )
                   {
                     // do not apply acceleration, just update previous values
                     m_x0[kfe] = m_x1_tilde[kfe];
