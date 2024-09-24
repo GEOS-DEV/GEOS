@@ -111,7 +111,7 @@ public:
                         DomainPartition & domain );
 
   virtual bool updateConfiguration( DomainPartition & domain,
-                                    integer const configurationLoopIter ) override final;
+                                    integer configurationLoopIter ) override final;
 
   bool useStaticCondensation() const { return m_useStaticCondensation; }
 

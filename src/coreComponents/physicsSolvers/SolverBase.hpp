@@ -582,7 +582,7 @@ public:
    * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not.
    */
   virtual bool updateConfiguration( DomainPartition & domain,
-                                    integer const configurationLoopIter );
+                                    integer configurationLoopIter );
 
   /**
    * @brief
