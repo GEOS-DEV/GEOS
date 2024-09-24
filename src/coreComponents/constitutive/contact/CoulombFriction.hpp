@@ -262,7 +262,7 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
 {
   // Compute the slip
   real64 const slip[2] = { dispJump[1] - oldDispJump[1],
-                            dispJump[2] - oldDispJump[2] };
+                           dispJump[2] - oldDispJump[2] };
 
   real64 const tau[2] = { m_shearStiffness * ( slip[0] + m_elasticSlip[k][0] ),
                           m_shearStiffness * ( slip[1] + m_elasticSlip[k][1] ) };
@@ -364,7 +364,7 @@ inline void CoulombFrictionUpdates::updateFractureState( localIndex const k,
       m_plasticSlip[k][1] += tractionVector[2] / m_shearStiffness;
 
       LvArray::tensorOps::copy< 2 >( m_elasticSlip[k], slip );
-      LvArray::tensorOps::subtract< 2 >( m_elasticSlip[k], m_plasticSlip[k] );
+      LvArray::tensorOps::subtract< 2 >( m_plasticSlip[k], m_plasticSlip[k] );
     }
   }
 }
