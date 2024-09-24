@@ -86,7 +86,7 @@ public:
   using ColumnType = real64;
 
   /// Struct containing conversion informations
-  struct TableConversionData
+  struct TableDataHolder
   {
     /// Vector containing all columns names
     /// A header value is presented as "pressure [K] = {}"
@@ -123,11 +123,11 @@ public:
    * @param columnAxisDescription The description for a column unit value
    * @return A struct containing the tableData converted and all header values ;
    */
-  TableData2D::TableConversionData convertTable2D( arrayView1d< real64 const > const values,
-                                                   units::Unit const valueUnit,
-                                                   ArrayOfArraysView< real64 const > const coordinates,
-                                                   string_view rowAxisDescription,
-                                                   string_view columnAxisDescription );
+  TableData2D::TableDataHolder convertTable2D( arrayView1d< real64 const > const values,
+                                               units::Unit const valueUnit,
+                                               ArrayOfArraysView< real64 const > const coordinates,
+                                               string_view rowAxisDescription,
+                                               string_view columnAxisDescription );
 
   /**
    * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table
@@ -138,7 +138,8 @@ public:
    * By default it displays the axis value.
    * I.E to display a customized axis to show the pressures in y axis, a rowFmt value can be : "pressure [K] = {}"
    */
-  TableConversionData buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
+  TableDataHolder buildTableData( string_view dataDescription,
+                                  string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
 private:
   /// @brief all cell values by their [ row ][ column ]

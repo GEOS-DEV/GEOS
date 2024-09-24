@@ -71,7 +71,7 @@ public:
                    string_array const & inputPara,
                    string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight,
-                   TableOutputOptions const pvtOutputOpts )
+                   TableFunction::OutputOptions const pvtOutputOpts )
     : PVTFunctionBase( name,
                        componentNames,
                        componentMolarWeight )

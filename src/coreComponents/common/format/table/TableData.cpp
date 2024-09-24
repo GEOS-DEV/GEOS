@@ -67,11 +67,11 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > rowAxisValues
   }
 }
 
-TableData2D::TableConversionData TableData2D::convertTable2D( arrayView1d< real64 const > const values,
-                                                              units::Unit const valueUnit,
-                                                              ArrayOfArraysView< real64 const > const coordinates,
-                                                              string_view rowAxisDescription,
-                                                              string_view columnAxisDescription )
+TableData2D::TableDataHolder TableData2D::convertTable2D( arrayView1d< real64 const > const values,
+                                                          units::Unit const valueUnit,
+                                                          ArrayOfArraysView< real64 const > const coordinates,
+                                                          string_view rowAxisDescription,
+                                                          string_view columnAxisDescription )
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
@@ -82,11 +82,11 @@ TableData2D::TableConversionData TableData2D::convertTable2D( arrayView1d< real6
                          columnFmt );
 }
 
-TableData2D::TableConversionData TableData2D::buildTableData( string_view targetUnit,
-                                                              string_view rowFmt,
-                                                              string_view columnFmt ) const
+TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit,
+                                                          string_view rowFmt,
+                                                          string_view columnFmt ) const
 {
-  TableData2D::TableConversionData tableData1D;
+  TableData2D::TableDataHolder tableData1D;
   std::vector< size_t > rowsLength;
 
   tableData1D.headerNames.push_back( string( targetUnit ) );

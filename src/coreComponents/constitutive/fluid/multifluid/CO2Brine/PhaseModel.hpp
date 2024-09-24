@@ -20,7 +20,7 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_PHASEMODEL_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_PHASEMODEL_HPP_
 
-#include "functions/PVTFunctionBase.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geos
 {
@@ -56,13 +56,13 @@ struct PhaseModel
    * @param[in] inputParams input parameters read from files
    * @param[in] componentNames names of the components
    * @param[in] componentMolarWeight molar weights of the components
-   * @param[in] pvtOutputOpts Output struct options
+   * @param[in] pvtOutputOpts A structure containing generated table output options
    */
   PhaseModel( string const & phaseModelName,
               array1d< array1d< string > > const & inputParams,
               string_array const & componentNames,
               array1d< real64 > const & componentMolarWeight,
-              PVTProps::PVTFunctionBase::TableOutputOptions const pvtOutputOpts )
+              TableFunction::OutputOptions const pvtOutputOpts )
     : density( phaseModelName + "_" + Density::catalogName(),
                inputParams[InputParamOrder::DENSITY],
                componentNames,
