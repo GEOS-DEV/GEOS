@@ -63,7 +63,7 @@ public:
 
   ConformingVirtualElementOrder1() = default;
 
-  virtual ~ConformingVirtualElementOrder1() = default;
+  ~ConformingVirtualElementOrder1() = default;
 
   /**
    * @struct StackVariables

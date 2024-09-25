@@ -88,7 +88,7 @@ public:
   /**
    * @brief Destructor
    */
-  virtual ~FiniteElementBase() = default;
+  ~FiniteElementBase() = default;
 
   /**
    * @struct StackVariables
