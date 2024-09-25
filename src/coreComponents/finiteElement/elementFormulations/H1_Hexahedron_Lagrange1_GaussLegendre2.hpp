@@ -94,7 +94,7 @@ public:
   /** @endcond Doxygen_Suppress */
   
   GEOS_HOST_DEVICE 
-  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() overridePartitionNumbers
+  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override
   {}
 
   GEOS_HOST_DEVICE
