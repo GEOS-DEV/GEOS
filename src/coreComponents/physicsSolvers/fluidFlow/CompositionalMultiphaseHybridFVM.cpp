@@ -641,7 +641,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
       if( normType == solverBaseKernels::NormType::Linf )
       {
         // take max between mass and volume residual
-        subRegionResidualNorm[0] = LvArray::math::max(subRegionResidualNorm[0], subRegionResidualNorm[1]);
+        subRegionResidualNorm[0] = LvArray::math::max( subRegionResidualNorm[0], subRegionResidualNorm[1] );
         if( subRegionResidualNorm[0] > localResidualNorm )
         {
           localResidualNorm = subRegionResidualNorm[0];
