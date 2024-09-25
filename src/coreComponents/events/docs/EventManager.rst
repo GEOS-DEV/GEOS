@@ -68,7 +68,7 @@ By default, a PeriodicEvent will execute throughout the entire simulation.  This
 The timestep request event is typically determined via its target.  However, this value can be overridden by setting the ``forceDt`` or ``maxEventDt`` attributes.
 
 .. include:: /docs/sphinx/datastructure/PeriodicEvent.rst
-
+    :start-line: 3
 
 SoloEvent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
