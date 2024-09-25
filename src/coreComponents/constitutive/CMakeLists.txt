@@ -70,6 +70,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
+     fluid/multifluid/compositional/functions/SoreideWhitsonEOSModel.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
      fluid/multifluid/compositional/models/ComponentProperties.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
@@ -219,6 +220,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.cpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
+     fluid/multifluid/compositional/models/ComponentProperties.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/CriticalVolume.cpp
