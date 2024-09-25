@@ -37,7 +37,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"            // check need of multiphase equivalent
+//#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"            // check need of multiphase equivalent
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geos
@@ -357,11 +357,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] NoOpFunc the function used to customize the computation of the flux
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >   // should change to multiphase
+  template< typename FUNC = NoOpFunc >   // should change to multiphase
   GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && kernelOp = NoOpFunc{} ) const
   {
     // first, compute the transmissibilities at this face                                             // get k and dk/dP from global arrays and place in stack
     m_stencilWrapper.computeWeights( iconn,
@@ -592,11 +592,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >                                  // should change to multiphase
+  template< typename FUNC = NoOpFunc >                                  // should change to multiphase
   GEOS_HOST_DEVICE
-  void complete( localIndex const iconn,
+  void complete( localIndex const iconn,  
                  StackVariables & stack,
-                 FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                 FUNC && kernelOp = NoOpFunc{} ) const
   {
     // add contribution to residual and jacobian into:
     // - the mass balance equation
