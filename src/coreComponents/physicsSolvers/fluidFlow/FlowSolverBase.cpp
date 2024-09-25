@@ -33,7 +33,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/FlowSolverBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/FluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp" // TODO should not be here
 
 namespace geos
 {
