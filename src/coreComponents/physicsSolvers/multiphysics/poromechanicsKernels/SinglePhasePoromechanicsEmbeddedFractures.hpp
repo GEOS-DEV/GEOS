@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/fluidFlow/kernels/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/FluxKernelsHelper.hpp"
+#include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {
