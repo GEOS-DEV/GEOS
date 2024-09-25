@@ -61,8 +61,10 @@ public:
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
-
-  ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() = default;
+  
+  GEOS_HOST_DEVICE 
+  virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
+  {}
 
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override

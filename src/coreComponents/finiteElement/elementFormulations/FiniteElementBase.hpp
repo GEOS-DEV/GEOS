@@ -88,7 +88,9 @@ public:
   /**
    * @brief Destructor
    */
-  ~FiniteElementBase() = default;
+  GEOS_HOST_DEVICE 
+  virtual ~FiniteElementBase()
+  {}
 
   /**
    * @struct StackVariables

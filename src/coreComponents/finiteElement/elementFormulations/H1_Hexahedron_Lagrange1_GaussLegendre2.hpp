@@ -92,8 +92,10 @@ public:
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
   /** @endcond Doxygen_Suppress */
-
-  ~H1_Hexahedron_Lagrange1_GaussLegendre2() = default;
+  
+  GEOS_HOST_DEVICE 
+  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() overridePartitionNumbers
+  {}
 
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override

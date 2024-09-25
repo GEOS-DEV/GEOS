@@ -76,8 +76,10 @@ public:
 
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
-
-  ~H1_Pyramid_Lagrange1_Gauss5() = default; 
+  
+  GEOS_HOST_DEVICE 
+  virtual ~H1_Pyramid_Lagrange1_Gauss5() override
+  {} 
 
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
