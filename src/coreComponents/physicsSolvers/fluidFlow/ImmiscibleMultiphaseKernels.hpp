@@ -169,8 +169,8 @@ protected:
   ElementViewConst< arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > > const m_dMob;
 
   /// Views on fluid density
-  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_dens;
-  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_dDens_dPres;
+  ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_dens;
+  ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dDens_dPres;
 
   /// Views on capillary pressure
   ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
@@ -409,13 +409,13 @@ public:
 
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
-        {        
+        {
           // calculate quantities on primary connected cells          
           for( integer ke = 0; ke < 2; ++ke )
           {
             // density
-            real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][ip];         // r = rho1 || rho2
-            real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][ip];  // dr/dP = dr1/dP1 || dr2/dP
+            real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];         // r = rho1 || rho2
+            real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 || dr2/dP
 
             // average density and derivatives
             densMean[ip] += 0.5 * density;          // rho = (rho1 + rho2) / 2
