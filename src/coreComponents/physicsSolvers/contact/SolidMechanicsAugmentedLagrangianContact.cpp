@@ -314,8 +314,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
   } );
 
 }
