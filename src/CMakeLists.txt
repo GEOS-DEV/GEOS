@@ -156,7 +156,7 @@ install( FILES ${CMAKE_INSTALL_PREFIX}/bin/geosx
          RENAME geos
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )
 
-if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
   set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
   set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)
@@ -169,9 +169,9 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      COMMENT "Generating XML schema"
                      )
 
-  add_custom_target( geosx_update_rst_tables
+  add_custom_target( geosx_build_datastructure_tables
                      ALL
-                     COMMAND python3 ${SCRIPT_DIR}/SchemaToRSTDocumentation.py ${SCHEMA_DIR} >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
+                     COMMAND python3 ${SCRIPT_DIR}/SchemaToRSTDocumentation.py -s ${SCHEMA_DIR}/schema.xsd -o ${CMAKE_SOURCE_DIR}/docs/sphinx >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Generating schema-dependent RST files"
@@ -181,19 +181,18 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      ALL
                      COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                     DEPENDS geosx_update_rst_tables
+                     DEPENDS geosx_generate_schema
                      COMMENT "Validating all XML files in the repository against the schema"
                      )
+  if( SPHINX_FOUND )
+    blt_add_sphinx_target( geosx_docs )
+    add_dependencies( geosx_docs geosx_build_datastructure_tables )
+  endif()
 endif()
 
 if( ENABLE_PYGEOSX )
    add_subdirectory( pygeosx )
 endif()
-
-if( SPHINX_FOUND )
-  blt_add_sphinx_target( geosx_docs )
-endif()
-
 
 install( DIRECTORY ../examples/
          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/examples )
