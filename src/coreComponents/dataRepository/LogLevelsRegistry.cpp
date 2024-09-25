@@ -29,7 +29,7 @@ string LogLevelsRegistry::buildLogLevelDescription() const
 {
   std::ostringstream description;
   description << "Sets the level of information to write in the standard output (the console typically).\n"
-                 "A level of 0 outputs minimal information, higher levels require more.";
+                 "Level 0 outputs no specific information for this solver. Higher levels require more outputs.";
   for( auto const & [logLevel, logDescriptions] : m_logLevelsDescriptions )
   {
     description << GEOS_FMT( "\n{}\n", logLevel );
