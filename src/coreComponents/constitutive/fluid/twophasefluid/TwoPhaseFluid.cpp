@@ -103,8 +103,8 @@ void TwoPhaseFluid::postInputInitialization()
   // Input relationships can be provided either as text files or TableFunctions.
   m_tableFiles.empty() ? readInputDataFromTableFunctions() : readInputDataFromFileTableFunctions();
 
-
-  /* ???????
+  checkTableConsistency();
+  /* TODO
      // call to correctly set member array tertiary sizes on the 'main' material object
      resizeFields( 0, 0 );
 
@@ -120,8 +120,9 @@ TwoPhaseFluid::readTable( string const & fileName,
                           array1d< array1d< real64 > > & data )
 {
   std::ifstream is( fileName );
-  GEOS_ERROR_IF( !is.is_open(),
-                 "TwoPhaseFluid: could not open file: " << fileName );
+  GEOS_THROW_IF( !is.is_open(),
+                 GEOS_FMT( "{}: could not open file: {}", getFullName(), fileName ),
+                 InputError );
 
   // Read line-by-line until eof
   string str;
@@ -150,9 +151,9 @@ TwoPhaseFluid::readTable( string const & fileName,
 
   for( localIndex i = 0; i < data.size(); ++i )
   {
-    GEOS_ERROR_IF( data[i].size() < minRowLength,
-                   "TwoPhaseFluid: too few entries in row " << i << " of table " << fileName
-                                                            << ", minimum " << std::to_string( minRowLength ) << " required" );
+    GEOS_THROW_IF( data[i].size() < minRowLength,
+                   GEOS_FMT( "{}: too few entries in row {} of table {}, minimum {} required", getFullName(), i, fileName, minRowLength ),
+                   InputError );
   }
 }
 
@@ -168,7 +169,7 @@ void TwoPhaseFluid::fillData( integer const ip,
   for( localIndex i = 0; i < tableValues.size(); ++i )
   {
     GEOS_THROW_IF_NE_MSG( tableValues[i].size(), 3,
-                          getFullName() << ": three columns (pressure, density, and viscosity) are expected",
+                          GEOS_FMT( "{}: three columns (pressure, density, and viscosity) are expected", getFullName() ),
                           InputError );
 
     pressureCoords[0][i] = tableValues[i][0];
@@ -268,6 +269,24 @@ void TwoPhaseFluid::initializePostSubGroups()
     TableFunction const & viscosityTable = functionManager.getGroup< TableFunction const >( m_viscosityTableNames[iph] );
     m_viscosityTables.emplace_back( &viscosityTable );
     m_viscosityTableKernels.emplace_back( m_viscosityTables[iph]->createKernelWrapper() );
+  }
+}
+
+
+void TwoPhaseFluid::checkTableConsistency() const
+{
+  FunctionManager const & functionManager = FunctionManager::getInstance();
+  for( integer iph = 0; iph < 2; ++iph )
+  {
+    TableFunction const & densityTable = functionManager.getGroup< TableFunction const >( m_densityTableNames[iph] );
+    arrayView1d< real64 const > const density = densityTable.getValues();
+
+    for( localIndex i = 1; i < density.size(); ++i )
+    {
+      GEOS_THROW_IF( density[i] - density[i-1] < 0,
+                     GEOS_FMT( "{}: in table '{}' density values must be increasing", getFullName(), densityTable.getName() ),
+                     InputError );
+    }
   }
 }
 

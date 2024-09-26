@@ -30,20 +30,20 @@ using namespace geos::dataRepository;   /// Only for group definition
 
 
 static constexpr char const * tableContentPhase0 = "# Pg(Pa) Dens(kg/m3) Visc(Pa.s)\n"
-                                                   "0.22     0.40203  40203\n"
-                                                   "0.3      0.31311  31311\n"
-                                                   "0.5      0.22423  22423\n"
-                                                   "0.6      0.15011  15011\n"
-                                                   "0.8      0.04224  4224\n"
-                                                   "1.0      0.00603  603";
+                                                   "0.22     0.00603  40203\n"
+                                                   "0.3      0.04224  31311\n"
+                                                   "0.5      0.15011  22423\n"
+                                                   "0.6      0.22423  15011\n"
+                                                   "0.8      0.31311  4224\n"
+                                                   "1.0      0.40203  603";
 
 static constexpr char const * tableContentPhase1 = "# Pg(Pa) Dens(kg/m3) Visc(Pa.s)\n"
-                                                   "1.22     0.40203  0.22\n"
-                                                   "1.3      0.31311  0.22\n"
-                                                   "1.5      0.22423  0.22\n"
-                                                   "1.6      0.15011  0.22\n"
-                                                   "1.8      0.04224  0.22\n"
-                                                   "2.0      0.00603  0.22";
+                                                   "1.22     0.00603  0.22\n"
+                                                   "1.3      0.04224  0.22\n"
+                                                   "1.5      0.15011  0.22\n"
+                                                   "1.6      0.22423  0.22\n"
+                                                   "1.8      0.31311  0.22\n"
+                                                   "2.0      0.40203  0.22";
 
 template< bool FROM_TABLE >
 class TwoPhaseFluidTest : public ConstitutiveTestBase< TwoPhaseFluid >
@@ -179,12 +179,12 @@ TwoPhaseFluid * TwoPhaseFluidTest< true >::makeTwoPhaseFluid( string const & nam
   array1d< real64_array > densityCoordPhase0( 1 );
   fill< Naxis >( densityCoordPhase0[0], { 0.22, 0.3, 0.5, 0.6, 0.8, 1.0 } );
   real64_array densityValuesPhase0;
-  fill< Naxis >( densityValuesPhase0, { 0.40203, 0.31311, 0.22423, 0.15011, 0.04224, 0.00603 } );
+  fill< Naxis >( densityValuesPhase0, { 0.00603, 0.04224, 0.04224, 0.22423, 0.31311, 0.40203 } );
 
   array1d< real64_array > densityCoordPhase1( 1 );
   fill< Naxis >( densityCoordPhase1[0], { 1.22, 1.3, 1.5, 1.6, 1.8, 2.0 } );
   real64_array densityValuesPhase1;
-  fill< Naxis >( densityValuesPhase1, { 0.40203, 0.31311, 0.22423, 0.15011, 0.04224, 0.00603 } );
+  fill< Naxis >( densityValuesPhase1, { 0.00603, 0.04224, 0.04224, 0.22423, 0.31311, 0.40203 } );
 
 
   array1d< real64_array > viscosityCoordPhase0( 1 );
@@ -216,7 +216,6 @@ TwoPhaseFluid * TwoPhaseFluidTest< true >::makeTwoPhaseFluid( string const & nam
   fill< 2 >( viscosityTableNames, {"viscosityTablePhase0", "viscosityTablePhase1"} );
 
   fluid.postInputInitializationRecursive();
-  //fluid.initialize(); // to test all the checks???... this one is redoing the postInput
   return &fluid;
 }
 

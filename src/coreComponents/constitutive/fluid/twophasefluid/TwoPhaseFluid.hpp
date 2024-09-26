@@ -54,14 +54,11 @@ public:
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "TwoPhaseFluid";
-
   /**
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return "TwoPhaseFluid"; }
 
   /**
    * @brief Get catalog name
@@ -255,10 +252,16 @@ private:
    * @param[in] minRowLength the expected minimum row length (typically 3: pressure, density, viscosity)
    * @param[out] data the data from the table
    */
-  static void
+  void
   readTable( string const & fileName,
              integer minRowLength,
              array1d< array1d< real64 > > & data );
+
+
+  /**
+   * @brief Check the monotonicity of the PVT relationship
+   */
+  void checkTableConsistency() const;
 };
 
 
