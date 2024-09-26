@@ -29,17 +29,11 @@
 #include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
-#include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "finiteVolume/BoundaryStencil.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
-#include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {

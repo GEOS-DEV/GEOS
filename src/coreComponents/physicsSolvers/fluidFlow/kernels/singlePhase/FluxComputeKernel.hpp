@@ -22,26 +22,6 @@
 
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernelBase.hpp"
 
-#include "common/DataLayouts.hpp"
-#include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
-#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
-#include "constitutive/permeability/PermeabilityBase.hpp"
-#include "constitutive/permeability/PermeabilityFields.hpp"
-#include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "finiteVolume/BoundaryStencil.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
-#include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {

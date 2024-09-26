@@ -14,10 +14,10 @@
  */
 
 /**
- * @file SinglePhaseProppantFluxKernels.cpp
+ * @file ProppantFluxKernels.cpp
  */
 
-#include "SinglePhaseProppantFluxKernels.hpp"
+#include "ProppantFluxKernels.hpp"
 
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
 

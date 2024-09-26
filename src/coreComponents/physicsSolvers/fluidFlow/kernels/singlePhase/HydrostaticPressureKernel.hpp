@@ -23,7 +23,6 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {

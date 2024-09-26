@@ -24,7 +24,6 @@
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
-#include "constitutive/thermalConductivity/SinglePhaseThermalConductivityFields.hpp"
 
 namespace geos
 {

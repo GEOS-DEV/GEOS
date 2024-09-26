@@ -22,7 +22,6 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {
