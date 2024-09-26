@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEACCUMULATIONKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEACCUMULATIONKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 
 namespace geos
 {

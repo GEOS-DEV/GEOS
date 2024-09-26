@@ -40,13 +40,15 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseMobilityKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseSolutionCheckKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseSolutionScalingKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseStatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseHydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
 
 namespace geos
@@ -263,7 +265,7 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    thermalSinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
+    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 

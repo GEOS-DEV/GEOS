@@ -32,7 +32,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
 
 
 /**

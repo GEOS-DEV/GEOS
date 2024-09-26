@@ -33,10 +33,11 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/AquiferBCKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StabilizedSinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseProppantFluxKernels.hpp"
@@ -156,22 +157,13 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
       if( m_isThermal )
       {
-        string const & solidName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() );
-        CoupledSolidBase const & solid = SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
-        string const & solidInternalEnergyName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidInternalEnergyNamesString() );
-        SolidInternalEnergy const & solidInternalEnergy = SolverBase::getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
-
-        thermalSinglePhaseBaseKernels::
+        singlePhaseBaseKernels::
           ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( normType,
                                                      rankOffset,
                                                      dofKey,
                                                      localRhs,
                                                      subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     solidInternalEnergy,
                                                      m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionResidualNorm,
                                                      subRegionResidualNormalizer );

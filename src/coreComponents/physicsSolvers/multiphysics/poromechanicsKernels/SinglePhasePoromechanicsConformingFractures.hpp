@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseFluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos

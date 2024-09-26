@@ -19,7 +19,7 @@
 
 #include "SinglePhaseProppantFluxKernels.hpp"
 
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseFluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
 
 namespace geos
 {

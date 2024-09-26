@@ -37,7 +37,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/HybridFVMHelperKernels.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 #include "codingUtilities/Utilities.hpp"
