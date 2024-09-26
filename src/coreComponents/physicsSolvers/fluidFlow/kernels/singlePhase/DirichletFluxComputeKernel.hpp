@@ -45,7 +45,7 @@ namespace singlePhaseFVMKernels
  */
 template< integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER >
 class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_EQN, NUM_DOF,
-                                                                         BoundaryStencilWrapper >
+                                                             BoundaryStencilWrapper >
 {
 public:
 
@@ -70,7 +70,7 @@ public:
   using AbstractBase::m_localRhs;
 
   using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF,
-                                                               BoundaryStencilWrapper >;
+                                                         BoundaryStencilWrapper >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_stencilWrapper;
@@ -93,16 +93,16 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   DirichletFluxComputeKernel( globalIndex const rankOffset,
-                                    FaceManager const & faceManager,
-                                    BoundaryStencilWrapper const & stencilWrapper,
-                                    FLUIDWRAPPER const & fluidWrapper,
-                                    DofNumberAccessor const & dofNumberAccessor,
-                                    SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                                    SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                                    PermeabilityAccessors const & permeabilityAccessors,
-                                    real64 const & dt,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs )
+                              FaceManager const & faceManager,
+                              BoundaryStencilWrapper const & stencilWrapper,
+                              FLUIDWRAPPER const & fluidWrapper,
+                              DofNumberAccessor const & dofNumberAccessor,
+                              SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                              SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                              PermeabilityAccessors const & permeabilityAccessors,
+                              real64 const & dt,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
             dofNumberAccessor,

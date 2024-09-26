@@ -109,17 +109,17 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   FluxComputeKernel( globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                           ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
-                           SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                           ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           ThermalConductivityAccessors const & thermalConductivityAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs )
+                     STENCILWRAPPER const & stencilWrapper,
+                     DofNumberAccessor const & dofNumberAccessor,
+                     SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                     ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
+                     SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                     ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
+                     PermeabilityAccessors const & permeabilityAccessors,
+                     ThermalConductivityAccessors const & thermalConductivityAccessors,
+                     real64 const & dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
             dofNumberAccessor,

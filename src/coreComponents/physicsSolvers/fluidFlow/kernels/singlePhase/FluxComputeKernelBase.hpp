@@ -104,13 +104,13 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   FluxComputeKernelBase( globalIndex const rankOffset,
-                               DofNumberAccessor const & dofNumberAccessor,
-                               SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                               SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                               PermeabilityAccessors const & permeabilityAccessors,
-                               real64 const & dt,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
+                         DofNumberAccessor const & dofNumberAccessor,
+                         SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                         SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                         PermeabilityAccessors const & permeabilityAccessors,
+                         real64 const & dt,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_dt( dt ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),

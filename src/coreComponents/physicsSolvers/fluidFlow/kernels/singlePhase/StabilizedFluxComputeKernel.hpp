@@ -92,16 +92,16 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   FluxComputeKernel( globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                           StabSinglePhaseFlowAccessors const & stabSinglePhaseFlowAccessors,
-                           SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                           StabSinglePhaseFluidAccessors const & stabSinglePhaseFluidAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs )
+                     STENCILWRAPPER const & stencilWrapper,
+                     DofNumberAccessor const & dofNumberAccessor,
+                     SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                     StabSinglePhaseFlowAccessors const & stabSinglePhaseFlowAccessors,
+                     SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                     StabSinglePhaseFluidAccessors const & stabSinglePhaseFluidAccessors,
+                     PermeabilityAccessors const & permeabilityAccessors,
+                     real64 const & dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
             dofNumberAccessor,

@@ -44,11 +44,11 @@ public:
   using Base::m_dofNumber;
 
   IsothermalResidualNormKernel( globalIndex const rankOffset,
-                      arrayView1d< real64 const > const & localResidual,
-                      arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< localIndex const > const & ghostRank,
-                      ElementSubRegionBase const & subRegion,
-                      real64 const minNormalizer )
+                                arrayView1d< real64 const > const & localResidual,
+                                arrayView1d< globalIndex const > const & dofNumber,
+                                arrayView1d< localIndex const > const & ghostRank,
+                                ElementSubRegionBase const & subRegion,
+                                real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
@@ -100,11 +100,11 @@ public:
   using Base::m_dofNumber;
 
   ThermalResidualNormKernel( globalIndex const rankOffset,
-                      arrayView1d< real64 const > const & localResidual,
-                      arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< localIndex const > const & ghostRank,
-                      ElementSubRegionBase const & subRegion,
-                      real64 const minNormalizer )
+                             arrayView1d< real64 const > const & localResidual,
+                             arrayView1d< globalIndex const > const & dofNumber,
+                             arrayView1d< localIndex const > const & ghostRank,
+                             ElementSubRegionBase const & subRegion,
+                             real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,

@@ -329,25 +329,25 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
       {
         thermalSinglePhaseFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+                                                                               dofKey,
+                                                                               getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
       }
       else
       {
         singlePhaseFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+                                                                               dofKey,
+                                                                               getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
       }
 
 
@@ -382,13 +382,13 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 cons
 
       // No thermal support yet
       stabilizedSinglePhaseFVMKernels::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                                                  dofKey,
-                                                                                                                  getName(),
-                                                                                                                  mesh.getElemManager(),
-                                                                                                                  stencilWrapper,
-                                                                                                                  dt,
-                                                                                                                  localMatrix.toViewConstSizes(),
-                                                                                                                  localRhs.toView() );
+                                                                                                            dofKey,
+                                                                                                            getName(),
+                                                                                                            mesh.getElemManager(),
+                                                                                                            stencilWrapper,
+                                                                                                            dt,
+                                                                                                            localMatrix.toViewConstSizes(),
+                                                                                                            localRhs.toView() );
 
     } );
   } );
@@ -491,25 +491,25 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
       {
         thermalSinglePhaseFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     this->getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+                                                                               dofKey,
+                                                                               this->getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
       }
       else
       {
         singlePhaseFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     this->getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+                                                                               dofKey,
+                                                                               this->getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
       }
     } );
 
@@ -580,25 +580,25 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
       {
         thermalSinglePhaseFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     this->getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+                                                                               dofKey,
+                                                                               this->getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
       }
       else
       {
         singlePhaseFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     this->getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+                                                                               dofKey,
+                                                                               this->getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
       }
     } );
 

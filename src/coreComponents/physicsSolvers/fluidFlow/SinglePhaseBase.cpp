@@ -263,7 +263,7 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    
+
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )

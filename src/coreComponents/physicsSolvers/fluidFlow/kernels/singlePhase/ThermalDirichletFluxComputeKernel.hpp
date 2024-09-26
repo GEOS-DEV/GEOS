@@ -115,19 +115,19 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   DirichletFluxComputeKernel( globalIndex const rankOffset,
-                                    FaceManager const & faceManager,
-                                    BoundaryStencilWrapper const & stencilWrapper,
-                                    FLUIDWRAPPER const & fluidWrapper,
-                                    DofNumberAccessor const & dofNumberAccessor,
-                                    SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                                    ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
-                                    SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                                    ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
-                                    PermeabilityAccessors const & permeabilityAccessors,
-                                    ThermalConductivityAccessors const & thermalConductivityAccessors,
-                                    real64 const & dt,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs )
+                              FaceManager const & faceManager,
+                              BoundaryStencilWrapper const & stencilWrapper,
+                              FLUIDWRAPPER const & fluidWrapper,
+                              DofNumberAccessor const & dofNumberAccessor,
+                              SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                              ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
+                              SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                              ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
+                              PermeabilityAccessors const & permeabilityAccessors,
+                              ThermalConductivityAccessors const & thermalConductivityAccessors,
+                              real64 const & dt,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs )
 
     : Base( rankOffset,
             faceManager,

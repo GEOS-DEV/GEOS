@@ -66,12 +66,12 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   AccumulationKernel( globalIndex const rankOffset,
-                              string const dofKey,
-                              SUBREGION_TYPE const & subRegion,
-                              constitutive::SingleFluidBase const & fluid,
-                              constitutive::CoupledSolidBase const & solid,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs )
+                      string const dofKey,
+                      SUBREGION_TYPE const & subRegion,
+                      constitutive::SingleFluidBase const & fluid,
+                      constitutive::CoupledSolidBase const & solid,
+                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dDensity_dTemp( fluid.dDensity_dTemperature() ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
@@ -250,12 +250,12 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   SurfaceElementAccumulationKernel( globalIndex const rankOffset,
-                                     string const dofKey,
-                                     SurfaceElementSubRegion const & subRegion,
-                                     constitutive::SingleFluidBase const & fluid,
-                                     constitutive::CoupledSolidBase const & solid,
-                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                     arrayView1d< real64 > const & localRhs )
+                                    string const dofKey,
+                                    SurfaceElementSubRegion const & subRegion,
+                                    constitutive::SingleFluidBase const & fluid,
+                                    constitutive::CoupledSolidBase const & solid,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_creationMass( subRegion.getField< fields::flow::massCreated >() )
   {}
