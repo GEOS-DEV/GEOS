@@ -34,7 +34,6 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp" // TODO should not be here
 
 namespace geos
 {

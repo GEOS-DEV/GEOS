@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernelBase.hpp"
 
 namespace geos
 {
@@ -42,7 +43,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using SinglePhaseFVMAbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using SinglePhaseFVMAbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = SinglePhaseFVMAbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
@@ -56,7 +57,7 @@ public:
   using SinglePhaseFVMAbstractBase::m_mob;
   using SinglePhaseFVMAbstractBase::m_dens;
 
-  using SinglePhaseFVMBase = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using SinglePhaseFVMBase = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using SinglePhaseFVMBase::numDof;
   using SinglePhaseFVMBase::numEqn;
   using SinglePhaseFVMBase::maxNumElems;

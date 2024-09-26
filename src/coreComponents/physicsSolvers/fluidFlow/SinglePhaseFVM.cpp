@@ -36,11 +36,13 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/AquiferBCKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSinglePhaseFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/StabilizedSinglePhaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/DirichletFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalDirichletFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/StabilizedFluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseProppantFluxKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/AquiferBCKernel.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
@@ -326,7 +328,7 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
       if( m_isThermal )
       {
         thermalSinglePhaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      getName(),
                                                                                      mesh.getElemManager(),
@@ -338,7 +340,7 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
       else
       {
         singlePhaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      getName(),
                                                                                      mesh.getElemManager(),
@@ -379,7 +381,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 cons
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       // No thermal support yet
-      stabilizedSinglePhaseFVMKernels::FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+      stabilizedSinglePhaseFVMKernels::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                                                   dofKey,
                                                                                                                   getName(),
                                                                                                                   mesh.getElemManager(),
@@ -423,9 +425,9 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      typename FaceBasedAssemblyKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
-      typename FaceBasedAssemblyKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
-      typename FaceBasedAssemblyKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
+      typename FluxComputeKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
+      typename FluxComputeKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
+      typename FluxComputeKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
 
       singlePhaseProppantFluxKernels::FaceElementFluxKernel::launch( stencilWrapper,
                                                                      dt,
@@ -488,7 +490,7 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
       if( m_isThermal )
       {
         thermalSinglePhaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      this->getName(),
                                                                                      mesh.getElemManager(),
@@ -500,7 +502,7 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
       else
       {
         singlePhaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      this->getName(),
                                                                                      mesh.getElemManager(),
@@ -577,7 +579,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
       if( m_isThermal )
       {
         thermalSinglePhaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      this->getName(),
                                                                                      mesh.getElemManager(),
@@ -589,7 +591,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
       else
       {
         singlePhaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      this->getName(),
                                                                                      mesh.getElemManager(),
@@ -785,7 +787,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
         thermalSinglePhaseFVMKernels::
-          DirichletFaceBasedAssemblyKernelFactory::
+          DirichletFluxComputeKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                      dofKey,
                                                      this->getName(),
@@ -846,7 +848,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
 
         singlePhaseFVMKernels::
-          DirichletFaceBasedAssemblyKernelFactory::
+          DirichletFluxComputeKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                      dofKey,
                                                      this->getName(),
@@ -901,8 +903,8 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
     elemDofNumber.setName( this->getName() + "/accessors/" + elemDofKey );
 
-    typename FaceBasedAssemblyKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-    typename FaceBasedAssemblyKernelBase::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
+    typename FluxComputeKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
+    typename FluxComputeKernelBase::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
 
     fsManager.apply< FaceManager,
                      AquiferBoundaryCondition >( time + dt,

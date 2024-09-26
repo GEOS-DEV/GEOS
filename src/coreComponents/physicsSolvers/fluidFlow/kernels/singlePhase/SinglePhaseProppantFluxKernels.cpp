@@ -14,7 +14,7 @@
  */
 
 /**
- * @file singlePhaseProppantFluxKernels.cpp
+ * @file SinglePhaseProppantFluxKernels.cpp
  */
 
 #include "SinglePhaseProppantFluxKernels.hpp"
