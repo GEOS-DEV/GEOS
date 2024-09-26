@@ -170,13 +170,6 @@ private:
 
 
   /**
-   * @brief Register a CellElementSubRegion in the element sub region group (named after viewKeyStruct::elementSubRegions()).
-   * The sub-regions are a set of the region that groups the same primitives.
-   * @param cellBlock The cell-block that the sub region will be made of.
-   */
-  void registerSubRegion( CellBlockABC const & cellBlock );
-
-  /**
    * @return all cell-block names entries from m_cellBlockAttributeValues,
    * m_cellBlockMatchPatterns and m_cellBlockNames.
    * @param cellBlocks the input mesh cell-block list
