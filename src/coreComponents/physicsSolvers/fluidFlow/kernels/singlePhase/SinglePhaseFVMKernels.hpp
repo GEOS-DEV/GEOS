@@ -37,7 +37,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseFluxKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos
