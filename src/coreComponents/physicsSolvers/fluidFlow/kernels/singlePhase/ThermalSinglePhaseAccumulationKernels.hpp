@@ -14,11 +14,11 @@
  */
 
 /**
- * @file ThermalSinglePhaseBaseKernels.hpp
+ * @file ThermalSinglePhaseAccumulationKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEACCUMULATIONKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEACCUMULATIONKERNELS_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
 
@@ -28,14 +28,14 @@ namespace geos
 namespace thermalSinglePhaseBaseKernels
 {
 
-/******************************** ElementBasedAssemblyKernel ********************************/
+/******************************** AccumulationKernel ********************************/
 
 /**
- * @class ElementBasedAssemblyKernel
+ * @class AccumulationKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
 template< typename SUBREGION_TYPE, integer NUM_DOF >
-class ElementBasedAssemblyKernel : public singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
+class AccumulationKernel : public singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
 {
 
 public:
@@ -65,7 +65,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  ElementBasedAssemblyKernel( globalIndex const rankOffset,
+  AccumulationKernel( globalIndex const rankOffset,
                               string const dofKey,
                               SUBREGION_TYPE const & subRegion,
                               constitutive::SingleFluidBase const & fluid,
@@ -204,8 +204,6 @@ public:
                                                      stack.dofIndices,
                                                      stack.localJacobian[numEqn-1],
                                                      numDof );
-
-
   }
 
 protected:
@@ -231,15 +229,15 @@ protected:
 };
 
 /**
- * @class SurfaceElementBasedAssemblyKernel
+ * @class SurfaceElementAccumulationKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation in SurfaceElementSubRegion
  */
-class SurfaceElementBasedAssemblyKernel : public ElementBasedAssemblyKernel< SurfaceElementSubRegion, 2 >
+class SurfaceElementAccumulationKernel : public AccumulationKernel< SurfaceElementSubRegion, 2 >
 {
 
 public:
 
-  using Base = ElementBasedAssemblyKernel< SurfaceElementSubRegion, 2 >;
+  using Base = AccumulationKernel< SurfaceElementSubRegion, 2 >;
 
   /**
    * @brief Constructor
@@ -251,7 +249,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  SurfaceElementBasedAssemblyKernel( globalIndex const rankOffset,
+  SurfaceElementAccumulationKernel( globalIndex const rankOffset,
                                      string const dofKey,
                                      SurfaceElementSubRegion const & subRegion,
                                      constitutive::SingleFluidBase const & fluid,
@@ -286,9 +284,9 @@ protected:
 };
 
 /**
- * @class ElementBasedAssemblyKernelFactory
+ * @class AccumulationKernelFactory
  */
-class ElementBasedAssemblyKernelFactory
+class AccumulationKernelFactory
 {
 public:
 
@@ -303,244 +301,30 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename SUBREGION_TYPE >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const dofKey,
-                   CellElementSubRegion const & subRegion,
+                   SUBREGION_TYPE const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    integer constexpr NUM_DOF = 2;
-
-    ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF >
-    kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-    ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF >::template
-    launch< POLICY, ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF > >( subRegion.size(), kernel );
-  }
-
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
-   * @param[in] subRegion the element subregion
-   * @param[in] fluid the fluid model
-   * @param[in] solid the solid model
-   * @param[inout] localMatrix the local CRS matrix
-   * @param[inout] localRhs the local right-hand side vector
-   */
-  template< typename POLICY >
-  static void
-  createAndLaunch( globalIndex const rankOffset,
-                   string const dofKey,
-                   SurfaceElementSubRegion const & subRegion,
-                   constitutive::SingleFluidBase const & fluid,
-                   constitutive::CoupledSolidBase const & solid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs )
-  {
-    SurfaceElementBasedAssemblyKernel
-      kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-    SurfaceElementBasedAssemblyKernel::launch< POLICY >( subRegion.size(), kernel );
-  }
-
-
-};
-
-
-/******************************** FluidUpdateKernel ********************************/
-
-struct FluidUpdateKernel
-{
-  template< typename FLUID_WRAPPER >
-  static void launch( FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & temp )
-  {
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    if constexpr ( std::is_same_v< SUBREGION_TYPE, CellElementSubRegion > )
     {
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k], temp[k] );
-      }
-    } );
-  }
-};
-
-/******************************** SolidInternalEnergyUpdateKernel ********************************/
-
-struct SolidInternalEnergyUpdateKernel
-{
-
-  template< typename POLICY, typename SOLID_INTERNAL_ENERGY_WRAPPER >
-  static void
-  launch( localIndex const size,
-          SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
-          arrayView1d< real64 const > const & temp )
-  {
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      solidInternalEnergyWrapper.update( k, temp[k] );
-    } );
-  }
-};
-
-/******************************** ResidualNormKernel ********************************/
-
-/**
- * @class ResidualNormKernel
- */
-class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 2 >
-{
-public:
-
-  using Base = solverBaseKernels::ResidualNormKernelBase< 2 >;
-  using Base::m_minNormalizer;
-  using Base::m_rankOffset;
-  using Base::m_localResidual;
-  using Base::m_dofNumber;
-
-  ResidualNormKernel( globalIndex const rankOffset,
-                      arrayView1d< real64 const > const & localResidual,
-                      arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< localIndex const > const & ghostRank,
-                      ElementSubRegionBase const & subRegion,
-                      constitutive::SingleFluidBase const & fluid,
-                      constitutive::CoupledSolidBase const & solid,
-                      constitutive::SolidInternalEnergy const & solidInternalEnergy,
-                      real64 const minNormalizer )
-    : Base( rankOffset,
-            localResidual,
-            dofNumber,
-            ghostRank,
-            minNormalizer ),
-    m_volume( subRegion.getElementVolume() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_density_n( fluid.density_n() ),
-    m_fluidInternalEnergy_n( fluid.internalEnergy_n() ),
-    m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
-  {}
-
-  GEOS_HOST_DEVICE
-  void computeMassEnergyNormalizers( localIndex const ei,
-                                     real64 & massNormalizer,
-                                     real64 & energyNormalizer ) const
-  {
-    massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
-    energyNormalizer =
-      LvArray::math::max( m_minNormalizer,
-                          LvArray::math::abs( m_solidInternalEnergy_n[ei][0] * ( 1.0 - m_porosity_n[ei][0] ) * m_volume[ei]
-                                              + m_fluidInternalEnergy_n[ei][0] * m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] ) );
-  }
-
-  GEOS_HOST_DEVICE
-  virtual void computeLinf( localIndex const ei,
-                            LinfStackVariables & stack ) const override
-  {
-    real64 massNormalizer = 0.0, energyNormalizer = 0.0;
-    computeMassEnergyNormalizers( ei, massNormalizer, energyNormalizer );
-
-    // step 1: mass residual
-
-    real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
-    if( valMass > stack.localValue[0] )
-    {
-      stack.localValue[0] = valMass;
+      integer constexpr NUM_DOF = 2;
+      AccumulationKernel< CellElementSubRegion, NUM_DOF > kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      AccumulationKernel< CellElementSubRegion, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     }
-
-    // step 2: energy residual
-    real64 const valEnergy = LvArray::math::abs( m_localResidual[stack.localRow + 1] ) / energyNormalizer;
-    if( valEnergy > stack.localValue[1] )
+    else if constexpr ( std::is_same_v< SUBREGION_TYPE, SurfaceElementSubRegion > )
     {
-      stack.localValue[1] = valEnergy;
+      SurfaceElementAccumulationKernel kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      SurfaceElementAccumulationKernel::launch< POLICY >( subRegion.size(), kernel );
     }
-  }
-
-  GEOS_HOST_DEVICE
-  virtual void computeL2( localIndex const ei,
-                          L2StackVariables & stack ) const override
-  {
-    real64 massNormalizer = 0.0, energyNormalizer = 0.0;
-    computeMassEnergyNormalizers( ei, massNormalizer, energyNormalizer );
-
-    // step 1: mass residual
-
-    stack.localValue[0] += m_localResidual[stack.localRow] * m_localResidual[stack.localRow];
-    stack.localNormalizer[0] += massNormalizer;
-
-    // step 2: energy residual
-
-    stack.localValue[1] += m_localResidual[stack.localRow + 1] * m_localResidual[stack.localRow + 1];
-    stack.localNormalizer[1] += energyNormalizer;
-  }
-
-
-protected:
-
-  /// View on the volume
-  arrayView1d< real64 const > const m_volume;
-
-  /// View on porosity at the previous converged time step
-  arrayView2d< real64 const > const m_porosity_n;
-
-  /// View on total mass/molar density at the previous converged time step
-  arrayView2d< real64 const > const m_density_n;
-  arrayView2d< real64 const > const m_fluidInternalEnergy_n;
-
-  /// View on solid internal energy at the previous converged time step
-  arrayView2d< real64 const > const m_solidInternalEnergy_n;
-
-};
-
-/**
- * @class ResidualNormKernelFactory
- */
-class ResidualNormKernelFactory
-{
-public:
-
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] normType the type of norm used (Linf or L2)
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
-   * @param[in] localResidual the residual vector on my MPI rank
-   * @param[in] subRegion the element subregion
-   * @param[in] fluid the fluid model
-   * @param[in] solid the solid model
-   * @param[in] solidInternalEnergy the solid internal energy model
-   * @param[out] residualNorm the residual norm on the subRegion
-   * @param[out] residualNormalizer the residual normalizer on the subRegion
-   */
-  template< typename POLICY >
-  static void
-  createAndLaunch( solverBaseKernels::NormType const normType,
-                   globalIndex const rankOffset,
-                   string const & dofKey,
-                   arrayView1d< real64 const > const & localResidual,
-                   ElementSubRegionBase const & subRegion,
-                   constitutive::SingleFluidBase const & fluid,
-                   constitutive::CoupledSolidBase const & solid,
-                   constitutive::SolidInternalEnergy const & solidInternalEnergy,
-                   real64 const minNormalizer,
-                   real64 (& residualNorm)[2],
-                   real64 (& residualNormalizer)[2] )
-  {
-    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid, solidInternalEnergy, minNormalizer );
-    if( normType == solverBaseKernels::NormType::Linf )
+    else
     {
-      ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
-    }
-    else // L2 norm
-    {
-      ResidualNormKernel::launchL2< POLICY >( subRegion.size(), kernel, residualNorm, residualNormalizer );
+      GEOS_ERROR( "Unsupported subregion type: " << typeid(SUBREGION_TYPE).name() );
     }
   }
 
