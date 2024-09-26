@@ -324,6 +324,7 @@ public:
     }
     else
     {
+      GEOS_UNUSED_VAR( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       GEOS_ERROR( "Unsupported subregion type: " << typeid(SUBREGION_TYPE).name() );
     }
   }
