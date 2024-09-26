@@ -7,6 +7,8 @@ set( gtest_geosx_tests
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testElasticIsotropicPressureDependent.cpp
+     testElasticTransverseIsotropic.cpp
      testKValueInitialization.cpp
      testImmiscibleWaterFlashModel.cpp
      testLohrenzBrayClarkViscosity.cpp
@@ -14,7 +16,9 @@ set( gtest_geosx_tests
      testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp
      testNegativeTwoPhaseFlash9Comp.cpp
+     testElasticOrthotropic.cpp
      testParticleFluidEnums.cpp
+     testPerfectlyPlastic.cpp
      testPropertyConversions.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp

@@ -15,7 +15,7 @@
 
 // Source includes
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/solid/CeramicDamage.hpp"
+#include "constitutive/solid/ElasticOrthotropic.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -24,14 +24,14 @@
 using namespace geos;
 using namespace ::geos::constitutive;
 
-TEST( CeramicDamageTests, testThermalExpansionAndTemperature )
+TEST( ElasticOrthotropicTests, testThermalExpansionAndTemperature )
 {
   conduit::Node node;
   dataRepository::Group rootGroup( "root", node );
-  CeramicDamage constitutiveModel( "model", &rootGroup );
+  ElasticOrthotropic constitutiveModel( "model", &rootGroup );
 
   // Create kernel updates
-  CeramicDamageUpdates updates = constitutiveModel.createKernelUpdates();
+  ElasticOrthotropicUpdates updates = constitutiveModel.createKernelUpdates();
 
   // Test that the default TEC derivative w.r.t. temperature and the default reference temperature are nil.
   EXPECT_DOUBLE_EQ( updates.m_dThermalExpansionCoefficient_dTemperature, 0 );
