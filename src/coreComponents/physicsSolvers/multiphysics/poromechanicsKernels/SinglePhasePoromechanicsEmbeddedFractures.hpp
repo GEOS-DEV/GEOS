@@ -181,21 +181,21 @@ public:
     real64 mobility = 0.0;
     real64 potGrad = 0.0;
 
-    fluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
-                                               trans,
-                                               dTrans,
-                                               m_pres,
-                                               m_gravCoef,
-                                               m_dens,
-                                               m_dDens_dPres,
-                                               m_mob,
-                                               m_dMob_dPres,
-                                               alpha,
-                                               mobility,
-                                               potGrad,
-                                               fluxVal,
-                                               dFlux_dP,
-                                               dFlux_dTrans );
+    singlePhaseFluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+                                                          trans,
+                                                          dTrans,
+                                                          m_pres,
+                                                          m_gravCoef,
+                                                          m_dens,
+                                                          m_dDens_dPres,
+                                                          m_mob,
+                                                          m_dMob_dPres,
+                                                          alpha,
+                                                          mobility,
+                                                          potGrad,
+                                                          fluxVal,
+                                                          dFlux_dP,
+                                                          dFlux_dTrans );
 
 
 

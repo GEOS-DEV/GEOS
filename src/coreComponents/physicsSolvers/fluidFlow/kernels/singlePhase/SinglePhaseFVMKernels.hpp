@@ -36,7 +36,8 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseMobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseFluxKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
 
@@ -359,21 +360,21 @@ public:
         localIndex const subRegionIndex[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const elementIndex[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-        fluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
-                                                   trans,
-                                                   dTrans,
-                                                   m_pres,
-                                                   m_gravCoef,
-                                                   m_dens,
-                                                   m_dDens_dPres,
-                                                   m_mob,
-                                                   m_dMob_dPres,
-                                                   alpha,
-                                                   mobility,
-                                                   potGrad,
-                                                   fluxVal,
-                                                   dFlux_dP,
-                                                   dFlux_dTrans );
+        singlePhaseFluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+                                                              trans,
+                                                              dTrans,
+                                                              m_pres,
+                                                              m_gravCoef,
+                                                              m_dens,
+                                                              m_dDens_dPres,
+                                                              m_mob,
+                                                              m_dMob_dPres,
+                                                              alpha,
+                                                              mobility,
+                                                              potGrad,
+                                                              fluxVal,
+                                                              dFlux_dP,
+                                                              dFlux_dTrans );
 
         // populate local flux vector and derivatives
         stack.localFlux[k[0]*numEqn] += m_dt * fluxVal;

@@ -20,6 +20,7 @@
 
 #include "SinglePhaseProppantBase.hpp"
 
+#include "mesh/DomainPartition.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SlurryFluidSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"

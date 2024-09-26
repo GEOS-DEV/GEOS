@@ -27,7 +27,7 @@ namespace geos
 namespace singlePhaseProppantFluxKernels
 {
 
-using namespace fluxKernelsHelper;
+using namespace singlePhaseFluxKernelsHelper;
 
 
 void FaceElementFluxKernel::

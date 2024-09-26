@@ -40,8 +40,13 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseMobilityKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseSolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseSolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseStatisticsKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseHydrostaticPressureKernel.hpp"
 
 
 namespace geos
@@ -368,16 +373,16 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
 
     ThermalFluidPropViews thermalFluidProps = getThermalFluidProperties( fluid );
 
-    thermalSinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                                                                     fluidProps.dens,
-                                                                                     fluidProps.dDens_dPres,
-                                                                                     thermalFluidProps.dDens_dTemp,
-                                                                                     fluidProps.visc,
-                                                                                     fluidProps.dVisc_dPres,
-                                                                                     thermalFluidProps.dVisc_dTemp,
-                                                                                     mob,
-                                                                                     dMob_dPres,
-                                                                                     dMob_dTemp );
+    singlePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                              fluidProps.dens,
+                                                                              fluidProps.dDens_dPres,
+                                                                              thermalFluidProps.dDens_dTemp,
+                                                                              fluidProps.visc,
+                                                                              fluidProps.dVisc_dPres,
+                                                                              thermalFluidProps.dVisc_dTemp,
+                                                                              mob,
+                                                                              dMob_dPres,
+                                                                              dMob_dTemp );
   }
   else
   {
@@ -1328,7 +1333,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       auto const subRegionData =
-        singlePhaseBaseKernels::ScalingForSystemSolutionKernel::
+        singlePhaseBaseKernels::SolutionScalingKernel::
           launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
 
       scalingFactor = std::min( scalingFactor, subRegionData.first );

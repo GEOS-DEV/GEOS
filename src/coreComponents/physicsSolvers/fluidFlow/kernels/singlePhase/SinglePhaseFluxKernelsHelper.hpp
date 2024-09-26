@@ -21,16 +21,12 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFLUXKERNELSHELPER_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "finiteVolume/BoundaryStencil.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 
 namespace geos
 {
 
-namespace fluxKernelsHelper
+namespace singlePhaseFluxKernelsHelper
 {
 
 /**
@@ -289,7 +285,7 @@ void computeConductiveFlux( localIndex const ( &seri )[2],
   }
 }
 
-} // namespace fluxKernelsHelper
+} // namespace singlePhaseFluxKernelsHelper
 
 } // namespace geos
 

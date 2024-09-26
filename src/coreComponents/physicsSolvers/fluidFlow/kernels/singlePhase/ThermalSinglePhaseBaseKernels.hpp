@@ -20,86 +20,13 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALSINGLEPHASEBASEKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp"
 
 namespace geos
 {
 
 namespace thermalSinglePhaseBaseKernels
 {
-
-/******************************** MobilityKernel ********************************/
-
-struct MobilityKernel
-{
-  GEOS_HOST_DEVICE
-  inline
-  static void
-  compute( real64 const & dens,
-           real64 const & dDens_dPres,
-           real64 const & dDens_dTemp,
-           real64 const & visc,
-           real64 const & dVisc_dPres,
-           real64 const & dVisc_dTemp,
-           real64 & mob,
-           real64 & dMob_dPres,
-           real64 & dMob_dTemp )
-  {
-    mob = dens / visc;
-    dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
-    dMob_dTemp = dDens_dTemp / visc - mob / visc * dVisc_dTemp;
-  }
-
-  GEOS_HOST_DEVICE
-  inline
-  static void
-  compute( real64 const & dens,
-           real64 const & visc,
-           real64 & mob )
-  {
-    mob = dens / visc;
-  }
-
-  template< typename POLICY >
-  static void launch( localIndex const size,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
-                      arrayView2d< real64 const > const & dDens_dTemp,
-                      arrayView2d< real64 const > const & visc,
-                      arrayView2d< real64 const > const & dVisc_dPres,
-                      arrayView2d< real64 const > const & dVisc_dTemp,
-                      arrayView1d< real64 > const & mob,
-                      arrayView1d< real64 > const & dMob_dPres,
-                      arrayView1d< real64 > const & dMob_dTemp )
-  {
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      compute( dens[a][0],
-               dDens_dPres[a][0],
-               dDens_dTemp[a][0],
-               visc[a][0],
-               dVisc_dPres[a][0],
-               dVisc_dTemp[a][0],
-               mob[a],
-               dMob_dPres[a],
-               dMob_dTemp[a] );
-    } );
-  }
-
-  template< typename POLICY >
-  static void launch( localIndex const size,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & visc,
-                      arrayView1d< real64 > const & mob )
-  {
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      compute( dens[a][0],
-               visc[a][0],
-               mob[a] );
-    } );
-  }
-};
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
@@ -108,12 +35,12 @@ struct MobilityKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
 template< typename SUBREGION_TYPE, integer NUM_DOF >
-class ElementBasedAssemblyKernel : public singlePhaseBaseKernels::ElementBasedAssemblyKernel< SUBREGION_TYPE, NUM_DOF >
+class ElementBasedAssemblyKernel : public singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
 {
 
 public:
 
-  using Base = singlePhaseBaseKernels::ElementBasedAssemblyKernel< SUBREGION_TYPE, NUM_DOF >;
+  using Base = singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_rankOffset;

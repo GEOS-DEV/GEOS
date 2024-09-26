@@ -711,12 +711,12 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     gravCoef.setName( getName() + "/accessors/" + fields::flow::gravityCoefficient::key() );
 
     real64 const targetSetSumFluxes = sumAquiferFluxes( stencil,
-                                           aquiferBCWrapper,
-                                           pressure.toNestedViewConst(),
-                                           pressure_n.toNestedViewConst(),
-                                           gravCoef.toNestedViewConst(),
-                                           time,
-                                           dt );
+                                                        aquiferBCWrapper,
+                                                        pressure.toNestedViewConst(),
+                                                        pressure_n.toNestedViewConst(),
+                                                        gravCoef.toNestedViewConst(),
+                                                        time,
+                                                        dt );
 
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
     localSumFluxes[aquiferIndex] += targetSetSumFluxes;
@@ -750,12 +750,12 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
  */
 real64
 FlowSolverBase::sumAquiferFluxes( BoundaryStencil const & stencil,
-            AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
-            ElementViewConst< arrayView1d< real64 const > > const & pres,
-            ElementViewConst< arrayView1d< real64 const > > const & presOld,
-            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-            real64 const & timeAtBeginningOfStep,
-            real64 const & dt )
+                                  AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+                                  ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                  ElementViewConst< arrayView1d< real64 const > > const & presOld,
+                                  ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                                  real64 const & timeAtBeginningOfStep,
+                                  real64 const & dt )
 {
   using Order = BoundaryStencil::Order;
 

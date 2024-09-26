@@ -20,7 +20,7 @@ set( physicsSolvers_headers
      fluidFlow/FlowSolverBaseFields.hpp
      fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp
      fluidFlow/kernels/StencilWeightsUpdateKernel.hpp
-     fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseFluxKernelsHelper.hpp
      fluidFlow/kernels/HybridFVMHelperKernels.hpp
      fluidFlow/SourceFluxStatistics.hpp
      fluidFlow/proppantTransport/ProppantTransport.hpp
@@ -28,7 +28,13 @@ set( physicsSolvers_headers
      fluidFlow/proppantTransport/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseBaseFields.hpp
-     fluidFlow/kernels/singlePhase/SinglePhaseBaseKernels.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseAccumulationKernels.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseMobilityKernel.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseSolutionCheckKernel.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseSolutionScalingKernel.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseResidualNormKernel.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseStatisticsKernel.hpp
+     fluidFlow/kernels/singlePhase/SinglePhaseHydrostaticPressureKernel.hpp
      fluidFlow/SinglePhaseStatistics.hpp
      fluidFlow/SinglePhaseFVM.hpp
      fluidFlow/kernels/singlePhase/SinglePhaseFVMKernels.hpp
