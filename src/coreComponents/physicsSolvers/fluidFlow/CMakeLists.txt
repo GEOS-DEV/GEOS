@@ -18,7 +18,8 @@ set( physicsSolvers_headers
      fluidFlow/kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FlowSolverBaseFields.hpp
-     fluidFlow/kernels/FlowSolverBaseKernels.hpp
+     fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp
+     fluidFlow/kernels/StencilWeightsUpdateKernel.hpp
      fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp
      fluidFlow/kernels/HybridFVMHelperKernels.hpp
      fluidFlow/SourceFluxStatistics.hpp

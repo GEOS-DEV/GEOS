@@ -33,9 +33,6 @@ namespace flowSolverBaseKernels
 /// Threshold for the min pore volume (below, a warning is issued)
 static constexpr real64 poreVolumeThreshold = 1e-4;
 
-template< typename VIEWTYPE >
-using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
 /**
  * @struct MinPoreVolumeMaxPorosityKernel
  * @brief Kernel to compute the min pore volume and the max porosity in a subRegion
@@ -103,45 +100,6 @@ struct MinPoreVolumeMaxPorosityKernel
     maxPorosityInSubRegion = maxPorosity.get();
     numElemsBelowPoreVolumeThresholdInSubRegion = numElemsBelowPoreVolumeThreshold.get();
     numElemsAbovePorosityThresholdInSubRegion = numElemsAbovePorosityThreshold.get();
-  }
-};
-
-/**
- * @brief
- *
- * @tparam STENCILWRAPPER
- */
-template< typename STENCILWRAPPER >
-struct stencilWeightsUpdateKernel
-{
-  /**
-   * @brief
-   *
-   * @param stencilWrappper
-   * @param hydraulicAperture
-   */
-  inline static void prepareStencilWeights( STENCILWRAPPER & stencilWrapper,
-                                            ElementViewConst< arrayView1d< real64 const > > const hydraulicAperture )
-  {
-    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
-    {
-      stencilWrapper.removeHydraulicApertureContribution( iconn, hydraulicAperture );
-    } );
-  }
-
-  /**
-   * @brief
-   *
-   * @param stencilWrappper
-   * @param hydraulicAperture
-   */
-  inline static void updateStencilWeights( STENCILWRAPPER & stencilWrapper,
-                                           ElementViewConst< arrayView1d< real64 const > > const hydraulicAperture )
-  {
-    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
-    {
-      stencilWrapper.addHydraulicApertureContribution( iconn, hydraulicAperture );
-    } );
   }
 };
 

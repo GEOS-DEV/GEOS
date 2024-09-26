@@ -22,6 +22,8 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "common/Units.hpp"
+#include "finiteVolume/BoundaryStencil.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 
 namespace geos
 {
@@ -34,6 +36,9 @@ namespace geos
  */
 class FlowSolverBase : public SolverBase
 {
+template< typename VIEWTYPE >
+using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
 public:
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
@@ -195,6 +200,14 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
+real64 sumAquiferFluxes( BoundaryStencil const & stencil,
+            AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+            ElementViewConst< arrayView1d< real64 const > > const & pres,
+            ElementViewConst< arrayView1d< real64 const > > const & presOld,
+            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+            real64 const & timeAtBeginningOfStep,
+            real64 const & dt );
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
