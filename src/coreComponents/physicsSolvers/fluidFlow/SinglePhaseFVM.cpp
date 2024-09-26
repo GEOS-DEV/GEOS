@@ -152,9 +152,6 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       real64 subRegionResidualNorm[numNorm]{};
       real64 subRegionResidualNormalizer[numNorm]{};
 
-      string const & fluidName = subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
-      SingleFluidBase const & fluid = SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
-
       // step 1: compute the norm in the subRegion
 
       if( m_isThermal )
