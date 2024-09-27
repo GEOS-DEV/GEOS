@@ -36,6 +36,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 
 namespace geos
 {
@@ -306,13 +307,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k], temp[k] );
-      }
-    } );
+    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 

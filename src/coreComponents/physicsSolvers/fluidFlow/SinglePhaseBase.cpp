@@ -47,6 +47,8 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
 
 namespace geos
@@ -263,8 +265,7 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-    updateFluid( fluidWrapper, pres, temp );
+    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 
@@ -331,10 +332,7 @@ void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGr
 
   SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
 
-  forAll< parallelDevicePolicy<> >( dataGroup.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    solidInternalEnergyWrapper.update( k, temperature[k] );
-  } );
+  thermalSinglePhaseBaseKernels::SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temperature );
 }
 
 void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const

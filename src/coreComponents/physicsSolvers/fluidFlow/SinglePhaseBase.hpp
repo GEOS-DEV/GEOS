@@ -298,20 +298,6 @@ public:
   virtual void
   updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
-  template< typename FLUID_WRAPPER >
-  void updateFluid( FLUID_WRAPPER const & fluidWrapper,
-                    arrayView1d< real64 const > const & pres,
-                    arrayView1d< real64 const > const & temp ) const
-  {
-    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k], temp[k] );
-      }
-    } );
-  }
-
   /**
    * @brief Function to update fluid mass
    * @param subRegion subregion that contains the fields

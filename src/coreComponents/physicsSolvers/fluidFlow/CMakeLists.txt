@@ -26,6 +26,7 @@ set( physicsSolvers_headers
      fluidFlow/kernels/singlePhase/AccumulationKernels.hpp
      fluidFlow/kernels/singlePhase/AquiferBCKernel.hpp
      fluidFlow/kernels/singlePhase/DirichletFluxComputeKernel.hpp
+     fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp
      fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp
      fluidFlow/kernels/singlePhase/FluxComputeKernelBase.hpp
      fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp
@@ -33,6 +34,7 @@ set( physicsSolvers_headers
      fluidFlow/kernels/singlePhase/MobilityKernel.hpp
      fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp
      fluidFlow/kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
+     fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp
      fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp
      fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp
      fluidFlow/kernels/singlePhase/StabilizedFluxComputeKernel.hpp
