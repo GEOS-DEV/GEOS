@@ -165,6 +165,14 @@ public:
 
   void enableLaggingFractureStencilWeightsUpdate(){ m_isLaggingFractureStencilWeightsUpdate = 1; };
 
+  real64 sumAquiferFluxes( BoundaryStencil const & stencil,
+                           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+                           ElementViewConst< arrayView1d< real64 const > > const & pres,
+                           ElementViewConst< arrayView1d< real64 const > > const & presOld,
+                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                           real64 const & timeAtBeginningOfStep,
+                           real64 const & dt );
+
 protected:
 
   /**
@@ -200,14 +208,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
-  real64 sumAquiferFluxes( BoundaryStencil const & stencil,
-                           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
-                           ElementViewConst< arrayView1d< real64 const > > const & pres,
-                           ElementViewConst< arrayView1d< real64 const > > const & presOld,
-                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                           real64 const & timeAtBeginningOfStep,
-                           real64 const & dt );
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
