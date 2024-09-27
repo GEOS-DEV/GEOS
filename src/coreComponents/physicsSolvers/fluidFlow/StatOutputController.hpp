@@ -28,6 +28,7 @@
 #include "dataRepository/BufferOpsDevice.hpp"
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "events/tasks/TaskBase.hpp"
+#include "events/tasks/TasksManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
@@ -41,7 +42,7 @@ namespace geos
 /**
  * @brief StatOutputController
  * Class responsible for creating components to output regions statistics in hdf file
- * Class in charge of creating component 
+ * Class in charge of creating component
  */
 class StatOutputController : public TaskBase
 {
@@ -97,9 +98,19 @@ private:
 
   void initializePreSubGroups() override;
 
+  void generatePackCollection( TasksManager & taskManager,
+                               string const regionName,
+                               string_view path,
+                               string_view fieldName );
+
+  void generateTimeHistory( OutputManager & outputManager,
+                            string const regionName );
+
   TaskBase * m_statistics;
   std::vector< TimeHistoryOutput * > m_timeHistories;
   std::vector< PackCollection * >  m_packCollections;
+
+  string_array m_sourceTasks;
 
   /**
    * @brief Apply the lambda expression to the supported types
@@ -108,6 +119,7 @@ private:
    */
   template< typename LAMBDA >
   void forSubStats( LAMBDA lambda );
+
 };
 
 } /* namespace geos */

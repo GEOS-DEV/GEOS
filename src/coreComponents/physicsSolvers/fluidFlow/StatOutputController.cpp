@@ -19,7 +19,6 @@
 
 #include "StatOutputController.hpp"
 #include "events/EventManager.hpp"
-#include "events/tasks/TasksManager.hpp"
 #include "events/EventBase.hpp"
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
 
@@ -29,30 +28,35 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 
-PackCollection * generatePackCollection( TasksManager & taskManager,
-                                         string const key,
-                                         string_view path,
-                                         string_view fieldName )
+void StatOutputController::generatePackCollection( TasksManager & taskManager,
+                                                   string const regionName,
+                                                   string_view path,
+                                                   string_view fieldName )
 {
-  PackCollection * packCollection = &taskManager.registerGroup< PackCollection >( key );
+  string const taskManagerKey = GEOS_FMT( "packCollection{}{}", regionName, fieldName );
+  PackCollection * packCollection = &taskManager.registerGroup< PackCollection >( taskManagerKey );
   string & pcObjectPath = packCollection->getReference< string >( PackCollection::viewKeysStruct::objectPathString());
   pcObjectPath = path;
   string & pcName = packCollection->getReference< string >( PackCollection::viewKeysStruct::fieldNameString());
   pcName = fieldName;
-  return packCollection;
+
+  m_packCollections.push_back( packCollection );
+  m_sourceTasks.emplace_back( GEOS_FMT( "{}/", packCollection->getPath()) );
 }
 
-TimeHistoryOutput * generateTimeHistory( OutputManager & outputManager,
-                                         string const key,
-                                         string_array sourceTasks,
-                                         string_view filename )
+void StatOutputController::generateTimeHistory( OutputManager & outputManager,
+                                                string const regionName )
 {
-  TimeHistoryOutput * timeHistory = &outputManager.registerGroup< TimeHistoryOutput >( key );
+  string const outputManagerKey = GEOS_FMT( "compFlowHistory{}", regionName );
+  string const filename = GEOS_FMT( "generatedHDFStat{}", regionName );
+
+  TimeHistoryOutput * timeHistory = &outputManager.registerGroup< TimeHistoryOutput >( outputManagerKey );
   string_array & collectorPaths =  timeHistory->getReference< string_array >( TimeHistoryOutput::viewKeys::timeHistoryOutputTargetString() );
-  collectorPaths = sourceTasks;
+  collectorPaths = m_sourceTasks;
   string & outputFile =  timeHistory->getReference< string >( TimeHistoryOutput::viewKeys::timeHistoryOutputFilenameString() );
   outputFile = filename;
-  return timeHistory;
+
+  m_timeHistories.push_back( timeHistory );
 }
 
 StatOutputController::StatOutputController( const string & name,
@@ -63,21 +67,28 @@ StatOutputController::StatOutputController( const string & name,
 
 void StatOutputController::initializePreSubGroups()
 {
+
   Group & problemManager = this->getGroupByPath( "/Problem" );
   DomainPartition & domain = problemManager.getGroup< DomainPartition >( "domain" );
   Group & meshBodies = domain.getMeshBodies();
 
   TasksManager & taskManager = this->getGroupByPath< TasksManager >( "/Tasks" );
   OutputManager & outputManager = this->getGroupByPath< OutputManager >( "/Outputs" );
-  
+
   std::vector< string > const groupNames = this->getSubGroupsNames();
+
+  GEOS_ERROR_IF( groupNames.empty() || groupNames.size() >= 2,
+                 "StatOutputController must have one of the following components : {SinglePhaseStatistics, CompositionalMultiphaseStatistics} " );
+
   m_statistics = &this->getGroup< TaskBase >( groupNames[0] );
 
   forSubStats( [&]( auto & statistics ) {
     using STATSTYPE = typename TYPEOFREF( statistics );
-    statistics.getSolver()->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                                              MeshLevel & mesh,
-                                                                              arrayView1d< string const > const & regionNames )
+
+    statistics.getSolver()->forDiscretizationOnMeshTargets( meshBodies,
+                                                            [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
       for( string const & regionName : regionNames )
@@ -85,22 +96,13 @@ void StatOutputController::initializePreSubGroups()
         ElementRegionBase & region = elemManager.getRegion( regionName );
         string const regionStatPath = GEOS_FMT( "{}/regionStatistics", region.getPath() );
         typename STATSTYPE::RegionStatistics & regionStats = this->getGroupByPath< typename STATSTYPE::RegionStatistics >( regionStatPath );
-        string_array sourceTasks;
-
+        m_sourceTasks.clear();
         regionStats.forWrappers( [&]( WrapperBase const & wrapper )
-        { //PackCollection generation
-          string const taskManagerKey = GEOS_FMT( "packCollection{}{}", regionName, wrapper.getName());
-          PackCollection * packCollection = generatePackCollection( taskManager, taskManagerKey, regionStatPath, wrapper.getName());
-          m_packCollections.push_back( packCollection );
-          sourceTasks.emplace_back( GEOS_FMT( "{}/", packCollection->getPath()) );
+        {
+          generatePackCollection( taskManager, regionName, regionStatPath, wrapper.getName());
         } );
 
-        { //TimeHistory generation
-          string const outputManagerKey = GEOS_FMT( "compFlowHistory{}", regionName );
-          string const filename = GEOS_FMT( "generatedHDFStat{}", regionName );
-          TimeHistoryOutput * timeHistory = generateTimeHistory( outputManager, outputManagerKey, sourceTasks, filename );
-          m_timeHistories.push_back( timeHistory );
-        }
+        generateTimeHistory( outputManager, regionName );
       }
     } );
   } );
@@ -117,14 +119,18 @@ Group * StatOutputController::createChild( string const & childKey, string const
 template< typename LAMBDA >
 void StatOutputController::forSubStats( LAMBDA lambda )
 {
+
   forSubGroups< SinglePhaseStatistics,
                 CompositionalMultiphaseStatistics >( lambda );
+
 }
 
 void StatOutputController::expandObjectCatalogs()
 {
-  createChild( SinglePhaseStatistics::catalogName(), SinglePhaseStatistics::catalogName() );
-  createChild( CompositionalMultiphaseStatistics::catalogName(), CompositionalMultiphaseStatistics::catalogName() );
+  createChild( SinglePhaseStatistics::catalogName(),
+               SinglePhaseStatistics::catalogName() );
+  createChild( CompositionalMultiphaseStatistics::catalogName(),
+               CompositionalMultiphaseStatistics::catalogName() );
 }
 
 bool StatOutputController::execute( real64 const time_n,
