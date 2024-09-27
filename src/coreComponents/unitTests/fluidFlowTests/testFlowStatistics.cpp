@@ -1282,9 +1282,9 @@ TestSet getTestSet()
                           logLevel="2" />
 
     <StatOutputController name="statController" >
-          <CompositionalMultiphaseStatistics name="timeStepReservoirStats"
-                                       flowSolverName="testSolver"
-                                       logLevel="1" />
+          <SinglePhaseStatistics name="timeStepReservoirStats"
+                           flowSolverName="testSolver"
+                           logLevel="1" />
     </StatOutputController>
 
     <TimeStepChecker name="timeStepChecker" />
@@ -1392,6 +1392,8 @@ TEST_F( FlowStatisticsTest, checkControllerEncapsulation )
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
+
+  EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 }
 
 
