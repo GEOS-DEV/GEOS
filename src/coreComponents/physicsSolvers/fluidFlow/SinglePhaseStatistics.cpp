@@ -56,7 +56,6 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
 
     for( integer i = 0; i < regionNames.size(); ++i )
     {
-      std::cout << " test region " << regionNames[i] << std::endl;
       ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
       region.registerGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -103,9 +102,8 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
   for( integer i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-    std::cout << " region stat check " << regionNames[i] << std::endl;
+
     RegionStatistics & regionStatistics = region.getGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
-    std::cout << " passed" << std::endl;
 
     regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averagePressureString()).setApplyDefaultValue( 0.0 );
     regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::maxPressureString()).setApplyDefaultValue( 0.0 );
@@ -181,9 +179,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
               subRegionTotalMass );
 
     ElementRegionBase & region = elemManager.getRegion( ElementRegionBase::getParentRegion( subRegion ).getName() );
-    std::cout << " region stat check 2"  << ElementRegionBase::getParentRegion( subRegion ).getName()  << std::endl;
     RegionStatistics & regionStatistics = region.getGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
-    std::cout << " passed 2" << std::endl;
 
     real64 & averagePressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averagePressureString());
     averagePressure += subRegionAvgPresNumerator;
@@ -232,10 +228,8 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
   for( integer i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-    std::cout << "  synchronize  "<< regionNames[i] <<std::endl;
     RegionStatistics & regionStatistics = region.getGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
-    std::cout << "  passed  "<< std::endl;
 
     real64 minPressure = MpiWrapper::min( regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::minPressureString()) );
     regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::minPressureString()).setApplyDefaultValue( minPressure );
@@ -286,10 +280,9 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
                                         getName(), regionNames[i], time, totalPoreVolume ) );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Total fluid mass: {} kg",
                                         getName(), regionNames[i], time, totalMass ) );
-    std::cout << " cscv " << m_writeCSV <<std::endl;
+
     if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
-    std::cout << " m_outputDir  " << m_outputDir <<std::endl;
       std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
       outputFile << time << "," << minPressure << "," << averagePressure << "," << maxPressure << "," <<
         minDeltaPressure << "," << maxDeltaPressure << "," <<
