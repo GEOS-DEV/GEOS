@@ -147,6 +147,8 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
+  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+  
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     arrayView1d< string const > const & regionNames )
@@ -158,7 +160,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     {
       setConstitutiveNamesCallSuper( subRegion );
 
-      subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::strain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
