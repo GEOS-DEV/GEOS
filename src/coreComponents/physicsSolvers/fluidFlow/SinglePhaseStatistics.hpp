@@ -94,7 +94,7 @@ public:
         //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
         setDescription( "maximum region delta pressure" );
 
-      registerWrapper( viewKeyStruct::maxDeltaPressureString(), &m_totalMass ).
+      registerWrapper( viewKeyStruct::totalMassString(), &m_totalMass ).
         setApplyDefaultValue( 0 ).
         //setInputFlag( dataRepository::InputFlags::OPTIONAL ).
         setDescription( "fluid mass" );
@@ -182,10 +182,6 @@ private:
 
   /**@}*/
 
-private:
-
-  using Base = FieldStatisticsBase< SinglePhaseBase >;
-
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
@@ -194,6 +190,11 @@ private:
     /// String for the region statistics
     constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
   };
+  
+private:
+
+  using Base = FieldStatisticsBase< SinglePhaseBase >;
+
 
 
   /**

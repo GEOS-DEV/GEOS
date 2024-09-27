@@ -206,7 +206,7 @@ real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
     mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
     {
       SinglePhaseStatistics::RegionStatistics & regionStatistics =
-        region.getGroupByPath< SinglePhaseStatistics::RegionStatistics >( "Tasks/timeStepReservoirStats" );
+        region.getGroupByPath< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::viewKeyStruct::regionStatisticsString() );
       real64 & regionTotalMass = regionStatistics.getReference< real64 >( SinglePhaseStatistics::RegionStatistics::viewKeyStruct::totalMassString());
 
       totalMass += regionTotalMass;
@@ -1135,7 +1135,6 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 
 
 }   /* namespace MultiPhaseFluxStatisticsTest */
-
 
 //////////////////////////////// Main ////////////////////////////////
 
