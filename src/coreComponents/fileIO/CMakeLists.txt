@@ -2,9 +2,8 @@
 # Package: fileIO
 #
 # Contains:
-#  - I/O interfaces to the three main outputs types : HDF5, VTK, Silo.
+#  - I/O interfaces for the packing components and supported outputs and their python wrappers.
 #  - a coupler for data exchange with CHOMBO.
-#  - python wrappers for Time History and VTK outputs.
 #
 #==================================================================================================
 

@@ -1,7 +1,7 @@
 #==================================================================================================
 # Package : functions
 #
-# Contains base class for interfacing arbitrary N-dimensional functions.
+# Contains classes for storing and computing arbitrary N-dimensional functions.
 #
 #==================================================================================================
 

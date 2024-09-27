@@ -1,9 +1,7 @@
 #==================================================================================================
 # Package: finiteElement
 #
-# Contains:
-#  - the implementation of finite element formulations for different types of elements.
-#  - the finite element method kernel interface (FEMKI).
+# Contains the interface and implementation of finite element formulations.
 #
 #==================================================================================================
 

@@ -1,7 +1,7 @@
 #==================================================================================================
 # Package: dataRepository
 #
-# Provides the building blocks for the code structure.
+# Provides the building blocks for the data structure of GEOS objects.
 # Also contains a wrapper to process entries from an xml file into data types.
 #
 #==================================================================================================

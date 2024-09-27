@@ -2,7 +2,7 @@
 # Package: fieldSpecification
 #
 # Contains:
-#  - field objects definition.
+#  - field specification objects definition.
 #  - an interface to manage these objects.
 #
 #==================================================================================================

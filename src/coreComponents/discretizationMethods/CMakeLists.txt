@@ -1,8 +1,7 @@
 #==================================================================================================
 # Package: discretizationMethods
 #
-# Contains the discretization methods and their components for applications to the methods.
-# Does not contain the full implementation of these methods.
+# Gives access to the discretization methods and their components for applications to the mesh.
 #
 #==================================================================================================
 
