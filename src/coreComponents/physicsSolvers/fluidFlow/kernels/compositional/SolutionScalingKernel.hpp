@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGKERNEL_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGKERNEL_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/compositional/ScalingAndCheckingSystemSolutionKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
 
 namespace geos
 {
@@ -34,11 +34,11 @@ namespace isothermalCompositionalMultiphaseBaseKernels
  * @class SolutionScalingKernel
  * @brief Define the kernel for scaling the Newton update
  */
-class SolutionScalingKernel : public ScalingAndCheckingSystemSolutionKernelBase< real64 >
+class SolutionScalingKernel : public SolutionScalingAndCheckingKernelBase< real64 >
 {
 public:
 
-  using Base = ScalingAndCheckingSystemSolutionKernelBase< real64 >;
+  using Base = SolutionScalingAndCheckingKernelBase< real64 >;
   using Base::m_rankOffset;
   using Base::m_numComp;
   using Base::m_dofNumber;

@@ -14,11 +14,11 @@
  */
 
 /**
- * @file ScalingAndCheckingSystemSolutionKernelBase.hpp
+ * @file SolutionScalingAndCheckingKernelBase.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SCALINGANDCHECKINGSYSTEMSOLUTIONKERNELBASE_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SCALINGANDCHECKINGSYSTEMSOLUTIONKERNELBASE_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
@@ -42,11 +42,11 @@ namespace isothermalCompositionalMultiphaseBaseKernels
 {
 
 /**
- * @class ScalingAndCheckingSystemSolutionKernelBase
+ * @class SolutionScalingAndCheckingKernelBase
  * @brief Define the kernel for scaling the solution and check its validity
  */
 template< typename TYPE >
-class ScalingAndCheckingSystemSolutionKernelBase
+class SolutionScalingAndCheckingKernelBase
 {
 public:
 
@@ -62,7 +62,7 @@ public:
    * @param[in] pressureScalingFactor the pressure local scaling factor
    * @param[in] compDensScalingFactor the component local scaling factor
    */
-  ScalingAndCheckingSystemSolutionKernelBase( globalIndex const rankOffset,
+  SolutionScalingAndCheckingKernelBase( globalIndex const rankOffset,
                                               integer const numComp,
                                               string const dofKey,
                                               ElementSubRegionBase const & subRegion,
@@ -189,4 +189,4 @@ protected:
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SCALINGANDCHECKINGSYSTEMSOLUTIONKERNELBASE_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP

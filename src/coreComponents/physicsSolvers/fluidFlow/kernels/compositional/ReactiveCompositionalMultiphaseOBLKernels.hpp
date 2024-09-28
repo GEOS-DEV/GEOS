@@ -584,13 +584,13 @@ public:
 
 };
 
-/******************************** FaceBasedAssemblyKernel ********************************/
+/******************************** FluxComputeKernel ********************************/
 
 /**
- * @brief Base class for FaceBasedAssemblyKernel that holds all data not dependent
+ * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of components/dofs).
  *
- *        FaceBasedAssemblyKernel is used for flux terms calculation.
+ *        FluxComputeKernel is used for flux terms calculation.
  *        In case mesh geometry/configuration is not changing during simulation,
  *        all connections can be pre-computed, sorted by element, and stored.
  *        Then, ElementBasedAssemblyKernel can be used for flux calculation: every flux will be computed twice,
@@ -598,7 +598,7 @@ public:
  *        and therefore overall performance can significantly improve
  *
  */
-class FaceBasedAssemblyKernelBase
+class FluxComputeKernelBase
 {
 public:
 
@@ -656,7 +656,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernelBase( globalIndex const rankOffset,
+  FluxComputeKernelBase( globalIndex const rankOffset,
                                DofNumberAccessor const & dofNumberAccessor,
                                CompFlowAccessors const & compFlowAccessors,
                                PermeabilityAccessors const & permeabilityAccessors,
@@ -724,7 +724,7 @@ protected:
 };
 
 /**
- * @class FaceBasedAssemblyKernel
+ * @class FluxComputeKernel
  * @tparam NUM_PHASES number of phases
  * @tparam NUM_COMPS number of components
  * @tparam ENABLE_ENERGY flag if energy balance equation is assembled
@@ -732,7 +732,7 @@ protected:
  * @brief Compute flux term for an element
  */
 template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
+class FluxComputeKernel : public FluxComputeKernelBase
 {
 public:
 
@@ -790,7 +790,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernel( globalIndex const rankOffset,
+  FluxComputeKernel( globalIndex const rankOffset,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -799,7 +799,7 @@ public:
                            real64 const & transMultExp,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
-    : FaceBasedAssemblyKernelBase( rankOffset,
+    : FluxComputeKernelBase( rankOffset,
                                    dofNumberAccessor,
                                    compFlowAccessors,
                                    permeabilityAccessors,
@@ -1168,9 +1168,9 @@ private:
 };
 
 /**
- * @class FaceBasedAssemblyKernelFactory
+ * @class FluxComputeKernelFactory
  */
-class FaceBasedAssemblyKernelFactory
+class FluxComputeKernelFactory
 {
 public:
 
@@ -1216,7 +1216,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, STENCILWRAPPER >;
+      using KERNEL_TYPE = FluxComputeKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 

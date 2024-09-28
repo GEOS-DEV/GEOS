@@ -47,11 +47,11 @@ namespace isothermalCompositionalMultiphaseBaseKernels
  * @class SolutionCheckKernel
  * @brief Define the kernel for checking the updated solution
  */
-class SolutionCheckKernel : public ScalingAndCheckingSystemSolutionKernelBase< integer >
+class SolutionCheckKernel : public SolutionScalingAndCheckingKernelBase< integer >
 {
 public:
 
-  using Base = ScalingAndCheckingSystemSolutionKernelBase< integer >;
+  using Base = SolutionScalingAndCheckingKernelBase< integer >;
   using Base::m_rankOffset;
   using Base::m_numComp;
   using Base::m_dofNumber;
