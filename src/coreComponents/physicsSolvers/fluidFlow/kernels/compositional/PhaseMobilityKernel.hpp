@@ -34,7 +34,7 @@ namespace isothermalCompositionalMultiphaseFVMKernels
  * @class PhaseMobilityKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_PHASE number of fluid phases
- * @brief Define the interface for the property kernel in charge of computing the phase mobilities
+ * @brief Defines the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
 class PhaseMobilityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >

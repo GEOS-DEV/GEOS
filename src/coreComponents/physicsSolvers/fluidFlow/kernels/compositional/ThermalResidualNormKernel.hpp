@@ -14,18 +14,18 @@
  */
 
 /**
- * @file ResidualNormKernel.hpp
+ * @file ThermalResidualNormKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_RESIDUALNORMKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_RESIDUALNORMKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_THERMALRESIDUALNORMKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_THERMALRESIDUALNORMKERNEL_HPP
 
 #include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace thermalCompositionalMultiphaseBaseKernels
 {
 
 /******************************** ResidualNormKernel ********************************/
@@ -33,11 +33,11 @@ namespace isothermalCompositionalMultiphaseBaseKernels
 /**
  * @class ResidualNormKernel
  */
-class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
+class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 2 >
 {
 public:
 
-  using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
+  using Base = ResidualNormKernelBase< 2 >;
   using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
@@ -48,9 +48,11 @@ public:
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< localIndex const > const & ghostRank,
                       integer const numComponents,
+                      integer const numPhases,
                       ElementSubRegionBase const & subRegion,
                       constitutive::MultiFluidBase const & fluid,
                       constitutive::CoupledSolidBase const & solid,
+                      constitutive::SolidInternalEnergy const & solidInternalEnergy,
                       real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
@@ -58,20 +60,41 @@ public:
             ghostRank,
             minNormalizer ),
     m_numComponents( numComponents ),
+    m_numPhases( numPhases ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
-    m_totalDens_n( fluid.totalDensity_n() )
+    m_phaseVolFrac_n( subRegion.getField< fields::flow::phaseVolumeFraction_n >() ),
+    m_totalDens_n( fluid.totalDensity_n() ),
+    m_phaseDens_n( fluid.phaseDensity_n() ),
+    m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
+    m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
   {}
+
+  GEOS_HOST_DEVICE
+  void computeMassEnergyNormalizers( localIndex const ei,
+                                     real64 & massNormalizer,
+                                     real64 & energyNormalizer ) const
+  {
+    massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const poreVolume = m_porosity_n[ei][0] * m_volume[ei];
+    energyNormalizer = m_solidInternalEnergy_n[ei][0] * ( 1.0 - m_porosity_n[ei][0] ) * m_volume[ei];
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      energyNormalizer += m_phaseInternalEnergy_n[ei][0][ip] * m_phaseDens_n[ei][0][ip] * m_phaseVolFrac_n[ei][ip] * poreVolume;
+    }
+    // warning: internal energy can be negative
+    energyNormalizer = LvArray::math::max( m_minNormalizer, LvArray::math::abs( energyNormalizer ) );
+  }
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
-    // this should never be zero if the simulation is set up correctly, but we never know
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 massNormalizer = 0.0, energyNormalizer = 0.0;
+    computeMassEnergyNormalizers( ei, massNormalizer, energyNormalizer );
     real64 const volumeNormalizer = LvArray::math::max( m_minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
 
-    // step 1: mass residuals
+    // step 1: mass residual
 
     for( integer idof = 0; idof < m_numComponents; ++idof )
     {
@@ -89,6 +112,14 @@ public:
     {
       stack.localValue[0] = valVol;
     }
+
+    // step 3: energy residual
+
+    real64 const valEnergy = LvArray::math::abs( m_localResidual[stack.localRow + m_numComponents + 1] ) / energyNormalizer;
+    if( valEnergy > stack.localValue[1] )
+    {
+      stack.localValue[1] = valEnergy;
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -96,10 +127,10 @@ public:
                           L2StackVariables & stack ) const override
   {
     // note: for the L2 norm, we bundle the volume and mass residuals/normalizers
+    real64 massNormalizer = 0.0, energyNormalizer = 0.0;
+    computeMassEnergyNormalizers( ei, massNormalizer, energyNormalizer );
 
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
-
-    // step 1: mass residuals
+    // step 1: mass residual
 
     for( integer idof = 0; idof < m_numComponents; ++idof )
     {
@@ -109,17 +140,24 @@ public:
 
     // step 2: volume residual
 
-    real64 const val = m_localResidual[stack.localRow + m_numComponents] * m_totalDens_n[ei][0]; // we need a mass here, hence the
-                                                                                                 // multiplication
-    stack.localValue[0] += val * val;
+    real64 const valVol = m_localResidual[stack.localRow + m_numComponents] * m_totalDens_n[ei][0]; // we need a mass here, hence the
+                                                                                                    // multiplication
+    stack.localValue[0] += valVol * valVol;
     stack.localNormalizer[0] += massNormalizer;
-  }
 
+    // step 3: energy residual
+
+    stack.localValue[1] += m_localResidual[stack.localRow + m_numComponents + 1] * m_localResidual[stack.localRow + m_numComponents + 1];
+    stack.localNormalizer[1] += energyNormalizer;
+  }
 
 protected:
 
-  /// Number of fluid coponents
+  /// Number of fluid components
   integer const m_numComponents;
+
+  /// Number of fluid phases
+  integer const m_numPhases;
 
   /// View on the volume
   arrayView1d< real64 const > const m_volume;
@@ -127,8 +165,14 @@ protected:
   /// View on porosity at the previous converged time step
   arrayView2d< real64 const > const m_porosity_n;
 
-  /// View on total mass/molar density at the previous converged time step
+  /// View on phase properties at the previous converged time step
+  arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac_n;
   arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const m_totalDens_n;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_phaseDens_n;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_phaseInternalEnergy_n;
+
+  /// View on solid properties at the previous converged time step
+  arrayView2d< real64 const > const m_solidInternalEnergy_n;
 
 };
 
@@ -144,12 +188,14 @@ public:
    * @tparam POLICY the policy used in the RAJA kernel
    * @param[in] normType the type of norm used (Linf or L2)
    * @param[in] numComps the number of fluid components
+   * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey the string key to retrieve the degress of freedom numbers
    * @param[in] localResidual the residual vector on my MPI rank
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    * @param[in] solid the solid model
+   * @param[in] solidInternalEnergy the solid internal energy model
    * @param[out] residualNorm the residual norm on the subRegion
    * @param[out] residualNormalizer the residual normalizer on the subRegion
    */
@@ -157,20 +203,23 @@ public:
   static void
   createAndLaunch( solverBaseKernels::NormType const normType,
                    integer const numComps,
+                   integer const numPhases,
                    globalIndex const rankOffset,
-                   string const dofKey,
+                   string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
+                   constitutive::SolidInternalEnergy const & solidInternalEnergy,
                    real64 const minNormalizer,
-                   real64 (& residualNorm)[1],
-                   real64 (& residualNormalizer)[1] )
+                   real64 (& residualNorm)[2],
+                   real64 (& residualNormalizer)[2] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps, subRegion, fluid, solid, minNormalizer );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
+                               numComps, numPhases, subRegion, fluid, solid, solidInternalEnergy, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
@@ -179,13 +228,14 @@ public:
     {
       ResidualNormKernel::launchL2< POLICY >( subRegion.size(), kernel, residualNorm, residualNormalizer );
     }
-  }
 
+  }
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+
+} // namespace thermalCompositionalMultiphaseBaseKernels
 
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_RESIDUALNORMKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_THERMALRESIDUALNORMKERNEL_HPP
