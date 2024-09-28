@@ -24,16 +24,6 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "functions/TableFunction.hpp"
-#include "mesh/ElementSubRegionBase.hpp"
-#include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 namespace geos
 {

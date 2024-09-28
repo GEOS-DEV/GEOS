@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/AccumulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/PhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/PhaseMobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
@@ -138,20 +138,20 @@ public:
 };
 
 
-/******************************** ElementBasedAssemblyKernel ********************************/
+/******************************** AccumulationKernel ********************************/
 
 /**
- * @class ElementBasedAssemblyKernel
+ * @class AccumulationKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of thermal accumulation and volume balance
  */
 template< localIndex NUM_COMP, localIndex NUM_DOF >
-class ElementBasedAssemblyKernel : public isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
+class AccumulationKernel : public isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF >
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >;
+  using Base = isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -183,7 +183,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  ElementBasedAssemblyKernel( localIndex const numPhases,
+  AccumulationKernel( localIndex const numPhases,
                               globalIndex const rankOffset,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
@@ -397,9 +397,9 @@ protected:
 };
 
 /**
- * @class ElementBasedAssemblyKernelFactory
+ * @class AccumulationKernelFactory
  */
-class ElementBasedAssemblyKernelFactory
+class AccumulationKernelFactory
 {
 public:
 
@@ -439,10 +439,9 @@ public:
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::AccumulationKernelFlags::TotalMassEquation );
 
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
+      AccumulationKernel< NUM_COMP, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
+                                                      fluid, solid, localMatrix, localRhs, kernelFlags );
+      AccumulationKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 

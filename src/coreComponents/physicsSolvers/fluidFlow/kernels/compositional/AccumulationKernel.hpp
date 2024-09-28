@@ -14,11 +14,11 @@
  */
 
 /**
- * @file IsothermalCompositionalMultiphaseBaseKernels.hpp
+ * @file AccumulationKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ACCUMULATIONKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ACCUMULATIONKERNEL_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
@@ -57,16 +57,16 @@ enum class AccumulationKernelFlags
   // Flag8 = 1 << 7  //128
 };
 
-/******************************** ElementBasedAssemblyKernel ********************************/
+/******************************** AccumulationKernel ********************************/
 
 /**
- * @class ElementBasedAssemblyKernel
+ * @class AccumulationKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
  */
 template< integer NUM_COMP, integer NUM_DOF >
-class ElementBasedAssemblyKernel
+class AccumulationKernel
 {
 public:
 
@@ -90,7 +90,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  ElementBasedAssemblyKernel( localIndex const numPhases,
+  AccumulationKernel( localIndex const numPhases,
                               globalIndex const rankOffset,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
@@ -454,9 +454,9 @@ protected:
 };
 
 /**
- * @class ElementBasedAssemblyKernelFactory
+ * @class AccumulationKernelFactory
  */
-class ElementBasedAssemblyKernelFactory
+class AccumulationKernelFactory
 {
 public:
 
@@ -498,9 +498,9 @@ public:
       if( useSimpleAccumulation )
         kernelFlags.set( AccumulationKernelFlags::SimpleAccumulation );
 
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
+      AccumulationKernel< NUM_COMP, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
+                                                      fluid, solid, localMatrix, localRhs, kernelFlags );
+      AccumulationKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 
@@ -511,4 +511,4 @@ public:
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ACCUMULATIONKERNEL_HPP
