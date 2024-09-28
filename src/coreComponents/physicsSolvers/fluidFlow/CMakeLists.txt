@@ -45,9 +45,11 @@ set( physicsSolvers_headers
      fluidFlow/kernels/singlePhase/proppant/ProppantBaseKernels.hpp
      fluidFlow/kernels/singlePhase/proppant/ProppantFluxKernels.hpp
      fluidFlow/kernels/compositional/AccumulationKernel.hpp
-     fluidFlow/kernels/compositional/ThermalCompositionalMultiphaseBaseKernels.hpp
+     fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp
      fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseFVMKernels.hpp
-     fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp
+     fluidFlow/kernels/compositional/PPUPhaseFlux.hpp
+     fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp
+     fluidFlow/kernels/compositional/IHUPhaseFlux.hpp
      fluidFlow/kernels/compositional/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
      fluidFlow/kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
