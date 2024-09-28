@@ -32,6 +32,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
 
 
 namespace geos

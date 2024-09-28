@@ -33,6 +33,9 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PropertyKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
@@ -903,12 +906,12 @@ public:
 
 };
 
-/******************************** ScalingForSystemSolutionKernel ********************************/
+/******************************** SolutionScalingKernel ********************************/
 
 /**
- * @class ScalingForSystemSolutionKernelFactory
+ * @class SolutionScalingKernelFactory
  */
-class ScalingForSystemSolutionKernelFactory
+class SolutionScalingKernelFactory
 {
 public:
 
@@ -926,7 +929,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel::StackVariables
+  static isothermalCompositionalMultiphaseBaseKernels::SolutionScalingKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
@@ -946,10 +949,10 @@ public:
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
-      ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, maxRelativeCompDensChange, rankOffset,
+      SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, maxRelativeCompDensChange, rankOffset,
                                              numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
-             ScalingForSystemSolutionKernel::
+             SolutionScalingKernel::
              launch< POLICY >( subRegion.size(), kernel );
   }
 

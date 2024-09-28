@@ -21,6 +21,10 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseVolumeFractionKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseMobilityKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
 
 namespace geos
 {
@@ -187,7 +191,7 @@ public:
                               constitutive::CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > const kernelFlags )
+                              BitFlags< isothermalCompositionalMultiphaseBaseKernels::AccumulationKernelFlags > const kernelFlags )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
@@ -431,9 +435,9 @@ public:
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC()+2;
 
-      BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
+      BitFlags< isothermalCompositionalMultiphaseBaseKernels::AccumulationKernelFlags > kernelFlags;
       if( useTotalMassEquation )
-        kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
+        kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::AccumulationKernelFlags::TotalMassEquation );
 
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );
@@ -502,17 +506,17 @@ struct SolidInternalEnergyUpdateKernel
   }
 };
 
-/******************************** ScalingForSystemSolutionKernel ********************************/
+/******************************** SolutionScalingKernel ********************************/
 
 /**
- * @class ScalingForSystemSolutionKernel
+ * @class SolutionScalingKernel
  * @brief Define the kernel for scaling the Newton update
  */
-class ScalingForSystemSolutionKernel : public isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel
+class SolutionScalingKernel : public isothermalCompositionalMultiphaseBaseKernels::SolutionScalingKernel
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel;
+  using Base = isothermalCompositionalMultiphaseBaseKernels::SolutionScalingKernel;
   using Base::m_numComp;
   using Base::m_localSolution;
 
@@ -535,7 +539,7 @@ public:
    * @param[in] compDensScalingFactor the component density local scaling factor
    * @param[in] temperatureFactor the temperature local scaling factor
    */
-  ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
+  SolutionScalingKernel( real64 const maxRelativePresChange,
                                   real64 const maxAbsolutePresChange,
                                   real64 const maxRelativeTempChange,
                                   real64 const maxCompFracChange,
@@ -637,9 +641,9 @@ protected:
 };
 
 /**
- * @class ScalingForSystemSolutionKernelFactory
+ * @class SolutionScalingKernelFactory
  */
-class ScalingForSystemSolutionKernelFactory
+class SolutionScalingKernelFactory
 {
 public:
 
@@ -658,7 +662,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static ScalingForSystemSolutionKernel::StackVariables
+  static SolutionScalingKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxAbsolutePresChange,
                    real64 const maxRelativeTempChange,
@@ -676,13 +680,13 @@ public:
     arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxRelativeTempChange,
+    SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxRelativeTempChange,
                                            maxCompFracChange, maxRelativeCompDensChange,
                                            rankOffset, numComp, dofKey, subRegion, localSolution,
                                            pressure, temperature, compDens, pressureScalingFactor,
                                            temperatureScalingFactor, compDensScalingFactor );
     return thermalCompositionalMultiphaseBaseKernels::
-             ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
+             SolutionScalingKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
 };

@@ -32,6 +32,9 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
 
 /**
  * @namespace the geos namespace that encapsulates the majority of the code
@@ -447,7 +450,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     {
       auto const subRegionData =
         isothermalCompositionalMultiphaseBaseKernels::
-          ScalingForSystemSolutionKernelFactory::
+          SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,

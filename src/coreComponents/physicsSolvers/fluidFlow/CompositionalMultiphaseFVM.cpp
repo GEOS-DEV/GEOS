@@ -40,6 +40,8 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StabilizedCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/DissipationCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
 
 namespace geos
 {
@@ -483,7 +485,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
       auto const subRegionData =
         m_isThermal
   ? thermalCompositionalMultiphaseBaseKernels::
-          ScalingForSystemSolutionKernelFactory::
+          SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxRelativeTempChange,
@@ -495,7 +497,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      subRegion,
                                                      localSolution )
   : isothermalCompositionalMultiphaseBaseKernels::
-          ScalingForSystemSolutionKernelFactory::
+          SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,

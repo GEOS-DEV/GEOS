@@ -44,6 +44,11 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseFVMKernels.hpp" // TODO this should not be here
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/GlobalComponentFractionKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
