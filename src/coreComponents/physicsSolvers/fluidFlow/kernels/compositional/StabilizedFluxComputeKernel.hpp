@@ -21,6 +21,9 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_STABILIZEDFLUXCOMPUTEKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernel.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
+
 
 namespace geos
 {

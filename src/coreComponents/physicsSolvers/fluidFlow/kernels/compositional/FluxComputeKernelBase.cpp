@@ -18,7 +18,6 @@
  */
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/SurfaceElementStencil.hpp"

@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DISSIPATIONFLUXCOMPUTEKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 

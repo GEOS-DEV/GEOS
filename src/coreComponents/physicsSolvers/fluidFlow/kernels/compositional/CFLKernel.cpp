@@ -18,13 +18,10 @@
  */
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/CFLKernel.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
 #include "finiteVolume/FaceElementToCellStencil.hpp"
-#include "mesh/utilities/MeshMapUtilities.hpp"
 
 namespace geos
 {
