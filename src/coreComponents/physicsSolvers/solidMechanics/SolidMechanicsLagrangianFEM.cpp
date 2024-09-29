@@ -148,7 +148,7 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
-  
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     arrayView1d< string const > const & regionNames )
