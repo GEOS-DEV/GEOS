@@ -43,13 +43,27 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
   m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
 
-  // TODO Implement the MGR strategy
+  registerWrapper( viewKeyStruct::simultaneousString(), &m_simultaneous ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag to update the Lagrange multiplier at each Newton iteration (true), or only after the Newton loop has converged (false)" );
+
+  registerWrapper( viewKeyStruct::symmetricString(), &m_symmetric ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag to neglect the non-symmetric contribution in the tangential matrix" );
 
   // Set the default linear solver parameters
-  //LinearSolverParameters & linParams = m_linearSolverParameters.get();
-  //linParams.dofsPerNode = 3;
-  //linParams.isSymmetric = true;
-  //linParams.amg.separateComponents = true;
+  LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
+  // Strategy: AMG with separate displacement components
+  linSolParams.dofsPerNode = 3;
+  linSolParams.isSymmetric = true;
+  linSolParams.amg.separateComponents = true;
+
+  // Strategy: static condensation of bubble dofs using MGR
+  linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics;
+  linSolParams.mgr.separateComponents = true;
+  linSolParams.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
 }
 
 SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianContact()

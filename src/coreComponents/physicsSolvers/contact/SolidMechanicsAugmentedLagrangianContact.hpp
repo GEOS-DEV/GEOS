@@ -239,6 +239,10 @@ private:
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * dispJumpUpdPenaltyString() { return "dispJumpUpdPenalty"; }
+
+    constexpr static char const * simultaneousString() { return "simultaneous"; }
+
+    constexpr static char const * symmetricString() { return "symmetric"; }
   };
 
   /// Tolerance for the sliding check: the tangential traction must exceed (1 + m_slidingCheckTolerance) * t_lim to activate the sliding
@@ -246,11 +250,11 @@ private:
   real64 const m_slidingCheckTolerance = 0.05;
 
   /// Flag to update the Lagrange multiplier at each Newton iteration (true), or only after the Newton loop has converged (false)
-  bool m_simultaneous = true;
+  int m_simultaneous = 1;
 
   /// Flag to neglect the non-symmetric contribution in the tangential matrix, i.e., the derivative of tangential traction with respect to
   /// the normal displacement is neglected
-  bool m_symmetric = true;
+  int m_symmetric = 1;
 
 };
 
