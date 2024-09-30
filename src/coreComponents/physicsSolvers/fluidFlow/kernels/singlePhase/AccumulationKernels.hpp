@@ -334,13 +334,13 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    if constexpr ( std::is_same_v< SUBREGION_TYPE, CellElementSubRegion > )
+    if constexpr ( std::is_base_of_v< CellElementSubRegion, SUBREGION_TYPE > )
     {
       integer constexpr NUM_DOF = 1;
       AccumulationKernel< CellElementSubRegion, NUM_DOF > kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       AccumulationKernel< CellElementSubRegion, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     }
-    else if constexpr ( std::is_same_v< SUBREGION_TYPE, SurfaceElementSubRegion > )
+    else if constexpr ( std::is_base_of_v< SurfaceElementSubRegion, SUBREGION_TYPE > )
     {
       SurfaceElementAccumulationKernel kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
       SurfaceElementAccumulationKernel::launch< POLICY >( subRegion.size(), kernel );
