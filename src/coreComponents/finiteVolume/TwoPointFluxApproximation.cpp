@@ -112,7 +112,7 @@ void TwoPointFluxApproximation::computeWellPerforationStencil( MeshLevel & mesh 
 
     WellPerforationStencil & stencil = getStencil< WellPerforationStencil >( mesh, set_name );
 
-    arrayView1d< globalIndex const > wellElementGlobalIndex = region.localToGlobalMap();
+    arrayView1d< globalIndex const > wellElementGlobalIndex = region.getGlobalWellElementIndex();
     PerforationData const * perforationData = region.getPerforationData();
     //stencil.reserve( perforationData.size() );
 
@@ -135,12 +135,12 @@ void TwoPointFluxApproximation::computeWellPerforationStencil( MeshLevel & mesh 
       localIndex const er  = meshElements.m_toElementRegion[iperfLocal];
       localIndex const esr = meshElements.m_toElementSubRegion[iperfLocal];
       localIndex const ei  = meshElements.m_toElementIndex[iperfLocal];
-      globalIndex const gi = reservoirElementGlobalIndex[ei];
+      globalIndex const gi = reservoirElementGlobalIndex[iperfLocal];
 
       regionIndex[0] = er;
       subRegionIndex[0] = esr;
       elementIndex[0] = ei;
-      stencilCellsGlobalIndex[0] = reservoirElementGlobalIndex[iperfLocal];
+      stencilCellsGlobalIndex[0] = gi;
 
       // Perforation elements' well segement indexes
 
@@ -149,30 +149,29 @@ void TwoPointFluxApproximation::computeWellPerforationStencil( MeshLevel & mesh 
       localIndex const wi = wellElementIndex[iperfLocal];
       elementIndex[1] = wi;
       stencilCellsGlobalIndex[1] = wellElementGlobalIndex[wi];
-      stencilCellsGlobalIndex[1] = wellElementGlobalIndex[wi];
       std::cout << regionIndex << " " << subRegionIndex << " " << elementIndex << " " << stencilCellsGlobalIndex << std::endl;
 
-      /*
-         // Ensure elements are added to stencil in order of global indices
-         if( stencilCellsGlobalIndex[0] >= stencilCellsGlobalIndex[1] )
-         {
-         std::swap( regionIndex[0], regionIndex[1] );
-         std::swap( subRegionIndex[0], subRegionIndex[1] );
-         std::swap( elementIndex[0], elementIndex[1] );
-         std::swap( stencilWeights[0], stencilWeights[1] );
-         std::swap( stencilStabilizationWeights[0], stencilStabilizationWeights[1] );
-         std::swap( cellToFaceVec[0][0], cellToFaceVec[1][0] );
-         std::swap( cellToFaceVec[0][1], cellToFaceVec[1][1] );
-         std::swap( cellToFaceVec[0][2], cellToFaceVec[1][2] );
-         }
 
-         stencil.add( 2,
+      // Ensure elements are added to stencil in order of global indices
+      if( stencilCellsGlobalIndex[0] >= stencilCellsGlobalIndex[1] )
+      {
+        std::swap( regionIndex[0], regionIndex[1] );
+        std::swap( subRegionIndex[0], subRegionIndex[1] );
+        std::swap( elementIndex[0], elementIndex[1] );
+        std::swap( stencilWeights[0], stencilWeights[1] );
+        //std::swap( stencilStabilizationWeights[0], stencilStabilizationWeights[1] );
+        //std::swap( cellToFaceVec[0][0], cellToFaceVec[1][0] );
+        //std::swap( cellToFaceVec[0][1], cellToFaceVec[1][1] );
+        //std::swap( cellToFaceVec[0][2], cellToFaceVec[1][2] );
+      }
+
+      stencil.add( 2,
                    regionIndex.data(),
                    subRegionIndex.data(),
                    elementIndex.data(),
                    stencilWeights.data(),
-                   iperf );
-       */
+                   iperfLocal );
+
     } );
 #if 0
     // For the moment, the feature is only available for DFM,
