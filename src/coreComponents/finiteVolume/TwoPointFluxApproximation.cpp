@@ -23,6 +23,7 @@
 #include "common/MpiWrapper.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "finiteVolume/WellPerforationStencil.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
@@ -79,6 +80,112 @@ void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) cons
     setRestartFlags( RestartFlags::NO_WRITE );
 }
 
+void TwoPointFluxApproximation::registerWellPerforationStencil( MeshLevel & mesh, Group & stencilGroup ) const
+{
+  mesh.getElemManager().forElementSubRegions< WellElementSubRegion >(
+    [&]( WellElementSubRegion const & region )
+  {
+    std::string const & setName = region.getName();
+    if( !stencilGroup.hasWrapper( setName ) )
+    {
+      // if not there yet, let's register the set name as a wrapper
+      stencilGroup.registerWrapper< WellPerforationStencil >( setName ).
+        setRestartFlags( RestartFlags::NO_WRITE );
+    }
+  } );
+}
+
+void TwoPointFluxApproximation::computeWellPerforationStencil( MeshLevel & mesh ) const
+{
+
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  elemManager.forElementSubRegions< WellElementSubRegion >(
+    [&]( WellElementSubRegion const & region )
+  {
+    std::string const & set_name = region.getName();
+
+    //get the region and subregion indices in the elemManager
+    WellElementRegion const & elemRegion = dynamicCast< WellElementRegion const & >( region.getParent().getParent() );
+    string const & elemRegionName = elemRegion.getName();
+    localIndex const iregion    = elemManager.getRegions().getIndex( elemRegionName );
+    localIndex const isubRegion = elemRegion.getSubRegions().getSubGroupIndex( set_name );
+
+    WellPerforationStencil & stencil = getStencil< WellPerforationStencil >( mesh, set_name );
+
+    arrayView1d< globalIndex const > wellElementGlobalIndex = region.localToGlobalMap();
+    PerforationData const * perforationData = region.getPerforationData();
+    //stencil.reserve( perforationData.size() );
+
+
+    arrayView1d< const localIndex > wellElementIndex = perforationData->getWellElements();
+    ToElementRelation< array1d< localIndex > > const & meshElements = perforationData->getMeshElements();
+    arrayView1d< globalIndex const > reservoirElementGlobalIndex = perforationData->getReservoirElementGlobalIndex();
+    forAll< serialPolicy >( perforationData->size(), [=, &stencil]( localIndex const iperfLocal )
+    {
+      GEOS_UNUSED_VAR( stencil );
+      stackArray1d< localIndex, 2 > regionIndex( 2 );
+      stackArray1d< localIndex, 2 > subRegionIndex( 2 );
+      stackArray1d< localIndex, 2 > elementIndex( 2 );
+      stackArray1d< real64, 2 > stencilWeights( 2 );
+      stackArray1d< real64, 2 > stencilStabilizationWeights( 2 );
+      stackArray1d< globalIndex, 2 > stencilCellsGlobalIndex( 2 );
+
+
+      // Perforation element's reservoir indexes
+      localIndex const er  = meshElements.m_toElementRegion[iperfLocal];
+      localIndex const esr = meshElements.m_toElementSubRegion[iperfLocal];
+      localIndex const ei  = meshElements.m_toElementIndex[iperfLocal];
+      globalIndex const gi = reservoirElementGlobalIndex[ei];
+
+      regionIndex[0] = er;
+      subRegionIndex[0] = esr;
+      elementIndex[0] = ei;
+      stencilCellsGlobalIndex[0] = reservoirElementGlobalIndex[iperfLocal];
+
+      // Perforation elements' well segement indexes
+
+      regionIndex[1] = iregion;
+      subRegionIndex[1] = isubRegion;
+      localIndex const wi = wellElementIndex[iperfLocal];
+      elementIndex[1] = wi;
+      stencilCellsGlobalIndex[1] = wellElementGlobalIndex[wi];
+      stencilCellsGlobalIndex[1] = wellElementGlobalIndex[wi];
+      std::cout << regionIndex << " " << subRegionIndex << " " << elementIndex << " " << stencilCellsGlobalIndex << std::endl;
+
+      /*
+         // Ensure elements are added to stencil in order of global indices
+         if( stencilCellsGlobalIndex[0] >= stencilCellsGlobalIndex[1] )
+         {
+         std::swap( regionIndex[0], regionIndex[1] );
+         std::swap( subRegionIndex[0], subRegionIndex[1] );
+         std::swap( elementIndex[0], elementIndex[1] );
+         std::swap( stencilWeights[0], stencilWeights[1] );
+         std::swap( stencilStabilizationWeights[0], stencilStabilizationWeights[1] );
+         std::swap( cellToFaceVec[0][0], cellToFaceVec[1][0] );
+         std::swap( cellToFaceVec[0][1], cellToFaceVec[1][1] );
+         std::swap( cellToFaceVec[0][2], cellToFaceVec[1][2] );
+         }
+
+         stencil.add( 2,
+                   regionIndex.data(),
+                   subRegionIndex.data(),
+                   elementIndex.data(),
+                   stencilWeights.data(),
+                   iperf );
+       */
+    } );
+#if 0
+    // For the moment, the feature is only available for DFM,
+    // which is described in GEOSX with `FaceElementSubRegion`.
+    if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+    {
+      string const & regionName = region.getName();
+      addFractureFractureConnectionsDFM( mesh, regionName );
+      addFractureMatrixConnectionsDFM( mesh, regionName );
+    }
+#endif
+  } );
+}
 void TwoPointFluxApproximation::computeFractureStencil( MeshLevel & mesh ) const
 {
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >(

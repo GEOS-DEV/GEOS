@@ -71,6 +71,13 @@ private:
 
   virtual void computeCellStencil( MeshLevel & mesh ) const override;
 
+
+  virtual void registerWellPerforationStencil( MeshLevel & mesh, Group & stencilGroup ) const override;
+
+  virtual void computeWellPerforationStencil( MeshLevel & mesh ) const override;
+
+
+
   virtual void registerFractureStencil( Group & stencilGroup ) const override;
 
   virtual void addToFractureStencil( MeshLevel & mesh,

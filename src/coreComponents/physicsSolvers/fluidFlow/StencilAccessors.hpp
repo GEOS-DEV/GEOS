@@ -119,6 +119,7 @@ public:
       bool const allowMissingViews = false;
       acc = elemManager.constructMaterialFieldAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
+      std::cout << "TRAIT::key " << TRAIT::key() << std::endl;
     } );
   }
 };

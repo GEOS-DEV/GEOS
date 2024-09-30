@@ -93,6 +93,8 @@ void FluxApproximationBase::initializePreSubGroups()
 
         registerCellStencil( stencilGroup );
 
+        registerWellPerforationStencil( mesh, stencilGroup );
+
         registerFractureStencil( stencilGroup );
       }
       else
@@ -132,6 +134,9 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         // Compute the fracture related stencils (within the fracture itself,
         // but between the fracture and the matrix as well).
         computeFractureStencil( mesh );
+
+        // Compute perforation stencils
+        computeWellPerforationStencil( mesh );
 
         Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
         Group & stencilGroup = stencilParentGroup.getGroup( getName() );

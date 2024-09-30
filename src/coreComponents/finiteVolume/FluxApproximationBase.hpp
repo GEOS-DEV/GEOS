@@ -234,6 +234,19 @@ protected:
    */
   virtual void computeCellStencil( MeshLevel & mesh ) const = 0;
 
+
+  /**
+   * @brief Register the wrapper for well perforation stencil on a mesh.
+   * @param stencilGroup the group holding the stencil objects
+   * @param setName the face set name (used as the wrapper name)
+   */
+  virtual void registerWellPerforationStencil( MeshLevel & mesh, Group & stencilGroup ) const = 0;
+  /**
+   * @brief Actual computation of the well perforation to cell stencil.
+   * @param[inout] mesh the mesh on which to perform the computation.
+   */
+  virtual void computeWellPerforationStencil( MeshLevel & mesh ) const = 0;
+
   /**
    * @brief Actual Computation of the fracture related stencils.
    * @param[inout] mesh the mesh on which to perform the computation.
