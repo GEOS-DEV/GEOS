@@ -270,11 +270,11 @@ TEST( testBufferOps, test_pack_unpack_arrayslice )
   ASSERT_EQ( val2[0], 8675309 );
   c_buff_head = &buff[0];
   UnpackArray( c_buff_head, slice2, 1, MPI_SUM );
-  ASSERT_EQ( slice2[0], 9035768*2 );
-  slice2[0] = 9035768 - 1;
+  ASSERT_EQ( slice2[0], 8675309*2 );
+  slice2[0] = 8675309 - 1;
   c_buff_head = &buff[0];
   UnpackArray( c_buff_head, slice2, 1, MPI_MAX );
-  ASSERT_EQ( slice2[0], 9035768 );
+  ASSERT_EQ( slice2[0], 8675309 );
 }
 
 TEST( testBufferOps, test_pack_unpack_arrayslice_nontrivial )
