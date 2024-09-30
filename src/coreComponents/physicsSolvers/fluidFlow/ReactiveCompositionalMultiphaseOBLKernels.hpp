@@ -620,6 +620,9 @@ public:
   static constexpr real64 transUnitMult = 8639693349945.239;
   static constexpr real64 transDUnitMult = 0.00852671467191601;
 
+  // tolerance of phase existence check in the calculation of diffusion flux
+  static constexpr real64 phaseExistenceTolerance = 1.e-6;
+
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
@@ -933,6 +936,7 @@ public:
 
     real64 transMult = 1;
     real64 transMultD = 0;
+    real64 phasePresenceMult = 1.0;
     if( m_transMultExp > 0 )
     {
       // Calculate transmissibility multiplier:
@@ -1003,36 +1007,35 @@ public:
 
     }     // end of loop over number of phases for convective operator with gravity and capillarity
 
-    // [3] Additional diffusion code here:   (phi_p * S_p) * (rho_p * D_cp * Delta_x_cp)  or (phi_p * S_p) * (kappa_p * Delta_T)
-
-    real64 const poroAverage = (m_referencePorosity[erI][esrI][eiI] + m_referencePorosity[erJ][esrJ][eiJ]) * 0.5;     // diffusion term
-                                                                                                                      // depends on total
-    // porosity!
-
-
-    // Add diffusion term to the residual:
+    // [3] Diffusion code here
+    // TODO: make sure this works only for matrix-matrix connections, avoiding wells
     for( integer c = 0; c < numDofs; ++c )
     {
       for( integer p = 0; p < numPhases; ++p )
       {
-        real64 phaseCompGrad = OBLValsJ[GRAD_OP + c * numPhases + p] - OBLValsI[GRAD_OP + c * numPhases + p];
+        // mass concentration gradient
+        real64 phaseCompGrad = OBLValsJ[GRAD_OP + p * numDofs + c] - OBLValsI[GRAD_OP + p * numDofs + c];
 
-        arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsUp = (phaseCompGrad < 0) ? OBLValsI : OBLValsJ;
-        arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDersUp = (phaseCompGrad < 0) ? OBLDersI : OBLDersJ;
-        integer const upOffset = (phaseCompGrad < 0) ? 0 : numDofs;
+        // phase existence check
+        if (OBLValsI[UPSAT_OP + p] * OBLValsJ[UPSAT_OP + p] > phaseExistenceTolerance)
+          phasePresenceMult = 1.0;
+        else
+          phasePresenceMult = 0.0;
 
-        // use upstream quantity from cell i for compressibility and saturation (mass or energy):
-        real64 phaseGammaDDiff = m_dt * transD * poroAverage * OBLValsUp[UPSAT_OP + p];
+        // use arithmetic mean for multiplier
+        real64 phaseGammaDDiff = m_dt * phasePresenceMult * transD * (m_referencePorosity[erI][esrI][eiI] * OBLValsI[UPSAT_OP + p] + 
+                                                                      m_referencePorosity[erJ][esrJ][eiJ] * OBLValsJ[UPSAT_OP + p]) * 0.5;
 
         stack.localFlux[c] -= phaseGammaDDiff * phaseCompGrad;         // diffusion term
 
         // Add diffusion terms to Jacobian:
         for( integer v = 0; v < numDofs; ++v )
         {
-          stack.localFluxJacobian[c][v] += phaseGammaDDiff * OBLDersI[GRAD_OP + c * numPhases + p][v];
-          stack.localFluxJacobian[c][numDofs + v] -= phaseGammaDDiff * OBLDersJ[GRAD_OP + c * numPhases + p][v];
+          stack.localFluxJacobian[c][v] += phaseGammaDDiff * OBLDersI[GRAD_OP + p * numDofs + c][v];
+          stack.localFluxJacobian[c][numDofs + v] -= phaseGammaDDiff * OBLDersJ[GRAD_OP + p * numDofs + c][v];
 
-          stack.localFluxJacobian[c][v + upOffset] -= phaseCompGrad * m_dt * transD * poroAverage * OBLDersUp[UPSAT_OP + p][v];
+          stack.localFluxJacobian[c][v] -= phaseCompGrad * m_dt * phasePresenceMult * transD * m_referencePorosity[erI][esrI][eiI] * OBLDersI[UPSAT_OP + p][v] * 0.5;
+          stack.localFluxJacobian[c][numDofs + v] -= phaseCompGrad * m_dt * phasePresenceMult * transD * m_referencePorosity[erJ][esrJ][eiJ] * OBLDersJ[UPSAT_OP + p][v] * 0.5;
         }
 
       }
