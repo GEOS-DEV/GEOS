@@ -1150,24 +1150,22 @@ TestSet getTestSet()
 <Problem>
 
   <Solvers>
-    <CompositionalMultiphaseFVM name="testSolver"
-                                discretization="fluidTPFA"
-                                targetRegions="{ reservoir }"
-                                temperature="366.483"
-                                useMass="0"
-                                logLevel="1" >
-      <NonlinearSolverParameters newtonMaxIter="8"
-                                 maxTimeStepCuts="8"
+    <SinglePhaseFVM name="testSolver"
+                    discretization="singlePhaseTPFA"
+                    targetRegions="{ reservoir }" >
+
+      <NonlinearSolverParameters newtonMaxIter="40"
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="iluk"
                               krylovTol="1.0e-6" />
-    </CompositionalMultiphaseFVM>
+
+    </SinglePhaseFVM>
   </Solvers>
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation name="fluidTPFA" />
+      <TwoPointFluxApproximation name="singlePhaseTPFA" />
     </FiniteVolume>
   </NumericalMethods>
 
@@ -1186,16 +1184,16 @@ TestSet getTestSet()
   <ElementRegions>
     <CellElementRegion name="reservoir"
                        cellBlocks="{ cellBlock }"
-                       materialList="{ fluid, rock, relperm }" />
+                       materialList="{ water, rock }" />
   </ElementRegions>
 
   <Constitutive>
-    <CO2BrineEzrokhiFluid name="fluid"
-                          phaseNames="{ gas, water }"
-                          componentNames="{ co2, water }"
-                          componentMolarWeight="{ 44e-3, 18e-3 }"
-                          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-                          flashModelParaFile="co2flash.txt" />
+    <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
+                                  referencePressure="0.0"
+                                  compressibility="5e-10"
+                                  viscosibility="0.0" />
 
     <CompressibleSolidConstantPermeability name="rock"
                                            solidModelName="nullSolid"
@@ -1208,47 +1206,40 @@ TestSet getTestSet()
                       compressibility="1.0e-9" />
     <ConstantPermeability name="rockPerm"
                           permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }" />
-    <TableRelativePermeability name="relperm"
-                               phaseNames="{ gas, water }"
-                               wettingNonWettingRelPermTableNames="{ gasRelativePermeabilityTable, waterRelativePermeabilityTable }" />
   </Constitutive>
 
   <FieldSpecifications>
-    <!-- We are injecting CO2 (negative production values) -->
+    <!-- The rates are positive, but we need negative values for injection (scale = -1) -->
     <SourceFlux name="sourceFlux"
                 objectPath="ElementRegions/reservoir"
-                component="0"
-                scale="-8"
-                functionName="FluxInjectionRate"
+                component="1"
+                scale="-1"
+                functionName="FluxRate"
                 setNames="{ sourceBox }" />
-    <!-- We are depleting water -->
+    <!-- sink is producing 3x source rate -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
-                scale="8"
-                functionName="FluxProductionRate"
-                setNames="{ sinkBox }" />
+                scale="3"
+                functionName="FluxRate"
+                setNames="{ sinkBox }"/>
 
     <HydrostaticEquilibrium name="equil"
                             objectPath="ElementRegions"
                             maxNumberOfEquilibrationIterations="100"
                             datumElevation="-5"
-                            datumPressure="1.895e7"
-                            initialPhaseName="water"
-                            componentNames="{ co2, water }"
-                            componentFractionVsElevationTableNames="{ initGasCompFracTable, initWaterCompFracTable }"
-                            temperatureVsElevationTableName="initTempTable" />
+                            datumPressure="1.895e7" />
   </FieldSpecifications>
 
   <Geometry>
     <!-- source selects 2 elements -->
     <Box name="sourceBox"
          xMin="{ -0.01, -0.01, -10.01 }"
-         xMax="{  1.01,  1.01,  -8.99 }" />
+         xMax="{  2.01,  1.01,  -8.99 }" />
     <!-- sink selects 2 elements -->
     <Box name="sinkBox"
-         xMin="{  8.99,  8.99, -1.01 }"
-         xMax="{ 10.01, 10.01,  0.01 }" />
+         xMin="{  4.99, 8.99, -1.01 }"
+         xMax="{ 10.01, 10.01, 0.01 }" />
   </Geometry>
 
   <!-- We are adding 500s to the whole sim time to force the wholeSimStatsEvent to be executed -->
@@ -1257,16 +1248,12 @@ TestSet getTestSet()
                    forceDt="500.0"
                    target="/Solvers/testSolver" />
 
-    <PeriodicEvent name="timestepFluxStatsEvent"
+    <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
                    target="/Tasks/timeStepFluxStats" />
     <PeriodicEvent name="timestepReservoirStatsEvent"
                    timeFrequency="500.0"
                    target="/Tasks/statController" />
-
-    <PeriodicEvent name="timestepsCheckEvent"
-                   timeFrequency="500.0"
-                   target="/Tasks/timeStepChecker" />
 
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
@@ -1276,121 +1263,80 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          logLevel="0" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
-
+                          logLevel="0" />
     <StatOutputController name="statController" >
-          <SinglePhaseStatistics name="timeStepReservoirStats"
-                           flowSolverName="testSolver"
-                           logLevel="1" />
+      <SinglePhaseStatistics name="timeStepReservoirStats"
+                            flowSolverName="testSolver"
+                            logLevel="1" />
     </StatOutputController>
-
-    <TimeStepChecker name="timeStepChecker" />
   </Tasks>
 
   <Functions>
-    <!-- CO2 injection rates in mol/s -->
+    <!-- Unscaled injection / production rate in mol/s -->
     <TableFunction
-      name="FluxInjectionRate"
+      name="FluxRate"
       inputVarNames="{ time }"
       interpolation="lower"
       coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.267,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
+      values="{       0.000,  0.000,  0.767,  0.894,  0.561,  0.234,  0.194,  0.178,  0.162,  0.059,  0.000,  0.000 }"
     />
-    <!-- water depletion rates in mol/s -->
-    <TableFunction
-      name="FluxProductionRate"
-      inputVarNames="{ time }"
-      interpolation="lower"
-      coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.083,  0.027,  0.000,  0.000 }"
-    />
-
-    <TableFunction name="initGasCompFracTable"
-                   coordinates="{ -10.0, -7.0, -3.0, -1.0 }"
-                   values="{      0.001,  0.001,  0.001,  0.001 }" />
-    <TableFunction name="initWaterCompFracTable"
-                   coordinates="{ -10.0, -7.0, -3.0, -1.0 }"
-                   values="{      0.999,  0.999,  0.999,  0.999 }" />
-    <TableFunction name="initTempTable"
-                   coordinates="{ -10.0,   -7.0,   -3.0,   -1.0 }"
-                   values="{     395.15, 389.15, 382.15, 378.15 }" />
-    <TableFunction name="waterRelativePermeabilityTable"
-                   coordinates="{ 0.3000,          0.3175,         0.3350,         0.3525,        0.3700,        0.3875,       0.4050,       0.4225,       0.4400,       0.4575,       0.4750,      0.4925,      0.5100,      0.5275,      0.5450,      0.5625,      0.5800,      0.5975,     0.6150,     0.6325,     0.6500,     0.6675,     0.6850,     0.7025,     0.7200,     0.7375,     0.7550,     0.7725,    0.7900,    0.8054,    0.8209,    0.8404,    0.8600,    0.8775,    0.8950,    0.9125,    0.9300,    0.9475,    0.9650,    0.9825, 1.0000   }"
-                   values="{         0.0, 0.0000001069690, 0.000001523818, 0.000007304599, 0.00002242961, 0.00005398050, 0.0001113999, 0.0002068239, 0.0003554932, 0.0005762517, 0.0008921512, 0.001331180, 0.001927144, 0.002720726, 0.003760776, 0.005105868, 0.006826186, 0.009005830, 0.01174561, 0.01516648, 0.01941368, 0.02466185, 0.03112128, 0.03904542, 0.04874017, 0.06057494, 0.07499593, 0.09254174, 0.1138611, 0.1364565, 0.1632363, 0.2042135, 0.2547712, 0.3097943, 0.3755964, 0.4536528, 0.5451093, 0.6502388, 0.7674166, 0.8909226, 1.000000 }" />
-    <TableFunction name="gasRelativePermeabilityTable"
-                   coordinates="{     0.0000,       0.0175,      0.0350,      0.0525,      0.0700,     0.0875,     0.1050,     0.1225,     0.1400,     0.1595,     0.1790,     0.1945,     0.2100,     0.2275,     0.2450,     0.2625,     0.2800,     0.2975,     0.3150,    0.3325,    0.3500,    0.3675,    0.3850,    0.4025,    0.4200,    0.4375,    0.4550,    0.4725,    0.4900,    0.5075,    0.5250,    0.5425,    0.5600,    0.5775,    0.5950,    0.6125,    0.6300,    0.6475,    0.6650,    0.6825,    0.7000 }"
-                   values="{     0.000000000, 0.0008885248, 0.002483741, 0.004583224, 0.007135315, 0.01012132, 0.01353719, 0.01738728, 0.02168159, 0.02701850, 0.03295183, 0.03808925, 0.04363513, 0.05042783, 0.05779578, 0.06577020, 0.07438478, 0.08367565, 0.09368138, 0.1044429, 0.1160032, 0.1284076, 0.1417029, 0.1559376, 0.1711607, 0.1874214, 0.2047679, 0.2232459, 0.2428968, 0.2637550, 0.2858446, 0.3091747, 0.3337331, 0.3594782, 0.3863263, 0.4141347, 0.4426735, 0.4715782, 0.5002513, 0.5275887, 0.5500000 }" />
   </Functions>
+
+  <Outputs>
+  </Outputs>
 
 </Problem>
 )xml";
 
-  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
-                                        "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n";
-
-  testInputs.tableFiles["pvtliquid.txt"] = "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
-                                           "ViscosityFun EzrokhiBrineViscosity 0 0 0\n";
-
-  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n";
-
 
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
-  testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
   testInputs.flowSolverPath = "/Solvers/testSolver";
 
   testInputs.dt = 500.0;
-  testInputs.sourceElementsCount = 1;
-  testInputs.sinkElementsCount = 1;
+  testInputs.sourceElementsCount = 2;
+  testInputs.sinkElementsCount = 5;
 
-  // FluxInjectionRate & FluxProductionRate table from 0.0s to 5000.0s
+  // FluxRate table from 0.0s to 5000.0s
   setRateTable( testInputs.sourceRates,
-                { { 0.000, 0.0 },
-                  { 0.000, 0.0 },
-                  { 0.267, 0.0 },
-                  { 0.561, 0.0 },
-                  { 0.194, 0.0 },
-                  { 0.102, 0.0 },
-                  { 0.059, 0.0 },
-                  { 0.000, 0.0 },
-                  { 0.000, 0.0 },
-                  { 0.000, 0.0 },
-                  { 0.000, 0.0 } } );
-  setRateTable( testInputs.sinkRates,
-                { { 0.0, 0.000 },
-                  { 0.0, 0.000 },
-                  { 0.0, 0.003 },
-                  { 0.0, 0.062 },
-                  { 0.0, 0.121 },
-                  { 0.0, 0.427 },
-                  { 0.0, 0.502 },
-                  { 0.0, 0.199 },
-                  { 0.0, 0.083 },
-                  { 0.0, 0.027 },
-                  { 0.0, 0.000 } } );
+                { { 0.000 },
+                  { 0.000 },
+                  { 0.767 },
+                  { 0.894 },
+                  { 0.561 },
+                  { 0.234 },
+                  { 0.194 },
+                  { 0.178 },
+                  { 0.162 },
+                  { 0.059 },
+                  { 0.000 } } );
+  testInputs.sinkRates=testInputs.sourceRates;
 
-  // scale is set to high values to make the solver generate timestep cuts
-  testInputs.sourceRateFactor = -8.0;
-  testInputs.sinkRateFactor = 8.0;
+  // sink is 3x source production
+  testInputs.sourceRateFactor = -1.0;
+  testInputs.sinkRateFactor = 3.0;
 
-  // this simulation is set-up to have at least one timestep cut.
-  testInputs.requiredSubTimeStep = 2;
+
+  // sink is 3x source production
+  testInputs.sourceRateFactor = -1.0;
+  testInputs.sinkRateFactor = 3.0;
 
   return TestSet( testInputs );
 }
 
 TEST_F( FlowStatisticsTest, checkControllerEncapsulation )
 {
+
   TestSet const testSet = getTestSet();
-  writeTableFiles( testSet.inputs.tableFiles );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
+  OutputBase::setOutputDirectory( "." );
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
@@ -1399,10 +1345,7 @@ TEST_F( FlowStatisticsTest, checkControllerEncapsulation )
 
 }
 
-
-
 //////////////////////////////// Main ////////////////////////////////
-
 
 int main( int argc, char * * argv )
 {
