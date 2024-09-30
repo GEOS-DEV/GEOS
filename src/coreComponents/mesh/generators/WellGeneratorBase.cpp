@@ -39,8 +39,6 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   , m_nDims( 3 )
   , m_polylineHeadNodeId( -1 )
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).

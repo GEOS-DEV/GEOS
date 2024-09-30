@@ -66,8 +66,8 @@ public:
   static CatalogInterface::CatalogType & getCatalog();
 
   /**
-   * @brief
-   *
+   * @brief This function provides the capability to open an external data repository
+   * from another component whatever its format.
    */
   virtual void open() = 0;
 };

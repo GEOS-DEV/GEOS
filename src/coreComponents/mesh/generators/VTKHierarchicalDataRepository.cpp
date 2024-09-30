@@ -48,7 +48,7 @@ void VTKHierarchicalDataRepository::open()
   m_collection = vtkSmartPointer< vtkPartitionedDataSetCollection >( vtkPartitionedDataSetCollection::SafeDownCast( reader->GetOutput()));
   m_dataAssembly = vtkSmartPointer< vtkDataAssembly >( m_collection->GetDataAssembly() );
 
-  GEOS_ERROR_IF(m_dataAssembly == nullptr, "No data Assembly attached to this collection");
+  GEOS_ERROR_IF( m_dataAssembly == nullptr, "No data Assembly attached to this collection" );
 }
 
 vtkSmartPointer< vtkPartitionedDataSet >
@@ -57,8 +57,8 @@ VTKHierarchicalDataRepository::search( string const & path )
   int node = m_dataAssembly->GetFirstNodeByPath( path.c_str());
   GEOS_ERROR_IF( node == -1, "Node doesn't exist" );
   GEOS_ERROR_IF( m_dataAssembly->GetNumberOfChildren( node ) > 0, "Only leaf nodes can be queried." );
-  
-  std::vector< unsigned int > indices = m_dataAssembly->GetDataSetIndices(node, false);
+
+  std::vector< unsigned int > indices = m_dataAssembly->GetDataSetIndices( node, false );
 
   GEOS_ERROR_IF( indices.size() == 0, "Queried node has no dataset attached." );
   GEOS_ERROR_IF( indices.size() > 1, "Current constraint each tree node has only one dataset." );

@@ -43,10 +43,17 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  MeshComponentBase( const string & name,
+  MeshComponentBase( string const & name,
                      Group * const parent );
 
-  /// The catalog interface type for TaskBase
+  /**
+   * @brief Default destructor.
+   */
+  virtual ~MeshComponentBase();
+
+  static string catalogName() { return "MeshComponentBase"; }
+
+  // The catalog interface type for MeshComponentBase
   using CatalogInterface = dataRepository::CatalogInterface< MeshComponentBase, string const &, Group * const >;
 
   static CatalogInterface::CatalogType & getCatalog();

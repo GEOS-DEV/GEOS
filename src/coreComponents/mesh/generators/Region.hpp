@@ -32,28 +32,35 @@ namespace geos
  * This class has dataRepository::Group capabilities to allow for XML input.
  *
  */
-class Region final : public MeshComponentBase
+class Region : public MeshComponentBase
 {
 public:
   /// Constructor
-  Region( string const & name, Group * const parent );
+  Region( const string & name, Group * const parent );
+
+  /**
+   * @brief Default destructor.
+   */
+  ~Region() override;
 
   static string catalogName() { return "Region"; }
 
-  using CatalogInterface = dataRepository::CatalogInterface< Region, string const &, Group * const >;
+  // using CatalogInterface = dataRepository::CatalogInterface< Region, string const &, Group * const >;
 
   /**
    * @brief Accessor for the singleton Catalog object
    * @return a static reference to the Catalog object
    */
-  static CatalogInterface::CatalogType & getCatalog();
+  // static CatalogInterface::CatalogType & getCatalog();
 
+  ///@cond DO_NOT_DOCUMENT
   /// Keys appearing in XML
   struct viewKeyStruct
   {
     static constexpr char const * idString() { return "id"; }
     static constexpr char const * pathInRepositoryString()  { return "pathInRepository"; }
   };
+  /// @endcond
 
 private:
 

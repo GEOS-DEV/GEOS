@@ -24,8 +24,12 @@ MeshComponentBase::MeshComponentBase( const string & name,
                                       Group * const parent )
   :
   Group( name, parent )
-{ }
+{
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+}
 
+MeshComponentBase::~MeshComponentBase()
+{}
 
 MeshComponentBase::CatalogInterface::CatalogType & MeshComponentBase::getCatalog()
 {

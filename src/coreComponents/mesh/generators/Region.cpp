@@ -38,11 +38,14 @@ Region::Region( string const & name,
     setDescription( "Path of the dataset in the repository" );
 }
 
-Region::CatalogInterface::CatalogType & Region::getCatalog()
-{
-  static Region::CatalogInterface::CatalogType catalog;
-  return catalog;
-}
+Region::~Region()
+{}
+
+// Region::CatalogInterface::CatalogType & Region::getCatalog()
+// {
+//   static Region::CatalogInterface::CatalogType catalog;
+//   return catalog;
+// }
 
 REGISTER_CATALOG_ENTRY( MeshComponentBase, Region, string const &, Group * const )
 

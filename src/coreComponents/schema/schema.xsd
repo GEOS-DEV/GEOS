@@ -1503,6 +1503,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:selector xpath="InternalWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshInternalMeshRegionUniqueName">
+					<xsd:selector xpath="Region" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="MeshInternalMeshVTKWellUniqueName">
 					<xsd:selector xpath="VTKWell" />
 					<xsd:field xpath="@name" />
@@ -1511,6 +1515,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="InternalWellbore" type="InternalWellboreType">
 				<xsd:unique name="MeshInternalWellboreInternalWellUniqueName">
 					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="MeshInternalWellboreRegionUniqueName">
+					<xsd:selector xpath="Region" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="MeshInternalWellboreVTKWellUniqueName">
@@ -1522,6 +1530,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="VTKMesh" type="VTKMeshType">
 				<xsd:unique name="MeshVTKMeshInternalWellUniqueName">
 					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="MeshVTKMeshRegionUniqueName">
+					<xsd:selector xpath="Region" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="MeshVTKMeshVTKWellUniqueName">
@@ -1539,6 +1551,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="Region" type="RegionType" />
 			<xsd:element name="VTKWell" type="VTKWellType">
 				<xsd:unique name="MeshInternalMeshVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
@@ -1610,6 +1623,14 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="RegionType">
+		<!--id => Interval region identifier-->
+		<xsd:attribute name="id" type="integer" use="required" />
+		<!--pathInRepository => Path of the dataset in the repository-->
+		<xsd:attribute name="pathInRepository" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="VTKWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
@@ -1639,6 +1660,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="Region" type="RegionType" />
 			<xsd:element name="VTKWell" type="VTKWellType">
 				<xsd:unique name="MeshInternalWellboreVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
@@ -1707,6 +1729,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="Region" type="RegionType" />
 			<xsd:element name="VTKWell" type="VTKWellType">
 				<xsd:unique name="MeshVTKMeshVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
