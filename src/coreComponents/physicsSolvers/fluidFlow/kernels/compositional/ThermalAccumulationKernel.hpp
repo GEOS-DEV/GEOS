@@ -74,14 +74,14 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   AccumulationKernel( localIndex const numPhases,
-                              globalIndex const rankOffset,
-                              string const dofKey,
-                              ElementSubRegionBase const & subRegion,
-                              constitutive::MultiFluidBase const & fluid,
-                              constitutive::CoupledSolidBase const & solid,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs,
-                              BitFlags< isothermalCompositionalMultiphaseBaseKernels::AccumulationKernelFlags > const kernelFlags )
+                      globalIndex const rankOffset,
+                      string const dofKey,
+                      ElementSubRegionBase const & subRegion,
+                      constitutive::MultiFluidBase const & fluid,
+                      constitutive::CoupledSolidBase const & solid,
+                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      arrayView1d< real64 > const & localRhs,
+                      BitFlags< isothermalCompositionalMultiphaseBaseKernels::AccumulationKernelFlags > const kernelFlags )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),

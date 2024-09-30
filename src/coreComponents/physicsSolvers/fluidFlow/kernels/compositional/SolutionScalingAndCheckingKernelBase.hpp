@@ -20,20 +20,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP
 
-#include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
-#include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 namespace geos
 {
@@ -63,14 +53,14 @@ public:
    * @param[in] compDensScalingFactor the component local scaling factor
    */
   SolutionScalingAndCheckingKernelBase( globalIndex const rankOffset,
-                                              integer const numComp,
-                                              string const dofKey,
-                                              ElementSubRegionBase const & subRegion,
-                                              arrayView1d< real64 const > const localSolution,
-                                              arrayView1d< real64 const > const pressure,
-                                              arrayView2d< real64 const, compflow::USD_COMP > const compDens,
-                                              arrayView1d< real64 > pressureScalingFactor,
-                                              arrayView1d< real64 > compDensScalingFactor )
+                                        integer const numComp,
+                                        string const dofKey,
+                                        ElementSubRegionBase const & subRegion,
+                                        arrayView1d< real64 const > const localSolution,
+                                        arrayView1d< real64 const > const pressure,
+                                        arrayView2d< real64 const, compflow::USD_COMP > const compDens,
+                                        arrayView1d< real64 > pressureScalingFactor,
+                                        arrayView1d< real64 > compDensScalingFactor )
     : m_rankOffset( rankOffset ),
     m_numComp( numComp ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),

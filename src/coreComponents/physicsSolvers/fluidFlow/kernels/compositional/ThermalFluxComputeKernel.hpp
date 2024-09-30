@@ -21,11 +21,10 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_THERMALFLUXCOMPUTEKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseMobilityKernel.hpp"
-
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
-#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityFields.hpp"
 
 namespace geos
 {
@@ -122,20 +121,20 @@ public:
    * @param[in] kernelFlags flags packed all together
    */
   FluxComputeKernel( integer const numPhases,
-                           globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           CompFlowAccessors const & compFlowAccessors,
-                           ThermalCompFlowAccessors const & thermalCompFlowAccessors,
-                           MultiFluidAccessors const & multiFluidAccessors,
-                           ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
-                           CapPressureAccessors const & capPressureAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           ThermalConductivityAccessors const & thermalConductivityAccessors,
-                           real64 const dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           BitFlags< isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelFlags > kernelFlags )
+                     globalIndex const rankOffset,
+                     STENCILWRAPPER const & stencilWrapper,
+                     DofNumberAccessor const & dofNumberAccessor,
+                     CompFlowAccessors const & compFlowAccessors,
+                     ThermalCompFlowAccessors const & thermalCompFlowAccessors,
+                     MultiFluidAccessors const & multiFluidAccessors,
+                     ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
+                     CapPressureAccessors const & capPressureAccessors,
+                     PermeabilityAccessors const & permeabilityAccessors,
+                     ThermalConductivityAccessors const & thermalConductivityAccessors,
+                     real64 const dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs,
+                     BitFlags< isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             stencilWrapper,

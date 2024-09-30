@@ -25,6 +25,8 @@
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
 #include "mesh/ElementRegionManager.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PotGrad.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseComponentFlux.hpp"
 
 
 namespace geos

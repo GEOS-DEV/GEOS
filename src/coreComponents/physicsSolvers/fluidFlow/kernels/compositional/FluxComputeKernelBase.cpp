@@ -35,14 +35,14 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 /******************************** FluxComputeKernelBase ********************************/
 
 FluxComputeKernelBase::FluxComputeKernelBase( integer const numPhases,
-                                                          globalIndex const rankOffset,
-                                                          DofNumberAccessor const & dofNumberAccessor,
-                                                          CompFlowAccessors const & compFlowAccessors,
-                                                          MultiFluidAccessors const & multiFluidAccessors,
-                                                          real64 const dt,
-                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                          arrayView1d< real64 > const & localRhs,
-                                                          BitFlags< FluxComputeKernelFlags > kernelFlags )
+                                              globalIndex const rankOffset,
+                                              DofNumberAccessor const & dofNumberAccessor,
+                                              CompFlowAccessors const & compFlowAccessors,
+                                              MultiFluidAccessors const & multiFluidAccessors,
+                                              real64 const dt,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs,
+                                              BitFlags< FluxComputeKernelFlags > kernelFlags )
   : m_numPhases( numPhases ),
   m_rankOffset( rankOffset ),
   m_dt( dt ),

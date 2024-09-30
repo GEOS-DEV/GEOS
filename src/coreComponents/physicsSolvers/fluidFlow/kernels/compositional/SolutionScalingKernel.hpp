@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 namespace geos
 {
@@ -66,18 +67,18 @@ public:
    * @param[in] compDensScalingFactor the component density local scaling factor
    */
   SolutionScalingKernel( real64 const maxRelativePresChange,
-                                  real64 const maxAbsolutePresChange,
-                                  real64 const maxCompFracChange,
-                                  real64 const maxRelativeCompDensChange,
-                                  globalIndex const rankOffset,
-                                  integer const numComp,
-                                  string const dofKey,
-                                  ElementSubRegionBase const & subRegion,
-                                  arrayView1d< real64 const > const localSolution,
-                                  arrayView1d< real64 const > const pressure,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const compDens,
-                                  arrayView1d< real64 > pressureScalingFactor,
-                                  arrayView1d< real64 > compDensScalingFactor )
+                         real64 const maxAbsolutePresChange,
+                         real64 const maxCompFracChange,
+                         real64 const maxRelativeCompDensChange,
+                         globalIndex const rankOffset,
+                         integer const numComp,
+                         string const dofKey,
+                         ElementSubRegionBase const & subRegion,
+                         arrayView1d< real64 const > const localSolution,
+                         arrayView1d< real64 const > const pressure,
+                         arrayView2d< real64 const, compflow::USD_COMP > const compDens,
+                         arrayView1d< real64 > pressureScalingFactor,
+                         arrayView1d< real64 > compDensScalingFactor )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -373,7 +374,7 @@ public:
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
     SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, maxRelativeCompDensChange, rankOffset,
-                                           numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
+                                  numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return SolutionScalingKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 };

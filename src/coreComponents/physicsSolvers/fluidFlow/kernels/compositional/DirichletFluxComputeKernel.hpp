@@ -51,8 +51,8 @@ namespace isothermalCompositionalMultiphaseFVMKernels
  */
 template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
 class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
-                                                                         NUM_DOF,
-                                                                         BoundaryStencilWrapper >
+                                                             NUM_DOF,
+                                                             BoundaryStencilWrapper >
 {
 public:
 
@@ -119,19 +119,19 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   DirichletFluxComputeKernel( integer const numPhases,
-                                    globalIndex const rankOffset,
-                                    FaceManager const & faceManager,
-                                    BoundaryStencilWrapper const & stencilWrapper,
-                                    FLUIDWRAPPER const & fluidWrapper,
-                                    DofNumberAccessor const & dofNumberAccessor,
-                                    CompFlowAccessors const & compFlowAccessors,
-                                    MultiFluidAccessors const & multiFluidAccessors,
-                                    CapPressureAccessors const & capPressureAccessors,
-                                    PermeabilityAccessors const & permeabilityAccessors,
-                                    real64 const dt,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs,
-                                    BitFlags< FluxComputeKernelFlags > kernelFlags )
+                              globalIndex const rankOffset,
+                              FaceManager const & faceManager,
+                              BoundaryStencilWrapper const & stencilWrapper,
+                              FLUIDWRAPPER const & fluidWrapper,
+                              DofNumberAccessor const & dofNumberAccessor,
+                              CompFlowAccessors const & compFlowAccessors,
+                              MultiFluidAccessors const & multiFluidAccessors,
+                              CapPressureAccessors const & capPressureAccessors,
+                              PermeabilityAccessors const & permeabilityAccessors,
+                              real64 const dt,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              BitFlags< FluxComputeKernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             stencilWrapper,

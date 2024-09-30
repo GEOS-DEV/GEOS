@@ -87,14 +87,14 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   AccumulationKernel( localIndex const numPhases,
-                              globalIndex const rankOffset,
-                              string const dofKey,
-                              ElementSubRegionBase const & subRegion,
-                              constitutive::MultiFluidBase const & fluid,
-                              constitutive::CoupledSolidBase const & solid,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs,
-                              BitFlags< AccumulationKernelFlags > const kernelFlags )
+                      globalIndex const rankOffset,
+                      string const dofKey,
+                      ElementSubRegionBase const & subRegion,
+                      constitutive::MultiFluidBase const & fluid,
+                      constitutive::CoupledSolidBase const & solid,
+                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      arrayView1d< real64 > const & localRhs,
+                      BitFlags< AccumulationKernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
