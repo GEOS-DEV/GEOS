@@ -98,18 +98,33 @@ private:
 
   void initializePreSubGroups() override;
 
+  /**
+   * @brief Generate a packCollection component
+   * @param taskManager The task manager 
+   * @param regionName The region
+   * @param path The region path
+   * @param fieldName The region name statistic
+   */
   void generatePackCollection( TasksManager & taskManager,
                                string const regionName,
                                string_view path,
                                string_view fieldName );
 
+  /**
+   * @brief Generate a TimeHistory component and automatically add the sources (in this case packCollection path) and the output file
+   * @param outputManager The OutputManager
+   * @param regionName The region name
+   */
   void generateTimeHistory( OutputManager & outputManager,
                             string const regionName );
-
+  
+  /// The statistics component class. 
   TaskBase * m_statistics;
+  /// Store all generated time histories
   std::vector< TimeHistoryOutput * > m_timeHistories;
+  /// Store all generated pack collection
   std::vector< PackCollection * >  m_packCollections;
-
+  /// [ TO DELETE ] Store pack collection paths for a region
   string_array m_sourceTasks;
 
   /**
