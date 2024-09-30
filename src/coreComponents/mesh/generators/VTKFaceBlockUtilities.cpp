@@ -311,6 +311,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     std::map< vtkIdType, int > edgeCount;
     for( vtkIdType const & d: allDuplicatedNodesOfEdge )
     {
+      std::cout<<"breakpoint 1: "<<d<<std::endl;
       localIndex const dd = LvArray::integerConversion< localIndex >( d );
       for( localIndex const & val: n2e[dd] )
       {
@@ -322,6 +323,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     // then it means that we're in a corner case where the 2d element is on the boundary of the MPI domain,
     // and maybe some nodes are missing for the 2d element to be properly and consistently defines.
     // In this case, we explicitly set the edge index at `-1`, so we can get back on it later.
+    std::cout<<"breakpoint 2: "<<res->first<<std::endl;
     face2dToEdge[i] = res->second < 2 ? -1: LvArray::integerConversion< localIndex >( res->first );
   }
 
