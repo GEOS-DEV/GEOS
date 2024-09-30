@@ -67,9 +67,9 @@ public:
    * e.g.:
    * @code{.unparsed}
    * <Events>
-   *   <PeriodicEStatOutputControllervent name="testStats" ...>
+   *   <StatOutputController  name="testStats" ...>
    *     <CompositionalMultiphaseStatistics name="sub_event" .../>
-   *   </PeriodicEvent>
+   *   </StatOutputController>
    * </Events>
    * @endcode
    */
