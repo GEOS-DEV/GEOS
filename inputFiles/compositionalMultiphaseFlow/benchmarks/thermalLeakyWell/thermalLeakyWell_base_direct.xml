@@ -59,7 +59,7 @@
     <PeriodicEvent
       name="statistics"
       timeFrequency="1e6"
-      target="/Tasks/testStats"/>
+      target="/Tasks/statController"/>
   </Events>
 
   <NumericalMethods>
@@ -357,7 +357,7 @@
       objectPath="ElementRegions/leakyWell/aquitard11"
       fieldName="componentOutflux"/>
       
-    <StatOutputController name="testStats" >
+    <StatOutputController name="statController" >
       <CompositionalMultiphaseStatistics
         name="compflowStatistics"
         flowSolverName="compflow"
