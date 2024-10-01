@@ -46,8 +46,6 @@ MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanic
                                                                                    Group * const parent )
   : Base( name, parent )
 {
-  Base::template addLogLevel< logInfo::PoromechanicsPhaseFraction >();
-
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   linearSolverParameters.mgr.separateComponents = true;
@@ -247,7 +245,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( Doma
 
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::PoromechanicsPhaseFraction,
+  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
                               GEOS_FMT( "        {}: Max phase volume fraction change = {}",
                                         this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }

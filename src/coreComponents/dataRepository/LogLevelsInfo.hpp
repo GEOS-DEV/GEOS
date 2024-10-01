@@ -14,7 +14,7 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains all log level informations and the mecanism to ensure LOG_LEVEL_INFO structure is valid
+ * This file contains log level information infrastructure and the mecanism to ensure LOG_LEVEL_INFO structure is valid
  */
 #ifndef GEOS_COMMON_LOGLEVELSINFO_HPP
 #define GEOS_COMMON_LOGLEVELSINFO_HPP
@@ -24,123 +24,6 @@
 
 namespace geos
 {
-
-namespace logInfo
-{
-
-/**
- * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
- */
-///@{
-
-/// @cond DO_NOT_DOCUMENT
-struct LineSearch
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on line search"; }
-};
-
-struct LineSearchFailed
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "On Incorrect solution, output the failed line search step"; }
-};
-
-struct ScalingFactor
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on global solution scaling factor"; }
-};
-
-struct TimeStep
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on the timestep"; }
-};
-
-struct SolverTimers
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on solver timers"; }
-};
-
-struct ScreenLinearSystem
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Output to screen the assembled linear system and solutions (matrices and vectors)"; }
-
-};
-
-struct FileLinearSystem
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Output to file the assembled linear system and solutions (matrices and vectors)"; }
-};
-
-struct SolverBaseNonlinearSystem
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "On non linear system, output informations about new configurations"; }
-};
-
-struct ResidualNorm
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Print residual norm"; }
-};
-
-struct ResidualValues
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Print the residual values"; }
-};
-
-struct LinearSystem
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on linear system"; }
-};
-
-struct CrossflowWarning
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "If the well is injector and crossflow enabled, display informations about crossflow for injectors"; }
-};
-
-struct HydraulicAperture
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on aperture and hydraulic aperture"; }
-};
-
-struct SolverTimeStep
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Informations on solver time step"; }
-};
-
-struct SolverNextDt
-{
-  static constexpr int getMinLogLevel() { return 3; }
-  static constexpr std::string_view getDescription() { return "Informations on changing DT"; }
-};
-
-struct Dof
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "The summary of declared fields and coupling"; }
-};
-
-struct PoromechanicsPhaseFraction
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Print poromechanics phase volume fraction"; }
-};
-/// @endcond
-///@}
-
-}
-
 
 /**
  * @brief Trait used to check whether a LOG_LEVEL_INFO structure is valid.
@@ -160,7 +43,7 @@ static constexpr bool is_log_level_info =
  *
  */
 template< typename LOG_LEVEL_INFO >
-std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, bool >
+std::enable_if_t< is_log_level_info< LOG_LEVEL_INFO >, bool >
 isLogLevelActive( int level )
 {
   return level >= LOG_LEVEL_INFO::getMinLogLevel();
@@ -190,4 +73,4 @@ isLogLevelActive( int level )
 
 }
 
-#endif
+#endif // GEOS_COMMON_LOGLEVELSINFO_HPP

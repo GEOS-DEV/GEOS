@@ -30,6 +30,7 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include <limits>
 
@@ -938,10 +939,10 @@ protected:
    * @param logLevel Log level
    * @return Adaptive tolerance recommendation
    */
-  static real64 eisenstatWalker( real64 const newNewtonNorm,
-                                 real64 const oldNewtonNorm,
-                                 LinearSolverParameters::Krylov const & krylovParams,
-                                 integer const logLevel );
+  real64 eisenstatWalker( real64 const newNewtonNorm,
+                          real64 const oldNewtonNorm,
+                          LinearSolverParameters::Krylov const & krylovParams,
+                          integer const logLevel );
 
   /**
    * @brief Get the Constitutive Name object

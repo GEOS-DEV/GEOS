@@ -42,6 +42,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -1336,8 +1337,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
 
       if( !subRegionData.localMinVal )
       {
-        GEOS_LOG_LEVEL( 1, "Solution is invalid in well " << subRegion.getName()
-                                                          << " (either a negative pressure or a negative component density was found)." );
+        GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, "Solution is invalid in well " << subRegion.getName()
+                                                                                      << " (either a negative pressure or a negative component density was found)." );
       }
 
       localCheck = std::min( localCheck, subRegionData.localMinVal );
@@ -1665,21 +1666,21 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           if( wellControls.isProducer() )
           {
             wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( timeAtEndOfStep ) );
-            GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                          << " from BHP constraint to phase volumetric rate constraint" );
+            GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl, "Control switch for well " << subRegion.getName()
+                                                                                         << " from BHP constraint to phase volumetric rate constraint" );
           }
           else
           {
             wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-            GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                          << " from BHP constraint to total volumetric rate constraint" );
+            GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl, "Control switch for well " << subRegion.getName()
+                                                                                         << " from BHP constraint to total volumetric rate constraint" );
           }
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                        << " from rate constraint to BHP constraint" );
+          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl, "Control switch for well " << subRegion.getName()
+                                                                                       << " from rate constraint to BHP constraint" );
         }
       }
     } );

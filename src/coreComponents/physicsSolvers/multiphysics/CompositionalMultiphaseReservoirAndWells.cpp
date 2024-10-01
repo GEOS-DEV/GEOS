@@ -31,6 +31,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 
 namespace geos
@@ -45,7 +46,7 @@ CompositionalMultiphaseReservoirAndWells( const string & name,
                                           Group * const parent )
   : Base( name, parent )
 {
-  Base::template addLogLevel< logInfo::CrossflowWarning >();
+  Base::template addLogLevel< logInfo::Crossflow >();
 }
 
 template< typename RESERVOIR_SOLVER >
@@ -94,7 +95,7 @@ setMGRStrategy()
   // flow solver here is indeed flow solver, not poromechanics solver
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
   {
-    GEOS_LOG_RANK_0( "The poromechanics MGR strategy for hybrid FVM is not implemented" );
+    GEOS_ERROR( "The poromechanics MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
@@ -415,10 +416,10 @@ assembleCouplingTerms( real64 const time_n,
         globalIndex const totalNumCrossflowPerforations = MpiWrapper::sum( numCrossflowPerforations.get() );
         if( totalNumCrossflowPerforations > 0 )
         {
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::CrossflowWarning, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
-                                                                           "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
-                                                                           this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
-                                                                           WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ));
+          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Crossflow, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
+                                                                    "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
+                                                                    this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
+                                                                    WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ));
         }
       }
     } );
