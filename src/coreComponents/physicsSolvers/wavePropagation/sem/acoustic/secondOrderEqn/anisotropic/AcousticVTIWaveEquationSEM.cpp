@@ -139,18 +139,6 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & ba
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
-  real64 dt = 0;
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
   mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                 localIndex const er,
                                                                                                 localIndex const esr,
@@ -195,12 +183,7 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & ba
         receiverCoordinates,
         receiverIsLocal,
         receiverNodeIds,
-        receiverConstants,
-        sourceValue,
-        dt,
-        m_timeSourceFrequency,
-        m_timeSourceDelay,
-        m_rickerOrder );
+        receiverConstants );
     } );
   } );
 }

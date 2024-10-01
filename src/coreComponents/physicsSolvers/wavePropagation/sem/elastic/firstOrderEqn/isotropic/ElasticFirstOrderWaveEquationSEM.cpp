@@ -233,19 +233,6 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   receiverConstants.setValues< serialPolicy >( -1 );
   receiverIsLocal.zero();
 
-  arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
-  real64 dt = 0;
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
   mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                 localIndex const regionIndex,
                                                                                                 localIndex const esr,
@@ -296,12 +283,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         receiverElem,
         receiverNodeIds,
         receiverConstants,
-        receiverRegion,
-        sourceValue,
-        dt,
-        m_timeSourceFrequency,
-        m_timeSourceDelay,
-        m_rickerOrder );
+        receiverRegion );
     } );
   } );
 }
@@ -504,7 +486,6 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toView();
   arrayView1d< localIndex const > const sourceElem = m_sourceElem.toView();
   arrayView1d< localIndex const > const sourceRegion = m_sourceRegion.toView();
-  arrayView2d< real32 const > const sourceValue = m_sourceValue.toView();
 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -578,9 +559,11 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           sourceIsAccessible,
           sourceElem,
           sourceRegion,
-          sourceValue,
           dt,
-          cycleForSource,
+          time_n,
+          m_timeSourceFrequency,
+          m_timeSourceDelay,
+          m_rickerOrder,
           stressxx,
           stressyy,
           stresszz,

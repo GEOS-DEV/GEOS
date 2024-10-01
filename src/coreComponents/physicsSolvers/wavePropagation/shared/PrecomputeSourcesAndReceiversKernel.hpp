@@ -51,11 +51,6 @@ struct PreComputeSourcesAndReceivers
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverConstants constant part of the receiver term
-   * @param[out] sourceValue value of the temporal source (eg. Ricker)
-   * @param[in] dt time-step
-   * @param[in] timeSourceFrequency the central frequency of the source
-   * @param[in] timeSourceDelay the time delay of the source
-   * @param[in] rickerOrder order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
@@ -206,11 +201,6 @@ struct PreComputeSourcesAndReceivers
    * @param[out] receiverElem element where a receiver is located
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverConstants constant part of the receiver term
-   * @param[out] sourceValue value of the temporal source (eg. Ricker)
-   * @param[in] dt time-step
-   * @param[in] timeSourceFrequency the central frequency of the source
-   * @param[in] timeSourceDelay the time delay of the source
-   * @param[in] rickerOrder order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
@@ -237,12 +227,7 @@ struct PreComputeSourcesAndReceivers
                                                                    arrayView1d< localIndex > const receiverElem,
                                                                    arrayView2d< localIndex > const receiverNodeIds,
                                                                    arrayView2d< real64 > const receiverConstants,
-                                                                   arrayView1d< localIndex > const receiverRegion,
-                                                                   arrayView2d< real32 > const sourceValue,
-                                                                   real64 const dt,
-                                                                   real32 const timeSourceFrequency,
-                                                                   real32 const timeSourceDelay,
-                                                                   localIndex const rickerOrder )
+                                                                   arrayView1d< localIndex > const receiverRegion )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
@@ -294,10 +279,6 @@ struct PreComputeSourcesAndReceivers
               sourceConstants[isrc][a] = Ntest[a];
             }
 
-            for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
-            {
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
-            }
           }
         }
       } // end loop over all sources
@@ -380,11 +361,6 @@ struct PreComputeSourcesAndReceivers
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverConstants constant part of the receiver term
-   * @param[out] sourceValue array containing the value of the time dependent source (Ricker for e.g)
-   * @param[in] dt time-step
-   * @param[in] timeSourceFrequency Peak frequency of the source
-   * @param[in] timeSourceDelay  Delay of the source
-   * @param[in] rickerOrder Order of the Ricker wavelet
    * @param[in] useDAS parameter that determines which kind of receiver needs to be modeled (DAS or not, and which type)
    * @param[in] linearDASSamples parameter that gives the number of integration points to be used when computing the DAS signal via strain
    * integration
