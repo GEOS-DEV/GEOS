@@ -161,7 +161,7 @@ struct PressureComputation
    * @param[in] sourceConstants constant part of the source terms
    * @param[in] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[in] sourceElem element where a source is located
-   * @param[in] dt time-step   
+   * @param[in] dt time-step
    * @param[in] timeSourceFrequency the central frequency of the source
    * @param[in] timeSourceDelay the time delay of the source
    * @param[in] rickerOrder order of the Ricker wavelet

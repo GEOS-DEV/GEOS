@@ -466,7 +466,7 @@ void AcousticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartitio
 
 real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                         real64 const & dt,
-                                                        integer ,
+                                                        integer,
                                                         DomainPartition & domain,
                                                         bool computeGradient )
 {
