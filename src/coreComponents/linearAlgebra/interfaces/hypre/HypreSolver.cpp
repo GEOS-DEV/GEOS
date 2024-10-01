@@ -272,14 +272,22 @@ void HypreSolver::solve( HypreVector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
+    HYPRE_BigInt global_num_rows, global_num_nonzeros;
 
-   GEOS_LOG_RANK_0( "        Linear Solver | " << m_result.status <<
-                    " | Iterations: " << m_result.numIterations <<
-                    " | Final Rel Res: " << std::scientific << std::setprecision(4)
-                                         << m_result.residualReduction
-                                         << std::fixed << std::setprecision(3) <<
-                    " | Setup Time: " << m_result.setupTime << " s" <<
-                    " | Solve Time: " << m_result.solveTime << " s" );
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJMatrixGetGlobalInfo( matrix().unwrappedIJ(),
+                                                       &global_num_rows,
+                                                       &global_num_rows,
+                                                       &global_num_nonzeros) );
+
+    GEOS_LOG_RANK_0( "        Linear Solver | " << m_result.status <<
+                     " | Unknowns: " << global_num_rows <<
+                     " | Nonzeros: " << global_num_nonzeros <<
+                     " | Iterations: " << m_result.numIterations <<
+                     " | Final Rel Res: " << std::scientific << std::setprecision(4)
+                                          << m_result.residualReduction
+                                          << std::fixed << std::setprecision(3) <<
+                     " | Setup Time: " << m_result.setupTime << " s" <<
+                     " | Solve Time: " << m_result.solveTime << " s" );
   }
 }
 
