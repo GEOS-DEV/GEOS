@@ -72,7 +72,6 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setInputFlag( InputFlags::OPTIONAL );
 
   Base::template addLogLevel< logInfo::HydraulicAperture >();
-  Base::template addLogLevel< logInfo::SolverTimeStep >();
   Base::template addLogLevel< logInfo::SolverNextDt >();
 
   registerWrapper( viewKeyStruct::isLaggingFractureStencilWeightsUpdateString(), &m_isLaggingFractureStencilWeightsUpdate ).
