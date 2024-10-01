@@ -114,6 +114,11 @@ TEST( testBufferOps, test_pack_unpack_data_arrayofarrays )
 
 TEST( testBufferOps, test_pack_unpack_data_arrayofsets )
 {
+#if !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma GCC diagnostic ignored "-Wstringop-overflow="
+#endif
   ArrayOfSets< int > val1( 2, 1 );
   val1.insertIntoSet( 0, 8675309 );
   val1.insertIntoSet( 1, 9035768 );
@@ -127,6 +132,9 @@ TEST( testBufferOps, test_pack_unpack_data_arrayofsets )
   ASSERT_EQ( sz1, sz );
   ASSERT_EQ( *reinterpret_cast< int * >( &buff[0] ), 8675309 );
   ASSERT_EQ( *reinterpret_cast< int * >( &buff[4] ), 9035768 );
+#if !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 TEST( testBufferOps, test_pack_unpack_data_maps )
