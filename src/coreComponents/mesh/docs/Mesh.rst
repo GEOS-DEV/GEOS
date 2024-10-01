@@ -201,10 +201,10 @@ The mesh block has the following syntax:
 
 GEOS uses ``ElementRegions`` to support different physics or to define different constitutive properties.
 The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion``
-is defined as a set of ``cellBlocks``. A ``cellBlock`` is an ensemble of elements with the same element
-geometry.
+is defined as a set of cell-blocks, which are sets of elements with the same element
+geometry, defined within the ``cellBlocks`` attribute.
 
-The naming of ``cellBlocks`` depends on if the mesh contains a data array which has the
+The naming of cell-blocks depends on if the mesh contains a data array which has the
 same value as the ``regionAttribute`` of the ``VTKMesh`` (which is ``attribute`` by default).
 This attribute is used to define regions in the vtu file and assign the cells to a given region.
 
@@ -217,12 +217,12 @@ For now, loaded regions has the following limitations:
    :width: 500
 
 In GEOS, there are three different ways to select ``cellBlocks`` in a ``CellElementRegion``:
-- Using ``cellBlockAttributeValues``, a list of the desired ``regionAttribute`` values.
-  I.e. ``"{ 1, 2 }"`` selects the ``{ 1_tetrahedra, 1_pyramid, 2_tetrahedra, 2_pyramid... }`` cellBlocks.
-- Using ``cellBlocks``, a list of the desired ``cellBlocks`` names from the mesh to contain in this
-  CellElementRegion. Naming is detailed bellow.
-- Using ``cellBlocksMatch``, a list of `fnmatch patterns <https://metacpan.org/pod/File::FnMatch>`_ to match cellBlock names to add them in this CellElementRegion.
-  I.e. ``{ 1_* }`` selects the ``{ 1_tetrahedra, 1_pyramid, 1_hexahedra... }`` cellBlocks, ``{ * }`` selects every elements.
+- Using a list of the desired ``regionAttribute`` values.
+  I.e. ``"{ 1, 2 }"`` selects all the cell-blocks of the ``regionAttribute`` 1 and 2.
+- Using a list of the exact cell-blocks names from the mesh to contain in this CellElementRegion.
+  I.e. ``{ 1_tetrahedra, 1_pyramid, 1_hexahedra, 2_tetrahedra, 2_pyramid, 2_hexahedra }``
+- Using a list of `fnmatch patterns <https://metacpan.org/pod/File::FnMatch>`_ to match cell-block names to add them in this ``CellElementRegion``.
+  I.e. ``{ * }`` selects every elements, ``{ 1_* }`` selects the ``{ 1_tetrahedra, 1_pyramid, 1_hexahedra }`` cell-blocks.
 
 In the example presented above, the mesh is is composed of two regions. Each region contains 4 element types.
 
@@ -234,24 +234,24 @@ In the example presented above, the mesh is is composed of two regions. Each reg
 
   ..  code-block:: xml
 
-    <!-- Method one: Use `cellBlocksMatch` to match all cellBlock names automatically. 
+    <!-- Method one: Use `*` to match all cellBlock names automatically. 
                      "{ [1-2]_* }" would have an equivalent result (range selection). -->
     <ElementRegions>
       <CellElementRegion
         name="MyRegion"
-        cellBlocksMatch="{ * }"
+        cellBlocks="{ * }"
         materialList="{ water, rock }" />
     </ElementRegions>
     
-    <!-- Method two: Use `cellBlockAttributeValues` to select all mesh regions (1 and 2). -->
+    <!-- Method two: Use `1, 2` to target the mesh regions. -->
     <ElementRegions>
       <CellElementRegion
         name="MyRegion"
-        cellBlockAttributeValues="{ 1, 2 }"
+        cellBlocks="{ 1, 2 }"
         materialList="{ water, rock }" />
     </ElementRegions>
 
-    <!-- Method three: Use `cellBlocks` to manually name them all. -->
+    <!-- Method three: manually name all cell-blocks. -->
     <ElementRegions>
       <CellElementRegion
         name="MyRegion"
@@ -263,7 +263,7 @@ In the example presented above, the mesh is is composed of two regions. Each reg
 
   .. code-block:: xml
 
-    <!-- Method one: Use `cellBlockAttributeValues` to select region '1' in 'Top' region, and region '2' in 'Bot' region. -->
+    <!-- Method one: Use the `regionAttribute` to select region '1' in 'Top' region, and region '2' in 'Bot' region. -->
     <ElementRegions>
       <CellElementRegion
         name="Top"
@@ -275,7 +275,7 @@ In the example presented above, the mesh is is composed of two regions. Each reg
         materialList="{ water, rock }" />
     </ElementRegions>
 
-    <!-- Method two: Use `cellBlocksMatch` for the same purpose, but by matching the name patterns. -->
+    <!-- Method two: Use `cellBlocks` for the same purpose, but by matching the name patterns. -->
     <ElementRegions>
       <CellElementRegion
         name="Top"
@@ -287,7 +287,7 @@ In the example presented above, the mesh is is composed of two regions. Each reg
         materialList="{ water, rock }" />
     </ElementRegions>
 
-    <!-- Method three: Use `cellBlocks` to manually name them all. -->
+    <!-- Method three: manually name the cell-blocks in the same regions. -->
     <ElementRegions>
       <CellElementRegion
         name="Top"
@@ -305,15 +305,15 @@ In the example presented above, the mesh is is composed of two regions. Each reg
 
 .. code-block:: xml
 
-  <!-- Method one: Use `cellBlocksMatch` to match all cellBlock names automatically.  -->
+  <!-- Method one: Use `*` to match all cellBlock names automatically.  -->
   <ElementRegions>
     <CellElementRegion
       name="MyRegion"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ water, rock }" />
   </ElementRegions>
 
-  <!-- Exemple two: Use `cellBlocks` to manually name them all. -->
+  <!-- Exemple two: manually name the desired cell-blocks. -->
   <ElementRegions>
     <CellElementRegion
       name="MyRegion"
@@ -321,7 +321,7 @@ In the example presented above, the mesh is is composed of two regions. Each reg
       materialList="{ water, rock }" />
   </ElementRegions>
 
-  <!-- Exemple three: Use only the tetrahedric cellBlocs on this region (see the warning below) -->
+  <!-- Exemple three: Use only the tetrahedric cell-blocks on this region (see the warning below) -->
   <ElementRegions>
     <CellElementRegion
       name="MyRegion"
@@ -331,7 +331,7 @@ In the example presented above, the mesh is is composed of two regions. Each reg
 
 .. warning::
 
-  **All** the imported ``cellBlocks`` must be included in one of the ``CellElementRegion``.
+  **All** the imported ``cellBlocks`` must be included in one (and only one) of the ``CellElementRegion``.
   Even if some cells are meant to be inactive during the simulation, they still have to be
   included in a ``CellElementRegion`` (this ``CellElementRegion`` should
   simply not be included as a targetRegion of any of the solvers involved in the simulation).
