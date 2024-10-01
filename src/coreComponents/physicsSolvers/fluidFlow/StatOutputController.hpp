@@ -100,7 +100,7 @@ private:
 
   /**
    * @brief Generate a packCollection component
-   * @param taskManager The task manager 
+   * @param taskManager The task manager
    * @param regionName The region
    * @param path The region path
    * @param fieldName The region name statistic
@@ -117,8 +117,8 @@ private:
    */
   void generateTimeHistory( OutputManager & outputManager,
                             string const regionName );
-  
-  /// The statistics component class. 
+
+  /// The statistics component class.
   TaskBase * m_statistics;
   /// Store all generated time histories
   std::vector< TimeHistoryOutput * > m_timeHistories;
