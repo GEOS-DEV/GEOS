@@ -65,7 +65,7 @@
   <ElementRegions>
     <CellElementRegion
       name="dummy"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ dummy }"/>
   </ElementRegions>
 </Problem>

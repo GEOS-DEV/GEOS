@@ -106,7 +106,7 @@ XML Symbolic Math:
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 

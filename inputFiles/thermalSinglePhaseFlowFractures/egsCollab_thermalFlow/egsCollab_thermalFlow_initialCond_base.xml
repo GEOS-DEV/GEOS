@@ -10,7 +10,7 @@
    <ElementRegions>
     <CellElementRegion
       name="matrix"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ water, rock, thermalCond }"/>
 
     <!-- <SurfaceElementRegion

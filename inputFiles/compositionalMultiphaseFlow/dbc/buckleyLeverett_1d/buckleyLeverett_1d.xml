@@ -41,7 +41,7 @@
   <ElementRegions>
     <CellElementRegion
       name="region"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
   <!-- SPHINX_ELEMENTREGIONS_END -->

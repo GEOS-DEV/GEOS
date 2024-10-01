@@ -32,7 +32,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Omega"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ rock }"/>
   </ElementRegions>
 

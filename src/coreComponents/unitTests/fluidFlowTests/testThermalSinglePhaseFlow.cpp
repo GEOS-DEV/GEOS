@@ -80,7 +80,7 @@ char const * xmlInput =
     </NumericalMethods>
     <ElementRegions>
       <CellElementRegion name="region"
-                         cellBlocksMatch="{ * }"
+                         cellBlocks="{ * }"
                          materialList="{ water, rock, thermalCond }" />
     </ElementRegions>
     <Constitutive>

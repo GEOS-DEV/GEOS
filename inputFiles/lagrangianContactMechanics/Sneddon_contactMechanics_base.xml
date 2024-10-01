@@ -38,7 +38,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion

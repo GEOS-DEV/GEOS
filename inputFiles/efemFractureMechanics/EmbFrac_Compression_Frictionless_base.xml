@@ -42,7 +42,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion

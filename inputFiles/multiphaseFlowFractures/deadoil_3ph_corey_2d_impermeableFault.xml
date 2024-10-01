@@ -109,7 +109,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ fluid1, rock, relperm }"/>
 
     <SurfaceElementRegion

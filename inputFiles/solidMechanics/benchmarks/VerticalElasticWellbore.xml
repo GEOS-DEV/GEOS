@@ -79,7 +79,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Omega"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ shale }"/>
   </ElementRegions>
 

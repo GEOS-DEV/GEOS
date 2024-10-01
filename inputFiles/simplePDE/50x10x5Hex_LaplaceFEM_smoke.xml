@@ -22,7 +22,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ nullModel }"/>
   </ElementRegions>
 

@@ -81,7 +81,7 @@
   <ElementRegions>
     <CellElementRegion
       name="region"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ water, sand }"/>
 
     <SurfaceElementRegion

@@ -105,7 +105,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ shale }"/>
   </ElementRegions>
 

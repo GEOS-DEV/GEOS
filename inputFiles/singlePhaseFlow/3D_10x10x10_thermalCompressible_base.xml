@@ -39,7 +39,7 @@
   <ElementRegions>
     <CellElementRegion
       name="region"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ fluid, rock, thermalCond }"/>
   </ElementRegions>
 

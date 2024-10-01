@@ -42,7 +42,7 @@
     <CellElementRegion
       name="Region2"
       meshBody="mesh1"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ shale }"/>
   </ElementRegions>
 

@@ -173,22 +173,22 @@
   <ElementRegions>
     <CellElementRegion
       name="Reservoir"
-      cellBlockAttributeValues="{ 1 }"
+      cellBlocks="{ 1 }"
       materialList="{ porousRock, water }"/>
 
     <CellElementRegion
       name="Overburden"
-      cellBlockAttributeValues="{ 3 }"
+      cellBlocks="{ 3 }"
       materialList="{ porousRock, water }"/> 
     
     <CellElementRegion
       name="Underburden"
-      cellBlockAttributeValues="{ 2 }"
+      cellBlocks="{ 2 }"
       materialList="{ porousRock, water }"/>
       
     <CellElementRegion
       name="Sideburden"
-      cellBlockAttributeValues="{ 0 }"
+      cellBlocks="{ 0 }"
       materialList="{ porousRock, water }"/>  
 
     <SurfaceElementRegion

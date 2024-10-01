@@ -19,7 +19,7 @@
     <CellElementRegion
       name="all"
       meshBody="mesh"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ materialPlastic }"/>
   </ElementRegions>
 

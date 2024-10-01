@@ -79,7 +79,7 @@
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ fluid, porousRock, relperm }"/>
   </ElementRegions>
 

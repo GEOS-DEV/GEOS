@@ -67,7 +67,7 @@ TEST( testGroupPath, testGlobalPaths )
       <ElementRegions>
         <CellElementRegion
           name="Region2"
-          cellBlocksMatch="{ * }"
+          cellBlocks="{ * }"
           materialList="{ shale }"/>
       </ElementRegions>
       <Constitutive>

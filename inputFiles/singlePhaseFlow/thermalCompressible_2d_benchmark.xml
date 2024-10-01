@@ -8,7 +8,7 @@
   <ElementRegions>
     <CellElementRegion
       name="region"
-      cellBlocksMatch="{ * }"
+      cellBlocks="{ * }"
       materialList="{ fluid, rock_linear, thermalCond_linear }"/>
   </ElementRegions>
 
