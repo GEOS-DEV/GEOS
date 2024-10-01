@@ -123,7 +123,7 @@ template< typename T, int NDIM, int USD >
 typename std::enable_if< is_device_packable_v< T >, localIndex >::type
 UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var,
-                  parallelDeviceEvents & GEOS_UNUSED_PARAM(events),
+                  parallelDeviceEvents & GEOS_UNUSED_PARAM( events ),
                   MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   // parallelDeviceStream stream;

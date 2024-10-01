@@ -445,14 +445,14 @@ Unpack( buffer_unit_type const * & buffer,
         MPI_Op op )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
-  T const castValue = *reinterpret_cast< T const * > ( buffer );
-  if ( op == MPI_REPLACE )
+  T const castValue = *reinterpret_cast< T const * >( buffer );
+  if( op == MPI_REPLACE )
   {
     var = castValue;
   }
-  else if ( op == MPI_SUM )
+  else if( op == MPI_SUM )
   {
-    if constexpr( traits::has_plus_equal_v< T > )
+    if constexpr ( traits::has_plus_equal_v< T > )
     {
       var += castValue;
     }
@@ -461,9 +461,9 @@ Unpack( buffer_unit_type const * & buffer,
       GEOS_ERROR( GEOS_FMT( "Unsupported unpack operator+= for type {}!", typeid(T).name() ) );
     }
   }
-  else if ( op == MPI_MAX )
+  else if( op == MPI_MAX )
   {
-    if constexpr( traits::has_less_than_v< T > ) // && traits::has_equality_v< T >
+    if constexpr ( traits::has_less_than_v< T > ) // && traits::has_equality_v< T >
     {
       var = std::max( var, castValue );
     }
@@ -492,11 +492,11 @@ Unpack( buffer_unit_type const * & buffer,
   var.resize( stringsize );
   string castValue( stringsize, ' ' );
   memcpy( &castValue[0], buffer, stringsize );
-  if ( op == MPI_REPLACE )
+  if( op == MPI_REPLACE )
   {
     var = castValue;
   }
-  else if ( op == MPI_SUM )
+  else if( op == MPI_SUM )
   {
     var += castValue;
   }
@@ -666,21 +666,21 @@ UnpackPointer( buffer_unit_type const * & buffer,
                    expectedLength << " != " << length );
   GEOS_DEBUG_VAR( expectedLength );
   T const * castBuffer = reinterpret_cast< T const * >( buffer );
-  if ( op == MPI_REPLACE )
+  if( op == MPI_REPLACE )
   {
     for( int ii = 0; ii < length; ++ii )
     {
       var[ ii ] = castBuffer[ ii ];
     }
   }
-  else if ( op == MPI_SUM )
+  else if( op == MPI_SUM )
   {
     for( int ii = 0; ii < length; ++ii )
     {
       var[ ii ] += castBuffer[ ii ];
     }
   }
-  else if ( op == MPI_MAX )
+  else if( op == MPI_MAX )
   {
     for( int ii = 0; ii < length; ++ii )
     {
@@ -728,21 +728,21 @@ UnpackArray( buffer_unit_type const * & buffer,
   GEOS_ASSERT_EQ( length, expectedLength );
 
   T const * castBuffer = reinterpret_cast< T const * >( buffer );
-  if ( op == MPI_REPLACE )
+  if( op == MPI_REPLACE )
   {
     for( int ii = 0; ii < length; ++ii )
     {
       var[ ii ] = castBuffer[ ii ];
     }
   }
-  else if ( op == MPI_SUM )
+  else if( op == MPI_SUM )
   {
     for( int ii = 0; ii < length; ++ii )
     {
       var[ ii ] += castBuffer[ ii ];
     }
   }
-  else if ( op == MPI_MAX )
+  else if( op == MPI_MAX )
   {
     for( int ii = 0; ii < length; ++ii )
     {
@@ -909,21 +909,21 @@ Unpack( buffer_unit_type const * & buffer,
   GEOS_ASSERT_EQ( length, expectedLength );
 
   T const * const GEOS_RESTRICT castBuffer = reinterpret_cast< T const * >( buffer );
-  if ( op == MPI_REPLACE )
+  if( op == MPI_REPLACE )
   {
     for( INDEX_TYPE ii = 0; ii < length; ++ii )
     {
       var[ ii ] = castBuffer[ ii ];
     }
   }
-  else if ( op == MPI_SUM )
+  else if( op == MPI_SUM )
   {
     for( INDEX_TYPE ii = 0; ii < length; ++ii )
     {
       var[ ii ] += castBuffer[ ii ];
     }
   }
-  else if ( op == MPI_MAX )
+  else if( op == MPI_MAX )
   {
     for( INDEX_TYPE ii = 0; ii < length; ++ii )
     {

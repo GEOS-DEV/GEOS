@@ -190,7 +190,7 @@ private:
     /// String for the region statistics
     constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
   };
-  
+
 private:
 
   using Base = FieldStatisticsBase< SinglePhaseBase >;
