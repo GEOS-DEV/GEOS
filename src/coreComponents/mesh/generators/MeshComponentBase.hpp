@@ -60,10 +60,7 @@ public:
   /// @typedef An alias for the MeshComponentBase catalog
   using CatalogInterface = dataRepository::CatalogInterface< MeshComponentBase, string const &, Group * const >;
 
-  /**
-   * @brief Singleton accessor for catalog
-   * @return
-   */
+  /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 };
 

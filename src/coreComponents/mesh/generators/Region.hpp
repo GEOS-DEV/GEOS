@@ -35,7 +35,11 @@ namespace geos
 class Region : public MeshComponentBase
 {
 public:
-  /// Constructor
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
   Region( const string & name, Group * const parent );
 
   /**

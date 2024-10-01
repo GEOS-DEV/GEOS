@@ -93,7 +93,7 @@ void VTKMeshGenerator::postInputInitialization()
 {
   GEOS_ERROR_IF( !this->m_filePath.empty() && !m_repositoryName.empty(), // (!m_repositoryName.empty() || !m_meshPath.empty()),
                  getDataContext() << ": Access to the mesh via file or repository are mutually exclusive. "
-                              "You can't set " << viewKeyStruct::repositoryString() << " or " << viewKeyStruct::meshPathString() << " and " <<
+                                     "You can't set " << viewKeyStruct::repositoryString() << " or " << viewKeyStruct::meshPathString() << " and " <<
                  ExternalMeshGeneratorBase::viewKeyStruct::filePathString() );
 
   if( !m_repositoryName.empty())

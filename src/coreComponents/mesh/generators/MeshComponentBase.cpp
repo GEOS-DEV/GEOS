@@ -17,13 +17,12 @@
 
 namespace geos
 {
-using namespace dataRepository;
 
+using namespace dataRepository;
 
 MeshComponentBase::MeshComponentBase( const string & name,
                                       Group * const parent )
-  :
-  Group( name, parent )
+  : Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
@@ -33,7 +32,8 @@ MeshComponentBase::~MeshComponentBase()
 
 MeshComponentBase::CatalogInterface::CatalogType & MeshComponentBase::getCatalog()
 {
-  static MeshComponentBase::CatalogInterface::CatalogType catalog;
+  static CatalogInterface::CatalogType catalog;
   return catalog;
 }
+
 }
