@@ -91,7 +91,6 @@ TEST( testBufferOps, test_pack_unpack_data_array )
 
 }
 
-#if !defined(__GNUC__) || (__GNUC__ != 9 || __GNUC_MINOR__ != 4 || __GNUC_PATCHLEVEL__ != 0)
 TEST( testBufferOps, test_pack_unpack_data_arrayofarrays )
 {
   ArrayOfArrays< int > val1( 2, 1 );
@@ -129,7 +128,6 @@ TEST( testBufferOps, test_pack_unpack_data_arrayofsets )
   ASSERT_EQ( *reinterpret_cast< int * >( &buff[0] ), 8675309 );
   ASSERT_EQ( *reinterpret_cast< int * >( &buff[4] ), 9035768 );
 }
-#endif
 
 TEST( testBufferOps, test_pack_unpack_data_maps )
 {
@@ -198,7 +196,6 @@ TEST( testBufferOps, test_pack_unpack_data_by_index_array )
   ASSERT_EQ( *reinterpret_cast< int * >( &buff[0] ), 8675309 );
 }
 
-#if !defined(__GNUC__) || (__GNUC__ != 9 || __GNUC_MINOR__ != 4 || __GNUC_PATCHLEVEL__ != 0)
 TEST( testBufferOps, test_pack_unpack_data_by_index_arrayofarrays )
 {
   ArrayOfArrays< int > val1( 2, 1 );
@@ -251,7 +248,6 @@ TEST( testBufferOps, test_pack_unpack_by_index_arrayofarrays )
   UnpackByIndex( c_buff_head, val2, idx, MPI_MAX );
   ASSERT_EQ( val2[1][0], 9035768 );
 }
-#endif
 
 TEST( testBufferOps, test_pack_unpack_arrayslice )
 {
