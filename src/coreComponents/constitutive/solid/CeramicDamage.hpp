@@ -352,7 +352,6 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
 
   // save new stress and return
   saveStress( k, q, stress );
-  return;
 }
 
 GEOS_HOST_DEVICE
@@ -426,7 +425,6 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 
   // Save new stress and return
   saveStress( k, q, stress );
-  return;
 }
 
 GEOS_HOST_DEVICE
@@ -594,17 +592,17 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       } else if(m_enableEnergyFailureCriterion == 1) 
       {
         // Alteration to support introduction of surface flags if new energy damage criterion is met
-        m_accumulatedModeIWork[k] += LvArray::tensorOps::AiBi< 6 >( elastic_trial_stress, strainIncrement);
+        m_accumulatedModeIWork[k] += LvArray::tensorOps::AiBi< 6 >( stressIncrement, strainIncrement);
 
         // Temporarily make the the same until we decide how to partition energy between different modes
-        m_accumulatedModeIIWork[k] = m_accumulatedModeIWork[k];
+        m_accumulatedModeIIWork[k] = 0;
 
-        real64 totalWork = sqrt(pow(m_accumulatedModeIWork[k],2) + pow(m_accumulatedModeIIWork[k],2));
+        real64 totalWorkSqr = pow(m_accumulatedModeIWork[k],2) + pow(m_accumulatedModeIIWork[k],2);
 
         // Only overwrite the surface flags of interior particles, if they already have a surface flag leave it
-        if( totalWork >= m_fractureEnergyReleaseRate/m_lengthScale[k] && m_surfaceFlag[k] == 0)
+        if( totalWorkSqr >= pow(m_fractureEnergyReleaseRate/m_lengthScale[k], 2) && m_surfaceFlag[k] == 0)
         {
-          m_surfaceFlag[k] = 2; 
+          m_surfaceFlag[k] = 1; 
         }
       }
     }    

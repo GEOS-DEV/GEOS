@@ -5465,7 +5465,6 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
 
     if(  constitutiveModel.hasWrapper( "materialDirection" ) )
     {
-      // CC: Todo add check for fiber vs plane update to material direction
       arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
       arrayView2d< real64 > const constitutiveMaterialDirection = constitutiveModel.getReference< array2d< real64 > >( "materialDirection" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
@@ -6954,10 +6953,75 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
           }
         }
       }
-      referenceCohesiveGridNodeAreas[g][fieldIndex] *= dA * tempGridVolumeGlobal[g] / ( hEl[0] * hEl[1] * hEl[2] );
+      referenceCohesiveGridNodeAreas[g][fieldIndex] *= dA; // * tempGridVolumeGlobal[g] / ( hEl[0] * hEl[1] * hEl[2] );
     }
   }
   // } );
+
+  // New Area correction
+  // I believe I need a correct for when the cohesive zone gap straddles a grid node (e.g. either side of interface are on differnt sides of the node, do a check for sA dot sB < 0)
+  // for( localIndex g = 0; g < numCohesiveNodes; g++)
+  // {
+  //   for(int fieldIndexI = 0; fieldIndexI < m_numVelocityFields-1; fieldIndexI++)
+  //   {
+  //     real64 mA = tempGridMassGlobal[g][fieldIndexI];
+  //     if( mA < 1e-12 )
+  //     {
+  //       continue;
+  //     }
+      
+  //     for(int fieldIndexJ = fieldIndexI+1; fieldIndexJ < m_numVelocityFields; fieldIndexJ++)
+  //     {
+  //       real64 mB = tempGridMassGlobal[g][fieldIndexJ];
+  //       if( mB < 1e-12 )
+  //       {
+  //         continue;
+  //       }
+
+  //       real64 sA[3] = { 0 };
+  //       LvArray::tensorOps::copy< 3 >(sA, tempGridSurfacePositionGlobal[g][fieldIndexI]);
+        
+  //       real64 sB[3] = { 0 };
+  //       LvArray::tensorOps::copy< 3 >(sB, tempGridSurfacePositionGlobal[g][fieldIndexJ]);
+
+  //       real64 nAB[3] = { 0 };
+  //       LvArray::tensorOps::scaledCopy< 3 >(nAB,  tempGridParticleSurfaceNormalGlobal[g][fieldIndexI], mA);
+  //       LvArray::tensorOps::scaledAdd< 3 >(nAB, tempGridParticleSurfaceNormalGlobal[g][fieldIndexJ], -mB);
+  //       LvArray::tensorOps::scale< 3 >(nAB, 1.0 / ( mA + mB ));
+
+  //       bool straddlesNode = LvArray::tensorOps::AiBi< 3 >(sA, sB) < 0.0;
+  //       real64 scale = 1.0;
+  //       if( straddlesNode )
+  //       {
+
+  //       }
+  //       else
+  //       {
+  //         real64 sAB[3] = { 0 };
+  //         LvArray::tensorOps::copy< 3 >(sAB, sA);
+  //         LvArray::tensorOps::subtract< 3 >(sAB, sB);
+          
+  //         real64 gap = -LvArray::tensorOps::AiBi< 3 >( nAB, sAB );
+
+  //         // Should probably use area projections along shared normal instead, can add that later after testing grid aligned case
+  //         real64 gap_volume = 0.5 * ( referenceCohesiveGridNodeAreas[g][fieldIndexI] + referenceCohesiveGridNodeAreas[g][fieldIndexJ] ) * gap;
+  //         scale = tempGridVolumeGlobal[g] / ( hEl[0] * hEl[1] * hEl[2] - gap_volume);
+  //       }
+
+  //       referenceCohesiveGridNodeAreas[g][fieldIndexI] *= scale;
+  //       referenceCohesiveGridNodeAreas[g][fieldIndexJ] *= scale;
+
+  //       GEOS_LOG_RANK_0("g: " << g << ", " << 
+  //                       "i: " << fieldIndexI << ", " << 
+  //                       "j: " << fieldIndexJ << ", " << 
+  //                       "gap: " << gap << ", " << 
+  //                       "gap vol: " << gap_volume << ", " << 
+  //                       "scale: " << scale << ", " <<
+  //                       "scale w/o: " << ( tempGridVolumeGlobal[g] / ( hEl[0] * hEl[1] * hEl[2] )) << ", " << 
+  //                       "A: " << referenceCohesiveGridNodeAreas[g][fieldIndexI] );
+  //     }
+  //   }
+  // }
 
   // CC: debug, for debugging temp grid variables to visualize in paraview
   arrayView3d< real64 > const gridReferenceAreaVector = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridReferenceAreaVectorString() );
@@ -6979,6 +7043,10 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
             gridReferenceSurfacePosition[g][fieldIndex][i] = tempGridSurfacePositionGlobal[n][fieldIndex][i];
             gridReferenceAreaVector[g][fieldIndex][i] = referenceCohesiveGridNodeAreas[n][fieldIndex] * referenceCohesiveGridNodeSurfaceNormals[n][fieldIndex][i];
           }
+          GEOS_LOG_RANK_0("g: " << g << ", " << 
+                          "f: " << fieldIndex << ", " << 
+                          "Avec: {" << gridReferenceAreaVector[g][fieldIndex][0] << ", " << gridReferenceAreaVector[g][fieldIndex][1] << ", " << gridReferenceAreaVector[g][fieldIndex][2] << "}, " << 
+                          "Avec mag: " << LvArray::tensorOps::l2Norm< 3 >( gridReferenceAreaVector[g][fieldIndex] ) );
         }
         isCohesive = true;
         break;

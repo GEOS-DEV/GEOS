@@ -1509,6 +1509,8 @@ public:
 protected:
   virtual void postInputInitialization() override;
 
+  // virtual void postRestartInitialization() override;
+
   /// The default value of the transverse Young's modulus for any new
   /// allocations.
   real64 m_defaultYoungModulusTransverse;
