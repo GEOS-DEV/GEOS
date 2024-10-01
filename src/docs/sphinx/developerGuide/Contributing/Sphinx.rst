@@ -13,7 +13,7 @@ Generating the documentation
     pip -m install sphinx-design sphinx-argparse sphinxcontrib-plantuml sphinxcontrib.programoutput sphinx_rtd_theme
     pip -m install scipy
 
-- Then you can generate the documentation files with the following command:
+- Then you can generate the documentation files with the following commands:
 
   .. code-block:: sh
 
