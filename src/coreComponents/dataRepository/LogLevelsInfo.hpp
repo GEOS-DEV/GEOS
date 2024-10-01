@@ -98,7 +98,7 @@ struct ResidualValues
 struct LinearSystem
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information oon linear system"; }
+  static constexpr std::string_view getDescription() { return "Information on linear system"; }
 };
 
 struct CrossflowWarning
@@ -134,7 +134,7 @@ struct Dof
 struct PoromechanicsPhaseFraction
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Print phase volume fraction"; }
+  static constexpr std::string_view getDescription() { return "Print poromechanics phase volume fraction"; }
 };
 /// @endcond
 ///@}

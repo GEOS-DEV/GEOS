@@ -71,7 +71,6 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
-  Base::template addLogLevel< logInfo::CrossflowWarning >();
   Base::template addLogLevel< logInfo::HydraulicAperture >();
   Base::template addLogLevel< logInfo::SolverTimeStep >();
   Base::template addLogLevel< logInfo::SolverNextDt >();
