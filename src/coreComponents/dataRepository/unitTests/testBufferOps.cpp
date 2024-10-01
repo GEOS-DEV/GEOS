@@ -93,23 +93,23 @@ TEST( testBufferOps, test_pack_unpack_data_array )
 
 TEST( testBufferOps, test_pack_unpack_data_arrayofarrays )
 {
-  // ArrayOfArrays< int > val1( 2, 1 );
-  // val1.emplaceBack( 0, 8675309 );
-  // val1.emplaceBack( 1, 9035768 );
-  // ASSERT_EQ( val1.size(), 2 );
-  // ASSERT_EQ( val1.sizeOfArray( 0 ), 1 );
-  // ASSERT_EQ( val1.sizeOfArray( 1 ), 1 );
-  // buffer_unit_type * buff_head = nullptr;
-  // localIndex sz = PackData< false >( buff_head, val1 );
-  // ASSERT_EQ( sz, 8 );
-  // buffer_type buff( sz );
-  // buff_head = &buff[0];
-  // localIndex sz1 = PackData< true >( buff_head, val1 );
-  // // There is no UnpackData as we only use the Pack*Data functions for history output
-  // // Packing raw data should result in the buffer containing only the integers themselves
-  // ASSERT_EQ( sz1, sz );
-  // ASSERT_EQ( *reinterpret_cast< int * >( &buff[0] ), 8675309 );
-  // ASSERT_EQ( *reinterpret_cast< int * >( &buff[4] ), 9035768 );
+  ArrayOfArrays< int > val1( 2, 1 );
+  val1.emplaceBack( 0, 8675309 );
+  val1.emplaceBack( 1, 9035768 );
+  ASSERT_EQ( val1.size(), 2 );
+  ASSERT_EQ( val1.sizeOfArray( 0 ), 1 );
+  ASSERT_EQ( val1.sizeOfArray( 1 ), 1 );
+  buffer_unit_type * buff_head = nullptr;
+  localIndex sz = PackData< false >( buff_head, val1 );
+  ASSERT_EQ( sz, 8 );
+  buffer_type buff( sz );
+  buff_head = &buff[0];
+  localIndex sz1 = PackData< true >( buff_head, val1 );
+  // There is no UnpackData as we only use the Pack*Data functions for history output
+  // Packing raw data should result in the buffer containing only the integers themselves
+  ASSERT_EQ( sz1, sz );
+  ASSERT_EQ( *reinterpret_cast< int * >( &buff[0] ), 8675309 );
+  ASSERT_EQ( *reinterpret_cast< int * >( &buff[4] ), 9035768 );
 }
 
 TEST( testBufferOps, test_pack_unpack_data_arrayofsets )
@@ -198,25 +198,25 @@ TEST( testBufferOps, test_pack_unpack_data_by_index_array )
 
 TEST( testBufferOps, test_pack_unpack_data_by_index_arrayofarrays )
 {
-  ArrayOfArrays< int > val1( 2, 1 );
-  val1.emplaceBack( 0, 8675309 );
-  val1.emplaceBack( 1, 9035768 );
-  ASSERT_EQ( val1.size(), 2 );
-  ASSERT_EQ( val1.sizeOfArray( 0 ), 1 );
-  ASSERT_EQ( val1.sizeOfArray( 1 ), 1 );
-  array1d< localIndex > idx( 1 );
-  idx[0] = 1;
-  ASSERT_EQ( idx.size(), 1 );
-  ASSERT_EQ( idx[0], 1 );
-  buffer_unit_type * buff_head = nullptr;
-  localIndex sz = PackDataByIndex< false >( buff_head, val1, idx );
-  buffer_type buff( sz );
-  buff_head = &buff[0];
-  localIndex sz1 = PackDataByIndex< true >( buff_head, val1, idx );
-  // There is no UnpackDataByIndex as we only use the Pack*Data functions for history output
-  // Packing raw data should result in the buffer containing only the integer itself
-  ASSERT_EQ( sz1, sz );
-  ASSERT_EQ( *reinterpret_cast< int * >( &buff[0] ), 9035768 );
+  // ArrayOfArrays< int > val1( 2, 1 );
+  // val1.emplaceBack( 0, 8675309 );
+  // val1.emplaceBack( 1, 9035768 );
+  // ASSERT_EQ( val1.size(), 2 );
+  // ASSERT_EQ( val1.sizeOfArray( 0 ), 1 );
+  // ASSERT_EQ( val1.sizeOfArray( 1 ), 1 );
+  // array1d< localIndex > idx( 1 );
+  // idx[0] = 1;
+  // ASSERT_EQ( idx.size(), 1 );
+  // ASSERT_EQ( idx[0], 1 );
+  // buffer_unit_type * buff_head = nullptr;
+  // localIndex sz = PackDataByIndex< false >( buff_head, val1, idx );
+  // buffer_type buff( sz );
+  // buff_head = &buff[0];
+  // localIndex sz1 = PackDataByIndex< true >( buff_head, val1, idx );
+  // // There is no UnpackDataByIndex as we only use the Pack*Data functions for history output
+  // // Packing raw data should result in the buffer containing only the integer itself
+  // ASSERT_EQ( sz1, sz );
+  // ASSERT_EQ( *reinterpret_cast< int * >( &buff[0] ), 9035768 );
 }
 
 TEST( testBufferOps, test_pack_unpack_by_index_arrayofarrays )
