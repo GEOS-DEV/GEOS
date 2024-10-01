@@ -104,19 +104,23 @@ private:
    * @param regionName The region
    * @param path The region path
    * @param fieldName The region name statistic
+   * @param packCollectionPaths Array containing all pack collection paths
    */
   void generatePackCollection( TasksManager & taskManager,
-                               string const regionName,
+                               string_view regionName,
                                string_view path,
-                               string_view fieldName );
+                               string_view fieldName,
+                               string_array & packCollectionPaths );
 
   /**
    * @brief Generate a TimeHistory component and automatically add the sources (in this case packCollection path) and the output file
    * @param outputManager The OutputManager
    * @param regionName The region name
+   * @param packCollectionPaths Array containing all pack collection paths
    */
   void generateTimeHistory( OutputManager & outputManager,
-                            string const regionName );
+                            string_view regionName,
+                            string_array const & packCollectionPaths );
 
   /// The statistics component class.
   TaskBase * m_statistics;
@@ -124,8 +128,6 @@ private:
   std::vector< TimeHistoryOutput * > m_timeHistories;
   /// Store all generated pack collection
   std::vector< PackCollection * >  m_packCollections;
-  /// [ TO DELETE ] Store pack collection paths for a region
-  string_array m_sourceTasks;
 
   /**
    * @brief Apply the lambda expression to the supported types

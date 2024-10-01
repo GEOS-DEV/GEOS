@@ -29,9 +29,10 @@ using namespace constitutive;
 using namespace dataRepository;
 
 void StatOutputController::generatePackCollection( TasksManager & taskManager,
-                                                   string const regionName,
+                                                   string_view regionName,
                                                    string_view path,
-                                                   string_view fieldName )
+                                                   string_view fieldName,
+                                                   string_array & packCollectionPaths )
 {
   string const taskManagerKey = GEOS_FMT( "packCollection{}{}", regionName, fieldName );
   PackCollection * packCollection = &taskManager.registerGroup< PackCollection >( taskManagerKey );
@@ -41,18 +42,19 @@ void StatOutputController::generatePackCollection( TasksManager & taskManager,
   pcName = fieldName;
 
   m_packCollections.push_back( packCollection );
-  m_sourceTasks.emplace_back( GEOS_FMT( "{}/", packCollection->getPath()) );
+  packCollectionPaths.emplace_back( GEOS_FMT( "{}/", packCollection->getPath()) );
 }
 
 void StatOutputController::generateTimeHistory( OutputManager & outputManager,
-                                                string const regionName )
+                                                string_view regionName,
+                                                string_array const & packCollectionPaths )
 {
   string const outputManagerKey = GEOS_FMT( "compFlowHistory{}", regionName );
   string const filename = GEOS_FMT( "generatedHDFStat{}", regionName );
 
   TimeHistoryOutput * timeHistory = &outputManager.registerGroup< TimeHistoryOutput >( outputManagerKey );
   string_array & collectorPaths =  timeHistory->getReference< string_array >( TimeHistoryOutput::viewKeys::timeHistoryOutputTargetString() );
-  collectorPaths = m_sourceTasks;
+  collectorPaths = packCollectionPaths;
   string & outputFile =  timeHistory->getReference< string >( TimeHistoryOutput::viewKeys::timeHistoryOutputFilenameString() );
   outputFile = filename;
 
@@ -70,11 +72,10 @@ void StatOutputController::initializePreSubGroups()
 
   Group & problemManager = this->getGroupByPath( "/Problem" );
   DomainPartition & domain = problemManager.getGroup< DomainPartition >( "domain" );
-  Group & meshBodies = domain.getMeshBodies();
-
   TasksManager & taskManager = this->getGroupByPath< TasksManager >( "/Tasks" );
   OutputManager & outputManager = this->getGroupByPath< OutputManager >( "/Outputs" );
 
+  Group & meshBodies = domain.getMeshBodies();
   std::vector< string > const groupNames = this->getSubGroupsNames();
 
   GEOS_ERROR_IF( groupNames.empty() || groupNames.size() >= 2,
@@ -96,13 +97,18 @@ void StatOutputController::initializePreSubGroups()
         ElementRegionBase & region = elemManager.getRegion( regionName );
         string const regionStatPath = GEOS_FMT( "{}/regionStatistics", region.getPath() );
         typename STATSTYPE::RegionStatistics & regionStats = this->getGroupByPath< typename STATSTYPE::RegionStatistics >( regionStatPath );
-        m_sourceTasks.clear();
+
+        string_array packCollectionPaths;
         regionStats.forWrappers( [&]( WrapperBase const & wrapper )
         {
-          generatePackCollection( taskManager, regionName, regionStatPath, wrapper.getName());
+          generatePackCollection( taskManager,
+                                  regionName,
+                                  regionStatPath,
+                                  wrapper.getName(),
+                                  packCollectionPaths );
         } );
 
-        generateTimeHistory( outputManager, regionName );
+        generateTimeHistory( outputManager, regionName, packCollectionPaths );
       }
     } );
   } );
