@@ -50,10 +50,6 @@ public:
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;
 
-  /// using alias for templated Catalog meshGenerator type
-  // using CatalogInterface = dataRepository::CatalogInterface< WellGeneratorBase, string const &, Group * const >;
-
-
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
    * @param childKey the catalog key of the new geometric object to create
@@ -61,12 +57,6 @@ public:
    * @return the group child
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
-
-  /**
-   * @brief Accessor for the singleton Catalog object
-   * @return a static reference to the Catalog object
-   */
-  // static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Main function of the class that generates the well geometry

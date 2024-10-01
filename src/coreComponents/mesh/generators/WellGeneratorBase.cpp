@@ -95,12 +95,6 @@ void WellGeneratorBase::expandObjectCatalogs()
   createChild( viewKeyStruct::perforationString(), viewKeyStruct::perforationString() );
 }
 
-// WellGeneratorBase::CatalogInterface::CatalogType & WellGeneratorBase::getCatalog()
-// {
-//   static WellGeneratorBase::CatalogInterface::CatalogType catalog;
-//   return catalog;
-// }
-
 void WellGeneratorBase::generateWellGeometry( )
 {
   fillPolylineDataStructure();

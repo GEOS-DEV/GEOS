@@ -51,14 +51,21 @@ public:
    */
   virtual ~MeshComponentBase();
 
+  /**
+   * @brief Get the catalog name.
+   * @return the name of this type in the catalog
+   */
   static string catalogName() { return "MeshComponentBase"; }
 
-  // The catalog interface type for MeshComponentBase
+  /// @typedef An alias for the MeshComponentBase catalog
   using CatalogInterface = dataRepository::CatalogInterface< MeshComponentBase, string const &, Group * const >;
 
+  /**
+   * @brief Singleton accessor for catalog
+   * @return
+   */
   static CatalogInterface::CatalogType & getCatalog();
-
-
 };
+
 }
 #endif /* GEOS_MESH_GENERATORS_MESHCOMPONENTBASE_HPP_ */

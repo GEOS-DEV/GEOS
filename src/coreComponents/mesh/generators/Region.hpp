@@ -43,15 +43,11 @@ public:
    */
   ~Region() override;
 
-  static string catalogName() { return "Region"; }
-
-  // using CatalogInterface = dataRepository::CatalogInterface< Region, string const &, Group * const >;
-
   /**
-   * @brief Accessor for the singleton Catalog object
-   * @return a static reference to the Catalog object
+   * @brief Get the catalog name.
+   * @return the name of this type in the catalog
    */
-  // static CatalogInterface::CatalogType & getCatalog();
+  static string catalogName() { return "Region"; }
 
   ///@cond DO_NOT_DOCUMENT
   /// Keys appearing in XML
@@ -64,7 +60,7 @@ public:
 
 private:
 
-  // Interval region identifier
+  /// Interval region identifier
   integer m_id = 0;
 
   /// Path of the dataset in the repository

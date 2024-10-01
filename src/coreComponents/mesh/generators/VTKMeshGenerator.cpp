@@ -92,7 +92,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
 void VTKMeshGenerator::postInputInitialization()
 {
   GEOS_ERROR_IF( !this->m_filePath.empty() && !m_repositoryName.empty(), // (!m_repositoryName.empty() || !m_meshPath.empty()),
-                 getName() << ": Access to the mesh via file or repository are mutually exclusive. "
+                 getDataContext() << ": Access to the mesh via file or repository are mutually exclusive. "
                               "You can't set " << viewKeyStruct::repositoryString() << " or " << viewKeyStruct::meshPathString() << " and " <<
                  ExternalMeshGeneratorBase::viewKeyStruct::filePathString() );
 
@@ -103,7 +103,7 @@ void VTKMeshGenerator::postInputInitialization()
     m_repository = externalDataManager.getGroupPointer< VTKHierarchicalDataRepository >( m_repositoryName );
 
     GEOS_THROW_IF( m_repository == nullptr,
-                   getName() << ": VTK Data Object Repository not found: " << m_repositoryName,
+                   getDataContext() << ": VTK Data Object Repository not found: " << m_repositoryName,
                    InputError );
 
     m_repository->open();

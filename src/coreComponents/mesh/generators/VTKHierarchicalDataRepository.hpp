@@ -55,8 +55,18 @@ public:
    */
   static string catalogName() { return "VTKHierarchicalDataRepository"; }
 
+  /**
+   * @brief Opens a vtkPartitionedDataSetCollection and gets the colletion and the associated dataAssembly
+   *
+   */
   void open() override;
 
+  /**
+   * @brief Performs a search in the dataAssembly to find a node of PartitionedDataSets
+   *
+   * @param path the path in the data assembly tree
+   * @return the found dataset
+   */
   vtkSmartPointer< vtkPartitionedDataSet > search( string const & path );
 
 private:
