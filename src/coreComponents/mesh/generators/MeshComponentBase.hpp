@@ -57,7 +57,9 @@ public:
    */
   static string catalogName() { return "MeshComponentBase"; }
 
-  /// @typedef An alias for the MeshComponentBase catalog
+  /**
+   * @brief Type alias for catalog interface used by this class. See CatalogInterface.
+   */
   using CatalogInterface = dataRepository::CatalogInterface< MeshComponentBase, string const &, Group * const >;
 
   /// @copydoc dataRepository::Group::getCatalog()
