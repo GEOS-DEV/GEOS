@@ -158,6 +158,9 @@ public:
 
   Group & getCellBlocks() override;
 
+  std::map< string, std::set< string > > const & getRegionAttributesCellBlocks() const override
+  { return m_regionAttributesCellBlocks; }
+
   Group const & getFaceBlocks() const override;
 
   Group & getFaceBlocks() override;
@@ -170,6 +173,8 @@ public:
    * @return A reference to the new cell block. The CellBlockManager owns this new instance.
    */
   CellBlock & registerCellBlock( string const & name );
+
+  CellBlock & registerCellBlock( string const & cellBlockName, string const & regionAttribute );
 
   /**
    * @brief Registers and returns a face block of name @p name.
@@ -271,6 +276,8 @@ private:
   array1d< globalIndex > m_nodeLocalToGlobal;
 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
+
+  std::map< string, std::set< string > > m_regionAttributesCellBlocks;
 
   real64 m_globalLength;
 

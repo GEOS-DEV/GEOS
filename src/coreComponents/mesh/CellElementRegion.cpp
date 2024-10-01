@@ -35,36 +35,15 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
     }
   }
 
-  registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
+  registerWrapper( viewKeyStruct::sourceCellBlockQualifiersString(), &m_cellBlockQualifiers ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( GEOS_FMT( "List of the desired cell-blocks names to contain in this {}.\n"
-                              "The form of this attribute is of \"regionAttribute_elementType\", so \"1_tetrahedra\" select the "
-                              "cell-block that contains the tetrahedric elements for which the regionAttribute is 1.\n"
-                              "The element types are: {}.\n"
-                              "This setting cannot be used simultaneously with {} nor {}.",
-                              catalogName(), stringutilities::join( elementNames, ", " ),
-                              viewKeyStruct::cellBlockAttributeValuesString(),
-                              viewKeyStruct::cellBlockMatchPatternsString() ) );
-
-  registerWrapper( viewKeyStruct::cellBlockAttributeValuesString(), &m_cellBlockAttributeValues ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( GEOS_FMT( "List of regionAttribute values for which we want to add the cells in this {}.\n"
-                              "I.e. {{ 1, 2 }} selects the {{ 1_tetrahedra, 1_pyramid, 2_tetrahedra, 2_pyramid... }} cellBlocks.\n"
-                              "This setting cannot be used simultaneously with {} nor {}.",
-                              catalogName(),
-                              viewKeyStruct::sourceCellBlockNamesString(),
-                              viewKeyStruct::cellBlockMatchPatternsString() ) );
-
-  registerWrapper( viewKeyStruct::cellBlockMatchPatternsString(), &m_cellBlockMatchPatterns ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( GEOS_FMT( "List of fnmatch pattern to match cell-block names to add them in this {}.\n"
-                              "I.e. \"{{ * }}\" selects every elements, {{ [1-5]_* }} selects the "
-                              "{{ 1_tetrahedra, 2_tetrahedra, ..., 5_tetrahedra, 1_pyramid... }} cellBlocks.\n"
-                              "This setting cannot be used simultaneously with {} nor {}.",
-                              catalogName(),
-                              viewKeyStruct::sourceCellBlockNamesString(),
-                              viewKeyStruct::cellBlockAttributeValuesString() ) );
+    setDescription( GEOS_FMT( "List of the desired cell-blocks qualifiers to contain in this {}, qualifiers can be either cell-block "
+                              "names, region attribute values, or fnmatch pattern."
+                              "The form of loaded cell-block names is of \"regionAttribute_elementType\", so \"1_tetrahedra\" "
+                              " contains the tetrahedric elements for which the regionAttribute is 1.\n"
+                              "The element types are: {}.",
+                              catalogName(), stringutilities::join( elementNames, ", " ) ) );
 
   registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -77,13 +56,17 @@ CellElementRegion::~CellElementRegion()
 
 void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
+  GEOS_THROW_IF( m_cellBlockNames.empty(),
+                 GEOS_FMT( "{}: No cellBlock selected in this region.",
+                           getDataContext() ),
+                 InputError );
   Group & subRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
   for( string const & cellBlockName : m_cellBlockNames )
   {
     CellBlockABC const * cellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cellBlockName );
     GEOS_THROW_IF( cellBlock == nullptr,
-                   GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
-                             getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
+                   GEOS_FMT( "{}: No cellBlock named '{}' found.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
+                             getDataContext(),
                              cellBlockName,
                              stringutilities::join( m_cellBlockNames, ", " ) ),
                    InputError );

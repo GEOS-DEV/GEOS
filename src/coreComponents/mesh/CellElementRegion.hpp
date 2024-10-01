@@ -85,6 +85,15 @@ public:
 
 
   /**
+   * @return List of user-requested mesh cellBlocks names.
+   * @note the list may be incomplete / invalid if CellElementRegionSelectorhas not been used on
+   *       the instance.
+   */
+  arrayView1d< string const > getCellBlockQualifiers() const
+  { return m_cellBlockQualifiers.toViewConst(); }
+
+
+  /**
    * @brief Select a cellBlock by its name for generateMesh().
    * @param cellBlockName string containing the cell block region name.
    */
@@ -98,22 +107,12 @@ public:
    * @param cellBlockNames array of string containing the cell block region names.
    */
   template< typename StringContainerType >
-  void addCellBlockNames( StringContainerType const & cellBlockNames )
+  void setCellBlockNames( StringContainerType const & cellBlockNames )
   {
     for( auto const & name: cellBlockNames )
     {
       m_cellBlockNames.emplace_back( name );
     }
-  }
-
-  /**
-   * @brief Free all lists of cellBlocks user-requests.
-   */
-  void clearCellBlockInputs()
-  {
-    m_cellBlockAttributeValues.clear();
-    m_cellBlockMatchPatterns.clear();
-    m_cellBlockNames.clear();
   }
 
   /**
@@ -144,25 +143,16 @@ public:
     /// @return String key for the coarsening ratio
     static constexpr char const * coarseningRatioString() {return "coarseningRatio"; }
 
-    /// @return String key for the cell block names
-    static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
-
-    /// @return String key for the cell block names
-    static constexpr char const * cellBlockAttributeValuesString() {return "cellBlockAttributeValues"; }
-
-    /// @return String key for the cell block matches
-    static constexpr char const * cellBlockMatchPatternsString() {return "cellBlocksMatch"; }
+    /// @return String key for the cell block qualifiers
+    static constexpr char const * sourceCellBlockQualifiersString() {return "cellBlocks"; }
   };
 
 private:
 
-  /// @brief List of user-requested regionAttribute values for which we want to add the cells
-  integer_array m_cellBlockAttributeValues;
+  /// @brief List of user-requested mesh cellBlocks qualifiers: cellblock names, cellblock match patterns, attribute values.
+  string_array m_cellBlockQualifiers;
 
-  /// @brief List of user-requested fnmatch patterns to match mesh cellBlocks names.
-  string_array m_cellBlockMatchPatterns;
-
-  /// @brief List of user-requested mesh cellBlocks names.
+  /// @brief List of mesh cellBlocks names.
   string_array m_cellBlockNames;
 
   /// @brief Coarsening ratio

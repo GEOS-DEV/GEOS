@@ -50,12 +50,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="groupNameRef">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[a-zA-Z0-9.\-_/*]*" />
+			<xsd:pattern value=".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="groupNameRef_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*]*\s*,\s*)*[a-zA-Z0-9.\-_/*]*\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*\[\]]*\s*,\s*)*[a-zA-Z0-9.\-_/*\[\]]*\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer">
@@ -5763,19 +5763,9 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	</xsd:complexType>
 	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-		<!--cellBlockAttributeValues => List of regionAttribute values for which we want to add the cells in this CellElementRegion.
-I.e. { 1, 2 } selects the { 1_tetrahedra, 1_pyramid, 2_tetrahedra, 2_pyramid... } cellBlocks.
-This setting cannot be used simultaneously with cellBlocks nor cellBlocksMatch.-->
-		<xsd:attribute name="cellBlockAttributeValues" type="integer_array" default="{0}" />
-		<!--cellBlocks => List of the desired cell-blocks names to contain in this CellElementRegion.
-The form of this attribute is of "regionAttribute_elementType", so "1_tetrahedra" select the cell-block that contains the tetrahedric elements for which the regionAttribute is 1.
-The element types are: tetrahedra, pyramids, wedges, hexahedra, pentagonalPrisms, hexagonalPrisms, heptagonalPrisms, octagonalPrisms, nonagonalPrisms, decagonalPrisms, hendecagonalPrisms, polyhedra.
-This setting cannot be used simultaneously with cellBlockAttributeValues nor cellBlocksMatch.-->
+		<!--cellBlocks => List of the desired cell-blocks qualifiers to contain in this CellElementRegion, qualifiers can be either cell-block names, region attribute values, or fnmatch pattern.The form of loaded cell-block names is of "regionAttribute_elementType", so "1_tetrahedra"  contains the tetrahedric elements for which the regionAttribute is 1.
+The element types are: tetrahedra, pyramids, wedges, hexahedra, pentagonalPrisms, hexagonalPrisms, heptagonalPrisms, octagonalPrisms, nonagonalPrisms, decagonalPrisms, hendecagonalPrisms, polyhedra.-->
 		<xsd:attribute name="cellBlocks" type="groupNameRef_array" default="{}" />
-		<!--cellBlocksMatch => List of fnmatch pattern to match cell-block names to add them in this CellElementRegion.
-I.e. "{ * }" selects every elements, { [1-5]_* } selects the { 1_tetrahedra, 2_tetrahedra, ..., 5_tetrahedra, 1_pyramid... } cellBlocks.
-This setting cannot be used simultaneously with cellBlocks nor cellBlockAttributeValues.-->
-		<xsd:attribute name="cellBlocksMatch" type="string_array" default="{}" />
 		<!--coarseningRatio => (no description available)-->
 		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--materialList => List of materials present in this region-->

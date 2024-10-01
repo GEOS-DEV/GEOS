@@ -182,45 +182,46 @@ TestCase const vtkImportRegionSyntaxCases[] = {
   { // should not crash
     "regular region list", true, { },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlockAttributeValues="{ 3, 5 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlockAttributeValues="{ 1, 6 }" />
-      <CellElementRegion name="underburden" materialList="{ }" cellBlockAttributeValues="{ 2, 4 }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
+      <CellElementRegion name="underburden" materialList="{ }" cellBlocks="{ 2, 4 }" />
     )xml"
   },
   { // mentioning the same region in multiple cellBlocks (6 in overburden & reservoir)
     "multiple region 1", false, { "6", "overburden", "reservoir" },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlockAttributeValues="{ 3, 5, 6 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlockAttributeValues="{ 1, 6 }" />
-      <CellElementRegion name="underburden" materialList="{ }" cellBlockAttributeValues="{ 2, 4 }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5, 6 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
+      <CellElementRegion name="underburden" materialList="{ }" cellBlocks="{ 2, 4 }" />
     )xml"
   },
   { // should not crash
     "regular * wildcard", true, { },
     R"xml(
-      <CellElementRegion name="everything" materialList="{ }" cellBlocksMatch="{ * }" />
+      <CellElementRegion name="everything" materialList="{ }" cellBlocks="{ * }" />
     )xml"
   },
   { // mentioning the same regions in multiple cellBlocks (because of "*")
     "* wildcard + region list", false, { "everything" },
     R"xml(
-      <CellElementRegion name="everything" materialList="{ }" cellBlocksMatch="{ * }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlockAttributeValues="{ 1, 6 }" />
-    )xml"
-  },
-  { // using multiple selection methods on the same region
-    "multiple selection methods", false, { "everything", "cellBlocksMatch", "cellBlockAttributeValues" },
-    R"xml(
-      <CellElementRegion name="everything" materialList="{ }" cellBlocksMatch="{ * }" cellBlockAttributeValues="{ 1, 6 }" />
+      <CellElementRegion name="everything" materialList="{ }" cellBlocks="{ * }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
     )xml"
   },
   { // should not crash
-    "mixing all selection methods", true, { },
+    "mixing all selection methods on 3 regions", true, { },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlockAttributeValues="{ 3, 5 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocksMatch="{ 1_*, 6_* }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1_*, 6_* }" />
       <CellElementRegion name="underburden" materialList="{ }"
                          cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
+    )xml"
+  },
+  { // should not crash
+    "mixing all selection methods on 1 region", true, { },
+    R"xml(
+      <CellElementRegion name="everything" materialList="{ }"
+                         cellBlocks="{ 1, 2_*, [3-5]_* , 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
     )xml"
   }
 };

@@ -34,11 +34,14 @@ class CellElementRegionSelector
 {
 public:
 
+  using RegionAttributesCellBlocksMap = std::map< string, std::set< string > >;
+
   /**
    * @brief Construct a new CellElementRegionSelector.
    * @param cellBlocks a Group containing all the available cell-blocks.
    */
-  CellElementRegionSelector( dataRepository::Group const & cellBlocks );
+  CellElementRegionSelector( dataRepository::Group const & cellBlocks,
+                             RegionAttributesCellBlocksMap const & cellBlocksRegion );
 
   /**
    * @brief Select the mesh cell-blocks for the specified region following the user inputs.
@@ -46,7 +49,7 @@ public:
    * @param region the region for which we want to select the cell-blocks.
    * @return the selected cell-blocks names.
    */
-  std::set< string > buildRegionCellBlocksSelection( CellElementRegion const & region );
+  std::set< string > buildCellBlocksSelection( CellElementRegion const & region );
 
   /**
    * @throw An InputError if region cell-blocks selections is inconsistent:
@@ -63,12 +66,17 @@ private:
   /// @brief The separator between the regionAttribute value and the type of the shape in a given cellBlock.
   static constexpr string_view cellBlockTypeSeparator = "_";
 
-  /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it (0 -> n).
+  /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it.
   std::map< string, std::vector< CellElementRegion const * > > m_cellBlocksOwners;
 
-  /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it (0 -> n).
-  std::map< string, std::vector< CellElementRegion const * > > m_regionAttributeOwners;
+  /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
+  std::map< string, std::vector< CellElementRegion const * > > m_regionAttributesOwners;
 
+  /// @brief A map that link every cellBlock name to its region attribute value.
+  RegionAttributesCellBlocksMap const & m_regionAttributesCellBlocks;
+
+  // /// @brief The set of the region attribute values, if any.
+  // std::set< string > m_regionAttributeValues;
 
   /**
    * @return A set of the FNMatch pattern from the provided lists.
@@ -79,17 +87,26 @@ private:
    * @throw An InputError if the attribute values does not exist in the mesh.
    */
   std::set< string > buildMatchPatterns( CellElementRegion const & region,
-                                         std::set< integer > const & attributeValues,
+                                         std::set< string > const & attributeValues,
                                          std::set< string > const & matchPatterns ) const;
+
+  // /**
+  //  * @return A set of the cell-blocks that the provided match-patterns select.
+  //  * @param region The region for which we collect the cell-blocks.
+  //  * @param matchPatterns The FNMatch pattern set.
+  //  * @throw An InputError if a FNMatch pattern does not select any cell-block.
+  //  */
+  // std::set< string > getMatchingCellblocks( CellElementRegion const & region,
+  //                                           std::set< string > const & matchPatterns ) const;
 
   /**
    * @return A set of the cell-blocks that the provided match-patterns select.
    * @param region The region for which we collect the cell-blocks.
-   * @param matchPatterns The FNMatch pattern set.
+   * @param matchPatterns The FNMatch pattern
    * @throw An InputError if a FNMatch pattern does not select any cell-block.
    */
   std::set< string > getMatchingCellblocks( CellElementRegion const & region,
-                                            std::set< string > const & matchPatterns ) const;
+                                            string_view matchPattern ) const;
 
   /**
    * @brief A set of the cell-blocks that the provided match-patterns select.
@@ -107,15 +124,22 @@ private:
    * @param cellBlockNames The cell-block names we want to select (can be empty).
    */
   void registerRegionSelection( CellElementRegion const & region,
-                                std::set< integer > const & attributeValues,
-                                std::set< string > const & cellBlockNames );
+                                std::set< string > const & cellBlockNames,
+                                std::set< string > const & attributeValues );
 
-  /**
-   * @return the cellBlock region attribute value in a given cellBlock name, or std::nullopt if
-   * the named did not contain any region attribute.
-   * @param cellBlockName the cellBlock name.
-   */
-  static std::optional< string > getCellBlockAttributeValue( string_view cellBlockName );
+  // /**
+  //  * @return the cellBlock region attribute value in a given cellBlock name, or std::nullopt if
+  //  * the named did not contain any region attribute.
+  //  * @param cellBlockName the cellBlock name.
+  //  */
+  // static std::optional< string > getCellBlockAttributeValue( string_view cellBlockName );
+
+  // /**
+  //  * @brief TODO
+  //  * @param cellBlockName TODO
+  //  * @return TODO
+  //  */
+  // static bool isRegionCellBlock( string_view cellBlockName );
 
 };
 
