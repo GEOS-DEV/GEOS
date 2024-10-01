@@ -927,7 +927,7 @@ Unpack( buffer_unit_type const * & buffer,
   {
     for( INDEX_TYPE ii = 0; ii < length; ++ii )
     {
-      var[ ii ] = std::max( bar[ ii ], castBuffer[ ii ] );
+      var[ ii ] = std::max( var[ ii ], castBuffer[ ii ] );
     }
   }
   else
