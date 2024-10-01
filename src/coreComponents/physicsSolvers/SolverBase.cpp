@@ -103,7 +103,7 @@ SolverBase::SolverBase( string const & name,
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::LinearSolver >();
   addLogLevel< logInfo::NonlinearSolver >();
-  addLogLevel< logInfo::SolverTimers >();
+  addLogLevel< logInfo::Timers >();
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -1389,7 +1389,7 @@ void SolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
     real64 const maxTime = MpiWrapper::max( time );
     if( maxTime > 0 )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverTimers, GEOS_FMT( "{}: {} time = {} s (min), {} s (max)", getName(), timer.first, minTime, maxTime ) );
+      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Timers, GEOS_FMT( "{}: {} time = {} s (min), {} s (max)", getName(), timer.first, minTime, maxTime ) );
     }
   }
 

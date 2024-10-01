@@ -77,7 +77,7 @@ struct NonlinearSolver
   static constexpr std::string_view getDescription() { return "Nonlinear solver information"; }
 };
 
-struct SolverTimers
+struct Timers
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Solver timers information"; }
