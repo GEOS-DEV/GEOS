@@ -452,10 +452,6 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        //Modification of cycleNember useful when minTime < 0
-        EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-        real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-
         acousticFirstOrderWaveEquationSEMKernels::
           VelocityComputation< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >

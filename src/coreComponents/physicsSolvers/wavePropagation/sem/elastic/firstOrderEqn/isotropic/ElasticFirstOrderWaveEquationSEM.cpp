@@ -536,8 +536,6 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         //Modification of cycleNember useful when minTime < 0
-        EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-        real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
 
         elasticFirstOrderWaveEquationSEMKernels::
           StressComputation< FE_TYPE > kernel( finiteElement );
