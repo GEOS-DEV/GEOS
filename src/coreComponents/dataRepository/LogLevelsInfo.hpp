@@ -43,7 +43,7 @@ struct LineSearch
 struct LineSearchFailed
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "On Incorrect solution, Information on failed line search"; }
+  static constexpr std::string_view getDescription() { return "On Incorrect solution, output the failed line search step"; }
 };
 
 struct ScalingFactor
@@ -77,10 +77,10 @@ struct FileLinearSystem
   static constexpr std::string_view getDescription() { return "Output to file the assembled linear system and solutions (matrices and vectors)"; }
 };
 
-struct SolverConfig
+struct SolverBaseNonlinearSystem
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "On non convergance, Information about testing new configuration and print the time step"; }
+  static constexpr std::string_view getDescription() { return "On non linear system, output informations about new configurations"; }
 };
 
 struct ResidualNorm

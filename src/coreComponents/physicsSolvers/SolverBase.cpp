@@ -103,7 +103,7 @@ SolverBase::SolverBase( string const & name,
   addLogLevel< logInfo::SolverTimers >();
   addLogLevel< logInfo::ScreenLinearSystem >();
   addLogLevel< logInfo::FileLinearSystem >();
-  addLogLevel< logInfo::SolverConfig >();
+  addLogLevel< logInfo::SolverBaseNonlinearSystem >();
   addLogLevel< logInfo::ResidualNorm >();
   addLogLevel< logInfo::LinearSystem >();
 
@@ -823,7 +823,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         {
           // increment the solver statistics for reporting purposes
           m_solverStatistics.logOuterLoopIteration();
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverConfig, "---------- Configuration did not converge. Testing new configuration. ----------" );
+          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverBaseNonlinearSystem, "---------- Configuration did not converge. Testing new configuration. ----------" );
         }
       }
       else if( !attemptedSimplestConfiguration )
@@ -853,7 +853,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
       m_numTimestepsSinceLastDtCut = 0;
-      GEOS_LOG_LEVEL_INFO_RANK_0 ( logInfo::SolverTimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
+      GEOS_LOG_LEVEL_INFO_RANK_0 ( logInfo::SolverBaseNonlinearSystem, GEOS_FMT( "New dt = {}", stepDt ) );
 
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
@@ -899,7 +899,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverConfig, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverBaseNonlinearSystem, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
     {
       Timer timer( m_timers["assemble"] );
