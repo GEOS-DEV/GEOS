@@ -81,6 +81,11 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 ////// Log Formatter implementation
 ///////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief distributes spaces equally from a string vector
+ * @param vec The vector where we adding spaces
+ * @param totalSpaces Total spaces to be distributed
+ */
 void distributeSpaces( std::vector< string > & vec, int totalSpaces )
 {
   int numElements = vec.size();
@@ -89,7 +94,6 @@ void distributeSpaces( std::vector< string > & vec, int totalSpaces )
 
   for( int i = 0; i < numElements; ++i )
   {
-
     vec[i] += string( baseSpaces, ' ' );
 
     if( i < extraSpaces )
@@ -181,7 +185,6 @@ string TableTextFormatter::toString() const
 template<>
 string TableTextFormatter::toString< TableData >( TableData const & tableData ) const
 {
-  std::ostringstream tableOutput;
   std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
   size_t nbHeaderRows = 0;
   string sectionSeparatingLine;
@@ -189,6 +192,7 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
 
   prepareAndBuildTable( columns, tableData, nbHeaderRows, sectionSeparatingLine, topSeparator );
 
+  std::ostringstream tableOutput;
   outputTable( tableOutput, columns, tableData, nbHeaderRows, sectionSeparatingLine, topSeparator );
 
   return tableOutput.str();
@@ -201,12 +205,13 @@ void TableTextFormatter::prepareAndBuildTable( std::vector< TableLayout::Column 
                                                string & topSeparator ) const
 {
   std::vector< std::vector< string > > tableDataRows = tableData.getTableDataRows();
-  std::vector< std::vector< string > > splitHeaders;
-  if( !tableData.getTableDataRows().empty())
+  if( !tableDataRows.empty())
   {
     updateVisibleColumns( columns, tableDataRows );
     populateColumnsFromTableData( columns, tableDataRows, false );
   }
+
+  std::vector< std::vector< string > > splitHeaders;
   splitAndMergeColumnHeaders( columns, nbHeaderRows, splitHeaders );
 
   for( auto & column : columns )
@@ -248,7 +253,6 @@ void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout:
                                                        bool isSubColumn ) const
 {
   size_t currentColumn = 0;
-
   std::vector< std::vector< string > > tColumnsValues( tableDataRows[0].size(),
                                                        std::vector< string >( tableDataRows.size()));
   if( !isSubColumn )
@@ -265,15 +269,16 @@ void TableTextFormatter::populateColumnsFromTableData( std::vector< TableLayout:
     }
     else
     {
-      std::vector< std::vector< string > > subColumnValues( tColumnsValues.begin() + currentColumn,
-                                                            tColumnsValues.begin() + currentColumn + column.parameter.subColumns.size());
+      auto subColumnStartIdx = tColumnsValues.begin() + currentColumn;
+      std::vector< std::vector< string > > subColumnValues( subColumnStartIdx,
+                                                            subColumnStartIdx + column.parameter.subColumns.size());
       populateColumnsFromTableData( column.subColumn, subColumnValues, true );
 
       std::vector< std::vector< string > > tSubColumnValues( subColumnValues[0].size(),
                                                              std::vector< string >( subColumnValues.size()) );
       transpose( tSubColumnValues, subColumnValues );
       for( const auto & columnValues : tSubColumnValues )
-      { // add all subcolumn values  in parent column
+      { // add all subcolumn values in parent column
         column.columnValues.insert( column.columnValues.end(), columnValues.begin(), columnValues.end() );
       }
       currentColumn += subColumnValues.size();
@@ -293,13 +298,12 @@ void TableTextFormatter::splitAndMergeColumnHeaders( std::vector< TableLayout::C
     std::vector< string > splitHeaderParts;
     std::istringstream ss( column.parameter.columnName );
     string subColumnNames;
-
     while( getline( ss, subColumnNames, '\n' ))
     {
       splitHeaderParts.push_back( subColumnNames );
     }
 
-    splitHeaders.push_back( std::move( splitHeaderParts ) );
+    splitHeaders.push_back( splitHeaderParts );
 
     if( !column.subColumn.empty())
     {
@@ -410,7 +414,7 @@ void TableTextFormatter::increaseColumnsSize( std::vector< TableLayout::Column >
                                               real64 const extraCharacters ) const
 {
   real64 const extraCharactersPerColumn = std::floor( (extraCharacters) / columns.size() );
-  integer rest = extraCharacters - (extraCharactersPerColumn *  columns.size() );
+  integer overflowCharacters = extraCharacters - (extraCharactersPerColumn *  columns.size() );
   for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
     if( !columns[idxColumn].subColumn.empty())
@@ -422,7 +426,7 @@ void TableTextFormatter::increaseColumnsSize( std::vector< TableLayout::Column >
     {
       string & cell = columns[idxColumn].maxStringSize[0];
       integer newMaxStringSize = idxColumn == 0 ?
-                                 extraCharactersPerColumn + cell.size() + rest :
+                                 extraCharactersPerColumn + cell.size() + overflowCharacters :
                                  extraCharactersPerColumn + cell.size();
       cell = GEOS_FMT( "{:>{}}", cell, newMaxStringSize );
     }
@@ -433,9 +437,6 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
                                                string & sectionSeparatingLine,
                                                string & topSeparator ) const
 {
-  integer const columnMargin = m_tableLayout.getColumnMargin();
-  integer const borderMargin = m_tableLayout.getBorderMargin();
-
   std::vector< string > maxStringsPerColumn;
   for( auto const & column : columns )
   {
@@ -444,6 +445,8 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
     } );
   }
 
+  integer const columnMargin = m_tableLayout.getColumnMargin();
+  integer const borderMargin = m_tableLayout.getBorderMargin();
   string const patternBetweenColumns = GEOS_FMT( "{:-^{}}", m_horizontalLine, columnMargin );
   string const leftBorder = GEOS_FMT( "{:-<{}}", m_horizontalLine, borderMargin );
   string const rightBorder = GEOS_FMT( "{:-<{}}", m_horizontalLine, borderMargin );
@@ -453,7 +456,7 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
   oss << leftBorder << columnJoin << rightBorder;
   sectionSeparatingLine = oss.str();
 
-  integer const topSeparatorLength = sectionSeparatingLine.size() -2; // Adjust for border characters
+  integer const topSeparatorLength = sectionSeparatingLine.size() - 2; // Adjust for border characters
   topSeparator = GEOS_FMT( "{}{:-<{}}{}", m_horizontalLine, "", topSeparatorLength, m_horizontalLine );
 }
 
