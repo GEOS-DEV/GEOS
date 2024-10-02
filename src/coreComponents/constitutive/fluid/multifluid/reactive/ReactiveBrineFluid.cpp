@@ -201,7 +201,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
                  InputError );
 
   bool const isClone = this->isClone();
-  PVTFunctionBase::TableOutputOptions const pvtOutputOpts = {
+  TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
   };

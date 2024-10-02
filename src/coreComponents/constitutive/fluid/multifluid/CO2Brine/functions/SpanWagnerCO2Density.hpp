@@ -81,7 +81,7 @@ public:
                         string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight,
-                        TableOutputOptions const pvtOutputOpts );
+                        TableFunction::OutputOptions const pvtOutputOpts );
 
   static string catalogName() { return "SpanWagnerCO2Density"; }
 

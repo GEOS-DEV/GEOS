@@ -264,6 +264,25 @@ void collectValues( std::ostringstream & formatterStream,
   }
 }
 
+void TableFunction::outputPVTTableData( OutputOptions const pvtOutputOpts ) const
+{
+  if( pvtOutputOpts.writeInLog &&  this->numDimensions() <= 2 )
+  {
+    TableTextFormatter textFormatter;
+    GEOS_LOG_RANK_0( textFormatter.toString( *this ));
+  }
+  if( pvtOutputOpts.writeCSV || ( pvtOutputOpts.writeInLog && this->numDimensions() >= 3 ) )
+  {
+    string const filename = this->getName();
+    std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
+                               FunctionBase::getOutputDirectory(),
+                               filename ));
+    TableCSVFormatter csvFormatter;
+    logStream << csvFormatter.toString( *this );
+  }
+}
+
 template<>
 string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
@@ -317,7 +336,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
       tableData.addRow( coords[idx], values[idx] );
     }
 
-    TableLayout const tableLayout( std::vector< std::string >{
+    TableLayout const tableLayout( {
         string( units::getDescription( tableFunction.getDimUnit( 0 ))),
         string( units::getDescription( valueUnit ))
       }, filename );
@@ -339,8 +358,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                                    units::getDescription( tableFunction.getDimUnit( 0 ) ),
                                                    units::getDescription( tableFunction.getDimUnit( 1 ) ));
 
-      TableLayout tableLayout( tableConverted.headerNames );
-      tableLayout.setTitle( filename );
+      TableLayout tableLayout( tableConverted.headerNames, filename );
 
       TableTextFormatter const table2DLog( tableLayout );
       logOutput =  table2DLog.toString( tableConverted.tableData );
@@ -348,9 +366,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     else
     {
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      TableLayout tableLayoutInfos( TableLayout::ColumnParam{{log}, TableLayout::Alignment::left} );
-      tableLayoutInfos.setTitle( filename );
-
+      TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
       TableTextFormatter const tableLog( tableLayoutInfos );
       logOutput = tableLog.layoutToString();
     }
