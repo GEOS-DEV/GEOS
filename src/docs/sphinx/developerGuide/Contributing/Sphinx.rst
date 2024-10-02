@@ -38,19 +38,20 @@ in the folder containing the source code.
 
 Information about how to write ``rst`` files can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_ .
 
-Generated ``.rst`` tables
-====================================
+Fixing errors the documentation
+===============================
+As part of the Continuous Integration process, the documentation is built on readthedocs, and any warnings or errors result in a failure test failure. 
+What follows is a brief guide on how to fix the most common errors.
 
-To describe the GEOS classes, some parts of the Sphinx documentation are automatically filled with
-generated ``.rst`` tables. Those tables are filled by the registered ``Group`` & ``Wrapper``
-configuration (with ``Group::registerWrapper()``, ``Wrapper::setDescription()``, ...).
+#. Navigate to the readthedocs build logs. This can be done by clicking on the failed test in the github test summary.
 
-When modifying a ``Wrapper`` configuration, one should call ``make geosx_update_rst_tables`` to
-generate the tables, and should then include the updated / added tables in its PR, exactly the
-same way the ``schema.xsd`` is maintained with ``make geosx_generate_schema``.
+.. image:: githubtestsummary.png
+   :width: 600
 
-To make these commands work, the following line is needed in the host-config:
+#. Download the logs from the failed test on readthedocs through the "view raw" button.
 
-  .. code-block:: sh
+.. image:: readthedocsbuildsummary.png
+   :width: 600
 
-    set( ENABLE_XML_UPDATES ON CACHE BOOL "" FORCE ) 
+#. Perform a case sensitive search for "WARNING:" or "ERROR" to locate the sphinx issues. 
+Note that there will be numerous doxygen warnings that should be ignored.
