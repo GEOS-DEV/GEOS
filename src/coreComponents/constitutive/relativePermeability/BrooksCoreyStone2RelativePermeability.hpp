@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -141,6 +142,9 @@ public:
 
 protected:
 
+  virtual void resizeFields( localIndex const size,
+                             localIndex const numPts ) override;
+
   virtual void postInputInitialization() override;
 
   array2d< real64 > m_phaseMinVolumeFraction;
@@ -177,10 +181,12 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
   real64 oilRelPerm_go = 0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_go_dOilVolFrac = 0; // derivative w.r.t to So
 
+  integer const numDir = m_waterOilRelPermExponent.size(0);
+
   // this function assumes that the oil phase can always be present (i.e., ipOil > 0)
 
   // 1) Water and oil phase relative permeabilities using water-oil data
-  for( int dir=0; dir<3; ++dir )
+  for( int dir=0; dir<numDir; ++dir )
   {
 
     real64 const volFracScaleInv = 1.0 / m_volFracScale[dir];
@@ -282,7 +288,7 @@ BrooksCoreyStone2RelativePermeabilityUpdate::
                                              phaseRelPerm[ipGas][dir],
                                              dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas][dir],
                                              phaseRelPerm[ipOil][dir],
-                                             dPhaseRelPerm_dPhaseVolFrac[ipOil][dir] );
+                                             dPhaseRelPerm_dPhaseVolFrac[ipOil] );
     }
     // update trapped phase volume fraction
     if( ipWater >= 0 )

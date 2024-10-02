@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -165,6 +166,8 @@ public:
   virtual arrayView2d< real64 const > getPhaseMinVolumeFraction() const = 0;
 
   std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
+
+
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
@@ -179,10 +182,24 @@ public:
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
+
+
+    static constexpr char const * drainageWettingNonWettingRelPermTableNamesString()
+    { return "drainageWettingNonWettingRelPermTableNames"; }
+
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
   };
+  
+  
+/*     struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
+  {
+        static constexpr char const * drainageWettingNonWettingRelPermTableNamesString()
+    { return "drainageWettingNonWettingRelPermTableNames"; }
+  } */
+    
+    
 
 private:
 

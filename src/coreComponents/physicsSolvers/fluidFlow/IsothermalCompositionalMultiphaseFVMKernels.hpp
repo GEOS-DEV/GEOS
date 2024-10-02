@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -55,8 +56,6 @@ namespace geos
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
-using namespace constitutive;
-
 enum class FaceBasedAssemblyKernelFlags
 {
   /// Flag to specify whether capillary pressure is used or not
@@ -100,8 +99,8 @@ public:
    * @param[in] relperm the relperm model
    */
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
-                       MultiFluidBase const & fluid,
-                       RelativePermeabilityBase const & relperm )
+                       constitutive::MultiFluidBase const & fluid,
+                       constitutive::RelativePermeabilityBase const & relperm )
     : Base(),
     m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
@@ -127,7 +126,7 @@ public:
   void compute( localIndex const ei,
                 FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
-    using Deriv = multifluid::DerivativeOffset;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
 
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
@@ -146,8 +145,9 @@ public:
     real64 dDens_dC[numComp]{};
     real64 dVisc_dC[numComp]{};
 
+    integer const numDir = phaseMob.size(1);
 
-    for( int dir = 0; dir < 3; ++dir )
+    for( int dir = 0; dir < numDir; ++dir )
     {
 
       for( integer ip = 0; ip < numPhase; ++ip )
@@ -224,12 +224,12 @@ protected:
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
 
   /// Views on the phase densities
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseDens;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseDens;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_phaseDens;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dPhaseDens;
 
   /// Views on the phase viscosities
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseVisc;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseVisc;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_phaseVisc;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dPhaseVisc;
 
   /// Views on the phase relative permeabilities
   arrayView4d< real64 const, relperm::USD_RELPERM > m_phaseRelPerm;
@@ -265,8 +265,8 @@ public:
   createAndLaunch( integer const numComp,
                    integer const numPhase,
                    ObjectManagerBase & subRegion,
-                   MultiFluidBase const & fluid,
-                   RelativePermeabilityBase const & relperm )
+                   constitutive::MultiFluidBase const & fluid,
+                   constitutive::RelativePermeabilityBase const & relperm )
   {
     if( numPhase == 2 )
     {
@@ -331,7 +331,7 @@ public:
                       fields::flow::phaseMobility,
                       fields::flow::dPhaseMobility >;
   using MultiFluidAccessors =
-    StencilMaterialAccessors< MultiFluidBase,
+    StencilMaterialAccessors< constitutive::MultiFluidBase,
                               fields::multifluid::phaseDensity,
                               fields::multifluid::dPhaseDensity,
                               fields::multifluid::phaseMassDensity,
@@ -340,12 +340,12 @@ public:
                               fields::multifluid::dPhaseCompFraction >;
 
   using CapPressureAccessors =
-    StencilMaterialAccessors< CapillaryPressureBase,
+    StencilMaterialAccessors< constitutive::CapillaryPressureBase,
                               fields::cappres::phaseCapPressure,
                               fields::cappres::dPhaseCapPressure_dPhaseVolFraction >;
 
   using PermeabilityAccessors =
-    StencilMaterialAccessors< PermeabilityBase,
+    StencilMaterialAccessors< constitutive::PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 
@@ -399,8 +399,8 @@ protected:
   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseVolFrac;
 
   /// Views on phase component fractions
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
-  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
+  ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
+  ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
 
   // Residual and jacobian
 
@@ -529,7 +529,7 @@ public:
     /// Transmissibility
     real64 transmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Derivatives of transmissibility with respect to pressure
-    real64 dTrans[numComp + 2][maxNumConns][numFluxSupportPoints]{};
+    real64 dTrans[numComp+2][maxNumConns][numFluxSupportPoints]{};
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -618,6 +618,7 @@ public:
         localIndex const seri[numFluxSupportPoints] = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const sei[numFluxSupportPoints] = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
+
 
         real64 faceNormal[3];
         m_stencilWrapper.getFaceNormal( iconn, faceNormal );
@@ -856,12 +857,12 @@ protected:
   ElementViewConst< arrayView4d< real64 const, constitutive::relperm::USD_MOB_DC > > const m_dPhaseMob;
 
   /// Views on phase mass densities
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseMassDens;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseMassDens;
+  ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_phaseMassDens;
+  ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dPhaseMassDens;
 
   /// Views on phase capillary pressure
-  ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
-  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const m_phaseCapPressure;
+  ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
 
   // Stencil information
 
@@ -1019,17 +1020,17 @@ public:
   using AbstractBase::m_kernelFlags;
 
   using DiffusionAccessors =
-    StencilMaterialAccessors< DiffusionBase,
+    StencilMaterialAccessors< constitutive::DiffusionBase,
                               fields::diffusion::diffusivity,
                               fields::diffusion::dDiffusivity_dTemperature,
                               fields::diffusion::phaseDiffusivityMultiplier >;
 
   using DispersionAccessors =
-    StencilMaterialAccessors< DispersionBase,
+    StencilMaterialAccessors< constitutive::DispersionBase,
                               fields::dispersion::dispersivity >;
 
   using PorosityAccessors =
-    StencilMaterialAccessors< PorosityBase,
+    StencilMaterialAccessors< constitutive::PorosityBase,
                               fields::porosity::referencePorosity >;
 
   /**
@@ -1184,7 +1185,7 @@ public:
                              StackVariables & stack,
                              FUNC && diffusionFluxKernelOp = NoOpFunc{} ) const
   {
-    using Deriv = multifluid::DerivativeOffset;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
 
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
@@ -1321,7 +1322,7 @@ public:
                               StackVariables & stack,
                               FUNC && dispersionFluxKernelOp = NoOpFunc{} ) const
   {
-    using Deriv = multifluid::DerivativeOffset;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
 
     // first, compute the transmissibilities at this face
     // note that the dispersion tensor is lagged in iteration
@@ -1454,7 +1455,7 @@ public:
                                     real64 (& dCompFracGrad_dP)[numFluxSupportPoints],
                                     real64 (& dCompFracGrad_dC)[numFluxSupportPoints][numComp] ) const
   {
-    using Deriv = multifluid::DerivativeOffset;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
 
     real64 dCompFrac_dC[numComp]{};
 
@@ -1614,8 +1615,8 @@ protected:
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFrac;
 
   /// Views on phase densities
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseDens;
+  ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_phaseDens;
+  ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dPhaseDens;
 
   /// Views on diffusivity
   ElementViewConst< arrayView3d< real64 const > > const m_diffusivity;
@@ -1927,7 +1928,7 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
-    using Deriv = multifluid::DerivativeOffset;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
     using Order = BoundaryStencil::Order;
 
     localIndex const er = m_seri( iconn, Order::ELEM );
@@ -1936,6 +1937,7 @@ public:
     localIndex const kf = m_sei( iconn, Order::FACE );
 
     // Step 1: compute the transmissibility at the boundary face
+    
     real64 faceNormal[3];
     m_stencilWrapper.getFaceNormal( iconn, faceNormal );
 
@@ -1963,21 +1965,21 @@ public:
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseInternalEnergy(
       1, 1, m_numPhases );
     StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NUM_COMP,
-                multifluid::LAYOUT_PHASE_COMP > facePhaseCompFrac( 1, 1, m_numPhases, NUM_COMP );
+                constitutive::multifluid::LAYOUT_PHASE_COMP > facePhaseCompFrac( 1, 1, m_numPhases, NUM_COMP );
     real64 faceTotalDens = 0.0;
 
-    MultiFluidBase::KernelWrapper::computeValues( m_fluidWrapper,
-                                                  m_facePres[kf],
-                                                  m_faceTemp[kf],
-                                                  m_faceCompFrac[kf],
-                                                  facePhaseFrac[0][0],
-                                                  facePhaseDens[0][0],
-                                                  facePhaseMassDens[0][0],
-                                                  facePhaseVisc[0][0],
-                                                  facePhaseEnthalpy[0][0],
-                                                  facePhaseInternalEnergy[0][0],
-                                                  facePhaseCompFrac[0][0],
-                                                  faceTotalDens );
+    constitutive::MultiFluidBase::KernelWrapper::computeValues( m_fluidWrapper,
+                                                                m_facePres[kf],
+                                                                m_faceTemp[kf],
+                                                                m_faceCompFrac[kf],
+                                                                facePhaseFrac[0][0],
+                                                                facePhaseDens[0][0],
+                                                                facePhaseMassDens[0][0],
+                                                                facePhaseVisc[0][0],
+                                                                facePhaseEnthalpy[0][0],
+                                                                facePhaseInternalEnergy[0][0],
+                                                                facePhaseCompFrac[0][0],
+                                                                faceTotalDens );
 
     // Step 3: loop over phases, compute and upwind phase flux and sum contributions to each component's flux
 
@@ -2043,23 +2045,29 @@ public:
       // *** upwinding ***
       // Step 3.4: upwinding based on the sign of the phase potential gradient
       // It is easier to hard-code the if/else because it is difficult to address elem and face variables in a uniform way
-
+      integer const numDir = m_phaseMob.size(4);
       if( potDif >= 0 )              // the element is upstream
       {
-
-        // compute the phase flux and derivatives using the element mobility
-        phaseFlux = LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * f;
-        dPhaseFlux_dP =
-          LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal )  * dF_dP +
-          LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dP], faceNormal ) * f;
-
-        for( integer jc = 0; jc < numComp; ++jc )
+        if (numDir == 1)
         {
-          dPhaseFlux_dC[jc] =
-            LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * dF_dC[jc] +
-            LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dC + jc], faceNormal ) * f;
+          phaseFlux = m_phaseMob[er][esr][ei][ip][0] * f;
+          dPhaseFlux_dP = m_phaseMob[er][esr][ei][ip][0] * dF_dP + m_dPhaseMob[er][esr][ei][ip][Deriv::dP][0] * f;
         }
-
+        // compute the phase flux and derivatives using the element mobility
+        else
+        {
+          phaseFlux = LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * f;
+          dPhaseFlux_dP =
+            LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal )  * dF_dP +
+            LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dP], faceNormal ) * f;
+  
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            dPhaseFlux_dC[jc] =
+              LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * dF_dC[jc] +
+              LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dC + jc], faceNormal ) * f;
+          }
+        }
         // slice some constitutive arrays to avoid too much indexing in component loop
         arraySlice1d< real64 const, multifluid::USD_PHASE_COMP - 3 > phaseCompFracSub =
           m_phaseCompFrac[er][esr][ei][0][ip];
@@ -2234,7 +2242,7 @@ public:
                    FaceManager const & faceManager,
                    ElementRegionManager const & elemManager,
                    BoundaryStencilWrapper const & stencilWrapper,
-                   MultiFluidBase & fluidBase,
+                   constitutive::MultiFluidBase & fluidBase,
                    real64 const dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -2330,20 +2338,20 @@ struct CFLFluxKernel
                       fields::flow::componentOutflux >;
 
   using MultiFluidAccessors =
-    StencilMaterialAccessors< MultiFluidBase,
+    StencilMaterialAccessors< constitutive::MultiFluidBase,
                               fields::multifluid::phaseViscosity,
                               fields::multifluid::phaseDensity,
                               fields::multifluid::phaseMassDensity,
                               fields::multifluid::phaseCompFraction >;
 
   using PermeabilityAccessors =
-    StencilMaterialAccessors< PermeabilityBase,
+    StencilMaterialAccessors< constitutive::PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 
 
   using RelPermAccessors =
-    StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm >;
+    StencilMaterialAccessors< constitutive::RelativePermeabilityBase, fields::relperm::phaseRelPerm >;
 
   template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
   GEOS_HOST_DEVICE
@@ -2467,7 +2475,7 @@ struct AquiferBCKernel
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    StencilMaterialAccessors< MultiFluidBase,
+    StencilMaterialAccessors< constitutive::MultiFluidBase,
                               fields::multifluid::phaseDensity,
                               fields::multifluid::dPhaseDensity,
                               fields::multifluid::phaseCompFraction,
@@ -2488,8 +2496,8 @@ struct AquiferBCKernel
              arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens,
              arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
              arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac,
-             arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
-             arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac,
+             arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
+             arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac,
              arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
              real64 const dt,
              real64 ( &localFlux )[NC],
@@ -2514,10 +2522,10 @@ struct AquiferBCKernel
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
+          ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseDens,
+          ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseDens,
+          ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
+          ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
           real64 const timeAtBeginningOfStep,
           real64 const dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
