@@ -32,7 +32,7 @@ namespace geos
  * @class MultivariableTableFunction
  *
  * An interface class for multivariable table function (function with multiple inputs and outputs) with uniform discretization
- * Prepares input data for MultivariableStaticInterpolatorKernel, which performes actual interpolation
+ * Prepares input data for MultilinearInterpolatorStaticKernel, which performes actual interpolation
  */
 
 class MultivariableTableFunction : public FunctionBase

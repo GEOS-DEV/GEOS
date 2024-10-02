@@ -20,7 +20,7 @@
 #include "functions/FunctionBase.hpp"
 #include "functions/TableFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
-#include "functions/MultivariableTableFunctionKernels.hpp"
+#include "functions/MultilinearInterpolatorStaticKernels.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOS_USE_MATHPRESSO
@@ -643,7 +643,7 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   arrayView2d< real64 > evaluatedDerivativesView = evaluatedDerivatives.toView();
 
 
-  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisMinimums(),
+  MultilinearInterpolatorStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisMinimums(),
                                                                       function.getAxisMaximums(),
                                                                       function.getAxisPoints(),
                                                                       function.getAxisSteps(),

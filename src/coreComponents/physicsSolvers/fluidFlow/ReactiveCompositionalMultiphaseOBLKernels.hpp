@@ -24,7 +24,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
-#include "functions/MultivariableTableFunctionKernels.hpp"
+#include "functions/MultilinearInterpolatorStaticKernels.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
@@ -177,7 +177,7 @@ public:
    * @param[in] OBLOperatorsTable the OBL table function kernel
    */
   OBLOperatorsKernel( ObjectManagerBase & subRegion,
-                      MultivariableTableFunctionStaticKernel< numDofs, numOps > OBLOperatorsTable )
+                      MultilinearInterpolatorStaticKernel< numDofs, numOps > OBLOperatorsTable )
     :
     m_OBLOperatorsTable( OBLOperatorsTable ),
     m_pressure( subRegion.getField< fields::flow::pressure >() ),
@@ -224,7 +224,7 @@ public:
 private:
 
   // inputs
-  MultivariableTableFunctionStaticKernel< numDofs, numOps > m_OBLOperatorsTable;
+  MultilinearInterpolatorStaticKernel< numDofs, numOps > m_OBLOperatorsTable;
 
   // Views on primary variables and their updates
   arrayView1d< real64 const > m_pressure;
@@ -272,7 +272,7 @@ public:
 
       OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >
       kernel( subRegion,
-              MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS >( function.getAxisMinimums(),
+              MultilinearInterpolatorStaticKernel< NUM_DIMS, NUM_OPS >( function.getAxisMinimums(),
                                                                            function.getAxisMaximums(),
                                                                            function.getAxisPoints(),
                                                                            function.getAxisSteps(),
