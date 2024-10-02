@@ -22,6 +22,7 @@
 #include "FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseKernels.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"  // should be removed eventually
 //#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
@@ -776,8 +777,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
     applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
                                              fields::flow::pressure::key(), fields::flow::bcPressure::key() );
     // 2. Apply saturation BC (phase volume fraction) and store in a separate field
-    applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-                                             fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(), fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+    //applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
+    //                                         fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(), fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
     
     globalIndex const rankOffset = dofManager.rankOffset();
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -795,8 +796,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
 
       arrayView1d< real64 const > const bcPres =
         subRegion.getReference< array1d< real64 > >( fields::flow::bcPressure::key() );
-      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const bcPhaseVolFraction =
-        subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >( fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+      //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const bcPhaseVolFraction =
+        //subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >( fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
       
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -804,8 +805,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
         subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< real64 const > const pres =
         subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
-      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFraction =
-        subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >( fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );      
+      //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFraction =
+        //subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >( fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );      
 
       integer const numPhase = m_numPhases;
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -830,19 +831,107 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
         localRhs[localRow] = rhsValue;
 
         // 3.2. For each phase, apply target saturation value
-        for( integer ip = 0; ip < numPhase; ++ip )
-        {
-          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ip + 1,
-                                                      rankOffset,
-                                                      localMatrix,
-                                                      rhsValue,
-                                                      bcPhaseVolFraction[ei][ip],
-                                                      phaseVolFraction[ei][ip] );
-          localRhs[localRow + ip + 1] = rhsValue;
-        }
+        // for( integer ip = 0; ip < numPhase; ++ip )
+        // {
+        //   FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ip + 1,
+        //                                               rankOffset,
+        //                                               localMatrix,
+        //                                               rhsValue,
+        //                                               bcPhaseVolFraction[ei][ip],
+        //                                               phaseVolFraction[ei][ip] );
+        //   localRhs[localRow + ip + 1] = rhsValue;
+        // }
       } );
     } );    
   } );
+}
+
+real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                          real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                          DomainPartition const & domain,
+                                                          DofManager const & dofManager,
+                                                          arrayView1d< real64 const > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+  integer constexpr numNorm = 1; // mass balance
+  array1d< real64 > localResidualNorm;
+  array1d< real64 > localResidualNormalizer;
+  localResidualNorm.resize( numNorm );
+  localResidualNormalizer.resize( numNorm );
+
+  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      real64 subRegionResidualNorm[numNorm]{};
+      real64 subRegionResidualNormalizer[numNorm]{};
+
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+      // step 1: compute the norm in the subRegion
+
+        real64 subRegionFlowResidualNorm[1]{};
+        real64 subRegionFlowResidualNormalizer[1]{};
+        
+      immiscibleMultiphaseKernels::
+      ResidualNormKernelFactory::createAndLaunch< parallelDevicePolicy<> >( normType,
+                                                     2,
+                                                     rankOffset,
+                                                     dofKey,
+                                                     localRhs,
+                                                     subRegion,
+                                                     solid,
+                                                     m_nonlinearSolverParameters.m_minNormalizer,
+                                                     subRegionFlowResidualNorm,
+                                                     subRegionFlowResidualNormalizer );
+        subRegionResidualNorm[0] = subRegionFlowResidualNorm[0];
+        subRegionResidualNormalizer[0] = subRegionFlowResidualNormalizer[0];
+
+      // step 2: first reduction across meshBodies/regions/subRegions
+      if( normType == solverBaseKernels::NormType::Linf )
+      {
+        solverBaseKernels::LinfResidualNormHelper::
+          updateLocalNorm< numNorm >( subRegionResidualNorm, localResidualNorm );
+      }
+      else
+      {
+        solverBaseKernels::L2ResidualNormHelper::
+          updateLocalNorm< numNorm >( subRegionResidualNorm, subRegionResidualNormalizer, localResidualNorm, localResidualNormalizer );
+      }
+    } );
+  } );
+
+  real64 residualNorm = 0.0;
+  residualNorm = localResidualNorm[0];
+if( normType == solverBaseKernels::NormType::Linf )
+    {
+      solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm[0], residualNorm );
+    }
+    else
+    {
+      solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
+    }
+
+    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+    {
+      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
+    }
+
+  
+  return residualNorm;
 }
 
 void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & domain )

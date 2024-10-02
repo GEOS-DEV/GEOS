@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseKernels.hpp"
 
 namespace geos
 {
@@ -87,6 +88,13 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
+  
+  virtual real64
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
   setupDofs( DomainPartition const & domain,
@@ -98,7 +106,7 @@ public:
                            DomainPartition & domain,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
+                           arrayView1d< real64 > const & localRhs ) override;                   
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;

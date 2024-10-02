@@ -20,10 +20,12 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_MULTIPHASEKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_MULTIPHASEKERNELS_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
@@ -39,10 +41,11 @@
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
 //#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"            // check need of multiphase equivalent
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/SolverBaseKernels.hpp"
 
 namespace geos
-{
 
+{
 namespace immiscibleMultiphaseKernels
 {
 using namespace constitutive;
@@ -608,7 +611,8 @@ public:
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
         GEOS_ASSERT_GE( localRow, 0 );
-        GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow + numEqn);
+        
+       GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow + numEqn - 1);
 
         for( integer ic = 0; ic < numEqn; ++ic )
         {
@@ -895,8 +899,143 @@ struct FluidUpdateKernel
   }
 };
 
+//******************************** ResidualNormKernel ********************************/
 
-} // namesace immiscible multiphasekernels
+/**
+ * @class ResidualNormKernel
+ *
+ * @brief Define the interface for the property kernel in charge of computing the residual norm
+ */
+
+/// Compile time value for the number of norms to compute
+  static constexpr integer numNorm = 1;
+
+class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< numNorm >
+{
+public:
+
+
+  using Base = solverBaseKernels::ResidualNormKernelBase< numNorm >;
+  using Base::m_minNormalizer;
+  using Base::m_rankOffset;
+  using Base::m_localResidual;
+  using Base::m_dofNumber; 
+
+ResidualNormKernel( globalIndex const rankOffset,
+                      arrayView1d< real64 const > const & localResidual,
+                      arrayView1d< globalIndex const > const & dofNumber,
+                      arrayView1d< localIndex const > const & ghostRank,
+                      integer const numPhases,
+                      ElementSubRegionBase const & subRegion,
+                      constitutive::CoupledSolidBase const & solid,
+                      real64 const minNormalizer )
+    : Base( rankOffset,
+            localResidual,
+            dofNumber,
+            ghostRank,
+            minNormalizer ),
+    m_numPhases( numPhases ),
+    m_volume( subRegion.getElementVolume() ),
+    m_porosity_n( solid.getPorosity_n() ),
+    m_phaseMass_n( subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >() )
+  {}
+
+  GEOS_HOST_DEVICE
+  virtual void computeLinf( localIndex const ei,
+                            LinfStackVariables & stack ) const override
+  {
+    for( integer idof = 0; idof < m_numPhases; ++idof )
+    {
+      real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
+      real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / massNormalizer;
+      if( valMass > stack.localValue[0] )
+      {
+        stack.localValue[0] = valMass;
+      }
+    }
+
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void computeL2( localIndex const ei,
+                          L2StackVariables & stack ) const override
+  {
+    for( integer idof = 0; idof < m_numPhases; ++idof )
+    {
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
+      stack.localValue[0] += m_localResidual[stack.localRow + idof] * m_localResidual[stack.localRow + idof];
+      stack.localNormalizer[0] += massNormalizer;
+    }
+  }
+
+
+protected:
+  
+  /// Number of fluid phases
+  integer const m_numPhases;
+
+  /// View on the volume
+  arrayView1d< real64 const > const m_volume;
+
+  /// View on porosity at the previous converged time step
+  arrayView2d< real64 const > const m_porosity_n;
+  /// View on mass at the previous converged time step
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseMass_n;
+};
+
+/**
+ * @class ResidualNormKernelFactory
+ */
+class ResidualNormKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] normType the type of norm used (Linf or L2)
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] localResidual the residual vector on my MPI rank
+   * @param[in] subRegion the element subregion
+   * @param[in] solid the solid model
+   * @param[out] residualNorm the residual norm on the subRegion
+   * @param[out] residualNormalizer the residual normalizer on the subRegion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( solverBaseKernels::NormType const normType,
+                   integer const numPhases,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localResidual,
+                   ElementSubRegionBase const & subRegion,
+                   constitutive::CoupledSolidBase const & solid,
+                   real64 const minNormalizer,
+                   real64 (& residualNorm)[1],
+                   real64 (& residualNormalizer)[1] )
+  {
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numPhases, subRegion, solid, minNormalizer );
+    if( normType == solverBaseKernels::NormType::Linf )
+    {
+      ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
+    }
+    else // L2 norm
+    {
+      ResidualNormKernel::launchL2< POLICY >( subRegion.size(), kernel, residualNorm, residualNormalizer );
+    }
+  }
+
+};
+
+
+
+
+} // namespace immiscible multiphasekernels
 
 
 } // namespace geos
