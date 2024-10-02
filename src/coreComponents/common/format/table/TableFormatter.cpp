@@ -159,7 +159,7 @@ TableTextFormatter::TableTextFormatter( TableLayout const & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
-string TableTextFormatter::layoutToString() const
+string TableTextFormatter::toString() const
 {
   std::ostringstream tableOutput;
   std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();

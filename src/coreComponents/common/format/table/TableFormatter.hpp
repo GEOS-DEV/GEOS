@@ -137,7 +137,7 @@ public:
   /**
    * @return A TableLayout converted into a formatted representation.
    */
-  string layoutToString() const;
+  string toString() const;
 
   /**
    * @brief Convert a data source to a table string.
@@ -161,7 +161,7 @@ private:
    * @param tableData Vector containing all rows filled with values
    * @param nbHeaderRows Number of header rows, which will be calculated based on column headers and their formatting.
    * @param sectionSeparatingLine Separator string used between sections of the table
-   * @param topSeparator The top table separator
+   * @param topSeparator The table top separator
    */
   void prepareAndBuildTable( std::vector< TableLayout::Column > & columns,
                              TableData const & tableData,
@@ -171,11 +171,11 @@ private:
 /**
  * @brief Displays the complete table
  * @param tableOutput The output stream
- * @param columns Tector containg all columns
- * @param tableData Vector conhe vtaining all rows filled with values
- * @param nbHeaderRows A variable to be calculated which will contain the number of header lines to be displayed
+ * @param columns Vector containg all columns
+ * @param tableData Vector containing all rows filled with values
+ * @param nbHeaderRows A variable to be calculated which will contain the number of header lines
  * @param sectionSeparatingLine Separator string used between sections of the table
- * @param topSeparator The top table separator
+ * @param topSeparator The table top separator
  */
   void outputTable( std::ostringstream & tableOutput,
                     std::vector< TableLayout::Column > & columns,
@@ -185,7 +185,7 @@ private:
                     string_view topSeparator ) const;
 
   /**
-   * @brief Populate all the column values with values extracted from the table data.
+   * @brief Populate all the column values with values extracted from TableData.
    * @param columns Vector of columns to populate.
    * @param tableData Vector containing all rows filled with values
    * @param isSubColumn Boolean indicating if the current column is a subcolumn
@@ -219,7 +219,7 @@ private:
                                       integer const idxColumn ) const;
 
   /**
-   * @brief Compute the max table line length, taking into account the length of : title, columns header and values
+   * @brief Compute the max table line length, taking into account the length of : title, columns header/values
    * Increase the size of the columns if necessary
    * @param columns Vector of column containing containing the largest string for each column
    */
@@ -237,7 +237,7 @@ private:
    * @brief Builds the table's separating lines based on the content length of the columns.
    * @param columns Vector containing all table columns
    * @param sectionSeparatingLine Separator string used between sections of the table
-   * @param topSeparator The top table separator
+   * @param topSeparator The table top separator
    */
   void buildTableSeparators( std::vector< TableLayout::Column > const & columns,
                              string & sectionSeparatingLine,

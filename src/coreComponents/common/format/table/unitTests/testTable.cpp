@@ -237,7 +237,7 @@ TEST( testTable, layoutTable )
   tableLayoutInfos.setTitle( filename );
 
   TableTextFormatter const tableLog( tableLayoutInfos );
-  EXPECT_EQ( tableLog.layoutToString(),
+  EXPECT_EQ( tableLog.toString(),
              "\n-------------------------------------------------------------------------------------\n"
              "|                   fluid1_phaseModel1_PhillipsBrineDensity_table                   |\n"
              "-------------------------------------------------------------------------------------\n"
