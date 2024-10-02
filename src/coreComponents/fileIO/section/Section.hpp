@@ -20,10 +20,12 @@
 #define GEOS_COMMON_SECTION_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
 
+// TODO ? SectionData ?
 class Section
 {
 public:
@@ -50,6 +52,21 @@ public:
   void addDescription( string_view description );
 
   /**
+   * @brief Add a description to the end of the section by concatening a description name and descriptions values.
+   * @param descriptionName The description name
+   * @param args Descriptions values to be aligned.
+   * Descriptions values can be be any types and will be aligned
+   */
+  template< typename ... Args >
+  void addEndDescription( string_view descriptionName, Args const & ... args );
+
+  /**
+   * @brief Add a description to the end of the section
+   * @param description The string value of the description
+   */
+  void addEndDescription( string_view description );
+
+  /**
    * @brief Set the minimal width of a row
    * @param minWidth The minimal width of the table
    */
@@ -71,23 +88,26 @@ private:
 
   /**
    * @brief Compute the max string size (m_sectionWidth) between title and the description(s)
-   * @param m_sectionTitle The table title
-   * @param descriptions The descriptions vector
-   * @return The max row length of the section
    */
-  void computeWidth( string_view m_sectionTitle,
-                        std::vector< string > const & descriptions );
+  void computeWidth();
 
   /**
    * @brief Build a description from the name and description values
    * @param descriptionName The decription name
    * @param decriptionsValues The description values
    */
-  void formatAndInsertDescriptions( string_view descriptionName,
+  void formatAndInsertDescriptions( std::vector< string > & descriptionContainer,
+                                    string_view descriptionName,
                                     std::vector< string > const & decriptionsValues );
+
+  string constructDescriptionsWithContainer( std::vector< string > const & descriptions, integer length ) const;
+
+  void constructDescription( std::ostringstream & oss, string const & description, integer length ) const;
 
   /// Vector containing all descriptions
   std::vector< string > m_descriptions;
+  /// title of section
+  std::vector< string > m_endLogMessages;
 
   /// title of section
   string m_sectionTitle;
@@ -100,6 +120,12 @@ private:
   static constexpr integer m_marginBorder = 2;
   /// numbers of character used as border
   static constexpr integer m_nbSpecialChar = 2;
+
+  ///
+  string m_lineSection;
+  ///
+  string m_borderSpaces;
+
 
   /// Start title footer string
   static string_view constexpr m_footerTitle = "End : ";
@@ -116,7 +142,20 @@ void Section::addDescription( string_view descriptionName, Args const &... args 
     descriptionsValues.push_back( value );
   } (), ...);
 
-  formatAndInsertDescriptions( descriptionName, descriptionsValues );
+  formatAndInsertDescriptions( m_descriptions, descriptionName, descriptionsValues );
+}
+
+template< typename ... Args >
+void Section::addEndDescription( string_view descriptionName, Args const &... args )
+{
+  std::vector< string > descriptionsValues;
+  ( [&] {
+    static_assert( has_formatter_v< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
+    string const value = GEOS_FMT( "{}", args );
+    descriptionsValues.push_back( value );
+  } (), ...);
+
+  formatAndInsertDescriptions( m_endLogMessages, descriptionName, descriptionsValues );
 }
 }
 
