@@ -198,20 +198,23 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-  // assemble the accumulation term in the mass balance equations
-  assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
+  if( !m_keepVariablesConstantDuringInitStep )
+  {
+    // assemble the accumulation term in the mass balance equations
+    assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
 
-  // then assemble the flux terms in the mass balance equations
-  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
+    // then assemble the flux terms in the mass balance equations
+    assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 
-  // then assemble the volume balance equations
-  assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
+    // then assemble the volume balance equations
+    assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
 
-  // then assemble the pressure relations between well elements
-  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+    // then assemble the pressure relations between well elements
+    assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
 
-  // then compute the perforation rates (later assembled by the coupled solver)
-  computePerforationRates( domain );
+    // then compute the perforation rates (later assembled by the coupled solver)
+    computePerforationRates( domain );
+  }
 
   // then apply a special treatment to the wells that are shut
   shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
