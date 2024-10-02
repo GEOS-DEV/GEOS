@@ -72,7 +72,7 @@ TEST_P( ElementRegionTestFixture, testVTKImportRegionSyntaxes )
       </Problem>
     )xml";
   string const xmlInput = GEOS_FMT( pattern,
-                                    testMeshDir + "/box_hybrid_mesh_clipped.vtu",
+                                    testMeshDir + "/box_hybrid_mesh.vtu",
                                     testCase.xmlRegions );
 
   ProblemManager & problem = getGlobalState().getProblemManager();
