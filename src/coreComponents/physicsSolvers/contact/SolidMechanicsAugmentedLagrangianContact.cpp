@@ -904,10 +904,11 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   int hasConfigurationConvergedGlobally = (totCondNotConv == 0) ? true : false;
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, GEOS_FMT( "  ALM convergence summary:"
-                                                              " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
-                                                              globalCondConv[0], globalCondConv[1], globalCondConv[2],
-                                                              globalCondConv[3], globalCondConv[4] ));
+  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence,
+                              GEOS_FMT( "  ALM convergence summary:"
+                                        " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
+                                        globalCondConv[0], globalCondConv[1], globalCondConv[2],
+                                        globalCondConv[3], globalCondConv[4] ));
 
   if( hasConfigurationConvergedGlobally )
   {

@@ -104,6 +104,8 @@ SolverBase::SolverBase( string const & name,
   addLogLevel< logInfo::LinearSolver >();
   addLogLevel< logInfo::NonlinearSolver >();
   addLogLevel< logInfo::Timers >();
+  addLogLevel< logInfo::Initialization >();
+  addLogLevel< logInfo::Statistics >();
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -323,7 +325,8 @@ bool SolverBase::execute( real64 const time_n,
 
     if( dtRemaining > 0.0 )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
+      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep,
+                                  GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
 
@@ -895,7 +898,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::NonlinearSolver, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::NonlinearSolver,
+                                GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
     {
       Timer timer( m_timers["assemble"] );

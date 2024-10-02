@@ -222,6 +222,8 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
+  addLogLevel< logInfo::SurfaceGenerator >();
+  addLogLevel< logInfo::Mapping >();
   addLogLevel< logInfo::RuptureRate >();
 }
 
@@ -748,7 +750,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   real64 ruptureRate = calculateRuptureRate( elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::RuptureRate, "rupture rate is " << ruptureRate );
+  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::RuptureRate, GEOS_FMT( "Rupture rate = {}", ruptureRate ) );
   if( ruptureRate > 0 )
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 

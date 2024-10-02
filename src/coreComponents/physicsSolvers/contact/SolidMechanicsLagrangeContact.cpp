@@ -427,10 +427,11 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
     } );
   } );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration, GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
-                                                                this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
-                                                                minSlidingTolerance, maxSlidingTolerance,
-                                                                minNormalTractionTolerance, maxNormalTractionTolerance ) );
+  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration,
+                              GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
+                                        this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
+                                        minSlidingTolerance, maxSlidingTolerance,
+                                        minNormalTractionTolerance, maxNormalTractionTolerance ) );
 }
 
 void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition & domain )

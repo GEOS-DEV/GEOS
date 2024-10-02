@@ -248,17 +248,22 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
       GEOS_WARNING( GEOS_FMT( "{}, {}: Cannot compute average pressure & temperature because region pore volume is zero.", getName(), regionNames[i] ) );
     }
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{}, {} (time {} s): Pressure (min, average, max): {}, {}, {} Pa",
-                                                               getName(), regionNames[i], time, regionStatistics.minPressure, regionStatistics.averagePressure, regionStatistics.maxPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{}, {} (time {} s): Delta pressure (min, max): {}, {} Pa",
-                                                               getName(), regionNames[i], time, regionStatistics.minDeltaPressure, regionStatistics.maxDeltaPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{}, {} (time {} s): Temperature (min, average, max): {}, {}, {} K",
-                                                               getName(), regionNames[i], time, regionStatistics.minTemperature, regionStatistics.averageTemperature,
-                                                               regionStatistics.maxTemperature ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{}, {} (time {} s): Total dynamic pore volume: {} rm^3",
-                                                               getName(), regionNames[i], time, regionStatistics.totalPoreVolume ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{}, {} (time {} s): Total fluid mass: {} kg",
-                                                               getName(), regionNames[i], time, regionStatistics.totalMass ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
+                                GEOS_FMT( "{}, {} (time {} s): Pressure (min, average, max): {}, {}, {} Pa",
+                                          getName(), regionNames[i], time, regionStatistics.minPressure, regionStatistics.averagePressure, regionStatistics.maxPressure ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
+                                GEOS_FMT( "{}, {} (time {} s): Delta pressure (min, max): {}, {} Pa",
+                                          getName(), regionNames[i], time, regionStatistics.minDeltaPressure, regionStatistics.maxDeltaPressure ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
+                                GEOS_FMT( "{}, {} (time {} s): Temperature (min, average, max): {}, {}, {} K",
+                                          getName(), regionNames[i], time, regionStatistics.minTemperature, regionStatistics.averageTemperature,
+                                          regionStatistics.maxTemperature ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
+                                GEOS_FMT( "{}, {} (time {} s): Total dynamic pore volume: {} rm^3",
+                                          getName(), regionNames[i], time, regionStatistics.totalPoreVolume ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
+                                GEOS_FMT( "{}, {} (time {} s): Total fluid mass: {} kg",
+                                          getName(), regionNames[i], time, regionStatistics.totalMass ) );
 
     if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
