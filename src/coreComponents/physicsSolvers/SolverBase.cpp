@@ -740,8 +740,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
 real64 SolverBase::eisenstatWalker( real64 const newNewtonNorm,
                                     real64 const oldNewtonNorm,
-                                    LinearSolverParameters::Krylov const & krylovParams,
-                                    integer const logLevel )
+                                    LinearSolverParameters::Krylov const & krylovParams )
 {
   real64 normRatio = std::min( newNewtonNorm / oldNewtonNorm, 1.0 );
   real64 newKrylovTol = krylovParams.adaptiveGamma * std::pow( normRatio, krylovParams.adaptiveExponent );
@@ -1025,7 +1024,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
       if( krylovParams.useAdaptiveTol )
       {
-        krylovParams.relTolerance = newtonIter > 0 ? eisenstatWalker( residualNorm, lastResidual, krylovParams, m_linearSolverParameters.getLogLevel() ) : krylovParams.weakestTol;
+        krylovParams.relTolerance = newtonIter > 0 ? eisenstatWalker( residualNorm, lastResidual, krylovParams ) : krylovParams.weakestTol;
       }
 
       // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers

@@ -941,8 +941,7 @@ protected:
    */
   real64 eisenstatWalker( real64 const newNewtonNorm,
                           real64 const oldNewtonNorm,
-                          LinearSolverParameters::Krylov const & krylovParams,
-                          integer const logLevel );
+                          LinearSolverParameters::Krylov const & krylovParams );
 
   /**
    * @brief Get the Constitutive Name object
