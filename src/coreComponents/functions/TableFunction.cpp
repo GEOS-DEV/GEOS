@@ -336,10 +336,10 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
       tableData.addRow( coords[idx], values[idx] );
     }
 
-    TableLayout const tableLayout( {
+    TableLayout const tableLayout( filename, {
         string( units::getDescription( tableFunction.getDimUnit( 0 ))),
         string( units::getDescription( valueUnit ))
-      }, filename );
+      } );
 
     TableTextFormatter const logTable( tableLayout );
     logOutput = logTable.toString( tableData );
@@ -366,7 +366,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     else
     {
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
+      TableLayout const tableLayoutInfos( filename, {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}} );
       TableTextFormatter const tableLog( tableLayoutInfos );
       logOutput = tableLog.layoutToString();
     }

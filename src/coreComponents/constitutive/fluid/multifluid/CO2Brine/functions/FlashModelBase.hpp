@@ -88,32 +88,7 @@ public:
    * @throw a SimulationError if one of the input values is out of bound.
    */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
-
-  /**
-   * @brief Print the table(s) in the log and/or CSV files when requested by the user.
-   * @param tableData The target table to be printed
-   * @param pvtOutputOpts Struct containing output options
-   */
-  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions const pvtOutputOpts )
-  {
-    if( pvtOutputOpts.writeInLog &&  tableData->numDimensions() <= 2 )
-    {
-      TableTextFormatter textFormatter;
-      GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
-    }
-    if( pvtOutputOpts.writeCSV || ( pvtOutputOpts.writeInLog && tableData->numDimensions() >= 3 ) )
-    {
-      string const filename = tableData->getName();
-      std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
-                                 FunctionBase::getOutputDirectory(),
-                                 filename ));
-
-      TableCSVFormatter csvFormatter;
-      logStream << csvFormatter.toString( *tableData );
-    }
-  }
-
+  
   string const & flashModelName() const { return m_modelName; }
 
 protected:
