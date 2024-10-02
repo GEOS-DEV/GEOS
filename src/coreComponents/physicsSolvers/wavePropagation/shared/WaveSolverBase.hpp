@@ -25,6 +25,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "common/LifoStorage.hpp"
+#include "functions/TableFunction.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
@@ -128,6 +129,8 @@ public:
     static constexpr char const * attenuationTypeString() { return "attenuationType"; }
     static constexpr char const * slsReferenceAngularFrequenciesString() { return "slsReferenceAngularFrequencies"; }
     static constexpr char const * slsAnelasticityCoefficientsString() { return "slsAnelasticityCoefficients"; }
+
+    static constexpr char const * sourceWaveletTableNames() { return "sourceWaveletTableNames"; }
   };
 
   /**
@@ -366,6 +369,15 @@ protected:
 
   /// A set of target nodes IDs that will be handled by the current solver
   SortedArray< localIndex > m_solverTargetNodesSet;
+
+  /// Names of table functions for source wavelet (time dependency)
+  array1d< string > m_sourceWaveletTableNames;
+
+  /// Flag to indicate if source wavelet table functions are used
+  bool m_useSourceWaveletTables;
+
+  /// Wrappers of table functions for source wavelet (time dependency)
+  array1d< TableFunction::KernelWrapper > m_sourceWaveletTableWrappers;
 
   struct parametersPML
   {

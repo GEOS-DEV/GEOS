@@ -322,18 +322,19 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n,
   arrayView2d< real64 const > const sourceConstantsz   = m_sourceConstantsz.toViewConst();
 
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  real64 const rickerValue = WaveSolverUtils::evaluateRicker( time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder );
+  real64 const rickerValue = m_useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder );
   forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
+      real64 const srcValue = m_useSourceWaveletTables ? m_sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
       for( localIndex inode = 0; inode < sourceConstantsx.size( 1 ); ++inode )
       {
-        real32 const localIncrementx = sourceConstantsx[isrc][inode] * rickerValue;
+        real32 const localIncrementx = sourceConstantsx[isrc][inode] * srcValue;
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhsx[sourceNodeIds[isrc][inode]], localIncrementx );
-        real32 const localIncrementy = sourceConstantsy[isrc][inode] * rickerValue;
+        real32 const localIncrementy = sourceConstantsy[isrc][inode] * srcValue;
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhsy[sourceNodeIds[isrc][inode]], localIncrementy );
-        real32 const localIncrementz = sourceConstantsz[isrc][inode] * rickerValue;
+        real32 const localIncrementz = sourceConstantsz[isrc][inode] * srcValue;
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhsz[sourceNodeIds[isrc][inode]], localIncrementz );
       }
     }

@@ -189,6 +189,8 @@ struct PressureComputation
           real32 const timeSourceFrequency,
           real32 const timeSourceDelay,
           localIndex const rickerOrder,
+          bool const useSourceWaveletTables,
+          arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
           arrayView1d< real32 > const p_np1 )
 
   {
@@ -201,7 +203,7 @@ struct PressureComputation
 
     //Source initialization
 
-    real64 const rickerValue = WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
+    real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -270,9 +272,10 @@ struct PressureComputation
         {
           if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
+            real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*rickerValue)/(mass[elemsToNodes[k][i]]);
+              real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*srcValue)/(mass[elemsToNodes[k][i]]);
               RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement2 );
             }
           }

@@ -226,6 +226,12 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( WaveSolverUtils::AttenuationType::none ).
     setDescription( "Flag to indicate which attenuation model to use: \"none\" for no attenuation, \"sls\\" " for the standard-linear-solid (SLS) model (Fichtner, 2014)." );
 
+  registerWrapper( viewKeyStruct::sourceWaveletTableNames(), &m_sourceWaveletTableNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    //setApplyDefaultValue( { } ).
+    setDescription( "Names of the table functions, one for each source, that are used to define the source wavelets. If a list is given, it overrides the Ricker wavelet definitions."
+                    "The default value is an empty list, which means that a Ricker wavelet is used everywhere." );
+
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -278,6 +284,17 @@ void WaveSolverBase::initializePreSubGroups()
   m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
+
+  if( m_useSourceWaveletTables )
+  {
+    FunctionManager const & functionManager = FunctionManager::getInstance();
+    m_sourceWaveletTableWrappers.clear();
+    for( integer i = 0; i < m_sourceWaveletTableNames.size(); i++ )
+    {
+      TableFunction const & sourceWaveletTable = functionManager.getGroup< TableFunction >( m_sourceWaveletTableNames[ i ] );
+      m_sourceWaveletTableWrappers.emplace_back( sourceWaveletTable.createKernelWrapper() );
+    }
+  }
 
 }
 
@@ -374,6 +391,11 @@ void WaveSolverBase::postInputInitialization()
   {
     m_nsamplesSeismoTrace = 0;
   }
+
+  GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && m_sourceWaveletTableNames.size() != m_sourceCoordinates.size( 0 ),
+                 "Invalid number of source wavelet table names. The number of table functions must be equal to the number of sources",
+                 InputError );
+  m_useSourceWaveletTables = m_sourceWaveletTableNames.size() > 0;
 
 }
 

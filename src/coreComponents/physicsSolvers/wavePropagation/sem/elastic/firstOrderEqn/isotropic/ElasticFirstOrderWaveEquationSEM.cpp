@@ -561,6 +561,8 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           m_timeSourceFrequency,
           m_timeSourceDelay,
           m_rickerOrder,
+          m_useSourceWaveletTables,
+          m_sourceWaveletTableWrappers,
           stressxx,
           stressyy,
           stresszz,

@@ -94,6 +94,8 @@ struct StressComputation
           real32 const timeSourceFrequency,
           real32 const timeSourceDelay,
           localIndex const rickerOrder,
+          bool const useSourceWaveletTables,
+          arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
           arrayView2d< real32 > const stressxx,
           arrayView2d< real32 > const stressyy,
           arrayView2d< real32 > const stresszz,
@@ -102,7 +104,7 @@ struct StressComputation
           arrayView2d< real32 > const stressyz )
 
   {
-    real64 const rickerValue = WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
+    real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // only the eight corners of the mesh cell are needed to compute the Jacobian
@@ -219,10 +221,11 @@ struct StressComputation
         {
           if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
+            real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
               real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-              real32 const localIncrement = dt*(sourceConstants[isrc][i]*rickerValue)/massLoc;
+              real32 const localIncrement = dt*(sourceConstants[isrc][i]*srcValue)/massLoc;
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][i], localIncrement );
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][i], localIncrement );
               RAJA::atomicAdd< ATOMIC_POLICY >( &stresszz[k][i], localIncrement );

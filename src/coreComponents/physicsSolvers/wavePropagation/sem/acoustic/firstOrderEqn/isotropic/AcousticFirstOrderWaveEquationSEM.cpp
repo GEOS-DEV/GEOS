@@ -486,6 +486,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           m_timeSourceFrequency,
           m_timeSourceDelay,
           m_rickerOrder,
+          m_useSourceWaveletTables,
+          m_sourceWaveletTableWrappers,
           p_np1 );
       } );
       arrayView2d< real32 > const uxReceivers = m_uxNp1AtReceivers.toView();
