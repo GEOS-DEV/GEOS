@@ -180,13 +180,11 @@ CellElementRegionSelector::registerRegionSelection( CellElementRegion const & re
   for( string const & attributeValue : attributeValues )
   {
     m_regionAttributesOwners[attributeValue].push_back( &region );
-    GEOS_LOG( "ajout de attributeValue="<<attributeValue<<" dans la region "<<region.getName());
   }
 
   for( string const & cellBlockName : cellBlockNames )
   {
     m_cellBlocksOwners[cellBlockName].push_back( &region );
-    GEOS_LOG( "ajout de cellBlockName="<<cellBlockName<<" dans la region "<<region.getName());
   }
 }
 
@@ -202,7 +200,6 @@ std::set< string > CellElementRegionSelector::buildCellBlocksSelection( CellElem
     auto const regionCellBlocks = m_regionAttributesCellBlocks.find( qualifier );
     if( regionCellBlocks != m_regionAttributesCellBlocks.end() )
     { // if the qualifier is a region attribute value, let's select it
-      GEOS_LOG(GEOS_FMT("selection du regionAttribute {}", qualifier));
       regionAttributeSelection.emplace( regionCellBlocks->first );
       for( string const & cellBlock : regionCellBlocks->second )
       {
@@ -211,7 +208,6 @@ std::set< string > CellElementRegionSelector::buildCellBlocksSelection( CellElem
     }
     else
     { // the qualifier is a match pattern, or a simple cellblock name, let's select all matching cell-blocks
-      GEOS_LOG(GEOS_FMT("selection du matchPattern {}", qualifier));
       std::set< string > const matchedCellBlocks = getMatchingCellblocks( region, qualifier );
       cellBlocksSelection.insert( matchedCellBlocks.begin(), matchedCellBlocks.end() );
     }
@@ -242,7 +238,6 @@ void CellElementRegionSelector::checkSelectionConsistency() const
       }
       else if( owningRegions.size() > 1 )
       {
-        GEOS_LOG(GEOS_FMT("WOW n°{} : {}",multipleRefsErrors.size(),qualifier));
         multipleRefsErrors.push_back(
           GEOS_FMT( "The {} '{}' has been referenced in multiple {}:\n{}",
                     qualifierType, qualifier, CellElementRegion::catalogName(),
