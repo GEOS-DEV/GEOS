@@ -67,6 +67,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
   return oss.str();
 }
 
+template<>
 string TableCSVFormatter::toString( TableData const & tableData ) const
 {
   return headerToString() + dataToString( tableData );
@@ -155,6 +156,7 @@ string TableTextFormatter::layoutToString() const
   return tableOutput.str();
 }
 
+template <>
 string TableTextFormatter::toString( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;

@@ -3947,7 +3947,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
 		<!--writeCSV => Write statistics into a CSV file-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4091,7 +4091,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => Write statistics into a CSV file-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4113,7 +4113,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--solidSolverName => Name of the solid solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--writeCSV => Write statistics into a CSV file-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4128,7 +4128,7 @@ Local- Add jump stabilization on interior of macro elements-->
 - Log Level 3 details values for each region.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => Write statistics into a CSV file-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
