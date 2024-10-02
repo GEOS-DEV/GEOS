@@ -97,5 +97,9 @@ target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS fileIO LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( section/unitTests )
+endif( )
+
 
 
