@@ -41,6 +41,12 @@ struct SurfaceGenerator
   static constexpr std::string_view getDescription() { return "Fracture generation information"; }
 };
 
+struct RuptureRate
+{
+  static constexpr int getMinLogLevel() { return 3; }
+  static constexpr std::string_view getDescription() { return "Rupture rate information"; }
+};
+
 struct Mapping
 {
   static constexpr int getMinLogLevel() { return 2; }

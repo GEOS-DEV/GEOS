@@ -50,7 +50,7 @@ struct LineSearch
 struct Solution
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Solutiuon information (scaling, maximum changes, quality check)"; }
+  static constexpr std::string_view getDescription() { return "Solution information (scaling, maximum changes, quality check)"; }
 };
 
 struct Convergence

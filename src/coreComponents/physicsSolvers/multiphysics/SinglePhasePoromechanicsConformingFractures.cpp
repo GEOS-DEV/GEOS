@@ -44,6 +44,8 @@ SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromecha
                                                                                                          Group * const parent )
   : Base( name, parent )
 {
+  Base::template addLogLevel< logInfo::Dof >();
+
   LinearSolverParameters & params = this->m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
   params.mgr.separateComponents = false;
@@ -81,6 +83,10 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( Do
   dofManager.setDomain( domain );
   this->setupDofs( domain, dofManager );
   dofManager.reorderByRank();
+
+  std::ostringstream oss;
+  dofManager.printFieldInfo( oss );
+  GEOS_LOG_LEVEL_INFO( logInfo::Dof, oss.str())
 
   /// 2. Add coupling terms not added by the DofManager.
   localIndex const numLocalRows = dofManager.numLocalDofs();

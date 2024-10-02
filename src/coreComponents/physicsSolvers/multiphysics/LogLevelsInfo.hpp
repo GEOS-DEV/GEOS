@@ -41,6 +41,12 @@ struct Coupling
   static constexpr std::string_view getDescription() { return "Coupling information"; }
 };
 
+struct Dof
+{
+  static constexpr int getMinLogLevel() { return 3; }
+  static constexpr std::string_view getDescription() { return "Dof information"; }
+};
+
 /// @endcond
 ///@}
 
@@ -49,4 +55,3 @@ struct Coupling
 }
 
 #endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_LOGLEVELSINFO_HPP
-

@@ -14,11 +14,11 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains log level informations for contact solvers
+ * This file contains log level informations for coupled multiphysics solvers
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
-#define GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_LOGLEVELSINFO_HPP
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -35,10 +35,10 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct Configuration
+struct SolidMechanicsInitialization
 {
   static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Configuration information"; }
+  static constexpr std::string_view getDescription() { return "SolidMechanics Initialization information"; }
 };
 
 /// @endcond
@@ -48,5 +48,4 @@ struct Configuration
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
-
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_LOGLEVELSINFO_HPP
