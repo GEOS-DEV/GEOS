@@ -174,6 +174,12 @@ public:
    */
   CellBlock & registerCellBlock( string const & name );
 
+  /**
+   * @brief Registers and returns a cell block of name @p name.
+   * @param cellBlockName The name of the created cell block.
+   * @param regionAttribute The region attribute of the created cell block.
+   * @return A reference to the new cell block. The CellBlockManager owns this new instance.
+   */
   CellBlock & registerCellBlock( string const & cellBlockName, string const & regionAttribute );
 
   /**

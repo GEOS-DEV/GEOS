@@ -122,7 +122,7 @@ public:
   virtual Group const & getFaceBlocks() const = 0;
 
   /**
-   * @return A map of the cellblocks for each region attribute values.
+   * @return A map of the cellblocks list for each region attribute values.
    */
   virtual std::map< string, std::set< string > > const & getRegionAttributesCellBlocks() const = 0;
 

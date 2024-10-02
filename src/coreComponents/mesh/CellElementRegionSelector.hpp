@@ -34,11 +34,13 @@ class CellElementRegionSelector
 {
 public:
 
+  /// @brief A map of the cellblocks name lists for each region attributes value.
   using RegionAttributesCellBlocksMap = std::map< string, std::set< string > >;
 
   /**
    * @brief Construct a new CellElementRegionSelector.
    * @param cellBlocks a Group containing all the available cell-blocks.
+   * @param cellBlocksRegion A map of the cellblocks name lists for each region attributes value.
    */
   CellElementRegionSelector( dataRepository::Group const & cellBlocks,
                              RegionAttributesCellBlocksMap const & cellBlocksRegion );
@@ -72,7 +74,7 @@ private:
   /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
   std::map< string, std::vector< CellElementRegion const * > > m_regionAttributesOwners;
 
-  /// @brief A map that link every region attribute to the cellBlock list they contain.
+  /// @brief A map of the cellblocks name lists for each region attributes value.
   RegionAttributesCellBlocksMap const & m_regionAttributesCellBlocks;
 
   /**
