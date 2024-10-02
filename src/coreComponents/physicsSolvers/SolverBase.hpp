@@ -936,7 +936,6 @@ protected:
    * @param newNewtonNorm Residual norm at current iteration
    * @param oldNewtonNorm Residual norm at previous iteration
    * @param krylovParams Linear solver parameters
-   * @param logLevel Log level
    * @return Adaptive tolerance recommendation
    */
   real64 eisenstatWalker( real64 const newNewtonNorm,

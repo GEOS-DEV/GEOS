@@ -49,4 +49,3 @@ struct Configuration
 }
 
 #endif // GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
-

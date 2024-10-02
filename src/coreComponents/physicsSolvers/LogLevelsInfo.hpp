@@ -103,4 +103,3 @@ struct Statistics
 }
 
 #endif // GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
-
