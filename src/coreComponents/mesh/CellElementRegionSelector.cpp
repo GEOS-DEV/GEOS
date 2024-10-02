@@ -28,6 +28,8 @@ CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks,
                                                       RegionAttributesCellBlocksMap const & regionsCellBlocks ):
   m_regionAttributesCellBlocks( regionsCellBlocks )
 {
+  // The owners lists need to be initialized so we will be able to verify later that it is not empty.
+
   cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
     string const name = cellBlock.getName();
