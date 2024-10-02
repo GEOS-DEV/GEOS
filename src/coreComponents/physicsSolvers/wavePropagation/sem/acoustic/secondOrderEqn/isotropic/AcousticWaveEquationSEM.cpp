@@ -207,7 +207,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
-      real64 const srcValue = m_useSourceWaveletTables ? m_sourceWaveletTableWrappers[ isrc ].compute( &time_n) : rickerValue; 
+      real64 const srcValue = m_useSourceWaveletTables ? m_sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
         real32 const localIncrement = sourceConstants[isrc][inode] * srcValue;
