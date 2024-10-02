@@ -38,7 +38,7 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::sourceCellBlockQualifiersString(), &m_cellBlockQualifiers ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( GEOS_FMT( "List of the desired cell-blocks qualifiers to contain in this {}, qualifiers can be either cell-block "
+    setDescription( GEOS_FMT( "List of the desired cell-blocks qualifiers to contain in this {}. Qualifiers can be either cell-block "
                               "names, region attribute values, or fnmatch pattern."
                               "The form of loaded cell-block names is of \"regionAttribute_elementType\", so \"1_tetrahedra\" "
                               " contains the tetrahedric elements for which the regionAttribute is 1.\n"

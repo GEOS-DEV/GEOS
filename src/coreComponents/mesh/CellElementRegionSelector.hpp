@@ -34,16 +34,13 @@ class CellElementRegionSelector
 {
 public:
 
-  /// @brief A map of the cellblocks name lists for each region attributes value.
-  using RegionAttributesCellBlocksMap = std::map< string, std::set< string > >;
-
   /**
    * @brief Construct a new CellElementRegionSelector.
    * @param cellBlocks a Group containing all the available cell-blocks.
    * @param cellBlocksRegion A map of the cellblocks name lists for each region attributes value.
    */
   CellElementRegionSelector( dataRepository::Group const & cellBlocks,
-                             RegionAttributesCellBlocksMap const & cellBlocksRegion );
+                             std::map< integer, std::set< string > > const & cellBlocksRegion );
 
   /**
    * @brief Select the mesh cell-blocks for the specified region following the user inputs.
@@ -74,8 +71,8 @@ private:
   /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
   std::map< string, std::vector< CellElementRegion const * > > m_regionAttributesOwners;
 
-  /// @brief A map of the cellblocks name lists for each region attributes value.
-  RegionAttributesCellBlocksMap const & m_regionAttributesCellBlocks;
+  /// @brief A map of the cellblocks name lists for each region attributes value. Internal attribute type is integer to facilitate comparison with cellBlock qualifiers.
+  std::map< string, std::set< string > const & > m_regionAttributesCellBlocks;
 
   /**
    * @return A set of the FNMatch pattern from the provided lists.

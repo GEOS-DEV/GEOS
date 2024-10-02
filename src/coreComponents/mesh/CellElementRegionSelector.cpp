@@ -24,9 +24,9 @@ using namespace dataRepository;
 using ViewKeys = CellElementRegion::viewKeyStruct;
 
 
-CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks,
-                                                      RegionAttributesCellBlocksMap const & regionsCellBlocks ):
-  m_regionAttributesCellBlocks( regionsCellBlocks )
+CellElementRegionSelector::CellElementRegionSelector(
+  Group const & cellBlocks,
+  std::map< integer, std::set< string > > const & regionsCellBlocks )
 {
   // The owners lists need to be initialized so we will be able to verify later that it is not empty.
 
@@ -36,9 +36,11 @@ CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks,
     m_cellBlocksOwners.emplace( name, std::vector< CellElementRegion const * >() );
   } );
 
-  for( auto const & regionAttribute : regionsCellBlocks )
+  for( auto const & regionCellBlocks : regionsCellBlocks )
   {
-    m_regionAttributesOwners.emplace( regionAttribute.first, std::vector< CellElementRegion const * >() );//possible de supprimer
+    string const regionAttributeStr = std::to_string( regionCellBlocks.first );
+    m_regionAttributesCellBlocks.emplace(regionAttributeStr, regionCellBlocks.second);
+    m_regionAttributesOwners.emplace( regionAttributeStr, std::vector< CellElementRegion const * >() );
   }
 }
 
@@ -95,7 +97,7 @@ CellElementRegionSelector::registerRegionSelection( CellElementRegion const & re
                                                     std::set< string > const & cellBlockNames,
                                                     std::set< string > const & attributeValues )
 {
-  for( string const & attributeValue : attributeValues )
+  for( string attributeValue : attributeValues )
   {
     m_regionAttributesOwners[attributeValue].push_back( &region );
   }

@@ -124,7 +124,7 @@ public:
   /**
    * @return A map of the cellblocks list for each region attribute values.
    */
-  virtual std::map< string, std::set< string > > const & getRegionAttributesCellBlocks() const = 0;
+  virtual std::map< integer, std::set< string > > const & getRegionAttributesCellBlocks() const = 0;
 
   /**
    * @brief Total number of nodes across all the cell blocks.
