@@ -242,13 +242,14 @@ void CellElementRegionSelector::checkSelectionConsistency() const
       }
       else if( owningRegions.size() > 1 )
       {
+        GEOS_LOG(GEOS_FMT("WOW n°{} : {}",multipleRefsErrors.size(),qualifier));
         multipleRefsErrors.push_back(
           GEOS_FMT( "The {} '{}' has been referenced in multiple {}:\n{}",
                     qualifierType, qualifier, CellElementRegion::catalogName(),
                     stringutilities::joinLamda( owningRegions, '\n', getRegionStr ) ) );
       }
     }
-    GEOS_THROW_IF( !multipleRefsErrors.empty(), stringutilities::join( multipleRefsErrors ), InputError );
+    GEOS_THROW_IF( !multipleRefsErrors.empty(), stringutilities::join( multipleRefsErrors, "\n\n" ), InputError );
   };
 
   std::set< string > orphanRegionAttributes;

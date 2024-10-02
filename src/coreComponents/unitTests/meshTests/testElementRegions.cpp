@@ -72,7 +72,7 @@ TEST_P( ElementRegionTestFixture, testVTKImportRegionSyntaxes )
       </Problem>
     )xml";
   string const xmlInput = GEOS_FMT( pattern,
-                                    testMeshDir + "/box_hybrid_mesh.vtu",
+                                    testMeshDir + "/box_hybrid_mesh_clipped.vtu",
                                     testCase.xmlRegions );
 
   ProblemManager & problem = getGlobalState().getProblemManager();
@@ -125,74 +125,69 @@ TEST_P( ElementRegionTestFixture, testVTKImportRegionSyntaxes )
 
 TestCase const vtkImportRegionSyntaxCases[] = {
   { // should not crash
-    "regular subRegion list", true, { },
+    "regular cell-block list", true, { },
     R"xml(
       <CellElementRegion name="overburden" materialList="{ }"
-                         cellBlocks="{ 3_hexahedra, 3_tetrahedra, 3_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
+                         cellBlocks="{ 1_hexahedra, 1_tetrahedra, 1_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
       <CellElementRegion name="reservoir" materialList="{ }"
-                         cellBlocks="{ 1_hexahedra, 1_tetrahedra, 1_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
-      <CellElementRegion name="underburden" materialList="{ }"
-                         cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
+                         cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
     )xml"
   },
-  { // crash because of not existing primitive (3_pendecagonalPrism)
-    "non existing 3_pendecagonalPrism", false, { "overburden", "3_pendecagonalPrism" },
+  { // crash because of not existing primitive (2_pendecagonalPrism)
+    "non existing 2_pendecagonalPrism", false, { "reservoir", "2_pendecagonalPrism" },
     R"xml(
       <CellElementRegion name="overburden" materialList="{ }" 
-                         cellBlocks="{ 3_pendecagonalPrism, 3_hexahedra, 3_tetrahedra, 3_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
+                         cellBlocks="{ 1_hexahedra, 1_tetrahedra, 1_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
       <CellElementRegion name="reservoir" materialList="{ }"
-                         cellBlocks="{ 1_hexahedra, 1_tetrahedra, 1_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
-      <CellElementRegion name="underburden" materialList="{ }"
-                         cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
+                         cellBlocks="{ 2_pendecagonalPrism, 2_hexahedra, 2_tetrahedra, 2_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
     )xml"
   },
   { // crash because of not unknown primitive name (helloWorld)
     "non existing helloWorld", false, { "overburden", "helloWorld" },
     R"xml(
       <CellElementRegion name="overburden" materialList="{ }" 
-                          cellBlocks="{ helloWorld, 3_hexahedra, 3_tetrahedra, 3_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
+                          cellBlocks="{ helloWorld, 1_hexahedra, 1_tetrahedra, 1_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
       <CellElementRegion name="reservoir" materialList="{ }"
-                          cellBlocks="{ 1_hexahedra, 1_tetrahedra, 1_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
-      <CellElementRegion name="underburden" materialList="{ }"
-                          cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
+                          cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
     )xml"
   },
-  { // crash because of lacking one primitive (3_hexahedra)
-    "lacking 3_hexahedra", false, { "3_hexahedra" },
+  { // crash because of lacking one primitive (1_hexahedra)
+    "lacking 1_hexahedra", false, { "1_hexahedra" },
     R"xml(
       <CellElementRegion name="overburden" materialList="{ }"
-                          cellBlocks="{ 3_tetrahedra, 3_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
+                          cellBlocks="{ 1_tetrahedra, 1_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
       <CellElementRegion name="reservoir" materialList="{ }"
-                          cellBlocks="{ 1_hexahedra, 1_tetrahedra, 1_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
-      <CellElementRegion name="underburden" materialList="{ }"
-                          cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
+                          cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
     )xml"
   },
-  { // mentioning the same sub-regions in multiple cellBlocks (3_hexahedra)
-    "multiple 3_hexahedra", false, { "overburden", "reservoir", "3_hexahedra" },
+  { // mentioning the same cell-blocks in multiple regions (1_hexahedra)
+    "multiple 1_hexahedra", false, { "overburden", "reservoir", "1_hexahedra" },
     R"xml(
       <CellElementRegion name="overburden" materialList="{ }"
-                          cellBlocks="{ 3_hexahedra, 3_tetrahedra, 3_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
+                          cellBlocks="{ 1_hexahedra, 1_tetrahedra, 1_pyramids, 5_hexahedra, 5_tetrahedra, 5_pyramids }" />
       <CellElementRegion name="reservoir" materialList="{ }"
-                          cellBlocks="{ 3_hexahedra, 1_hexahedra, 1_tetrahedra, 1_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
-      <CellElementRegion name="underburden" materialList="{ }"
-                          cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
+                          cellBlocks="{ 1_hexahedra, 2_hexahedra, 2_tetrahedra, 2_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
     )xml"
   },
   { // should not crash
-    "regular region list", true, { },
+    "regular region attribute list", true, { },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
-      <CellElementRegion name="underburden" materialList="{ }" cellBlocks="{ 2, 4 }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 1, 5 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 2, 6 }" />
     )xml"
   },
-  { // mentioning the same region in multiple cellBlocks (6 in overburden & reservoir)
-    "multiple region 1", false, { "6", "overburden", "reservoir" },
+  { // mentioning the same region attribute in multiple cellBlocks (6 in overburden & reservoir)
+    "multiple region 1", false, { "6", "region attribute", "overburden", "reservoir" },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5, 6 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
-      <CellElementRegion name="underburden" materialList="{ }" cellBlocks="{ 2, 4 }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 1, 5, 6 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 2, 6 }" />
+    )xml"
+  },
+  { // forgetting a region attribute (5)
+    "forget region 5", false, { "5", "region attribute" },
+    R"xml(
+      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 1 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 2, 6 }" />
     )xml"
   },
   { // should not crash
@@ -202,26 +197,25 @@ TestCase const vtkImportRegionSyntaxCases[] = {
     )xml"
   },
   { // mentioning the same regions in multiple cellBlocks (because of "*")
-    "* wildcard + region list", false, { "everything" },
+    "* wildcard + region list", false, { "2", "6", "everything", "reservoir" },
     R"xml(
       <CellElementRegion name="everything" materialList="{ }" cellBlocks="{ * }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 2, 6 }" />
     )xml"
   },
   { // should not crash
-    "mixing all selection methods on 3 regions", true, { },
+    "mixing selection methods on 2 regions", true, { },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1_*, 6_* }" />
-      <CellElementRegion name="underburden" materialList="{ }"
-                         cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 1, 5 }" />
+      <CellElementRegion name="reservoir" materialList="{ }"
+                         cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
     )xml"
   },
   { // should not crash
     "mixing all selection methods on 1 region", true, { },
     R"xml(
       <CellElementRegion name="everything" materialList="{ }"
-                         cellBlocks="{ 1, 2_*, [3-5]_* , 6_hexahedra, 6_tetrahedra, 6_pyramids }" />
+                         cellBlocks="{ 1, 2_hexahedra, 2_tetrahedra, 2_pyramids, [5-6]_* }" />
     )xml"
   }
 };
