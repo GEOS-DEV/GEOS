@@ -72,11 +72,8 @@ private:
   /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
   std::map< string, std::vector< CellElementRegion const * > > m_regionAttributesOwners;
 
-  /// @brief A map that link every cellBlock name to its region attribute value.
+  /// @brief A map that link every region attribute to the cellBlock list they contain.
   RegionAttributesCellBlocksMap const & m_regionAttributesCellBlocks;
-
-  // /// @brief The set of the region attribute values, if any.
-  // std::set< string > m_regionAttributeValues;
 
   /**
    * @return A set of the FNMatch pattern from the provided lists.
@@ -89,15 +86,6 @@ private:
   std::set< string > buildMatchPatterns( CellElementRegion const & region,
                                          std::set< string > const & attributeValues,
                                          std::set< string > const & matchPatterns ) const;
-
-  // /**
-  //  * @return A set of the cell-blocks that the provided match-patterns select.
-  //  * @param region The region for which we collect the cell-blocks.
-  //  * @param matchPatterns The FNMatch pattern set.
-  //  * @throw An InputError if a FNMatch pattern does not select any cell-block.
-  //  */
-  // std::set< string > getMatchingCellblocks( CellElementRegion const & region,
-  //                                           std::set< string > const & matchPatterns ) const;
 
   /**
    * @return A set of the cell-blocks that the provided match-patterns select.
@@ -126,20 +114,6 @@ private:
   void registerRegionSelection( CellElementRegion const & region,
                                 std::set< string > const & cellBlockNames,
                                 std::set< string > const & attributeValues );
-
-  // /**
-  //  * @return the cellBlock region attribute value in a given cellBlock name, or std::nullopt if
-  //  * the named did not contain any region attribute.
-  //  * @param cellBlockName the cellBlock name.
-  //  */
-  // static std::optional< string > getCellBlockAttributeValue( string_view cellBlockName );
-
-  // /**
-  //  * @brief TODO
-  //  * @param cellBlockName TODO
-  //  * @return TODO
-  //  */
-  // static bool isRegionCellBlock( string_view cellBlockName );
 
 };
 

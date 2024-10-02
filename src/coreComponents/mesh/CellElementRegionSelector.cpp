@@ -24,27 +24,6 @@ using namespace dataRepository;
 using ViewKeys = CellElementRegion::viewKeyStruct;
 
 
-// std::optional< string > CellElementRegionSelector::getCellBlockAttributeValue( string_view cellBlockName )
-// {
-//   if( cellBlockName.find( cellBlockTypeSeparator ) != string_view::npos )
-//   {
-//     for( )
-//     {
-//       if( stringutilities::endsWith( cellBlockName, primitiveSuffix ))
-//       {
-//         return stringutilities::removeStringAndFollowingContent( cellBlockName, cellBlockTypeSeparator );
-//       }
-//     }
-//   }
-//   return {};
-// }
-
-// bool CellElementRegionSelector::isRegionCellBlock( string_view cellBlockName )
-// {
-//   return cellBlockName.find( cellBlockTypeSeparator ) != string_view::npos;
-// }
-
-
 CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks,
                                                       RegionAttributesCellBlocksMap const & regionsCellBlocks ):
   m_regionAttributesCellBlocks( regionsCellBlocks )
@@ -52,8 +31,7 @@ CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks,
   cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
     string const name = cellBlock.getName();
-    m_cellBlocksOwners.emplace( name, std::vector< CellElementRegion const * >() );//possible de supprimer en gardant un set des noms de
-                                                                                   // cellblocks ?
+    m_cellBlocksOwners.emplace( name, std::vector< CellElementRegion const * >() );
   } );
 
   for( auto const & regionAttribute : regionsCellBlocks )
@@ -63,68 +41,6 @@ CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks,
 }
 
 
-// std::set< string >
-// CellElementRegionSelector::buildMatchPatterns( CellElementRegion const & region,
-//                                                std::set< integer > const & requestedAttributeValues,
-//                                                std::set< string > const & requestedMatchPatterns ) const
-// {
-//   std::set< string > matchPatterns;
-
-//   // user region attribute matching patterns creation
-//   for( integer attributeValue : requestedAttributeValues )
-//   {
-//     string attributeValueStr = std::to_string( attributeValue );
-//     // if attribute value does not exist in the mesh
-//     GEOS_THROW_IF( m_regionAttributesOwners.count( attributeValueStr ) == 0,
-//                    GEOS_FMT( "{}: Region attribute value '{}' not found.\nAvailable region attribute list: {{ {} }}",
-//                              region.getWrapperDataContext( ViewKeys::cellBlockAttributeValuesString() ),
-//                              attributeValueStr,
-//                              stringutilities::joinLamda( m_regionAttributesOwners, ", ",
-//                                                          []( auto pair ) { return pair->first; } ) ),
-//                    InputError );
-
-//     // for each desired attribute values, we add the following the match patterns:
-//     // Attribute value, followed by an underscore, followed by one or more characters.
-//     matchPatterns.emplace( GEOS_FMT( "{}_?*", attributeValueStr ) );
-//   }
-
-//   // user fnMatch patterns
-//   for( string const & matchPattern : requestedMatchPatterns )
-//   {
-//     matchPatterns.emplace( matchPattern );
-//   }
-
-//   return matchPatterns;
-// }
-
-// std::set< string >
-// CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & region,
-//                                                   std::set< string > const & matchPatterns ) const
-// {
-//   std::set< string > matchedCellBlocks;
-//   for( string const & matchPattern : matchPatterns )
-//   {
-//     bool matching = false;
-//     for( auto const & [cellBlockName, owners] : m_cellBlocksOwners )
-//     {
-//       // if the pattern matches the tested cellBlock name
-//       if( fnmatch( matchPattern.c_str(), cellBlockName.c_str(), 0 ) == 0 )
-//       {
-//         matching = true;
-//         matchedCellBlocks.emplace( cellBlockName );
-//       }
-//     }
-
-//     GEOS_THROW_IF( !matching,
-//                    GEOS_FMT( "{}: No cellBlock name is satisfying the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
-//                              region.getWrapperDataContext( ViewKeys::cellBlockMatchPatternsString() ),
-//                              matchPattern,
-//                              stringutilities::joinLamda( m_cellBlocksOwners, ", ",
-//                                                          []( auto pair ) { return pair->first; } ) ),
-//                    InputError );
-//   }
-//   return matchedCellBlocks;
-// }
 std::set< string >
 CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & region,
                                                   string_view matchPattern ) const
