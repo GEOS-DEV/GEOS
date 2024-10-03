@@ -14,7 +14,6 @@
  */
 
 
-//TODO REAJUSTER LAPPEL DES FONCTIONS
 /**
  * @file TableFormatter.cpp
  */
