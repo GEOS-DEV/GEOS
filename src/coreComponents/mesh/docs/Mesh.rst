@@ -217,10 +217,13 @@ For now, loaded regions has the following limitations:
    :width: 500
 
 In GEOS, there are three different ways to select ``cellBlocks`` in a ``CellElementRegion``:
+
 - Using a list of the desired ``regionAttribute`` values.
   I.e. ``"{ 1, 2 }"`` selects all the cell-blocks of the ``regionAttribute`` 1 and 2.
+
 - Using a list of the exact cell-blocks names from the mesh to contain in this CellElementRegion.
   I.e. ``{ 1_tetrahedra, 1_pyramid, 1_hexahedra, 2_tetrahedra, 2_pyramid, 2_hexahedra }``
+
 - Using a list of `fnmatch patterns <https://metacpan.org/pod/File::FnMatch>`_ to match cell-block names to add them in this ``CellElementRegion``.
   I.e. ``{ * }`` selects every elements, ``{ 1_* }`` selects the ``{ 1_tetrahedra, 1_pyramid, 1_hexahedra }`` cell-blocks.
 
