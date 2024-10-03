@@ -322,12 +322,14 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n,
   arrayView2d< real64 const > const sourceConstantsz   = m_sourceConstantsz.toViewConst();
 
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  real64 const rickerValue = m_useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder );
+  bool useSourceWaveletTables = m_useSourceWaveletTables;
+  real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, m_timeSourceFrequency, m_timeSourceDelay, m_rickerOrder );
+  arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers = m_sourceWaveletTableWrappers.toViewConst(); 
   forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
-      real64 const srcValue = m_useSourceWaveletTables ? m_sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
+      real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
       for( localIndex inode = 0; inode < sourceConstantsx.size( 1 ); ++inode )
       {
         real32 const localIncrementx = sourceConstantsx[isrc][inode] * srcValue;
