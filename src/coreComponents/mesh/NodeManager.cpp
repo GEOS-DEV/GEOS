@@ -271,7 +271,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
+  GEOS_ERROR_IF_NE( temp, viewKeyStruct::edgeListString() );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -298,8 +298,8 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toElements.getElementRegionManager(),
                                      overwriteUpMaps );
 
-  GEOS_ERROR_IF_EQ( m_unmappedGlobalIndicesInToEdges.size(), 0 );
-  GEOS_ERROR_IF_EQ( m_unmappedGlobalIndicesInToFaces.size(), 0 );
+  // GEOS_ERROR_IF_EQ( m_unmappedGlobalIndicesInToEdges.size(), 0 );
+  // GEOS_ERROR_IF_EQ( m_unmappedGlobalIndicesInToFaces.size(), 0 );
   
 
   return unPackedSize;

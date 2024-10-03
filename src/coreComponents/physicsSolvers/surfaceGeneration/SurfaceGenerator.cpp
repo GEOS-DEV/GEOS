@@ -636,6 +636,10 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   for( int color=0; color<numTileColors; ++color )
   {
+
+    MpiWrapper::barrier();
+    std::cout<<"color = "<<color<<std::endl;
+    MpiWrapper::barrier();
     ModifiedObjectLists modifiedObjects;
     if( color==tileColor )
     {
@@ -684,10 +688,18 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
                                                        receivedObjects,
                                                        m_mpiCommOrder );
 
-    synchronizeTipSets( faceManager,
-                        edgeManager,
-                        nodeManager,
-                        receivedObjects );
+  for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+  {
+    MpiWrapper::barrier();
+    if( rank==MpiWrapper::commRank() )
+    {
+      std::cout<<"rank "<<rank<<std::endl;
+      synchronizeTipSets( faceManager,
+                          edgeManager,
+                          nodeManager,
+                          receivedObjects );
+    }
+  }
 
 
 #else
@@ -786,6 +798,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
 {
   arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getField< fields::parentIndex >();
 
+  //std::cout<<"breakpoint 1"<<std::endl;
   for( localIndex const nodeIndex : receivedObjects.newNodes )
   {
     localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
@@ -795,6 +808,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
     m_tipNodes.remove( parentNodeIndex );
   }
 
+  //std::cout<<"breakpoint 2"<<std::endl;
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
   arrayView1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   arrayView1d< integer > const & nodeIsExternal = nodeManager.isExternal();
@@ -839,6 +853,8 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
     }
   }
 
+  //std::cout<<"breakpoint 3"<<std::endl;
+
   arrayView1d< integer const > const & isFaceSeparable = faceManager.getField< surfaceGeneration::isFaceSeparable >();
   arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
 
@@ -847,20 +863,25 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
 
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
+    //std::cout<<"  breakpoint 3a"<<std::endl;
     localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
     GEOS_ERROR_IF( parentFaceIndex == -1, getDataContext() << ": parentFaceIndex should not be -1" );
 
     m_trailingFaces.insert( parentFaceIndex );
     m_tipFaces.remove( parentFaceIndex );
 
+    //std::cout<<"  breakpoint 3b"<<std::endl;
     for( localIndex const edgeIndex : faceManager.edgeList()[ parentFaceIndex ] )
     {
+    //std::cout<<"  breakpoint 3c: "<<edgeIndex<<std::endl;
       if( parentEdgeIndices[edgeIndex]==-1 && childEdgeIndices[edgeIndex]==-1 )
       {
         m_tipEdges.insert( edgeIndex );
 
+    //std::cout<<"  breakpoint 3d"<<std::endl;
         for( localIndex const iface: edgeManager.faceList()[ edgeIndex ] )
         {
+    //std::cout<<"  breakpoint 3e"<<std::endl;
           if( faceToElementMap.size( 1 ) == 2  &&
               faceIsExternal[iface] < 1 &&
               isFaceSeparable[iface] == 1 )
@@ -869,23 +890,30 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
           }
         }
       }
+    //std::cout<<"  breakpoint 3f"<<std::endl;
       if( edgeIsExternal[edgeIndex]==0 )
       {
+    //std::cout<<"  breakpoint 3g"<<std::endl;
         edgeIsExternal[edgeIndex] = 2;
       }
     }
+    //std::cout<<"  breakpoint 3h"<<std::endl;
     for( localIndex const nodeIndex : faceManager.nodeList()[ parentFaceIndex ] )
     {
+    //std::cout<<"  breakpoint 3i"<<std::endl;
       if( parentNodeIndices[nodeIndex]==-1 && childNodeIndices[nodeIndex]==-1 )
       {
         m_tipNodes.insert( nodeIndex );
       }
+    //std::cout<<"  breakpoint 3j"<<std::endl;
       if( nodeIsExternal[nodeIndex] )
       {
         nodeIsExternal[nodeIndex] = 2;
       }
     }
   }
+  //std::cout<<"breakpoint 4"<<std::endl;
+
 }
 
 
