@@ -200,6 +200,7 @@ public:
    * @brief Create a new kernel and launch
    * @tparam SUBREGION_TYPE the subRegion type
    * @tparam FE_TYPE the finite element type
+   * @tparam SOLID_TYPE the constitutive type
    * @tparam POLICY the kernel policy
    * @param nodeManager the node manager
    * @param edgeManager the edge manager
@@ -222,11 +223,11 @@ public:
                    SOLID_TYPE const & solidModel,
                    fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
-                   fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,)
+                   fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain)
   {
     AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            solidModel, displacement, avgStrain );
+            solidModel, displacement, avgStrain, avgPlasticStrain );
 
     AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
