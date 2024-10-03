@@ -1770,6 +1770,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LinearSolverParametersType">
+		<!--adaptiveExponent => Exponent parameter for adaptive method-->
+		<xsd:attribute name="adaptiveExponent" type="real64" default="1" />
+		<!--adaptiveGamma => Gamma parameter for adaptive method-->
+		<xsd:attribute name="adaptiveGamma" type="real64" default="0.1" />
 		<!--amgAggressiveCoarseningLevels => AMG number of levels for aggressive coarsening-->
 		<xsd:attribute name="amgAggressiveCoarseningLevels" type="integer" default="0" />
 		<!--amgAggressiveCoarseningPaths => AMG number of paths for aggressive coarsening-->
@@ -1822,6 +1826,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="krylovMaxIter" type="integer" default="200" />
 		<!--krylovMaxRestart => Maximum iterations before restart (GMRES only)-->
 		<xsd:attribute name="krylovMaxRestart" type="integer" default="200" />
+		<!--krylovStrongestTol => Strongest-allowed tolerance for adaptive method-->
+		<xsd:attribute name="krylovStrongestTol" type="real64" default="1e-08" />
 		<!--krylovTol => Relative convergence tolerance of the iterative method
 If the method converges, the iterative solution :math:`\mathsf{x}_k` is such that
 the relative residual norm satisfies:
@@ -1900,7 +1906,7 @@ the relative residual norm satisfies:
 		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
 * Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
-* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step.-->
+* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time-step.-->
 		<xsd:attribute name="lineSearchAction" type="geos_NonlinearSolverParameters_LineSearchAction" default="Attempt" />
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
@@ -1922,10 +1928,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxNumConfigurationAttempts" type="integer" default="10" />
 		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
 		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
-		<!--maxTimeStepCuts => Max number of time step cuts-->
+		<!--maxTimeStepCuts => Max number of time-step cuts-->
 		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
 		<!--minNormalizer => Value used to make sure that residual normalizers are not too small when computing residual norm.-->
 		<xsd:attribute name="minNormalizer" type="real64" default="1e-12" />
+		<!--minTimeStepIncreaseInterval => Minimum number of cycles since the last time-step cut for increasing the time-step again.-->
+		<xsd:attribute name="minTimeStepIncreaseInterval" type="integer" default="10" />
 		<!--newtonMaxIter => Maximum number of iterations that are allowed in a Newton loop.-->
 		<xsd:attribute name="newtonMaxIter" type="integer" default="5" />
 		<!--newtonMinIter => Minimum number of iterations that are required before exiting the Newton loop.-->
@@ -1941,15 +1949,15 @@ the relative residual norm satisfies:
 		<xsd:attribute name="sequentialConvergenceCriterion" type="geos_NonlinearSolverParameters_SequentialConvergenceCriterion" default="ResidualNorm" />
 		<!--subcycling => Flag to decide whether to iterate between sequentially coupled solvers or not.-->
 		<xsd:attribute name="subcycling" type="integer" default="0" />
-		<!--timeStepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
+		<!--timeStepCutFactor => Factor by which the time-step will be cut if a time-step cut is required.-->
 		<xsd:attribute name="timeStepCutFactor" type="real64" default="0.5" />
-		<!--timeStepDecreaseFactor => Factor by which the time step is decreased when the number of Newton iterations is large.-->
+		<!--timeStepDecreaseFactor => Factor by which the time-step is decreased when the number of Newton iterations is large.-->
 		<xsd:attribute name="timeStepDecreaseFactor" type="real64" default="0.5" />
-		<!--timeStepDecreaseIterLimit => Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step.-->
+		<!--timeStepDecreaseIterLimit => Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time-step.-->
 		<xsd:attribute name="timeStepDecreaseIterLimit" type="real64" default="0.7" />
-		<!--timeStepIncreaseFactor => Factor by which the time step is increased when the number of Newton iterations is small.-->
+		<!--timeStepIncreaseFactor => Factor by which the time-step is increased when the number of Newton iterations is small.-->
 		<xsd:attribute name="timeStepIncreaseFactor" type="real64" default="2" />
-		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step.-->
+		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time-step.-->
 		<xsd:attribute name="timeStepIncreaseIterLimit" type="real64" default="0.4" />
 		<!--normType => Norm used by the flow solver to check nonlinear convergence. Valid options:
 * Linfinity
@@ -2222,19 +2230,19 @@ the relative residual norm satisfies:
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -2273,19 +2281,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -2356,19 +2364,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -2429,19 +2437,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -2496,19 +2504,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--kappaminDBC => Factor that controls how much dissipation is kept in the system when continuation is used-->
 		<xsd:attribute name="kappaminDBC" type="real64" default="1e-20" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -2595,19 +2603,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -2668,20 +2676,21 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
- - If the well is injector and crossflow enabled, display informations about crossflow for injectors
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
+ - Crossflow information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -2704,20 +2713,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
- - Print phase volume fraction
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
 		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
@@ -2757,19 +2766,21 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Well control information
+ - Crossflow information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -2891,19 +2902,19 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -2964,19 +2975,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -3027,19 +3038,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
@@ -3064,19 +3075,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--proppantSolverName => Name of the proppant solver used by the coupled solver-->
 		<xsd:attribute name="proppantSolverName" type="groupNameRef" use="required" />
@@ -3105,24 +3117,21 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
- - If the well is injector and crossflow enabled, display informations about crossflow for injectors
- - Information on aperture and hydraulic aperture
- - Informations on solver time step
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
+ - Fracture generation information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)
-3
- - Informations on changing DT-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
@@ -3169,19 +3178,19 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3213,20 +3222,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
- - Print phase volume fraction
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3256,20 +3265,21 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
- - If the well is injector and crossflow enabled, display informations about crossflow for injectors
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
+ - Crossflow information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -3302,19 +3312,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
 		<xsd:attribute name="localDissipation" type="geos_PhaseFieldDamageFEM_LocalDissipation" use="required" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3347,19 +3357,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3392,19 +3403,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -3451,19 +3462,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -3508,19 +3519,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--stressSolverName => Name of solver for computing stress-->
 		<xsd:attribute name="stressSolverName" type="string" default="" />
@@ -3551,19 +3562,19 @@ SourceFluxes application if isThermal is enabled :
 For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -3600,19 +3611,19 @@ SourceFluxes application if isThermal is enabled :
 For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -3643,19 +3654,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3689,19 +3701,19 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
@@ -3732,19 +3744,20 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsConformingFracturesSolverName => Name of the poromechanicsConformingFractures solver used by the coupled solver-->
 		<xsd:attribute name="poromechanicsConformingFracturesSolverName" type="groupNameRef" use="required" />
@@ -3771,19 +3784,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3813,19 +3827,20 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -3858,19 +3873,19 @@ SourceFluxes application if isThermal is enabled :
 For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -3899,19 +3914,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3934,19 +3950,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Coupling information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
 		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
@@ -3979,19 +3996,21 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Well control information
+ - Crossflow information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -4016,19 +4035,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling
+ - Configuration information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4075,19 +4095,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling
+ - Configuration information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4131,19 +4152,20 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling
+ - Configuration information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4191,19 +4213,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4249,19 +4271,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4321,19 +4343,19 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--needsNeighborList => Flag for whether to construct neighbor list-->
 		<xsd:attribute name="needsNeighborList" type="integer" default="0" />
@@ -4388,19 +4410,23 @@ A level of 0 outputs minimal information, higher levels require more.
 		<!--isPoroelastic => Flag that defines whether the material is poroelastic or not.-->
 		<xsd:attribute name="isPoroelastic" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-A level of 0 outputs minimal information, higher levels require more.
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
- - Information on line search
- - On Incorrect solution, Information on failed line search
- - Information on global solution scaling factor
- - Information on the timestep
- - Information on solver timers
- - Output to screen the assembled linear system and solutions (matrices and vectors)
- - On non convergance, Information about testing new configuration and print the time step
- - Print residual norm
- - Information oon linear system
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Initialization information
+ - Print statistics when supported
+ - Fracture generation information
 2
- - Output to file the assembled linear system and solutions (matrices and vectors)-->
+ - The summary of declared fields and coupling
+ - Mapping information
+3
+ - Rupture rate information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
@@ -4464,7 +4490,10 @@ A level of 0 outputs minimal information, higher levels require more.
 		<xsd:attribute name="computeRegionStatistics" type="integer" default="1" />
 		<!--flowSolverName => Name of the flow solver-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
+1
+ - CFL information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />

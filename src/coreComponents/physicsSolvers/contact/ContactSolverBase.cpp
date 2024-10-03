@@ -23,6 +23,7 @@
 #include "constitutive/contact/FrictionBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
+#include "physicsSolvers/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -42,6 +43,8 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
+
+  addLogLevel< logInfo::Configuration >();
 }
 
 void ContactSolverBase::postInputInitialization()
