@@ -65,9 +65,10 @@ enum class FaceBasedAssemblyKernelFlags
   /// Flag indicating whether C1-PPU is used or not
   C1PPU = 1 << 2, // 4
   /// Flag indicating whether IHU is used or not
-  IHU = 1 << 3 // 8
+  IHU = 1 << 3, // 8
+  /// Flag indicating whether interface conditions are used (PPU only for now)
+  PPUIC = 1 << 4 // 16
         /// Add more flags like that if needed:
-        // Flag5 = 1 << 4, // 16
         // Flag6 = 1 << 5, // 32
         // Flag7 = 1 << 6, // 64
         // Flag8 = 1 << 7  //128
@@ -301,9 +302,10 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using CompFlowAccessors =
-    StencilAccessors< fields::ghostRank,
+    StencilAccessors< fields::ghostRank, 
                       fields::flow::gravityCoefficient,
                       fields::flow::pressure,
+                      fields::flow::globalCompDensity,
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
@@ -471,7 +473,8 @@ public:
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
-    m_sei( stencilWrapper.getElementIndices() )
+    m_sei( stencilWrapper.getElementIndices() ),
+    m_globalCompDensity( compFlowAccessors.get( fields::flow::globalCompDensity {} ) ) // TODO: Maybe only store this for IC solver where its needed?
   { }
 
   /**
@@ -672,6 +675,33 @@ public:
               dCompFlux_dP,
               dCompFlux_dC );
           }
+          else if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::PPUIC ) )
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::PPUICPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              m_globalCompDensity,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
+          }
           else
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
@@ -841,6 +871,8 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 
+  ElementViewConst< arrayView2d < real64 const, compflow::USD_COMP > > const m_globalCompDensity;
+
 };
 
 /**
@@ -901,6 +933,8 @@ public:
         kernelFlags.set( FaceBasedAssemblyKernelFlags::C1PPU );
       else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::IHU );
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::PPUIC)
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::PPUIC );
 
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
