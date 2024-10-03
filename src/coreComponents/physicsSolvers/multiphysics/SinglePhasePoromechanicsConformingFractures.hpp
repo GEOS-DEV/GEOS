@@ -103,6 +103,8 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override final;
 
+  virtual void setMGRStrategy() override;
+
   /**@}*/
 
 private:
@@ -175,7 +177,6 @@ private:
    * @param domain
    */
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
-
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
