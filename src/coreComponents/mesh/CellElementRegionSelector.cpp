@@ -39,7 +39,7 @@ CellElementRegionSelector::CellElementRegionSelector(
   for( auto const & regionCellBlocks : regionsCellBlocks )
   {
     string const regionAttributeStr = std::to_string( regionCellBlocks.first );
-    m_regionAttributesCellBlocks.emplace(regionAttributeStr, regionCellBlocks.second);
+    m_regionAttributesCellBlocks.emplace( regionAttributeStr, regionCellBlocks.second );
     m_regionAttributesOwners.emplace( regionAttributeStr, std::vector< CellElementRegion const * >() );
   }
 }

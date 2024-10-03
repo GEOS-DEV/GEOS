@@ -71,7 +71,10 @@ private:
   /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
   std::map< string, std::vector< CellElementRegion const * > > m_regionAttributesOwners;
 
-  /// @brief A map of the cellblocks name lists for each region attributes value. Internal attribute type is integer to facilitate comparison with cellBlock qualifiers.
+  /**
+   * @brief A map of the cellblocks name lists for each region attributes value. Internal attribute type
+   *        is integer to facilitate comparison with cellBlock qualifiers.
+   */
   std::map< string, std::set< string > const & > m_regionAttributesCellBlocks;
 
   /**
