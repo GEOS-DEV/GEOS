@@ -1125,6 +1125,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
+    ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1139,8 +1141,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
-
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       if( numNodesPerFace == 3 )
       {
         keys_v[kfe]=0;
@@ -1385,7 +1387,8 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPar
 
     for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
     {
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       localIndex const numDispDof = 3*numNodesPerFace;
 
       for( int k=0; k<2; ++k )
@@ -1517,7 +1520,8 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
     for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
     {
 
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       localIndex const numDispDof = 3*numNodesPerFace;
 
       for( int k=0; k<2; ++k )
