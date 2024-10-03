@@ -951,7 +951,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, [&] (auto & solidModel)
       {
 
-        using SOLID_TYPE = decltype( solidModel );
+        using SOLID_TYPE = TYPEOFREF( solidModel );
 
       finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
       finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
