@@ -130,13 +130,9 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
                                                  cellBlockManager.getRegionAttributesCellBlocks() };
     this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
     {
-      std::set< string > selectedCellBlocks = cellBlockSelector.buildCellBlocksSelection( elemRegion );
-      // clear the user-filled fields and set up the selected cell-block list
-      elemRegion.setCellBlockNames( selectedCellBlocks );
-
+      elemRegion.setCellBlockNames( cellBlockSelector.buildCellBlocksSelection( elemRegion ) );
       elemRegion.generateMesh( cellBlocks );
     } );
-
     // selecting all cellblocks is mandatory
     cellBlockSelector.checkSelectionConsistency();
   }

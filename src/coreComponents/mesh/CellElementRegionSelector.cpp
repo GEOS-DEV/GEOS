@@ -114,6 +114,11 @@ std::set< string > CellElementRegionSelector::buildCellBlocksSelection( CellElem
   std::set< string > cellBlocksSelection;
   std::set< string > regionAttributeSelection;
 
+  { // select the potencially already added cellBlock names to include them in the validation process
+    auto existingCellBlockNames = region.getCellBlockNames();
+    cellBlocksSelection.insert( existingCellBlockNames.begin(), existingCellBlockNames.end());
+  }
+
   auto const qualifiers = region.getCellBlockQualifiers();
   for( string const & qualifier : qualifiers )
   {

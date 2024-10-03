@@ -109,6 +109,7 @@ public:
   template< typename StringContainerType >
   void setCellBlockNames( StringContainerType const & cellBlockNames )
   {
+    m_cellBlockNames.clear();
     for( auto const & name: cellBlockNames )
     {
       m_cellBlockNames.emplace_back( name );
