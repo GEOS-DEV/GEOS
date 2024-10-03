@@ -69,7 +69,8 @@ public:
                                      FE_TYPE const & finiteElementSpace,
                                      SOLID_TYPE const & solidModel,
                                      fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
-                                     fields::solidMechanics::arrayView2dLayoutStrain const avgStrain ):
+                                     fields::solidMechanics::arrayView2dLayoutStrain const avgStrain
+                                     fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -77,7 +78,8 @@ public:
           finiteElementSpace ),
     m_solidUpdate(solidModel.createKernelUpdates()),
     m_displacement( displacement ),
-    m_avgStrain( avgStrain )
+    m_avgStrain( avgStrain ),
+    m_avgPlasticStrain( avgPlasticStrain )
   {}
 
   /**
@@ -172,6 +174,9 @@ protected:
 
   /// The average strain
   fields::solidMechanics::arrayView2dLayoutStrain const m_avgStrain;
+
+  /// The average plastic strain
+  fields::solidMechanics::arrayView2dLayoutStrain const m_avgPlasticStrain;
 
 };
 
