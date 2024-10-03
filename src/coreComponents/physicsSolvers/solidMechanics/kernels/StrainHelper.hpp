@@ -36,17 +36,16 @@ namespace geos
  * @tparam FE_TYPE the finite element type
  * @tparam SOLID_TYPE the solid mechanics constitutuve type
  */
-template< typename SUBREGION_TYPE,
-          typename FE_TYPE,
+template< typename FE_TYPE,
           typename SOLID_TYPE >
 class AverageStrainOverQuadraturePoints :
-  public AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+  public AverageOverQuadraturePointsBase< CellElementSubRegion,
                                           FE_TYPE >
 {
 public:
 
   /// Alias for the base class;
-  using Base = AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+  using Base = AverageOverQuadraturePointsBase< CellElementSubRegion,
                                                 FE_TYPE >;
 
   using Base::m_elementVolume;
@@ -66,7 +65,7 @@ public:
   AverageStrainOverQuadraturePoints( NodeManager & nodeManager,
                                      EdgeManager const & edgeManager,
                                      FaceManager const & faceManager,
-                                     SUBREGION_TYPE const & elementSubRegion,
+                                     CellElementSubRegion const & elementSubRegion,
                                      FE_TYPE const & finiteElementSpace,
                                      SOLID_TYPE const & solidModel,
                                      fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
@@ -210,26 +209,25 @@ public:
    * @param property the property at quadrature points
    * @param averageProperty the property averaged over quadrature points
    */
-  template< typename SUBREGION_TYPE,
-            typename FE_TYPE,
+  template< typename FE_TYPE,
             typename SOLID_TYPE,
             typename POLICY >
   static void
   createAndLaunch( NodeManager & nodeManager,
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
-                   SUBREGION_TYPE const & elementSubRegion,
+                   CellElementSubRegion const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
                    SOLID_TYPE const & solidModel,
                    fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain)
   {
-    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE, SOLID_TYPE >
+    AverageStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
             solidModel, displacement, avgStrain, avgPlasticStrain );
 
-    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE, SOLID_TYPE >::template
+    AverageStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
   }
 };
