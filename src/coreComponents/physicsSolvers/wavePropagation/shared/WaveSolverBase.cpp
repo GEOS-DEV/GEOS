@@ -228,7 +228,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::sourceWaveletTableNames(), &m_sourceWaveletTableNames ).
     setInputFlag( InputFlags::OPTIONAL ).
-    //setApplyDefaultValue( { } ).
     setDescription( "Names of the table functions, one for each source, that are used to define the source wavelets. If a list is given, it overrides the Ricker wavelet definitions."
                     "The default value is an empty list, which means that a Ricker wavelet is used everywhere." );
 
