@@ -133,7 +133,7 @@ public:
     real64 strain[6] = {0.0};
     FE_TYPE::symmetricGradient( dNdX, stack.uLocal, strain );
 
-    real64 elasticStrain[6];
+    real64 elasticStrain[6] = {0.0};
     m_solidUpdate.getElasticStrain(k, q, elasticStrain);
 
     for( int icomp = 0; icomp < 6; ++icomp )
