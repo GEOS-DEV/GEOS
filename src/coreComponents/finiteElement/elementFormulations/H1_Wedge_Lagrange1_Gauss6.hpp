@@ -73,9 +73,9 @@ public:
 
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
-  
-  GEOS_HOST_DEVICE 
-  virtual ~H1_Wedge_Lagrange1_Gauss6() override 
+
+  GEOS_HOST_DEVICE
+  virtual ~H1_Wedge_Lagrange1_Gauss6() override
   {}
 
   GEOS_HOST_DEVICE

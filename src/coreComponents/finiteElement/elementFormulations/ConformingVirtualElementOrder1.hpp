@@ -62,8 +62,8 @@ public:
   static constexpr localIndex numQuadraturePoints = 1;
 
   ConformingVirtualElementOrder1() = default;
-  
-  GEOS_HOST_DEVICE 
+
+  GEOS_HOST_DEVICE
   virtual ~ConformingVirtualElementOrder1() override
   {}
 

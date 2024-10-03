@@ -88,7 +88,7 @@ public:
   /**
    * @brief Destructor
    */
-  GEOS_HOST_DEVICE 
+  GEOS_HOST_DEVICE
   virtual ~FiniteElementBase()
   {}
 
