@@ -21,7 +21,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_FLASHMODELBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
-#include "functions/TableFunction.hpp"
 
 namespace geos
 {
