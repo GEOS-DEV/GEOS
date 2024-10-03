@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
-#include "constitutive/ConsitutivePassThru.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
