@@ -172,7 +172,7 @@ public:
 protected:
 
   /// The material
-  typename SOLID_TYPE::kernelWrapper const m_solidUpdate;
+  typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 
   /// The displacement solution
   fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const m_displacement;
