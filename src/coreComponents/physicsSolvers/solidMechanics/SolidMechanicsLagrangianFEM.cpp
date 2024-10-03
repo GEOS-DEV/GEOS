@@ -946,17 +946,25 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
 
+      constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, , [&] (auto const solidModel)
+      {
+      using SOLID_TYPE = decltype( solidModel );
+
       finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
       finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
       {
         using FE_TYPE = decltype( finiteElement );
-        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
+        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, SOLID_TYPE, parallelDevicePolicy<> >( nodeManager,
                                                                                                                                   mesh.getEdgeManager(),
                                                                                                                                   mesh.getFaceManager(),
                                                                                                                                   subRegion,
                                                                                                                                   finiteElement,
+                                                                                                                                  solidModel,
                                                                                                                                   disp,
                                                                                                                                   strain );
+      } );
+
+
       } );
 
 
