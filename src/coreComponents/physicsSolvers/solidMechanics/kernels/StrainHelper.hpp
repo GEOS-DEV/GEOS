@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
+#include "constitutive/ConsitutivePassThru.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -111,6 +112,7 @@ public:
     for( int icomp = 0; icomp < 6; ++icomp )
     {
       m_avgStrain[k][icomp] = 0.0;
+      m_avgPlasticStrain[k][icomp] = 0.0;
     }
   }
 
@@ -132,9 +134,13 @@ public:
     real64 strain[6] = {0.0};
     FE_TYPE::symmetricGradient( dNdX, stack.uLocal, strain );
 
+    real64 elasticStrain[6];
+    m_solidUpdate.getElasticStrain(k, q, elasticStrain);
+
     for( int icomp = 0; icomp < 6; ++icomp )
     {
       m_avgStrain[k][icomp] += detJxW*strain[icomp]/m_elementVolume[k];
+      m_avgPlasticStrain[k][icomp] += detJxW*(strain[icomp] - elasticStrain[icomp])/m_elementVolume[k];
     }
   }
 
@@ -205,6 +211,7 @@ public:
    */
   template< typename SUBREGION_TYPE,
             typename FE_TYPE,
+            typename SOLID_TYPE,
             typename POLICY >
   static void
   createAndLaunch( NodeManager & nodeManager,
@@ -212,14 +219,16 @@ public:
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
+                   SOLID_TYPE const & solidModel,
                    fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
-                   fields::solidMechanics::arrayView2dLayoutStrain const avgStrain )
+                   fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
+                   fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,)
   {
-    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >
+    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            displacement, avgStrain );
+            solidModel, displacement, avgStrain );
 
-    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >::template
+    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
   }
 };
