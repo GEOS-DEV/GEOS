@@ -33,9 +33,11 @@ namespace geos
  * @class AverageStrainOverQuadraturePoints
  * @tparam SUBREGION_TYPE the subRegion type
  * @tparam FE_TYPE the finite element type
+ * @tparam SOLID_TYPE the solid mechanics constitutuve type
  */
 template< typename SUBREGION_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename SOLID_TYPE >
 class AverageStrainOverQuadraturePoints :
   public AverageOverQuadraturePointsBase< SUBREGION_TYPE,
                                           FE_TYPE >
@@ -65,6 +67,7 @@ public:
                                      FaceManager const & faceManager,
                                      SUBREGION_TYPE const & elementSubRegion,
                                      FE_TYPE const & finiteElementSpace,
+                                     SOLID_TYPE const & solidModel,
                                      fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
                                      fields::solidMechanics::arrayView2dLayoutStrain const avgStrain ):
     Base( nodeManager,
@@ -72,6 +75,7 @@ public:
           faceManager,
           elementSubRegion,
           finiteElementSpace ),
+    m_solidUpdate(solidModel.createKernelUpdates()),
     m_displacement( displacement ),
     m_avgStrain( avgStrain )
   {}
@@ -159,6 +163,9 @@ public:
   }
 
 protected:
+
+  /// The material
+  typename SOLID_TYPE::kernelWrapper const m_solidUpdate;
 
   /// The displacement solution
   fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const m_displacement;
