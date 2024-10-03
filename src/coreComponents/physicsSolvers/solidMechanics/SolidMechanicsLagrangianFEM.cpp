@@ -951,11 +951,13 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, [&] (auto & solidModel)
       {
 
+        using SOLID_TYPE = decltype( solidModel );
+
       finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
       finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
       {
         using FE_TYPE = decltype( finiteElement );
-        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< FE_TYPE, parallelDevicePolicy<> >( nodeManager,
+        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< FE_TYPE, SOLID_TYPE, parallelDevicePolicy<> >( nodeManager,
                                                                                                                                   mesh.getEdgeManager(),
                                                                                                                                   mesh.getFaceManager(),
                                                                                                                                   subRegion,
