@@ -60,7 +60,8 @@ string TableCSVFormatter::headerToString() const
 
 string TableCSVFormatter::dataToString( TableData const & tableData ) const
 {
-  std::vector< std::vector< string > > const rowsValues = tableData.getTableDataRows();
+
+  std::vector< std::vector< string > > const rowsValues( tableData.getTableDataRows() );
   std::ostringstream oss;
 
   for( const auto & row : rowsValues )
@@ -166,7 +167,7 @@ TableTextFormatter::TableTextFormatter( TableLayout const & tableLayout ):
 string TableTextFormatter::toString() const
 {
   std::ostringstream tableOutput;
-  std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
+  std::vector< TableLayout::Column > columns( m_tableLayout.getColumns());
   size_t nbHeaderRows = 0;
   TableData tableData;
   string sectionSeparatingLine;
@@ -185,7 +186,7 @@ string TableTextFormatter::toString() const
 template<>
 string TableTextFormatter::toString< TableData >( TableData const & tableData ) const
 {
-  std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
+  std::vector< TableLayout::Column > columns( m_tableLayout.getColumns());
   size_t nbHeaderRows = 0;
   string sectionSeparatingLine;
   string topSeparator;
@@ -204,7 +205,7 @@ void TableTextFormatter::prepareAndBuildTable( std::vector< TableLayout::Column 
                                                string & sectionSeparatingLine,
                                                string & topSeparator ) const
 {
-  std::vector< std::vector< string > > tableDataRows = tableData.getTableDataRows();
+  std::vector< std::vector< string > > tableDataRows( tableData.getTableDataRows());
   if( !tableDataRows.empty())
   {
     updateVisibleColumns( columns, tableDataRows );
@@ -290,7 +291,6 @@ void TableTextFormatter::splitAndMergeColumnHeaders( std::vector< TableLayout::C
                                                      size_t & nbHeaderRows,
                                                      std::vector< std::vector< string > > & splitHeaders ) const
 {
-
   splitHeaders.reserve( columns.size() );
 
   for( auto & column : columns )
@@ -603,6 +603,5 @@ void TableTextFormatter::outputHeaderSectionRows( std::vector< TableLayout::Colu
     outputHeaderSectionRows( rowSubColumns, tableOutput, 1, sectionSeparatingLine );
   }
 }
-
 
 }
