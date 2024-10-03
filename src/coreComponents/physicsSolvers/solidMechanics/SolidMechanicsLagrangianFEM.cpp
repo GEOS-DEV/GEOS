@@ -948,7 +948,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
       solidMechanics::arrayView2dLayoutStrain plasticStrain = subRegion.getField< solidMechanics::plasticStrain >();
 
-      constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, , [&] (auto const solidModel)
+      constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, [&] (auto const solidModel)
       {
       using SOLID_TYPE = decltype( solidModel );
 
