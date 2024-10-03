@@ -159,6 +159,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       setConstitutiveNamesCallSuper( subRegion );
 
       subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::plasticStrain >( getName() ).reference().resizeDimension< 1 >( 6 );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -945,6 +946,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       constitutiveRelation.saveConvergedState();
 
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
+      solidMechanics::arrayView2dLayoutStrain plasticStrain = subRegion.getField< solidMechanics::plasticStrain >();
 
       constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, , [&] (auto const solidModel)
       {
@@ -961,7 +963,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
                                                                                                                                   finiteElement,
                                                                                                                                   solidModel,
                                                                                                                                   disp,
-                                                                                                                                  strain );
+                                                                                                                                  strain,
+                                                                                                                                  plasticStrain );
       } );
 
 
