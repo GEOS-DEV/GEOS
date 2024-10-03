@@ -948,9 +948,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
       solidMechanics::arrayView2dLayoutStrain plasticStrain = subRegion.getField< solidMechanics::plasticStrain >();
 
-      constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, [&] (auto const solidModel)
+      constitutive::ConstitutivePassThru< SolidBase >::execute(constitutiveRelation, [&] (auto solidModel)
       {
-      using SOLID_TYPE = decltype( solidModel );
 
       finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
       finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
