@@ -70,7 +70,7 @@ public:
                                      FE_TYPE const & finiteElementSpace,
                                      SOLID_TYPE const & solidModel,
                                      fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
-                                     fields::solidMechanics::arrayView2dLayoutStrain const avgStrain
+                                     fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
                                      fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain):
     Base( nodeManager,
           edgeManager,
