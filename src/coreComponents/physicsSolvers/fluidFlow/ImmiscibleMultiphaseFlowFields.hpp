@@ -59,7 +59,7 @@ DECLARE_FIELD( bcPhaseVolumeFraction,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Boundary condition phase volume fraction" );               
+               "Boundary condition phase volume fraction" );
 
 DECLARE_FIELD( phaseMass,
                "phaseMass",

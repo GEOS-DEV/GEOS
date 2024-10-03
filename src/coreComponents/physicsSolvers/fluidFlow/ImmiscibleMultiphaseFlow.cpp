@@ -53,23 +53,6 @@ using namespace constitutive;
 using namespace fields::immiscibleMultiphaseFlow;
 using namespace immiscibleMultiphaseKernels;
 
-real64 computeDensityL ( real64 P ) {
-  return (1.0e-6 * (P * P));
-}
-
-real64 computedDensitydPL ( real64 P ) {
-  return (1.0e-6 * 2.0 * (P));
-}
-
-real64 computeDensityV ( real64 P ) {
-  return (1.0e-8 * (P * P));
-}
-
-real64 computedDensitydPV ( real64 P ) {
-  return (1.0e-8 * 2.0 * (P));
-}
-
-
 
 ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
                                                     Group * const parent )
@@ -181,7 +164,6 @@ void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subR
 
 
 
-
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
                            setPlotLevel( PlotLevel::NOPLOT ).
                            setRestartFlags( RestartFlags::NO_WRITE ).
@@ -236,8 +218,8 @@ void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup )
   {
     using FluidType = TYPEOFREF( castedFluid );
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    
-    FluidUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),fluidWrapper, pres );
+
+    FluidUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), fluidWrapper, pres );
   } );
 }
 
@@ -323,18 +305,18 @@ void ImmiscibleMultiphaseFlow::updatePhaseMass( ElementSubRegionBase & subRegion
   arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac= subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseDens = fluid.phaseDensity();
   arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseMass = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMass >();
- 
+
   // Might be needed for geomechanics????? if so, need to change the accumulation as well?
   //arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
- 
+
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
-       real64 const poreVolume = volume[ei] * porosity[ei][0];
-        for( integer ip = 0; ip < 2; ++ip )
-        {    
-         phaseMass[ei][ip] = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
-        }
-  });
+    real64 const poreVolume = volume[ei] * porosity[ei][0];
+    for( integer ip = 0; ip < 2; ++ip )
+    {
+      phaseMass[ei][ip] = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
+    }
+  } );
 }
 
 
@@ -344,17 +326,18 @@ void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGrou
 
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
-  TwoPhaseFluid  const & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, fluidName );
+  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, fluidName );
 
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
 
   immiscibleMultiphaseKernels::
-      PhaseMobilityKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                 dataGroup,
-                                                 fluid,
-                                                 relperm );  }
+    PhaseMobilityKernelFactory::
+    createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                               dataGroup,
+                                               fluid,
+                                               relperm );
+}
 
 void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
                                                      DomainPartition & GEOS_UNUSED_PARAM( domain ),
@@ -371,7 +354,7 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     updateFluidModel( subRegion );
 
   } );
-  
+
   // for some reason CUDA does not want the host_device lambda to be defined inside the generic lambda
   // I need the exact type of the subRegion for updateSolidflowProperties to work well.
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
@@ -571,7 +554,7 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                arrayView1d< real64 > const & localRhs )
 {
-  GEOS_MARK_FUNCTION; 
+  GEOS_MARK_FUNCTION;
 
   assembleAccumulationTerm( domain,
                             dofManager,
@@ -611,80 +594,80 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-    //arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-    integer const numofPhases = 2;
-    globalIndex const rankOffset = dofManager.rankOffset();
-    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const elemGhostRank= subRegion.ghostRank();
-    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView2d< real64 const > const porosity = solid.getPorosity();
-    arrayView2d< real64 const > const dPoro_dPres = solid.getDporosity_dPressure();
-    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac= subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
-    arrayView3d< real64 const, multifluid::USD_PHASE > phaseDens = fluid.phaseDensity();
-    arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseDens = fluid.dPhaseDensity();
-    arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const PhaseMass_n = subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();
+      //arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      integer const numofPhases = 2;
+      globalIndex const rankOffset = dofManager.rankOffset();
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const elemGhostRank= subRegion.ghostRank();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView2d< real64 const > const porosity = solid.getPorosity();
+      arrayView2d< real64 const > const dPoro_dPres = solid.getDporosity_dPressure();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac= subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      arrayView3d< real64 const, multifluid::USD_PHASE > phaseDens = fluid.phaseDensity();
+      arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseDens = fluid.dPhaseDensity();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const PhaseMass_n = subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();
 
-    // The line below is to be used if we want to use the total mass flux formulation
-    //BitFlags< ElementBasedAssemblyKernelFlags > m_kernelFlags = kernelFlags;
+      // The line below is to be used if we want to use the total mass flux formulation
+      //BitFlags< ElementBasedAssemblyKernelFlags > m_kernelFlags = kernelFlags;
 
 
-    integer const numElems = subRegion.size();
-    forAll< parallelDevicePolicy<> >( 
-      numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank( ei ) >= 0 )
+      integer const numElems = subRegion.size();
+      forAll< parallelDevicePolicy<> >(
+        numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
-        return;
-      }
+        if( elemGhostRank( ei ) >= 0 )
+        {
+          return;
+        }
 
-      // setup
-      globalIndex dofIndices[2]{};
-      real64 localResidual[2]{};
-      real64 localJacobian[2][2]{};
+        // setup
+        globalIndex dofIndices[2]{};
+        real64 localResidual[2]{};
+        real64 localJacobian[2][2]{};
 
-   real64 const poreVolume = volume[ei] * porosity[ei][0];
-   real64 const dPoreVolume_dPres = volume[ei] * dPoro_dPres[ei][0];
+        real64 const poreVolume = volume[ei] * porosity[ei][0];
+        real64 const dPoreVolume_dPres = volume[ei] * dPoro_dPres[ei][0];
 
-   localIndex localRow = dofNumber[ei] - rankOffset;
-    
-    for( integer idof = 0; idof < 2; ++idof )
-    {
-      dofIndices[idof] = dofNumber[ei] + idof;
-    }
+        localIndex localRow = dofNumber[ei] - rankOffset;
 
-      // compute accumulation
+        for( integer idof = 0; idof < 2; ++idof )
+        {
+          dofIndices[idof] = dofNumber[ei] + idof;
+        }
+
+        // compute accumulation
 
 
-   for( integer ip = 0; ip < numofPhases; ++ip )
-      {
-        real64 const phaseMass = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
-        real64 const phaseMass_n = PhaseMass_n[ei][ip];
+        for( integer ip = 0; ip < numofPhases; ++ip )
+        {
+          real64 const phaseMass = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
+          real64 const phaseMass_n = PhaseMass_n[ei][ip];
 
-        localResidual[ip] += phaseMass - phaseMass_n;
+          localResidual[ip] += phaseMass - phaseMass_n;
 
-        real64 const dPhaseMass_dP =  dPoreVolume_dPres * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip]
+          real64 const dPhaseMass_dP =  dPoreVolume_dPres * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip]
                                        + poreVolume * phaseVolFrac[ei][ip] * dPhaseDens[ei][0][ip][0];
-        localJacobian[ip][0] += dPhaseMass_dP;
+          localJacobian[ip][0] += dPhaseMass_dP;
 
-        real64 const dPhaseMass_dS = poreVolume * phaseDens[ei][0][ip];
-    
-        localJacobian[ip][1] += dPhaseMass_dS;
-      }
+          real64 const dPhaseMass_dS = poreVolume * phaseDens[ei][0][ip];
 
-      // complete
-      
-      integer const numRows = numofPhases;
+          localJacobian[ip][1] += dPhaseMass_dS;
+        }
 
-    for( integer i = 0; i < numRows; ++i )
-    {
-      localRhs[localRow + i] += localResidual[i];
-      localMatrix.addToRow< serialAtomic >( localRow + i,
-                                              dofIndices,
-                                              localJacobian[i],
-                                              2);
-    }
+        // complete
 
-    } );
+        integer const numRows = numofPhases;
+
+        for( integer i = 0; i < numRows; ++i )
+        {
+          localRhs[localRow + i] += localResidual[i];
+          localMatrix.addToRow< serialAtomic >( localRow + i,
+                                                dofIndices,
+                                                localJacobian[i],
+                                                2 );
+        }
+
+      } );
 
     } );
   } );
@@ -697,7 +680,7 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const
-{  
+{
   GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -714,32 +697,32 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
       immiscibleMultiphaseKernels::
-      FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >(  m_numPhases,
-                                                                                  dofManager.rankOffset(),
-                                                                                  dofKey,
-                                                                                  m_hasCapPressure,
-                                                                                  m_useTotalMassEquation,                                                                                  
-                                                                                  getName(),
-                                                                                  mesh.getElemManager(),
-                                                                                  stencilWrapper,
-                                                                                  dt,
-                                                                                  localMatrix.toViewConstSizes(),
-                                                                                  localRhs.toView() );
-    } ); 
+        FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                                   dofManager.rankOffset(),
+                                                                                   dofKey,
+                                                                                   m_hasCapPressure,
+                                                                                   m_useTotalMassEquation,
+                                                                                   getName(),
+                                                                                   mesh.getElemManager(),
+                                                                                   stencilWrapper,
+                                                                                   dt,
+                                                                                   localMatrix.toViewConstSizes(),
+                                                                                   localRhs.toView() );
+    } );
   } );
 }
 
 // Ryan: Looks like this will need to be overwritten as well...
 // I have left the CompositionalMultiphaseFVM implementation for reference
 void ImmiscibleMultiphaseFlow::setupDofs( DomainPartition const & domain,
-                                            DofManager & dofManager ) const
+                                          DofManager & dofManager ) const
 {
-  GEOS_UNUSED_VAR(domain, dofManager);
+  GEOS_UNUSED_VAR( domain, dofManager );
   // add a field for the cell-centered degrees of freedom
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
-                      FieldLocation::Elem,
-                      m_numDofPerCell,
-                      getMeshTargets() );
+                       FieldLocation::Elem,
+                       m_numDofPerCell,
+                       getMeshTargets() );
 
   //// this call with instruct GEOS to reorder the dof numbers
   //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
@@ -802,8 +785,9 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                              fields::flow::pressure::key(), fields::flow::bcPressure::key() );
     // 2. Apply saturation BC (phase volume fraction) and store in a separate field
     //applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
-    //                                         fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(), fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
-    
+    //                                         fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
+    // fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+
     globalIndex const rankOffset = dofManager.rankOffset();
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
@@ -816,13 +800,14 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
-    {      
+    {
 
       arrayView1d< real64 const > const bcPres =
         subRegion.getReference< array1d< real64 > >( fields::flow::bcPressure::key() );
       //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const bcPhaseVolFraction =
-        //subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >( fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
-      
+      //subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
+      // fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
       arrayView1d< globalIndex const > const dofNumber =
@@ -830,7 +815,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
       arrayView1d< real64 const > const pres =
         subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
       //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFraction =
-        //subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >( fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );      
+      //subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
+      // fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
 
       integer const numPhase = m_numPhases;
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -866,15 +852,15 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
         //   localRhs[localRow + ip + 1] = rhsValue;
         // }
       } );
-    } );    
+    } );
   } );
 }
 
 real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                          real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                          DomainPartition const & domain,
-                                                          DofManager const & dofManager,
-                                                          arrayView1d< real64 const > const & localRhs )
+                                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                        DomainPartition const & domain,
+                                                        DofManager const & dofManager,
+                                                        arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
   integer constexpr numNorm = 1; // mass balance
@@ -907,22 +893,22 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
 
       // step 1: compute the norm in the subRegion
 
-        real64 subRegionFlowResidualNorm[1]{};
-        real64 subRegionFlowResidualNormalizer[1]{};
-        
+      real64 subRegionFlowResidualNorm[1]{};
+      real64 subRegionFlowResidualNormalizer[1]{};
+
       immiscibleMultiphaseKernels::
-      ResidualNormKernelFactory::createAndLaunch< parallelDevicePolicy<> >( normType,
-                                                     2,
-                                                     rankOffset,
-                                                     dofKey,
-                                                     localRhs,
-                                                     subRegion,
-                                                     solid,
-                                                     m_nonlinearSolverParameters.m_minNormalizer,
-                                                     subRegionFlowResidualNorm,
-                                                     subRegionFlowResidualNormalizer );
-        subRegionResidualNorm[0] = subRegionFlowResidualNorm[0];
-        subRegionResidualNormalizer[0] = subRegionFlowResidualNormalizer[0];
+        ResidualNormKernelFactory::createAndLaunch< parallelDevicePolicy<> >( normType,
+                                                                              2,
+                                                                              rankOffset,
+                                                                              dofKey,
+                                                                              localRhs,
+                                                                              subRegion,
+                                                                              solid,
+                                                                              m_nonlinearSolverParameters.m_minNormalizer,
+                                                                              subRegionFlowResidualNorm,
+                                                                              subRegionFlowResidualNormalizer );
+      subRegionResidualNorm[0] = subRegionFlowResidualNorm[0];
+      subRegionResidualNormalizer[0] = subRegionFlowResidualNormalizer[0];
 
       // step 2: first reduction across meshBodies/regions/subRegions
       if( normType == solverBaseKernels::NormType::Linf )
@@ -940,21 +926,21 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
 
   real64 residualNorm = 0.0;
   residualNorm = localResidualNorm[0];
-if( normType == solverBaseKernels::NormType::Linf )
-    {
-      solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm[0], residualNorm );
-    }
-    else
-    {
-      solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
-    }
+  if( normType == solverBaseKernels::NormType::Linf )
+  {
+    solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm[0], residualNorm );
+  }
+  else
+  {
+    solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
+  }
 
-    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-    {
-      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-    }
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
+  }
 
-  
+
   return residualNorm;
 }
 
