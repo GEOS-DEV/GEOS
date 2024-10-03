@@ -7,7 +7,8 @@
       name="FlowSolver"
       discretization="TPFA"
       targetRegions="{ Domain }"
-      logLevel="1"
+      logLevel="3"
+      writeLinearSystem="2"
       temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -104,21 +105,6 @@
            densityTableNames="{densityTablePhase1, densityTablePhase2}"    
            viscosityTableNames="{viscosityTablePhase1, viscosityTablePhase2}" />
 
-    <!-- <CompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="5e-10"
-      viscosibility="0.0"/>
-
-    <DeadOilFluid
-      name="fluid"
-      phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
-      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/> -->
-
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
@@ -163,20 +149,38 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
-      scale="0.0"/>
+      scale="3e6"/>
+
+    <FieldSpecification
+      name="initialSat1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="phaseVolumeFraction"
+      component="0"
+      scale="1"/>
+
+    <FieldSpecification
+      name="initialSat2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="phaseVolumeFraction"
+      component="1"
+      scale="0."/>
 
     <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
-      scale="5e6"
+      scale="4e6"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
-      scale="-5e6"
+      scale="2e6"
       setNames="{ sink }"/>
   </FieldSpecifications>
 

@@ -293,15 +293,50 @@ void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataG
   }
 }
 
+
 void ImmiscibleMultiphaseFlow::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
   updateFluidModel( subRegion );
+  updatePhaseMass( subRegion );
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
   updateCapPressureModel( subRegion );
 }
+
+
+void ImmiscibleMultiphaseFlow::updatePhaseMass( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+
+  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+  CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+  integer const numofPhases = 2;
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+  arrayView2d< real64 const > const porosity = solid.getPorosity();
+
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac= subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseDens = fluid.phaseDensity();
+  arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseMass = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMass >();
+ 
+  // Might be needed for geomechanics????? if so, need to change the accumulation as well?
+  //arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+ 
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+       real64 const poreVolume = volume[ei] * porosity[ei][0];
+        for( integer ip = 0; ip < 2; ++ip )
+        {    
+         phaseMass[ei][ip] = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
+        }
+  });
+}
+
 
 void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGroup ) const
 {
@@ -431,6 +466,8 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
     initPres.setValues< parallelDevicePolicy<> >( pres );
     initTemp.setValues< parallelDevicePolicy<> >( temp );
+
+    // TODO: Missing updatePhaseMass?
   } );
 }
 
@@ -620,19 +657,6 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 
    for( integer ip = 0; ip < numofPhases; ++ip )
       {
-
-        // The few lines of code below are to be used if we want to use free functions for the phase density (to test the derivatives)
-       // real64 const pressure = pres[ei];
-
-       // real64 phaseDens = computeDensityV ( pressure );
-       // real64 dPhaseDens = computedDensitydPV ( pressure );
-
-       // if( ip == 1)
-       // {
-         // phaseDens = computeDensityL ( pressure );
-         // dPhaseDens = computedDensitydPL ( pressure );
-        //}
-
         real64 const phaseMass = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
         real64 const phaseMass_n = PhaseMass_n[ei][ip];
 
@@ -1052,7 +1076,11 @@ void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subReg
     subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
   phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
 
-
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseMass =
+    subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMass >();
+  arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseMass_n =
+    subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();
+  phaseMass_n.setValues< parallelDevicePolicy<> >( phaseMass );
 
 }
 
