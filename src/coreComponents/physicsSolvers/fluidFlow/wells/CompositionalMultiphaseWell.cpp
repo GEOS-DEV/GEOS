@@ -1711,7 +1711,7 @@ void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
 
       // if the well is open, we don't have to do anything, so we just return
       WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( time_n + dt ) )
+      if( wellControls.isWellOpen( time_n + dt ) && !m_keepVariablesConstantDuringInitStep )
       {
         return;
       }

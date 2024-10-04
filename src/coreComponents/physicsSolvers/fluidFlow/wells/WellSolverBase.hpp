@@ -271,6 +271,14 @@ public:
    */
   virtual void computePerforationRates( DomainPartition & domain ) = 0;
 
+  /**
+   * @brief Utility function to keep the well variables during a time step (used in poromechanics simulations)
+   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
+  { m_keepVariablesConstantDuringInitStep = keepVariablesConstantDuringInitStep; }
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
@@ -327,6 +335,9 @@ protected:
 
   integer m_writeCSV;
   string const m_ratesOutputDir;
+
+  /// flag to freeze the initial state during initialization in coupled problems
+  integer m_keepVariablesConstantDuringInitStep;
 
 };
 
