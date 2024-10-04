@@ -313,11 +313,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  if( m_preComputeDt==1 )
+  if( m_timestepStabilityLimit==1 )
   {
     real64 dtOut = 0.0;
     computeTimeStep( dtOut );
-    m_preComputeDt = 0;
+    m_timestepStabilityLimit = 0;
     m_timeStep=dtOut;
   }
 
@@ -433,7 +433,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     stiffnessVector.zero();
     p.zero();
   } );
-  return m_timeStep;
+  return m_timeStep * m_cflFactor;
 }
 
 
