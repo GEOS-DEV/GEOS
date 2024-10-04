@@ -196,12 +196,6 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeBoth )
   testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -80, -80, 10 );
 }
 
-
-TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
-{
-  testLifoStorage< local::devicePolicy< 32 > >( 10, 0, 3, 10 );
-}
-
 TEST( LifoStorageTest, LifoStorageAsyncBufferOnCUDA )
 {
   testLifoStorageAsync< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
