@@ -20,6 +20,7 @@ set( events_headers
      mpmEvents/FrictionCoefficientSwapMPMEvent.hpp
      mpmEvents/BodyForceUpdateMPMEvent.hpp
      mpmEvents/DeformationUpdateMPMEvent.hpp
+     mpmEvents/BoreholePressureMPMEvent.hpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.hpp
    )
 
@@ -45,6 +46,7 @@ set( events_sources
      mpmEvents/FrictionCoefficientSwapMPMEvent.cpp
      mpmEvents/BodyForceUpdateMPMEvent.cpp
      mpmEvents/DeformationUpdateMPMEvent.cpp
+     mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.cpp
    )
 

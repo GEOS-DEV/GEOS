@@ -585,7 +585,7 @@ void interpolateValueInRange( real64 const & x,
                               real64 const & ymin,
                               real64 const & ymax,
                               real64 & output,
-                              SolidMechanicsMPM::InterpolationOption interpolationType );
+                              int interpolationType );
 
   void interpolateFTable( real64 dt, real64 time_n );
 

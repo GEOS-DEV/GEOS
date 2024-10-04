@@ -8074,7 +8074,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           // This is the traction, in Voight notation, applied to the borehole surface.
           // This could easily be changed to be a virtual traction not just hydrostatic stress, which is
           // why we coded it this way:
-          boreholeStress = {-m_boreholePressure,-m_boreholePressure,-m_boreholePressure,0.,0.,0.};
+          boreholeStress[0] = -m_boreholePressure;
+          boreholeStress[1] = -m_boreholePressure;
+          boreholeStress[2] = -m_boreholePressure;
           }    
         
           for( int k=0; k < numDims; k++ )
@@ -8314,7 +8316,7 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
                                           real64 const & ymin,
                                           real64 const & ymax,
                                           real64 & output,
-                                          SolidMechanicsMPM::InterpolationOption interpolationType )
+                                          int interpolationType )
 { // Stripped down version of the table interpolation to be used when interpolating a 1D function
   // in a fixed and well-defined range (xmin<x<xmax).
   // Perhaps this should construct a table and call the tableInterpolation so we don't need to 
@@ -8331,15 +8333,15 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
   real64 timeFrac = (x-xmin)/(xmax-xmin);
       switch( interpolationType )
       {
-        case SolidMechanicsMPM::InterpolationOption::Linear:
+        case static_cast<int>(SolidMechanicsMPM::InterpolationOption::Linear):
           // default linear interpolation
           output = ymin * ( 1.0 - timeFrac ) + ymax * timeFrac;
           break;
-        case SolidMechanicsMPM::InterpolationOption::Cosine:
+        case static_cast<int>(SolidMechanicsMPM::InterpolationOption::Cosine):
           // smooth-step interpolation with cosine, zero endpoint velocity
           output = ymin - 0.5 * ( ymax - ymin ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
           break;
-        case SolidMechanicsMPM::InterpolationOption::Smoothstep:
+        case static_cast<int>(SolidMechanicsMPM::InterpolationOption::Smoothstep):
           // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
           output = ymin + ( ymax - ymin ) * ( 10.0 * pow( timeFrac, 3 ) - 15.0 * pow( timeFrac, 4 ) + 6.0 * pow( timeFrac, 5 ) );
           break;
