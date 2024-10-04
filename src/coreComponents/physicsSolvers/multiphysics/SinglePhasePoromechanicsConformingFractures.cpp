@@ -46,7 +46,6 @@ SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromecha
   LinearSolverParameters & params = this->m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
   params.mgr.separateComponents = false;
-  params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   params.dofsPerNode = 3;
 }
 
