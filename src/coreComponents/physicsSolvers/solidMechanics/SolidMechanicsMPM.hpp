@@ -579,6 +579,14 @@ void interpolateTable( real64 x,
                        arrayView1d< real64 > output,
                        SolidMechanicsMPM::InterpolationOption interpolationType );
 
+void interpolateValueInRange( real64 const & x, 
+                              real64 const & xmin,
+                              real64 const & xmax,
+                              real64 const & ymin,
+                              real64 const & ymax,
+                              real64 & output,
+                              SolidMechanicsMPM::InterpolationOption interpolationType );
+
   void interpolateFTable( real64 dt, real64 time_n );
 
   void interpolateStressTable( real64 dt, real64 time_n );
@@ -767,6 +775,10 @@ protected:
   array1d< real64 > m_globalFaceReactions;
 
   array1d< real64 > m_bodyForce;
+
+  // borehole fluid pressure and radius used in the boreholePressure event.
+  real64 m_boreholePressure;
+  real64 m_boreholeRadius;
 
   array1d< int > m_stressControl;
   InterpolationOption m_stressTableInterpType;
