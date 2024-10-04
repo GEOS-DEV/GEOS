@@ -133,7 +133,7 @@ void SinglePhasePoromechanics<>::setMGRStrategy()
 }
 
 template<>
-void SinglePhasePoromechanics<SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangianFEM>::setMGRStrategy()
+void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangianFEM >::setMGRStrategy()
 {
   // same as SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> >::setMGRStrategy
 
@@ -198,11 +198,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( 
 
 template<>
 void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangianFEM >::assembleSystem( real64 const time_n,
-                                                                               real64 const dt,
-                                                                               DomainPartition & domain,
-                                                                               DofManager const & dofManager,
-                                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                               arrayView1d< real64 > const & localRhs )
+                                                                                                              real64 const dt,
+                                                                                                              DomainPartition & domain,
+                                                                                                              DofManager const & dofManager,
+                                                                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -234,7 +234,7 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
 
   // step 4: assemble well contributions
 
-  this->flowSolver()->wellSolver()->assembleSystem(time_n, dt, domain, dofManager, localMatrix, localRhs);
+  this->flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
   this->flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 

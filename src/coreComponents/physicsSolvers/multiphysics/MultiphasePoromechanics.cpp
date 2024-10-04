@@ -105,11 +105,11 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( r
 
 template<>
 void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidMechanicsLagrangianFEM >::assembleSystem( real64 const time,
-                                                                               real64 const dt,
-                                                                               DomainPartition & domain,
-                                                                               DofManager const & dofManager,
-                                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                               arrayView1d< real64 > const & localRhs )
+                                                                                                                         real64 const dt,
+                                                                                                                         DomainPartition & domain,
+                                                                                                                         DofManager const & dofManager,
+                                                                                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                                                         arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -143,7 +143,7 @@ void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidM
 
   // step 4: assemble well contributions
 
-  this->flowSolver()->wellSolver()->assembleSystem(time, dt, domain, dofManager, localMatrix, localRhs);
+  this->flowSolver()->wellSolver()->assembleSystem( time, dt, domain, dofManager, localMatrix, localRhs );
   this->flowSolver()->assembleCouplingTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 }
 
@@ -334,7 +334,7 @@ void MultiphasePoromechanics<>::setMGRStrategy()
 }
 
 template<>
-void MultiphasePoromechanics<CompositionalMultiphaseReservoirAndWells<>, SolidMechanicsLagrangianFEM>::setMGRStrategy()
+void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidMechanicsLagrangianFEM >::setMGRStrategy()
 {
   // same as CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >::setMGRStrategy
 
