@@ -66,11 +66,10 @@ void SolidMechanicsEmbeddedFractures::postInputInitialization()
 {
   ContactSolverBase::postInputInitialization();
 
-  LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
-
   if( m_useStaticCondensation )
   {
     // configure AMG
+    LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
     linearSolverParameters.dofsPerNode = 3;
     linearSolverParameters.isSymmetric = true;
     linearSolverParameters.amg.separateComponents = true;
