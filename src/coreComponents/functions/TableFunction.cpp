@@ -322,7 +322,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   units::Unit const valueUnit = tableFunction.getValueUnit();
   arrayView1d< real64 const > const values = tableFunction.getValues();
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
-  string const filename = tableFunction.getName();
+  std::string_view filename = tableFunction.getName();
   string logOutput;
 
   GEOS_LOG_RANK_0( GEOS_FMT( "Values in the table are represented by : {}", units::getDescription( valueUnit )));
@@ -335,12 +335,10 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     {
       tableData.addRow( coords[idx], values[idx] );
     }
-
     TableLayout const tableLayout( filename, {
         string( units::getDescription( tableFunction.getDimUnit( 0 ))),
         string( units::getDescription( valueUnit ))
       } );
-
     TableTextFormatter const logTable( tableLayout );
     logOutput = logTable.toString( tableData );
   }
@@ -358,8 +356,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                                    units::getDescription( tableFunction.getDimUnit( 0 ) ),
                                                    units::getDescription( tableFunction.getDimUnit( 1 ) ));
 
-      TableLayout tableLayout( tableConverted.headerNames, filename );
-
+      TableLayout tableLayout( filename, tableConverted.headerNames );
       TableTextFormatter const table2DLog( tableLayout );
       logOutput =  table2DLog.toString( tableConverted.tableData );
     }

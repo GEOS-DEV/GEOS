@@ -71,7 +71,7 @@ public:
      * @param name The name of the column
      */
     ColumnParam( string_view name )
-      : columnName( name )
+      : columnName( name ), alignment( m_defaultAlignment )
     {}
 
     /**
@@ -86,10 +86,10 @@ public:
     /**
      * @brief Construct a ColumnParam object with the specified name and alignment.
      * @param name The name of the column
-     * @param align The alignment of the column
+     * @param subsColumns Vector containing subcolumn values
      */
     ColumnParam( string_view name, std::vector< string > subsColumns )
-      : columnName( name ), subColumns( subsColumns )
+      : columnName( name ), subColumns( subsColumns ), alignment( m_defaultAlignment )
     {}
 
     /**
@@ -107,9 +107,10 @@ public:
      * @param name The name of the column
      * @param align The alignment of the column
      * @param display Flag indicating whether the column is enabled
+     * @param columns Vector containing subcolumn values
      */
-    ColumnParam( string_view name, Alignment align, bool display, std::vector< string > columns )
-      : columnName( name ), alignment( align ), enabled( display ), subColumns( columns )
+    ColumnParam( string_view name, Alignment align, bool display, std::vector< string > subsColumns )
+      : columnName( name ), alignment( align ), enabled( display ), subColumns( subsColumns )
     {}
   };
 
@@ -168,19 +169,6 @@ public:
 
   /**
    * @brief Construct a new Table Layout object
-   * @tparam Args Process only string, vector < string > and ColumnParam type
-   * @param args Variadics to be processed
-   */
-  template< typename ... Args >
-  TableLayout( Args &&... args )
-  {
-    setAlignment( Alignment::right );
-    setMargin( MarginValue::medium );
-    processArguments( std::forward< Args >( args )... );
-  }
-
-  /**
-   * @brief Construct a new Table Layout object
    * @param title The table title
    * @param args An initializer_list containing string / columnParam
    */
@@ -191,6 +179,33 @@ public:
     setMargin( MarginValue::medium );
     setTitle( title );
     processArguments( args );
+  }
+
+  /**
+   * @brief Construct a new Table Layout object
+   * @param title The table title
+   * @param args An initializer_list containing string / columnParam
+   */
+  TableLayout( string_view title,
+               std::vector< string > args )
+  {
+    setAlignment( Alignment::right );
+    setMargin( MarginValue::medium );
+    setTitle( title );
+    addToColumns( args );
+  }
+
+  /**
+   * @brief Construct a new Table Layout object
+   * @tparam Args Process only string, vector < string > and ColumnParam type
+   * @param args Variadics to be processed
+   */
+  template< typename ... Args >
+  TableLayout( Args &&... args )
+  {
+    setAlignment( Alignment::right );
+    setMargin( MarginValue::medium );
+    processArguments( std::forward< Args >( args )... );
   }
 
   /**
@@ -225,7 +240,7 @@ public:
 
   /**
    * @brief Set the default table alignment
-   * @param marginValue The table alignment
+   * @param alignment The table alignment
    * @return The tableLayout reference
    */
   TableLayout & setAlignment( Alignment alignment );
