@@ -71,6 +71,13 @@ isLogLevelActive( int level )
  */
 #define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfoStruct, msg ) GEOS_LOG_RANK_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
 
+/**
+ * @brief Output messages (only on rank 0) based on current Group's log level without the line return.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfoStruct, msg ) GEOS_LOG_RANK_0_IF_NLR( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+
 }
 
 #endif // GEOS_COMMON_LOGLEVELSINFO_HPP
