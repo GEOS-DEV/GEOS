@@ -128,6 +128,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_prescribedBoundaryTransverseVelocities(),
   m_globalFaceReactions(),
   m_bodyForce(),
+  m_boreholePressure( 0.0 ),
+  m_boreholeRadius( 0.0 ),
   m_stressControl(),
   m_stressTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
   m_stressControlKp( 0.1 ),
@@ -2869,6 +2871,30 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         event.setIsComplete( 1 );
       }
 
+      if( event.getName() == "BoreholePressure" )
+      {
+        BoreholePressureMPMEvent & boreholePressure = dynamicCast< BoreholePressureMPMEvent & >( event );
+        GEOS_LOG_RANK_0("Setting borehole pressure");
+
+        m_boreholeRadius = boreholePressure.getBoreholeRadius();
+        real64 startPressure = boreholePressure.getStartPressure();
+        real64 endPressure = boreholePressure.getEndPressure();
+        int interpolationType = boreholePressure.getInterpType();
+
+        // Set m_boreholePressure to interpolated value.  The default is 0, but at the end of the event
+        // it won't be reset.
+
+        interpolateValueInRange( time_n, 
+                                eventTime,
+                                eventTime + eventInterval,
+                                startPressure,
+                                endPressure,
+                                m_boreholePressure, // output, overwritten from interpolaiton.
+                                interpolationType );
+     
+        event.setIsComplete( 1 );
+      }
+
       if( event.getName() == "Anneal" )
       {
         AnnealMPMEvent & anneal = dynamicCast< AnnealMPMEvent & >( event );
@@ -3040,16 +3066,27 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                   real64 normalStress = LvArray::tensorOps::AiBi< 3 >( particleDamageGradient[p], temp );
 
                   real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
-                  if( ( healType == 1 || ( healType == 0 && ( normalStress < 0.0 || detF < 1.0 ) ) ) && particleDamage[p] > 0.0 )
+                  if( ( healType == 1 || healType == 3 || ( healType == 0 && ( normalStress < 0.0 || detF < 1.0 ) ) ) && particleDamage[p] > 0.0 )
                   {
                     particleCrystalHealFlag[p] = 1;
 
-                    if( detF > 1.0 )
+                    if( detF > 1.0 && healType == 3 )
                     {
+
+                    // If there is a porosity model, healing can modify the material to be
+                    // a porous material with a reference volume equal to the current volume,
+                    // and a porosity that will allow compaction to the original material density
+                    // Since we don't yet have porosity, this shouldn't be used.
+
                     // particleReferencePorosity[p] = 1.0 - 1.0 / detF;
-                      
+                     
+                    // This def grad scaling needs to be modified for plane strain.  and it won't work
+                    // well for anisotropic materials, so instead it will only be active for healType 3
+                    // so we can still use 0,1 for the other cases.  
                       real64 power = m_planeStrain ? 0.5 : 1.0 / 3.0;
                       real64 scaling = std::pow( detF, power );
+
+
                       LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], 1 / scaling );
 
                       LvArray::tensorOps::scale< 3 >( particleRVectors[p][0], scaling );
@@ -7978,6 +8015,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     int const numContactGroups = m_numContactGroups;
     int const damageFieldPartitioning = m_damageFieldPartitioning;
 
+    std::cout << "m_boreholePressure:  " << m_boreholePressure <<  std::endl;
+    std::cout << "m_boreholeRadius:  " << m_boreholeRadius <<  std::endl;
+
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
                                                                                                 // remember to pass copies of class
                                                                                                 // variables
@@ -8023,11 +8063,25 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
           // TODO: Switch to volume weighting?
           gridCenterOfMass[mappedNode][fieldIndex][i] += particleMass[p] * (particlePosition[p][i] - gridPosition[mappedNode][i]) * shapeFunctionValue;
+          
+          // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
+          // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
+          // pressure BC, should be bigger than the borehole but not near outer domain boundary.
+
+          real64 boreholeStress[6] = {0.};
+          if ( ( fabs(m_boreholePressure) > 1.e-12 ) && ( pow( gridPosition[mappedNode][0], 2 ) + pow( gridPosition[mappedNode][1], 2 ) < m_boreholeRadius * m_boreholeRadius ) )
+          {
+          // This is the traction, in Voight notation, applied to the borehole surface.
+          // This could easily be changed to be a virtual traction not just hydrostatic stress, which is
+          // why we coded it this way:
+          boreholeStress = {-m_boreholePressure,-m_boreholePressure,-m_boreholePressure,0.,0.,0.};
+          }    
+        
           for( int k=0; k < numDims; k++ )
           {
             int voigt = voigtMap[k][i];
             // CC: double check this implementation of artificial viscosity is correct
-            gridInternalForce[mappedNode][fieldIndex][i] -= ( particleStress[p][voigt] - particleArtificialViscosity[p] * m_useArtificialViscosity * (k == i) ) 
+           gridInternalForce[mappedNode][fieldIndex][i] -= ( ( particleStress[p][voigt] - boreholeStress[voigt] ) - particleArtificialViscosity[p] * m_useArtificialViscosity * (k == i) ) 
                                                             * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
           }
         }
@@ -8252,6 +8306,48 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
           break;
       }
   }
+}
+
+void SolidMechanicsMPM::interpolateValueInRange( real64 const & x, 
+                                          real64 const & xmin,
+                                          real64 const & xmax,
+                                          real64 const & ymin,
+                                          real64 const & ymax,
+                                          real64 & output,
+                                          SolidMechanicsMPM::InterpolationOption interpolationType )
+{ // Stripped down version of the table interpolation to be used when interpolating a 1D function
+  // in a fixed and well-defined range (xmin<x<xmax).
+  // Perhaps this should construct a table and call the tableInterpolation so we don't need to 
+  // keep both consistent if other inteprolation types are created.
+  GEOS_MARK_FUNCTION;
+  if( ( x < xmin ) || ( xmax <= xmin ) )
+  { 
+  GEOS_ERROR( "Bad interpolation values given" );
+  output = ymin;
+  }
+  else
+  {
+  
+  real64 timeFrac = (x-xmin)/(xmax-xmin);
+      switch( interpolationType )
+      {
+        case SolidMechanicsMPM::InterpolationOption::Linear:
+          // default linear interpolation
+          output = ymin * ( 1.0 - timeFrac ) + ymax * timeFrac;
+          break;
+        case SolidMechanicsMPM::InterpolationOption::Cosine:
+          // smooth-step interpolation with cosine, zero endpoint velocity
+          output = ymin - 0.5 * ( ymax - ymin ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
+          break;
+        case SolidMechanicsMPM::InterpolationOption::Smoothstep:
+          // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
+          output = ymin + ( ymax - ymin ) * ( 10.0 * pow( timeFrac, 3 ) - 15.0 * pow( timeFrac, 4 ) + 6.0 * pow( timeFrac, 5 ) );
+          break;
+        default:
+          GEOS_ERROR( "No interpolation option of that type!" );
+          break;
+      }
+  }  
 }
 
 void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n )
