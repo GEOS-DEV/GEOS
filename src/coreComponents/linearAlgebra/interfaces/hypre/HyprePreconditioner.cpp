@@ -359,12 +359,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
   {
     LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
-    // Perform setup of the MGR mechanics F-solver with SDC matrix, if used
-    if( m_mgrData && m_mgrData->mechSolver.ptr && m_mgrData->mechSolver.setup )
-    {
-//      GEOS_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
-    }
-
     // Perform setup of the main solver, if needed
     if( m_precond->setup )
     {
