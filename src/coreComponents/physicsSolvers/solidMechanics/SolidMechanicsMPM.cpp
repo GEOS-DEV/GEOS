@@ -2892,7 +2892,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                 m_boreholePressure, // output, overwritten from interpolaiton.
                                 interpolationType );
      
-        event.setIsComplete( 1 );
+        //sevent.setIsComplete( 1 );
       }
 
       if( event.getName() == "Anneal" )
@@ -8324,8 +8324,11 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
   GEOS_MARK_FUNCTION;
   if( ( x < xmin ) || ( xmax <= xmin ) )
   { 
-  GEOS_ERROR( "Bad interpolation values given" );
-  output = ymin;
+   output = ymin;
+  }
+  else if ( x>xmax )
+  {
+    output = ymax;
   }
   else
   {
@@ -8333,15 +8336,15 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
   real64 timeFrac = (x-xmin)/(xmax-xmin);
       switch( interpolationType )
       {
-        case static_cast<int>(SolidMechanicsMPM::InterpolationOption::Linear):
+        case 1:
           // default linear interpolation
           output = ymin * ( 1.0 - timeFrac ) + ymax * timeFrac;
           break;
-        case static_cast<int>(SolidMechanicsMPM::InterpolationOption::Cosine):
+        case 2:
           // smooth-step interpolation with cosine, zero endpoint velocity
           output = ymin - 0.5 * ( ymax - ymin ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
           break;
-        case static_cast<int>(SolidMechanicsMPM::InterpolationOption::Smoothstep):
+        case 3:
           // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
           output = ymin + ( ymax - ymin ) * ( 10.0 * pow( timeFrac, 3 ) - 15.0 * pow( timeFrac, 4 ) + 6.0 * pow( timeFrac, 5 ) );
           break;
