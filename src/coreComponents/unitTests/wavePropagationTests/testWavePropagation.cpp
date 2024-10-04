@@ -43,7 +43,6 @@ char const * xmlInput =
     <Solvers>
       <AcousticSEM
         name="acousticSolver"
-        cflFactor="0.25"
         discretization="FE1"
         targetRegions="{ Region }"
         sourceCoordinates="{ { 50, 50, 50 } }"
@@ -52,7 +51,8 @@ char const * xmlInput =
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50, 50, 50 } }"
         outputSeismoTrace="0"
-        preComputeDt="1"
+        timestepStabilityLimit="1"
+        cflFactor="0.95"
         dtSeismoTrace="0.1"/>
     </Solvers>
     <Mesh>

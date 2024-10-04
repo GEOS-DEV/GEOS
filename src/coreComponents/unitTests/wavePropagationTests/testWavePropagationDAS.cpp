@@ -41,7 +41,6 @@ char const * xmlInput =
     <Solvers>
       <ElasticSEM
         name="elasticSolver"
-        cflFactor="0.25"
         discretization="FE1"
         targetRegions="{ Region }"
         sourceCoordinates="{ { 50, 50, 50 } }"
@@ -54,7 +53,8 @@ char const * xmlInput =
         receiverCoordinates="{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50, 50, 50 } }"
-        preComputeDt="1"
+        timestepStabilityLimit="1"
+        cflFactor="0.95"
         outputSeismoTrace="0"
         dtSeismoTrace="0.1"/>
     </Solvers>
