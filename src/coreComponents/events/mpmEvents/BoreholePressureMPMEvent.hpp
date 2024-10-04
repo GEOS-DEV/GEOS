@@ -67,7 +67,7 @@ protected:
   real64 m_boreholeRadius;
   real64 m_startPressure;
   real64 m_endPressure;
-  SolidMechanicsMPM::InterpolationOption m_interpType;
+  int m_interpType;
 
 };
 
