@@ -181,7 +181,7 @@ protected:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMinCoarseSize( solver.ptr, 512 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, hypre::getAMGCoarseType( LinearSolverParameters::AMG::CoarseType::gsElimWPivoting ), 3 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType(solver.ptr, hypre::getAMGInterpolationType( LinearSolverParameters::AMG::InterpType::modifiedExtendedE )) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( solver.ptr, hypre::getAMGInterpolationType( LinearSolverParameters::AMG::InterpType::modifiedExtendedE )) );
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
@@ -210,8 +210,8 @@ protected:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggPMaxElmts( solver.ptr, 16 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMinCoarseSize( solver.ptr, 1024 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, 99, 3 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMinCoarseSize( solver.ptr, 512 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, hypre::getAMGCoarseType( LinearSolverParameters::AMG::CoarseType::gsElimWPivoting ), 3 ) );
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( solver.ptr, hypre::getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType::modifiedExtendedE ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
