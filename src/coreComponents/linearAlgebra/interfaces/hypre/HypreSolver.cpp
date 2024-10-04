@@ -274,20 +274,15 @@ void HypreSolver::solve( HypreVector const & rhs,
   {
     HYPRE_BigInt global_num_rows, global_num_nonzeros;
 
+    // This involves an MPI collective call, and therefore we call it only when necessary
     GEOS_LAI_CHECK_ERROR( HYPRE_IJMatrixGetGlobalInfo( matrix().unwrappedIJ(),
                                                        &global_num_rows,
-                                                       &global_num_rows,
+                                                       &global_num_rows, // This is intentional and assuming the matrix is square
                                                        &global_num_nonzeros) );
 
-    GEOS_LOG_RANK_0( "        Linear Solver | " << m_result.status <<
-                     " | Unknowns: " << global_num_rows <<
-                     " | Nonzeros: " << global_num_nonzeros <<
-                     " | Iterations: " << m_result.numIterations <<
-                     " | Final Rel Res: " << std::scientific << std::setprecision(4)
-                                          << m_result.residualReduction
-                                          << std::fixed << std::setprecision(3) <<
-                     " | Setup Time: " << m_result.setupTime << " s" <<
-                     " | Solve Time: " << m_result.solveTime << " s" );
+    GEOS_LOG_RANK_0( GEOS_FMT( "        Linear Solver | {} | Unknowns: {} | Nonzeros: {} | Iterations: {} | Final Rel Res: {:.4e} | Setup Time: {:.3f} s | Solve Time: {:.3f} s",
+                     m_result.status, global_num_rows, global_num_nonzeros, m_result.numIterations,
+                     m_result.residualReduction, m_result.setupTime, m_result.solveTime ) );
   }
 }
 
