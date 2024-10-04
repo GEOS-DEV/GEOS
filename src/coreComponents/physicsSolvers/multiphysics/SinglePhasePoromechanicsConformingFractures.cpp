@@ -57,7 +57,6 @@ void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
   linearSolverParameters.mgr.separateComponents = false;
   linearSolverParameters.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  linearSolverParameters.dofsPerNode = 3;
 }
 
 template< typename FLOW_SOLVER >

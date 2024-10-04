@@ -51,6 +51,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postInputInitiali
 {
   Base::postInputInitialization();
 
+  setMGRStrategy();
+
   GEOS_ERROR_IF( this->flowSolver()->getCatalogName() == "CompositionalMultiphaseReservoir" &&
                  this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,
                  GEOS_FMT( "{}: {} solver is only designed to work for {} = {}",
@@ -268,8 +270,6 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIni
                              getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
                    InputError );
   }
-
-  setMGRStrategy();
 }
 
 template<>
@@ -292,7 +292,6 @@ void MultiphasePoromechanics<>::setMGRStrategy()
                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  linearSolverParameters.dofsPerNode = 3;
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >

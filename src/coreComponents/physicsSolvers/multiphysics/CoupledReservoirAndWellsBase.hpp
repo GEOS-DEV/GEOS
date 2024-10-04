@@ -196,8 +196,6 @@ public:
   {
     Base::initializePostInitialConditionsPreSubGroups( );
 
-    setMGRStrategy();
-
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
     // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
@@ -205,6 +203,13 @@ public:
     {
       GEOS_ERROR( GEOS_FMT( "{}: well perforations validation failed, bad perforations found", this->getName()));
     }
+  }
+
+  void postInputInitialization()
+  {
+    Base::postInputInitialization();
+
+    setMGRStrategy();
   }
 
   virtual void

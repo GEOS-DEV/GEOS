@@ -57,7 +57,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::setMGRStrategy()
                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
   linearSolverParameters.mgr.separateComponents = false;
   linearSolverParameters.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  linearSolverParameters.dofsPerNode = 3;
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::postInputInitialization()
