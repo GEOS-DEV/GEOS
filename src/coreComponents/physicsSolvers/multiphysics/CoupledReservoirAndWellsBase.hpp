@@ -196,12 +196,14 @@ public:
   {
     Base::initializePostInitialConditionsPreSubGroups( );
 
+    setMGRStrategy();
+
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
     // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
     if( !validateWellPerforations( domain ))
     {
-      return;
+      GEOS_ERROR( GEOS_FMT( "{}: well perforations validation failed, bad perforations found", this->getName()));
     }
   }
 
@@ -298,7 +300,7 @@ protected:
   virtual void setMGRStrategy()
   {
     if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR(GEOS_FMT("{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
   }
 
   /// Flag to determine whether the well transmissibility needs to be computed

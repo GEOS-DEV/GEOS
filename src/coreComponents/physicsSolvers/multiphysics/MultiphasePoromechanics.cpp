@@ -288,6 +288,8 @@ void MultiphasePoromechanics<>::setMGRStrategy()
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   }
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   linearSolverParameters.dofsPerNode = 3;

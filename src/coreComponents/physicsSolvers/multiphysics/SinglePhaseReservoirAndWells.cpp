@@ -83,6 +83,8 @@ setMGRStrategy()
     // add Reservoir
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
   }
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -98,13 +100,15 @@ setMGRStrategy()
   // flow solver here is indeed flow solver, not poromechanics solver
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
   {
-    GEOS_LOG_RANK_0( "The poromechanics MGR strategy for hybrid FVM is not implemented" );
+    GEOS_ERROR( "The poromechanics MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
     // add Reservoir
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
+                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template< typename RESERVOIR_SOLVER >
