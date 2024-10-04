@@ -87,9 +87,9 @@ setMGRStrategy()
                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
-template< typename POROMECHANICS_SOLVER >
+template<>
 void
-SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::
+SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> >::
 setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
