@@ -43,7 +43,7 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
 {
   LinearSolverParameters & params = m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
-  params.mgr.separateComponents = false;
+  params.mgr.separateComponents = true;
   params.dofsPerNode = 3;
 }
 
