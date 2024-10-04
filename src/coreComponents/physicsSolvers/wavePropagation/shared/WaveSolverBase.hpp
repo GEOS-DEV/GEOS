@@ -123,7 +123,7 @@ public:
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
 
-    static constexpr char const * preComputeDtString() { return "preComputeDt"; }
+    static constexpr char const * timestepStabilityLimitString() { return "timestepStabilityLimit"; }
     static constexpr char const * timeStepString() { return "timeStep"; }
 
     static constexpr char const * attenuationTypeString() { return "attenuationType"; }
@@ -323,7 +323,7 @@ protected:
   /// Flag to precompute the time-step
   /// usage:  the time-step is computed then the code exit and you can
   /// copy paste the time-step inside the XML then deactivate the option
-  integer m_preComputeDt;
+  integer m_timestepStabilityLimit;
 
   //Time step computed with power iteration
   real64 m_timeStep;
