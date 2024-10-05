@@ -37,15 +37,6 @@
 #include <format>
 #define GEOS_FMT_NS std
 #endif
-#include <locale>
-
-/**
- * @brief Sets the global locale to "en_US.UTF-8" once.
- */
-inline void setGlobalLocale()
-{
-  static std::locale locale_set = std::locale::global( std::locale( "en_US.UTF-8" ));
-}
 
 #ifdef GEOS_USE_FMT
 /**
