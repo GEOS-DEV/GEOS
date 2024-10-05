@@ -281,8 +281,8 @@ void HypreSolver::solve( HypreVector const & rhs,
                                                        &global_num_nonzeros ) );
 
     GEOS_LOG_RANK_0( GEOS_FMT( "        Linear Solver | {} | Unknowns: {} | Nonzeros: {} | Iterations: {} | Final Rel Res: {:.4e} | Setup Time: {:.3f} s | Solve Time: {:.3f} s",
-                               m_result.status, stringutilities::addCommaSeparators(global_num_rows),
-                               stringutilities::addCommaSeparators(global_num_nonzeros), m_result.numIterations,
+                               m_result.status, stringutilities::addCommaSeparators( global_num_rows ),
+                               stringutilities::addCommaSeparators( global_num_nonzeros ), m_result.numIterations,
                                m_result.residualReduction, m_result.setupTime, m_result.solveTime ) );
   }
 }

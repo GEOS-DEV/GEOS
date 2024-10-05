@@ -190,8 +190,8 @@ string removeStringAndFollowingContent( string const & str,
  * @param[in] num the integral number to format.
  * @return a string representation of the number with comma separators.
  */
-template<typename T>
-string addCommaSeparators(T const & num);
+template< typename T >
+string addCommaSeparators( T const & num );
 
 /**
  * @brief Take a string, and return a array1d with the cast values
