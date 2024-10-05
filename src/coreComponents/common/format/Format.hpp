@@ -44,7 +44,7 @@
  */
 inline void set_global_locale()
 {
-  static std::locale locale_set = std::locale::global(std::locale("en_US.UTF-8"));
+  static std::locale locale_set = std::locale::global( std::locale( "en_US.UTF-8" ));
 }
 
 #ifdef GEOS_USE_FMT
