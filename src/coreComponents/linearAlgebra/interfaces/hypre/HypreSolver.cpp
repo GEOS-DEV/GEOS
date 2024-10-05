@@ -280,7 +280,7 @@ void HypreSolver::solve( HypreVector const & rhs,
                                                        &global_num_rows, // This is intentional and assuming the matrix is square
                                                        &global_num_nonzeros ) );
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "        Linear Solver | {} | Unknowns: {} | Nonzeros: {} | Iterations: {} | Final Rel Res: {:.4e} | Setup Time: {:.3f} s | Solve Time: {:.3f} s",
+    GEOS_LOG_RANK_0( GEOS_FMT( "        Linear Solver | {} | Unknowns: {:L} | Nonzeros: {:L} | Iterations: {} | Final Rel Res: {:.4e} | Setup Time: {:.3f} s | Solve Time: {:.3f} s",
                                m_result.status, global_num_rows, global_num_nonzeros, m_result.numIterations,
                                m_result.residualReduction, m_result.setupTime, m_result.solveTime ) );
   }
