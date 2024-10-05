@@ -169,6 +169,7 @@ protected:
   /**
    * @brief Set up BoomerAMG to perform the solve for the displacement system
    * @param solver the solver wrapper
+   * @param separateComponents flag controlling the use of the separate displacement component (SDC) approximation
    */
   void setDisplacementAMG( HyprePrecWrapper & solver,
                            integer const & separateComponents )
@@ -259,6 +260,7 @@ protected:
    * @brief Set up BoomerAMG to perform the mechanics F-solve for the first F-relaxation
    * @param precond the preconditioner wrapper
    * @param mgrData auxiliary MGR data
+   * @param separateComponents flag controlling the use of the separate displacement component (SDC) approximation
    *
    * @note This function should be rethought once MGR allows for customizing boomerAMG (or
    *       any other solver) for F-relaxation at any level
