@@ -62,7 +62,7 @@ namespace geos
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLogger()
 {
-  set_global_locale();
+  setGlobalLocale();
 #ifdef GEOS_USE_MPI
   logger::InitializeLogger( MPI_COMM_GEOS );
 #else
