@@ -1770,6 +1770,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LinearSolverParametersType">
+		<!--adaptiveExponent => Exponent parameter for adaptive method-->
+		<xsd:attribute name="adaptiveExponent" type="real64" default="1" />
+		<!--adaptiveGamma => Gamma parameter for adaptive method-->
+		<xsd:attribute name="adaptiveGamma" type="real64" default="0.1" />
 		<!--amgAggressiveCoarseningLevels => AMG number of levels for aggressive coarsening-->
 		<xsd:attribute name="amgAggressiveCoarseningLevels" type="integer" default="0" />
 		<!--amgAggressiveCoarseningPaths => AMG number of paths for aggressive coarsening-->
@@ -1822,6 +1826,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="krylovMaxIter" type="integer" default="200" />
 		<!--krylovMaxRestart => Maximum iterations before restart (GMRES only)-->
 		<xsd:attribute name="krylovMaxRestart" type="integer" default="200" />
+		<!--krylovStrongestTol => Strongest-allowed tolerance for adaptive method-->
+		<xsd:attribute name="krylovStrongestTol" type="real64" default="1e-08" />
 		<!--krylovTol => Relative convergence tolerance of the iterative method
 If the method converges, the iterative solution :math:`\mathsf{x}_k` is such that
 the relative residual norm satisfies:
@@ -1900,7 +1906,7 @@ the relative residual norm satisfies:
 		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
 * Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
-* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step.-->
+* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time-step.-->
 		<xsd:attribute name="lineSearchAction" type="geos_NonlinearSolverParameters_LineSearchAction" default="Attempt" />
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
@@ -1922,10 +1928,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxNumConfigurationAttempts" type="integer" default="10" />
 		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
 		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
-		<!--maxTimeStepCuts => Max number of time step cuts-->
+		<!--maxTimeStepCuts => Max number of time-step cuts-->
 		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
 		<!--minNormalizer => Value used to make sure that residual normalizers are not too small when computing residual norm.-->
 		<xsd:attribute name="minNormalizer" type="real64" default="1e-12" />
+		<!--minTimeStepIncreaseInterval => Minimum number of cycles since the last time-step cut for increasing the time-step again.-->
+		<xsd:attribute name="minTimeStepIncreaseInterval" type="integer" default="10" />
 		<!--newtonMaxIter => Maximum number of iterations that are allowed in a Newton loop.-->
 		<xsd:attribute name="newtonMaxIter" type="integer" default="5" />
 		<!--newtonMinIter => Minimum number of iterations that are required before exiting the Newton loop.-->
@@ -1941,15 +1949,15 @@ the relative residual norm satisfies:
 		<xsd:attribute name="sequentialConvergenceCriterion" type="geos_NonlinearSolverParameters_SequentialConvergenceCriterion" default="ResidualNorm" />
 		<!--subcycling => Flag to decide whether to iterate between sequentially coupled solvers or not.-->
 		<xsd:attribute name="subcycling" type="integer" default="0" />
-		<!--timeStepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
+		<!--timeStepCutFactor => Factor by which the time-step will be cut if a time-step cut is required.-->
 		<xsd:attribute name="timeStepCutFactor" type="real64" default="0.5" />
-		<!--timeStepDecreaseFactor => Factor by which the time step is decreased when the number of Newton iterations is large.-->
+		<!--timeStepDecreaseFactor => Factor by which the time-step is decreased when the number of Newton iterations is large.-->
 		<xsd:attribute name="timeStepDecreaseFactor" type="real64" default="0.5" />
-		<!--timeStepDecreaseIterLimit => Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step.-->
+		<!--timeStepDecreaseIterLimit => Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time-step.-->
 		<xsd:attribute name="timeStepDecreaseIterLimit" type="real64" default="0.7" />
-		<!--timeStepIncreaseFactor => Factor by which the time step is increased when the number of Newton iterations is small.-->
+		<!--timeStepIncreaseFactor => Factor by which the time-step is increased when the number of Newton iterations is small.-->
 		<xsd:attribute name="timeStepIncreaseFactor" type="real64" default="2" />
-		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step.-->
+		<!--timeStepIncreaseIterLimit => Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time-step.-->
 		<xsd:attribute name="timeStepIncreaseIterLimit" type="real64" default="0.4" />
 		<!--normType => Norm used by the flow solver to check nonlinear convergence. Valid options:
 * Linfinity
@@ -2938,7 +2946,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
-		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType" default="Pressure" />
+		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType" default="Pressure" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
@@ -2961,7 +2969,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType">
+	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Pressure|Displacement" />
 		</xsd:restriction>
@@ -4370,6 +4378,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
+		<!--writeCSV => Write PVT tables into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4390,6 +4400,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
+		<!--writeCSV => Write PVT tables into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4410,6 +4422,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
+		<!--writeCSV => Write PVT tables into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4430,6 +4444,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
+		<!--writeCSV => Write PVT tables into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5441,6 +5457,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--writeCSV => Write PVT tables into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5455,6 +5473,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--writeCSV => Write PVT tables into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
