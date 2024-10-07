@@ -672,10 +672,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
           coher_new;  								                // coher at end of substep
 
 
-  real64 sigma_old[6],                                // sigma at start of substep
-          sigma_new[6],                                // sigma at end of substep
-          ep_old[6],                                   // plastic strain at start of substep
-          ep_new[6];                                   // plastic strain at end of substep
+  real64 sigma_old[6];                                // sigma at start of substep
+  real64 sigma_new[6];                                // sigma at end of substep
+  real64 ep_old[6];                                   // plastic strain at start of substep
+  real64 ep_new[6];                                   // plastic strain at end of substep
 
   real64 bulk, shear;
 
@@ -779,7 +779,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 ep_dev[6] = { 0 };
     real64 ep_iso_old;
     real64 ep_J2_old;
-    twoInvariant::stressDecomposition( epa_old,
+    twoInvariant::stressDecomposition( ep_old,
                                        ep_iso_old,
                                        ep_J2_old,
                                        ep_dev );
@@ -797,7 +797,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
       real64 equilibriumVMShearStrain = 0.0; // this could be some other function of pressure, granular density, etc.
       real64 creepVMStrainIncrement = c0 * std::pow( elasticVMShearStrain - equilibriumVMShearStrain, c1 ) * Dt;
-			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticShearStrain;
+			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticVMShearStrain;
 
 			// increment plastic strain such that total strain is constant:  (0.5/g0)*stress_dev*( 1.0 - devStressCreepScale );
 			real64 creepStrainIncrement[6];  
@@ -832,14 +832,12 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
  		  {  // creep compaction
  			  real64 dphidt = -1.0*p*C*( phi_p - phi_e );  // creep compaction rate:
  			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
-
- 			  real64 evp_0 = log( (phi_i - 1. ) / ( phi_p - 1. ) ); // vol. strain before creep, computed from porosity
  			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
  			  real64 devp = evp_c - evp;  // creep vol. strain increment
-
  			  real64 p_c = std::max( 0., p + bulk*devp );  // relaxed pressure after creep.
 
         // uncomment for debugging:
+        // real64 evp_0 = log( (phi_i - 1. ) / ( phi_p - 1. ) ); // vol. strain before creep, computed from porosity (uncomment for debugging)
         // std::cout<<"creep compaction:phi_p = "<<phi_p<<", phi_e = "<<phi_e<<", phi_c = "<<phi_c<<", dphiDt = "<<dphidt
         // <<", evp_0 = "<<evp_0<<", evp = "<<evp<<", devp = "<<devp<<", bulk = "<<bulk
         // <<", p_old = "<<p<<", p_c = "<<p_c<<std::endl;
@@ -859,7 +857,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
         0.0, // Fluid bulk modulus
         0.0, // Term to simplify the fluid model expressions
         0.0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-        0.0 )
+        0.0 );
  		  }
 
 	    // Reassemble the stress with a scaled deviatoric stress tensor
