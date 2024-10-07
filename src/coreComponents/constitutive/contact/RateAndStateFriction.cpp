@@ -30,7 +30,27 @@ namespace constitutive
 RateAndStateFriction::RateAndStateFriction( string const & name, Group * const parent ):
   FrictionBase( name, parent ),
   m_frictionCoefficient()
-{}
+{
+  registerWrapper( viewKeyStruct::aCoefficientString(), &m_a ).
+    setApplyDefaultValue( 0.01 ).
+    setDescription( "Rate- and State-dependent friction coefficient a." );
+
+  registerWrapper( viewKeyStruct::aCoefficientString(), &m_b ).
+    setApplyDefaultValue( 0.015 ).
+    setDescription( "Rate- and State-dependent friction coefficient b." );
+
+  registerWrapper( viewKeyStruct::aCoefficientString(), &m_Dc ).
+    setApplyDefaultValue( 10e-6 ).
+    setDescription( "Rate- and State-dependent friction characteristic length." );
+
+  registerWrapper( viewKeyStruct::aCoefficientString(), &m_referenceVelocity ).
+    setApplyDefaultValue( 1.0e-6 ).
+    setDescription( "Rate- and State-dependent friction reference slip rate." );
+
+  registerWrapper( viewKeyStruct::aCoefficientString(), &m_referenceFrictionCoefficient ).
+    setApplyDefaultValue( 0.6 ).
+    setDescription( "Rate- and State-dependent friction reference friction coefficient." );              
+}
 
 RateAndStateFriction::~RateAndStateFriction()
 {}

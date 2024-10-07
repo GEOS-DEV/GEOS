@@ -148,6 +148,8 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
     {
       arrayView1d< real64 const > const slip = subRegion.getField< fields::contact::slip >().toViewConst();
       arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
+
+      real64 const tauRate = 1e-4;
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         traction[k][1] = traction[k][1] + tauRate * dt - springStiffness * slip;

@@ -1,7 +1,30 @@
 <?xml version="1.0" ?>
-  <Problem>
-    <Included>
-      <File
-          name="./SpringSlider_base.xml"/>
-      </Included>
-  </Problem>
+<Problem>
+  <Included>
+    <File
+      name="./SpringSlider_base.xml"/>
+  </Included>
+
+  <Events
+    maxTime="2.0e5">
+    <SoloEvent 
+      name="generateFault"
+      target="/Solvers/SurfaceGen"/>
+      
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/SpringSlider"/>
+
+    <PeriodicEvent
+      name="seismicRateCollection"
+      cycleFrequency="1"
+      target="/Tasks/seismicRateCollection"/>
+      
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="1"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput" />    
+  </Events>
+</Problem>

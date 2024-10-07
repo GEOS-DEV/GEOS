@@ -192,15 +192,15 @@ private:
   {
     /// string/key for friction coefficient
     static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
-    /// string/key for friction coefficient
+    /// string/key for Rate and State coefficient a
     static constexpr char const * aCoefficientString() { return "a"; }
-    /// string/key for friction coefficient
+    /// string/key for Rate and State coefficient b
     static constexpr char const * bCoefficientString() { return "b"; }
-    /// string/key for friction coefficient
+    /// string/key for Rate and State characteristic length
     static constexpr char const * DcCoefficientString() { return "Dc"; }
-    /// string/key for friction coefficient
+    /// string/key for reference slip rate
     static constexpr char const * referenceVelocityString() { return "referenceVelocity"; }
-    /// string/key for friction coefficient
+    /// string/key for reference friction coefficient
     static constexpr char const * referenceFrictionCoefficientString() { return "referenceFrictionCoefficient"; }
   };
 
