@@ -51,9 +51,9 @@ public:
   enum Section { header, values };
 
   /**
-   * @brief Structure to set up each colum parameters.
+   * @brief Structure to set up each colum.
    */
-  struct ColumnParam
+  struct Column
   {
     /// Name for a column
     string columnName;
@@ -67,49 +67,49 @@ public:
     std::vector< string > splitColumnNames = {""};
 
     /**
-     * @brief Construct a ColumnParam object with the specified name
+     * @brief Construct a Column object with the specified name
      * @param name The name of the column
      */
-    ColumnParam( string_view name )
+    Column( string_view name )
       : columnName( name )
     {}
 
     /**
-     * @brief Construct a ColumnParam object with the specified name and alignment.
+     * @brief Construct a Column object with the specified name and alignment.
      * @param name The name of the column
      * @param align The alignment of the column
      */
-    ColumnParam( string_view name, Alignment align )
+    Column( string_view name, Alignment align )
       : columnName( name ), alignment( align )
     {}
 
     /**
-     * @brief Construct a ColumnParam object with the specified name and alignment.
+     * @brief Construct a Column object with the specified name and alignment.
      * @param name The name of the column
      * @param subsColumns Vector containing subcolumn values
      */
-    ColumnParam( string_view name, std::vector< string > subsColumns )
+    Column( string_view name, std::vector< string > subsColumns )
       : columnName( name ), subColumns( subsColumns )
     {}
 
     /**
-     * @brief Construct a ColumnParam object with the specified name, alignment, and display flag.
+     * @brief Construct a Column object with the specified name, alignment, and display flag.
      * @param name The name of the column
      * @param align The alignment of the column
      * @param display Flag indicating whether the column is enabled
      */
-    ColumnParam( string_view name, Alignment align, bool display )
+    Column( string_view name, Alignment align, bool display )
       : columnName( name ), alignment( align ), enabled( display )
     {}
 
     /**
-     * @brief Construct a ColumnParam object with the specified name, alignment, and display flag.
+     * @brief Construct a Column object with the specified name, alignment, and display flag.
      * @param name The name of the column
      * @param align The alignment of the column
      * @param display Flag indicating whether the column is enabled
      * @param subsColumns Vector containing subcolumn values
      */
-    ColumnParam( string_view name, Alignment align, bool display, std::vector< string > subsColumns )
+    Column( string_view name, Alignment align, bool display, std::vector< string > subsColumns )
       : columnName( name ), alignment( align ), enabled( display ), subColumns( subsColumns )
     {}
   };
@@ -118,46 +118,46 @@ public:
    * @brief Struct for a column.
    * Each column contains its own parameters (such as name, alignment, etc.) and column values.
    */
-  struct Column
+  struct TableColumnData
   {
     /// Structure who contains parameters for a column
-    ColumnParam parameter;
+    Column column;
     /// A vector containing all columns values
     std::vector< string > columnValues;
     /// The largest string(s) in the column
     std::vector< string > maxStringSize;
     /// Vector containing all sub columns subdivison
-    std::vector< Column > subColumn;
+    std::vector< TableColumnData > subColumn;
 
     /**
-     * @brief Constructs a Column with the given parameter.
-     * @param columnParam The parameters for the column.
+     * @brief Constructs a TableColumnData  with the given column.
+     * @param col The parameters for the column.
      */
-    Column( ColumnParam columnParam )
-      : parameter( columnParam )
+    TableColumnData ( Column col )
+      : column( col )
     {}
 
     /**
-     * @brief Constructs a Column with the given parameters.
-     * @param columnParam The parameters for the column.
+     * @brief Constructs a TableColumnData  with the given parameters.
+     * @param col The parameters for the column.
      * @param subColumnInit The subcolumns contained in the colum
      */
-    Column( ColumnParam columnParam, std::vector< Column > subColumnInit )
-      : parameter( columnParam ), subColumn( subColumnInit )
+    TableColumnData ( Column col, std::vector< TableColumnData > subColumnInit )
+      : column( col ), subColumn( subColumnInit )
     {}
 
     /**
-     * @brief Constructs a Column with the given parameters.
-     * @param columnParam The parameters for the column.
+     * @brief Constructs a TableColumnData  with the given parameters.
+     * @param col The parameters for the column.
      * @param columnValuesInit The values in the column.
      * @param maxStringSizeInit The largest string(s) in the column.
      * @param subColumnInit The sub-columns of the column.
      */
-    Column( ColumnParam columnParam,
-            std::vector< string > columnValuesInit,
-            std::vector< string > maxStringSizeInit,
-            std::vector< Column > subColumnInit )
-      : parameter( columnParam ),
+    TableColumnData ( Column col,
+                      std::vector< string > columnValuesInit,
+                      std::vector< string > maxStringSizeInit,
+                      std::vector< TableColumnData > subColumnInit )
+      : column( col ),
       columnValues( columnValuesInit ),
       maxStringSize( maxStringSizeInit ),
       subColumn( subColumnInit )
@@ -170,10 +170,10 @@ public:
   /**
    * @brief Construct a new Table Layout object
    * @param title The table title
-   * @param args An initializer_list containing string / columnParam
+   * @param args An initializer_list containing string / column
    */
   TableLayout( string_view title,
-               std::initializer_list< std::variant< string, TableLayout::ColumnParam > > args )
+               std::initializer_list< std::variant< string, TableLayout::Column > > args )
   {
     setMargin( MarginValue::medium );
     setTitle( title );
@@ -183,7 +183,7 @@ public:
   /**
    * @brief Construct a new Table Layout object
    * @param title The table title
-   * @param args An initializer_list containing string / columnParam
+   * @param args An initializer_list containing string / column
    */
   TableLayout( string_view title,
                std::vector< string > args )
@@ -195,7 +195,7 @@ public:
 
   /**
    * @brief Construct a new Table Layout object
-   * @tparam Args Process only string, vector < string > and ColumnParam type
+   * @tparam Args Process only string, vector < string > and Column  type
    * @param args Variadics to be processed
    */
   template< typename ... Args >
@@ -209,7 +209,7 @@ public:
    * @return The columns vector
    */
 
-  std::vector< Column > const & getColumns() const;
+  std::vector< TableColumnData > const & getColumns() const;
 
   /**
    * @return The table name
@@ -236,7 +236,7 @@ public:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
-   * @return whether we have a line return at the end of the table or not 
+   * @return whether we have a line return at the end of the table or not
    */
   bool isLineWrapEnabled() const;
 
@@ -269,10 +269,10 @@ public:
 private:
 
   /**
-   * @brief Add a column to the table given an initializer_list of string & ColumnParam
-   * @param args An initializer_list containing string / columnParam
+   * @brief Add a column to the table given an initializer_list of string & TableColumnData
+   * @param args An initializer_list containing string / column
    */
-  void processArguments( std::initializer_list< std::variant< string, TableLayout::ColumnParam > > args )
+  void processArguments( std::initializer_list< std::variant< string, TableLayout::Column > > args )
   {
     for( auto const & arg : args )
     {
@@ -312,12 +312,12 @@ private:
   void addToColumns( string_view columnName );
 
 /**
- * @brief Create and add a column to the columns vector given a ColumnParam
- * @param columnParam Vector containing addition information on the column
+ * @brief Create and add a column to the columns vector given a Column
+ * @param column Vector containing addition information on the column
  */
-  void addToColumns( ColumnParam const & columnParam );
+  void addToColumns( Column const & column );
 
-  std::vector< Column > m_columns;
+  std::vector< TableColumnData > m_columns;
 
   bool m_wrapLine = true;
   string m_tableTitle;

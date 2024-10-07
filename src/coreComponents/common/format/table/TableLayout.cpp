@@ -31,23 +31,23 @@ void TableLayout::addToColumns( const std::vector< string > & columnNames )
 
 void TableLayout::addToColumns( string_view columnName )
 {
-  m_columns.push_back( TableLayout::ColumnParam{ columnName, TableLayout::Alignment::right } );
+  m_columns.push_back( TableLayout::Column{ columnName, TableLayout::Alignment::right } );
 }
 
-void TableLayout::addToColumns( ColumnParam const & columnParam )
+void TableLayout::addToColumns( Column const & column )
 {
-  if( !columnParam.subColumns.empty())
+  if( !column.subColumns.empty())
   {
-    std::vector< TableLayout::Column > subColumns;
-    for( const auto & subColumnsName : columnParam.subColumns )
+    std::vector< TableLayout::TableColumnData > subColumns;
+    for( const auto & subColumnsName : column.subColumns )
     {
-      subColumns.push_back( TableLayout::Column{ TableLayout::ColumnParam{subColumnsName, columnParam.alignment}  } );
+      subColumns.push_back( TableLayout::TableColumnData { TableLayout::Column{ subColumnsName, column.alignment }  } );
     }
-    m_columns.push_back( TableLayout::Column{ columnParam, subColumns } );
+    m_columns.push_back( TableLayout::TableColumnData { column, subColumns } );
   }
   else
   {
-    m_columns.push_back( TableLayout::Column{ columnParam } );
+    m_columns.push_back( TableLayout::TableColumnData { column } );
   }
 }
 
@@ -88,7 +88,7 @@ void TableLayout::removeSubColumn()
   }
 }
 
-std::vector< TableLayout::Column > const & TableLayout::getColumns() const
+std::vector< TableLayout::TableColumnData > const & TableLayout::getColumns() const
 {
   return m_columns;
 }

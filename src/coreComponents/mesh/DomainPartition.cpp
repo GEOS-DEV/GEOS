@@ -411,10 +411,10 @@ void DomainPartition::outputPartitionInformation() const
         GEOS_LOG_RANK_0( "  MeshBody: " + meshBody.getName() + " MeshLevel: " + meshLevel.getName() + "\n" );
 
         TableLayout tableLayout( "Rank",
-                                 TableLayout::ColumnParam{"Nodes", {"local", "ghost"}},
-                                 TableLayout::ColumnParam{"Edges", {"local", "ghost"}},
-                                 TableLayout::ColumnParam{"Faces", {"local", "ghost"}},
-                                 TableLayout::ColumnParam{"Elems", {"local", "ghost"}} );
+                                 TableLayout::Column{"Nodes", {"local", "ghost"}},
+                                 TableLayout::Column{"Edges", {"local", "ghost"}},
+                                 TableLayout::Column{"Faces", {"local", "ghost"}},
+                                 TableLayout::Column{"Elems", {"local", "ghost"}} );
         tableLayout.setMargin( TableLayout::MarginValue::large );
         tableLayout.disableLineWrap();
 

@@ -363,7 +363,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     else
     {
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      TableLayout const tableLayoutInfos( filename, {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}} );
+      TableLayout const tableLayoutInfos( filename, {TableLayout::Column{{log}, TableLayout::Alignment::left}} );
       TableTextFormatter const tableLog( tableLayoutInfos );
       logOutput = tableLog.toString();
     }

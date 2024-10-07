@@ -342,8 +342,8 @@ void LinearSolverParametersInput::print()
     }
   }
   TableLayout tableLayout = TableLayout(
-    TableLayout::ColumnParam{"Parameter", TableLayout::Alignment::left},
-    TableLayout::ColumnParam{"Value", TableLayout::Alignment::left}
+    TableLayout::Column{"Parameter", TableLayout::Alignment::left},
+    TableLayout::Column{"Value", TableLayout::Alignment::left}
     );
   tableLayout.setTitle( GEOS_FMT( "{}: linear solver", getParent().getName() ) );
   TableTextFormatter const tableFormatter( tableLayout );

@@ -91,12 +91,12 @@ TEST( testTable, tableClassic )
 
 TEST( testTable, tableColumnParamClassic )
 {
-  TableLayout tableLayout( TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
-                           TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::left},
-                           TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::left},
-                           TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
-                           TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::right},
-                           TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::right} );
+  TableLayout tableLayout( TableLayout::Column{{"Cras egestas"}, TableLayout::Alignment::center},
+                           TableLayout::Column{{"CoordX"}, TableLayout::Alignment::left},
+                           TableLayout::Column{{"C"}, TableLayout::Alignment::left},
+                           TableLayout::Column{{"CoordZ"}, TableLayout::Alignment::left},
+                           TableLayout::Column{{"Prev\nelement"}, TableLayout::Alignment::right},
+                           TableLayout::Column{{"Next\nelement"}, TableLayout::Alignment::right} );
   string const title = "InternalWellGenerator well_injector1";
   tableLayout.setTitle( title );
 
@@ -120,12 +120,12 @@ TEST( testTable, tableColumnParamClassic )
 
 TEST( testTable, tableHiddenColumn )
 {
-  TableLayout tableLayout( TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
-                           TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
-                           TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
-                           TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
-                           TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left, false},
-                           TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center, false} );
+  TableLayout tableLayout( TableLayout::Column{{"Cras egestas"}, TableLayout::Alignment::center},
+                           TableLayout::Column{{"CoordX"}, TableLayout::Alignment::right},
+                           TableLayout::Column{{"C"}, TableLayout::Alignment::center},
+                           TableLayout::Column{{"CoordZ"}, TableLayout::Alignment::left},
+                           TableLayout::Column{{"Prev\nelement"}, TableLayout::Alignment::left, false},
+                           TableLayout::Column{{"Next\nelement"}, TableLayout::Alignment::center, false} );
   string const title = "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis";
   tableLayout.setTitle( title );
 
@@ -147,7 +147,7 @@ TEST( testTable, tableHiddenColumn )
 
 TEST( testTable, tableUniqueColumn )
 {
-  TableLayout tableLayout( TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center} );
+  TableLayout tableLayout( TableLayout::Column{{"Cras egestas"}, TableLayout::Alignment::center} );
   string const title = "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis";
   tableLayout.setTitle( title );
 
@@ -169,12 +169,12 @@ TEST( testTable, tableUniqueColumn )
 
 TEST( testTable, tableEmptyTitle )
 {
-  TableLayout tableLayout( TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
-                           TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
-                           TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
-                           TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
-                           TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
-                           TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center} );
+  TableLayout tableLayout( TableLayout::Column{{"Cras egestas"}, TableLayout::Alignment::center},
+                           TableLayout::Column{{"CoordX"}, TableLayout::Alignment::right},
+                           TableLayout::Column{{"C"}, TableLayout::Alignment::center},
+                           TableLayout::Column{{"CoordZ"}, TableLayout::Alignment::left},
+                           TableLayout::Column{{"Prev\nelement"}, TableLayout::Alignment::left},
+                           TableLayout::Column{{"Next\nelement"}, TableLayout::Alignment::center} );
 
   TableData tableData;
   tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
@@ -233,7 +233,7 @@ TEST( testTable, layoutTable )
 {
   string filename = "fluid1_phaseModel1_PhillipsBrineDensity_table";
   string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-  TableLayout tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}} );
+  TableLayout tableLayoutInfos( {TableLayout::Column{{log}, TableLayout::Alignment::left}} );
   tableLayoutInfos.setTitle( filename );
 
   TableTextFormatter const tableLog( tableLayoutInfos );
@@ -252,9 +252,9 @@ TEST( testTable, subColumns )
   {
     TableLayout tableLayout( " ",
                              "Column1",
-                             TableLayout::ColumnParam{"Nodes ", TableLayout::Alignment::right, true, {"Locales", "Ghost", "Active"}},
+                             TableLayout::Column{"Nodes ", TableLayout::Alignment::right, true, {"Locales", "Ghost", "Active"}},
                              "Column3",
-                             TableLayout::ColumnParam{"Column4 ", TableLayout::Alignment::right, true, {"Locales", "Ghost"}},
+                             TableLayout::Column{"Column4 ", TableLayout::Alignment::right, true, {"Locales", "Ghost"}},
                              "Column5" );
 
     TableData tableData;
@@ -281,10 +281,10 @@ TEST( testTable, variadicTest )
   {
     TableLayout const layoutTest( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis nascetur ridiculus mus",
                                   { "Rank",
-                                    TableLayout::ColumnParam{"Nodes", TableLayout::Alignment::center, true, {"local", "ghost"}},
+                                    TableLayout::Column{"Nodes", TableLayout::Alignment::center, true, {"local", "ghost"}},
                                     "Edge",
-                                    TableLayout::ColumnParam{"Faces", TableLayout::Alignment::center, true, {"local", "ghost"}},
-                                    TableLayout::ColumnParam{"Elems", TableLayout::Alignment::center, true, {"local", "ghost"}} } );
+                                    TableLayout::Column{"Faces", TableLayout::Alignment::center, true, {"local", "ghost"}},
+                                    TableLayout::Column{"Elems", TableLayout::Alignment::center, true, {"local", "ghost"}} } );
 
     TableData data;
     data.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
