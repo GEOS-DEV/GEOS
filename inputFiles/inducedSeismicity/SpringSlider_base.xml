@@ -1,0 +1,80 @@
+<?xml version="1.0" ?>
+  <Problem>
+    <Solvers>
+      <QuasiDynamicEQ
+        name="springSlider"
+        targetRegions="{ Domain }"
+        backgroundStressingRate="3.171e-5">
+      </QuasiDynamicEQ>
+    </Solvers>
+    <Mesh>
+      <InternalMesh
+        name="mesh"
+        elementTypes="{ C3D8 }"
+        xCoords="{ 0, 10 }"
+        yCoords="{ 0, 10 }"
+        zCoords="{ 0, 10 }"
+        nx="{ 1 }"
+        ny="{ 1 }"
+        nz="{ 1 }"
+        cellBlockNames="{ cb1 }"/>
+    </Mesh>
+    <Events
+      maxTime="360000.0">
+      <PeriodicEvent
+        name="solverApplications"
+        forceDt="3600.0"
+        target="/Solvers/dieterichSR"/>
+
+      <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="360000.0"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput" />
+
+     <PeriodicEvent
+      name="seismicRateCollection"
+      timeFrequency="3600.0"
+      targetExactTimestep="1"
+      target="/Tasks/seismicRateCollection" />  
+    </Events>
+    <ElementRegions>
+      <CellElementRegion
+        name="Domain"
+        cellBlocks="{ cb1 }"
+        materialList="{}"/>
+    </ElementRegions>
+    <Constitutive>
+    </Constitutive>
+    <FieldSpecifications>
+     
+    </FieldSpecifications>
+
+     <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/seismicRateCollection}"
+      filename="seismicityRate" />
+   </Outputs>
+
+   <Tasks>
+    <PackCollection
+      name="seismicRateCollection"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="slip"/>
+    
+      <PackCollection
+      name="seismicRateCollection"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="slipRate"/>
+      
+    <PackCollection
+      name="seismicRateCollection"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="stateVariable"/>  
+  </Tasks>
+
+  </Problem>

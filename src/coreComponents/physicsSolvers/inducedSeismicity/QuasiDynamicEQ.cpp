@@ -100,9 +100,11 @@ real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
                                    const int cycleNumber,
                                    DomainPartition & domain )
 {
+
+  /// 1. Compute shear and normal tractions
   real64 const dtStress = updateStresses( time_n, dt, cycleNumber, domain );
 
-  // Loop over subRegions to solve for seismicity rate
+  /// 2. Solve for slip rate and state variable and, compute slip
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -139,8 +141,18 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
   }
   else
   {
-    // Spring-slider version
-  }
+    // Spring-slider shear traction computation
+    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                           [&]( localIndex const,
+                                                                                SurfaceElementSubRegion & subRegion )
+    {
+      arrayView1d< real64 const > const slip = subRegion.getField< fields::contact::slip >().toViewConst();
+      arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        traction[k][1] = traction[k][1] + tauRate * dt - springStiffness * slip;
+      } );  
+    } );
   return dt;
 }
 

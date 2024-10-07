@@ -44,8 +44,7 @@ public:
     m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
     m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
     m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable >() ),
-    m_normalTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
-    m_shearTraction( subRegion.getField< fields::rateAndState::slipRate >() ),
+    m_traction( subRegion.getField< fields::contact::traction >() ),
     m_shearImpedance( shearImpedance ),
     m_frictionLaw( frictionLaw.createKernelWrapper()  )
   {}
@@ -73,13 +72,17 @@ public:
               real64 const dt,
               StackVariables & stack ) const
   {
+    
+    // 
+    real64 const normalTraction = m_traction[k][0];
+    real64 const shearTraction = LvArray::math::sqrt( m_traction[k][1]*m_traction[k][1] + m_traction[k][2]*m_traction[k][2] );
 
     // Eq 1: shear stress balance
-    real64 const tauFriction     = m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] ) * m_normalTraction[k];
-    real64 const dTauFriction[2] = { m_frictionLaw.dfrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ) * m_normalTraction[k],
-                                     m_frictionLaw.dfrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) * m_normalTraction[k] };
+    real64 const tauFriction     = m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction;
+    real64 const dTauFriction[2] = { m_frictionLaw.dfrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction,
+                                     m_frictionLaw.dfrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction };
 
-    stack.rhs[0] = m_shearTraction[k] - tauFriction - m_shearImpedance * m_slipRate[k];
+    stack.rhs[0] = shearTraction - tauFriction - m_shearImpedance * m_slipRate[k];
 
     // Eq 2: slip law
     stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.dStateVariabledT( k, m_slipRate[k], m_stateVariable[k] );
@@ -119,9 +122,7 @@ private:
 
   arrayView1d< real64 const > const m_stateVariable_n;
 
-  arrayView1d< real64 const > const m_normalTraction;
-
-  arrayView1d< real64 const > const m_shearTraction;
+  arrayView2d< real64 const > const m_traction;
 
   real64 const m_shearImpedance;
 
