@@ -551,13 +551,13 @@ void WellGeneratorBase::logInternalWell() const
   }
 
   string const wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
-  TableLayout tableWellLayout = TableLayout(
-    TableLayout::Column{"Element no.", TableLayout::Alignment::right},
-    TableLayout::Column{"CoordX", TableLayout::Alignment::right},
-    TableLayout::Column{"CoordY", TableLayout::Alignment::right},
-    TableLayout::Column{"CoordZ", TableLayout::Alignment::right},
-    TableLayout::Column{"Prev\nElement", TableLayout::Alignment::right},
-    TableLayout::Column{"Next\nElement", TableLayout::Alignment::right} );
+  TableLayout tableWellLayout(
+    "Element no.",
+    "CoordX",
+    "CoordY",
+    "CoordZ",
+    "Prev\nElement",
+    "Next\nElement" );
   tableWellLayout.setTitle( wellTitle );
 
   TableTextFormatter const tableFormatter( tableWellLayout );

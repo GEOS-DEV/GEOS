@@ -51,14 +51,25 @@ public:
   enum Section { header, values };
 
   /**
+   * @brief Structure to set up values alignment for each colum.
+   */
+  struct ColumnAlignment
+  {
+    /// Alignment for  column name. By default aligned to center
+    Alignment headerAlignment = Alignment::center;
+    /// Alignment for column values. By default aligned to right side
+    Alignment valueAlignment = Alignment::right;
+  };
+
+  /**
    * @brief Structure to set up each colum.
    */
   struct Column
   {
     /// Name for a column
     string columnName;
-    /// Alignment for a column. By default aligned to the right side
-    Alignment alignment = Alignment::right;
+    /// Alignment for  column name. By default aligned to center
+    ColumnAlignment alignmentSettings;
     /// A boolean to display a colummn
     bool enabled = true;
     /// Vector containing sub columns name
@@ -75,16 +86,16 @@ public:
     {}
 
     /**
-     * @brief Construct a Column object with the specified name and alignment.
+     * @brief Construct a Column object with the specified name and alignments.
      * @param name The name of the column
-     * @param align The alignment of the column
+     * @param headerAlign The column name alignment
      */
-    Column( string_view name, Alignment align )
-      : columnName( name ), alignment( align )
+    Column( string_view name, Alignment headerAlign )
+      : columnName( name ), alignmentSettings( {headerAlign, Alignment::right} )
     {}
 
     /**
-     * @brief Construct a Column object with the specified name and alignment.
+     * @brief Construct a Column object with the specified name and alignments.
      * @param name The name of the column
      * @param subsColumns Vector containing subcolumn values
      */
@@ -93,24 +104,29 @@ public:
     {}
 
     /**
-     * @brief Construct a Column object with the specified name, alignment, and display flag.
+     * @brief Construct a Column object with the specified name, alignments, and display flag.
      * @param name The name of the column
-     * @param align The alignment of the column
+     * @param headerAlign The column name alignment
      * @param display Flag indicating whether the column is enabled
      */
-    Column( string_view name, Alignment align, bool display )
-      : columnName( name ), alignment( align ), enabled( display )
+    Column( string_view name, Alignment headerAlign, bool display )
+      : columnName( name ),
+      alignmentSettings( {headerAlign, Alignment::right} ),
+      enabled( display )
     {}
 
     /**
-     * @brief Construct a Column object with the specified name, alignment, and display flag.
+     * @brief Construct a Column object with the specified name, alignments, and display flag.
      * @param name The name of the column
-     * @param align The alignment of the column
+     * @param headerAlign The column name alignment
      * @param display Flag indicating whether the column is enabled
      * @param subsColumns Vector containing subcolumn values
      */
-    Column( string_view name, Alignment align, bool display, std::vector< string > subsColumns )
-      : columnName( name ), alignment( align ), enabled( display ), subColumns( subsColumns )
+    Column( string_view name, Alignment headerAlign, bool display, std::vector< string > subsColumns )
+      : columnName( name ),
+      alignmentSettings( {headerAlign, Alignment::right} ),
+      enabled( display ),
+      subColumns( subsColumns )
     {}
   };
 
@@ -236,6 +252,12 @@ public:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
+   * @brief Set the column values alignment
+   * @param alignment column values alignment
+   */
+  TableLayout & setValuesAlignment( TableLayout::Alignment alignment );
+
+  /**
    * @return whether we have a line return at the end of the table or not
    */
   bool isLineWrapEnabled() const;
@@ -317,7 +339,7 @@ private:
  */
   void addToColumns( Column const & column );
 
-  std::vector< TableColumnData > m_columns;
+  std::vector< TableColumnData > m_tableColumnsData;
 
   bool m_wrapLine = true;
   string m_tableTitle;

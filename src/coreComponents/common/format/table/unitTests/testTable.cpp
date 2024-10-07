@@ -47,10 +47,10 @@ TEST( testTable, tableEmptyRow )
              "\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
              "|                                                                                InternalWellGenerator well_injector1                                                                                 |\n"
              "-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-             "|                                                                                                                                        Well  |       CordX  |       CoordZ  |     Prev  |     Next  |\n"
-             "|                                                                                                                                 element no.  |              |               |  element  |  element  |\n"
-             "|                                                                                                                                 PV weighted  |              |               |           |           |\n"
-             "|                                                                                                                                         bar  |              |               |           |           |\n"
+             "|                                                                     Well                                                                     |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
+             "|                                                                 element no.                                                                  |              |               |  element  |  element  |\n"
+             "|                                                                 PV weighted                                                                  |              |               |           |           |\n"
+             "|                                                                     bar                                                                      |              |               |           |           |\n"
              "-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
              "|                                                                                                                                      value1  |  [30.21543]  |          3.0  |       54  |        0  |\n"
              "|                                                                                                                                              |              |               |           |           |\n"
@@ -79,7 +79,7 @@ TEST( testTable, tableClassic )
              "\n-----------------------------------------------------------------------------------------------------------------------------------------------------------\n"
              "|                                                          InternalWellGenerator well_injector1                                                           |\n"
              "-----------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-             "|                                                     Duis fringilla, ligula sed porta fringilla,  |       CordX  |       CoordZ  |     Prev  |     Next  |\n"
+             "|                           Duis fringilla, ligula sed porta fringilla,                            |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
              "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |              |               |  element  |  element  |\n"
              "-----------------------------------------------------------------------------------------------------------------------------------------------------------\n"
              "|                                                                                          value1  |  [30.21543]  |          3.0  |       54  |        0  |\n"
@@ -89,7 +89,7 @@ TEST( testTable, tableClassic )
              );
 }
 
-TEST( testTable, tableColumnParamClassic )
+TEST( testTable, tableColumnParamClassic ) //TODO
 {
   TableLayout tableLayout( TableLayout::Column{{"Cras egestas"}, TableLayout::Alignment::center},
                            TableLayout::Column{{"CoordX"}, TableLayout::Alignment::left},
@@ -97,6 +97,7 @@ TEST( testTable, tableColumnParamClassic )
                            TableLayout::Column{{"CoordZ"}, TableLayout::Alignment::left},
                            TableLayout::Column{{"Prev\nelement"}, TableLayout::Alignment::right},
                            TableLayout::Column{{"Next\nelement"}, TableLayout::Alignment::right} );
+  tableLayout.setValuesAlignment( TableLayout::Alignment::right );
   string const title = "InternalWellGenerator well_injector1";
   tableLayout.setTitle( title );
 
@@ -112,13 +113,13 @@ TEST( testTable, tableColumnParamClassic )
              "|  Cras egestas  |  CoordX  |  C                    |  CoordZ     |     Prev  |     Next  |\n"
              "|                |          |                       |             |  element  |  element  |\n"
              "-------------------------------------------------------------------------------------------\n"
-             "|     value1     |          |  3.0                  |  3.0129877  |        2  |        1  |\n"
-             "|      val1      |  v       |  [3.045,42.02,89.25]  |  3          |       10  |        3  |\n"
+             "|        value1  |          |                  3.0  |  3.0129877  |        2  |        1  |\n"
+             "|          val1  |       v  |  [3.045,42.02,89.25]  |          3  |       10  |        3  |\n"
              "-------------------------------------------------------------------------------------------\n\n"
              );
 }
 
-TEST( testTable, tableHiddenColumn )
+TEST( testTable, tableHiddenColumn ) // TODO
 {
   TableLayout tableLayout( TableLayout::Column{{"Cras egestas"}, TableLayout::Alignment::center},
                            TableLayout::Column{{"CoordX"}, TableLayout::Alignment::right},
@@ -127,7 +128,7 @@ TEST( testTable, tableHiddenColumn )
                            TableLayout::Column{{"Prev\nelement"}, TableLayout::Alignment::left, false},
                            TableLayout::Column{{"Next\nelement"}, TableLayout::Alignment::center, false} );
   string const title = "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis";
-  tableLayout.setTitle( title );
+  tableLayout.setTitle( title ).setValuesAlignment( TableLayout::Alignment::left );
 
   TableData tableData;
   tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
@@ -140,8 +141,8 @@ TEST( testTable, tableHiddenColumn )
              "---------------------------------------------------------------------------------------------------------------\n"
              "|       Cras egestas        |             CoordX  |                C                 |  CoordZ                |\n"
              "---------------------------------------------------------------------------------------------------------------\n"
-             "|          value1           |                     |               3.0                |  3.0129877             |\n"
-             "|           val1            |                  v  |       [3.045,42.02,89.25]        |  3                     |\n"
+             "|  value1                   |                     |  3.0                             |  3.0129877             |\n"
+             "|  val1                     |  v                  |  [3.045,42.02,89.25]             |  3                     |\n"
              "---------------------------------------------------------------------------------------------------------------\n\n" );
 }
 
@@ -162,8 +163,8 @@ TEST( testTable, tableUniqueColumn )
              "---------------------------------------------------------------------------------------------------------------\n"
              "|                                                Cras egestas                                                 |\n"
              "---------------------------------------------------------------------------------------------------------------\n"
-             "|                                                   value1                                                    |\n"
-             "|                                                    val1                                                     |\n"
+             "|                                                                                                     value1  |\n"
+             "|                                                                                                       val1  |\n"
              "---------------------------------------------------------------------------------------------------------------\n\n" );
 }
 
@@ -186,8 +187,8 @@ TEST( testTable, tableEmptyTitle )
              "|  Cras egestas  |  CoordX  |           C           |  CoordZ     |  Prev     |   Next    |\n"
              "|                |          |                       |             |  element  |  element  |\n"
              "-------------------------------------------------------------------------------------------\n"
-             "|     value1     |          |          3.0          |  3.0129877  |  2        |     1     |\n"
-             "|      val1      |       v  |  [3.045,42.02,89.25]  |  3          |  10       |     3     |\n"
+             "|        value1  |          |                  3.0  |  3.0129877  |        2  |        1  |\n"
+             "|          val1  |       v  |  [3.045,42.02,89.25]  |          3  |       10  |        3  |\n"
              "-------------------------------------------------------------------------------------------\n\n"
              );
 }
@@ -217,10 +218,10 @@ TEST( testTable, table2DTable )
   TableLayout tableLayout( tableconverted.headerNames );
 
   //log
-  TableTextFormatter const tableLog( tableLayout );
-  EXPECT_EQ( tableLog.toString( tableconverted.tableData ),
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableconverted.tableData ),
              "\n---------------------------------------------------------------------\n"
-             "|     Viscosity kg*s  |  Pression = 10000  |      Pression = 15000  |\n"
+             "|   Viscosity kg*s    |  Pression = 10000  |    Pression = 15000    |\n"
              "---------------------------------------------------------------------\n"
              "|  Temperature = 300  |              0.03  |                  0.02  |\n"
              "|  Temperature = 350  |             0.035  |  0.023333333333333334  |\n"
@@ -236,8 +237,8 @@ TEST( testTable, layoutTable )
   TableLayout tableLayoutInfos( {TableLayout::Column{{log}, TableLayout::Alignment::left}} );
   tableLayoutInfos.setTitle( filename );
 
-  TableTextFormatter const tableLog( tableLayoutInfos );
-  EXPECT_EQ( tableLog.toString(),
+  TableTextFormatter const tableText( tableLayoutInfos );
+  EXPECT_EQ( tableText.toString(),
              "\n-------------------------------------------------------------------------------------\n"
              "|                   fluid1_phaseModel1_PhillipsBrineDensity_table                   |\n"
              "-------------------------------------------------------------------------------------\n"
@@ -261,9 +262,9 @@ TEST( testTable, subColumns )
     tableData.addRow( "min", "125", "375,0001", " YES", 2354654, 562, 43.0, 43.0, 562, 5 );
     tableData.addRow( "max", "360", "390,1", " YES", 383213213, 712, 48.0, 47.0, 72, 2 );
 
-    TableTextFormatter tableLog( tableLayout );
+    TableTextFormatter tableText( tableLayout );
 
-    EXPECT_EQ( tableLog.toString( tableData ),
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n--------------------------------------------------------------------------------------------------------\n"
                "|       |  Column1  |                            Nodes   |  Column3  |           Column4   |  Column5  |\n"
                "--------------------------------------------------------------------------------------------------------\n"
@@ -286,20 +287,20 @@ TEST( testTable, variadicTest )
                                     TableLayout::Column{"Faces", TableLayout::Alignment::center, true, {"local", "ghost"}},
                                     TableLayout::Column{"Elems", TableLayout::Alignment::center, true, {"local", "ghost"}} } );
 
-    TableData data;
-    data.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
-    data.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
+    TableData tableData;
+    tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
+    tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
     TableTextFormatter log( layoutTest );
-    EXPECT_EQ( log.toString( data ),
+    EXPECT_EQ( log.toString( tableData ),
                "\n--------------------------------------------------------------------------------------------------------------------------------------\n"
                "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis nascetur ridiculus mus  |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|                         Rank  |           Nodes           |          Edge  |           Faces           |           Elems           |\n"
+               "|             Rank              |           Nodes           |      Edge      |           Faces           |           Elems           |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n"
                "|                               |    local    |    ghost    |                |    local    |    ghost    |    local    |    ghost    |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|             min(local/total)  |      1      |      2      |             3  |      4      |      5      |      6      |      7      |\n"
-               "|             min(local/total)  |      1      |      2      |             3  |      4      |      5      |      6      |      7      |\n"
+               "|             min(local/total)  |          1  |          2  |             3  |          4  |          5  |          6  |          7  |\n"
+               "|             min(local/total)  |          1  |          2  |             3  |          4  |          5  |          6  |          7  |\n"
                "--------------------------------------------------------------------------------------------------------------------------------------\n\n"
                );
   }
@@ -314,11 +315,12 @@ TEST( testTable, testLineWrap )
   tableData.addRow( "1", "2", "3.0", 3.0129877, 2.0f, 1 );
 
   TableTextFormatter const tableText( tableLayout );
+
   EXPECT_EQ( tableText.toString( tableData ),
              "---------------------------------------------------\n"
              "|                      title                      |\n"
              "---------------------------------------------------\n"
-             "|Cras egestas|CoordX|  C|   CoordZ|   Prev|   Next|\n"
+             "|Cras egestas|CoordX| C | CoordZ  | Prev  | Next  |\n"
              "|            |      |   |         |element|element|\n"
              "---------------------------------------------------\n"
              "|           1|     2|3.0|3.0129877|      2|      1|\n"

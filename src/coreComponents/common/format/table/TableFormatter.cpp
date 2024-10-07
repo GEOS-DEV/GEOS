@@ -115,7 +115,7 @@ void transpose( std::vector< std::vector< string > > & dest, std::vector< std::v
 }
 
 /**
- * @brief Build  cell given an alignment, a value and spaces
+ * @brief Build cell given an alignment, a value and spaces
  * @param alignment The aligment of cell value
  * @param value The cell value
  * @param spaces The number of spaces in the cell
@@ -466,7 +466,7 @@ void TableTextFormatter::outputSubSection( std::vector< TableLayout::TableColumn
   integer const columnMargin = m_tableLayout.getColumnMargin();
   for( size_t idxCol = 0; idxCol< tableColumnsData.size(); ++idxCol )
   {
-    tableOutput << buildCell( tableColumnsData[idxCol].column.alignment,
+    tableOutput << buildCell( tableColumnsData[idxCol].column.alignmentSettings.valueAlignment,
                               tableColumnsData[idxCol].columnValues[idxRow],
                               tableColumnsData[idxCol].maxStringSize[0].length() );
     if( idxCol < tableColumnsData.size() - 1 )
@@ -502,7 +502,9 @@ void TableTextFormatter::outputValuesSectionRows( std::vector< TableLayout::Tabl
       {
         string const cell = tableColumnData.columnValues.at( idxRow );
         string const cellSize = stringutilities::join( tableColumnData.maxStringSize, spaces );
-        tableOutput << buildCell( tableColumnData.column.alignment, cell, cellSize.length());
+        tableOutput << buildCell( tableColumnData.column.alignmentSettings.valueAlignment,
+                                  cell,
+                                  cellSize.length());
       }
 
       if( idxColumn < tableColumnsData.size() - 1 )
@@ -561,7 +563,9 @@ void TableTextFormatter::outputHeaderSectionRows( std::vector< TableLayout::Tabl
       auto const & tableColumnData = tableColumnsData[idxColumn];
       string cell = tableColumnData.column.splitColumnNames.at( idxRow );
       string cellSize =  stringutilities::join( tableColumnData.maxStringSize, spaces );
-      tableOutput << buildCell( tableColumnData.column.alignment, cell, cellSize.length());
+      tableOutput << buildCell( tableColumnData.column.alignmentSettings.headerAlignment,
+                                cell,
+                                cellSize.length());
 
       // Add space between tableColumnsData
       if( idxColumn < tableColumnsData.size() - 1 )

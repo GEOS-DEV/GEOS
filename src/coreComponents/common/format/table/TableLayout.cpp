@@ -31,7 +31,7 @@ void TableLayout::addToColumns( const std::vector< string > & columnNames )
 
 void TableLayout::addToColumns( string_view columnName )
 {
-  m_columns.push_back( TableLayout::Column{ columnName, TableLayout::Alignment::right } );
+  m_tableColumnsData.push_back( TableLayout::Column{ columnName } );
 }
 
 void TableLayout::addToColumns( Column const & column )
@@ -41,13 +41,16 @@ void TableLayout::addToColumns( Column const & column )
     std::vector< TableLayout::TableColumnData > subColumns;
     for( const auto & subColumnsName : column.subColumns )
     {
-      subColumns.push_back( TableLayout::TableColumnData { TableLayout::Column{ subColumnsName, column.alignment }  } );
+      subColumns.push_back(
+        TableLayout::TableColumnData {
+          TableLayout::Column{ subColumnsName, column.alignmentSettings.headerAlignment }
+        } );
     }
-    m_columns.push_back( TableLayout::TableColumnData { column, subColumns } );
+    m_tableColumnsData.push_back( TableLayout::TableColumnData { column, subColumns } );
   }
   else
   {
-    m_columns.push_back( TableLayout::TableColumnData { column } );
+    m_tableColumnsData.push_back( TableLayout::TableColumnData { column } );
   }
 }
 
@@ -72,6 +75,15 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
   return *this;
 }
 
+TableLayout & TableLayout::setValuesAlignment( TableLayout::Alignment alignment )
+{
+  for( auto & tableColumnData : m_tableColumnsData )
+  {
+    tableColumnData.column.alignmentSettings.valueAlignment = alignment;
+  }
+  return *this;
+}
+
 bool TableLayout::isLineWrapEnabled() const
 {
   return m_wrapLine;
@@ -79,7 +91,7 @@ bool TableLayout::isLineWrapEnabled() const
 
 void TableLayout::removeSubColumn()
 {
-  for( auto & column : m_columns )
+  for( auto & column : m_tableColumnsData )
   {
     if( !column.subColumn.empty() )
     {
@@ -90,7 +102,7 @@ void TableLayout::removeSubColumn()
 
 std::vector< TableLayout::TableColumnData > const & TableLayout::getColumns() const
 {
-  return m_columns;
+  return m_tableColumnsData;
 }
 
 string_view TableLayout::getTitle() const
