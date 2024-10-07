@@ -89,8 +89,9 @@ SinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
   m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
   m_surfaceCenter( embeddedSurfSubRegion.getElementCenter() ),
   m_surfaceArea( embeddedSurfSubRegion.getElementArea() ),
-  m_elementVolume( elementSubRegion.getElementVolume() ),
-  m_deltaVolume( elementSubRegion.template getField< fields::flow::deltaVolume >() ),
+  m_elementVolumeCell( elementSubRegion.getElementVolume() ),
+  m_elementVolumeFrac( embeddedSurfSubRegion.getElementVolume() ),
+  m_deltaVolume( embeddedSurfSubRegion.template getField< fields::flow::deltaVolume >() ),
   m_fracturedElems( elementSubRegion.fracturedElementsList() ),
   m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
@@ -146,7 +147,8 @@ setup( localIndex const k,
 {
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
-  stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolume[k];
+  stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolumeCell[k];
+
   for( localIndex a=0; a<numNodesPerElem; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
@@ -301,9 +303,9 @@ complete( localIndex const k,
   real64 const localJumpFracPressureJacobian = -m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
 
   // Mass balance accumulation
-  real64 const newVolume = m_elementVolume( embSurfIndex ) + m_deltaVolume( embSurfIndex );
+  real64 const newVolume = m_elementVolumeFrac( embSurfIndex ) + m_deltaVolume( embSurfIndex );
   real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * newVolume;
-  real64 const oldMass =  m_fluidDensity_n( embSurfIndex, 0 ) * m_elementVolume( embSurfIndex );
+  real64 const oldMass =  m_fluidDensity_n( embSurfIndex, 0 ) * m_elementVolumeFrac( embSurfIndex );
   real64 const localFlowResidual = ( newMass - oldMass );
   real64 const localFlowJumpJacobian = m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
   real64 const localFlowFlowJacobian = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * newVolume;
@@ -320,7 +322,6 @@ complete( localIndex const k,
                                                                             stack.jumpColIndices,
                                                                             stack.localKuw[i],
                                                                             3 );
-
   }
 
   for( localIndex i=0; i < 3; ++i )
@@ -348,7 +349,7 @@ complete( localIndex const k,
                                                                             1 );
   }
 
-//    // it only affects the normal jump
+  // it only affects the normal jump
 
   if( stack.jumpEqnRowIndices[0] >= 0 && stack.jumpEqnRowIndices[0] < m_matrix.numRows() )
   {

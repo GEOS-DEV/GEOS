@@ -2259,7 +2259,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
             integer const originalFractureState = fractureState[kfe];
             if( originalFractureState == FractureState::Open )
             {
-              if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] )
+              // trying comparison in absolute
+              if( LvArray::math::abs( dispJump[kfe][0] ) <= LvArray::math::abs( normalDisplacementTolerance[kfe] ) )
               {
                 fractureState[kfe] = FractureState::Stick;
                 if( getLogLevel() >= 10 )

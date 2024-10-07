@@ -31,7 +31,8 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
   FrictionBase( name, parent ),
   m_cohesion(),
   m_frictionCoefficient(),
-  m_elasticSlip()
+  m_elasticSlip(),
+  m_plasticSlip()
 {
   registerWrapper( viewKeyStruct::shearStiffnessString(), &m_shearStiffness ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -51,6 +52,9 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setDescription( "Elastic Slip" );
 
+  registerWrapper( viewKeyStruct::plasticSlipString(), &m_plasticSlip ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Plastic Slip" );
 }
 
 CoulombFriction::~CoulombFriction()
@@ -68,6 +72,7 @@ void CoulombFriction::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   m_elasticSlip.resize( 0, 2 );
+  m_plasticSlip.resize( 0, 2 );
 
   FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
@@ -79,7 +84,8 @@ CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const
                                  m_shearStiffness,
                                  m_cohesion,
                                  m_frictionCoefficient,
-                                 m_elasticSlip );
+                                 m_elasticSlip,
+                                 m_plasticSlip );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombFriction, string const &, Group * const )
