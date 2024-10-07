@@ -31,7 +31,7 @@ void TableLayout::addToColumns( const std::vector< string > & columnNames )
 
 void TableLayout::addToColumns( string_view columnName )
 {
-  m_columns.push_back( TableLayout::ColumnParam{ columnName, getDefaultAlignment() } );
+  m_columns.push_back( TableLayout::ColumnParam{ columnName, TableLayout::Alignment::right } );
 }
 
 void TableLayout::addToColumns( ColumnParam const & columnParam )
@@ -69,12 +69,6 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
   m_borderMargin = marginValue + 1; // margin + border character
   m_columnMargin = integer( marginValue ) * 2 + 1;
 
-  return *this;
-}
-
-TableLayout & TableLayout::setAlignment( TableLayout::Alignment alignment )
-{
-  m_defaultAlignment = alignment;
   return *this;
 }
 
@@ -122,11 +116,6 @@ integer const & TableLayout::getMarginValue() const
 integer const & TableLayout::getMarginTitle() const
 {
   return m_titleMargin;
-}
-
-TableLayout::Alignment TableLayout::getDefaultAlignment() const
-{
-  return m_defaultAlignment;
 }
 
 }

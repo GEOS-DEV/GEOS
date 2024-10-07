@@ -415,8 +415,7 @@ void DomainPartition::outputPartitionInformation() const
                                  TableLayout::ColumnParam{"Edges", {"local", "ghost"}},
                                  TableLayout::ColumnParam{"Faces", {"local", "ghost"}},
                                  TableLayout::ColumnParam{"Elems", {"local", "ghost"}} );
-        tableLayout.setMargin( TableLayout::MarginValue::large )
-          .setAlignment( TableLayout::Alignment::center );
+        tableLayout.setMargin( TableLayout::MarginValue::large );
         tableLayout.disableLineWrap();
 
         TableData tableData;

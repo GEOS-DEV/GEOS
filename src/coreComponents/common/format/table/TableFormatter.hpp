@@ -135,7 +135,8 @@ public:
   virtual ~TableTextFormatter() = default;
 
   /**
-   * @return A TableLayout converted into a formatted representation.
+   * @return A TableLayout string representation,
+   * The TableTextFormatter receives hasn't receive any data, so only the top part is returned.
    */
   string toString() const;
 

@@ -58,7 +58,7 @@ public:
     /// Name for a column
     string columnName;
     /// Alignment for a column. By default aligned to the right side
-    Alignment alignment;
+    Alignment alignment = Alignment::right;
     /// A boolean to display a colummn
     bool enabled = true;
     /// Vector containing sub columns name
@@ -71,7 +71,7 @@ public:
      * @param name The name of the column
      */
     ColumnParam( string_view name )
-      : columnName( name ), alignment( m_defaultAlignment )
+      : columnName( name )
     {}
 
     /**
@@ -89,7 +89,7 @@ public:
      * @param subsColumns Vector containing subcolumn values
      */
     ColumnParam( string_view name, std::vector< string > subsColumns )
-      : columnName( name ), subColumns( subsColumns ), alignment( m_defaultAlignment )
+      : columnName( name ), subColumns( subsColumns )
     {}
 
     /**
@@ -175,7 +175,6 @@ public:
   TableLayout( string_view title,
                std::initializer_list< std::variant< string, TableLayout::ColumnParam > > args )
   {
-    setAlignment( Alignment::right );
     setMargin( MarginValue::medium );
     setTitle( title );
     processArguments( args );
@@ -189,7 +188,6 @@ public:
   TableLayout( string_view title,
                std::vector< string > args )
   {
-    setAlignment( Alignment::right );
     setMargin( MarginValue::medium );
     setTitle( title );
     addToColumns( args );
@@ -203,7 +201,6 @@ public:
   template< typename ... Args >
   TableLayout( Args &&... args )
   {
-    setAlignment( Alignment::right );
     setMargin( MarginValue::medium );
     processArguments( std::forward< Args >( args )... );
   }
@@ -239,13 +236,6 @@ public:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
-   * @brief Set the default table alignment
-   * @param alignment The table alignment
-   * @return The tableLayout reference
-   */
-  TableLayout & setAlignment( Alignment alignment );
-
-  /**
    * @brief Check whether we have a line return at the end of the table or not
    */
   bool isLineWrapEnabled() const;
@@ -275,11 +265,6 @@ public:
    * @return The margin title
    */
   integer const & getMarginTitle() const;
-
-  /**
-   * @brief Get the table default aligment
-   */
-  TableLayout::Alignment getDefaultAlignment() const;
 
 private:
 
@@ -335,7 +320,6 @@ private:
   std::vector< Column > m_columns;
 
   bool m_wrapLine = true;
-  TableLayout::Alignment m_defaultAlignment = TableLayout::Alignment::right;
   string m_tableTitle;
   integer m_borderMargin;
   integer m_columnMargin;
