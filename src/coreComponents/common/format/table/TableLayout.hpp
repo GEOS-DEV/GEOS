@@ -107,7 +107,7 @@ public:
      * @param name The name of the column
      * @param align The alignment of the column
      * @param display Flag indicating whether the column is enabled
-     * @param columns Vector containing subcolumn values
+     * @param subsColumns Vector containing subcolumn values
      */
     ColumnParam( string_view name, Alignment align, bool display, std::vector< string > subsColumns )
       : columnName( name ), alignment( align ), enabled( display ), subColumns( subsColumns )
@@ -236,7 +236,7 @@ public:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
-   * @brief Check whether we have a line return at the end of the table or not
+   * @return whether we have a line return at the end of the table or not 
    */
   bool isLineWrapEnabled() const;
 
