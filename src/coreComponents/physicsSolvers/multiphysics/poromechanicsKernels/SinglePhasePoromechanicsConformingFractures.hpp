@@ -246,7 +246,6 @@ public:
     Base::complete( iconn, stack, [&] ( integer const i,
                                         localIndex const localRow )
     {
-
       localIndex const row = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
 
       m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,

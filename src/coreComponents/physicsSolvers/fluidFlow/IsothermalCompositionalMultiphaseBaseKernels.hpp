@@ -26,6 +26,8 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
+#include "constitutive/relativePermeability/layouts.hpp"
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -33,7 +35,6 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 namespace geos
 {
@@ -1514,7 +1515,7 @@ public:
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
                        integer const allowNegativePressure,
-                       CompositionalMultiphaseFVM::ScalingType const scalingType,
+                       compositionalMultiphaseUtilities::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -1670,7 +1671,7 @@ public:
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
   {
-    bool const localScaling = m_scalingType == CompositionalMultiphaseFVM::ScalingType::Local;
+    bool const localScaling = m_scalingType == compositionalMultiphaseUtilities::ScalingType::Local;
 
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
     if( newPres < 0 )
@@ -1733,7 +1734,7 @@ protected:
   real64 const m_scalingFactor;
 
   /// scaling type (global or local)
-  CompositionalMultiphaseFVM::ScalingType const m_scalingType;
+  compositionalMultiphaseUtilities::ScalingType const m_scalingType;
 
 };
 
@@ -1759,7 +1760,7 @@ public:
   static SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
                    integer const allowNegativePressure,
-                   CompositionalMultiphaseFVM::ScalingType const scalingType,
+                   compositionalMultiphaseUtilities::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,

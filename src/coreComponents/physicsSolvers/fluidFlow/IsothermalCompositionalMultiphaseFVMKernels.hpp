@@ -601,6 +601,7 @@ public:
         real64 compFlux[numComp]{};
         real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
         real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
+        real64 dCompFlux_dTrans[numComp]{};
 
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };
@@ -617,6 +618,7 @@ public:
           real64 phaseFlux = 0.0;
           real64 dPhaseFlux_dP[numFluxSupportPoints]{};
           real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
+          real64 dPhaseFlux_dTrans = 0.0;
 
           localIndex k_up = -1;
 
@@ -696,7 +698,8 @@ public:
               dPhaseFlux_dC,
               compFlux,
               dCompFlux_dP,
-              dCompFlux_dC );
+              dCompFlux_dC,
+              dCompFlux_dTrans );
           }
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
@@ -705,7 +708,7 @@ public:
                             k_up, seri[k_up], sesri[k_up], sei[k_up], potGrad,
                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
-        }                                 // loop over phases
+        } // loop over phases
 
         /// populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
@@ -901,7 +904,6 @@ public:
         kernelFlags.set( FaceBasedAssemblyKernelFlags::C1PPU );
       else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::IHU );
-
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );

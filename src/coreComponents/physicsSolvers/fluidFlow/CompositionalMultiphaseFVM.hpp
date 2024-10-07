@@ -138,6 +138,14 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const override;
 
+  virtual void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
@@ -163,15 +171,6 @@ public:
 
     // nonlinear solver parameters
     static constexpr char const * scalingTypeString()               { return "scalingType"; }
-  };
-
-  /**
-   * @brief Solution scaling type
-   */
-  enum class ScalingType : integer
-  {
-    Global,         ///< Scale the Newton update with a unique scaling factor
-    Local            ///< Scale the Newton update locally (modifies the Newton direction)
   };
 
 protected:
@@ -200,7 +199,7 @@ protected:
   } m_dbcParams;
 
   /// Solution scaling type
-  ScalingType m_scalingType;
+  compositionalMultiphaseUtilities::ScalingType m_scalingType;
 
 private:
 
@@ -231,10 +230,6 @@ private:
   // no data needed here, see CompositionalMultiphaseBase
 
 };
-
-ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
-              "Global",
-              "Local" );
 
 } // namespace geos
 

@@ -978,7 +978,7 @@ public:
   template< typename POLICY >
   static isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
-                   CompositionalMultiphaseFVM::ScalingType const scalingType,
+                   compositionalMultiphaseUtilities::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
