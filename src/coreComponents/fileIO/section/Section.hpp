@@ -25,7 +25,6 @@
 namespace geos
 {
 
-// TODO ? SectionData ?
 class Section
 {
 public:
@@ -86,11 +85,6 @@ public:
 
 private:
 
-  // /**
-  //  * @brief Compute the max string size (m_sectionWidth) between title and the description(s)
-  //  */
-  // void computeWidth();
-
   /**
    * @brief Build a description from the name and description values
    * @param descriptionName The decription name
@@ -100,13 +94,23 @@ private:
                                     string_view descriptionName,
                                     std::vector< string > const & decriptionsValues );
 
-  string constructDescriptionsWithContainer( std::vector< string > const & descriptions ) const;
+  /**
+   * @brief Constructs a string from a vector of descriptions.
+   * @param descriptions A vector of string containing the descriptions
+   * @return A string containing all the formatted descriptions.
+   */
+  string constructDescriptionsWithVector( std::vector< string > const & descriptions ) const;
 
-  void constructDescription( std::ostringstream & oss,
-                             string const & description,
-                             integer const remainingLength ) const;
-
-  void outputSection( std::ostream & oss, string_view topPart, string_view bottomPart ) const;
+  /**
+   * @brief Formats a description and adds it to an output stream
+   * @param oss The output stream
+   * @param description The description to be formatted
+   * @param remainingLength The remaining length available for the description
+   * after accounting for borders and margins
+   */
+  void formatDescription( std::ostringstream & oss,
+                          string const & description,
+                          integer const remainingLength ) const;
 
   /// Vector containing all descriptions
   std::vector< string > m_descriptions;
@@ -125,8 +129,8 @@ private:
   /// numbers of character used as border
   static constexpr integer m_nbSpecialChar = 2;
 
-  ///
-  string m_lineSection;
+  /// String containing horizontal border
+  string horizontalBorder;
 
   /// Start title footer string
   static string_view constexpr m_footerTitle = "End : ";

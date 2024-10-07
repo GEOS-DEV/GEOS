@@ -156,7 +156,7 @@ string TableTextFormatter::layoutToString() const
   return tableOutput.str();
 }
 
-template <>
+template<>
 string TableTextFormatter::toString( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
