@@ -65,7 +65,8 @@ public:
       m_axisSteps(axisSteps),
       m_axisStepInvs(axisStepInvs),
       m_axisHypercubeMults(axisHypercubeMults),
-      m_axisPointMults(numDims)
+      m_axisPointMults(numDims),
+      m_coordinates(numDims)
   {
     // fill remaining properties
     m_axisPointMults[numDims - 1] = 1;
@@ -326,7 +327,7 @@ public:
   }
 protected:
   /**
-   * @brief Get pointer to hypercube data
+   * @brief Get const pointer to hypercube data
    *
    * @param[in] hypercubeIndex
    * @return pointer to hypercube data
@@ -339,7 +340,12 @@ protected:
   {
     return nullptr;
   }
-
+  /**
+   * @brief Get pointer to hypercube data
+   *
+   * @param[in] hypercubeIndex
+   * @return pointer to hypercube data
+   */
   virtual
   GEOS_HOST_DEVICE
   inline
@@ -348,6 +354,27 @@ protected:
   {
     return nullptr;
   }
+  /**
+   * @brief Get coordinates of point given by index
+   *
+   * @param[in] pointIndex point's index
+   * @return pointer to hypercube data
+   */
+  virtual
+  GEOS_HOST_DEVICE
+  inline
+  void
+  getPointCoordinates(globalIndex pointIndex, stackArray1d<real64, numDims> & coordinates)
+  {
+    globalIndex axisIdx, remainderIdx = pointIndex;
+    for (integer i = 0; i < numDims; ++i)
+    {
+      axisIdx = remainderIdx / m_axisPointMults[i];
+      remainderIdx = remainderIdx % m_axisPointMults[i];
+      coordinates[i] = m_axisMinimums[i] + m_axisSteps[i] * axisIdx;
+    }
+  }
+
 
   // inputs : table discretization data
 
@@ -373,6 +400,11 @@ protected:
 
   /// Array [numDims] of point index mult factors for each axis 
   array1d< globalIndex > const m_axisPointMults;     
+
+  // inputs: where to interpolate
+
+  /// Coordinates in numDims-dimensional space where interpolation is requested
+  stackArray1d< real64, numDims > m_coordinates;
 };
 
 } /* namespace geos */

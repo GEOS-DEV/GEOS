@@ -54,6 +54,7 @@ public:
   using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisStepInvs;
   using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisHypercubeMults;
   using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisPointMults;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_coordinates;
 
   /**
    * @brief Construct a new Multilinear Interpolator Adaptive Kernel object
@@ -70,13 +71,15 @@ public:
                                           array1d< integer > const & axisPoints,
                                           array1d< real64 > const & axisSteps,
                                           array1d< real64 > const & axisStepInvs,
-                                          array1d< globalIndex > const & axisHypercubeMults ):
+                                          array1d< globalIndex > const & axisHypercubeMults,
+                                          const PythonFunction<numDims, numOps>* evalFunc ):
     MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>( axisMinimums,
                                                           axisMaximums,
                                                           axisPoints,
                                                           axisSteps,
                                                           axisStepInvs,
-                                                          axisHypercubeMults)
+                                                          axisHypercubeMults),
+    m_evalFunc(evalFunc)
   {};
 protected:
   /**
@@ -95,7 +98,8 @@ protected:
     if (item == m_pointData.end())
     {
       stackArray1d<real64, numOps> newPoint;
-      newPoint[0] = 1.;
+      this->getPointCoordinates(pointIndex, m_coordinates);
+      m_evalFunc->evaluate(m_coordinates, newPoint);
       m_pointData[pointIndex] = newPoint;
       return m_pointData.at(pointIndex);
     }
@@ -168,15 +172,17 @@ protected:
         return item->second.data();
   }
 
-   /**
+  /**
+   * @brief wrapper providing interface to Python function
+   */
+  const PythonFunction<numDims, numOps>* m_evalFunc;
+  /**
    * @brief adaptive point storage: the values of operators at requested supporting points
    * Storage is grown dynamically in the process of simulation. 
    * Only supporting points that are required for interpolation are computed and added
-   * 
    */
   unordered_map<globalIndex, stackArray1d<real64, numOps>> m_pointData;
-
-   /**
+  /**
    * @brief adaptive hypercube storage: the values of operators at every vertex of reqested hypercubes
    * Storage is grown dynamically in the process of simulation
    * Only hypercubes that are required for interpolation are computed and added

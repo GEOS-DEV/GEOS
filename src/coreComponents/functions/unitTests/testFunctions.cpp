@@ -13,14 +13,17 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include <Python.h>
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "gtest/gtest.h"
 #include "mainInterface/initialization.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/FunctionBase.hpp"
 #include "functions/TableFunction.hpp"
+#include "functions/PythonFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 #include "functions/MultilinearInterpolatorStaticKernels.hpp"
+#include "functions/MultilinearInterpolatorAdaptiveKernels.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOS_USE_MATHPRESSO
@@ -650,7 +653,8 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                                                                       function.getAxisStepInvs(),
                                                                       function.getAxisHypercubeMults(),
                                                                       function.getHypercubeData()
-                                                                      );
+                                                                      );  
+
   // Test values evaluation first
   forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
                                              ( localIndex const elemIndex )
@@ -886,6 +890,84 @@ TEST( FunctionTests, MultivariableTableFromFile )
   testMutivariableFunction< nDims, nOps >( table_h, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
+PyObject* definePythonFunction()
+{
+    // Python code as a string
+    const char* pythonCode = R"(
+def python_evaluate(state, values):
+    x1, x2, x3, x4, x5, x6 = state
+    # First result: product of sin and cos
+    values[0] = (math.sin(x1) * math.cos(x2) * math.sin(x3) * 
+                 math.cos(x4) * math.sin(x5) * math.cos(x6))
+    # Second result: sum of sin and cos
+    values[1] = (math.sin(x1) + math.cos(x2) + math.sin(x3) +
+                 math.cos(x4) + math.sin(x5) + math.cos(x6))
+)";
+    
+    // Execute the Python code to define the function
+    PyObject* module = PyModule_Create(nullptr);
+    PyRun_SimpleString(pythonCode);
+
+    // Retrieve the function by name
+    PyObject* mainModule = PyImport_AddModule("__main__");
+    PyObject* func = PyObject_GetAttrString(mainModule, "python_evaluate");
+
+    if (func == nullptr || !PyCallable_Check(func)) {
+        PyErr_Print();
+        throw std::runtime_error("Failed to define Python function.");
+    }
+    
+    return func;
+}
+
+TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
+{
+  constexpr integer nDims = 6;
+  constexpr integer nOps = 2;
+  constexpr integer nPts = 10;
+
+  // Initialize Python interpreter
+  Py_Initialize();
+
+  // Create a PythonFunction object
+  PythonFunction<nDims, nOps> func;
+
+  // Define and set the Python function for the func object
+  PyObject* pyFunc = definePythonFunction();
+  func.setEvaluateFunction(pyFunc);
+
+  array1d< real64 > const axesMinimums ( nDims );
+  array1d< real64 > const axesMaximums ( nDims );
+  array1d< integer > const axesPoints ( nDims );
+  array1d< real64 > const axisSteps( nDims );
+  array1d< real64 > const axisStepInvs( nDims );
+  array1d< globalIndex > const axisHypercubeMults( nDims );
+
+  for( integer dim = 0; dim < nDims; dim++ )
+  {
+    axesMinimums[dim] = -M_PI;
+    axesMaximums[dim] = M_PI;
+    axesPoints[dim] = nPts;
+    axisSteps[dim] = (axesMaximums[dim] - axesMinimums[dim]) / (axesPoints[dim] - 1);
+    axisStepInvs[dim] = 1 / axisSteps[dim];
+  }
+
+  axisHypercubeMults[nDims - 1] = 1;
+  for( integer dim = nDims - 2; dim >= 0; --dim )
+  {
+    axisHypercubeMults[dim] = axisHypercubeMults[dim + 1] * (axesPoints[dim + 1] - 1);
+  }
+
+  MultilinearInterpolatorAdaptiveKernel< nDims, nOps > kernel( axesMinimums,
+                                                              axesMaximums,
+                                                              axesPoints,
+                                                              axisSteps,
+                                                              axisStepInvs,
+                                                              axisHypercubeMults,
+                                                              &func );
+
+  Py_Finalize();
+}
 
 // The `ENUM_STRING` implementation relies on consistency between the order of the `enum`,
 // and the order of the `string` array provided. Since this consistency is not enforced, it can be corrupted anytime.
