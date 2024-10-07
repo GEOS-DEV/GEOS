@@ -114,15 +114,9 @@ TEST( testSection, sectionEndDescription )
   std::ostringstream oss;
   Section section( "TIMESTEP START" );
   section.addDescription( "description" );
-  section.addEndDescription("test end description");
+  section.addEndDescription( "test end description" );
   section.setMinWidth( 70 );
   section.beginSection( oss );
-  // EXPECT_EQ ( oss.str(),
-  //             "\n######################################################################\n"
-  //             "##                          TIMESTEP START                          ##\n"
-  //             "######################################################################\n"
-  //             "##  - Time: 00h08m20s out of 2d, 21h26m40s (0% completed)           ##\n"
-  //             );
   oss.clear();
   oss.str( "" );
 
@@ -131,7 +125,9 @@ TEST( testSection, sectionEndDescription )
   std::cout << " end section \n" << oss.str() << std::endl;
 
   EXPECT_EQ( oss.str(),
-             "\n##                       End : TIMESTEP START                       ##\n"
+             "\n##  test end description                                            ##\n"
+             "######################################################################\n"
+             "##                       End : TIMESTEP START                       ##\n"
              "######################################################################\n\n"
              );
   oss.clear();

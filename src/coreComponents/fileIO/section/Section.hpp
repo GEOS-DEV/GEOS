@@ -86,10 +86,10 @@ public:
 
 private:
 
-  /**
-   * @brief Compute the max string size (m_sectionWidth) between title and the description(s)
-   */
-  void computeWidth();
+  // /**
+  //  * @brief Compute the max string size (m_sectionWidth) between title and the description(s)
+  //  */
+  // void computeWidth();
 
   /**
    * @brief Build a description from the name and description values
@@ -100,9 +100,13 @@ private:
                                     string_view descriptionName,
                                     std::vector< string > const & decriptionsValues );
 
-  string constructDescriptionsWithContainer( std::vector< string > const & descriptions, integer length ) const;
+  string constructDescriptionsWithContainer( std::vector< string > const & descriptions ) const;
 
-  void constructDescription( std::ostringstream & oss, string const & description, integer length ) const;
+  void constructDescription( std::ostringstream & oss,
+                             string const & description,
+                             integer const remainingLength ) const;
+
+  void outputSection( std::ostream & oss, string_view topPart, string_view bottomPart ) const;
 
   /// Vector containing all descriptions
   std::vector< string > m_descriptions;
@@ -114,7 +118,7 @@ private:
   /// section length
   integer m_sectionWidth;
   /// min width of section length
-  integer m_rowMinWidth;
+  integer m_rowMinWidth = 70;
 
   /// description border margin
   static constexpr integer m_marginBorder = 2;
@@ -123,9 +127,6 @@ private:
 
   ///
   string m_lineSection;
-  ///
-  string m_borderSpaces;
-
 
   /// Start title footer string
   static string_view constexpr m_footerTitle = "End : ";
