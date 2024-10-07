@@ -113,6 +113,9 @@ public:
                        int const & creep,
                        real64 const & creepC0,
                        real64 const & creepC1,
+                       real64 const & creepA,
+                       real64 const & creepB,
+                       real64 const & creepC,
                        arrayView1d< real64 > const bulkModulus,
                        arrayView1d< real64 > const shearModulus,
                        arrayView3d< real64 const > const velocityGradient,
@@ -161,6 +164,9 @@ public:
     m_creep( creep ),
     m_creepC0( creepC0 ),
     m_creepC1( creepC1 ),
+    m_creepA( creepA ),
+    m_creepB( creepB ),
+    m_creepC( creepC ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_velocityGradient( velocityGradient ),
@@ -446,6 +452,9 @@ private:
   int const & m_creep;
   real64 const & m_creepC0;
   real64 const & m_creepC1;
+  real64 const & m_creepA;
+  real64 const & m_creepB;
+  real64 const & m_creepC;
 
   /// A reference to the ArrayView holding the bulk modulus for each element/particle.
   arrayView1d< real64 > const m_bulkModulus;
@@ -750,10 +759,12 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 	{
 		real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
+    real64 A = m_creepA;  // volumetric creep rate parameter
+    real64 B = m_creepB;  // volumetric creep rate parameter
+    real64 C = m_creepC;  // volumetric creep rate parameter
 
-    real64 stress_iso[6] = { 0 },
-           stress_dev[6] = { 0 };
-
+    real64 stress_iso[6] = { 0 };
+    real64 stress_dev[6] = { 0 };
     real64 iso_old;
     real64 J2_old;
     twoInvariant::stressDecomposition( sigma_old,
@@ -764,41 +775,99 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     stress_iso[1] = iso_old;
     stress_iso[2] = iso_old;
 
-    LvArray::tensorOps::scale< 6 >( stress_dev, sqrt(2/3) * J2_old);
+    real64 ep_iso[6] = { 0 };
+    real64 ep_dev[6] = { 0 };
+    real64 ep_iso_old;
+    real64 ep_J2_old;
+    twoInvariant::stressDecomposition( epa_old,
+                                       ep_iso_old,
+                                       ep_J2_old,
+                                       ep_dev );
+    ep_iso[0] = ep_iso_old;
+    ep_iso[1] = ep_iso_old;
+    ep_iso[2] = ep_iso_old;
 
-    // isotropicDeviatoricDecomposition(sigma_old, stress_iso, stress_dev);
-		// double J2_old = computeJ2fromDevStress( stress_dev );
-		real64 sigma_vm_old = sqrt( 3.0 * J2_old );
-
+   	real64 sigma_vm_old = sqrt( 3.0 * J2_old );
 		computeElasticProperties( bulk,
                               shear );
-		real64 elasticShearStrain = sigma_vm_old / ( 3 * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
+		real64 elasticVMShearStrain = sigma_vm_old / ( 3 * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
 
-		if ( elasticShearStrain > 1.e-12 )
+		if ( elasticVMShearStrain > 1.e-12 )
 		{  // only apply creep if there is elastic strain
 
-			real64 creepStrainIncrement = c0 * std::pow( sigma_vm_old , c1 ) * Dt;
-			real64 devStressCreepScale = std::max ( elasticShearStrain - creepStrainIncrement , 0.0 ) / elasticShearStrain;
+      real64 equilibriumVMShearStrain = 0.0; // this could be some other function of pressure, granular density, etc.
+      real64 creepVMStrainIncrement = c0 * std::pow( elasticVMShearStrain - equilibriumVMShearStrain, c1 ) * Dt;
+			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticShearStrain;
 
 			// increment plastic strain such that total strain is constant:  (0.5/g0)*stress_dev*( 1.0 - devStressCreepScale );
-			real64 creepStrain[6];
-			// creepStrain = stress_dev; // this is temporarily the dev stress
-			// creepStrain *= 0.5/g0*( 1.0 - devStressCreepScale ); // this is now the change in elastic deviatoric strain
-			// ep_old += creepStrain; // increment plastic strain such that total strain is constant
-      LvArray::tensorOps::copy< 6 >( creepStrain, stress_dev );
-      LvArray::tensorOps::scale< 6 >( creepStrain,  0.5/m_g0*( 1.0 - devStressCreepScale ) ); // CC: TODO check if new to double off diagonal components
-      LvArray::tensorOps::add< 6 >( ep_old, creepStrain );
+			real64 creepStrainIncrement[6];  
+			// creepStrainIncrement = stress_dev; // this is temporarily the dev stress
+			// creepStrainIncrement *= 0.5/g0*( 1.0 - devStressCreepScale ); // this is now the change in elastic deviatoric strain
+			// ep_old += creepStrainIncrement; // increment plastic strain such that total strain is constant
+      LvArray::tensorOps::copy< 6 >( creepStrainIncrement, stress_dev );
+      LvArray::tensorOps::scale< 6 >( creepStrainIncrement,  0.5/shear*( 1.0 - devStressCreepScale ) ); // CC: TODO check if new to double off diagonal components
+      LvArray::tensorOps::add< 6 >( ep_dev, creepStrainIncrement );
 
 			// relax elastic deviatoric stress due to creep
 			// stress_dev *= devStressCreepScale;
       LvArray::tensorOps::scale< 6 >( stress_dev, devStressCreepScale );
+		}
+
+	  // volumetric creep ----------------
+
+
+    real64 p = -iso_old;  // hydrostatic pressure, positive in compression
+
+    // volumetric plastic strain, negative in compression
+ 	  real64 evp = ep_old[0] + ep_old[1] + ep_old[2]; 
+    // unloaded porosity at the start of the step.
+    real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
+    // equilibrium porosity at the start of the step.
+		real64 phi_e = std::max(1.e-10 , A*exp(-p/B));    
+
+    // uncomment for debugging:
+    //		  std::cout<<"evp = "<<evp<<", phi_p = "<<phi_p<<", phi_e = "<<phi_e<<std::endl;
+
+    if ( (phi_p > phi_e) && (p > 1.e-12) && (C > 0) )
+ 		  {  // creep compaction
+ 			  real64 dphidt = -1.0*p*C*( phi_p - phi_e );  // creep compaction rate:
+ 			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
+
+ 			  real64 evp_0 = log( (phi_i - 1. ) / ( phi_p - 1. ) ); // vol. strain before creep, computed from porosity
+ 			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
+ 			  real64 devp = evp_c - evp;  // creep vol. strain increment
+
+ 			  real64 p_c = std::max( 0., p + bulk*devp );  // relaxed pressure after creep.
+
+        // uncomment for debugging:
+        // std::cout<<"creep compaction:phi_p = "<<phi_p<<", phi_e = "<<phi_e<<", phi_c = "<<phi_c<<", dphiDt = "<<dphidt
+        // <<", evp_0 = "<<evp_0<<", evp = "<<evp<<", devp = "<<devp<<", bulk = "<<bulk
+        // <<", p_old = "<<p<<", p_c = "<<p_c<<std::endl;
+
+        // update stress and plastic strain values after creep
+        stress_iso[0] = -1.0*p_c;
+			  stress_iso[1] = -1.0*p_c;
+        stress_iso[2] = -1.0*p_c;
+ 			  ep_iso[0] = evp_c/3.;
+ 			  ep_iso[1] = evp_c/3.;
+ 			  ep_iso[2] = evp_c/3.;
+
+        // update cap function to be consistent with new vol. plastic
+        X_old = computeX( evp_c,
+        phi_i, // Initial porosity (inferred from crush curve, used for fluid model/
+        bulk, // matrix bulk modulus
+        0.0, // Fluid bulk modulus
+        0.0, // Term to simplify the fluid model expressions
+        0.0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
+        0.0 )
+ 		  }
 
 	    // Reassemble the stress with a scaled deviatoric stress tensor
-			// sigma_old = stress_dev;
-			// sigma_old += stress_iso;
       LvArray::tensorOps::copy< 6 >( sigma_old, stress_dev );
       LvArray::tensorOps::add< 6 >( sigma_old, stress_iso );
-		}
+
+      LvArray::tensorOps::copy< 6 >( ep_old, ep_dev );
+      LvArray::tensorOps::add< 6 >( ep_old, ep_iso );
 	}
 	// -------------------------------------------------------------------------------
 
@@ -2281,6 +2350,15 @@ public:
     /// string/key for creep C1 parameter
     static constexpr char const * creepC1String() { return "creepC1"; }
 
+    /// string/key for creep A parameter
+    static constexpr char const * creepAString() { return "creepA"; }
+
+    /// string/key for creep B parameter
+    static constexpr char const * creepBString() { return "creepB"; }
+
+    /// string/key for creep C parameter
+    static constexpr char const * creepCString() { return "creepC"; }
+
     //string/key for element/particle bulk modulus value
     static constexpr char const * bulkModulusString() { return "bulkModulus"; }
 
@@ -2338,6 +2416,9 @@ public:
                                 m_creep,
                                 m_creepC0,
                                 m_creepC1,
+                                m_creepA,
+                                m_creepB,
+                                m_creepC,
                                 m_bulkModulus,
                                 m_shearModulus,
                                 m_velocityGradient,
@@ -2393,6 +2474,9 @@ public:
                           m_creep,
                           m_creepC0,
                           m_creepC1,
+                          m_creepA,
+                          m_creepB,
+                          m_creepC,
                           m_bulkModulus,
                           m_shearModulus,
                           m_velocityGradient,
@@ -2526,8 +2610,13 @@ protected:
   real64 m_fluidInitialPressure;
 
   int m_creep;
+  // deviatoric creep parameters
   real64 m_creepC0;
   real64 m_creepC1;
+  // compaction creep parameters
+  real64 m_creepA;
+  real64 m_creepB;
+  real64 m_creepC;
 
   /// The bulk modulus for each element/particle
   array1d< real64 > m_bulkModulus;

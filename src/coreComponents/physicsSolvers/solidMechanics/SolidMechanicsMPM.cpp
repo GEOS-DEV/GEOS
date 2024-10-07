@@ -8015,8 +8015,8 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     int const numContactGroups = m_numContactGroups;
     int const damageFieldPartitioning = m_damageFieldPartitioning;
 
-    std::cout << "m_boreholePressure:  " << m_boreholePressure <<  std::endl;
-    std::cout << "m_boreholeRadius:  " << m_boreholeRadius <<  std::endl;
+    //std::cout << "m_boreholePressure:  " << m_boreholePressure <<  std::endl;
+    //std::cout << "m_boreholeRadius:  " << m_boreholeRadius <<  std::endl;
 
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
                                                                                                 // remember to pass copies of class
