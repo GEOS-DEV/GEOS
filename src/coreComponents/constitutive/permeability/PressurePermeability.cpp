@@ -40,8 +40,12 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Pressure dependence coefficients for each permeability component." );
 
-  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+  registerWrapper( viewKeyStruct::defaultReferencePressureString(), &m_defaultReferencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default reference pressure for the pressure permeability model" );
+  
+  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setApplyDefaultValue( -1.0 ).
     setDescription( "Reference pressure for the pressure permeability model" );
 
   registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
@@ -74,6 +78,9 @@ void PressurePermeability::postInputInitialization()
     GEOS_ERROR_IF( fabs( m_pressureDependenceConstants[i] ) < 1e-15 && m_presModelType == PressureModelType::Hyperbolic,
                    getDataContext() << ": the pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model." );
   }
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePressureString() ).
+    setApplyDefaultValue( m_defaultReferencePressure );
 }
 
 void PressurePermeability::allocateConstitutiveData( dataRepository::Group & parent,
