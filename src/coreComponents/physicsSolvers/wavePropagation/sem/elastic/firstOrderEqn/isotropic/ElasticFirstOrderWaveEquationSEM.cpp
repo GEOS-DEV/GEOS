@@ -307,7 +307,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
     baseMesh.getElemManager().getRegion( regionIndex ).getSubRegion< CellElementSubRegion >( esr ).nodeList().freeOnDevice();
     elementSubRegion.getElementCenter().freeOnDevice();
     elementSubRegion.ghostRank().freeOnDevice();
-    elementSubRegion.localToGlobalMap().freeOnDevice(); 
+    elementSubRegion.localToGlobalMap().freeOnDevice();
   } );
   baseMesh.getNodeManager().localToGlobalMap().freeOnDevice();
   baseMesh.getNodeManager().elementList().toView().freeOnDevice();
