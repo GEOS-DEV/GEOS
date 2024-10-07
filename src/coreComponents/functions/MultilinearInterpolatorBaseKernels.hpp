@@ -59,13 +59,21 @@ public:
                                     arrayView1d< real64 const > const & axisSteps,
                                     arrayView1d< real64 const > const & axisStepInvs,
                                     arrayView1d< globalIndex const > const & axisHypercubeMults):
-    m_axisMinimums ( axisMinimums ),
-    m_axisMaximums ( axisMaximums ),
-    m_axisPoints ( axisPoints ),
-    m_axisSteps ( axisSteps ),
-    m_axisStepInvs ( axisStepInvs ),
-    m_axisHypercubeMults ( axisHypercubeMults )
-  {}
+      m_axisMinimums(axisMinimums),
+      m_axisMaximums(axisMaximums),
+      m_axisPoints(axisPoints),
+      m_axisSteps(axisSteps),
+      m_axisStepInvs(axisStepInvs),
+      m_axisHypercubeMults(axisHypercubeMults),
+      m_axisPointMults(numDims)
+  {
+    // fill remaining properties
+    m_axisPointMults[numDims - 1] = 1;
+    for (integer i = numDims - 2; i >= 0; --i)
+    {
+        m_axisPointMults[i] = m_axisPointMults[i + 1] * m_axisPoints[i + 1];
+    }
+  }
 
   /**
    * @brief Get the interval index, low and mult values for a given axis coordinate
@@ -247,29 +255,124 @@ public:
       }
     }
   }
+  /**
+   * @brief interpolate all operators at a given point
+   *
+   * @param[in] coordinates point coordinates
+   * @param[out] values interpolated operator values
+   */
+  template< typename IN_ARRAY, typename OUT_ARRAY >
+  GEOS_HOST_DEVICE
+  void
+  compute( IN_ARRAY const & coordinates,
+           OUT_ARRAY && values ) const
+  {
+    globalIndex hypercubeIndex = 0;
+    real64 axisLows[numDims];
+    real64 axisMults[numDims];
 
+    for( int i = 0; i < numDims; ++i )
+    {
+      integer const axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
+                                                             m_axisMinimums[i], m_axisMaximums[i],
+                                                             m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
+                                                             axisLows[i], axisMults[i] );
+      hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
+    }
+
+    interpolatePoint( coordinates,
+                      getHypercubeData( hypercubeIndex ),
+                      &axisLows[0],
+                      &m_axisStepInvs[0],
+                      values );
+  }
+
+  /**
+   * @brief interpolate all operators and compute their derivatives at a given point
+   *
+   * @tparam IN_ARRAY type of input array of coordinates
+   * @tparam OUT_ARRAY type of output array of values
+   * @tparam OUT_2D_ARRAY type of output array of derivatives
+   * @param[in] coordinates point coordinates
+   * @param[out] values interpolated operator values
+   * @param[out] derivatives derivatives of interpolated operators
+   */
+  template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
+  GEOS_HOST_DEVICE
+  void
+  compute( IN_ARRAY const & coordinates,
+           OUT_ARRAY && values,
+           OUT_2D_ARRAY && derivatives ) const
+  {
+    globalIndex hypercubeIndex = 0;
+    real64 axisLows[numDims];
+    real64 axisMults[numDims];
+
+    for( int i = 0; i < numDims; ++i )
+    {
+      integer const axisIndex = this->getAxisIntervalIndexLowMult(coordinates[i],
+                                                                  m_axisMinimums[i], m_axisMaximums[i],
+                                                                  m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
+                                                                  axisLows[i], axisMults[i] );
+      hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
+    }
+
+    interpolatePointWithDerivatives(  coordinates,
+                                      getHypercubeData( hypercubeIndex ),
+                                      &axisLows[0], &axisMults[0],
+                                      &m_axisStepInvs[0],
+                                      values,
+                                      derivatives );
+  }
 protected:
+  /**
+   * @brief Get pointer to hypercube data
+   *
+   * @param[in] hypercubeIndex
+   * @return pointer to hypercube data
+   */
+  virtual
+  GEOS_HOST_DEVICE
+  inline
+  real64 const *
+  getHypercubeData( globalIndex const hypercubeIndex ) const
+  {
+    return nullptr;
+  }
+
+  virtual
+  GEOS_HOST_DEVICE
+  inline
+  real64 *
+  getHypercubeData( globalIndex const hypercubeIndex )
+  {
+    return nullptr;
+  }
+
   // inputs : table discretization data
 
   /// Array [numDims] of axis minimum values
-  arrayView1d< real64 const > m_axisMinimums;
+  arrayView1d< real64 const > const m_axisMinimums;
 
   /// Array [numDims] of axis maximum values
-  arrayView1d< real64 const > m_axisMaximums;
+  arrayView1d< real64 const > const m_axisMaximums;
 
   /// Array [numDims] of axis discretization points
-  arrayView1d< integer const > m_axisPoints;
+  arrayView1d< integer const > const m_axisPoints;
 
   // inputs : service data derived from table discretization data
 
   ///  Array [numDims] of axis interval lengths (axes are discretized uniformly)
-  arrayView1d< real64 const > m_axisSteps;
+  arrayView1d< real64 const > const m_axisSteps;
 
   ///  Array [numDims] of inversions of axis interval lengths (axes are discretized uniformly)
-  arrayView1d< real64 const > m_axisStepInvs;
+  arrayView1d< real64 const > const m_axisStepInvs;
 
   ///  Array [numDims] of hypercube index mult factors for each axis
-  arrayView1d< globalIndex const > m_axisHypercubeMults;
+  arrayView1d< globalIndex const > const m_axisHypercubeMults;
+
+  /// Array [numDims] of point index mult factors for each axis 
+  array1d< globalIndex > const m_axisPointMults;     
 };
 
 } /* namespace geos */
