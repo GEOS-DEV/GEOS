@@ -131,46 +131,53 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     }
     else if( !m_repositoryName.empty())
     {
-      std::vector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
-      vtkNew< vtkAppendFilter > appender;
-      appender->MergePointsOn();
-      for( auto & [key, value] : this->getSubGroups())
+      if( MpiWrapper::commRank() == 0 )
       {
-        GEOS_LOG( key );
-        Region const & region = this->getGroup< Region >( key );
-
-        string path = region.getWrapper< string >( Region::viewKeyStruct::pathInRepositoryString()).reference();
-        integer region_id = region.getWrapper< integer >( Region::viewKeyStruct::idString()).reference();
-
-        GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading partition from {}", catalogName(), getName(), path ) );
-        vtkPartitionedDataSet * p = m_repository->search( path );
-
-        //load the grid
-        vtkDataObject * block = p->GetPartition( 0 );
-        if( block->IsA( "vtkDataSet" ) )
+        std::vector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
+        vtkNew< vtkAppendFilter > appender;
+        appender->MergePointsOn();
+        for( auto & [key, value] : this->getSubGroups())
         {
-          vtkSmartPointer< vtkDataSet > dataset = vtkDataSet::SafeDownCast( block );
+          Region const & region = this->getGroup< Region >( key );
 
-          vtkIntArray * arr = vtkIntArray::New();
-          arr->SetName( m_attributeName.c_str());
-          arr->SetNumberOfComponents( 1 );
-          arr->SetNumberOfTuples( dataset->GetNumberOfCells());
+          string path = region.getWrapper< string >( Region::viewKeyStruct::pathInRepositoryString()).reference();
+          integer region_id = region.getWrapper< integer >( Region::viewKeyStruct::idString()).reference();
 
-          arr->FillValue( region_id );
+          GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading partition from {}", catalogName(), getName(), path ) );
+          vtkPartitionedDataSet * p = m_repository->search( path );
 
-          dataset->GetCellData()->AddArray( arr );
-          appender->AddInputDataObject( dataset );
+          //load the grid
+          vtkDataObject * block = p->GetPartition( 0 );
+          if( block->IsA( "vtkDataSet" ) )
+          {
+            vtkSmartPointer< vtkDataSet > dataset = vtkDataSet::SafeDownCast( block );
+
+            vtkIntArray * arr = vtkIntArray::New();
+            arr->SetName( m_attributeName.c_str());
+            arr->SetNumberOfComponents( 1 );
+            arr->SetNumberOfTuples( dataset->GetNumberOfCells());
+
+            arr->FillValue( region_id );
+
+            dataset->GetCellData()->AddArray( arr );
+            appender->AddInputDataObject( dataset );
+          }
         }
-      }
-      appender->Update();
-      vtkUnstructuredGrid * result = vtkUnstructuredGrid::SafeDownCast( appender->GetOutputDataObject( 0 ) );
-      allMeshes.setMainMesh( result );
+        appender->Update();
+        vtkUnstructuredGrid * result = vtkUnstructuredGrid::SafeDownCast( appender->GetOutputDataObject( 0 ) );
+        allMeshes.setMainMesh( result );
 
-      //DEBUG code
-      vtkNew< vtkXMLUnstructuredGridWriter > writer;
-      writer->SetFileName( "tmp_output.vtu" );
-      writer->SetInputData( result );
-      writer->Write();
+        //DEBUG code
+        vtkNew< vtkXMLUnstructuredGridWriter > writer;
+        writer->SetFileName( "tmp_output.vtu" );
+        writer->SetInputData( result );
+        writer->Write();
+      }
+      else
+      {
+        vtkUnstructuredGrid * result = vtkUnstructuredGrid::New();
+        allMeshes.setMainMesh( result );
+      }
     }
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
 
