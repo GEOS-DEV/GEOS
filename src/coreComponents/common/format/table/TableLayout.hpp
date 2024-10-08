@@ -254,6 +254,7 @@ public:
   /**
    * @brief Set the column values alignment
    * @param alignment column values alignment
+   * @return The tableLayout reference
    */
   TableLayout & setValuesAlignment( TableLayout::Alignment alignment );
 
