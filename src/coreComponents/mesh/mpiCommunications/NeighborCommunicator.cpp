@@ -257,6 +257,8 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
       elemManager.constructReferenceAccessor< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
                                                                        std::to_string( this->m_neighborRank ) );
 
+    GEOS_LOG_RANK_IF(MpiWrapper::commRank() == 23, "sending to rank " << this->m_neighborRank);
+
     mesh.generateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
                                  nodeAdjacencyList,
                                  edgeAdjacencyList,

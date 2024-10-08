@@ -368,6 +368,8 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
+    auto nodePositions = nodeManager.referencePosition();
+
     // Get the finite volume method used to compute the stabilization
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -382,6 +384,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
                    this->getDataContext() << ": The fracture subregion must contain pressure field." );
 
     ArrayOfArraysView< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
+    //auto elem2dToNodes = fractureSubRegion.nodeList().toViewConst();
 
     arrayView1d< globalIndex const > const &
     presDofNumber = fractureSubRegion.getReference< globalIndex_array >( presDofKey );
@@ -419,6 +422,33 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
               localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[fractureIndex][0] );
 
               // Loop over the two sides of each fracture element
+	     // if(elem2dToFaces.sizeOfArray(fractureIndex) != 2)
+	     // {
+		   //   std::cout << "the fracture index is " << fractureIndex << std::endl;
+		   //   std::cout << "size of array elem2dToFaces[fractureIndex] (which should be 2) is " << elem2dToFaces.sizeOfArray(fractureIndex) << std::endl;
+		   //   std::cout << "the array elem2dToFaces[fractureIndex] contains:" << std::endl;
+		    //  for (localIndex i = 0; i < elem2dToFaces.sizeOfArray(fractureIndex); ++i)
+		  //    {
+		//	      auto faceIndex = elem2dToFaces[fractureIndex][i];
+		//	      std::cout<< "face index " << faceIndex << "which has nodes " <<  std::endl;
+		//	      for (localIndex j  = 0; j < numNodesPerFace; ++j)
+		//	      {
+		//		      auto nodeIndex = faceToNodeMap(faceIndex, j);
+		//		      std::cout << "\t" << nodeIndex << "\t with position " << nodePositions(nodeIndex, 0) << "\t" << nodePositions(nodeIndex, 1) << "\t" << nodePositions(nodeIndex, 2) << std::endl;
+		//	      }
+		  //    }
+		  //    std::cout << "elem2dToNodes(fractureIndex) contains" << std::endl;
+		  //    for (localIndex i = 0; i < elem2dToNodes.sizeOfArray(fractureIndex); ++i)
+		  //    {
+		//	      auto nodeIndex = elem2dToNodes[fractureIndex][i];
+		//	      std::cout << nodeIndex << "\t" << nodePositions(nodeIndex, 0) << "\t" << nodePositions(nodeIndex, 1) << "\t" << nodePositions(nodeIndex, 2) << std::endl;
+			   
+		//      }
+		     
+	      //}
+	      
+	      //GEOS_LOG_RANK( "Fracture face " << fractureIndex << " has elem2dToFaces[fractureIndex] of size " << elem2dToFaces.sizeOfArray(fractureIndex) );
+
               GEOS_ERROR_IF( elem2dToFaces.sizeOfArray( fractureIndex ) != 2,
                              "Fracture face " << fractureIndex << " has to be shared by two cells." );
               for( localIndex kf1 = 0; kf1 < 2; ++kf1 )

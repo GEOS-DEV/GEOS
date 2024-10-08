@@ -383,6 +383,7 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
 
       if( sizes.size() != 1 || sizes.find( 2 ) == sizes.cend() )
       {
+       // GEOS_LOG_RANK("For 2d element " << e2d << "  we terminated in the if (sizes) statement, elem2dToFaces.sizeOfArray(e2d) = " << elem2dToFaces.sizeOfArray(e2d) );
         continue;
       }
 
@@ -414,6 +415,8 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
       {
         GEOS_ERROR( "Mapping neighbor inconsistency detected for fracture " << fractureName );
       }
+
+      //GEOS_LOG_RANK("For 2d element " << e2d << " elem2dToFaces[e2d][0] = " << elem2dToFaces[e2d][0] << " and elem2ToFaces[e2d][1] = " << elem2dToFaces[e2d][1] );
     }
   }
 }
@@ -687,6 +690,8 @@ void fillMissing2dElemToNodes( ArrayOfArrays< array1d< globalIndex > > const & e
         }
       }
     }
+    //GEOS_LOG_RANK("FOr e2d = " << e2d << " elem2dToNodes.sizeOfArray(e2d) = " << elem2dToNodes.sizeOfArray(e2d) );
+    //GEOS_ERROR_IF(elem2dToNodes.sizeOfArray(e2d) < 5, "fracture element " << e2d << " has only " << elem2dToNodes.sizeOfArray(e2d) << " nodes");
   }
 }
 
@@ -853,13 +858,34 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                                                  FaceManager const & faceManager,
                                                  ElementRegionManager const & elemManager )
 {
+  int const commRank = MpiWrapper::commRank();
+
   arrayView1d< globalIndex const > const nl2g = nodeManager.localToGlobalMap();
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+
+  if (commRank == 21 || commRank == 28)
+  {
+    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
+                                                                         localIndex const esr,
+                                                                         ElementRegionBase const & GEOS_UNUSED_PARAM( region ),
+                                                                         CellElementSubRegion const & subRegion )
+		    {
+		          auto l2g = subRegion.localToGlobalMap();
+			  for (int i = 0; i < l2g.size(); ++i) {GEOS_LOG_RANK( "Entry " << i << " of l2g = " << l2g(i));}
+		    } );
+  }
 
   // First let's create the reference mappings for both nodes and edges.
   std::map< globalIndex, globalIndex > const referenceCollocatedNodes = buildReferenceCollocatedNodes( m_2dElemToCollocatedNodesBuckets );
 
   fillMissing2dElemToNodes( m_2dElemToCollocatedNodesBuckets, nodeManager.globalToLocalMap(), m_toNodesRelation );
+
+  GEOS_LOG_RANK_IF(commRank == 28 , "Rank 28, lid 3 number of nodes is " << m_toNodesRelation.sizeOfArray(3) << " with gids:" );
+  if(commRank == 28) {for (int i = 0; i < m_toNodesRelation.sizeOfArray(3); ++i )
+  {GEOS_LOG_RANK_IF(commRank == 28, "node gid = " << nl2g(m_toNodesRelation[3][i]));}}
+  GEOS_LOG_RANK_IF( commRank == 21 , "Rank 21, lid 1 number of nodes is " << m_toNodesRelation.sizeOfArray(1) << " with gids:" );
+  if(commRank == 21) {for (int i = 0; i < m_toNodesRelation.sizeOfArray(1); ++i )
+  {GEOS_LOG_RANK_IF(commRank == 21, "node gid = " << nl2g(m_toNodesRelation[1][i]));}}
 
   std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const collocatedEdgeBuckets = buildCollocatedEdgeBuckets( referenceCollocatedNodes, nl2g, edgeManager.nodeList() );
   std::map< localIndex, localIndex > const referenceCollocatedEdges = buildReferenceCollocatedEdges( collocatedEdgeBuckets, edgeManager.ghostRank() );
@@ -942,9 +968,16 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
       continue;
     }
 
+    GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "Rank 28, lid 3, gid " << this->localToGlobalMap()[e2d] << " m_2dElemToElems.m_toElementIndex.sizeOfArray(e2d) = " << m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) );
+    GEOS_LOG_RANK_IF( commRank == 21 && e2d == 1, "Rank 21, lid 1, gid " << this->localToGlobalMap()[e2d] << " m_2dElemToElems.m_toElementIndex.sizeOfArray(e2d) = " << m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) );
+
     std::set< globalIndex > refNodes;
     if( m_toNodesRelation[e2d].size() != 0 )
     {
+
+      GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "Rank 28, lid 3 entered toNodesRelation check" );
+      GEOS_LOG_RANK_IF( commRank == 21 && e2d == 1, "Rank 21, lid 1, entered toNodesRelation check" );
+
       for( localIndex const & n: m_toNodesRelation[e2d] )
       {
         globalIndex const & gn = nl2g[n];
@@ -957,6 +990,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
     else if( m_ghostRank[e2d] < 0 )
     {
+
+      GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "Rank 28, lid 3 entered ghostRank check" );
+      GEOS_LOG_RANK_IF( commRank == 21 && e2d == 1, "Rank 21, lid 1, entered ghostRank check" );
       for( integer ni = 0; ni < m_2dElemToCollocatedNodesBuckets[e2d].size(); ++ni )
       {
         array1d< globalIndex > const & bucket = m_2dElemToCollocatedNodesBuckets( e2d, ni );
@@ -971,15 +1007,32 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
       }
     }
 
+    
+    GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "Rank 28, lid 3 num refNodes = " << refNodes.size() );
+    GEOS_LOG_RANK_IF( commRank == 21 && e2d == 1, "Rank 21, lid 1, num refNodes = " << refNodes.size() );
+
     auto const match = faceRefNodesToElems.find( refNodes );
     if( match != faceRefNodesToElems.cend() )
     {
+
+      GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "Rank 28, lid 3 found match" );
+      GEOS_LOG_RANK_IF( commRank == 21 && e2d == 1, "Rank 21, lid 1, found match" );
+
       for( ElemPath const & path: match->second )
-      {
-        // This `if` prevents from storing the same data twice.
+      {	      
+	GEOS_LOG_RANK_IF(commRank == 21 && e2d == 1, "m_2dElemToElems.m_toElementIndex[e2d][0] = " << m_2dElemToElems.m_toElementIndex[e2d][0] << " and path.ei = " << path.ei );
+	GEOS_LOG_RANK_IF(commRank == 21 && e2d == 1, "m_2dElemToElems.m_toElementSubRegion[e2d][0] = " << m_2dElemToElems.m_toElementSubRegion[e2d][0] << " and path.esr = " << path.esr );
+	GEOS_LOG_RANK_IF(commRank == 21 && e2d == 1, "m_2dElemToElems.m_toElementRegion[e2d][0] = " << m_2dElemToElems.m_toElementRegion[e2d][0] << " and path.er = " << path.er );
+	GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "m_2dElemToElems.m_toElementIndex[e2d][0] = " << m_2dElemToElems.m_toElementIndex[e2d][0] << " and path.ei = " << path.ei );
+	GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "m_2dElemToElems.m_toElementSubRegion[e2d][0] = " << m_2dElemToElems.m_toElementSubRegion[e2d][0] << " and path.esr = " << path.esr );
+	GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "m_2dElemToElems.m_toElementRegion[e2d][0] = " << m_2dElemToElems.m_toElementRegion[e2d][0] << " and path.er = " << path.er );
+       	// This `if` prevents from storing the same data twice.
         if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) == 0 || m_2dElemToElems.m_toElementIndex[e2d][0] != path.ei )
         {
-          m_2dElemToElems.m_toElementRegion.emplaceBack( e2d, path.er );
+          GEOS_LOG_RANK_IF(commRank == 28 && e2d == 3, "Rank 28, lid 3 not storing same data" );
+          GEOS_LOG_RANK_IF( commRank == 21 && e2d == 1, "Rank 21, lid 1 not storing same data" );
+         
+	  m_2dElemToElems.m_toElementRegion.emplaceBack( e2d, path.er );
           m_2dElemToElems.m_toElementSubRegion.emplaceBack( e2d, path.esr );
           m_2dElemToElems.m_toElementIndex.emplaceBack( e2d, path.ei );
           m_toFacesRelation.emplaceBack( e2d, path.face );
@@ -1021,6 +1074,13 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
 
   fixNodesOrder( m_toFacesRelation.toViewConst(), faceToNodes, m_toNodesRelation );
+
+   localIndex const num2dElems_final = m_toFacesRelation.size();
+   for( int e2d = 0; e2d < num2dElems_final; ++e2d )
+   {
+	   GEOS_LOG_RANK_IF(m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) < 2 , "At end of fixSecondaryMappings, for e2d (global) = " << e2d << " (" << this->localToGlobalMap()[e2d] << ")"  << " m_toFacesRelation.sizeOfArray(e2d) = " << m_toFacesRelation.sizeOfArray(e2d) << " m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) = " << m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) << " m_ghostRank[e2d] = " << m_ghostRank[e2d]);
+   }
+
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
