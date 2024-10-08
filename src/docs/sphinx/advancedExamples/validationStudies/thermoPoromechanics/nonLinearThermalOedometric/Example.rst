@@ -85,7 +85,7 @@ Results and benchmark
 A good agreement between the GEOS results and analytical results is shown in the figure below:
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/nonLinearThermalOedometric/plot.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/nonLinearThermalOedometric/thermoElasticOedometricFigure.py
 
 
 ------------------------------------------------------------------
