@@ -29,7 +29,7 @@ namespace geos
  * @brief Trait used to check whether a LOG_LEVEL_INFO structure is valid.
  * @tparam LOG_LEVEL_INFO The log level structure to check.
  *
- * @example A log level structure must have this following
+ *  A log level structure must have this following
  *  struct LogName
  *  {
  *    static constexpr int getMinLogLevel() { return 1; }
