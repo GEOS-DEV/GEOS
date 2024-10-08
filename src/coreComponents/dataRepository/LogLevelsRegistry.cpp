@@ -30,7 +30,7 @@ string LogLevelsRegistry::buildLogLevelDescription() const
   for( auto const & [logLevel, logDescriptions] : m_logLevelsDescriptions )
   {
     description << GEOS_FMT( "\n{}\n", logLevel );
-    for( size_t idxDesc = 0; idxDesc< logDescriptions.size(); idxDesc++ )
+    for( size_t idxDesc = 0; idxDesc < logDescriptions.size(); idxDesc++ )
     {
       description << " - " << logDescriptions[idxDesc];
       if( idxDesc != logDescriptions.size() - 1 )
