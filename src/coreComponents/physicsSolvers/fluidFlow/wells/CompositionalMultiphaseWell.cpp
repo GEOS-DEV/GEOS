@@ -1750,7 +1750,7 @@ void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    pres[ei],         // freeze the current pressure value
+                                                    pres[ei], // freeze the current pressure value
                                                     pres[ei] );
         localRhs[localRow] = rhsValue;
 
@@ -1761,7 +1761,7 @@ void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
                                                       rankOffset,
                                                       localMatrix,
                                                       rhsValue,
-                                                      compDens[ei][ic],         // freeze the current component density values
+                                                      compDens[ei][ic], // freeze the current component density values
                                                       compDens[ei][ic] );
           localRhs[localRow + ic + 1] = rhsValue;
         }
@@ -1771,7 +1771,7 @@ void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    connRate[ei],         // freeze the current pressure value
+                                                    connRate[ei], // freeze the current pressure value
                                                     connRate[ei] );
         localRhs[localRow + numComp + 1] = rhsValue;
 

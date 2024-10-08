@@ -22,9 +22,6 @@ void LogLevelsRegistry::addEntry( integer condition, std::string_view descriptio
   m_logLevelsDescriptions[condition].push_back( string( description ) );
 }
 
-/**
- * @brief Construct the log level string description for a wrapper
- */
 string LogLevelsRegistry::buildLogLevelDescription() const
 {
   std::ostringstream description;

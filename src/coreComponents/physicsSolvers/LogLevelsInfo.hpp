@@ -89,12 +89,6 @@ struct Initialization
   static constexpr std::string_view getDescription() { return "Initialization information"; }
 };
 
-struct Statistics
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Print statistics when supported"; }
-};
-
 /// @endcond
 ///@}
 

@@ -17,8 +17,8 @@
  * This file contains log level informations for flow solvers
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_LOGLEVELSINFO_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_LOGLEVELSINFO_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -35,12 +35,6 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct CFL
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "CFL information"; }
-};
-
 struct Statistics
 {
   static constexpr int getMinLogLevel() { return 1; }
@@ -54,4 +48,4 @@ struct Statistics
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_LOGLEVELSINFO_HPP
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP

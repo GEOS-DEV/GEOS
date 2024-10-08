@@ -104,8 +104,6 @@ SolverBase::SolverBase( string const & name,
   addLogLevel< logInfo::LinearSolver >();
   addLogLevel< logInfo::NonlinearSolver >();
   addLogLevel< logInfo::Timers >();
-  addLogLevel< logInfo::Initialization >();
-  addLogLevel< logInfo::Statistics >();
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );

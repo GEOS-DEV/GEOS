@@ -58,6 +58,8 @@ PoromechanicsInitialization( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Name of the solid mechanics statistics" );
+
+  addLogLevel< logInfo::Initialization >();
 }
 
 template< typename POROMECHANICS_SOLVER >

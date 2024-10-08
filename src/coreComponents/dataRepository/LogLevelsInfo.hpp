@@ -28,10 +28,17 @@ namespace geos
 /**
  * @brief Trait used to check whether a LOG_LEVEL_INFO structure is valid.
  * @tparam LOG_LEVEL_INFO The log level structure to check.
+ *
+ * @example A log level structure must have this following
+ *  struct LogName
+    {
+      static constexpr int getMinLogLevel() { return 1; }
+      static constexpr std::string_view getDescription() { return "Log level description"; }
+    };
  */
 template< typename LOG_LEVEL_INFO >
 static constexpr bool is_log_level_info =
-  std::is_same_v< int, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&
+  std::is_same_v< integer, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&
   std::is_same_v< std::string_view, decltype(LOG_LEVEL_INFO::getDescription()) >;
 
 /**
@@ -44,7 +51,7 @@ static constexpr bool is_log_level_info =
  */
 template< typename LOG_LEVEL_INFO >
 std::enable_if_t< is_log_level_info< LOG_LEVEL_INFO >, bool >
-isLogLevelActive( int level )
+isLogLevelActive( integer level )
 {
   return level >= LOG_LEVEL_INFO::getMinLogLevel();
 }

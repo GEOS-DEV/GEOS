@@ -52,6 +52,8 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
     setApplyDefaultValue( false ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable/disable inelastic behavior" );
+
+  addLogLevel< logInfo::Initialization >();
 }
 
 SolidMechanicsStateReset::~SolidMechanicsStateReset()

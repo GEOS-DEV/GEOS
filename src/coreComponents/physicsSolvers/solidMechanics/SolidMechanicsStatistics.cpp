@@ -25,6 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "physicsSolvers/solidMechanics/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -36,7 +37,9 @@ using namespace fields;
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
-{}
+{
+  addLogLevel< logInfo::Statistics >();
+}
 
 void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 {
