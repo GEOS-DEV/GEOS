@@ -118,7 +118,8 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
     'sphinxcontrib.plantuml',
-    'sphinxcontrib.programoutput'
+    'sphinxcontrib.programoutput',
+    'sphinxcontrib.bibtex'
 ]
 
 plantuml = "/usr/bin/java -Djava.awt.headless=true -jar /tmp/plantuml.jar"
@@ -262,7 +263,7 @@ texinfo_documents = [
 numfig = True
 
 # Additional stuff for the LaTeX preamble.
-latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n'
+latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n\\usepackage{mathtools}\n'
 
 
 #####################################################
