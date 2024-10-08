@@ -23,6 +23,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "kernels/RateAndStateKernels.hpp"
 #include "rateAndStateFields.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geos
 {
@@ -117,7 +118,7 @@ real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
       // solve rate and state equations.
       rateAndStateKernels::createAndLaunch< parallelDevicePolicy<> >( subRegion, viewKeyStruct::frictionLawNameString(), m_shearImpedance, m_maxNewtonIterations, time_n, dt );
       // save old state
-      saveOldState( subRegion );
+      saveOldStateAndUpdateSlip( subRegion, dt );
     } );
   } );
 
@@ -142,35 +143,53 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
   else
   {
     // Spring-slider shear traction computation
-    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
-                                                                           [&]( localIndex const,
-                                                                                SurfaceElementSubRegion & subRegion )
-    {
-      arrayView1d< real64 const > const slip = subRegion.getField< fields::contact::slip >().toViewConst();
-      arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
 
-      real64 const tauRate = 1e-4; // (MPa/s)
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                             [&]( localIndex const,
+                                                                                  SurfaceElementSubRegion & subRegion )
       {
-        real64 const criticalStiffness = normalTraction * (frictionLaw.b - frictionLaw.a) / frictionLaw.D_c;
-        real64 const springStiffness = 0.9 * criticalStiffness;
-        traction[k][1] = traction[k][1] + tauRate * dt - springStiffness * slip;
-      } );  
+        arrayView1d< real64 const > const slip = subRegion.getField< fields::contact::slip >().toViewConst();
+        arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
+        
+        string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+        RateAndStateFriction const & frictionLaw = getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
+
+        RateAndStateFriction::KernelWrapper frictionKernelWrapper= frictionLaw.createKernelUpdates();
+
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          SpringSliderParameters springSliderParameters = SpringSliderParameters( traction[k][0], 
+                                                                                  frictionKernelWrapper.getACoefficient(k),
+                                                                                  frictionKernelWrapper.getBCoefficient(k), 
+                                                                                  frictionKernelWrapper.getDcCoefficient(k) );
+
+          traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt - springSliderParameters.springStiffness * slip[k];
+          traction[k][2] = 0.0;
+        } );
+      } );
     } );
-  return dt;
+    return dt;
+  }
 }
 
-void QuasiDynamicEQ::saveOldState( ElementSubRegionBase & subRegion ) const
+void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion, real64 const dt  ) const
 {
   arrayView1d< real64 > const stateVariable   = subRegion.getField< rateAndState::stateVariable >();
   arrayView1d< real64 > const stateVariable_n = subRegion.getField< rateAndState::stateVariable_n >();
   arrayView1d< real64 > const slipRate        = subRegion.getField< rateAndState::slipRate >();
   arrayView1d< real64 > const slipRate_n      = subRegion.getField< rateAndState::slipRate_n >();
 
+  arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
+
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     slipRate_n[k]      = slipRate[k];
     stateVariable_n[k] = stateVariable[k];
+    slip[k] = slip[k] + slipRate[k] * dt;
   } );
 }
 

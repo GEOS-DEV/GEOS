@@ -65,7 +65,6 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override final;
 
-
   class KernelWrapper : public FrictionBaseUpdates
   {
 public:
@@ -99,6 +98,15 @@ public:
 
     /// Deleted move assignment operator
     KernelWrapper & operator=( KernelWrapper && ) =  delete;
+    
+    GEOS_HOST_DEVICE
+    real64 getACoefficient( localIndex const k ) const { return m_a[k]; }
+    
+    GEOS_HOST_DEVICE
+    real64 getBCoefficient( localIndex const k ) const { return m_b[k]; }   
+    
+    GEOS_HOST_DEVICE
+    real64 getDcCoefficient( localIndex const k ) const { return m_Dc[k]; }
 
     GEOS_HOST_DEVICE
     inline
@@ -161,7 +169,7 @@ private:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper() const;
+  KernelWrapper createKernelUpdates() const;
 
 private:
 
@@ -185,6 +193,20 @@ private:
   /// Rate and State reference friction coefficient
   array1d< real64 > m_mu0;
 
+  ///  Default value of Rate and State coefficient a
+  real64 m_defaultA;
+  /// Default value of Rate and State coefficient b
+  real64 m_defaultB;
+
+  ///  Default value of Rate and State characteristic length
+  real64 m_defaultDc;
+
+  ///  Default value of Rate and State reference velocity
+  real64 m_defaultV0;
+
+  /// Default value of Rate and State reference friction coefficient
+  real64 m_defaultMu0;
+
 /**
  * @struct Set of "char const *" and keys for data specified in this class.
  */
@@ -202,6 +224,16 @@ private:
     static constexpr char const * referenceVelocityString() { return "referenceVelocity"; }
     /// string/key for reference friction coefficient
     static constexpr char const * referenceFrictionCoefficientString() { return "referenceFrictionCoefficient"; }
+    /// string/key for the default value of Rate and State coefficient a
+    static constexpr char const * defaultACoefficientString() { return "defaultA"; }
+    /// string/key for the default value of Rate and State coefficient b
+    static constexpr char const * defaultBCoefficientString() { return "defaultB"; }
+    /// string/key for the default value of Rate and State characteristic length
+    static constexpr char const * defaultDcCoefficientString() { return "defaultDc"; }
+    /// string/key for the default value ofreference slip rate
+    static constexpr char const * defaultReferenceVelocityString() { return "defaultReferenceVelocity"; }
+    /// string/key for the default value of reference friction coefficient
+    static constexpr char const * defaultReferenceFrictionCoefficientString() { return "defaultReferenceFrictionCoefficient"; }
   };
 
 };

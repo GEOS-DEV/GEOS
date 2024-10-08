@@ -46,7 +46,7 @@ public:
     m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable >() ),
     m_traction( subRegion.getField< fields::contact::traction >() ),
     m_shearImpedance( shearImpedance ),
-    m_frictionLaw( frictionLaw.createKernelWrapper()  )
+    m_frictionLaw( frictionLaw.createKernelUpdates()  )
   {}
 
   /**
@@ -72,8 +72,8 @@ public:
               real64 const dt,
               StackVariables & stack ) const
   {
-    
-    // 
+
+    //
     real64 const normalTraction = m_traction[k][0];
     real64 const shearTraction = LvArray::math::sqrt( m_traction[k][1]*m_traction[k][1] + m_traction[k][2]*m_traction[k][2] );
 

@@ -32,31 +32,62 @@ RateAndStateFriction::RateAndStateFriction( string const & name, Group * const p
   m_frictionCoefficient()
 {
   registerWrapper( viewKeyStruct::aCoefficientString(), &m_a ).
-    setApplyDefaultValue( 0.01 ).
     setDescription( "Rate- and State-dependent friction coefficient a." );
 
-  registerWrapper( viewKeyStruct::aCoefficientString(), &m_b ).
-    setApplyDefaultValue( 0.015 ).
+  registerWrapper( viewKeyStruct::bCoefficientString(), &m_b ).
     setDescription( "Rate- and State-dependent friction coefficient b." );
 
-  registerWrapper( viewKeyStruct::aCoefficientString(), &m_Dc ).
-    setApplyDefaultValue( 10e-6 ).
+  registerWrapper( viewKeyStruct::DcCoefficientString(), &m_Dc ).
     setDescription( "Rate- and State-dependent friction characteristic length." );
 
-  registerWrapper( viewKeyStruct::aCoefficientString(), &m_referenceVelocity ).
-    setApplyDefaultValue( 1.0e-6 ).
+  registerWrapper( viewKeyStruct::referenceVelocityString(), &m_V0 ).
     setDescription( "Rate- and State-dependent friction reference slip rate." );
 
-  registerWrapper( viewKeyStruct::aCoefficientString(), &m_referenceFrictionCoefficient ).
-    setApplyDefaultValue( 0.6 ).
-    setDescription( "Rate- and State-dependent friction reference friction coefficient." );              
+  registerWrapper( viewKeyStruct::referenceFrictionCoefficientString(), &m_mu0 ).
+    setDescription( "Rate- and State-dependent friction reference friction coefficient." );
+
+  /// Default values
+  registerWrapper( viewKeyStruct::defaultACoefficientString(), &m_defaultA ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value of the Rate- and State-dependent friction coefficient a." );
+
+  registerWrapper( viewKeyStruct::defaultBCoefficientString(), &m_defaultB ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value of the Rate- and State-dependent friction coefficient b." );
+
+  registerWrapper( viewKeyStruct::defaultDcCoefficientString(), &m_defaultDc ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value of the Rate- and State-dependent friction characteristic length." );
+
+  registerWrapper( viewKeyStruct::defaultReferenceVelocityString(), &m_defaultV0 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value of the Rate- and State-dependent friction reference slip rate." );
+
+  registerWrapper( viewKeyStruct::defaultReferenceFrictionCoefficientString(), &m_defaultMu0 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value of the Rate- and State-dependent friction reference friction coefficient." );
 }
 
 RateAndStateFriction::~RateAndStateFriction()
 {}
 
 void RateAndStateFriction::postInputInitialization()
-{}
+{
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::aCoefficientString() ).
+    setApplyDefaultValue( m_defaultA );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bCoefficientString() ).
+    setApplyDefaultValue( m_defaultB );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::DcCoefficientString() ).
+    setApplyDefaultValue( m_defaultDc );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referenceVelocityString() ).
+    setApplyDefaultValue( m_defaultV0 );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referenceFrictionCoefficientString() ).
+    setApplyDefaultValue( m_defaultMu0 );
+}
 
 void RateAndStateFriction::allocateConstitutiveData( Group & parent,
                                                      localIndex const numConstitutivePointsPerParentIndex )
@@ -65,7 +96,7 @@ void RateAndStateFriction::allocateConstitutiveData( Group & parent,
 }
 
 using RateAndStateFrictionUpdates = RateAndStateFriction::KernelWrapper;
-RateAndStateFrictionUpdates RateAndStateFriction::createKernelWrapper() const
+RateAndStateFrictionUpdates RateAndStateFriction::createKernelUpdates() const
 {
   return RateAndStateFrictionUpdates( m_displacementJumpThreshold,
                                       m_frictionCoefficient, m_a, m_b,

@@ -12,7 +12,7 @@
       targetRegions="{ Domain }"
       rockToughness="1.0"
       nodeBasedSIF="1"
-       mpiCommOrder="1"/>  
+      mpiCommOrder="1"/>  
   </Solvers>
 
   <Mesh>
@@ -50,7 +50,12 @@
 
   <Constitutive>
     <RateAndStateFriction
-      name="frictionLaw"/>  
+      name="frictionLaw"
+      defaultA="0.01"
+      defaultB="0.015"
+      defaultDc="1.0e-5"  
+      defaultReferenceVelocity="1.0e-6"
+      defaultReferenceFrictionCoefficient="0.6"/>  
   </Constitutive>
 
   <FieldSpecifications>
