@@ -149,9 +149,11 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
       arrayView1d< real64 const > const slip = subRegion.getField< fields::contact::slip >().toViewConst();
       arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
 
-      real64 const tauRate = 1e-4;
+      real64 const tauRate = 1e-4; // (MPa/s)
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
+        real64 const criticalStiffness = normalTraction * (frictionLaw.b - frictionLaw.a) / frictionLaw.D_c;
+        real64 const springStiffness = 0.9 * criticalStiffness;
         traction[k][1] = traction[k][1] + tauRate * dt - springStiffness * slip;
       } );  
     } );
