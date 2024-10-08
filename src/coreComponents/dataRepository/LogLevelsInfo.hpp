@@ -31,10 +31,10 @@ namespace geos
  *
  * @example A log level structure must have this following
  *  struct LogName
-    {
-      static constexpr int getMinLogLevel() { return 1; }
-      static constexpr std::string_view getDescription() { return "Log level description"; }
-    };
+ *  {
+ *    static constexpr int getMinLogLevel() { return 1; }
+ *    static constexpr std::string_view getDescription() { return "Log level description"; }
+ *  };
  */
 template< typename LOG_LEVEL_INFO >
 static constexpr bool is_log_level_info =
