@@ -58,6 +58,8 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_creepA( 0.0 ),
   m_creepB( 0.0 ),
   m_creepC( 0.0 ),
+  m_strainHardeningN( 0.0 ),
+  m_strainHardeningK( 0.0 ),
   m_bulkModulus(),
   m_shearModulus(),
   m_velocityGradient(),
@@ -189,6 +191,14 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::creepCString(), &m_creepC ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep C parameter" );
+
+  registerWrapper( viewKeyStruct::strainHardeningNString(), &m_strainHardeningN ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Strain Hardening n parameter" );
+
+  registerWrapper( viewKeyStruct::strainHardeningKString(), &m_strainHardeningK ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Strain Hardening K parameter" );
 
   // register fields
   registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
