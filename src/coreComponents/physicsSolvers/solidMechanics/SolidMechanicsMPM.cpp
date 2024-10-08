@@ -6114,6 +6114,12 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       bulkModulus = graphite.effectiveBulkModulus();
     }
 
+    if( constitutiveModelName == "Geomechanics" )
+    {
+      const Geomechanics & geomechanics = dynamic_cast< const Geomechanics & >( constitutiveModel );
+      bulkModulus = geomechanics.bulkModulus();
+    }
+
     forAll< serialPolicy >( activeParticleIndices.size(), [=, &maximumBulkModulus] GEOS_HOST ( localIndex const pp ) // Could be reduction instead of a loop
     {
       localIndex const p = activeParticleIndices[pp];

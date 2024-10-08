@@ -257,34 +257,33 @@ void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
 void Geomechanics::postInputInitialization()
 {
     SolidBase::postInputInitialization();
-
-    // GEOS_THROW_IF( m_b0 <= 0.0, "b0 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_b0 <= 0.0, "b0 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_b1 <= 0.0, "b1 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_b2 <= 0.0, "b2 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_b3 <= 0.0, "b3 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_b4 <= 0.0, "b4 must be greater than 0", InputError );
 
-    // GEOS_THROW_IF( m_g0 <= 0.0, "g0 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_g0 < 0.0, "g0 must be greater than or equalt to 0", InputError );
     // GEOS_THROW_IF( m_g1 <= 0.0, "g1 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_g2 <= 0.0, "g2 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_g3 <= 0.0, "g3 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_g4 <= 0.0, "g4 must be greater than 0", InputError );
 
-    // GEOS_THROW_IF( m_p0 <= 0.0, "p0 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_p0 > 0.0, "p0 must be less than 0", InputError );
     // GEOS_THROW_IF( m_p1 <= 0.0, "p1 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_p2 <= 0.0, "p2 must be greater than 0", InputError );
-    // GEOS_THROW_IF( m_p3 <= 0.0, "p3 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_p3 <= 0.0, "p3 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_p4 <= 0.0, "p4 must be greater than 0", InputError );
 
     // GEOS_THROW_IF( m_peakT1 <= 0.0, "peakT1 must be greater than 0", InputError );
-    // GEOS_THROW_IF( m_fSlope <= 0.0, "fSlope must be greater than 0", InputError );
+    GEOS_THROW_IF( m_fSlope < 0.0, "fSlope must be greater than 0", InputError );
     // GEOS_THROW_IF( m_ySlope <= 0.0, "ySlope must be greater than 0", InputError );
     // GEOS_THROW_IF( m_stren <= 0.0, "stren must be greater than 0", InputError );
-    // GEOS_THROW_IF( m_beta <= 0.0, "beta must be greater than 0", InputError );
+    GEOS_THROW_IF( m_beta <= 0.0, "beta must be greater than 0", InputError );
     // GEOS_THROW_IF( m_t1RateDependence <= 0.0, "t1RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_t2RateDependence <= 0.0, "t2RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fractureEnergyReleaseRate must be greater than 0", InputError );
-    // GEOS_THROW_IF( m_cr <= 0.0, "cr must be greater than 0", InputError );
+    GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
     // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
     // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
 }
