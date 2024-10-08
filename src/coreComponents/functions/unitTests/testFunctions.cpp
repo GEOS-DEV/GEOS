@@ -890,81 +890,192 @@ TEST( FunctionTests, MultivariableTableFromFile )
   testMutivariableFunction< nDims, nOps >( table_h, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
-PyObject* definePythonFunction()
+std::pair<PyObject*, PyObject*> definePythonFunction()
 {
-    // Python code as a string
     const char* pythonCode = R"(
+import math
+
 def python_evaluate(state, values):
     x1, x2, x3, x4, x5, x6 = state
-    # First result: product of sin and cos
+
     values[0] = (math.sin(x1) * math.cos(x2) * math.sin(x3) * 
                  math.cos(x4) * math.sin(x5) * math.cos(x6))
-    # Second result: sum of sin and cos
+
     values[1] = (math.sin(x1) + math.cos(x2) + math.sin(x3) +
                  math.cos(x4) + math.sin(x5) + math.cos(x6))
+
+def python_derivatives(state, derivatives):
+    x1, x2, x3, x4, x5, x6 = state
+
+    derivatives[0][0] = math.cos(x1) * math.cos(x2) * math.sin(x3) * math.cos(x4) * math.sin(x5) * math.cos(x6) 
+    derivatives[0][1] = -math.sin(x1) * math.sin(x2) * math.sin(x3) * math.cos(x4) * math.sin(x5) * math.cos(x6) 
+    derivatives[0][2] = math.sin(x1) * math.cos(x2) * math.cos(x3) * math.cos(x4) * math.sin(x5) * math.cos(x6) 
+    derivatives[0][3] = -math.sin(x1) * math.cos(x2) * math.sin(x3) * math.sin(x4) * math.sin(x5) * math.cos(x6)
+    derivatives[0][4] = math.sin(x1) * math.cos(x2) * math.sin(x3) * math.cos(x4) * math.cos(x5) * math.cos(x6)
+    derivatives[0][5] = -math.sin(x1) * math.cos(x2) * math.sin(x3) * math.cos(x4) * math.sin(x5) * math.sin(x6)
+
+    derivatives[1][0] = math.cos(x1) 
+    derivatives[1][1] = -math.sin(x2)
+    derivatives[1][2] = math.cos(x3) 
+    derivatives[1][3] = -math.sin(x4)
+    derivatives[1][4] = math.cos(x5)  
+    derivatives[1][5] = -math.sin(x6) 
 )";
     
-    // Execute the Python code to define the function
-    PyObject* module = PyModule_Create(nullptr);
     PyRun_SimpleString(pythonCode);
 
-    // Retrieve the function by name
     PyObject* mainModule = PyImport_AddModule("__main__");
     PyObject* func = PyObject_GetAttrString(mainModule, "python_evaluate");
+    PyObject* deriv_func = PyObject_GetAttrString(mainModule, "python_derivatives");
 
-    if (func == nullptr || !PyCallable_Check(func)) {
+    if (func == nullptr || 
+        deriv_func == nullptr || 
+        !PyCallable_Check(func) || 
+        !PyCallable_Check(deriv_func)) 
+    {
         PyErr_Print();
-        throw std::runtime_error("Failed to define Python function.");
+        throw std::runtime_error("Failed to define Python function or derivatives.");
     }
     
-    return func;
+    return {func, deriv_func};
 }
 
-TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
+template< integer NUM_DIMS, integer NUM_OPS >
+void getMultilinearAdaptiveInterpolation( integer numAxisPts,
+                                          real64 lowerBound, 
+                                          real64 upperBound,
+                                          PythonFunction<NUM_DIMS, NUM_OPS> const & func,
+                                          array1d<real64> const & coordinates,
+                                          arrayView2d< real64, compflow::USD_OBL_VAL > const & values,
+                                          arrayView3d< real64, compflow::USD_OBL_DER > const & derivatives )
 {
-  constexpr integer nDims = 6;
-  constexpr integer nOps = 2;
-  constexpr integer nPts = 10;
+  array1d< real64 > const axesMinimums ( NUM_DIMS );
+  array1d< real64 > const axesMaximums ( NUM_DIMS );
+  array1d< integer > const axesPoints ( NUM_DIMS );
+  array1d< real64 > const axisSteps( NUM_DIMS );
+  array1d< real64 > const axisStepInvs( NUM_DIMS );
+  array1d< globalIndex > const axisHypercubeMults( NUM_DIMS );
 
-  // Initialize Python interpreter
-  Py_Initialize();
-
-  // Create a PythonFunction object
-  PythonFunction<nDims, nOps> func;
-
-  // Define and set the Python function for the func object
-  PyObject* pyFunc = definePythonFunction();
-  func.setEvaluateFunction(pyFunc);
-
-  array1d< real64 > const axesMinimums ( nDims );
-  array1d< real64 > const axesMaximums ( nDims );
-  array1d< integer > const axesPoints ( nDims );
-  array1d< real64 > const axisSteps( nDims );
-  array1d< real64 > const axisStepInvs( nDims );
-  array1d< globalIndex > const axisHypercubeMults( nDims );
-
-  for( integer dim = 0; dim < nDims; dim++ )
+  for( integer dim = 0; dim < NUM_DIMS; dim++ )
   {
-    axesMinimums[dim] = -M_PI;
-    axesMaximums[dim] = M_PI;
-    axesPoints[dim] = nPts;
+    axesMinimums[dim] = lowerBound;
+    axesMaximums[dim] = upperBound;
+    axesPoints[dim] = numAxisPts;
     axisSteps[dim] = (axesMaximums[dim] - axesMinimums[dim]) / (axesPoints[dim] - 1);
     axisStepInvs[dim] = 1 / axisSteps[dim];
   }
 
-  axisHypercubeMults[nDims - 1] = 1;
-  for( integer dim = nDims - 2; dim >= 0; --dim )
+  axisHypercubeMults[NUM_DIMS - 1] = 1;
+  for( integer dim = NUM_DIMS - 2; dim >= 0; --dim )
   {
     axisHypercubeMults[dim] = axisHypercubeMults[dim + 1] * (axesPoints[dim + 1] - 1);
   }
 
-  MultilinearInterpolatorAdaptiveKernel< nDims, nOps > kernel( axesMinimums,
+  MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > kernel( axesMinimums,
                                                               axesMaximums,
                                                               axesPoints,
                                                               axisSteps,
                                                               axisStepInvs,
                                                               axisHypercubeMults,
                                                               &func );
+
+  arrayView1d< real64 const > const coordinatesView = coordinates.toViewConst();
+
+  // Test values evaluation first
+  const integer numPts = coordinates.size() / NUM_DIMS;
+  forAll< geos::parallelDevicePolicy< > >( numPts, 
+  [=] GEOS_HOST_DEVICE ( localIndex const ptIndex )
+  {
+    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = values[ptIndex];
+    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = derivatives[ptIndex];
+
+    kernel.compute( &coordinatesView[ptIndex * NUM_DIMS], ptValues, ptDers );
+  });
+}
+
+TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
+{
+  constexpr integer numDims = 6;
+  constexpr integer numOps = 2;
+  constexpr real64 lowerBound = -M_PI;
+  constexpr real64 upperBound = M_PI;
+  constexpr integer numPts = 1000.;
+  constexpr integer numResolutions = 3;
+  constexpr std::array<integer, numResolutions> numAxesPts = {16, 64, 256};
+  array1d<real64> residuals ( 2 * numResolutions );
+
+  // Fill array of coordinates
+  array1d<real64> states ( numPts * numDims );
+  std::default_random_engine generator;
+  std::uniform_real_distribution< double > distribution( lowerBound, upperBound );
+  for (integer i = 0; i < numPts * numDims; ++i)
+  {
+    states[i] = distribution( generator );
+  }
+
+  // Create interface to Python functions
+  PythonFunction<numDims, numOps> func;
+  auto [pyFunc, pyDerivFunc] = definePythonFunction();
+  func.setEvaluateFunction(pyFunc, pyDerivFunc);
+
+  // Initialize output arrays
+  using array2dLayoutOBLOpVals = array2d< real64, compflow::LAYOUT_OBL_OPERATOR_VALUES >;
+  using array3dLayoutOBLOpDers = array3d< real64, compflow::LAYOUT_OBL_OPERATOR_DERIVATIVES >;
+
+  array2dLayoutOBLOpVals  trueValues( numPts, numOps ), 
+                          evaluatedValues( numPts, numOps );
+  array3dLayoutOBLOpDers  trueDerivatives( numPts, numOps, numDims ), 
+                          evaluatedDerivatives ( numPts, numOps, numDims );
+
+  arrayView2d< real64, compflow::USD_OBL_VAL > const m_evaluatedValues (evaluatedValues);
+  arrayView3d< real64, compflow::USD_OBL_DER > const m_evaluatedDerivatives (evaluatedDerivatives);
+
+  // Python section
+  Py_Initialize();
+
+  // Do exact evaluations
+  arrayView1d< real64 const > const coordinatesView = states.toViewConst();
+  forAll< geos::parallelDevicePolicy< > >( numPts, 
+  [=] GEOS_HOST_DEVICE ( localIndex const ptIndex )
+  {
+    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = trueValues[ptIndex];
+    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = trueDerivatives[ptIndex];
+
+    func.evaluate( &coordinatesView[ptIndex * numDims], ptValues, ptDers );
+  });
+
+  // Do multilinear interpolation
+  for (integer i = 0; i < numResolutions; ++i)
+  {
+    getMultilinearAdaptiveInterpolation<numDims, numOps>( numAxesPts[i], 
+                                                          lowerBound, 
+                                                          upperBound,
+                                                          func,
+                                                          states,
+                                                          m_evaluatedValues,
+                                                          m_evaluatedDerivatives );
+
+    residuals[2 * i] = residuals[2 * i + 1] = 0.0;
+    for (integer ptIndex = 0; ptIndex < numPts; ++ptIndex)
+    {
+      for (integer opIndex = 0; opIndex < numOps; ++opIndex)
+      {
+        real64 diff = m_evaluatedValues[ptIndex][opIndex] - trueValues[ptIndex][opIndex];
+        residuals[2 * i] += diff * diff;
+
+        for (integer axIndex = 0; axIndex < numDims; ++axIndex)
+        {
+          real64 d_diff = m_evaluatedDerivatives[ptIndex][opIndex][axIndex] - trueDerivatives[ptIndex][opIndex][axIndex];
+          residuals[2 * i + 1] += d_diff * d_diff;
+        }
+      }
+    }
+    residuals[2 * i] /= numPts * numOps;
+    residuals[2 * i + 1] /= numPts * numOps * numDims;
+
+    residuals[2 * i] = sqrt(residuals[2 * i]);
+    residuals[2 * i + 1] = sqrt(residuals[2 * i + 1]);
+  }
 
   Py_Finalize();
 }

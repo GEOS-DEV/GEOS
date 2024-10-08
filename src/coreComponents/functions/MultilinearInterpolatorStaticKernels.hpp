@@ -94,11 +94,6 @@ protected:
   ///  Main table data stored per hypercube: all values required for interpolation withing give hypercube are stored contiguously
   arrayView1d< real64 const > const m_hypercubeData;
 
-  // inputs: where to interpolate
-
-  /// Coordinates in numDims-dimensional space where interpolation is requested
-  arrayView1d< real64 const > m_coordinates;
-
   // outputs
 
   /// Interpolated values

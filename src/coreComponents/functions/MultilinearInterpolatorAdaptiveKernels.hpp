@@ -92,12 +92,12 @@ protected:
    */
   GEOS_HOST_DEVICE
   stackArray1d<real64, numOps> const &
-  getPointData(globalIndex const pointIndex)
+  getPointData(globalIndex const pointIndex) const
   {
     auto item = m_pointData.find(pointIndex);
     if (item == m_pointData.end())
     {
-      stackArray1d<real64, numOps> newPoint;
+      stackArray1d<real64, numOps> newPoint (numOps);
       this->getPointCoordinates(pointIndex, m_coordinates);
       m_evalFunc->evaluate(m_coordinates, newPoint);
       m_pointData[pointIndex] = newPoint;
@@ -145,14 +145,14 @@ protected:
    */
   GEOS_HOST_DEVICE
   inline
-  real64*
-  getHypercubeData( globalIndex const hypercubeIndex ) override
+  real64 const *
+  getHypercubeData( globalIndex const hypercubeIndex ) const override
   {
     auto item = m_hypercubeData.find(hypercubeIndex);
     if (item == m_hypercubeData.end())
     {
         stackArray1d<integer, numVerts> points (numVerts);
-        stackArray1d<real64, numVerts * numOps> newHypercube;
+        stackArray1d<real64, numVerts * numOps> newHypercube (numVerts * numOps);
 
         this->getHypercubePoints(hypercubeIndex, points);
 
@@ -181,7 +181,7 @@ protected:
    * Storage is grown dynamically in the process of simulation. 
    * Only supporting points that are required for interpolation are computed and added
    */
-  unordered_map<globalIndex, stackArray1d<real64, numOps>> m_pointData;
+  mutable unordered_map<globalIndex, stackArray1d<real64, numOps>> m_pointData;
   /**
    * @brief adaptive hypercube storage: the values of operators at every vertex of reqested hypercubes
    * Storage is grown dynamically in the process of simulation
@@ -192,7 +192,7 @@ protected:
    * Usage of point_data for interpolation directly would require N_VERTS memory accesses (>1000 accesses for 10-dimensional space)
    *  * 
    */  
-  unordered_map<globalIndex, stackArray1d<real64, numVerts * numOps>> m_hypercubeData;
+  mutable unordered_map<globalIndex, stackArray1d<real64, numVerts * numOps>> m_hypercubeData;
 };
 
 } /* namespace geos */

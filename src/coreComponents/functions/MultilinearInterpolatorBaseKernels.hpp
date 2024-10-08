@@ -147,7 +147,7 @@ public:
                     real64 const * const hypercubeData,
                     real64 const * const axisLows,
                     real64 const * const axisStepInvs,
-                    OUT_ARRAY && values ) const
+                    OUT_ARRAY && values ) const 
   {
     integer pwr = numVerts / 2;   // distance between high and low values
     real64 workspace[numVerts][numOps];
@@ -327,7 +327,21 @@ public:
   }
 protected:
   /**
-   * @brief Get const pointer to hypercube data
+   * @brief Get pointer to hypercube data
+   *
+   * @param[in] hypercubeIndex
+   * @return pointer to hypercube data
+   */
+  /*virtual
+  GEOS_HOST_DEVICE
+  inline
+  real64 *
+  getHypercubeData( globalIndex const hypercubeIndex )
+  {
+    return nullptr;
+  }*/
+  /**
+   * @brief Get pointer to hypercube data
    *
    * @param[in] hypercubeIndex
    * @return pointer to hypercube data
@@ -341,20 +355,6 @@ protected:
     return nullptr;
   }
   /**
-   * @brief Get pointer to hypercube data
-   *
-   * @param[in] hypercubeIndex
-   * @return pointer to hypercube data
-   */
-  virtual
-  GEOS_HOST_DEVICE
-  inline
-  real64 *
-  getHypercubeData( globalIndex const hypercubeIndex )
-  {
-    return nullptr;
-  }
-  /**
    * @brief Get coordinates of point given by index
    *
    * @param[in] pointIndex point's index
@@ -364,7 +364,7 @@ protected:
   GEOS_HOST_DEVICE
   inline
   void
-  getPointCoordinates(globalIndex pointIndex, stackArray1d<real64, numDims> & coordinates)
+  getPointCoordinates(globalIndex pointIndex, stackArray1d<real64, numDims> & coordinates) const
   {
     globalIndex axisIdx, remainderIdx = pointIndex;
     for (integer i = 0; i < numDims; ++i)
@@ -404,7 +404,7 @@ protected:
   // inputs: where to interpolate
 
   /// Coordinates in numDims-dimensional space where interpolation is requested
-  stackArray1d< real64, numDims > m_coordinates;
+  mutable stackArray1d< real64, numDims > m_coordinates;
 };
 
 } /* namespace geos */
