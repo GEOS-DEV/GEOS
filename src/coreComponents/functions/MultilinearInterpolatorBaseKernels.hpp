@@ -20,6 +20,20 @@
 #ifndef GEOS_FUNCTIONS_MULTILINEARINTERPOLATORBASEKERNELS_HPP_
 #define GEOS_FUNCTIONS_MULTILINEARINTERPOLATORBASEKERNELS_HPP_
 
+namespace std
+{
+  template <>
+  struct hash<__uint128_t>
+  {
+    size_t operator()(const __uint128_t& x) const noexcept
+    {
+      size_t h1 = std::hash<uint64_t>{}(static_cast<uint64_t>(x));
+      size_t h2 = std::hash<uint64_t>{}(static_cast<uint64_t>(x >> 64));
+      return h1 ^ (h2 * 0x9e3779b97f4a7c15 + 0x7f4a7c15);  // Use a large prime multiplier and a random offset
+    }
+  };
+};
+
 namespace geos
 {
 
@@ -31,8 +45,9 @@ namespace geos
  *
  * @tparam NUM_DIMS number of dimensions (inputs)
  * @tparam NUM_OPS number of interpolated functions (outputs)
+ * @tparam INDEX_T datatype used for indexing in multidimensional space 
  */
-template< integer NUM_DIMS, integer NUM_OPS >
+template< integer NUM_DIMS, integer NUM_OPS, typename INDEX_T = __uint128_t>
 class MultilinearInterpolatorBaseKernel
 {
 public:
@@ -46,6 +61,9 @@ public:
   /// Compile time value for the number of hypercube vertices
   static constexpr integer numVerts = 1 << numDims;
 
+  /// Datatype used for indexing
+  typedef INDEX_T longIndex;
+
   /**
    * @brief Construct a new Multilinear Interpolator Base Kernel object
    *
@@ -58,7 +76,7 @@ public:
                                     arrayView1d< integer const > const & axisPoints,
                                     arrayView1d< real64 const > const & axisSteps,
                                     arrayView1d< real64 const > const & axisStepInvs,
-                                    arrayView1d< globalIndex const > const & axisHypercubeMults):
+                                    arrayView1d< longIndex const > const & axisHypercubeMults):
       m_axisMinimums(axisMinimums),
       m_axisMaximums(axisMaximums),
       m_axisPoints(axisPoints),
@@ -268,7 +286,7 @@ public:
   compute( IN_ARRAY const & coordinates,
            OUT_ARRAY && values ) const
   {
-    globalIndex hypercubeIndex = 0;
+    longIndex hypercubeIndex = 0;
     real64 axisLows[numDims];
     real64 axisMults[numDims];
 
@@ -305,7 +323,7 @@ public:
            OUT_ARRAY && values,
            OUT_2D_ARRAY && derivatives ) const
   {
-    globalIndex hypercubeIndex = 0;
+    longIndex hypercubeIndex = 0;
     real64 axisLows[numDims];
     real64 axisMults[numDims];
 
@@ -332,25 +350,11 @@ protected:
    * @param[in] hypercubeIndex
    * @return pointer to hypercube data
    */
-  /*virtual
-  GEOS_HOST_DEVICE
-  inline
-  real64 *
-  getHypercubeData( globalIndex const hypercubeIndex )
-  {
-    return nullptr;
-  }*/
-  /**
-   * @brief Get pointer to hypercube data
-   *
-   * @param[in] hypercubeIndex
-   * @return pointer to hypercube data
-   */
   virtual
   GEOS_HOST_DEVICE
   inline
   real64 const *
-  getHypercubeData( globalIndex const hypercubeIndex ) const
+  getHypercubeData( longIndex const hypercubeIndex ) const
   {
     return nullptr;
   }
@@ -364,9 +368,9 @@ protected:
   GEOS_HOST_DEVICE
   inline
   void
-  getPointCoordinates(globalIndex pointIndex, stackArray1d<real64, numDims> & coordinates) const
+  getPointCoordinates(longIndex pointIndex, stackArray1d<real64, numDims> & coordinates) const
   {
-    globalIndex axisIdx, remainderIdx = pointIndex;
+    longIndex axisIdx, remainderIdx = pointIndex;
     for (integer i = 0; i < numDims; ++i)
     {
       axisIdx = remainderIdx / m_axisPointMults[i];
@@ -396,10 +400,10 @@ protected:
   arrayView1d< real64 const > const m_axisStepInvs;
 
   ///  Array [numDims] of hypercube index mult factors for each axis
-  arrayView1d< globalIndex const > const m_axisHypercubeMults;
+  arrayView1d< longIndex const > const m_axisHypercubeMults;
 
   /// Array [numDims] of point index mult factors for each axis 
-  array1d< globalIndex > const m_axisPointMults;     
+  array1d< longIndex > const m_axisPointMults;     
 
   // inputs: where to interpolate
 

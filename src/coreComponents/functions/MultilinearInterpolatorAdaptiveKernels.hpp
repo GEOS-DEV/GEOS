@@ -40,21 +40,22 @@ namespace geos
  * @tparam NUM_DIMS number of dimensions (inputs)
  * @tparam NUM_OPS number of interpolated functions (outputs)
  */
-template< integer NUM_DIMS, integer NUM_OPS >
-class MultilinearInterpolatorAdaptiveKernel : public MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>
+template< integer NUM_DIMS, integer NUM_OPS, typename INDEX_T = __uint128_t >
+class MultilinearInterpolatorAdaptiveKernel : public MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>
 {
 public:
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::numDims;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::numOps;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::numVerts;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisMinimums;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisMaximums;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisPoints;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisSteps;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisStepInvs;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisHypercubeMults;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_axisPointMults;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>::m_coordinates;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::numDims;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::numOps;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::numVerts;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisMinimums;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisMaximums;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisPoints;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisSteps;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisStepInvs;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisHypercubeMults;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisPointMults;
+  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_coordinates;
+  using typename MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::longIndex;
 
   /**
    * @brief Construct a new Multilinear Interpolator Adaptive Kernel object
@@ -71,7 +72,7 @@ public:
                                           array1d< integer > const & axisPoints,
                                           array1d< real64 > const & axisSteps,
                                           array1d< real64 > const & axisStepInvs,
-                                          array1d< globalIndex > const & axisHypercubeMults,
+                                          array1d< longIndex > const & axisHypercubeMults,
                                           const PythonFunction<numDims, numOps>* evalFunc ):
     MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>( axisMinimums,
                                                           axisMaximums,
@@ -92,7 +93,7 @@ protected:
    */
   GEOS_HOST_DEVICE
   stackArray1d<real64, numOps> const &
-  getPointData(globalIndex const pointIndex) const
+  getPointData(longIndex const pointIndex) const
   {
     auto item = m_pointData.find(pointIndex);
     if (item == m_pointData.end())
@@ -115,10 +116,10 @@ protected:
   GEOS_HOST_DEVICE
   inline 
   void 
-  getHypercubePoints( globalIndex const hypercubeIndex, 
-                      stackArray1d<integer, numVerts>& hypercubePoints ) const
+  getHypercubePoints( longIndex const hypercubeIndex, 
+                      stackArray1d<longIndex, numVerts>& hypercubePoints ) const
   {
-    globalIndex remainderIdx = hypercubeIndex;
+    longIndex axisIdx, remainderIdx = hypercubeIndex;
     integer pwr = numVerts;
 
     for (integer i = 0; i < numVerts; ++i)
@@ -126,7 +127,7 @@ protected:
 
     for (integer i = 0; i < numDims; ++i)
     {
-      globalIndex axisIdx = remainderIdx / m_axisHypercubeMults[i];
+      axisIdx = remainderIdx / m_axisHypercubeMults[i];
       remainderIdx = remainderIdx % m_axisHypercubeMults[i];
       pwr /= 2;
 
@@ -146,12 +147,12 @@ protected:
   GEOS_HOST_DEVICE
   inline
   real64 const *
-  getHypercubeData( globalIndex const hypercubeIndex ) const override
+  getHypercubeData( longIndex const hypercubeIndex ) const override
   {
     auto item = m_hypercubeData.find(hypercubeIndex);
     if (item == m_hypercubeData.end())
     {
-        stackArray1d<integer, numVerts> points (numVerts);
+        stackArray1d<longIndex, numVerts> points (numVerts);
         stackArray1d<real64, numVerts * numOps> newHypercube (numVerts * numOps);
 
         this->getHypercubePoints(hypercubeIndex, points);
@@ -181,7 +182,7 @@ protected:
    * Storage is grown dynamically in the process of simulation. 
    * Only supporting points that are required for interpolation are computed and added
    */
-  mutable unordered_map<globalIndex, stackArray1d<real64, numOps>> m_pointData;
+  mutable unordered_map<longIndex, stackArray1d<real64, numOps>> m_pointData;
   /**
    * @brief adaptive hypercube storage: the values of operators at every vertex of reqested hypercubes
    * Storage is grown dynamically in the process of simulation
@@ -192,7 +193,7 @@ protected:
    * Usage of point_data for interpolation directly would require N_VERTS memory accesses (>1000 accesses for 10-dimensional space)
    *  * 
    */  
-  mutable unordered_map<globalIndex, stackArray1d<real64, numVerts * numOps>> m_hypercubeData;
+  mutable unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> m_hypercubeData;
 };
 
 } /* namespace geos */

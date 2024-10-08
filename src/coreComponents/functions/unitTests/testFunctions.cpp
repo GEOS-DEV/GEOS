@@ -954,7 +954,7 @@ void getMultilinearAdaptiveInterpolation( integer numAxisPts,
   array1d< integer > const axesPoints ( NUM_DIMS );
   array1d< real64 > const axisSteps( NUM_DIMS );
   array1d< real64 > const axisStepInvs( NUM_DIMS );
-  array1d< globalIndex > const axisHypercubeMults( NUM_DIMS );
+  array1d< __uint128_t > const axisHypercubeMults( NUM_DIMS );
 
   for( integer dim = 0; dim < NUM_DIMS; dim++ )
   {
@@ -981,7 +981,7 @@ void getMultilinearAdaptiveInterpolation( integer numAxisPts,
 
   arrayView1d< real64 const > const coordinatesView = coordinates.toViewConst();
 
-  // Test values evaluation first
+  // Evaluation
   const integer numPts = coordinates.size() / NUM_DIMS;
   forAll< geos::parallelDevicePolicy< > >( numPts, 
   [=] GEOS_HOST_DEVICE ( localIndex const ptIndex )
@@ -999,9 +999,9 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   constexpr integer numOps = 2;
   constexpr real64 lowerBound = -M_PI;
   constexpr real64 upperBound = M_PI;
-  constexpr integer numPts = 1000.;
+  constexpr integer numPts = 1000;
   constexpr integer numResolutions = 3;
-  constexpr std::array<integer, numResolutions> numAxesPts = {16, 64, 256};
+  constexpr std::array<integer, numResolutions> numAxesPts = {32, 128, 512};
   array1d<real64> residuals ( 2 * numResolutions );
 
   // Fill array of coordinates
@@ -1027,6 +1027,8 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   array3dLayoutOBLOpDers  trueDerivatives( numPts, numOps, numDims ), 
                           evaluatedDerivatives ( numPts, numOps, numDims );
 
+  arrayView2d< real64, compflow::USD_OBL_VAL > const m_trueValues (trueValues);
+  arrayView3d< real64, compflow::USD_OBL_DER > const m_trueDerivatives (trueDerivatives);
   arrayView2d< real64, compflow::USD_OBL_VAL > const m_evaluatedValues (evaluatedValues);
   arrayView3d< real64, compflow::USD_OBL_DER > const m_evaluatedDerivatives (evaluatedDerivatives);
 
@@ -1038,8 +1040,8 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   forAll< geos::parallelDevicePolicy< > >( numPts, 
   [=] GEOS_HOST_DEVICE ( localIndex const ptIndex )
   {
-    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = trueValues[ptIndex];
-    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = trueDerivatives[ptIndex];
+    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = m_trueValues[ptIndex];
+    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = m_trueDerivatives[ptIndex];
 
     func.evaluate( &coordinatesView[ptIndex * numDims], ptValues, ptDers );
   });
@@ -1058,14 +1060,20 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
     residuals[2 * i] = residuals[2 * i + 1] = 0.0;
     for (integer ptIndex = 0; ptIndex < numPts; ++ptIndex)
     {
+      arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptTrueValues = m_trueValues[ptIndex];
+      arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptTrueDers = m_trueDerivatives[ptIndex];
+
+      arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptEvalValues = m_evaluatedValues[ptIndex];
+      arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptEvalDers = m_evaluatedDerivatives[ptIndex];
+
       for (integer opIndex = 0; opIndex < numOps; ++opIndex)
       {
-        real64 diff = m_evaluatedValues[ptIndex][opIndex] - trueValues[ptIndex][opIndex];
+        real64 diff = ptEvalValues[opIndex] - ptTrueValues[opIndex];
         residuals[2 * i] += diff * diff;
 
         for (integer axIndex = 0; axIndex < numDims; ++axIndex)
         {
-          real64 d_diff = m_evaluatedDerivatives[ptIndex][opIndex][axIndex] - trueDerivatives[ptIndex][opIndex][axIndex];
+          real64 d_diff = ptEvalDers[opIndex][axIndex] - ptTrueDers[opIndex][axIndex];
           residuals[2 * i + 1] += d_diff * d_diff;
         }
       }
@@ -1075,9 +1083,22 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
 
     residuals[2 * i] = sqrt(residuals[2 * i]);
     residuals[2 * i + 1] = sqrt(residuals[2 * i + 1]);
-  }
+
+    // printf("Residuals with %d points per axes: %f \t %f \n", numAxesPts[i], residuals[2 * i], residuals[2 * i + 1]);
+  }            
 
   Py_Finalize();
+
+  const real64 dLogDx = log((upperBound - lowerBound) / numAxesPts[numResolutions - 1]) - 
+                        log((upperBound - lowerBound) / numAxesPts[numResolutions - 2]);
+  const real64 convOrderVals = (log(residuals[2 * (numResolutions - 1)]) - 
+                                  log(residuals[2 * (numResolutions - 2)])) / dLogDx;
+  const real64 convOrderDers = (log(residuals[2 * (numResolutions - 1) + 1]) - 
+                                  log(residuals[2 * (numResolutions - 2) + 1])) / dLogDx;        
+  // printf("Covergence order: values %f, \t derivatives %f \n", convOrderVals, convOrderDers);  
+
+  ASSERT_GT(convOrderVals, 1.6) << "interpolation convergence rate must be greater than 1.6";
+  ASSERT_GT(convOrderDers, 0.6) << "derivatives convergence rate must be greater than 0.6";
 }
 
 // The `ENUM_STRING` implementation relies on consistency between the order of the `enum`,
