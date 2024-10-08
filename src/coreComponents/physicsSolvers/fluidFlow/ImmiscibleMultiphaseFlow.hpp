@@ -97,6 +97,13 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
+  applySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       real64 const dt,
+                       DomainPartition & domain ) override;
+
+  virtual void
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
