@@ -1613,4 +1613,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_GRAPHITE_HPP_ */

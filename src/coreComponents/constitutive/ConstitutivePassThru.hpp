@@ -37,6 +37,7 @@
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropicPressureDependent.hpp"
+#include "solid/Geomechanics.hpp"
 #include "solid/Graphite.hpp"
 #include "solid/ElasticOrthotropic.hpp"
 #include "solid/Hyperelastic.hpp"
@@ -47,7 +48,6 @@
 #include "solid/StrainHardeningPolymer.hpp"
 #include "solid/Chiumenti.hpp"
 #include "solid/CeramicDamage.hpp"
-#include "solid/Graphite.hpp"
 #include "solid/VonMisesJ.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
@@ -184,6 +184,7 @@ struct ConstitutivePassThruMPM< ContinuumBase >
   void execute( ContinuumBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< Graphite,
+                                 Geomechanics,
                                  CeramicDamage,
                                  Chiumenti,
                                  StrainHardeningPolymer,
