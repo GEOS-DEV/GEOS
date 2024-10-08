@@ -82,7 +82,7 @@ void Section::formatDescription( std::ostringstream & oss,
   oss << borderCharacters << '\n';
 }
 
-void Section::beginSection( std::ostream & oss )
+void Section::beginSection( std::ostream & os )
 {
   m_sectionWidth = std::max( m_sectionWidth, m_rowMinWidth );
   horizontalBorder =  GEOS_FMT( "{:#>{}}\n", "", m_sectionWidth );
@@ -104,7 +104,7 @@ void Section::beginSection( std::ostream & oss )
 
   string topPart = GEOS_FMT( "{}{}{}", horizontalBorder, titleRowFormatted, horizontalBorder );
   string bottomPart = descriptions;
-  oss << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
+  os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
 }
 
 void Section::endSection( std::ostream & os ) const
@@ -126,6 +126,6 @@ void Section::endSection( std::ostream & os ) const
                                        titleLength,
                                        borderCharacters );
   string bottomPart = GEOS_FMT( "{}{}", titleRowFormatted, horizontalBorder );
-  oss << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
+  os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
 }
 }

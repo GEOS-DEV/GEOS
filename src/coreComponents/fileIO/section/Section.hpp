@@ -38,7 +38,7 @@ public:
   /**
    * @brief Add a description to the section by concatening a description name and descriptions values.
    * @param descriptionName The description name
-   * @param args Descriptions values to be aligned.
+   * @param args Descriptions values to be concatened.
    * Descriptions values can be be any types and will be aligned
    */
   template< typename ... Args >
@@ -53,7 +53,7 @@ public:
   /**
    * @brief Add a description to the end of the section by concatening a description name and descriptions values.
    * @param descriptionName The description name
-   * @param args Descriptions values to be aligned.
+   * @param args Descriptions values to be concatened.
    * Descriptions values can be be any types and will be aligned
    */
   template< typename ... Args >
@@ -99,7 +99,7 @@ private:
    * @param descriptions A vector of string containing the descriptions
    * @return A string containing all the formatted descriptions.
    */
-  string constructDescriptionsWithVector( std::vector< string > const & descriptions ) const;
+  string constructDescriptionsFromVector( std::vector< string > const & descriptions ) const;
 
   /**
    * @brief Formats a description and adds it to an output stream
