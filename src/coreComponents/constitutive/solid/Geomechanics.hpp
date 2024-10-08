@@ -116,6 +116,8 @@ public:
                        real64 const & creepA,
                        real64 const & creepB,
                        real64 const & creepC,
+                       real64 const & strainHardeningN,
+                       real64 const & strainHardeningK,
                        arrayView1d< real64 > const bulkModulus,
                        arrayView1d< real64 > const shearModulus,
                        arrayView3d< real64 const > const velocityGradient,
@@ -167,6 +169,8 @@ public:
     m_creepA( creepA ),
     m_creepB( creepB ),
     m_creepC( creepC ),
+    m_strainHardeningN( strainHardeningN ),
+    m_strainHardeningK( strainHardeningK ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_velocityGradient( velocityGradient ),
@@ -353,7 +357,8 @@ public:
                           real64 const ( & d_e )[6],           
                           const real64 & X,                    
                           const real64 & Zeta,                 
-                          const real64 & coher,          
+                          const real64 & coher,     
+                          const real64 & hardening,          
                           const real64 & bulk,                 
                           const real64 & shear,
                           real64 & I1_new,                     
@@ -412,7 +417,8 @@ public:
 		                           real64 & a2,
 		                           real64 & a3,
 		                           real64 & a4,
-		                           const real64 & coher );
+		                           const real64 & coher,
+                               const real64 & hardening );
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -455,6 +461,8 @@ private:
   real64 const & m_creepA;
   real64 const & m_creepB;
   real64 const & m_creepC;
+  real64 const & m_strainHardeningN;
+  real64 const & m_strainHardeningK;
 
   /// A reference to the ArrayView holding the bulk modulus for each element/particle.
   arrayView1d< real64 > const m_bulkModulus;
@@ -770,7 +778,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     twoInvariant::stressDecomposition( sigma_old,
                                        iso_old,
                                        J2_old,
-                                       stress_dev );
+                                       stress_dev); //This gives unit vector in direction of dev stress
+    // rescale to have actual deviator
+    LvArray::tensorOps::scale< 6 >( stress_dev, sqrt(2/3) * J2_old);
+                                    
     stress_iso[0] = iso_old;
     stress_iso[1] = iso_old;
     stress_iso[2] = iso_old;
@@ -782,7 +793,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     twoInvariant::stressDecomposition( ep_old,
                                        ep_iso_old,
                                        ep_J2_old,
-                                       ep_dev );
+                                       ep_dev); //This gives unit vector in direction of dev p. strain 
+    LvArray::tensorOps::scale< 6 >( ep_dev, sqrt(2/3) * ep_J2_old);                                       
     ep_iso[0] = ep_iso_old;
     ep_iso[1] = ep_iso_old;
     ep_iso[2] = ep_iso_old;
@@ -1174,11 +1186,12 @@ void GeomechanicsUpdates::computeInvariants( real64 const ( & stress )[6],
 //   real64 deviator[6] = { 0 };
   twoInvariant::stressDecomposition( stress,
                                      I1,
-                                     J2,
-                                     S );
+                                     J2, //this is rootJ2
+                                     S); //this gives a unit verctor
     I1 *= 3.0;
     LvArray::tensorOps::scale< 6 >( S, sqrt(2.0 / 3.0) * J2 );
-    J2 = 3 * J2 * J2;
+    J2 = 3 * J2 * J2;  //MH: why are we squaring and then taking a square root?
+
 
 //   // Compute the second invariant
 //   J2 = computeJ2fromDevStress(S);  // 0.5*S.Contract(S);
@@ -1379,6 +1392,28 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
   // (4) Evaluate the yield function at the trial stress:
   // Compute the limit parameters based on the value of coher.  These are then passed down
   // to the computeYieldFunction, to avoid the expense of repeatedly computing a3
+
+  // Compute strain hardening applied to the STREN parameter
+  real64 hardening = 0.0;
+   if (m_strainHardeningK > 0)
+   {
+
+	   // This experssion is incomplete until the (2./3.)*sqrt(equilivantPlasticStrain) is applied below.
+	  //  real64 equilivantPlasticStrain = ep_old(0,0)*ep_old(0,0) + ep_old(1,1)*ep_old(1,1) + ep_old(2,2)*ep_old(2,2)
+		// 	   + 3*ep_old(0,1)*ep_old(0,1) + 3*ep_old(0,2)*ep_old(0,2) + 3*ep_old(1,2)*ep_old(1,2)
+		// 	   - ep_old(1,1)*ep_old(2,2) - ep_old(0,0)*ep_old(1,1) - ep_old(0,0)*ep_old(2,2);
+
+   	real64 ep_J2 = ep_old[0]*ep_old[0] + ep_old[1]*ep_old[1] + ep_old[2]*ep_old[2]
+		 	   + 3*ep_old[3]*ep_old[3] + 3*ep_old[4]*ep_old[4] + 3*ep_old[5]*ep_old[5]
+		 	   - ep_old[1]*ep_old[2] - ep_old[0]*ep_old[1] - ep_old[0]*ep_old[2]; 
+
+		if (ep_J2 > 0.)
+		{
+			real64 equilivantPlasticStrain = (2./3.)*sqrt(ep_J2);
+			hardening = m_strainHardeningK*( 1.0 - exp(-1.0*m_strainHardeningN*equilivantPlasticStrain) );
+		}
+   }
+
   real64 a1,
          a2,
          a3,
@@ -1387,7 +1422,8 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                           a2,
                           a3,
                           a4,
-                          coher_old );
+                          coher_old,
+                          hardening );
 
   int YIELD = computeYieldFunction( I1_trial,
                                     rJ2_trial,
@@ -1451,6 +1487,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      X_old,
                                      Zeta_old,
                                      coher_old,
+                                     hardening,
                                      bulk,
                                      shear,
 									                   I1_0,
@@ -1579,6 +1616,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      X_new,
                                      Zeta_new,
                                      coher_new,
+                                     hardening,
                                      bulk,
                                      shear,
                                      I1_new,
@@ -1742,7 +1780,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                                              real64 const ( & d_e )[6],            // increment in total strain
                                              const real64 & X,                     // cap position
                                              const real64 & Zeta,                  // isotropic bacstress
-                                             const real64 & coher,          
+                                             const real64 & coher,    
+                                             const real64 & hardening,          
                                              const real64 & bulk,                  // elastic bulk modulus
                                              const real64 & shear,                 // elastic shear modulus
                                              real64 & I1_new,                      // New stress state on yield surface
@@ -1835,7 +1874,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                           a2,
                           a3,
                           a4,
-                          coher );
+                          coher,
+                          hardening );
 
   // (3) Perform Bisection between in transformed space, to find the new point on the
   //  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
@@ -2167,12 +2207,25 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a2,
 		                                              real64 & a3,
 		                                              real64 & a4,
-		                                              const real64 & GEOS_UNUSED_PARAM( coher ) ) // Value of I1 at strength=0 (Perturbed by variability)
+		                                              const real64 & GEOS_UNUSED_PARAM( coher ),
+                                                  const real64 & hardening
+                                                   ) // Value of I1 at strength=0 (Perturbed by variability)
 { // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
   // the user inputs are the more intuitive set of FSLOPE. YSLOPE, STREN, and PEAKI1.
 
   // This routine computes the a_i parameters from the user inputs.  The code was
   // originally written by R.M. Brannon, with modifications by M.S. Swan.
+  // harden peakI1 and stren together to not change slope:
+	real64 stren_h = m_stren + hardening;
+ 	real64 peakT1_h;
+  if (m_fSlope > 0.0)
+  {
+     peakT1_h = m_peakT1 + hardening/m_fSlope;
+  } 
+  else
+  {
+    peakT1_h = m_peakT1;
+  }
 
   if (m_fSlope > 0.0 && m_peakT1 >= 0.0 && m_stren == 0.0 && m_ySlope == 0.0)
   {// ----------------------------------------------Linear Drucker-Prager
@@ -2183,23 +2236,23 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else if (m_fSlope == 0.0 && m_peakT1 == 0.0 && m_stren > 0.0 && m_ySlope == 0.0)
   { // ------------------------------------------------------- Von Mises
-    a1 = m_stren;
+    a1 = stren_h;
     a2 = 0.0;
     a3 = 0.0;
     a4 = 0.0;
   }
   else if (m_fSlope > 0.0 && m_ySlope  == 0.0 && m_stren > 0.0 && m_peakT1 == 0.0)
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
-    a1 = m_stren;
-    a2 = m_fSlope / m_stren;
-    a3 = m_stren;
+    a1 = stren_h;
+    a2 = m_fSlope / stren_h;
+    a3 = stren_h;
     a4 = 0.0;
   }
   else if (m_fSlope > m_ySlope && m_ySlope > 0.0 && m_stren > m_ySlope*m_peakT1 && m_peakT1 >= 0.0)
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
-    a1 = m_stren;
-    a2 = (m_fSlope-m_ySlope )/(m_stren-m_ySlope *m_peakT1);
-    a3 = (m_stren-m_ySlope *m_peakT1)*exp(-a2*m_peakT1);
+    a1 = stren_h;
+    a2 = (m_fSlope-m_ySlope )/(stren_h-m_ySlope *peakT1_h);
+    a3 = (stren_h-m_ySlope *peakT1_h)*exp(-a2*peakT1_h);
     a4 = m_ySlope ;
   }
   else
@@ -2357,6 +2410,12 @@ public:
     /// string/key for creep C parameter
     static constexpr char const * creepCString() { return "creepC"; }
 
+    /// string/key for strain-hardening N parameter
+    static constexpr char const * strainHardeningNString() { return "strainHardeningN"; }
+
+    /// string/key for strain-hardening K parameter
+    static constexpr char const * strainHardeningKString() { return "strainHardeningK"; }
+
     //string/key for element/particle bulk modulus value
     static constexpr char const * bulkModulusString() { return "bulkModulus"; }
 
@@ -2417,6 +2476,8 @@ public:
                                 m_creepA,
                                 m_creepB,
                                 m_creepC,
+                                m_strainHardeningN,
+                                m_strainHardeningK,
                                 m_bulkModulus,
                                 m_shearModulus,
                                 m_velocityGradient,
@@ -2475,6 +2536,8 @@ public:
                           m_creepA,
                           m_creepB,
                           m_creepC,
+                          m_strainHardeningN,
+                          m_strainHardeningK,
                           m_bulkModulus,
                           m_shearModulus,
                           m_velocityGradient,
@@ -2615,6 +2678,10 @@ protected:
   real64 m_creepA;
   real64 m_creepB;
   real64 m_creepC;
+
+  // strain-hardening parameters
+  real64 m_strainHardeningN;
+  real64 m_strainHardeningK;
 
   /// The bulk modulus for each element/particle
   array1d< real64 > m_bulkModulus;
