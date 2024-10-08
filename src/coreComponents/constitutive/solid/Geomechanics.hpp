@@ -600,7 +600,13 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 D[6] = { 0 };
   LvArray::tensorOps::denseToSymmetric<3>( D, denseD );
 
-  m_wavespeed[k][0] = sqrt( ( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
+  // Update effective elastic properties
+  m_bulkModulus[k] = m_b0 + m_b1;
+  m_shearModulus[k] = m_g0;
+  
+  // MH:TODO set wavespeed based on actual pressure-dependent bulk modulus, not the high-pressure limit.
+  // m_wavespeed[k][0] = sqrt( ( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
+  m_wavespeed[k][0] = sqrt( ( m_b0 + m_b1 + (4.0/3.0) * m_g0 ) / m_density[k][0] );
 
   if( m_disableInelasticity )
   {
@@ -621,7 +627,8 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   }
 }
 
-
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // strain "rate"
                                       const real64 & Dt,                     // time step (s)
                                       const real64 & lch,                    // length scale
@@ -636,7 +643,11 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 						                          real64 ( & sigma_p )[6],         // unrotated stress at end of step(t_n+1)
                                       real64 ( & ep_p )[6] )           // plastic strain at end of step(t_n+1)
 {
-	real64 fluid_B0 = m_fluidBulkModulus; // Fluid bulk modulus (K_f)
+	
+  // Figure out where to initialize and set these and use pressure dependence to get value for each
+  // particle correctly.
+
+  real64 fluid_B0 = m_fluidBulkModulus; // Fluid bulk modulus (K_f)
 	real64 fluid_pressure_initial = m_fluidInitialPressure; // Zero strain Fluid Pressure (Pf0)
 
 	// These  variables are computed from input parameters and are used throughout the code
@@ -694,7 +705,6 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
   // of substeps and stable time steps.
   computeElasticProperties( bulk, 
                             shear ); 
-
   //Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
   real64 sigma_trial[6] = { 0 };
   computeHypoelasticTrialStress( Dt,              // full time step
@@ -958,6 +968,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     return stepFlag;
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeHypoelasticTrialStress( const real64 dt,                    // time step
                                                          const real64 bulk,                  // bulk modulus
                                                          const real64 GEOS_UNUSED_PARAM(shear),                 // shear modulus
@@ -989,7 +1001,8 @@ void GeomechanicsUpdates::computeHypoelasticTrialStress( const real64 dt,       
   LvArray::tensorOps::add< 6 >( stress_new, Ddev );
 }
 
-
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeElasticProperties( real64 & bulk,
                                                     real64 & shear )
 {
@@ -1000,6 +1013,8 @@ void GeomechanicsUpdates::computeElasticProperties( real64 & bulk,
     bulk  = m_b0 + m_b1;  // Bulk Modulus
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
                                                     real64 const ( &ep )[6],
 		                                                const real64 & GEOS_UNUSED_PARAM( p3_crush_curve ),
@@ -1084,6 +1099,8 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 }
 
 // [nsub] = computeStepDivisions(X,Zeta,ep,sigma_n,sigma_trial)
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
 		                                           const real64 & GEOS_UNUSED_PARAM( Zeta ),
 		                                           real64 const ( & ep )[6],
@@ -1171,6 +1188,8 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   return nsub;
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeInvariants( real64 const ( & stress )[6],
                                              real64 ( & S )[6],
                                              real64 & I1,
@@ -1204,6 +1223,8 @@ void GeomechanicsUpdates::computeInvariants( real64 const ( & stress )[6],
 }
 
 // update the coherence (1-damage) variable based on dilational plastic work
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeCoher( const real64 & lch,       // length scale
                                         const real64 & I1_trial,  // trial value of I1
 			                                  const real64 & I1_0,      // I1 value on yield surface
@@ -1230,6 +1251,8 @@ void GeomechanicsUpdates::computeCoher( const real64 & lch,       // length scal
 }
 
 // Compute state variable X, the Hydrostatic Compressive strength (cap position)
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 GeomechanicsUpdates::computeX( const real64 & evp,
 		                                  const real64 & phi_i, // Initial porosity (inferred from crush curve, used for fluid model/
 		                                  const real64 & Km, // matrix bulk modulus
@@ -1324,6 +1347,8 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
 
 
 // Computes the updated stress state for a substep
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // strain "rate" for substep D=sym(L)
 		                                     const real64 & dt,               // substep time interval
                                          const real64 & lch,              // length scale
@@ -1771,6 +1796,8 @@ failedSubstep:
 }
 
 // Compute nonhardening return from trial stress to some yield surface
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,              // Trial Stress
                                              const real64 & rJ2_trial,          
                                              real64 const ( & S_trial )[6],          
@@ -2006,6 +2033,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
 }
 
 // Computes bisection between two points in transformed space
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void GeomechanicsUpdates::transformedBisection(real64 & z_0,
                                                real64 & r_0,
                                                const real64 & z_trial,
@@ -2070,6 +2099,8 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
 }
 
 // computeTransformedYieldFunction from transformed inputs
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int GeomechanicsUpdates::transformedYieldFunction( const real64 & z,
                                                    const real64 & r,
                                                    const real64 & X,
@@ -2103,6 +2134,8 @@ int GeomechanicsUpdates::transformedYieldFunction( const real64 & z,
 }
 
 // computeYieldFunction from untransformed inputs
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
                                                const real64 & rJ2,
                                                const real64 & X,
@@ -2178,6 +2211,8 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 } 
 
 // Compute (dZeta/devp) Zeta and vol. plastic strain
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 GeomechanicsUpdates::computedZetadevp( real64 const & fluid_pressure_initial,
                                               real64 const & Km,
                                               real64 const & Kf,
@@ -2203,6 +2238,8 @@ real64 GeomechanicsUpdates::computedZetadevp( real64 const & fluid_pressure_init
 } 
 
 // Compute (dZeta/devp) Zeta and vol. plastic strain
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a2,
 		                                              real64 & a3,
