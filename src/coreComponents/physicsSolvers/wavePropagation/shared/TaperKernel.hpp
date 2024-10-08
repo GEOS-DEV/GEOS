@@ -60,9 +60,9 @@ struct TaperKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      real32 const dxMin = -((3*vMax)/(2*dMin[0]))*log( r )*pow((dMin[0]-nodeCoords[a][0])/dMin[0], 2 );
-      real32 const dyMin = -((3*vMax)/(2*dMin[1]))*log( r )*pow((dMin[1]-nodeCoords[a][1])/dMin[1], 2 );
-      real32 const dzMin = -((3*vMax)/(2*dMin[2]))*log( r )*pow((dMin[2]-nodeCoords[a][2])/dMin[2], 2 );
+      real32 const dxMin = -((3*vMax)/(2*dMin[0]))*log( r )*pow((xMin[0]-nodeCoords[a][0])/dMin[0], 2 );
+      real32 const dyMin = -((3*vMax)/(2*dMin[1]))*log( r )*pow((xMin[1]-nodeCoords[a][1])/dMin[1], 2 );
+      real32 const dzMin = -((3*vMax)/(2*dMin[2]))*log( r )*pow((xMin[2]-nodeCoords[a][2])/dMin[2], 2 );
       real32 const dxMax = -((3*vMax)/(2*dMax[0]))*log( r )*pow((xMax[0]-nodeCoords[a][0])/dMax[0], 2 );
       real32 const dyMax = -((3*vMax)/(2*dMax[1]))*log( r )*pow((xMax[1]-nodeCoords[a][1])/dMax[1], 2 );
       real32 const dzMax = -((3*vMax)/(2*dMax[2]))*log( r )*pow((xMax[2]-nodeCoords[a][2])/dMax[2], 2 );
