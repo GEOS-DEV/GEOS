@@ -130,6 +130,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_bodyForce(),
   m_boreholePressure( 0.0 ),
   m_boreholeRadius( 0.0 ),
+  m_confiningPressure( 0.0 ),
+  m_confiningPressureBoxMin( ),
+  m_confiningPressureBoxMax( ),
   m_stressControl(),
   m_stressTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
   m_stressControlKp( 0.1 ),
@@ -2890,6 +2893,32 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                 startPressure,
                                 endPressure,
                                 m_boreholePressure, // output, overwritten from interpolaiton.
+                                interpolationType );
+     
+        //sevent.setIsComplete( 1 );
+      }
+
+      if( event.getName() == "ConfiningPressure" )
+      {
+        ConfiningPressureMPMEvent & confiningPressure = dynamicCast< ConfiningPressureMPMEvent & >( event );
+        GEOS_LOG_RANK_0("Setting confining pressure");
+
+        m_confiningPressureBoxMin = confiningPressure.getConfiningPressureBoxMin();
+        m_confiningPressureBoxMax = confiningPressure.getConfiningPressureBoxMax();
+
+        real64 startPressure = confiningPressure.getStartPressure();
+        real64 endPressure = confiningPressure.getEndPressure();
+        int interpolationType = confiningPressure.getInterpType();
+
+        // Set m_confiningPressure to interpolated value.  The default is 0, but at the end of the event
+        // it won't be reset.
+
+        interpolateValueInRange( time_n, 
+                                eventTime,
+                                eventTime + eventInterval,
+                                startPressure,
+                                endPressure,
+                                m_confiningPressure, // output, overwritten from interpolaiton.
                                 interpolationType );
      
         //sevent.setIsComplete( 1 );
@@ -8021,9 +8050,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     int const numContactGroups = m_numContactGroups;
     int const damageFieldPartitioning = m_damageFieldPartitioning;
 
-    //std::cout << "m_boreholePressure:  " << m_boreholePressure <<  std::endl;
-    //std::cout << "m_boreholeRadius:  " << m_boreholeRadius <<  std::endl;
-
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
                                                                                                 // remember to pass copies of class
                                                                                                 // variables
@@ -8074,22 +8100,37 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
           // pressure BC, should be bigger than the borehole but not near outer domain boundary.
 
-          real64 boreholeStress[6] = {0.};
+          //std::cout << "m_boreholePressure:  " << m_boreholePressure <<  std::endl;
+          //std::cout << "m_boreholeRadius:  " << m_boreholeRadius <<  std::endl;
+
+          real64 fluidStress[6] = {0.};
           if ( ( fabs(m_boreholePressure) > 1.e-12 ) && ( pow( gridPosition[mappedNode][0], 2 ) + pow( gridPosition[mappedNode][1], 2 ) < m_boreholeRadius * m_boreholeRadius ) )
           {
           // This is the traction, in Voight notation, applied to the borehole surface.
           // This could easily be changed to be a virtual traction not just hydrostatic stress, which is
           // why we coded it this way:
-          boreholeStress[0] = -m_boreholePressure;
-          boreholeStress[1] = -m_boreholePressure;
-          boreholeStress[2] = -m_boreholePressure;
+          fluidStress[0] = -m_boreholePressure;
+          fluidStress[1] = -m_boreholePressure;
+          fluidStress[2] = -m_boreholePressure;
+          }
+          else if ( ( fabs(m_confiningPressure) > 1.e-12 ) && 
+          ( gridPosition[mappedNode][0] < m_confiningPressureBoxMin[0] ) || ( gridPosition[mappedNode][1] < m_confiningPressureBoxMin[1] ) || ( gridPosition[mappedNode][2] < m_confiningPressureBoxMin[2] ) || 
+          ( gridPosition[mappedNode][0] > m_confiningPressureBoxMax[0] ) || ( gridPosition[mappedNode][1] > m_confiningPressureBoxMin[1] ) || ( gridPosition[mappedNode][2] > m_confiningPressureBoxMin[2] )
+          )
+          {
+          // This is the traction, in Voight notation, applied to the borehole surface.
+          // This could easily be changed to be a virtual traction not just hydrostatic stress, which is
+          // why we coded it this way:
+          fluidStress[0] = -m_confiningPressure;
+          fluidStress[1] = -m_confiningPressure;
+          fluidStress[2] = -m_confiningPressure;
           }    
         
           for( int k=0; k < numDims; k++ )
           {
             int voigt = voigtMap[k][i];
             // CC: double check this implementation of artificial viscosity is correct
-           gridInternalForce[mappedNode][fieldIndex][i] -= ( ( particleStress[p][voigt] - boreholeStress[voigt] ) - particleArtificialViscosity[p] * m_useArtificialViscosity * (k == i) ) 
+           gridInternalForce[mappedNode][fieldIndex][i] -= ( ( particleStress[p][voigt] - fluidStress[voigt] ) - particleArtificialViscosity[p] * m_useArtificialViscosity * (k == i) ) 
                                                             * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
           }
         }
