@@ -21,6 +21,7 @@ set( events_headers
      mpmEvents/BodyForceUpdateMPMEvent.hpp
      mpmEvents/DeformationUpdateMPMEvent.hpp
      mpmEvents/BoreholePressureMPMEvent.hpp
+     mpmEvents/ConfiningPressureMPMEvent.hpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.hpp
    )
 
@@ -47,6 +48,7 @@ set( events_sources
      mpmEvents/BodyForceUpdateMPMEvent.cpp
      mpmEvents/DeformationUpdateMPMEvent.cpp
      mpmEvents/BoreholePressureMPMEvent.cpp
+     mpmEvents/ConfiningPressureMPMEvent.cpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.cpp
    )
 
