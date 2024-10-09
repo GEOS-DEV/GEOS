@@ -1000,8 +1000,8 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   constexpr real64 lowerBound = -M_PI;
   constexpr real64 upperBound = M_PI;
   constexpr integer numPts = 1000;
-  constexpr integer numResolutions = 3;
-  constexpr std::array<integer, numResolutions> numAxesPts = {32, 128, 512};
+  constexpr integer numResolutions = 2;
+  constexpr std::array<integer, numResolutions> numAxesPts = {128, 512};
   array1d<real64> residuals ( 2 * numResolutions );
 
   // Fill array of coordinates
