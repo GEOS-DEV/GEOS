@@ -54,6 +54,8 @@ public:
     constexpr static char const * shearImpedanceString() { return "shearImpedance"; }
     /// max number of Newton iterations string
     constexpr static char const * maxNumberOfNewtonIterationsString() { return "maxNumberOfNewtonIterations"; }
+    /// target slip increment
+    constexpr static char const * targetSlipIncrementString() { return "targetSlipIncrement"; }
   };
 
   virtual real64 solverStep( real64 const & time_n,
@@ -62,6 +64,9 @@ public:
                              DomainPartition & domain ) override final;
 
 private:
+
+  virtual real64 setNextDt( real64 const & currentDt,
+                            DomainPartition & domain ) override final;
 
   virtual void postInputInitialization() override;
 
@@ -85,17 +90,20 @@ private:
   /// max number of newton iterations for rate and state solver
   integer m_maxNewtonIterations;
 
-  /// Shear impedance
+  /// shear impedance
   real64 m_shearImpedance;
+
+  /// target slip rate
+  real64 m_targetSlipIncrement;
 
   class SpringSliderParameters
   {
-  public:
+public:
 
     GEOS_HOST_DEVICE
-    SpringSliderParameters( real64 const normalTraction, real64 const a, real64 const b, real64 const Dc ) :
-    tauRate( 1e-4 ),
-    springStiffness( 0.0 )
+    SpringSliderParameters( real64 const normalTraction, real64 const a, real64 const b, real64 const Dc ):
+      tauRate( 1e-4 ),
+      springStiffness( 0.0 )
     {
       real64 const criticalStiffness = normalTraction * (b - a) / Dc;
       springStiffness = 0.9 * criticalStiffness;
@@ -116,7 +124,7 @@ private:
     /// Deleted move assignment operator
     SpringSliderParameters & operator=( SpringSliderParameters && ) =  delete;
 
-    real64 tauRate; 
+    real64 tauRate;
 
     real64 springStiffness;
   };

@@ -98,13 +98,13 @@ public:
 
     /// Deleted move assignment operator
     KernelWrapper & operator=( KernelWrapper && ) =  delete;
-    
+
     GEOS_HOST_DEVICE
     real64 getACoefficient( localIndex const k ) const { return m_a[k]; }
-    
+
     GEOS_HOST_DEVICE
-    real64 getBCoefficient( localIndex const k ) const { return m_b[k]; }   
-    
+    real64 getBCoefficient( localIndex const k ) const { return m_b[k]; }
+
     GEOS_HOST_DEVICE
     real64 getDcCoefficient( localIndex const k ) const { return m_Dc[k]; }
 

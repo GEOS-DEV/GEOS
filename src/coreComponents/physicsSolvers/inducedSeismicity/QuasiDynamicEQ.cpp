@@ -38,7 +38,8 @@ QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
   m_stressSolver( nullptr ),
   m_stressSolverName( "SpringSlider" ),
   m_maxNewtonIterations( 10 ),
-  m_shearImpedance( 0.0 )
+  m_shearImpedance( 0.0 ),
+  m_targetSlipIncrement( 1.0e-7 )
 {
   this->registerWrapper( viewKeyStruct::maxNumberOfNewtonIterationsString(), &m_maxNewtonIterations ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -52,6 +53,11 @@ QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
   this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of solver for computing stress. If empty, the spring-slider model is run." );
+
+  this->registerWrapper( viewKeyStruct::targetSlipIncrementString(), &m_targetSlipIncrement ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0e-7 ).
+    setDescription( "Target slip incrmeent for timestep size selction" );
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -116,11 +122,13 @@ real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
       // solve rate and state equations.
-      rateAndStateKernels::createAndLaunch< parallelDevicePolicy<> >( subRegion, viewKeyStruct::frictionLawNameString(), m_shearImpedance, m_maxNewtonIterations, time_n, dt );
+      rateAndStateKernels::createAndLaunch< parallelDevicePolicy<> >( subRegion, viewKeyStruct::frictionLawNameString(), m_shearImpedance, m_maxNewtonIterations, time_n, dtStress );
       // save old state
       saveOldStateAndUpdateSlip( subRegion, dt );
     } );
   } );
+
+  m_nextDt = setNextDt( dtStress, domain );
 
   // return time step size achieved by stress solver
   return dtStress;
@@ -154,7 +162,7 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
       {
         arrayView1d< real64 const > const slip = subRegion.getField< fields::contact::slip >().toViewConst();
         arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
-        
+
         string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         RateAndStateFriction const & frictionLaw = getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
 
@@ -162,10 +170,10 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
 
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
-          SpringSliderParameters springSliderParameters = SpringSliderParameters( traction[k][0], 
-                                                                                  frictionKernelWrapper.getACoefficient(k),
-                                                                                  frictionKernelWrapper.getBCoefficient(k), 
-                                                                                  frictionKernelWrapper.getDcCoefficient(k) );
+          SpringSliderParameters springSliderParameters = SpringSliderParameters( traction[k][0],
+                                                                                  frictionKernelWrapper.getACoefficient( k ),
+                                                                                  frictionKernelWrapper.getBCoefficient( k ),
+                                                                                  frictionKernelWrapper.getDcCoefficient( k ) );
 
           traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt - springSliderParameters.springStiffness * slip[k];
           traction[k][2] = 0.0;
@@ -176,7 +184,7 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
   }
 }
 
-void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion, real64 const dt  ) const
+void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion, real64 const dt ) const
 {
   arrayView1d< real64 > const stateVariable   = subRegion.getField< rateAndState::stateVariable >();
   arrayView1d< real64 > const stateVariable_n = subRegion.getField< rateAndState::stateVariable_n >();
@@ -189,8 +197,40 @@ void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion
   {
     slipRate_n[k]      = slipRate[k];
     stateVariable_n[k] = stateVariable[k];
-    slip[k] = slip[k] + slipRate[k] * dt;
+    slip[k]            = slip[k] + slipRate[k] * dt;
   } );
+}
+
+real64 QuasiDynamicEQ::setNextDt( real64 const & currentDt, DomainPartition & domain )
+{
+  GEOS_UNUSED_VAR( currentDt );
+
+  real64 maxSlipRate = 0.0;
+  // Spring-slider shear traction computation
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+
+  {
+    real64 maxSlipRateOnThisRank  = 0.0;
+    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                           [&]( localIndex const,
+                                                                                SurfaceElementSubRegion const & subRegion )
+    {
+      arrayView1d< real64 const > const slipRate = subRegion.getField< rateAndState::slipRate >();
+
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > maximumSlipRateOnThisRegion( 0.0 );
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        maximumSlipRateOnThisRegion.max( LvArray::math::abs( slipRate[k] ) );
+      } );
+      if( maximumSlipRateOnThisRegion.get() > maxSlipRateOnThisRank )
+        maxSlipRateOnThisRank = maximumSlipRateOnThisRegion.get();
+    } );
+    maxSlipRate = MpiWrapper::max( maxSlipRateOnThisRank );
+  } );
+
+  return m_targetSlipIncrement / maxSlipRate;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, QuasiDynamicEQ, string const &, dataRepository::Group * const )
