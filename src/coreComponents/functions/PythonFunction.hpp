@@ -21,6 +21,7 @@
 #define GEOS_FUNCTIONS_PYTHONFUNCTION_HPP_
 
 #include <Python.h>
+#include "common/DataTypes.hpp"
 
 namespace geos
 {
