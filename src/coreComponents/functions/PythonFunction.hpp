@@ -41,6 +41,9 @@ public:
   /// Python function reference to be called for evaluation of derivatives
   mutable PyObject* py_derivative_func = nullptr;
 
+  /**
+   * @brief Construct a new wrapper for python function
+   */
   PythonFunction(): py_evaluate_func(nullptr), 
                     py_derivative_func(nullptr)
   {
@@ -49,6 +52,9 @@ public:
       Py_Initialize();
   }
 
+  /**
+   * @brief Desctructor of a wrapper of python function
+   */
   ~PythonFunction() 
   {
     // Decrement reference count for the evaluation function if set
@@ -60,6 +66,12 @@ public:
       Py_XDECREF(py_derivative_func);
   }
 
+  /**
+   * @brief Set Python functions for values and (optionally) for their derivatives
+   * 
+   * @param[in] pyFunc pointer to the function
+   * @param[in] pyDerivativeFunc pointer to the function evaluating derivatives
+   */
   void setEvaluateFunction(PyObject* pyFunc, PyObject* pyDerivativeFunc = nullptr) 
   {
     // Set the evaluation function (required)
@@ -90,6 +102,14 @@ public:
     }
   }
 
+  /**
+   * @brief interpolate all operators values at a given point
+   * 
+   * @tparam IN_ARRAY type of input array of coordinates
+   * @tparam OUT_ARRAY type of output array of values
+   * @param[in] state function arguments
+   * @param[out] values function values
+   */
   template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOS_HOST_DEVICE   
   inline  
@@ -140,6 +160,16 @@ public:
     }
   }
 
+  /**
+   * @brief interpolate all operators values at a given point
+   * 
+   * @tparam IN_ARRAY type of input array of coordinates
+   * @tparam OUT_ARRAY type of output array of values
+   * @tparam OUT_2D_ARRAY type of output array of derivatives
+   * @param[in] state function arguments
+   * @param[out] values function values
+   * @param[out] derivatives derivatives of function values w.r.t. arguments
+   */
   template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
   GEOS_HOST_DEVICE   
   inline  

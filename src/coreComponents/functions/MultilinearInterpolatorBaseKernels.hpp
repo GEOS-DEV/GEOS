@@ -70,6 +70,9 @@ public:
    * @param[in] axisMinimums  minimum coordinate for each axis
    * @param[in] axisMaximums maximum coordinate for each axis
    * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
+   * @param[in] axisSteps axis interval lengths (axes are discretized uniformly)
+   * @param[in] axisStepInvs inversions of axis interval lengths (axes are discretized uniformly)
+   * @param[in] axisHypercubeMults hypercube index mult factors for each axis
    */
   MultilinearInterpolatorBaseKernel(arrayView1d< real64 const > const & axisMinimums,
                                     arrayView1d< real64 const > const & axisMaximums,
@@ -276,7 +279,9 @@ public:
   }
   /**
    * @brief interpolate all operators at a given point
-   *
+   * 
+   * @tparam IN_ARRAY type of input array of coordinates
+   * @tparam OUT_ARRAY type of output array of values
    * @param[in] coordinates point coordinates
    * @param[out] values interpolated operator values
    */
@@ -361,8 +366,8 @@ protected:
   /**
    * @brief Get coordinates of point given by index
    *
-   * @param[in] pointIndex point's index
-   * @return pointer to hypercube data
+   * @param[in] pointIndex index of a point
+   * @param[out] coordinates coordinates of a point
    */
   virtual
   GEOS_HOST_DEVICE

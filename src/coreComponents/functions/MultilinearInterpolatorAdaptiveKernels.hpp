@@ -65,7 +65,8 @@ public:
    * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
    * @param[in] axisSteps axis interval lengths (axes are discretized uniformly)
    * @param[in] axisStepInvs inversions of axis interval lengths (axes are discretized uniformly)
-   * @param[in] axisHypercubeMults  hypercube index mult factors for each axis
+   * @param[in] axisHypercubeMults hypercube index mult factors for each axis
+   * @param[in] evalFunc evaluator of exact function values
    */
   MultilinearInterpolatorAdaptiveKernel( array1d< real64 > const & axisMinimums,
                                           array1d< real64 > const & axisMaximums,
@@ -107,7 +108,7 @@ protected:
     else
       return item->second;
   }
-    /**
+  /**
    * @brief Get indexes of all vertices for given hypercube
    * 
    * @param[in] hypercubeIndex index of the hyporcube
@@ -172,7 +173,6 @@ protected:
     else
         return item->second.data();
   }
-
   /**
    * @brief wrapper providing interface to Python function
    */
