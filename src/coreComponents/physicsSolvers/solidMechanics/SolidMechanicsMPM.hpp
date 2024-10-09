@@ -780,6 +780,10 @@ protected:
   real64 m_boreholePressure;
   real64 m_boreholeRadius;
 
+  real64 m_confiningPressure;
+  array1d< real64 > m_confiningPressureBoxMin;
+  array1d< real64 > m_confiningPressureBoxMax;
+
   array1d< int > m_stressControl;
   InterpolationOption m_stressTableInterpType;
   array2d< real64 > m_stressTable;

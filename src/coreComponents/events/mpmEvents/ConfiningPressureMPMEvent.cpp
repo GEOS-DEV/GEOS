@@ -26,16 +26,17 @@ namespace geos
   ConfiningPressureMPMEvent::ConfiningPressureMPMEvent( const string & name,
                                                     Group * const parent ) :
                                                     MPMEventBase(  name, parent ),
-                                                    m_boreholeRadius( 0.0 ),
+                                                    m_confiningPressureBoxMin(  ),
+                                                    m_confiningPressureBoxMax(  ),
                                                     m_startPressure( 0.0 ),
                                                     m_endPressure( 0.0 ),
                                                     m_interpType( 1 )
   {  
-    registerWrapper( viewKeyStruct::confiningPressureBoxMin(), &m_confiningPressureBoxMin ).
+    registerWrapper( viewKeyStruct::confiningPressureBoxMinString(), &m_confiningPressureBoxMin ).
         setInputFlag( InputFlags::REQUIRED ).
         setDescription( "Min corner of box defining confining pressure region" );
 
-    registerWrapper( viewKeyStruct::confiningPressureBoxMin(), &m_confiningPressureBoxMax ).
+    registerWrapper( viewKeyStruct::confiningPressureBoxMaxString(), &m_confiningPressureBoxMax ).
         setInputFlag( InputFlags::REQUIRED ).
         setDescription( "Max corner of box defining confining pressure region" );
 
