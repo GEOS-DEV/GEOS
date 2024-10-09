@@ -20,6 +20,7 @@
 #define GEOSX_CONFININGPRESSURE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {

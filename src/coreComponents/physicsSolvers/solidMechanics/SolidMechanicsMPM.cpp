@@ -8114,9 +8114,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           fluidStress[2] = -m_boreholePressure;
           }
           else if ( ( fabs(m_confiningPressure) > 1.e-12 ) && 
-          ( gridPosition[mappedNode][0] < m_confiningPressureBoxMin[0] ) || ( gridPosition[mappedNode][1] < m_confiningPressureBoxMin[1] ) || ( gridPosition[mappedNode][2] < m_confiningPressureBoxMin[2] ) || 
-          ( gridPosition[mappedNode][0] > m_confiningPressureBoxMax[0] ) || ( gridPosition[mappedNode][1] > m_confiningPressureBoxMin[1] ) || ( gridPosition[mappedNode][2] > m_confiningPressureBoxMin[2] )
-          )
+          ( ( gridPosition[mappedNode][0] < m_confiningPressureBoxMin[0] ) || ( gridPosition[mappedNode][1] < m_confiningPressureBoxMin[1] ) || ( gridPosition[mappedNode][2] < m_confiningPressureBoxMin[2] ) || 
+          ( gridPosition[mappedNode][0] > m_confiningPressureBoxMax[0] ) || ( gridPosition[mappedNode][1] > m_confiningPressureBoxMax[1] ) || ( gridPosition[mappedNode][2] > m_confiningPressureBoxMax[2] ) )
+          ) 
           {
           // This is the traction, in Voight notation, applied to the borehole surface.
           // This could easily be changed to be a virtual traction not just hydrostatic stress, which is
