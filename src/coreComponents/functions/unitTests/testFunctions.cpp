@@ -944,7 +944,7 @@ template< integer NUM_DIMS, integer NUM_OPS >
 void getMultilinearAdaptiveInterpolation( integer numAxisPts,
                                           real64 lowerBound, 
                                           real64 upperBound,
-                                          PythonFunction<NUM_DIMS, NUM_OPS> const & func,
+                                          PythonFunction<NUM_DIMS, NUM_OPS> & func,
                                           array1d<real64> const & coordinates,
                                           arrayView2d< real64, compflow::USD_OBL_VAL > const & values,
                                           arrayView3d< real64, compflow::USD_OBL_DER > const & derivatives )

@@ -73,7 +73,7 @@ public:
                                           array1d< real64 > const & axisSteps,
                                           array1d< real64 > const & axisStepInvs,
                                           array1d< longIndex > const & axisHypercubeMults,
-                                          const PythonFunction<numDims, numOps>* evalFunc ):
+                                          PythonFunction<numDims, numOps, longIndex>* evalFunc ):
     MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>( axisMinimums,
                                                           axisMaximums,
                                                           axisPoints,
@@ -95,6 +95,7 @@ protected:
   stackArray1d<real64, numOps> const &
   getPointData(longIndex const pointIndex) const
   {
+    auto & m_pointData = m_evalFunc->getPointData();
     auto item = m_pointData.find(pointIndex);
     if (item == m_pointData.end())
     {
@@ -149,6 +150,7 @@ protected:
   real64 const *
   getHypercubeData( longIndex const hypercubeIndex ) const override
   {
+    auto & m_hypercubeData = m_evalFunc->getHypercubeData();
     auto item = m_hypercubeData.find(hypercubeIndex);
     if (item == m_hypercubeData.end())
     {
@@ -175,24 +177,7 @@ protected:
   /**
    * @brief wrapper providing interface to Python function
    */
-  const PythonFunction<numDims, numOps>* m_evalFunc;
-  /**
-   * @brief adaptive point storage: the values of operators at requested supporting points
-   * Storage is grown dynamically in the process of simulation. 
-   * Only supporting points that are required for interpolation are computed and added
-   */
-  mutable unordered_map<longIndex, stackArray1d<real64, numOps>> m_pointData;
-  /**
-   * @brief adaptive hypercube storage: the values of operators at every vertex of reqested hypercubes
-   * Storage is grown dynamically in the process of simulation
-   * Only hypercubes that are required for interpolation are computed and added
-   * 
-   * In fact it is an excess storage used to reduce memory accesses during interpolation. 
-   * Here all values of all vertexes of requested hypercube are stored consecutevely and are accessed via a single index
-   * Usage of point_data for interpolation directly would require N_VERTS memory accesses (>1000 accesses for 10-dimensional space)
-   *  * 
-   */  
-  mutable unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> m_hypercubeData;
+  PythonFunction<numDims, numOps, longIndex>* m_evalFunc;
 };
 
 } /* namespace geos */

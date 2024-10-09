@@ -23,10 +23,30 @@
 #include <Python.h>
 #include "common/DataTypes.hpp"
 
+namespace std
+{
+  template <>
+  struct hash<__uint128_t>
+  {
+    size_t operator()(const __uint128_t& x) const noexcept
+    {
+      size_t h1 = std::hash<uint64_t>{}(static_cast<uint64_t>(x));
+      size_t h2 = std::hash<uint64_t>{}(static_cast<uint64_t>(x >> 64));
+      return h1 ^ (h2 * 0x9e3779b97f4a7c15 + 0x7f4a7c15);  // Use a large prime multiplier and a random offset
+    }
+  };
+};
+
 namespace geos
 {
-
-template< integer NUM_DIMS, integer NUM_OPS >
+/**
+ * @class PythonFunction
+ * @brief A wrapper class to interface Python functions for use in C++ computations.
+ *
+ * @tparam NUM_DIMS number of dimensions (inputs)
+ * @tparam NUM_OPS number of interpolated functions (outputs)
+ */
+template< integer NUM_DIMS, integer NUM_OPS, typename INDEX_T = __uint128_t >
 class PythonFunction
 {
 public:
@@ -36,11 +56,17 @@ public:
   /// Compile time value for the number of operators (interpolated functions, outputs)
   static constexpr integer numOps = NUM_OPS;
 
+  /// Compile time value for the number of hypercube vertices
+  static constexpr integer numVerts = 1 << numDims;
+
+  /// Datatype used for indexing
+  typedef INDEX_T longIndex;
+
   /// Python function reference to be called in evaluate
-  mutable PyObject* py_evaluate_func = nullptr;
+  PyObject* py_evaluate_func = nullptr;
 
   /// Python function reference to be called for evaluation of derivatives
-  mutable PyObject* py_derivative_func = nullptr;
+  PyObject* py_derivative_func = nullptr;
 
   /**
    * @brief Construct a new wrapper for python function
@@ -274,6 +300,48 @@ public:
       Py_DECREF(args);
     }
   }
+
+  GEOS_HOST_DEVICE
+  inline
+  unordered_map<longIndex, stackArray1d<real64, numOps>> const & 
+  getPointData() const 
+  { return m_pointData; }
+
+  GEOS_HOST_DEVICE  
+  inline
+  unordered_map<longIndex, stackArray1d<real64, numOps>> & 
+  getPointData() 
+  { return m_pointData; }
+
+  GEOS_HOST_DEVICE
+  inline
+  unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> const & 
+  getHypercubeData() const 
+  { return m_hypercubeData; }
+
+  GEOS_HOST_DEVICE
+  inline
+  unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> & 
+  getHypercubeData() 
+  { return m_hypercubeData; }
+protected:
+  /**
+   * @brief adaptive point storage: the values of operators at requested supporting points
+   * Storage is grown dynamically in the process of simulation. 
+   * Only supporting points that are required for interpolation are computed and added
+   */
+  unordered_map<longIndex, stackArray1d<real64, numOps>> m_pointData;
+  /**
+   * @brief adaptive hypercube storage: the values of operators at every vertex of reqested hypercubes
+   * Storage is grown dynamically in the process of simulation
+   * Only hypercubes that are required for interpolation are computed and added
+   * 
+   * In fact it is an excess storage used to reduce memory accesses during interpolation. 
+   * Here all values of all vertexes of requested hypercube are stored consecutevely and are accessed via a single index
+   * Usage of point_data for interpolation directly would require N_VERTS memory accesses (>1000 accesses for 10-dimensional space)
+   *  * 
+   */  
+  unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> m_hypercubeData;
 };
 
 } /* namespace geos */
