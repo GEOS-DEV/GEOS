@@ -16,8 +16,8 @@
  * @file KernelLaunchSelectors.hpp
  */
 
-#ifndef GEOS_COMMON_KERNELLAUNCHSELECTORS_HPP
-#define GEOS_COMMON_KERNELLAUNCHSELECTORS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_KERNELLAUNCHSELECTORS_HPP
+#define GEOS_PHYSICSSOLVERS_KERNELLAUNCHSELECTORS_HPP
 
 namespace geos
 {
@@ -171,4 +171,4 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
 } // end namespace geos
 
 
-#endif // GEOS_COMMON_KERNELLAUNCHSELECTORS_HPP
+#endif // GEOS_PHYSICSSOLVERS_KERNELLAUNCHSELECTORS_HPP
