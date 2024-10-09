@@ -2322,7 +2322,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
   arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
 
 #if 1
-if( getLogLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
     std::cout << "CONSISTENCY CHECKING OF THE MAPS" << std::endl;
 
