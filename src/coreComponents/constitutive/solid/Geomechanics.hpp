@@ -598,7 +598,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   // unrotated beginning-of-step stress:  sigma_old_unrotated = R_old^T*sigma_old*R_old
   real64 oldStress[6] = { 0 };
   real64 denseStress[3][3] = { { 0 } };
-  LvArray::tensorOps::copy< 6 >( oldStress, stress ); 
+  LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q] ); 
   LvArray::tensorOps::symmetricToDense<3>( denseStress, oldStress );
   LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( tempMat, beginningRotation, denseStress );
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( denseStress, tempMat, beginningRotation );
