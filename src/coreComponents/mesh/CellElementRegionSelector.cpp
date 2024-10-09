@@ -64,7 +64,7 @@ CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & regi
   GEOS_THROW_IF( !matching,
                  GEOS_FMT( "{}: No cellBlock name is satisfying the qualifier '{}'.\n"
                            "Available cellBlock list: {{ {} }}\nAvailable region attribute list: {{ {} }}",
-                           region.getWrapperDataContext( ViewKeys::sourceCellBlockQualifiersString() ),
+                           region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
                            matchPattern,
                            stringutilities::joinLamda( m_regionAttributesOwners, ", ",
                                                        []( auto pair ) { return pair->first; } ),
@@ -83,7 +83,7 @@ CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & 
     // if cell block does not exist in the mesh
     GEOS_THROW_IF( m_cellBlocksOwners.count( requestedCellBlockName ) == 0,
                    GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
-                             region.getWrapperDataContext( ViewKeys::sourceCellBlockQualifiersString() ),
+                             region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
                              requestedCellBlockName,
                              stringutilities::joinLamda( m_cellBlocksOwners, ", ",
                                                          []( auto pair ) { return pair->first; } ) ),
@@ -114,12 +114,7 @@ std::set< string > CellElementRegionSelector::buildCellBlocksSelection( CellElem
   std::set< string > cellBlocksSelection;
   std::set< string > regionAttributeSelection;
 
-  { // select the potencially already added cellBlock names to include them in the validation process
-    auto existingCellBlockNames = region.getCellBlockNames();
-    cellBlocksSelection.insert( existingCellBlockNames.begin(), existingCellBlockNames.end());
-  }
-
-  auto const qualifiers = region.getCellBlockQualifiers();
+  auto const qualifiers = region.getCellBlockNames();
   for( string const & qualifier : qualifiers )
   {
     auto const regionCellBlocks = m_regionAttributesCellBlocks.find( qualifier );
@@ -189,8 +184,7 @@ void CellElementRegionSelector::checkSelectionConsistency() const
     oss << GEOS_FMT( "The following cell-blocks has not been referenced in any region: {{ {} }}.\n",
                      stringutilities::join( orphanCellBlockNames, ", " ) );
     oss << GEOS_FMT( "Please add it in an existing {} (through the '{}' attribute), or consider creating a new one to describe your model.",
-                     CellElementRegion::catalogName(),
-                     ViewKeys::sourceCellBlockQualifiersString() );
+                     CellElementRegion::catalogName(), ViewKeys::sourceCellBlockNamesString() );
     GEOS_THROW( oss.str(), InputError );
   }
 }

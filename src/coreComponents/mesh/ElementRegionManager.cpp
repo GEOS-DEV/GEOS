@@ -78,7 +78,6 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( childName,
                                         CatalogInterface::factory( childKey, childName, &elementRegions ) );
-
 }
 
 void ElementRegionManager::expandObjectCatalogs()

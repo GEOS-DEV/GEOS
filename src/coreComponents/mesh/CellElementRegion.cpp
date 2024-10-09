@@ -35,9 +35,9 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
     }
   }
 
-  registerWrapper( viewKeyStruct::sourceCellBlockQualifiersString(), &m_cellBlockQualifiers ).
+  registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( GEOS_FMT( "List of the desired cell-blocks qualifiers to contain in this {}. Qualifiers can be either cell-block "
                               "names, region attribute values, or fnmatch pattern."
                               "The form of loaded cell-block names is of \"regionAttribute_elementType\", so \"1_tetrahedra\" "
@@ -53,7 +53,6 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
 CellElementRegion::~CellElementRegion()
 {}
 
-
 void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
   GEOS_THROW_IF( m_cellBlockNames.empty(),
@@ -61,18 +60,16 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
                            getDataContext() ),
                  InputError );
   Group & subRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
-  for( string const & cellBlockName : m_cellBlockNames )
+  for( string const & cbName : m_cellBlockNames )
   {
-    CellBlockABC const * cellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cellBlockName );
+    CellBlockABC const * cellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cbName );
     GEOS_THROW_IF( cellBlock == nullptr,
                    GEOS_FMT( "{}: No cellBlock named '{}' found.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
-                             getDataContext(),
-                             cellBlockName,
-                             stringutilities::join( m_cellBlockNames, ", " ) ),
+                             getDataContext(), cbName, stringutilities::join( m_cellBlockNames, ", " ) ),
                    InputError );
 
     // subRegion name must be the same as the cell-block (so we can match them and reference them in errors).
-    CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cellBlockName );
+    CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cbName );
     subRegion.copyFromCellBlock( *cellBlock );
   }
 }
