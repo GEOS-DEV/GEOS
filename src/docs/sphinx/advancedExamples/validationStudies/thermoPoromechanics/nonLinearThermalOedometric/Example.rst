@@ -33,19 +33,19 @@ contained within two GEOS xml files that are located at:
 
 .. code-block:: console
 
-  inputFiles/thermoPoromechanics/ThermoElasticOedometric_base.xml
+  inputFiles/thermoPoromechanics/ThermoElasticOedometric_linearTEC_base.xml
 
 and
 
 .. code-block:: console
 
-  inputFiles/thermoPoromechanics/ThermoElasticOedometric_benchmark.xml
+  inputFiles/thermoPoromechanics/ThermoElasticOedometric_linearTEC_benchmark.xml
 
 The corresponding integrated test is
 
 .. code-block:: console
 
-  inputFiles/thermoPoromechanics/ThermoElasticOedometric_LinearTEC_smoke.xml
+  inputFiles/thermoPoromechanics/ThermoElasticOedometric_linearTEC_smoke.xml
 
 In this example, we explain the ``Constitutive`` and ``FieldSpecifications`` tags.
 
@@ -55,10 +55,10 @@ Constitutive
 
 The thermoelastic properties are defined in the following xml block:  
 
-.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticOedometric_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticOedometric_linearTEC_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_TemperatureBC -->
-  :end-before: <!-- SPHINX_TemperatureBCEnd -->
+  :start-after: <!-- SPHINX_ThermoElasticProperties -->
+  :end-before: <!-- SPHINX_ThermoElasticPropertiesEnd -->
 
 --------------------------------------------------------------------   
 FieldSpecifications
@@ -66,14 +66,14 @@ FieldSpecifications
 
 The uniform temperature applied to the system is defined in the following xml block:
 
-.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticOedometric_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticOedometric_linearTEC_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_FieldSpecificationImposedTemperature -->
-  :end-before: <!-- SPHINX_FieldSpecificationImposedTemperatureEnd -->
+  :start-after: <!-- SPHINX_TemperatureBC -->
+  :end-before: <!-- SPHINX_TemperatureBCEnd -->
 
 Where the temperature table is specified by
 
-.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticOedometric_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticOedometric_linearTEC_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TemperatureTable -->
   :end-before: <!-- SPHINX_TemperatureTableEnd -->
