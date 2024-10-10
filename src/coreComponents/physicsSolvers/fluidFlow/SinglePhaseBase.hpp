@@ -338,7 +338,11 @@ public:
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
-  void computeHydrostaticEquilibrium();
+  virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) override;
+
+  void initializeFluid( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+
+  void initializeThermal( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
   /**
    * @brief Update the cell-wise pressure gradient

@@ -190,6 +190,20 @@ protected:
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
+  void initialize( DomainPartition & domain );
+
+  virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) {GEOS_UNUSED_VAR( domain );}
+
+  void initializePorosityAndPermeability( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+
+  void initializeHydraulicAperture( MeshLevel & mesh, const arrayView1d< const string > & regionNames );
+
+  virtual void initializeFluid( MeshLevel & mesh, const arrayView1d< const string > & regionNames ) {GEOS_UNUSED_VAR( mesh, regionNames );}
+
+  virtual void initializeThermal( MeshLevel & mesh, const arrayView1d< const string > & regionNames ) {GEOS_UNUSED_VAR( mesh, regionNames );}
+
+  void saveInitialPressureAndTemperature( MeshLevel & mesh, const arrayView1d< const string > & regionNames );
+
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
