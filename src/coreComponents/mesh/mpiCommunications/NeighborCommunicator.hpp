@@ -217,7 +217,7 @@ public:
 
   /**
    * Unpack the receive buffer and process synchronization
-   *  list information recieved from m_neighborRank.
+   *  list information received from m_neighborRank.
    *  This must be called after PostRecv is called, and
    *  the request associated with that recv has
    *  completed (retrieve the request using GetRecvRequest)

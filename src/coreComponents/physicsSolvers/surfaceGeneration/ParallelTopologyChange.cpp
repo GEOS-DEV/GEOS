@@ -26,7 +26,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
-
+#if PARALLEL_TOPOLOGY_CHANGE_METHOD==0
 namespace geos
 {
 
@@ -37,47 +37,6 @@ using namespace dataRepository;
 
 namespace
 {
-
-struct MultiStepUnpackingData
-{
-  void init( buffer_type & receiveBuffer,
-             ElementRegionManager * elemManager)
-  {
-
-    m_receiveBufferPtr = receiveBuffer.data();
-    buffer_unit_type const * & receiveBufferPtr = unpackStateData.m_receiveBufferPtr;
-
-    newNodes.resize(0);
-    newEdges.resize(0);
-    newFaces.resize(0);
-
-  newElements.resize( elemManager.numRegions());
-  newElementsData.resize( elemManager.numRegions());
-  for( Index er=0; er<elemManager.numRegions(); ++er )
-  {
-    ElementRegionBase & elemRegion = elemManager.getRegion( er );
-    newElements[er].resize( elemRegion.numSubRegions());
-    newElementsData[er].resize( elemRegion.numSubRegions());
-    for( Index esr=0; esr<elemRegion.numSubRegions(); ++esr )
-    {
-      newElementsData[er][esr].resize(0);
-      newElements[er][esr].set( newElementsData[er][esr] );
-    }
-  }
-
-  }
-
-
-  localIndex_array m_newNodes;
-  localIndex_array m_newEdges;
-  localIndex_array m_newFaces;
-  ElementRegionManager::ElementReferenceAccessor< localIndex_array > m_newElems;
-  array1d< array1d< localIndex_array > > m_newElemsData;
-  buffer_unit_type const * m_receiveBufferPtr = nullptr;
-  buffer_type::size_type m_unpackedSize;
-
-};
-
 
 void print( ModifiedObjectLists const & objectList )
 {
@@ -521,8 +480,7 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
 localIndex unpackNewObjectsOnOwningRanks(  NeighborCommunicator & neighbor,
                                                      MeshLevel * const mesh,
                                                      int const commID,
-                                                     ModifiedObjectLists & receivedObjects
-                                                     UnpackStateData & unpackStateData )
+                                                     ModifiedObjectLists & receivedObjects )
 {
   GEOS_MARK_FUNCTION;
 
@@ -532,15 +490,15 @@ localIndex unpackNewObjectsOnOwningRanks(  NeighborCommunicator & neighbor,
   ElementRegionManager & elemManager = mesh->getElemManager();
 
   buffer_type const & receiveBuffer = neighbor.receiveBuffer( commID );
-  unpackStateData.m_receiveBufferPtr = receiveBuffer.data();
-  buffer_unit_type const * & receiveBufferPtr = unpackStateData.m_receiveBufferPtr;
+  neighbor.m_receiveBufferPtr = receiveBuffer.data();
+  buffer_unit_type const * & receiveBufferPtr = neighbor.m_receiveBufferPtr;
 
-  localIndex_array & newLocalNodes = unpackStateData.m_newLocalNodes;
-  localIndex_array & newLocalEdges = unpackStateData.m_newLocalEdges;
-  localIndex_array & newLocalFaces = unpackStateData.m_newLocalFaces;
+  localIndex_array & newLocalNodes = neighbor.m_newLocalNodes;
+  localIndex_array & newLocalEdges = neighbor.m_newLocalEdges;
+  localIndex_array & newLocalFaces = neighbor.m_newLocalFaces;
 
-  ElementRegionManager::ElementReferenceAccessor< array1d< localIndex > > & newLocalElements = unpackStateData.m_newLocalElements;
-  array1d< array1d< localIndex_array > > & newLocalElementsData = unpackStateData.m_newLocalElementsData;
+  ElementRegionManager::ElementReferenceAccessor< array1d< localIndex > > & newLocalElements = neighbor.m_newLocalElements;
+  array1d< array1d< localIndex_array > > & newLocalElementsData = neighbor.m_newLocalElementsData;
 
   newLocalNodes.resize(0);
   newLocalEdges.resize(0);
@@ -1559,3 +1517,4 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
 
 
 } /* namespace geos */
+#endif // PARALLEL_TOPOLOGY_CHANGE_METHOD==0

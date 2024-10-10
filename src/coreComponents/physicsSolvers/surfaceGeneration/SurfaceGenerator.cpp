@@ -18,7 +18,6 @@
  */
 
 #include "SurfaceGenerator.hpp"
-#include "ParallelTopologyChange.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -35,6 +34,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
 
+#include "ParallelTopologyChange.hpp"
 
 #include <algorithm>
 
