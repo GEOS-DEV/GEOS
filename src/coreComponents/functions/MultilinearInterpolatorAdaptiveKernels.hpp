@@ -58,28 +58,15 @@ public:
 
   /**
    * @brief Construct a new Multilinear Interpolator Adaptive Kernel object
-   *
-   * @param[in] axisMinimums  minimum coordinate for each axis
-   * @param[in] axisMaximums maximum coordinate for each axis
-   * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
-   * @param[in] axisSteps axis interval lengths (axes are discretized uniformly)
-   * @param[in] axisStepInvs inversions of axis interval lengths (axes are discretized uniformly)
-   * @param[in] axisHypercubeMults hypercube index mult factors for each axis
    * @param[in] evalFunc evaluator of exact function values
    */
-  MultilinearInterpolatorAdaptiveKernel( array1d< real64 > const & axisMinimums,
-                                          array1d< real64 > const & axisMaximums,
-                                          array1d< integer > const & axisPoints,
-                                          array1d< real64 > const & axisSteps,
-                                          array1d< real64 > const & axisStepInvs,
-                                          array1d< longIndex > const & axisHypercubeMults,
-                                          PythonFunction<numDims, numOps, longIndex>* evalFunc ):
-    MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>( axisMinimums,
-                                                          axisMaximums,
-                                                          axisPoints,
-                                                          axisSteps,
-                                                          axisStepInvs,
-                                                          axisHypercubeMults),
+  MultilinearInterpolatorAdaptiveKernel( PythonFunction<longIndex>* evalFunc ):
+    MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>( evalFunc->getAxisMinimums(),
+                                                          evalFunc->getAxisMaximums(),
+                                                          evalFunc->getAxisPoints(),
+                                                          evalFunc->getAxisSteps(),
+                                                          evalFunc->getAxisStepInvs(),
+                                                          evalFunc->getAxisHypercubeMults() ),
     m_evalFunc(evalFunc)
   {};
 protected:
@@ -92,14 +79,14 @@ protected:
    * @return operator values at given point
    */
   GEOS_HOST_DEVICE
-  stackArray1d<real64, numOps> const &
+  array1d<real64> const &
   getPointData(longIndex const pointIndex) const
   {
     auto & m_pointData = m_evalFunc->getPointData();
     auto item = m_pointData.find(pointIndex);
     if (item == m_pointData.end())
     {
-      stackArray1d<real64, numOps> newPoint (numOps);
+      array1d<real64> newPoint (numOps);
       this->getPointCoordinates(pointIndex, m_coordinates);
       m_evalFunc->evaluate(m_coordinates, newPoint);
       m_pointData[pointIndex] = newPoint;
@@ -118,7 +105,7 @@ protected:
   inline 
   void 
   getHypercubePoints( longIndex const hypercubeIndex, 
-                      stackArray1d<longIndex, numVerts>& hypercubePoints ) const
+                      array1d<longIndex>& hypercubePoints ) const
   {
     longIndex axisIdx, remainderIdx = hypercubeIndex;
     integer pwr = numVerts;
@@ -154,8 +141,8 @@ protected:
     auto item = m_hypercubeData.find(hypercubeIndex);
     if (item == m_hypercubeData.end())
     {
-        stackArray1d<longIndex, numVerts> points (numVerts);
-        stackArray1d<real64, numVerts * numOps> newHypercube (numVerts * numOps);
+        array1d<longIndex> points (numVerts);
+        array1d<real64> newHypercube (numVerts * numOps);
 
         this->getHypercubePoints(hypercubeIndex, points);
 
@@ -177,7 +164,7 @@ protected:
   /**
    * @brief wrapper providing interface to Python function
    */
-  PythonFunction<numDims, numOps, longIndex>* m_evalFunc;
+  PythonFunction<longIndex>* m_evalFunc;
 };
 
 } /* namespace geos */

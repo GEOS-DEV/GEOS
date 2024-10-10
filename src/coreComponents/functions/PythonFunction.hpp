@@ -22,6 +22,7 @@
 
 #include <Python.h>
 #include "common/DataTypes.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace std
 {
@@ -43,21 +44,20 @@ namespace geos
  * @class PythonFunction
  * @brief A wrapper class to interface Python functions for use in C++ computations.
  *
- * @tparam NUM_DIMS number of dimensions (inputs)
- * @tparam NUM_OPS number of interpolated functions (outputs)
+ * @tparam INDEX_T datatype used for indexing in multidimensional space 
  */
-template< integer NUM_DIMS, integer NUM_OPS, typename INDEX_T = __uint128_t >
-class PythonFunction
+template< typename INDEX_T = __uint128_t >
+class PythonFunction : public dataRepository::Group
 {
 public:
-  /// Compile time value for the number of table dimensions (inputs)
-  static constexpr integer numDims = NUM_DIMS;
+  /// Number of table dimensions (inputs)
+  integer numDims;
 
-  /// Compile time value for the number of operators (interpolated functions, outputs)
-  static constexpr integer numOps = NUM_OPS;
+  /// Number of operators (interpolated functions, outputs)
+  integer numOps;
 
-  /// Compile time value for the number of hypercube vertices
-  static constexpr integer numVerts = 1 << numDims;
+  /// Number of hypercube vertices
+  integer numVerts;
 
   /// Datatype used for indexing
   typedef INDEX_T longIndex;
@@ -70,15 +70,19 @@ public:
 
   /**
    * @brief Construct a new wrapper for python function
+   * @param[in] name the name of this object manager
+   * @param[in] parent the parent Group
    */
-  PythonFunction(): py_evaluate_func(nullptr), 
-                    py_derivative_func(nullptr)
+  PythonFunction( const string & name,
+                  Group * const parent ): 
+                                  dataRepository::Group( name, parent ),
+                                  py_evaluate_func(nullptr), 
+                                  py_derivative_func(nullptr)
   {
     // Initialize Python if needed (ensure Python interpreter is initialized)
     if (!Py_IsInitialized()) 
       Py_Initialize();
   }
-
   /**
    * @brief Desctructor of a wrapper of python function
    */
@@ -92,7 +96,11 @@ public:
     if (py_derivative_func)
       Py_XDECREF(py_derivative_func);
   }
-
+  /**
+   * @brief The catalog name interface
+   * @return name of the PythonFunction in the FunctionBase catalog
+   */
+  static string catalogName() { return "PythonFunction"; }
   /**
    * @brief Set Python functions for values and (optionally) for their derivatives
    * 
@@ -129,6 +137,44 @@ public:
     }
   }
 
+  void setDimensions( integer numberOfDimesions,
+                      integer numberOfOperators )
+  {
+    numDims = numberOfDimesions;
+    numOps = numberOfOperators;
+    numVerts = 1 << numDims;
+  }
+
+  void setAxes( integer numberOfDimesions,
+                integer numberOfOperators,
+                real64_array axisMinimums,
+                real64_array axisMaximums,
+                integer_array axisPoints )
+  {
+    numDims = numberOfDimesions;
+    numOps = numberOfOperators;
+    numVerts = 1 << numDims;
+
+    m_axisMinimums = axisMinimums;
+    m_axisMaximums = axisMaximums;
+    m_axisPoints = axisPoints;
+
+    m_axisSteps.resize(numDims);
+    m_axisStepInvs.resize(numDims);
+    m_axisHypercubeMults.resize(numDims);
+
+    for( integer dim = 0; dim < numDims; dim++ )
+    {
+      m_axisSteps[dim] = (m_axisMaximums[dim] - m_axisMinimums[dim]) / (m_axisPoints[dim] - 1);
+      m_axisStepInvs[dim] = 1 / m_axisSteps[dim];
+    }
+
+    m_axisHypercubeMults[numDims - 1] = 1;
+    for( integer dim = numDims - 2; dim >= 0; --dim )
+    {
+      m_axisHypercubeMults[dim] = m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1);
+    }
+  }
   /**
    * @brief interpolate all operators values at a given point
    * 
@@ -300,37 +346,101 @@ public:
       Py_DECREF(args);
     }
   }
-
+  /**
+   * @brief Retrieves constant point data.
+   * @return const unordered_map<longIndex, array1d<real64>>&
+   *         A constant reference to the point data mapping.
+   */
   GEOS_HOST_DEVICE
   inline
-  unordered_map<longIndex, stackArray1d<real64, numOps>> const & 
+  unordered_map<longIndex, array1d<real64>> const & 
   getPointData() const 
   { return m_pointData; }
-
+  /**
+   * @brief Retrieves modifiable point data.
+   * @return unordered_map<longIndex, array1d<real64>>&
+   *         A reference to the point data mapping, which can be modified by the caller.
+   */
   GEOS_HOST_DEVICE  
   inline
-  unordered_map<longIndex, stackArray1d<real64, numOps>> & 
+  unordered_map<longIndex, array1d<real64>> & 
   getPointData() 
   { return m_pointData; }
-
+  /**
+   * @brief Retrieves constant hypercube data.
+   * @return const unordered_map<longIndex, array1d<real64>>&
+   *         A constant reference to the hypercube data mapping.
+   */
   GEOS_HOST_DEVICE
   inline
-  unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> const & 
+  unordered_map<longIndex, array1d<real64>> const & 
   getHypercubeData() const 
   { return m_hypercubeData; }
-
+  /**
+   * @brief Retrieves modifiable hypercube data.
+   * @return unordered_map<longIndex, array1d<real64>>&
+   *         A reference to the hypercube data mapping, which can be modified by the caller.
+   */
   GEOS_HOST_DEVICE
   inline
-  unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> & 
+  unordered_map<longIndex, array1d<real64>> & 
   getHypercubeData() 
   { return m_hypercubeData; }
-protected:
+    /**
+   * @brief Get the axes minimums
+   * @return a reference to an array of axes minimums
+   */
+  arrayView1d< real64 const > getAxisMinimums() const { return m_axisMinimums.toViewConst(); }
+  /**
+   * @brief Get the axes maximums
+   * @return a reference to an array of axes maximums
+   */
+  arrayView1d< real64 const > getAxisMaximums() const { return m_axisMaximums.toViewConst(); }
+  /**
+   * @brief Get the axes discretization points numbers
+   * @return a reference to an array of axes discretization points numbers
+   */
+  arrayView1d< integer const > getAxisPoints() const { return m_axisPoints.toViewConst(); }
+  /**
+   * @brief Get the axes step sizes
+   * @return a reference to an array of axes step sizes
+   */
+  arrayView1d< real64 const > getAxisSteps() const { return m_axisSteps.toViewConst(); }
+  /**
+   * @brief Get the axes step sizes inversions
+   * @return a reference to an array of axes step sizes inversions
+   */
+  arrayView1d< real64 const > getAxisStepInvs() const { return m_axisStepInvs.toViewConst(); }
+  /**
+   * @brief Get the table axes hypercube index multiplicators
+   * @return a reference to an array of table axes hypercube index multiplicators
+   */
+  arrayView1d< __uint128_t const > getAxisHypercubeMults() const { return m_axisHypercubeMults.toViewConst(); }
+private:
+  /// Array [numDims] of axis minimum values
+  array1d<real64> m_axisMinimums;
+
+  /// Array [numDims] of axis maximum values
+  array1d<real64> m_axisMaximums;
+
+  /// Array [numDims] of axis discretization points numbers
+  array1d<integer> m_axisPoints;
+
+  /// Array [numDims] of axis interval lengths (axes are discretized uniformly)
+  array1d<real64> m_axisSteps;
+
+  /// Array [numDims] of inversions of axis interval lengths (axes are discretized uniformly)
+  array1d<real64> m_axisStepInvs;
+
+  /// Array [numDims] of hypercube index mult factors for each axis
+  array1d<__uint128_t> m_axisHypercubeMults;
+
   /**
    * @brief adaptive point storage: the values of operators at requested supporting points
    * Storage is grown dynamically in the process of simulation. 
    * Only supporting points that are required for interpolation are computed and added
    */
-  unordered_map<longIndex, stackArray1d<real64, numOps>> m_pointData;
+  unordered_map<longIndex, array1d<real64>> m_pointData;
   /**
    * @brief adaptive hypercube storage: the values of operators at every vertex of reqested hypercubes
    * Storage is grown dynamically in the process of simulation
@@ -341,7 +451,7 @@ protected:
    * Usage of point_data for interpolation directly would require N_VERTS memory accesses (>1000 accesses for 10-dimensional space)
    *  * 
    */  
-  unordered_map<longIndex, stackArray1d<real64, numVerts * numOps>> m_hypercubeData;
+  unordered_map<longIndex, array1d<real64>> m_hypercubeData;
 };
 
 } /* namespace geos */

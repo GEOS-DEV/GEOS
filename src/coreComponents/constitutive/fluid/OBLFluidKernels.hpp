@@ -19,7 +19,8 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_OBLFLUIDKERNELS_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_OBLFLUIDKERNELS_HPP_
 
-#include "functions/MultilinearInterpolatorBaseKernels.hpp"
+#include "functions/MultilinearInterpolatorStaticKernels.hpp"
+#include "functions/MultilinearInterpolatorAdaptiveKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
 
@@ -247,7 +248,7 @@ public:
                    integer const numComponents,
                    bool const enableEnergyBalance,
                    ObjectManagerBase & subRegion,
-                   MultivariableTableFunction const & function )
+                   constitutive::OBLFluid * oblFluid )
   {
     internal::kernelLaunchSelectorEnergySwitch( numPhases, numComponents, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
     {
@@ -257,7 +258,10 @@ public:
       integer constexpr NUM_DIMS = ENABLE_ENERGY + NUM_COMPS;
       integer constexpr NUM_OPS  = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
 
-      MultilinearInterpolatorStaticKernel< NUM_DIMS, NUM_OPS > const interpolationKernel( 
+      if ( oblFluid->getInterpolatorMode() == constitutive::OBLInterpolatorMode::Static )
+      {
+        MultivariableTableFunction const& function = oblFluid->getTable();
+        MultilinearInterpolatorStaticKernel< NUM_DIMS, NUM_OPS > const interpolationKernel( 
                                                                            function.getAxisMinimums(),
                                                                            function.getAxisMaximums(),
                                                                            function.getAxisPoints(),
@@ -266,11 +270,17 @@ public:
                                                                            function.getAxisHypercubeMults(),
                                                                            function.getHypercubeData()
                                                                            );
+                                                                          
+        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel);
+        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
+      }
+      else /* if ( oblFluid->getInterpolatorMode() == constitutive::OBLInterpolatorMode::Adaptive ) */
+      {
+        MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > const interpolationKernel( oblFluid->getPythonFunction() );
+        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel);
+        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
+      }
 
-      OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >
-      kernel( subRegion,
-              &interpolationKernel);
-      OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 

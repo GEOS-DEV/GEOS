@@ -944,40 +944,31 @@ template< integer NUM_DIMS, integer NUM_OPS >
 void getMultilinearAdaptiveInterpolation( integer numAxisPts,
                                           real64 lowerBound, 
                                           real64 upperBound,
-                                          PythonFunction<NUM_DIMS, NUM_OPS> & func,
                                           array1d<real64> const & coordinates,
                                           arrayView2d< real64, compflow::USD_OBL_VAL > const & values,
                                           arrayView3d< real64, compflow::USD_OBL_DER > const & derivatives )
 {
+  // Set parameters of state space grid
   array1d< real64 > const axesMinimums ( NUM_DIMS );
   array1d< real64 > const axesMaximums ( NUM_DIMS );
   array1d< integer > const axesPoints ( NUM_DIMS );
-  array1d< real64 > const axisSteps( NUM_DIMS );
-  array1d< real64 > const axisStepInvs( NUM_DIMS );
-  array1d< __uint128_t > const axisHypercubeMults( NUM_DIMS );
-
   for( integer dim = 0; dim < NUM_DIMS; dim++ )
   {
     axesMinimums[dim] = lowerBound;
     axesMaximums[dim] = upperBound;
     axesPoints[dim] = numAxisPts;
-    axisSteps[dim] = (axesMaximums[dim] - axesMinimums[dim]) / (axesPoints[dim] - 1);
-    axisStepInvs[dim] = 1 / axisSteps[dim];
   }
 
-  axisHypercubeMults[NUM_DIMS - 1] = 1;
-  for( integer dim = NUM_DIMS - 2; dim >= 0; --dim )
-  {
-    axisHypercubeMults[dim] = axisHypercubeMults[dim + 1] * (axesPoints[dim + 1] - 1);
-  }
+  // Create interface to Python functions
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+  string const pythonFunctionName = "Evaluator_" + std::to_string(numAxisPts);
+  PythonFunction<> & func = dynamicCast< PythonFunction<> & >( *functionManager->createChild( "PythonFunction", pythonFunctionName ) );
+  auto [pyFunc, pyDerivFunc] = definePythonFunction();
+  func.setEvaluateFunction(pyFunc, pyDerivFunc);
+  func.setAxes(NUM_DIMS, NUM_OPS, axesMinimums, axesMaximums, axesPoints);
 
-  MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > kernel( axesMinimums,
-                                                              axesMaximums,
-                                                              axesPoints,
-                                                              axisSteps,
-                                                              axisStepInvs,
-                                                              axisHypercubeMults,
-                                                              &func );
+  // Create interpolation kernel
+  MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > kernel( &func );
 
   arrayView1d< real64 const > const coordinatesView = coordinates.toViewConst();
 
@@ -1013,11 +1004,6 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
     states[i] = distribution( generator );
   }
 
-  // Create interface to Python functions
-  PythonFunction<numDims, numOps> func;
-  auto [pyFunc, pyDerivFunc] = definePythonFunction();
-  func.setEvaluateFunction(pyFunc, pyDerivFunc);
-
   // Initialize output arrays
   using array2dLayoutOBLOpVals = array2d< real64, compflow::LAYOUT_OBL_OPERATOR_VALUES >;
   using array3dLayoutOBLOpDers = array3d< real64, compflow::LAYOUT_OBL_OPERATOR_DERIVATIVES >;
@@ -1032,13 +1018,20 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   arrayView2d< real64, compflow::USD_OBL_VAL > const m_evaluatedValues (evaluatedValues);
   arrayView3d< real64, compflow::USD_OBL_DER > const m_evaluatedDerivatives (evaluatedDerivatives);
 
+  // Create interface to Python functions for evaluation of exact values
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+  PythonFunction<> & func = dynamicCast< PythonFunction<> & >( *functionManager->createChild( "PythonFunction", "ExactEvaluator" ) );
+  auto [pyFunc, pyDerivFunc] = definePythonFunction();
+  func.setEvaluateFunction(pyFunc, pyDerivFunc);
+  func.setDimensions(numDims, numOps);
+
   // Python section
   Py_Initialize();
 
   // Do exact evaluations
   arrayView1d< real64 const > const coordinatesView = states.toViewConst();
   forAll< geos::parallelDevicePolicy< > >( numPts, 
-  [=] GEOS_HOST_DEVICE ( localIndex const ptIndex )
+  [&] GEOS_HOST_DEVICE ( localIndex const ptIndex )
   {
     arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = m_trueValues[ptIndex];
     arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = m_trueDerivatives[ptIndex];
@@ -1052,7 +1045,6 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
     getMultilinearAdaptiveInterpolation<numDims, numOps>( numAxesPts[i], 
                                                           lowerBound, 
                                                           upperBound,
-                                                          func,
                                                           states,
                                                           m_evaluatedValues,
                                                           m_evaluatedDerivatives );

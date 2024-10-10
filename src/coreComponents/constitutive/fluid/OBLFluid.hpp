@@ -43,8 +43,9 @@ enum OBLInterpolatorType : integer
 class OBLFluid : public ConstitutiveBase
 {
 public:
+  typedef __uint128_t longIndex;
+
   OBLFluid( string const & name, Group * const parent );
-  ~OBLFluid();
   /**
    * @brief name of the constitutive in the object catalog
    * @return string that contains the catalog name to generate a new object through the object catalog.
@@ -72,7 +73,17 @@ public:
   {
     GEOS_ERROR_IF( m_OBLOperatorsTable == nullptr, "m_OBLOperatorsTable is not initialized" );
     return *m_OBLOperatorsTable;
-  };
+  }
+  /**
+   * @brief getter to the Python-based evaluator
+   * @return pointer to the Python-based evaluator.
+   */
+  template <typename INDEX_T = longIndex>
+  PythonFunction<INDEX_T> * getPythonFunction()
+  {
+    GEOS_ERROR_IF( m_pythonFunction == nullptr, "m_pythonFunction is not initialized" );
+    return m_pythonFunction;
+  }
   /**
    * @brief initialize input
    */
@@ -111,6 +122,9 @@ private:
 
   /// OBL operators table function tabulated vs all primary variables
   MultivariableTableFunction const * m_OBLOperatorsTable;
+
+  /// OBL operators with access to Python-base exact evaluator 
+  PythonFunction<longIndex> * m_pythonFunction;
 
   /// Flag to check if contitutive is initialized or not
   bool m_isInitialized = false;

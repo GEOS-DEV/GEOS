@@ -1330,7 +1330,7 @@ void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase &
                                                     m_numComponents,
                                                     m_enableEnergyBalance,
                                                     dataGroup,
-                                                    oblFluid->getTable() );
+                                                    oblFluid );
       }
     }
   }

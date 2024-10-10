@@ -29,7 +29,8 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOperatorsTableFile,
+MultivariableTableFunction const * 
+makeOBLOperatorsTable( string const & OBLOperatorsTableFile,
                                                           string const & OBLFluidName,
                                                           FunctionManager & functionManager )
 {
@@ -46,9 +47,26 @@ MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOper
   }
 }
 
+template <typename INDEX_T = __uint128_t>
+PythonFunction<INDEX_T> *
+makePythonFunction(string const & OBLFluidName, FunctionManager & functionManager)
+{
+  string const pythonFunctionName = OBLFluidName + "PythonFunction";
+  if (functionManager.hasGroup<PythonFunction<INDEX_T>>(pythonFunctionName))
+  {
+    return functionManager.getGroupPointer<PythonFunction<INDEX_T>>(pythonFunctionName);
+  }
+  else
+  {
+    PythonFunction<INDEX_T> * function = dynamicCast<PythonFunction<INDEX_T> *>(functionManager.createChild("PythonFunction", pythonFunctionName));
+    return function;
+  }
+}
+
 OBLFluid::OBLFluid( string const & name, Group * const parent ) 
               : ConstitutiveBase( name, parent ),
-                m_OBLOperatorsTable( nullptr )
+                m_OBLOperatorsTable( nullptr ),
+                m_pythonFunction( nullptr )
 {
   this->registerWrapper( viewKeyStruct::interpolatorModeString(), &m_interpolatorModeString ).
   setInputFlag( InputFlags::REQUIRED ).
@@ -61,12 +79,6 @@ OBLFluid::OBLFluid( string const & name, Group * const parent )
   this->registerWrapper( viewKeyStruct::oblOperatorsTableFileString(), &m_OBLOperatorsTableFile ).
   setInputFlag( InputFlags::OPTIONAL ).
   setDescription( "File containing OBL operator values for static mode interpolation" );
-}
-
-OBLFluid::~OBLFluid()
-{
-  if (m_OBLOperatorsTable)
-    delete m_OBLOperatorsTable;
 }
 
 void OBLFluid::postInputInitialization()
@@ -120,6 +132,8 @@ void OBLFluid::postInputInitialization()
   
   if (m_interpolatorMode == OBLInterpolatorMode::Static)
     m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, getName(), FunctionManager::getInstance());
+  else if (m_interpolatorMode == OBLInterpolatorMode::Adaptive)
+    m_pythonFunction = makePythonFunction<longIndex>( getName(), FunctionManager::getInstance());
 
   // raise intialization flag
   m_isInitialized = true;
