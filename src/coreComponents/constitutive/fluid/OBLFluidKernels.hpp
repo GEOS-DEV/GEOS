@@ -270,17 +270,24 @@ public:
                                                                            function.getAxisHypercubeMults(),
                                                                            function.getHypercubeData()
                                                                            );
-                                                                          
+
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel);
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
       }
       else /* if ( oblFluid->getInterpolatorMode() == constitutive::OBLInterpolatorMode::Adaptive ) */
       {
-        MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > const interpolationKernel( oblFluid->getPythonFunction() );
+        // Check if Python function was assigned to wrapper
+        auto pyFunctionPtr = oblFluid->getPythonFunction();
+
+        GEOS_ERROR_IF( pyFunctionPtr->py_evaluate_func == nullptr, 
+                        GEOS_FMT( "{}: py_evaluate_func is not specified", 
+                            pyFunctionPtr->getName())
+                            );
+        MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > const interpolationKernel( pyFunctionPtr );
+
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel);
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
       }
-
     } );
   }
 
