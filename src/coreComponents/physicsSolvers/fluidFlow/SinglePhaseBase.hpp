@@ -340,9 +340,9 @@ public:
    */
   virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) override;
 
-  void initializeFluid( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+  virtual void initializeFluid( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
-  void initializeThermal( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+  virtual void initializeThermal( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
   /**
    * @brief Update the cell-wise pressure gradient
