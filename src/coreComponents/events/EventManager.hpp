@@ -19,7 +19,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "EventBase.hpp"
-#include "fileIO/section/Section.hpp"
+#include "fileIO/section/LogPart.hpp"
 
 namespace geos
 {
@@ -135,7 +135,7 @@ private:
    * @brief ouput time information to the log
    *
    */
-  void outputTime( Section & section ) const;
+  void outputTime( LogPart & section ) const;
 
   /// Min time for a simulation
   real64 m_minTime;

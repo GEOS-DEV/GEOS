@@ -170,7 +170,7 @@ string TableTextFormatter::toString( TableData const & tableData ) const
   fillTableColumnsFromRows( columns, tableDataRows );
 
   outputLayout( tableOutput, columns, msgTableError, sectionSeparatingLine );
-  outputSectionRows( columns, sectionSeparatingLine, tableOutput, nbValuesRows, TableLayout::Section::values );
+  outputSectionRows( columns, sectionSeparatingLine, tableOutput, nbValuesRows, TableLayout::LogPart::values );
   tableOutput << '\n';
 
   return tableOutput.str();
@@ -197,7 +197,7 @@ void TableTextFormatter::outputLayout( std::ostringstream & tableOutput,
   outputTopRows( tableOutput, msgTableError, topSeparator, TableLayout::Alignment::left );
   tableOutput << GEOS_FMT( "{}\n", sectionSeparatingLine );
 
-  outputSectionRows( columns, sectionSeparatingLine, tableOutput, nbHeaderRows, TableLayout::Section::header );
+  outputSectionRows( columns, sectionSeparatingLine, tableOutput, nbHeaderRows, TableLayout::LogPart::header );
 }
 
 void TableTextFormatter::splitAndSetColumnNames( std::vector< TableLayout::Column > & columns,
@@ -368,7 +368,7 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
                                             string_view sectionSeparatingLine,
                                             std::ostringstream & tableOutput,
                                             integer const nbRows,
-                                            TableLayout::Section const section ) const
+                                            TableLayout::LogPart const section ) const
 {
   integer const columnMargin = m_tableLayout.getColumnMargin();
   integer const borderMargin = m_tableLayout.getBorderMargin();
@@ -380,7 +380,7 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
     for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
     {
       TableLayout::Column const currentColumn = columns[idxColumn];
-      auto const & columnContent = section == TableLayout::Section::header ?
+      auto const & columnContent = section == TableLayout::LogPart::header ?
                                    columns[idxColumn].m_parameter.splitColumnNameLines :
                                    columns[idxColumn].m_columnValues;
       string cell = columnContent.at( idxRow );

@@ -13,7 +13,7 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "fileIO/section/Section.hpp"
+#include "fileIO/section/LogPart.hpp"
 #include <gtest/gtest.h>
 
 using namespace geos;
@@ -21,7 +21,7 @@ using namespace geos;
 TEST( testSection, sectionWithTitle )
 {
   std::ostringstream oss;
-  Section section( "section name" );
+  LogPart section( "section name" );
   section.beginSection( oss );
   EXPECT_EQ( oss.str(),
              "\n######################################################################\n"
@@ -42,7 +42,7 @@ TEST( testSection, sectionWithTitle )
 TEST( testSection, sectionWithTitleAndOneDescription )
 {
   std::ostringstream oss;
-  Section section( "section name" );
+  LogPart section( "section name" );
   section.addDescription( "description name" );
   section.beginSection( oss );
   EXPECT_EQ( oss.str(),
@@ -57,7 +57,7 @@ TEST( testSection, sectionWithTitleAndOneDescription )
 TEST( testSection, sectionWithSetWidth )
 {
   std::ostringstream oss;
-  Section section( "section name" );
+  LogPart section( "section name" );
   section.addDescription( "description name 1" );
   section.addDescription( "description name 2" );
   section.setMinWidth( 100 );
@@ -83,7 +83,7 @@ TEST( testSection, sectionWithSetWidth )
 TEST( testSection, sectionMultipleDescriptions )
 {
   std::ostringstream oss;
-  Section section( "TIMESTEP START" );
+  LogPart section( "TIMESTEP START" );
   section.addDescription( "Time", "00h08m20s out of 2d, 21h26m40s (0% completed)", "500 s / 250000 s" );
   section.addDescription( "Delta Time", "00h16m40s (1000 s)" );
   section.addDescription( "- Cycle: 1" );
@@ -112,7 +112,7 @@ TEST( testSection, sectionMultipleDescriptions )
 TEST( testSection, sectionEndDescription )
 {
   std::ostringstream oss;
-  Section section( "TIMESTEP START" );
+  LogPart section( "TIMESTEP START" );
   section.addDescription( "description" );
   section.addEndDescription( "test end description" );
   section.setMinWidth( 70 );

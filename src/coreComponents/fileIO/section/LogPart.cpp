@@ -13,36 +13,36 @@
  */
 
 /**
- * @file Section.cpp
+ * @file LogPart.cpp
  */
 
-#include "Section.hpp"
+#include "LogPart.hpp"
 #include <algorithm>
 
 namespace geos
 {
 
-Section::Section( string_view sectionTitle ):
+LogPart::LogPart( string_view sectionTitle ):
   m_sectionTitle( string( sectionTitle ) ),
   m_sectionWidth( sectionTitle.length() )
 {}
 
-void Section::addDescription( string_view description )
+void LogPart::addDescription( string_view description )
 {
   m_descriptions.push_back( string( description ) );
 }
 
-void Section::addEndDescription( string_view description )
+void LogPart::addEndDescription( string_view description )
 {
   m_endLogMessages.push_back( string( description ) );
 }
 
-void Section::setMinWidth( integer const & minWidth )
+void LogPart::setMinWidth( integer const & minWidth )
 {
   m_rowMinWidth = minWidth;
 }
 
-void Section::formatAndInsertDescriptions( std::vector< string > & descriptionContainer,
+void LogPart::formatAndInsertDescriptions( std::vector< string > & descriptionContainer,
                                            string_view descriptionName,
                                            std::vector< string > const & descriptionValues )
 {
@@ -61,7 +61,7 @@ void Section::formatAndInsertDescriptions( std::vector< string > & descriptionCo
   }
 }
 
-string Section::constructDescriptionsFromVector( std::vector< string > const & descriptions ) const
+string LogPart::constructDescriptionsFromVector( std::vector< string > const & descriptions ) const
 {
   std::ostringstream oss;
   for( const auto & description : descriptions )
@@ -72,7 +72,7 @@ string Section::constructDescriptionsFromVector( std::vector< string > const & d
   return oss.str();
 }
 
-void Section::formatDescription( std::ostringstream & oss,
+void LogPart::formatDescription( std::ostringstream & oss,
                                  string const & description,
                                  integer const remainingLength ) const
 {
@@ -82,7 +82,7 @@ void Section::formatDescription( std::ostringstream & oss,
   oss << borderCharacters << '\n';
 }
 
-void Section::beginSection( std::ostream & os )
+void LogPart::beginSection( std::ostream & os )
 {
   m_sectionWidth = std::max( m_sectionWidth, m_rowMinWidth );
   horizontalBorder =  GEOS_FMT( "{:#>{}}\n", "", m_sectionWidth );
@@ -107,7 +107,7 @@ void Section::beginSection( std::ostream & os )
   os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
 }
 
-void Section::endSection( std::ostream & os ) const
+void LogPart::endSection( std::ostream & os ) const
 {
   string const footerTitle = GEOS_FMT( "{}{}", m_footerTitle, m_sectionTitle );
   string const lineSection = GEOS_FMT( "{:#^{}}\n", "", m_sectionWidth );

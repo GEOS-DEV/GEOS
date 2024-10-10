@@ -170,7 +170,7 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-    Section section( "TIMESTEP START" );
+    LogPart section( "TIMESTEP START" );
     outputTime( section );
     section.beginSection();
 
@@ -227,7 +227,7 @@ bool EventManager::run( DomainPartition & domain )
   return false;
 }
 
-void EventManager::outputTime( Section & section ) const
+void EventManager::outputTime( LogPart & section ) const
 {
   const bool isTimeLimited = m_maxTime < std::numeric_limits< real64 >::max();
   const bool isCycleLimited = m_maxCycle < std::numeric_limits< integer >::max();

@@ -6,7 +6,7 @@ set( fileIO_headers
      Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
-     section/Section.hpp
+     section/LogPart.hpp
      Outputs/TimeHistoryOutput.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
@@ -23,7 +23,7 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
-     section/Section.cpp
+     section/LogPart.cpp
      Outputs/TimeHistoryOutput.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp

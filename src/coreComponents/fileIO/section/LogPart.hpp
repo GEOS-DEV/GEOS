@@ -13,7 +13,7 @@
  */
 
 /**
- * @file Section.hpp
+ * @file LogPart.hpp
  */
 
 #ifndef GEOS_COMMON_SECTION_HPP
@@ -25,15 +25,15 @@
 namespace geos
 {
 
-class Section
+class LogPart
 {
 public:
 
   /**
-   * @brief Construct a new Section
+   * @brief Construct a new LogPart
    * @param m_sectionTitle The section title
    */
-  Section( string_view m_sectionTitle );
+  LogPart( string_view m_sectionTitle );
 
   /**
    * @brief Add a description to the section by concatening a description name and descriptions values.
@@ -138,7 +138,7 @@ private:
 };
 
 template< typename ... Args >
-void Section::addDescription( string_view descriptionName, Args const &... args )
+void LogPart::addDescription( string_view descriptionName, Args const &... args )
 {
   std::vector< string > descriptionsValues;
   ( [&] {
@@ -151,7 +151,7 @@ void Section::addDescription( string_view descriptionName, Args const &... args 
 }
 
 template< typename ... Args >
-void Section::addEndDescription( string_view descriptionName, Args const &... args )
+void LogPart::addEndDescription( string_view descriptionName, Args const &... args )
 {
   std::vector< string > descriptionsValues;
   ( [&] {

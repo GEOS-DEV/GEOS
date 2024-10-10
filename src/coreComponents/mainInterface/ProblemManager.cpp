@@ -32,7 +32,7 @@
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "fileIO/section/Section.hpp"
+#include "fileIO/section/LogPart.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -169,7 +169,7 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  Section section( "Mesh generation" );
+  LogPart section( "Mesh generation" );
   section.beginSection();
   generateMesh();
   section.endSection();

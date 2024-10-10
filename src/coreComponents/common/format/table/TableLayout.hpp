@@ -48,7 +48,7 @@ public:
   /**
    * @brief Enumeration for table sections.
    */
-  enum Section { header, values };
+  enum LogPart { header, values };
 
   /**
    * @brief Structure to set up each colum parameters.
