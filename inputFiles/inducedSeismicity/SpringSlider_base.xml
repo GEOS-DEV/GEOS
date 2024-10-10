@@ -4,16 +4,27 @@
     <QuasiDynamicEQ
       name="SpringSlider"
       targetRegions="{ Fault }"
-      shearImpedance="4.41">
+      shearImpedance="4.41"
+      initialDt="1"
+      logLevel="1"
+      discretization="FE1">
     </QuasiDynamicEQ>
     
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
       rockToughness="1.0"
-      nodeBasedSIF="1"
-      mpiCommOrder="1"/>  
+      mpiCommOrder="1"
+      fractureRegion="Fault"/>  
   </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
 
   <Mesh>
     <InternalMesh
@@ -32,7 +43,7 @@
     <ThickPlane
       name="faultPlane"
       normal="{ 0, 1, 0 }"
-      origin="{ 0, 0, 0 }"
+      origin="{ 0, 1, 0 }"
       thickness="0.1"/>
   </Geometry>
 
@@ -66,40 +77,33 @@
       objectPath="faceManager"
       scale="1"
       setNames="{ faultPlane }"/>
-
-    <FieldSpecification
-      name="separableFace"
-      fieldName="isFaceSeparable"
-      initialCondition="1"
-      objectPath="faceManager"
-      scale="1"
-      setNames="{ faultPlane }"/> 
-    </FieldSpecifications>
+  </FieldSpecifications>
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput"
+      plotFileRoot="springSlider"/>
 
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/seismicRateCollection}"
-      filename="seismicityRate" />
+      sources="{/Tasks/slipCollection,/Tasks/slipRateCollection,/Tasks/stateVariableCollection}"
+      filename="springSlider"/>
   </Outputs>
 
   <Tasks>
     <PackCollection
-      name="seismicRateCollection"
-      objectPath="ElementRegions/Domain/cb1"
+      name="slipCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
       fieldName="slip"/>
     
     <PackCollection
-      name="seismicRateCollection"
-      objectPath="ElementRegions/Domain/cb1"
+      name="slipRateCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
       fieldName="slipRate"/>
       
     <PackCollection
-      name="seismicRateCollection"
-      objectPath="ElementRegions/Domain/cb1"
+      name="stateVariableCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
       fieldName="stateVariable"/>  
   </Tasks>
 </Problem>

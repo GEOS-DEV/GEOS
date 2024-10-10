@@ -2842,7 +2842,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
   SIFNode.zero();
   SIFonFace.zero();
-
+  
   arrayView2d< real64 const > const & fext = nodeManager.getField< fields::solidMechanics::externalForce >();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement =
     nodeManager.getField< fields::solidMechanics::totalDisplacement >();

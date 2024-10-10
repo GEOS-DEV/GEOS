@@ -58,9 +58,6 @@ QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-7 ).
     setDescription( "Target slip incrmeent for timestep size selction" );
-
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
 }
 
 void QuasiDynamicEQ::postInputInitialization()
@@ -90,14 +87,30 @@ void QuasiDynamicEQ::registerDataOnMesh( Group & meshBodies )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+    elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
-                                                                   ElementSubRegionBase & subRegion )
+                                                                   SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerField< rateAndState::stateVariable >( getName() );
       subRegion.registerField< rateAndState::slipRate >( getName() );
       subRegion.registerField< rateAndState::stateVariable_n >( getName() );
       subRegion.registerField< rateAndState::slipRate_n >( getName() );
+
+      if ( !subRegion.hasWrapper( contact::slip::key() ))
+      { 
+        subRegion.registerField< contact::slip >( getName() );
+        subRegion.registerField< contact::traction >( getName() );
+        
+        subRegion.registerWrapper< string >( viewKeyStruct::frictionLawNameString() ).
+         setPlotLevel( PlotLevel::NOPLOT ).
+         setRestartFlags( RestartFlags::NO_WRITE ).
+         setSizedFromParent( 0 );
+
+        string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+        frictionLawName = SolverBase::getConstitutiveName< FrictionBase >( subRegion );
+        GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
+                                                      getDataContext(), subRegion.getDataContext() ) );
+      }
     } );
   } );
 }
@@ -107,11 +120,16 @@ real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
                                    const int cycleNumber,
                                    DomainPartition & domain )
 {
+  if(cycleNumber == 0)
+  {}
 
   /// 1. Compute shear and normal tractions
+  GEOS_LOG_LEVEL_RANK_0( 1, "Stress solver" );
+
   real64 const dtStress = updateStresses( time_n, dt, cycleNumber, domain );
 
   /// 2. Solve for slip rate and state variable and, compute slip
+  GEOS_LOG_LEVEL_RANK_0( 1, "Rate and State solver" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -142,7 +160,6 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
   // Call member variable stress solver to update the stress state
   if( m_stressSolver )
   {
-
     // 1. Solve the momentum balance
     real64 const dtStress =  m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
 
@@ -166,7 +183,9 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
         string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         RateAndStateFriction const & frictionLaw = getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
 
-        RateAndStateFriction::KernelWrapper frictionKernelWrapper= frictionLaw.createKernelUpdates();
+        RateAndStateFriction::KernelWrapper frictionKernelWrapper = frictionLaw.createKernelUpdates();
+        
+        std::cout << "Launching kernel " << std::endl;
 
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
@@ -174,6 +193,9 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
                                                                                   frictionKernelWrapper.getACoefficient( k ),
                                                                                   frictionKernelWrapper.getBCoefficient( k ),
                                                                                   frictionKernelWrapper.getDcCoefficient( k ) );
+
+          std::cout << "tau rate " << springSliderParameters.tauRate << std::endl;
+          std::cout << "Spring stiffness" << springSliderParameters.springStiffness << std::endl;                                                                        
 
           traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt - springSliderParameters.springStiffness * slip[k];
           traction[k][2] = 0.0;
@@ -198,6 +220,9 @@ void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion
     slipRate_n[k]      = slipRate[k];
     stateVariable_n[k] = stateVariable[k];
     slip[k]            = slip[k] + slipRate[k] * dt;
+    std::cout << "slip" << slip[k] << std::endl;
+    std::cout << "slipRate" << slipRate[k] << std::endl;
+    std::cout << "stateVariable" << stateVariable[k] << std::endl;
   } );
 }
 

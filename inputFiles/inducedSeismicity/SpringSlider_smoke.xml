@@ -6,20 +6,37 @@
   </Included>
 
   <Events
-    maxTime="2.0e5">
+    maxTime="2.0">
+
     <SoloEvent 
       name="generateFault"
       target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="1"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>  
       
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1"
+      maxEventDt="1"
       target="/Solvers/SpringSlider"/>
 
     <PeriodicEvent
       name="seismicRateCollection"
       cycleFrequency="1"
-      target="/Tasks/seismicRateCollection"/>
+      target="/Tasks/slipCollection"/>
+
+    <PeriodicEvent
+      name="slipRateCollection"
+      cycleFrequency="1"
+      target="/Tasks/slipRateCollection"/>
+      
+    <PeriodicEvent
+      name="stateVariableCollection"
+      cycleFrequency="1"
+      target="/Tasks/stateVariableCollection"/>  
       
     <PeriodicEvent
       name="timeHistoryOutput"
