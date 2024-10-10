@@ -33,6 +33,14 @@ if( ENABLE_MATHPRESSO )
    list( APPEND dependencyList mathpresso )
 endif()
 
+if( ENABLE_PYGEOSX )
+  list( APPEND functions_headers
+        python/PyPythonFunctionType.hpp )
+  list( APPEND functions_sources
+        python/PyPythonFunction.cpp )
+  list( APPEND dependencyList Python3::Python pylvarray )
+endif()
+
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
