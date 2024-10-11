@@ -6,8 +6,7 @@
   </Included>
 
   <Events
-    maxTime="200"
-    maxCycle="2">
+    maxTime="2e5">
 
     <SoloEvent 
       name="generateFault"
@@ -15,13 +14,13 @@
 
     <PeriodicEvent
       name="vtkOutput"
-      timeFrequency="1"
-      targetExactTimestep="1"
+      cycleFrequency="5000"
+      targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>  
       
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1"
+      maxEventDt="1e4"
       target="/Solvers/SpringSlider"/>
 
     <PeriodicEvent
@@ -41,7 +40,7 @@
       
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="1"
+      cycleFrequency="1"
       target="/Outputs/timeHistoryOutput" />    
   </Events>
 </Problem>

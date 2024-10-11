@@ -89,32 +89,33 @@ void QuasiDynamicEQ::registerDataOnMesh( Group & meshBodies )
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   SurfaceElementSubRegion & subRegion )
+                                                                 [&]( localIndex const,
+                                                                      SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerField< rateAndState::stateVariable >( getName() );
       subRegion.registerField< rateAndState::slipRate >( getName() );
       subRegion.registerField< rateAndState::stateVariable_n >( getName() );
       subRegion.registerField< rateAndState::slipRate_n >( getName() );
+      subRegion.registerField< rateAndState::deltaSlip >( getName() );
 
-      if ( !subRegion.hasWrapper( contact::slip::key() ))
-      { 
+      if( !subRegion.hasWrapper( contact::slip::key() ))
+      {
         string const labels[3] = { "normal", "tangent1", "tangent2" };
 
         subRegion.registerField< contact::slip >( getName() );
         subRegion.registerField< contact::traction >( getName() ).
-        setDimLabels( 1, labels ).
-        reference().resizeDimension< 1 >( 3 );
-        
+          setDimLabels( 1, labels ).
+          reference().resizeDimension< 1 >( 3 );
+
         subRegion.registerWrapper< string >( viewKeyStruct::frictionLawNameString() ).
-         setPlotLevel( PlotLevel::NOPLOT ).
-         setRestartFlags( RestartFlags::NO_WRITE ).
-         setSizedFromParent( 0 );
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 );
 
         string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
         frictionLawName = SolverBase::getConstitutiveName< FrictionBase >( subRegion );
         GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
-                                                      getDataContext(), subRegion.getDataContext() ) );
+                                                          getDataContext(), subRegion.getDataContext() ) );
       }
     } );
   } );
@@ -125,11 +126,11 @@ real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
                                    int const cycleNumber,
                                    DomainPartition & domain )
 {
-  if(cycleNumber == 0)
+  if( cycleNumber == 0 )
   {
     /// Apply initial conditions to the Fault
     FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::getInstance();
-    
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
                                                                  arrayView1d< string const > const & )
@@ -193,28 +194,23 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
                                                                              [&]( localIndex const,
                                                                                   SurfaceElementSubRegion & subRegion )
       {
-        arrayView1d< real64 const > const slip = subRegion.getField< fields::contact::slip >().toViewConst();
+        arrayView1d< real64 const > const deltaSlip        = subRegion.getField< rateAndState::deltaSlip >();
         arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
 
         string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         RateAndStateFriction const & frictionLaw = getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
 
         RateAndStateFriction::KernelWrapper frictionKernelWrapper = frictionLaw.createKernelUpdates();
-        
+
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
-          // std::cout << "traction" << traction[k][0] << std::endl;
-
           SpringSliderParameters springSliderParameters = SpringSliderParameters( traction[k][0],
                                                                                   frictionKernelWrapper.getACoefficient( k ),
                                                                                   frictionKernelWrapper.getBCoefficient( k ),
-                                                                                  frictionKernelWrapper.getDcCoefficient( k ) );                                                                   
+                                                                                  frictionKernelWrapper.getDcCoefficient( k ) );
 
-          traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt - springSliderParameters.springStiffness * slip[k];
+          traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt - springSliderParameters.springStiffness * deltaSlip[k];
           traction[k][2] = 0.0;
-
-          // std::cout << "tau rate " << springSliderParameters.tauRate << std::endl;
-          // std::cout << "Spring stiffness" << springSliderParameters.springStiffness << std::endl;     
         } );
       } );
     } );
@@ -228,6 +224,8 @@ void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion
   arrayView1d< real64 > const stateVariable_n = subRegion.getField< rateAndState::stateVariable_n >();
   arrayView1d< real64 > const slipRate        = subRegion.getField< rateAndState::slipRate >();
   arrayView1d< real64 > const slipRate_n      = subRegion.getField< rateAndState::slipRate_n >();
+  arrayView1d< real64 > const deltaSlip       = subRegion.getField< rateAndState::deltaSlip >();
+
 
   arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
 
@@ -235,6 +233,7 @@ void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion
   {
     slipRate_n[k]      = slipRate[k];
     stateVariable_n[k] = stateVariable[k];
+    deltaSlip[k]       = slipRate[k] * dt;
     slip[k]            = slip[k] + slipRate[k] * dt;
     // std::cout << "slip" << slip[k] << std::endl;
     // std::cout << "slipRate" << slipRate[k] << std::endl;
@@ -273,7 +272,7 @@ real64 QuasiDynamicEQ::setNextDt( real64 const & currentDt, DomainPartition & do
 
   real64 const nextDt = m_targetSlipIncrement / maxSlipRate;
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "The next dt will be {} s", nextDt));
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "The next dt will be {:.2e} s", nextDt ));
 
   return nextDt;
 }

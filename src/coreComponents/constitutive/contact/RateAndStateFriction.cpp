@@ -47,7 +47,7 @@ RateAndStateFriction::RateAndStateFriction( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
     setApplyDefaultValue( 0.0 ).
-    setDescription( "Friction coefficient" );  
+    setDescription( "Friction coefficient" );
 
   /// Default values
   registerWrapper( viewKeyStruct::defaultACoefficientString(), &m_defaultA ).

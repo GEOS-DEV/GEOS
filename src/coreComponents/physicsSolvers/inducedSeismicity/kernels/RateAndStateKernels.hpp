@@ -43,7 +43,7 @@ public:
                       real64 const shearImpedance ):
     m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
     m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
-    m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable >() ),
+    m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable_n >() ),
     m_traction( subRegion.getField< fields::contact::traction >() ),
     m_shearImpedance( shearImpedance ),
     m_frictionLaw( frictionLaw.createKernelUpdates()  )
@@ -74,8 +74,6 @@ public:
   {
     real64 const normalTraction = m_traction[k][0];
     real64 const shearTraction = LvArray::math::sqrt( m_traction[k][1]*m_traction[k][1] + m_traction[k][2]*m_traction[k][2] );
-    // std::cout << "normalTraction: " << normalTraction << std::endl;
-    // std::cout << "shearTraction: " << shearTraction << std::endl;
 
     // Eq 1: shear stress balance
     real64 const tauFriction     = m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction;
@@ -83,32 +81,38 @@ public:
     real64 const dTauFriction[2] = { m_frictionLaw.dfrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction,
                                      m_frictionLaw.dfrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction };
 
-    // std::cout << "dTauFriction " << dTauFriction[0] << " - " << dTauFriction[1] << std::endl;
-
     // std::cout << "force balance" << std::endl;
     stack.rhs[0] = shearTraction - tauFriction - m_shearImpedance * m_slipRate[k];
 
     // Eq 2: slip law
-    stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.dStateVariabledT( k, m_slipRate[k], m_stateVariable[k] );
+    real64 const dStateVariabledT = m_frictionLaw.dStateVariabledT( k, m_slipRate[k], m_stateVariable[k] );
+    stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - dStateVariabledT;
     real64 const dStateEvolutionLaw[2] = { 1 / dt - m_frictionLaw.dStateVariabledT_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
                                            -m_frictionLaw.dStateVariabledT_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) };
-    
 
     // Assemble Jacobian matrix
     // derivative shear stress balance w.r.t. theta
     stack.jacobian[0][0] = -dTauFriction[0];
     // derivative shear stress balance w.r.t. slip_velocity
-    stack.jacobian[0][1] = -dTauFriction[1];
+    stack.jacobian[0][1] = -dTauFriction[1] - m_shearImpedance;
     // derivative slip law w.r.t. theta
     stack.jacobian[1][0] = dStateEvolutionLaw[0];
     // derivative slip law w.r.t. slip_velocity
     stack.jacobian[1][1] = dStateEvolutionLaw[1];
-    // for (int i = 0; i < 2; i++)
-    // { 
-    //   std::cout << "rhs[" << i << "] = " << stack.rhs[i] << std::endl;
-    //   for (int j = 0; j < 2; j++)
-    //   { 
-    //     std::cout << "j(" << i << "," << j << ") = " << stack.jacobian[i][j] << std::endl;
+
+
+    /// Matteo: debugging tools.
+    // printf("dStateVariabledT = %.10e\n", dStateVariabledT);
+    // printf("m_stateVariable = %.10e\n", m_stateVariable[k]);
+    // printf("m_stateVariable_n = %.10e\n", m_stateVariable_n[k]);
+    // printf("dt = %.10e\n", dt);
+
+    // for( int i = 0; i < 2; i++ )
+    // {
+    //   printf( "rhs[%d] = %.10e\n", i, stack.rhs[i] );
+    //   for( int j = 0; j < 2; j++ )
+    //   {
+    //     printf( "j(%d,%d) = %.10e\n", i, j, stack.jacobian[i][j] );
     //   }
     // }
   }
@@ -126,21 +130,21 @@ public:
     m_stateVariable[k] -= solution[0];
     m_slipRate[k]      -= solution[1];
 
-    // std::cout << "solution[0]" << solution[0]  << std::endl;
-    // std::cout << "solution[1]" << solution[1]  << std::endl;
+    /// Matteo: debugging tools.
+    // printf("solution[0] = %.10e\n", solution[0]);
+    // printf("solution[1] = %.10e\n", solution[1]);
 
-    // std::cout << "m_stateVariable[k]" << m_stateVariable[k]  << std::endl;
-    // std::cout << "m_slipRate[k]" << m_slipRate[k] << std::endl;
-
+    // printf("m_stateVariable[%d] = %.10e\n", k, m_stateVariable[k]);
+    // printf("m_slipRate[%d] = %.10e\n", k, m_slipRate[k]);
   }
-  
+
   GEOS_HOST_DEVICE
-  int checkConvergence( StackVariables const & stack, 
-                        real64 const tol ) const
+  std::pair< int, real64 > checkConvergence( StackVariables const & stack,
+                                             real64 const tol ) const
   {
-    int const converged = LvArray::tensorOps::l2Norm< 2 >( stack.rhs ) < tol ? 1 : 0;
-    std::cout << "norm: " << LvArray::tensorOps::l2Norm< 2 >( stack.rhs )  << std::endl;
-    return converged;
+    real64 const residualNorm = LvArray::tensorOps::l2Norm< 2 >( stack.rhs );
+    int const converged = residualNorm < tol ? 1 : 0;
+    return std::make_pair( converged, residualNorm );
   }
 
 private:
@@ -182,31 +186,34 @@ createAndLaunch( SurfaceElementSubRegion & subRegion,
   constitutive::RateAndStateFriction const & frictionLaw = subRegion.getConstitutiveModel< constitutive::RateAndStateFriction >( frictionaLawName );
   RateAndStateKernel kernel( subRegion, frictionLaw, shearImpedance );
 
-  // Newton loops outside of the kernel launch
+  // Newton loop (outside of the kernel launch)
   bool allConverged = false;
   for( integer iter = 0; iter < maxNewtonIter; iter++ )
   {
-    /// Kernel 1: Do a solver for all non converged elements
     RAJA::ReduceMin< parallelDeviceReduce, int > converged( 1 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > residualNorm( 0.0 );
     forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       RateAndStateKernel::StackVariables stack;
       kernel.setup( k, dt, stack );
       kernel.solve( k, stack );
-      converged.min( kernel.checkConvergence( stack, 1.0e-6 ) );
+      auto result = kernel.checkConvergence( stack, 1.0e-6 );
+      converged.min( std::get< 0 >( result ) );
+      residualNorm.max( std::get< 1 >( result ) );
     } );
 
-    std::cout << converged.get() << std::endl;
-    if ( converged.get() )
+    real64 const maxResidualNorm = MpiWrapper::max( residualNorm.get() );
+    GEOS_LOG_RANK_0( GEOS_FMT( "-----iter {} : residual = {:.10e} ", iter, maxResidualNorm ) );
+
+    if( converged.get() )
     {
       allConverged = true;
       break;
     }
   }
-  
-  if ( !allConverged )
+  if( !allConverged )
   {
-    GEOS_ERROR(" Failed to converge");
+    GEOS_ERROR( " Failed to converge" );
   }
 }
 
