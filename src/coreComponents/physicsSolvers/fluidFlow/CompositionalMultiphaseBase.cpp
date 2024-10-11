@@ -869,10 +869,10 @@ void CompositionalMultiphaseBase::initializeFluid( MeshLevel & mesh,
                                                                                            auto & subRegion )
   {
     // Initialize/update dependent state quantities
-    
+
     updateCompAmount( subRegion );
     updatePhaseVolumeFraction( subRegion );
-    
+
     // Update the constitutive models that only depend on
     //  - the primary variables
     //  - the fluid constitutive quantities (as they have already been updated)
