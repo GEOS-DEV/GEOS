@@ -200,7 +200,7 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeBoth )
 // that affects the current CI (see issue https://github.com/GEOS-DEV/GEOS/issues/3355).
 // The error appears randomly on some configurations, and is probably related to the
 // size-0 device buffer case that this test covers. This case should not be frequent
-// in practise, but the issue should be resolved and the test reactivated as soon as 
+// in practise, but the issue should be resolved and the test reactivated as soon as
 // a solution is found.
 //TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
 //{
