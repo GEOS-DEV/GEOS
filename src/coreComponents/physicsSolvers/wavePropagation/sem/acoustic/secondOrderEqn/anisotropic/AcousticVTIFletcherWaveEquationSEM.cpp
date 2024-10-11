@@ -219,20 +219,20 @@ void AcousticVTIFletcherWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLe
           m_rickerOrder );
       }
     } );
-    elementSubRegion.faceList().freeOnDevice();
+/*    elementSubRegion.faceList().freeOnDevice();
     baseMesh.getElemManager().getRegion( er ).getSubRegion< CellElementSubRegion >( esr ).nodeList().freeOnDevice();
     elementSubRegion.getElementCenter().freeOnDevice();
     elementSubRegion.ghostRank().freeOnDevice();
-    elementSubRegion.localToGlobalMap().freeOnDevice();
+    elementSubRegion.localToGlobalMap().freeOnDevice();*/
   } );
-  baseMesh.getNodeManager().localToGlobalMap().freeOnDevice();
+/*  baseMesh.getNodeManager().localToGlobalMap().freeOnDevice();
   baseMesh.getNodeManager().elementList().toView().freeOnDevice();
   baseMesh.getFaceManager().nodeList().toView().freeOnDevice();
   baseMesh.getNodeManager().referencePosition().freeOnDevice();
   m_sourceCoordinates.freeOnDevice();
   m_receiverCoordinates.freeOnDevice();
   facesToNodes.freeOnDevice();
-  nodesToElements.freeOnDevice();
+  nodesToElements.freeOnDevice();*/
 }
 
 void AcousticVTIFletcherWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
