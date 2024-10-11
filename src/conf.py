@@ -265,6 +265,7 @@ numfig = True
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n\\usepackage{mathtools}\n'
 
+bibtex_bibfiles = ['docs/sphinx/biblio_wave.bib']
 
 #####################################################
 # add LaTeX macros
