@@ -23,7 +23,9 @@
 #include "../FieldStatisticsBase.hpp"
 #include "FlowSolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
-
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
@@ -332,7 +334,7 @@ private:
    * @param elementSetName the region / sub-subregion name concerned by the statistics.
    * @param stats          the statistics that must be output in the log.
    */
-  void writeStatsToLog( integer minLogLevel, string_view elementSetName, WrappedStats const & stats );
+  void writeStatsToLog( integer minLogLevel, TableData & tableData, WrappedStats const & stats );
   /**
    * @brief If CSV is enabled, create or append a new CSV file.
    * @param elementSetName the region / sub-subregion name concerned by the statistics.

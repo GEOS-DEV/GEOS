@@ -125,35 +125,42 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
 }
 
 void SourceFluxStatsAggregator::writeStatsToLog( integer minLogLevel,
-                                                 string_view elementSetName,
+                                                 TableData & tableData,
                                                  WrappedStats const & wrappedStats )
 {
   if( getLogLevel() >= minLogLevel && logger::internal::rank == 0 )
   {
-    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Producing on {} elements",
-                             catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                             wrappedStats.stats().m_elementCount ) );
-
     // we want to format differently if we have got multiple phases or not
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
+    string nbProducedElems = GEOS_FMT( "Producing on {} elements", wrappedStats.stats().m_elementCount );
+    // GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Producing on {} elements",
+    //                          catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+    //                          wrappedStats.stats().m_elementCount ) );
+    string producedMass;
+    string producedRate;
     if( wrappedStats.stats().m_producedMass.size() == 1 )
     {
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} {}",
-                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_producedMass[0], massUnit ) );
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} {}/s",
-                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_productionRate[0], massUnit ) );
+      producedMass = GEOS_FMT( "[{} {}]", wrappedStats.stats().m_producedMass[0], massUnit );
+      producedRate = GEOS_FMT( "[{} {}]", wrappedStats.stats().m_productionRate[0], massUnit );
+      // GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} {}",
+      //                          catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+      //                          wrappedStats.stats().m_producedMass[0], massUnit ) );
+      // GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} {}/s",
+      //                          catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+      //                          wrappedStats.stats().m_productionRate[0], massUnit ) );
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} {}",
-                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_producedMass, massUnit ) );
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} {}/s",
-                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_productionRate, massUnit ) );
+      producedMass = GEOS_FMT( "[{} {}]", wrappedStats.stats().m_producedMass, massUnit );
+      producedRate = GEOS_FMT( "[{} {}]", wrappedStats.stats().m_productionRate, massUnit );
+      // GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} {}",
+      //                          catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+      //                          wrappedStats.stats().m_producedMass, massUnit ) );
+      // GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} {}/s",
+      //                          catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+      //                          wrappedStats.stats().m_productionRate, massUnit ) );
     }
+    tableData.addRow( producedMass, producedRate );
   }
 }
 
@@ -189,6 +196,8 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
                                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                          DomainPartition & domain )
 {
+  string tableTitle;
+  TableData tableData;
   forMeshLevelStatsWrapper( domain,
                             [&] ( MeshLevel & meshLevel, WrappedStats & meshLevelStats )
   {
@@ -211,20 +220,26 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
           regionStats.stats().combine( subRegionStats.stats() );
         } );
 
+        tableTitle = GEOS_FMT( "SourceFluxStatistics in {}", region.getName());
         fluxStats.stats().combine( regionStats.stats() );
-        writeStatsToLog( 3, region.getName(), regionStats );
+        writeStatsToLog( 3, tableData, regionStats );
         writeStatsToCSV( region.getName(), regionStats, false );
       } );
 
+      tableTitle = GEOS_FMT( "SourceFluxStatistics in {}", viewKeyStruct::allRegionWrapperString());
       meshLevelStats.stats().combine( fluxStats.stats() );
-      writeStatsToLog( 2, viewKeyStruct::allRegionWrapperString(), fluxStats );
+      writeStatsToLog( 2, tableData, fluxStats );
       writeStatsToCSV( viewKeyStruct::allRegionWrapperString(), fluxStats, false );
     } );
 
-    writeStatsToLog( 1, viewKeyStruct::allRegionWrapperString(), meshLevelStats );
+    tableTitle = GEOS_FMT( "SourceFluxStatistics in {}", viewKeyStruct::allRegionWrapperString());
+    writeStatsToLog( 1, tableData, meshLevelStats );
     writeStatsToCSV( viewKeyStruct::allRegionWrapperString(), meshLevelStats, false );
   } );
-
+  TableLayout statsLayout( "Produced mass\nkg", "Produced Rate\nkg\\s" );
+  statsLayout.setTitle( tableTitle );
+  TableTextFormatter const tableStatFormatter( statsLayout );
+  GEOS_LOG_RANK( tableStatFormatter.toString( tableData ) );
   return false;
 }
 
