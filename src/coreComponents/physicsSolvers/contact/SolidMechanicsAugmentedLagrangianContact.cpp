@@ -53,6 +53,16 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
     setApplyDefaultValue( 1 ).
     setDescription( "Flag to neglect the non-symmetric contribution in the tangential matrix" );
 
+  registerWrapper( viewKeyStruct::iterativePenaltyNFacString(), &m_iterPenaltyNFac ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 10.0 ).
+    setDescription( "Factor for tuning the iterative penalty coefficient for normal traction" );
+
+  registerWrapper( viewKeyStruct::iterativePenaltyTFacString(), &m_iterPenaltyTFac ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Factor for tuning the iterative penalty coefficient for tangential traction" );
+
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   // Strategy: AMG with separate displacement components
@@ -1725,8 +1735,8 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
                                           pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus / 2.e+5;
             normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
-            iterativePenalty[kfe][0] = 1e+01*averageConstrainedModulus/(averageBoxSize0*area);
-            iterativePenalty[kfe][1] = 1e-01*averageConstrainedModulus/(averageBoxSize0*area);
+            iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0*area);
+            iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageBoxSize0*area);
           }
         } );
       }

@@ -243,6 +243,11 @@ private:
     constexpr static char const * simultaneousString() { return "simultaneous"; }
 
     constexpr static char const * symmetricString() { return "symmetric"; }
+
+    constexpr static char const * iterativePenaltyNFacString() { return "epsNfac"; }
+
+    constexpr static char const * iterativePenaltyTFacString() { return "epsTfac"; }
+
   };
 
   /// Tolerance for the sliding check: the tangential traction must exceed (1 + m_slidingCheckTolerance) * t_lim to activate the sliding
@@ -255,6 +260,12 @@ private:
   /// Flag to neglect the non-symmetric contribution in the tangential matrix, i.e., the derivative of tangential traction with respect to
   /// the normal displacement is neglected
   int m_symmetric = 1;
+
+  /// Factor for tuning the iterative penalty coefficient for normal traction
+  real64 m_iterPenaltyNFac = 10.0;
+
+  /// Factor for tuning the iterative penalty coefficient for tangential traction
+  real64 m_iterPenaltyTFac = 0.1;
 
 };
 
