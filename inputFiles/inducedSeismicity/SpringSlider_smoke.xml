@@ -6,7 +6,7 @@
   </Included>
 
   <Events
-    maxTime="2e5">
+    maxTime="4.5e4">
 
     <SoloEvent 
       name="generateFault"
@@ -14,7 +14,7 @@
 
     <PeriodicEvent
       name="vtkOutput"
-      cycleFrequency="5000"
+      cycleFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>  
       
