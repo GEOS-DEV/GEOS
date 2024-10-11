@@ -340,32 +340,6 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
 
 HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix const & mat )
 {
-  GEOS_MARK_FUNCTION;
-
-  if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_params.mgr.separateComponents )
-  {
-    GEOS_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
-    HypreMatrix Pu;
-    HypreMatrix Auu;
-    {
-      Stopwatch timer( m_makeRestrictorTime );
-      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.comm(), true, Pu );
-    }
-    {
-      Stopwatch timer( m_computeAuuTime );
-      mat.multiplyPtAP( Pu, Auu );
-    }
-    {
-      Stopwatch timer( m_componentFilterTime );
-      Auu.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
-    }
-  }
-  else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
-  {
-    Stopwatch timer( m_componentFilterTime );
-    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
-    return m_precondMatrix;
-  }
   return mat;
 }
 
@@ -384,12 +358,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
   // To be able to use Hypre preconditioner (e.g., BoomerAMG) we need to disable floating point exceptions
   {
     LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
-
-    // Perform setup of the MGR mechanics F-solver with SDC matrix, if used
-    if( m_mgrData && m_mgrData->mechSolver.ptr && m_mgrData->mechSolver.setup )
-    {
-//      GEOS_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
-    }
 
     // Perform setup of the main solver, if needed
     if( m_precond->setup )

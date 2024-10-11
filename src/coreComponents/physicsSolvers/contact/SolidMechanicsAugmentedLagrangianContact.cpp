@@ -43,13 +43,13 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
   m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
 
-  // TODO Implement the MGR strategy
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
 
-  // Set the default linear solver parameters
-  //LinearSolverParameters & linParams = m_linearSolverParameters.get();
-  //linParams.dofsPerNode = 3;
-  //linParams.isSymmetric = true;
-  //linParams.amg.separateComponents = true;
+  linParams.isSymmetric = true;
+  linParams.dofsPerNode = 3;
+  linParams.mgr.separateComponents = true;
+  // TODO Implement the MGR strategy
+  //linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsAugumentedLagrangianContact;
 }
 
 SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianContact()

@@ -1780,7 +1780,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="amgAggressiveCoarseningPaths" type="integer" default="1" />
 		<!--amgAggressiveInterpType => AMG aggressive interpolation algorithm. Available options are: ``default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass``-->
 		<xsd:attribute name="amgAggressiveInterpType" type="geos_LinearSolverParameters_AMG_AggInterpType" default="multipass" />
-		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs``-->
+		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs|gsElimWPivoting|gsElimWInverse``-->
 		<xsd:attribute name="amgCoarseSolver" type="geos_LinearSolverParameters_AMG_CoarseType" default="direct" />
 		<!--amgCoarseningType => AMG coarsening algorithm. Available options are: ``default|CLJP|RugeStueben|Falgout|PMIS|HMIS``-->
 		<xsd:attribute name="amgCoarseningType" type="geos_LinearSolverParameters_AMG_CoarseningType" default="HMIS" />
@@ -1851,7 +1851,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_CoarseType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs" />
+			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs|gsElimWPivoting|gsElimWInverse" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_CoarseningType">
@@ -2946,7 +2946,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
-		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType" default="Pressure" />
+		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType" default="Pressure" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
@@ -2969,7 +2969,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType">
+	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Pressure|Displacement" />
 		</xsd:restriction>
