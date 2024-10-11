@@ -217,7 +217,7 @@ public:
     {
       real32 const localIncrement_p = val * stack.invDensity *(-stack.vti_epsi) * m_p_n[m_elemsToNodes( k, j )];
       stack.stiffnessVectorLocal_p[i] += localIncrement_p;
-      real32 const localIncrement_q = val * stack.invDensity * ((-stack.vti_2delta-stack.vti_f) * m_p_n[m_elemsToNodes[k][j]] +(stack.vti_f-1)*m_q_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrement_q = val * stack.invDensity * ((-stack.vti_2delta-stack.vti_f) * m_p_n[m_elemsToNodes( k, j )] +(stack.vti_f-1)*m_q_n[m_elemsToNodes( k, j )]);
       stack.stiffnessVectorLocal_q[i] += localIncrement_q;
     } );
 
@@ -225,7 +225,7 @@ public:
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = val * stack.invDensity * ((stack.vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - stack.vti_f*m_q_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrement_p = val * stack.invDensity * ((stack.vti_f-1)*m_p_n[m_elemsToNodes( k, j )] - stack.vti_f*m_q_n[m_elemsToNodes( k, j )]);
       stack.stiffnessVectorLocal_p[i] += localIncrement_p;
 
       real32 const localIncrement_q = -val * stack.invDensity * m_q_n[m_elemsToNodes( k, j )];
