@@ -127,7 +127,7 @@ void AcousticVTIZhangWaveEquationSEM::postInputInitialization()
 }
 
 void AcousticVTIZhangWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                                       arrayView1d< string const > const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -225,13 +225,13 @@ void AcousticVTIZhangWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel
     elementSubRegion.localToGlobalMap().freeOnDevice();*/
   } );
 /*  baseMesh.getNodeManager().localToGlobalMap().freeOnDevice();
-  baseMesh.getNodeManager().elementList().toView().freeOnDevice();
-  baseMesh.getFaceManager().nodeList().toView().freeOnDevice();
-  baseMesh.getNodeManager().referencePosition().freeOnDevice();
-  m_sourceCoordinates.freeOnDevice();
-  m_receiverCoordinates.freeOnDevice();
-  facesToNodes.freeOnDevice();
-  nodesToElements.freeOnDevice();*/
+   baseMesh.getNodeManager().elementList().toView().freeOnDevice();
+   baseMesh.getFaceManager().nodeList().toView().freeOnDevice();
+   baseMesh.getNodeManager().referencePosition().freeOnDevice();
+   m_sourceCoordinates.freeOnDevice();
+   m_receiverCoordinates.freeOnDevice();
+   facesToNodes.freeOnDevice();
+   nodesToElements.freeOnDevice();*/
 }
 
 void AcousticVTIZhangWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )

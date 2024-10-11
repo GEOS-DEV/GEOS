@@ -70,27 +70,27 @@ struct AcousticTimeSchemeSEM
   };
 
 /**
-   * @brief  Apply second order Leap-Frog time scheme for VTI case without PML
-   * @param[in] size The number of nodes in the nodeManager
-   * @param[in] dt time-step
-   * @param[out] p_np1 pressure array at time n+1 (updated here)
-   * @param[in] p_n pressure array at time n
-   * @param[in] p_nm1 pressure array at time n-1
-   * @param[out] q_np1 auxiliary pressure array at time n+1 (updated here)
-   * @param[in] q_n auxiliary pressure array at time n
-   * @param[in] q_nm1 auxiliary pressure array at time n-1
-   * @param[in] mass the mass matrix
-   * @param[in] stiffnessVector_p array containing the product of the stiffness matrix R and the pressure at time n
-   * @param[in] stiffnessVector_q array containing the product of the stiffness matrix R and the auxiliary pressure at time n
-   * @param[in] damping_pp the damping matrix applied to p on p-equation
-   * @param[in] damping_pq the damping matrix applied to q on p-equation
-   * @param[in] damping_qp the damping matrix applied to p on q-equation
-   * @param[in] damping_qq the damping matrix applied to q on q-equation
-   * @param[in] rhs the right-hand-side
-   * @param[in] freeSurfaceNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not
-   * @param[in] lateralSurfaceNodeIndicator array which contains indicators to tell if we are on a lateral boundary or not
-   * @param[in] bottomSurfaceNodeIndicator array which contains indicators to telle if we are on the bottom boundary or not
-   */
+ * @brief  Apply second order Leap-Frog time scheme for VTI case without PML
+ * @param[in] size The number of nodes in the nodeManager
+ * @param[in] dt time-step
+ * @param[out] p_np1 pressure array at time n+1 (updated here)
+ * @param[in] p_n pressure array at time n
+ * @param[in] p_nm1 pressure array at time n-1
+ * @param[out] q_np1 auxiliary pressure array at time n+1 (updated here)
+ * @param[in] q_n auxiliary pressure array at time n
+ * @param[in] q_nm1 auxiliary pressure array at time n-1
+ * @param[in] mass the mass matrix
+ * @param[in] stiffnessVector_p array containing the product of the stiffness matrix R and the pressure at time n
+ * @param[in] stiffnessVector_q array containing the product of the stiffness matrix R and the auxiliary pressure at time n
+ * @param[in] damping_pp the damping matrix applied to p on p-equation
+ * @param[in] damping_pq the damping matrix applied to q on p-equation
+ * @param[in] damping_qp the damping matrix applied to p on q-equation
+ * @param[in] damping_qq the damping matrix applied to q on q-equation
+ * @param[in] rhs the right-hand-side
+ * @param[in] freeSurfaceNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not
+ * @param[in] lateralSurfaceNodeIndicator array which contains indicators to tell if we are on a lateral boundary or not
+ * @param[in] bottomSurfaceNodeIndicator array which contains indicators to telle if we are on the bottom boundary or not
+ */
   static void LeapFrogVTIWithoutPML( real64 const dt,
                                      arrayView1d< real32 > const p_np1,
                                      arrayView1d< real32 > const p_n,

@@ -147,28 +147,28 @@ struct AcousticMatricesSEM
       } );
     }
 
-   /**
-    * @brief Launches the precomputation of the damping matrices
-    * @tparam EXEC_POLICY the execution policy
-    * @tparam ATOMIC_POLICY the atomic policy
-    * @param[in] size the number of cells in the subRegion
-    * @param[in] nodeCoords coordinates of the nodes
-    * @param[in] elemsToFaces map from elements to faces
-    * @param[in] facesToNodes map from face to nodes
-    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
-    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
-    * @param[in] lateralSurfaceFaceIndicator flag equal to 1 if the face is on the lateral surface, and to 0 otherwise
-    * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
-    * @param[in] velocity cell-wise velocity
-    * @param[in] density cell-wise density
-    * @param[in] vti_epsilon cell-wise epsilon (Thomsen parameter)
-    * @param[in] vti_delta density cell-wise delta (Thomsen parameter)
-    * @param[in] vti_sigma sigma cell-wise parameter
-    * @param[out] damping_pp Damping matrix D^{pp}
-    * @param[out] damping_pq Damping matrix D^{pq}
-    * @param[out] damping_qp Damping matrix D^{qp}
-    * @param[out] damping_qq Damping matrix D^{qq}
-    */
+    /**
+     * @brief Launches the precomputation of the damping matrices
+     * @tparam EXEC_POLICY the execution policy
+     * @tparam ATOMIC_POLICY the atomic policy
+     * @param[in] size the number of cells in the subRegion
+     * @param[in] nodeCoords coordinates of the nodes
+     * @param[in] elemsToFaces map from elements to faces
+     * @param[in] facesToNodes map from face to nodes
+     * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
+     * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
+     * @param[in] lateralSurfaceFaceIndicator flag equal to 1 if the face is on the lateral surface, and to 0 otherwise
+     * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
+     * @param[in] velocity cell-wise velocity
+     * @param[in] density cell-wise density
+     * @param[in] vti_epsilon cell-wise epsilon (Thomsen parameter)
+     * @param[in] vti_delta density cell-wise delta (Thomsen parameter)
+     * @param[in] vti_sigma sigma cell-wise parameter
+     * @param[out] damping_pp Damping matrix D^{pp}
+     * @param[out] damping_pq Damping matrix D^{pq}
+     * @param[out] damping_qp Damping matrix D^{qp}
+     * @param[out] damping_qq Damping matrix D^{qq}
+     */
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
     computeVTIFletcherDampingMatrices( localIndex const size,
