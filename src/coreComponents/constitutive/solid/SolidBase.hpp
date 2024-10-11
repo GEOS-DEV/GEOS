@@ -338,6 +338,24 @@ public:
   }
 
   /**
+   * @brief Return the current elastic strain increment at a given material point (small-strain interface)
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @param elasticStrainInc Current elastic strain increment
+   */
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                 localIndex const q,
+                                 real64 ( & elasticStrainInc )[6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( elasticStrainInc );
+    GEOS_ERROR( "getElasticStrainInc() not implemented for this model (called when computing plastic strains)" );
+  }
+
+  /**
    * @brief Perform a viscous (rate-dependent) state update
    *
    * @param beta time-dependent parameter

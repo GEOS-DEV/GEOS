@@ -160,8 +160,8 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     {
       setConstitutiveNamesCallSuper( subRegion );
 
-      subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
       subRegion.registerField< solidMechanics::strain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::plasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
 
     } );
 
@@ -455,6 +455,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
         m_targetNodes = m_sendOrReceiveNodes;
         m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
                               m_nonSendOrReceiveNodes.end() );
+
 
       } );
     } );
@@ -946,8 +947,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
     {
       string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-      constitutiveRelation.saveConvergedState();
 
+      
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
       solidMechanics::arrayView2dLayoutStrain plasticStrain = subRegion.getField< solidMechanics::plasticStrain >();
 
@@ -967,6 +968,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
                                                                                                                                   finiteElement,
                                                                                                                                   solidModel,
                                                                                                                                   disp,
+                                                                                                                                  uhat,
                                                                                                                                   strain,
                                                                                                                                   plasticStrain );
       } );
@@ -974,6 +976,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
       } );
 
+      constitutiveRelation.saveConvergedState();
 
     } );
   } );

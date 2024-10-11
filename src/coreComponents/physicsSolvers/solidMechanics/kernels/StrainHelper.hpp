@@ -69,6 +69,7 @@ public:
                                      FE_TYPE const & finiteElementSpace,
                                      SOLID_TYPE const & solidModel,
                                      fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                                     fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
                                      fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
                                      fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain):
     Base( nodeManager,
@@ -78,6 +79,7 @@ public:
           finiteElementSpace ),
     m_solidUpdate(solidModel.createKernelUpdates()),
     m_displacement( displacement ),
+    m_displacementInc( displacementInc ),
     m_avgStrain( avgStrain ),
     m_avgPlasticStrain( avgPlasticStrain )
   {}
@@ -86,7 +88,8 @@ public:
    * @copydoc finiteElement::KernelBase::StackVariables
    */
   struct StackVariables : Base::StackVariables
-  {real64 uLocal[FE_TYPE::maxSupportPoints][3]; };
+  {real64 uLocal[FE_TYPE::maxSupportPoints][3];
+   real64 uHatLocal[FE_TYPE::maxSupportPoints][3]; };
 
   /**
    * @brief Performs the setup phase for the kernel.
@@ -105,13 +108,14 @@ public:
       for( int i = 0; i < 3; ++i )
       {
         stack.uLocal[a][i] = m_displacement[localNodeIndex][i];
+        stack.uHatLocal[a][i] = m_displacementInc[localNodeIndex][i];
       }
     }
 
     for( int icomp = 0; icomp < 6; ++icomp )
     {
       m_avgStrain[k][icomp] = 0.0;
-      m_avgPlasticStrain[k][icomp] = 0.0;
+      //m_avgPlasticStrain[k][icomp] = 0.0;
     }
   }
 
@@ -131,15 +135,18 @@ public:
     real64 dNdX[ FE_TYPE::maxSupportPoints ][3];
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
     real64 strain[6] = {0.0};
+    real64 strainInc[6] = {0.0};
     FE_TYPE::symmetricGradient( dNdX, stack.uLocal, strain );
+    FE_TYPE::symmetricGradient( dNdX, stack.uHatLocal, strainInc );
 
-    real64 elasticStrain[6] = {0.0};
-    m_solidUpdate.getElasticStrain(k, q, elasticStrain);
+    real64 elasticStrainInc[6] = {0.0};
+    m_solidUpdate.getElasticStrainInc(k, q, elasticStrainInc);
 
     for( int icomp = 0; icomp < 6; ++icomp )
     {
       m_avgStrain[k][icomp] += detJxW*strain[icomp]/m_elementVolume[k];
-      m_avgPlasticStrain[k][icomp] += detJxW*(strain[icomp] - elasticStrain[icomp])/m_elementVolume[k];
+      m_avgPlasticStrain[k][icomp] += detJxW*(strainInc[icomp] - elasticStrainInc[icomp])/m_elementVolume[k];
+      //m_avgPlasticStrain[k][icomp] += detJxW*(elasticStrainInc[icomp])/m_elementVolume[k];
     }
   }
 
@@ -176,6 +183,9 @@ protected:
 
   /// The displacement solution
   fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const m_displacement;
+
+  /// The displacement increment
+  fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const m_displacementInc;
 
   /// The average strain
   fields::solidMechanics::arrayView2dLayoutStrain const m_avgStrain;
@@ -220,12 +230,13 @@ public:
                    FE_TYPE const & finiteElementSpace,
                    SOLID_TYPE const & solidModel,
                    fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                   fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain)
   {
     AverageStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            solidModel, displacement, avgStrain, avgPlasticStrain );
+            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain );
 
     AverageStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
