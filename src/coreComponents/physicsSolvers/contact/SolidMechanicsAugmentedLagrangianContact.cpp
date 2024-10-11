@@ -43,13 +43,37 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
   m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
 
-  // TODO Implement the MGR strategy
+  registerWrapper( viewKeyStruct::simultaneousString(), &m_simultaneous ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag to update the Lagrange multiplier at each Newton iteration (true), or only after the Newton loop has converged (false)" );
+
+  registerWrapper( viewKeyStruct::symmetricString(), &m_symmetric ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag to neglect the non-symmetric contribution in the tangential matrix" );
+
+  registerWrapper( viewKeyStruct::iterativePenaltyNFacString(), &m_iterPenaltyNFac ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 10.0 ).
+    setDescription( "Factor for tuning the iterative penalty coefficient for normal traction" );
+
+  registerWrapper( viewKeyStruct::iterativePenaltyTFacString(), &m_iterPenaltyTFac ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Factor for tuning the iterative penalty coefficient for tangential traction" );
 
   // Set the default linear solver parameters
-  //LinearSolverParameters & linParams = m_linearSolverParameters.get();
-  //linParams.dofsPerNode = 3;
-  //linParams.isSymmetric = true;
-  //linParams.amg.separateComponents = true;
+  LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
+  // Strategy: AMG with separate displacement components
+  linSolParams.dofsPerNode = 3;
+  linSolParams.isSymmetric = true;
+  linSolParams.amg.separateComponents = true;
+
+  // Strategy: static condensation of bubble dofs using MGR
+  linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics;
+  linSolParams.mgr.separateComponents = true;
+  linSolParams.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
 }
 
 SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianContact()
@@ -1111,6 +1135,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
+    ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1125,8 +1151,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
-
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       if( numNodesPerFace == 3 )
       {
         keys_v[kfe]=0;
@@ -1371,7 +1397,8 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPar
 
     for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
     {
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       localIndex const numDispDof = 3*numNodesPerFace;
 
       for( int k=0; k<2; ++k )
@@ -1503,7 +1530,8 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
     for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
     {
 
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       localIndex const numDispDof = 3*numNodesPerFace;
 
       for( int k=0; k<2; ++k )
@@ -1707,8 +1735,8 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
                                           pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus / 2.e+5;
             normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
-            iterativePenalty[kfe][0] = 1e+01*averageConstrainedModulus/(averageBoxSize0*area);
-            iterativePenalty[kfe][1] = 1e-01*averageConstrainedModulus/(averageBoxSize0*area);
+            iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0*area);
+            iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageBoxSize0*area);
           }
         } );
       }
