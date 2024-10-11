@@ -286,16 +286,6 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
   m_sequentialTempChange = m_isThermal ? MpiWrapper::max( maxTempChange ) : 0.0;
 }
 
-void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
-{
-  m_isFixedStressPoromechanicsUpdate = true;
-}
-
-void FlowSolverBase::enableJumpStabilization()
-{
-  m_isJumpStabilized = true;
-}
-
 void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
   SolverBase::setConstitutiveNamesCallSuper( subRegion );
@@ -550,7 +540,10 @@ void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, arrayV
 
     updatePorosityAndPermeability( subRegion );
 
-    // save the initial/old porosity
+    // Save the computed porosity into the old porosity
+    // Note:
+    // - This must be called after updatePorosityAndPermeability
+    // - This step depends on porosity
     porousSolid.initializeState();
   } );
 }

@@ -869,13 +869,14 @@ void CompositionalMultiphaseBase::initializeFluid( MeshLevel & mesh,
                                                                                            auto & subRegion )
   {
     // Initialize/update dependent state quantities
-
+    
+    updateCompAmount( subRegion );
+    updatePhaseVolumeFraction( subRegion );
+    
     // Update the constitutive models that only depend on
     //  - the primary variables
     //  - the fluid constitutive quantities (as they have already been updated)
     // We postpone the other constitutive models for now
-    updateCompAmount( subRegion );
-    updatePhaseVolumeFraction( subRegion );
 
     // Now, we initialize and update each constitutive model one by one
 
@@ -887,11 +888,11 @@ void CompositionalMultiphaseBase::initializeFluid( MeshLevel & mesh,
     // Note:
     // - This must be called after updatePhaseVolumeFraction
     // - This step depends on phaseVolFraction
-    string const & relpermName = subRegion.template getReference< string >( viewKeyStruct::relPermNamesString() );
-    RelativePermeabilityBase & relPermMaterial = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
-    relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
+    RelativePermeabilityBase & relPerm =
+      getConstitutiveModel< RelativePermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::relPermNamesString() ) );
+    relPerm.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
-    relPermMaterial.saveConvergedState(); // this needs to happen after calling updateRelPermModel
+    relPerm.saveConvergedState(); // this needs to happen after calling updateRelPermModel
 
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
@@ -978,6 +979,8 @@ void CompositionalMultiphaseBase::initializeThermal( MeshLevel & mesh, arrayView
 
 void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 {
+  std::cout << "CompositionalMultiphaseBase::computeHydrostaticEquilibrium" << std::endl;
+
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   integer const numComps = m_numComponents;
@@ -1242,6 +1245,16 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
                                      regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames,
+                                                                                                 [&]( localIndex const,
+                                                                                                      auto & subRegion )
+    {
+      // set mass fraction flag on fluid models
+      string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      fluid.setMassFlag( m_useMass );
+    } );
   } );
 
   initialize( domain );

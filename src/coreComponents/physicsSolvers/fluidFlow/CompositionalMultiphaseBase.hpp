@@ -274,6 +274,45 @@ public:
 
   };
 
+  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
+                                              DomainPartition & domain ) override;
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  real64 setNextDt( real64 const & currentDt,
+                    DomainPartition & domain ) override;
+
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain ) override;
+
+  void computeCFLNumbers( DomainPartition & domain, real64 const & dt, real64 & maxPhaseCFL, real64 & maxCompCFL );
+
+  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
+
+  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+  virtual void initializePreSubGroups() override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  /**
+   * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
+   * This function will produce an error if one of the constitutive models
+   * (fluid, relperm) is incompatible with the reference fluid model.
+   */
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
+
   /**
    * @brief Initialize all variables from initial conditions
    * @param domain the domain containing the mesh and fields
@@ -290,6 +329,12 @@ public:
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
   virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) override;
+
+  /**
+   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
+   * @param[in] cm reference to the global constitutive model manager
+   */
+  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -357,7 +402,6 @@ public:
                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                 arrayView1d< real64 > const & localRhs ) const;
 
-
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
@@ -365,52 +409,6 @@ public:
   void chopNegativeDensities( DomainPartition & domain );
 
   void chopNegativeDensities( ElementSubRegionBase & subRegion );
-
-  virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
-                                              DomainPartition & domain ) override;
-
-  void computeCFLNumbers( DomainPartition & domain, real64 const & dt, real64 & maxPhaseCFL, real64 & maxCompCFL );
-
-  /**
-   * @brief function to set the next time step size
-   * @param[in] currentDt the current time step size
-   * @param[in] domain the domain object
-   * @return the prescribed time step size
-   */
-  real64 setNextDt( real64 const & currentDt,
-                    DomainPartition & domain ) override;
-
-  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
-                                      DomainPartition & domain ) override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
-  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
-
-  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
-
-  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
-
-protected:
-
-  virtual void postInputInitialization() override;
-
-  virtual void initializePreSubGroups() override;
-
-
-  /**
-   * @brief Utility function that checks the consistency of the constitutive models
-   * @param[in] domain the domain partition
-   * This function will produce an error if one of the constitutive models
-   * (fluid, relperm) is incompatible with the reference fluid model.
-   */
-  void validateConstitutiveModels( DomainPartition const & domain ) const;
-
-  /**
-   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application

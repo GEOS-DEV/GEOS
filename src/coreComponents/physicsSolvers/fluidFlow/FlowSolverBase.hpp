@@ -95,9 +95,9 @@ public:
    */
   void updateStencilWeights( DomainPartition & domain ) const;
 
-  void enableFixedStressPoromechanicsUpdate();
+  void enableFixedStressPoromechanicsUpdate() { m_isFixedStressPoromechanicsUpdate = true; }
 
-  void enableJumpStabilization();
+  void enableJumpStabilization() { m_isJumpStabilized = true; }
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
@@ -109,39 +109,12 @@ public:
    */
   virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
-  /**
-   * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
-   * @param[in] domain the domain partition
-   * @param[in] equilNameToEquilId the map from the name of the initial condition to the initial condition index (used in min/maxElevation)
-   * @param[out] maxElevation the max elevation for each initial condition
-   * @param[out] minElevation the min elevation for each initial condition
-   */
-  void findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                               std::map< string, localIndex > const & equilNameToEquilId,
-                                               arrayView1d< real64 > const & maxElevation,
-                                               arrayView1d< real64 > const & minElevation ) const;
-
-  /**
-   * @brief For each source flux boundary condition, loop over all the target cells and sum the owned cells
-   * @param[in] time the time at the beginning of the time step
-   * @param[in] dt the time step size
-   * @param[in] domain the domain partition
-   * @param[in] bcNameToBcId the map from the name of the boundary condition to the boundary condition index
-   * @param[out] bcAllSetsSize the total number of owned cells for each source flux boundary condition
-   */
-  void computeSourceFluxSizeScalingFactor( real64 const & time,
-                                           real64 const & dt,
-                                           DomainPartition & domain, // cannot be const...
-                                           std::map< string, localIndex > const & bcNameToBcId,
-                                           arrayView1d< globalIndex > const & bcAllSetsSize ) const;
-
   integer & isThermal() { return m_isThermal; }
 
   /**
    * @return The unit in which we evaluate the amount of fluid per element (Mass or Mole).
    */
-  virtual units::Unit getMassUnit() const
-  { return units::Unit::Mass; }
+  virtual units::Unit getMassUnit() const { return units::Unit::Mass; }
 
   /**
    * @brief Function to activate the flag allowing negative pressure
@@ -190,9 +163,21 @@ protected:
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
+  /**
+   * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
+   * @param[in] domain the domain partition
+   * @param[in] equilNameToEquilId the map from the name of the initial condition to the initial condition index (used in min/maxElevation)
+   * @param[out] maxElevation the max elevation for each initial condition
+   * @param[out] minElevation the min elevation for each initial condition
+   */
+  void findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
+                                               std::map< string, localIndex > const & equilNameToEquilId,
+                                               arrayView1d< real64 > const & maxElevation,
+                                               arrayView1d< real64 > const & minElevation ) const;
+
   void initialize( DomainPartition & domain );
 
-  virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) {GEOS_UNUSED_VAR( domain );}
+  virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) {GEOS_UNUSED_VAR( domain ); std::cout << "computeHydrostaticEquilibrium" << std::endl;}
 
   void initializePorosityAndPermeability( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
@@ -209,6 +194,20 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
+  /**
+   * @brief For each source flux boundary condition, loop over all the target cells and sum the owned cells
+   * @param[in] time the time at the beginning of the time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   * @param[in] bcNameToBcId the map from the name of the boundary condition to the boundary condition index
+   * @param[out] bcAllSetsSize the total number of owned cells for each source flux boundary condition
+   */
+  void computeSourceFluxSizeScalingFactor( real64 const & time,
+                                           real64 const & dt,
+                                           DomainPartition & domain, // cannot be const...
+                                           std::map< string, localIndex > const & bcNameToBcId,
+                                           arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
