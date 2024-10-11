@@ -24,6 +24,7 @@
 #include "kernels/RateAndStateKernels.hpp"
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
 {
@@ -37,7 +38,7 @@ QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
   SolverBase( name, parent ),
   m_stressSolver( nullptr ),
   m_stressSolverName( "SpringSlider" ),
-  m_maxNewtonIterations( 10 ),
+  m_maxNewtonIterations( 2 ),
   m_shearImpedance( 0.0 ),
   m_targetSlipIncrement( 1.0e-7 )
 {
@@ -98,8 +99,12 @@ void QuasiDynamicEQ::registerDataOnMesh( Group & meshBodies )
 
       if ( !subRegion.hasWrapper( contact::slip::key() ))
       { 
+        string const labels[3] = { "normal", "tangent1", "tangent2" };
+
         subRegion.registerField< contact::slip >( getName() );
-        subRegion.registerField< contact::traction >( getName() );
+        subRegion.registerField< contact::traction >( getName() ).
+        setDimLabels( 1, labels ).
+        reference().resizeDimension< 1 >( 3 );
         
         subRegion.registerWrapper< string >( viewKeyStruct::frictionLawNameString() ).
          setPlotLevel( PlotLevel::NOPLOT ).
@@ -117,11 +122,22 @@ void QuasiDynamicEQ::registerDataOnMesh( Group & meshBodies )
 
 real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
                                    real64 const & dt,
-                                   const int cycleNumber,
+                                   int const cycleNumber,
                                    DomainPartition & domain )
 {
   if(cycleNumber == 0)
-  {}
+  {
+    /// Apply initial conditions to the Fault
+    FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::getInstance();
+    
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & )
+
+    {
+      fieldSpecificationManager.applyInitialConditions( mesh );
+    } );
+  }
 
   /// 1. Compute shear and normal tractions
   GEOS_LOG_LEVEL_RANK_0( 1, "Stress solver" );
@@ -146,7 +162,7 @@ real64 QuasiDynamicEQ::solverStep( real64 const & time_n,
     } );
   } );
 
-  m_nextDt = setNextDt( dtStress, domain );
+  // m_nextDt = setNextDt( dtStress, domain );
 
   // return time step size achieved by stress solver
   return dtStress;
@@ -185,20 +201,20 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
 
         RateAndStateFriction::KernelWrapper frictionKernelWrapper = frictionLaw.createKernelUpdates();
         
-        std::cout << "Launching kernel " << std::endl;
-
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
+          // std::cout << "traction" << traction[k][0] << std::endl;
+
           SpringSliderParameters springSliderParameters = SpringSliderParameters( traction[k][0],
                                                                                   frictionKernelWrapper.getACoefficient( k ),
                                                                                   frictionKernelWrapper.getBCoefficient( k ),
-                                                                                  frictionKernelWrapper.getDcCoefficient( k ) );
-
-          std::cout << "tau rate " << springSliderParameters.tauRate << std::endl;
-          std::cout << "Spring stiffness" << springSliderParameters.springStiffness << std::endl;                                                                        
+                                                                                  frictionKernelWrapper.getDcCoefficient( k ) );                                                                   
 
           traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt - springSliderParameters.springStiffness * slip[k];
           traction[k][2] = 0.0;
+
+          // std::cout << "tau rate " << springSliderParameters.tauRate << std::endl;
+          // std::cout << "Spring stiffness" << springSliderParameters.springStiffness << std::endl;     
         } );
       } );
     } );
@@ -220,9 +236,9 @@ void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion
     slipRate_n[k]      = slipRate[k];
     stateVariable_n[k] = stateVariable[k];
     slip[k]            = slip[k] + slipRate[k] * dt;
-    std::cout << "slip" << slip[k] << std::endl;
-    std::cout << "slipRate" << slipRate[k] << std::endl;
-    std::cout << "stateVariable" << stateVariable[k] << std::endl;
+    // std::cout << "slip" << slip[k] << std::endl;
+    // std::cout << "slipRate" << slipRate[k] << std::endl;
+    // std::cout << "stateVariable" << stateVariable[k] << std::endl;
   } );
 }
 
@@ -255,7 +271,11 @@ real64 QuasiDynamicEQ::setNextDt( real64 const & currentDt, DomainPartition & do
     maxSlipRate = MpiWrapper::max( maxSlipRateOnThisRank );
   } );
 
-  return m_targetSlipIncrement / maxSlipRate;
+  real64 const nextDt = m_targetSlipIncrement / maxSlipRate;
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "The next dt will be {} s", nextDt));
+
+  return nextDt;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, QuasiDynamicEQ, string const &, dataRepository::Group * const )

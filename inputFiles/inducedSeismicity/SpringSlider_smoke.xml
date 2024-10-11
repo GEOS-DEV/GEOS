@@ -6,7 +6,8 @@
   </Included>
 
   <Events
-    maxTime="2.0">
+    maxTime="200"
+    maxCycle="2">
 
     <SoloEvent 
       name="generateFault"
@@ -41,7 +42,6 @@
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput" />    
   </Events>
 </Problem>

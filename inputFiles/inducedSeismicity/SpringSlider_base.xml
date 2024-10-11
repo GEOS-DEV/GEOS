@@ -77,6 +77,38 @@
       objectPath="faceManager"
       scale="1"
       setNames="{ faultPlane }"/>
+
+    <FieldSpecification
+      name="normalTraction"
+      fieldName="traction"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="50"
+      setNames="{all}"/>
+    
+    <FieldSpecification
+      name="shearTraction"
+      fieldName="traction"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="30"
+      setNames="{all}"/>
+    <FieldSpecification
+      name="stateVariable"
+      fieldName="stateVariable"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      scale="0.6"
+      setNames="{all}"/>
+    <FieldSpecification
+      name="slipRate"
+      fieldName="slipRate"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      scale="1.0e-6"
+      setNames="{all}"/>               
   </FieldSpecifications>
 
   <Outputs>

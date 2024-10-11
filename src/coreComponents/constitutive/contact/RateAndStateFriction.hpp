@@ -264,6 +264,7 @@ inline real64 RateAndStateFriction::KernelWrapper::frictionCoefficient( localInd
                                                                         real64 const stateVariable ) const
 {
   real64 const arg = ( slipRate / (2 * m_V0[k]) ) * LvArray::math::exp( stateVariable / m_a[k] );
+
   m_frictionCoefficient[k]  = m_a[k] * LvArray::math::asinh( arg );
 
   return m_frictionCoefficient[k];

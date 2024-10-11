@@ -28,8 +28,7 @@ namespace constitutive
 {
 
 RateAndStateFriction::RateAndStateFriction( string const & name, Group * const parent ):
-  FrictionBase( name, parent ),
-  m_frictionCoefficient()
+  FrictionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::aCoefficientString(), &m_a ).
     setDescription( "Rate- and State-dependent friction coefficient a." );
@@ -45,6 +44,10 @@ RateAndStateFriction::RateAndStateFriction( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::referenceFrictionCoefficientString(), &m_mu0 ).
     setDescription( "Rate- and State-dependent friction reference friction coefficient." );
+
+  registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Friction coefficient" );  
 
   /// Default values
   registerWrapper( viewKeyStruct::defaultACoefficientString(), &m_defaultA ).
@@ -86,6 +89,9 @@ void RateAndStateFriction::postInputInitialization()
     setApplyDefaultValue( m_defaultV0 );
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referenceFrictionCoefficientString() ).
+    setApplyDefaultValue( m_defaultMu0 );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::frictionCoefficientString() ).
     setApplyDefaultValue( m_defaultMu0 );
 }
 
