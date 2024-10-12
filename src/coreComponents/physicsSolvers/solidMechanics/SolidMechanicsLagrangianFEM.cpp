@@ -60,7 +60,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_isFixedStressPoromechanicsUpdate( false )
+  m_isFixedStressPoromechanicsUpdate( false ),
+  m_performStressInitialization( false )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -1055,7 +1056,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    if( m_isFixedStressPoromechanicsUpdate )
+    if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
     {
       set< string > poromechanicsRegions;
       set< string > mechanicsRegions;

@@ -133,6 +133,8 @@ public:
 
   void enableLaggingFractureStencilWeightsUpdate(){ m_isLaggingFractureStencilWeightsUpdate = 1; };
 
+  void initialize( DomainPartition & domain );
+
 protected:
 
   /**
@@ -174,8 +176,6 @@ protected:
                                                std::map< string, localIndex > const & equilNameToEquilId,
                                                arrayView1d< real64 > const & maxElevation,
                                                arrayView1d< real64 > const & minElevation ) const;
-
-  void initialize( DomainPartition & domain );
 
   virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) { GEOS_UNUSED_VAR( domain ); }
 

@@ -279,6 +279,15 @@ public:
     return m_rigidBodyModes;
   }
 
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( integer const performStressInitialization )
+  {
+    m_performStressInitialization = performStressInitialization;
+  }
+
 protected:
   virtual void postInputInitialization() override;
 
@@ -295,7 +304,11 @@ protected:
   integer m_maxNumResolves;
   integer m_strainTheory;
   MPI_iCommData m_iComm;
+
+  /// Flag to indicate that the solver is running in fixed stress (sequential) mode
   bool m_isFixedStressPoromechanicsUpdate;
+  /// Flag to indicate that the solver is going to perform stress initialization
+  bool m_performStressInitialization;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
