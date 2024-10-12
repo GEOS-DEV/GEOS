@@ -33,12 +33,15 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   ConstantPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                              arrayView3d< real64 > const & dPerm_dPressure )
-    : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
+                              arrayView3d< real64 > const & dPerm_dPressure,
+                              arrayView4d< real64 > const & dPerm_dDispJump )
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
+    m_dPerm_dDispJump( dPerm_dDispJump )
   {}
 
 private:
 
+  arrayView4d< real64 > m_dPerm_dDispJump;
 };
 
 
@@ -68,7 +71,8 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_permeability,
-                          m_dPerm_dPressure );
+                          m_dPerm_dPressure,
+                          m_dPerm_dDispJump );
   }
 
 
@@ -84,6 +88,9 @@ protected:
   virtual void postInputInitialization() override;
 
 private:
+
+  /// Derivative of fracture permeability w.r.t. displacement jump
+  array4d< real64 > m_dPerm_dDispJump;
 
   R1Tensor m_permeabilityComponents;
 
