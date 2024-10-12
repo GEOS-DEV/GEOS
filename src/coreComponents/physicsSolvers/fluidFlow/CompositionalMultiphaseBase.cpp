@@ -830,17 +830,14 @@ void CompositionalMultiphaseBase::initializeFluid( MeshLevel & mesh,
                                               [&]( localIndex const,
                                                    ElementSubRegionBase & subRegion )
   {
-    // set mass fraction flag on fluid models
-    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    fluid.setMassFlag( m_useMass );
-
     // Assume global component fractions have been prescribed.
     // Initialize constitutive state to get fluid density.
     updateFluidModel( subRegion );
 
     // Back-calculate global component densities from fractions and total fluid density
     // in order to initialize the primary solution variables
+    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+    MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
     arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
       subRegion.getField< fields::flow::globalCompFraction >();
@@ -979,8 +976,6 @@ void CompositionalMultiphaseBase::initializeThermal( MeshLevel & mesh, arrayView
 
 void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 {
-  std::cout << "CompositionalMultiphaseBase::computeHydrostaticEquilibrium" << std::endl;
-
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   integer const numComps = m_numComponents;

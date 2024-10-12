@@ -527,24 +527,29 @@ void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, arrayV
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )
   {
+    // Apply netToGross to reference porosity and horizontal permeability
     CoupledSolidBase const & porousSolid =
       getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
     PermeabilityBase const & permeability =
       getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
-
     arrayView1d< real64 const > const netToGross = subRegion.template getField< fields::flow::netToGross >();
     porousSolid.scaleReferencePorosity( netToGross );
     permeability.scaleHorizontalPermeability( netToGross );
 
+    // in some initializeState versions it uses newPorosity, so let's run updatePorosityAndPermeability to compute something
     saveConvergedState( subRegion );   // necessary for a meaningful porosity update in sequential schemes
+    updatePorosityAndPermeability( subRegion );
+    porousSolid.initializeState();
 
+    // run final update
+    saveConvergedState( subRegion );   // necessary for a meaningful porosity update in sequential schemes
     updatePorosityAndPermeability( subRegion );
 
     // Save the computed porosity into the old porosity
     // Note:
     // - This must be called after updatePorosityAndPermeability
     // - This step depends on porosity
-    porousSolid.initializeState();
+    porousSolid.saveConvergedState();
   } );
 }
 
