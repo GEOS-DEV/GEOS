@@ -84,8 +84,9 @@ postInputInitialization()
     TasksManager & tasksManager = problemManager.getGroup< TasksManager >( "Tasks" );
 
     GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
-                   GEOS_FMT( "{}: statistics task named {} not found",
+                   GEOS_FMT( "{}: {} task named {} not found",
                              getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ),
+                             SolidMechanicsStatistics::catalogName(),
                              m_solidMechanicsStatisticsName ),
                    InputError );
 
@@ -132,6 +133,7 @@ execute( real64 const time_n,
 
 namespace
 {
+typedef PoromechanicsInitialization< SolidMechanicsLagrangianFEM > MechanicsInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics<> > MultiphasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> > > MultiphaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics<> > SinglePhasePoromechanicsInitialization;
@@ -139,6 +141,7 @@ typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFractures
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsEmbeddedFractures > SinglePhasePoromechanicsEmbeddedFracturesInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics<> > > HydrofractureInitialization;
+REGISTER_CATALOG_ENTRY( TaskBase, MechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
