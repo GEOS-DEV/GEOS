@@ -189,7 +189,10 @@
         "PorousSolid<ElasticOrthotropic>",
         "PorousSolid<DamageSpectral<ElasticIsotropic>>",
         "PorousSolid<DamageVolDev<ElasticIsotropic>>",
-        "PorousSolid<Damage<ElasticIsotropic>>"
+        "PorousSolid<Damage<ElasticIsotropic>>",
+        "PorousSolid<DuvautLionsSolid<DruckerPrager>>",
+        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
@@ -466,11 +469,11 @@
         "5, 6"
       ],
       "KERNEL_TYPE": [
-        "DeadOilFluid",
-        "BlackOilFluid",
-        "CO2BrinePhillipsFluid",
-        "CO2BrineEzrokhiFluid",
-        "CO2BrinePhillipsThermalFluid"
+        "constitutive::DeadOilFluid",
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid"
       ]
     },
     "explicit": []
@@ -497,11 +500,11 @@
         "5, 6"
       ],
       "KERNEL_TYPE": [
-        "DeadOilFluid",
-        "BlackOilFluid",
-        "CO2BrinePhillipsFluid",
-        "CO2BrineEzrokhiFluid",
-        "CO2BrinePhillipsThermalFluid"
+        "constitutive::DeadOilFluid",
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid"
       ]
     },
     "explicit": []

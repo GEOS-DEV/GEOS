@@ -505,8 +505,10 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
+  using SUBREGION_TYPES = types::Slice< DISPATCH_TYPE_LIST >;
+
   // Loop over all sub-regions in regions of type SUBREGION_TYPE, that are listed in the targetRegions array.
-  elementRegionManager.forElementSubRegions( targetRegions,
+  elementRegionManager.forElementSubRegions( SUBREGION_TYPES{}, targetRegions,
                                              [&constitutiveStringName,
                                               &maxResidualContribution,
                                               &nodeManager,
