@@ -72,7 +72,6 @@ public:
               real64 const dt,
               StackVariables & stack ) const
   {
-    m_slipRate[k][1] = 0.; //TODO. Remove once solution is correctly initialized.
     real64 const normalTraction = m_traction[k][0];
     real64 const shearTraction[2] = { m_traction[k][1],
                                       m_traction[k][2]};

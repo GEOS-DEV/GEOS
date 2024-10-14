@@ -103,12 +103,20 @@
       scale="0.6"
       setNames="{all}"/>
     <FieldSpecification
-      name="slipRate"
+      name="slipRate1"
       fieldName="slipRate"
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="0"
       scale="1.0e-6"
+      setNames="{all}"/>               
+    <FieldSpecification
+      name="slipRate2"
+      fieldName="slipRate"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="0."
       setNames="{all}"/>               
   </FieldSpecifications>
 
