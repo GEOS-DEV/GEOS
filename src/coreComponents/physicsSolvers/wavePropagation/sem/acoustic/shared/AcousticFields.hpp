@@ -59,6 +59,30 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
+DECLARE_FIELD( DivPsi,
+               "divpsi",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "memory variable for acoustic attenuation." );
+
+DECLARE_FIELD( DivPsi_p,
+               "divpsi_p",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "p-type memory variable for acoustic VTI attenuation." );
+
+DECLARE_FIELD( DivPsi_q,
+               "divpsi_q",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "q-type memory variable for acoustic VTI attenuation." );
+
 DECLARE_FIELD( PressureDoubleDerivative,
                "pressureDoubleDerivative",
                array1d< real32 >,
@@ -123,6 +147,30 @@ DECLARE_FIELD( StiffnessVector,
                WRITE_AND_READ,
                "Stiffness vector contains R_h*Pressure_n." );
 
+DECLARE_FIELD( StiffnessVectorA,
+               "stiffnessVectorA",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "acoustic attenuation stiffness vector." );
+
+DECLARE_FIELD( StiffnessVectorA_p,
+               "stiffnessVectorA_p",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "p-type acoustic attenuation stiffness vector." );
+
+DECLARE_FIELD( StiffnessVectorA_q,
+               "stiffnessVectorA_q",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "q-type acoustic attenuation stiffness vector." );
+
 DECLARE_FIELD( DampingVector,
                "dampingVector",
                array1d< real32 >,
@@ -146,6 +194,14 @@ DECLARE_FIELD( AcousticDensity,
                NOPLOT,
                WRITE_AND_READ,
                "Medium density of the cell" );
+
+DECLARE_FIELD( AcousticQualityFactor,
+               "acousticQualityFactor",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Quality factor for acoustic wave attenuation in the cell" );
 
 DECLARE_FIELD( AcousticFreeSurfaceFaceIndicator,
                "acousticFreeSurfaceFaceIndicator",

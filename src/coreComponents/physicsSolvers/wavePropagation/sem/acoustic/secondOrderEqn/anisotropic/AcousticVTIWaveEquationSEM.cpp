@@ -84,6 +84,16 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                acousticvtifields::LateralSurfaceNodeIndicator,
                                acousticvtifields::BottomSurfaceNodeIndicator >( getName() );
 
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      integer l = m_slsReferenceAngularFrequencies.size( 0 );
+      nodeManager.registerField< elasticfields::DivPsi_p,
+                                 elasticfields::DivPsi_q,
+                                 elasticfields::StiffnessVectorA_p,
+                                 elasticfields::StiffnessVectorA_q >( getName() );
+      nodeManager.getField< elasticfields::DivPsi_p >().resizeDimension< 1 >( l );
+      nodeManager.getField< elasticfields::DivPsi_q >().resizeDimension< 1 >( l );
+    }
 
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< acousticfields::AcousticFreeSurfaceFaceIndicator >( getName() );
@@ -608,11 +618,25 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     GEOS_MARK_SCOPE ( updateP );
 
-    AcousticTimeSchemeSEM::LeapFrogforVTI( nodeManager.size(), dt, p_np1, p_n, p_nm1, q_np1, q_n, q_nm1, mass, stiffnessVector_p,
-                                           stiffnessVector_q, damping_p, damping_pq, damping_q, damping_qp,
-                                           rhs, freeSurfaceNodeIndicator, lateralSurfaceNodeIndicator,
-                                           bottomSurfaceNodeIndicator );
-
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      arrayView1d< real32 > const stiffnessVectorA_p = nodeManager.getField< elasticfields::StiffnessVectorA_p >();
+      arrayView1d< real32 > const stiffnessVectorA_q = nodeManager.getField< elasticfields::StiffnessVectorA_q >();
+      arrayView2d< real32 > const divpsix = nodeManager.getField< elasticfields::DivPsi_p >();
+      arrayView2d< real32 > const divpsiy = nodeManager.getField< elasticfields::DivPsi_q >();
+      arrayView1d< real32 > const referenceFrequencies = m_slsReferenceAngularFrequencies.toView();
+      arrayView1d< real32 > const anelasticityCoefficients = m_slsAnelasticityCoefficients.toView();
+      AcousticTimeSchemeSEM::AttenuationLeapFrogforVTI( nodeManager.size(), dt, p_np1, p_n, p_nm1, q_np1, q_n, q_nm1, mass, stiffnessVector_p,
+                                                        stiffnessVector_q, stiffnessVectorA_p, stiffnessVectorA_q, damping_p, damping_pq, damping_q, 
+                                                        damping_qp, rhs, freeSurfaceNodeIndicator, lateralSurfaceNodeIndicator, bottomSurfaceNodeIndicator );
+    }
+    else
+    {
+      AcousticTimeSchemeSEM::LeapFrogforVTI( nodeManager.size(), dt, p_np1, p_n, p_nm1, q_np1, q_n, q_nm1, mass, stiffnessVector_p,
+                                             stiffnessVector_q, damping_p, damping_pq, damping_q, damping_qp,
+                                             rhs, freeSurfaceNodeIndicator, lateralSurfaceNodeIndicator,
+                                             bottomSurfaceNodeIndicator );
+    }
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::Pressure_p_np1::key() } );
@@ -637,6 +661,15 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       stiffnessVector_q[a] = 0.0;
       rhs[a] = 0.0;
     } );
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      arrayView1d< real32 > const stiffnessVectorA_p = nodeManager.getField< elasticfields::StiffnessVectorA_p >();
+      arrayView1d< real32 > const stiffnessVectorA_q = nodeManager.getField< elasticfields::StiffnessVectorA_q >();
+      forAll< EXEC_POLICY >( nodeManager.size() , [=] GEOS_HOST_DEVICE ( localIndex const q )
+      {
+        stiffnessVectorA_p[a] = stiffnessVectorA_q[a] = 0.0;
+      } );
+    }
 
   } );
 

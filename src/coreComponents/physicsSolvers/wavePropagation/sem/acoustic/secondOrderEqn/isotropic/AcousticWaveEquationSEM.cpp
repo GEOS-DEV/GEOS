@@ -84,6 +84,14 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                acousticfields::StiffnessVector,
                                acousticfields::AcousticFreeSurfaceNodeIndicator >( getName() );
 
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      integer l = m_slsReferenceAngularFrequencies.size( 0 );
+      nodeManager.registerField< elasticfields::DivPsi,
+                                 elasticfields::StiffnessVectorA >( getName() );
+      nodeManager.getField< elasticfields::DivPsi >().resizeDimension< 1 >( l );
+    }
+
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
     {
@@ -106,6 +114,10 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< acousticfields::AcousticVelocity >( getName() );
       subRegion.registerField< acousticfields::AcousticDensity >( getName() );
       subRegion.registerField< acousticfields::PartialGradient >( getName() );
+      if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+      {
+        subRegion.registerField< acousticfields::AcousticQualityFactor >( getName() );
+      }
     } );
 
   } );
@@ -337,10 +349,25 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              velocity,
                                                                              density,
                                                                              damping );
-
-
       } );
     } );
+
+    // check anelasticity coefficient and/or compute it if needed
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      real32 minQVal = computeGlobalMinQFactor();
+      if( m_slsAnelasticityCoefficients.size( 0 ) == 1 && m_slsAnelasticityCoefficients[ 0 ] < 0 )
+      {
+        m_slsAnelasticityCoefficients[ 0 ] = 2.0 * minQVal / ( minQVal - 1.0 );
+      }
+      // test if anelasticity is too high and artifacts could appear
+      real32 ySum = 0.0;
+      for( integer l = 0; l < m_slsAnelasticityCoefficients.size( 0 ); l++ )
+      {
+        ySum += m_slsAnelasticityCoefficients[ l ];
+      }
+      GEOS_WARNING_IF( ySum > minQVal, "The anelasticity parameters are too high for the given quality factor. This could lead to solution artifacts such as zero-velocity waves." );
+    }
   } );
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
@@ -943,6 +970,15 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 
     stiffnessVector[a] = rhs[a] = 0.0;
   } );
+  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  {
+    arrayView1d< real32 > const stiffnessVectorA = nodeManager.getField< elasticfields::StiffnessVectorA >();
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+    {
+      localIndex const a = solverTargetNodesSet[n];
+      stiffnessVectorA[a] = 0.0;
+    } );
+  }
 }
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
@@ -985,11 +1021,27 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   real64 const dt2 = pow( dt, 2 );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+  if( m_usePML && m_attenuationType != WaveSolverUtils::AttenuationType::none  )
+  {
+      GEOS_ERROR( "Attenuation is not supported with PML boindary conditions.");
+  }
   if( !m_usePML )
   {
     GEOS_MARK_SCOPE ( updateP );
-    AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
-                                               rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
+                                                 rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+    }
+    else
+    {
+      arrayView1d< real32 > const stiffnessVectorA = nodeManager.getField< elasticfields::StiffnessVectorA >();
+      arrayView2d< real32 > const divpsi = nodeManager.getField< elasticfields::DivPsi >();
+      arrayView1d< real32 > const referenceFrequencies = m_slsReferenceAngularFrequencies.toView();
+      arrayView1d< real32 > const anelasticityCoefficients = m_slsAnelasticityCoefficients.toView();
+      AcousticTimeSchemeSEM::AttenuationLeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, stiffnessVectorA, 
+                                                            damping, rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+    }
   }
   else
   {
