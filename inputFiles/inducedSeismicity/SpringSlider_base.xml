@@ -107,6 +107,7 @@
       fieldName="slipRate"
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
       scale="1.0e-6"
       setNames="{all}"/>               
   </FieldSpecifications>
@@ -126,7 +127,7 @@
     <PackCollection
       name="slipCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
-      fieldName="slip"/>
+      fieldName="displacementJump"/>
     
     <PackCollection
       name="slipRateCollection"
