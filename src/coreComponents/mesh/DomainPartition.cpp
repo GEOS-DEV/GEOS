@@ -343,8 +343,7 @@ void DomainPartition::outputPartitionInformation() const
     return result;
   };
 
-  GEOS_LOG_RANK_0( "MPI Partition information:" );
-
+  GEOS_LOG_RANK_0( "\nMPI Partition information:" );
 
   forMeshBodies( [&]( MeshBody const & meshBody )
   {

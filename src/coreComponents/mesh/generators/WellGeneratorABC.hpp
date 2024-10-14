@@ -178,6 +178,12 @@ public:
   virtual arrayView1d< real64 const > getPerfSkinFactor() const = 0;
 
   /**
+   * @brief Get the target region for a perforation.
+   * @return the target region for a perforation
+   */
+  virtual arrayView1d< string const > getPerfTargetRegion() const = 0;
+
+  /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */
