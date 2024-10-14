@@ -1443,7 +1443,7 @@ void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PAR
 }
 
 
-void SolverBase::PreStepFieldSpecification( real64 const time, DomainPartition & domain )
+void SolverBase::PreStepFieldSpecification( real64 const, DomainPartition & domain )
 {
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -1451,7 +1451,7 @@ void SolverBase::PreStepFieldSpecification( real64 const time, DomainPartition &
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
   {
-    fsManager.applyNonInitialConditions( time, mesh, this->m_preStepFieldSpecificationNames );
+    fsManager.applyNonInitialConditions( 2.0e20, mesh, this->m_preStepFieldSpecificationNames );
   } );
 }
 
