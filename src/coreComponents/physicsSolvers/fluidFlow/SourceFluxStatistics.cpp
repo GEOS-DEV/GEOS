@@ -81,14 +81,34 @@ void SourceFluxStatsAggregator::postInputInitialization()
 Wrapper< SourceFluxStatsAggregator::WrappedStats > &
 SourceFluxStatsAggregator::registerWrappedStats( Group & group,
                                                  string_view fluxName,
-                                                 string_view elementSetName )
+                                                 string_view elementSetName,
+                                                 string_array & filenames )
 {
   string const wrapperName = getStatWrapperName( fluxName );
   Wrapper< WrappedStats > & statsWrapper = group.registerWrapper< WrappedStats >( wrapperName );
   statsWrapper.setRestartFlags( RestartFlags::NO_WRITE );
-  statsWrapper.reference().setTarget( getName(), fluxName );
 
-  writeStatsToCSV( elementSetName, statsWrapper.reference(), true );
+  WrappedStats & stats = statsWrapper.reference();
+  stats.setTarget( getName(), fluxName );
+
+  { //tableLayout initialisation
+    string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
+
+    string const logMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
+    string const logRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
+    TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn } );
+    m_logLayout = statsLogLayout;
+
+    string const csvMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
+    string const csvRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
+
+    filenames.emplace_back( GEOS_FMT( "{}/{}_{}_{}.csv",
+                                      m_outputDir,
+                                      stats.getAggregatorName(), stats.getFluxName(), elementSetName ) );
+
+    TableLayout statsCSVLayout( "", {"Time [s]", "Element Count", csvMassColumn, csvRateColumn} );
+    m_csvLayout = statsCSVLayout;
+  }
 
   return statsWrapper;
 }
@@ -103,26 +123,28 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
                                                               MeshLevel & mesh,
                                                               arrayView1d< string const > const & )
   {
-    registerWrappedStats( mesh, viewKeyStruct::fluxSetWrapperString(), viewKeyStruct::allRegionWrapperString() );
+    registerWrappedStats( mesh,
+                          viewKeyStruct::fluxSetWrapperString(),
+                          viewKeyStruct::allRegionWrapperString(),
+                          m_allRegionWrapperFluxFilename );
 
-    std::cout << "registerDataOnMesh" << std::endl;
     for( string const & fluxName : m_fluxNames )
     {
-      std::cout << " flux name " << fluxName << std::endl;
-      registerWrappedStats( mesh, fluxName, viewKeyStruct::allRegionWrapperString() );
+      registerWrappedStats( mesh,
+                            fluxName,
+                            viewKeyStruct::allRegionWrapperString(),
+                            m_allRegionFluxsfilename );
 
       mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
       {
-        std::cout << " region " << region.getName() << std::endl;
         Wrapper< WrappedStats > & regionStatsWrapper =
-          registerWrappedStats( region, fluxName, region.getName() );
+          registerWrappedStats( region, fluxName, region.getName(), m_regionsfilename );
         region.excludeWrappersFromPacking( { regionStatsWrapper.getName() } );
 
         region.forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
         {
-          std::cout << " subRegion " << subRegion.getName() << std::endl;
           Wrapper< WrappedStats > & subRegionStatsWrapper =
-            registerWrappedStats( subRegion, fluxName, subRegion.getName() );
+            registerWrappedStats( subRegion, fluxName, subRegion.getName(), m_subRegionsfilename );
           subRegion.excludeWrappersFromPacking( { subRegionStatsWrapper.getName() } );
         } );
       } );
@@ -149,49 +171,40 @@ void SourceFluxStatsAggregator::writeStats( int logLevel,
                         GEOS_FMT( "{}", wrappedStats.stats().m_producedMass ),
                         GEOS_FMT( "{}", wrappedStats.stats().m_productionRate ) );
     }
-
-
   }
 }
 
-void SourceFluxStatsAggregator::outputStatsToLog( int logLevel, string_view statsName, TableData tableMeshData )
+void SourceFluxStatsAggregator::outputStatsToLog( int logLevel, string_view statsName, TableData const & tableMeshData )
 {
   if( getLogLevel() == logLevel && logger::internal::rank == 0 )
   {
-    string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
-
-    string title = string( GEOS_FMT( "Source flux statistics in {}", statsName ) );
-    string const columnMass = GEOS_FMT( "Produced mass [{}]", massUnit );
-    string const columnRate = GEOS_FMT( "Production rate [{}]", massUnit );
-    TableLayout statsLayout( title, { "region", columnMass, columnRate } );
-
-    TableTextFormatter const tableStatFormatter( statsLayout );
+    m_logLayout.setTitle( GEOS_FMT( "Source flux statistics in {}", statsName ));
+    TableTextFormatter const tableStatFormatter( m_logLayout );
     GEOS_LOG_RANK( tableStatFormatter.toString( tableMeshData ) );
   }
 }
+void SourceFluxStatsAggregator::outputStatsToCSV( string_array const & filenames, TableData & csvData )
+{
+  if( m_writeCSV > 0 && logger::internal::rank == 0 )
+  {
+    for( auto const & filename : filenames )
+    {
+      std::ofstream outputFile( filename );
 
-void SourceFluxStatsAggregator::writeStatsToCSV( string_view elementSetName, WrappedStats const & stats,
-                                                 bool writeHeader )
+      TableCSVFormatter const tableStatFormatter( m_csvLayout );
+      outputFile << tableStatFormatter.toString( csvData );
+      outputFile.close();
+    }
+    csvData.clear();
+  }
+}
+
+void SourceFluxStatsAggregator::writeStatsToCSV( TableData & tableData, WrappedStats const & stats )
 {
   if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
-    string const fileName = GEOS_FMT( "{}/{}_{}_{}.csv",
-                                      m_outputDir,
-                                      stats.getAggregatorName(), stats.getFluxName(), elementSetName );
-    std::ofstream outputFile( fileName,
-                              writeHeader ? std::ios_base::out : std::ios_base::app );
-    if( writeHeader )
-    {
-      outputFile << GEOS_FMT( "Time [s],Element Count,Producted Mass [{0}],Production Rate [{0}/s]",
-                              units::getSymbol( m_solver->getMassUnit() ) ) << std::endl;
-    }
-    else
-    {
-      outputFile << GEOS_FMT( "{},{},{},{}",
-                              stats.getStatsPeriodStart(), stats.stats().m_elementCount,
-                              stats.stats().m_producedMass, stats.stats().m_productionRate ) << std::endl;
-    }
-    outputFile.close();
+    tableData.addRow( stats.getStatsPeriodStart(), stats.stats().m_elementCount,
+                      stats.stats().m_producedMass, stats.stats().m_productionRate );
   }
 }
 
@@ -207,6 +220,7 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
                             [&] ( MeshLevel & meshLevel, WrappedStats & meshLevelStats )
   {
     TableData tableMeshData;
+    TableData csvData;
     meshLevelStats.stats() = StatData();
     forAllFluxStatsWrappers( meshLevel,
                              [&] ( MeshLevel &, WrappedStats & fluxStats )
@@ -229,20 +243,25 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
         fluxStats.stats().combine( regionStats.stats() );
 
         writeStats( 3, region.getName(), tableRegionsData, regionStats );
-        writeStatsToCSV( region.getName(), regionStats, false );
+        writeStatsToCSV( csvData, regionStats );
       } );
 
       outputStatsToLog( 3, fluxStats.getFluxName(), tableRegionsData );
+      outputStatsToCSV( m_regionsfilename, csvData );
 
       meshLevelStats.stats().combine( fluxStats.stats() );
       writeStats( 2, viewKeyStruct::allRegionWrapperString(), tableFluxData, fluxStats );
-      writeStatsToCSV( viewKeyStruct::allRegionWrapperString(), fluxStats, false );
+      writeStatsToCSV( csvData, fluxStats );
+
       outputStatsToLog( 2, fluxStats.getFluxName(), tableFluxData );
+      outputStatsToCSV( m_allRegionFluxsfilename, csvData );
 
     } );
     writeStats( 1, viewKeyStruct::allRegionWrapperString(), tableMeshData, meshLevelStats );
-    writeStatsToCSV( viewKeyStruct::allRegionWrapperString(), meshLevelStats, false );
+    writeStatsToCSV( csvData, meshLevelStats );
+
     outputStatsToLog( 1, meshLevelStats.getFluxName(), tableMeshData );
+    outputStatsToCSV( m_allRegionWrapperFluxFilename, csvData );
   } );
   return false;
 }

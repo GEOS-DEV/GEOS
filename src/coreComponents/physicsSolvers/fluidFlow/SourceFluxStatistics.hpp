@@ -26,6 +26,7 @@
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
+#include <map>
 
 namespace geos
 {
@@ -313,6 +314,15 @@ private:
 
   /// the names of the SourceFlux(s) for which we want the statistics
   string_array m_fluxNames;
+  ///
+  TableLayout m_logLayout;
+  TableLayout m_csvLayout;
+
+  string_array m_subRegionsfilename;
+  string_array m_regionsfilename;
+  string_array m_allRegionFluxsfilename;
+  string_array m_allRegionWrapperFluxFilename;
+
 
   /**
    * @copydoc Group::registerDataOnMesh(Group &)
@@ -326,7 +336,8 @@ private:
 
   dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group,
                                                                   string_view fluxName,
-                                                                  string_view elementSetName );
+                                                                  string_view elementSetName,
+                                                                  string_array & filenames );
 
   /**
    * @brief  If requested, collect statistics in a tableData.
@@ -345,7 +356,7 @@ private:
    * @param stats          the statistics that must be output in the log.
    * @param writeHeader    If true, create the CSV with the header. If false, append it with the statistics.
    */
-  void writeStatsToCSV( string_view elementSetName, WrappedStats const & stats, bool writeHeader );
+  void writeStatsToCSV( TableData & tableData, WrappedStats const & stats );
 
   /**
    * @brief If requested, output statistics in the log.
@@ -353,7 +364,13 @@ private:
    * @param statsName The stat name where we collect
    * @param tableMeshData The TableData where we have all collected statistics
    */
-  void outputStatsToLog( int logLevel, string_view statsName, TableData tableMeshData );
+  void outputStatsToLog( int logLevel, string_view statsName, TableData const & tableMeshData );
+
+  /**
+   * @brief If requested, output statistics in csv.
+   * @param csvData The TableData where we have all collected statistics
+   */
+  void outputStatsToCSV( string_array const & filenames, TableData & csvData );
 
 };
 
