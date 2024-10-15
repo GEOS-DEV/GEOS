@@ -21,6 +21,8 @@
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
+#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
+
 
 namespace geos
 {
@@ -340,8 +342,8 @@ void WellControls::postInputInitialization()
   else if( m_targetBHP <= 0.0 && m_targetBHPTableName.empty() )
   {
     m_targetBHP = isProducer() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
-    GEOS_LOG_LEVEL_RANK_0( 1, "WellControls " << getDataContext() << ": Setting " << viewKeyStruct::targetBHPString() << " to default value "
-                                              << m_targetBHP << "." );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
+                                GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
   }
 
   // 6.2) Check incoherent information
