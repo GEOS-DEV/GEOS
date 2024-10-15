@@ -54,7 +54,7 @@ EventManager::EventManager( string const & name,
     setDescription( "Start simulation time for the global event loop." );
 
   registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
-    setApplyDefaultValue( std::numeric_limits< real64 >::max() ).
+    setApplyDefaultValue( std::numeric_limits< integer >::max() * units::YearSeconds ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation time for the global event loop. Disabled by default." );
 
