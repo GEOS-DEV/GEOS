@@ -481,10 +481,12 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="0" />
+                          fluxNames="{*}"
+                          logLevel="3" />
     <SourceFluxStatistics name="wholeSimFluxStats"
+                          fluxNames="{*}"
                           flowSolverName="testSolver"
-                          logLevel="0" />
+                          logLevel="3" />
 
     <SinglePhaseStatistics name="timeStepReservoirStats"
                            flowSolverName="testSolver"
@@ -726,10 +728,12 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          fluxNames="{*}"
+                          logLevel="3" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          fluxNames="{*}"
+                          logLevel="3" />
 
     <CompositionalMultiphaseStatistics name="timeStepReservoirStats"
                                        flowSolverName="testSolver"
@@ -998,10 +1002,12 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          fluxNames="{*}"
+                          logLevel="3" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          fluxNames="{*}"
+                          logLevel="3" />
 
     <CompositionalMultiphaseStatistics name="timeStepReservoirStats"
                                        flowSolverName="testSolver"
