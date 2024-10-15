@@ -42,6 +42,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -1336,8 +1337,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
 
       if( !subRegionData.localMinVal )
       {
-        GEOS_LOG_LEVEL( 1, "Solution is invalid in well " << subRegion.getName()
-                                                          << " (either a negative pressure or a negative component density was found)." );
+        GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
+                                    GEOS_FMT( "Solution is invalid in well {} (either a negative pressure or a negative component density was found)", subRegion.getName()) );
       }
 
       localCheck = std::min( localCheck, subRegionData.localMinVal );
@@ -1596,9 +1597,9 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
 {
   GEOS_MARK_FUNCTION;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+                                                                 MeshLevel const & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1641,7 +1642,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
                                                          subRegion.getTopWellElementIndex(),
                                                          m_targetPhaseIndex,
                                                          wellControls,
-                                                         time_n + dt, // controls evaluated with BHP/rate of the end of step
+                                                         time_n + dt,   // controls evaluated with BHP/rate of the end of step
                                                          wellElemDofNumber,
                                                          wellElemGravCoef,
                                                          nextWellElemIndex,
@@ -1665,25 +1666,26 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           if( wellControls.isProducer() )
           {
             wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( timeAtEndOfStep ) );
-            GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                          << " from BHP constraint to phase volumetric rate constraint" );
+            GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
+                                        GEOS_FMT( "Control switch for well {} from BHP constraint to phase volumetric rate constraint", subRegion.getName() ) );
           }
           else
           {
             wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
-            GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                          << " from BHP constraint to total volumetric rate constraint" );
+            GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
+                                        GEOS_FMT( "Control switch for well {} from BHP constraint to total volumetric rate constraint", subRegion.getName()) );
           }
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
-          GEOS_LOG_LEVEL( 1, "Control switch for well " << subRegion.getName()
-                                                        << " from rate constraint to BHP constraint" );
+          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
+                                      GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName() ) );
         }
       }
     } );
-  } );
+  }
+                                   );
 }
 
 void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
@@ -1950,4 +1952,4 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseWell, string const &, Group * const )
-} // namespace geos
+}     // namespace geos
