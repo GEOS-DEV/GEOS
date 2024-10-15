@@ -459,7 +459,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   // check anelasticity coefficient and/or compute it if needed
   if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
   {
-    initializeAnelasticityCoefficients< elasticfields::ElasticQualityFactorP, elasticfields::ElasticQualityFactorS >();
+    initializeAnelasticityCoefficients< elasticfields::ElasticQualityFactorP, elasticfields::ElasticQualityFactorS >( domain );
   }
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );

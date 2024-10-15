@@ -27,8 +27,6 @@
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "WaveSolverUtils.hpp"
 #include "events/EventManager.hpp"
 
 #include <limits>
@@ -539,50 +537,5 @@ bool WaveSolverBase::directoryExists( std::string const & directoryName )
   struct stat buffer;
   return stat( directoryName.c_str(), &buffer ) == 0;
 }
-
-template< typename F, typename T >
-real32 WaveSolverBase::computeGlobalMinOfElemField()
-{
-  RAJA::ReduceMin< ReducePolicy< EXEC_POLICY >, T > minF( LvArray::NumericLimits< T >::max );
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          CellElementSubRegion & elementSubRegion )
-    {
-      arrayView1d< T const > const f = elementSubRegion.getField< F >();
-      forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const e ) {
-        minF.min( f[e] );
-      } );
-    } );
-  } );
-  T minFVal = minF.get();
-  return MpiWrapper::min< T >( minFVal );
-}
-
-template< typename... Qs >
-void WaveSolverBase::initializeAnelasticityCoefficients()
-{
-  // compute miniumum quality factor
-  real32 minQVal = LvArray::NumericLimits< real32>::max;
-  ( minQVal = std::min( minQVal, computeGlobalMinOfElemField< Qs >() ), ... ); 
-  if( m_slsAnelasticityCoefficients.size( 0 ) == 1 && m_slsAnelasticityCoefficients[ 0 ] < 0 )
-  {
-    m_slsAnelasticityCoefficients[ 0 ] = 2.0 * minQVal / ( minQVal - 1.0 );
-  }
-  // test if anelasticity is too high and artifacts could appear
-  real32 ySum = 0.0;
-  for( integer l = 0; l < m_slsAnelasticityCoefficients.size( 0 ); l++ )
-  {
-    ySum += m_slsAnelasticityCoefficients[ l ];
-  }
-  GEOS_WARNING_IF( ySum > minQVal, "The anelasticity parameters are too high for the given quality factor. This could lead to solution artifacts such as zero-velocity waves." );
-  
-}
-
-
 
 } /* namespace geos */
