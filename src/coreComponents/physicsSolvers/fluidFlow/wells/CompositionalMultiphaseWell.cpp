@@ -37,10 +37,14 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/AccumulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/GlobalComponentFractionKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseVolumeFractionKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -1281,7 +1285,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
       // check that pressure and component densities are non-negative
       auto const subRegionData =
         compositionalMultiphaseWellKernels::
-          ScalingForSystemSolutionKernelFactory::
+          SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,

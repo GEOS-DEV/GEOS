@@ -736,7 +736,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      FaceBasedAssemblyKernelFactory::
+      FluxComputeKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                    m_numComponents,
                                                    m_enableEnergyBalance,
