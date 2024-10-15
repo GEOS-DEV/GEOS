@@ -138,6 +138,24 @@ public:
   void computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                              localIndex const subRegionSize,
                              localIndex const numQuadraturePointsPerElem );
+ 
+ /**
+  * @brief Computes the minimum value of the given element field over the whole mesh. 
+  * @param[in] F The type of the field whose minimum must be computed
+  * @param[in] T The data type of the field
+  * @eturn the minimum value
+  */ 
+  template< typename F, typename T >
+  real32 computeGlobalMinOfElemField();
+
+  /**
+  * @brief Initializes the anealsticity coefficients if needed, and checks that the anealsticity values 
+  * are within a valid range. Gives a warning if not. 
+  * @param[in] Qs the quality factor fields used to compute the anelasticity value if not given
+  */ 
+  template< typename... Qs >
+  void initializeAnelasticityCoefficients();
+
 
 protected:
 

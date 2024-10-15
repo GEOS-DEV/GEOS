@@ -67,22 +67,6 @@ DECLARE_FIELD( DivPsi,
                WRITE_AND_READ,
                "memory variable for acoustic attenuation." );
 
-DECLARE_FIELD( DivPsi_p,
-               "divpsi_p",
-               array2d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "p-type memory variable for acoustic VTI attenuation." );
-
-DECLARE_FIELD( DivPsi_q,
-               "divpsi_q",
-               array2d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "q-type memory variable for acoustic VTI attenuation." );
-
 DECLARE_FIELD( PressureDoubleDerivative,
                "pressureDoubleDerivative",
                array1d< real32 >,
@@ -154,22 +138,6 @@ DECLARE_FIELD( StiffnessVectorA,
                NOPLOT,
                WRITE_AND_READ,
                "acoustic attenuation stiffness vector." );
-
-DECLARE_FIELD( StiffnessVectorA_p,
-               "stiffnessVectorA_p",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "p-type acoustic attenuation stiffness vector." );
-
-DECLARE_FIELD( StiffnessVectorA_q,
-               "stiffnessVectorA_q",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "q-type acoustic attenuation stiffness vector." );
 
 DECLARE_FIELD( DampingVector,
                "dampingVector",

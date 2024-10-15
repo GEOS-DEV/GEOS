@@ -119,7 +119,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitAcousticSEMBase Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -179,7 +179,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitAcousticSEMBase Description
    * Calculates stiffness vector
    *
    */
@@ -241,7 +241,7 @@ public:
   using Base = ExplicitAcousticSEMBase< SUBREGION_TYPE,
                                         CONSTITUTIVE_TYPE,
                                         FE_TYPE,
-                                        fields::acousticfields::StiffnessVector >;
+                                        fields::acousticfields::StiffnessVectorA >;
 
 //*****************************************************************************
   /**
@@ -269,7 +269,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           dt ),
-    m_qualityFactor( elementSubRegion.template getField< fields::acousticfields::AcusticQualityFactor >() ),
+    m_qualityFactor( elementSubRegion.template getField< fields::acousticfields::AcousticQualityFactor >() )
   {}
 
   /**
@@ -283,7 +283,7 @@ public:
               typename Base::StackVariables & stack ) const
   {
     Base::setup( k, stack );
-    stack.invDensity = stack.invDensity * m_qualityFactor[ k ];
+    stack.invDensity = stack.invDensity / m_qualityFactor[ k ];
   }
 
 protected:
