@@ -343,20 +343,19 @@ private:
    * @brief  If requested, collect statistics in a tableData.
    * @param logLevel  the min log level to collect any statistics.
    * @param regionName The region name where we collect statistics
-   * @param tableData The table data where we collect all region statistics
+   * @param tableData The table data where we collect statistics
    * @param wrappedStats the statistics that must be retrieved.
    */
-  void writeStats( int logLevel,
-                   string_view regionName,
-                   TableData & tableData,
-                   WrappedStats const & wrappedStats );
+  void gatherStatsForLog( int logLevel,
+                          string_view regionName,
+                          TableData & tableData,
+                          WrappedStats const & wrappedStats );
   /**
    * @brief If CSV is enabled, create or append a new CSV file.
-   * @param elementSetName the region / sub-subregion name concerned by the statistics.
-   * @param stats          the statistics that must be output in the log.
-   * @param writeHeader    If true, create the CSV with the header. If false, append it with the statistics.
+   * @param tableData The TableData where we collect the statistics
+   * @param stats the statistics that must be retrieved.
    */
-  void writeStatsToCSV( TableData & tableData, WrappedStats const & stats );
+  void gatherStatsForCSV( TableData & tableData, WrappedStats const & stats );
 
   /**
    * @brief If requested, output statistics in the log.
@@ -368,6 +367,7 @@ private:
 
   /**
    * @brief If requested, output statistics in csv.
+   * @param filenames String array containing all filenames to be generated
    * @param csvData The TableData where we have all collected statistics
    */
   void outputStatsToCSV( string_array const & filenames, TableData & csvData );

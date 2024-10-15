@@ -152,7 +152,7 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SourceFluxStatsAggregator::writeStats( int logLevel,
+void SourceFluxStatsAggregator::gatherStatsForLog( int logLevel,
                                             string_view regionName,
                                             TableData & tableData,
                                             WrappedStats const & wrappedStats )
@@ -199,7 +199,7 @@ void SourceFluxStatsAggregator::outputStatsToCSV( string_array const & filenames
   }
 }
 
-void SourceFluxStatsAggregator::writeStatsToCSV( TableData & tableData, WrappedStats const & stats )
+void SourceFluxStatsAggregator::gatherStatsForCSV( TableData & tableData, WrappedStats const & stats )
 {
   if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
@@ -242,23 +242,23 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
         } );
         fluxStats.stats().combine( regionStats.stats() );
 
-        writeStats( 3, region.getName(), tableRegionsData, regionStats );
-        writeStatsToCSV( csvData, regionStats );
+        gatherStatsForLog( 3, region.getName(), tableRegionsData, regionStats );
+        gatherStatsForCSV( csvData, regionStats );
       } );
 
       outputStatsToLog( 3, fluxStats.getFluxName(), tableRegionsData );
       outputStatsToCSV( m_regionsfilename, csvData );
 
       meshLevelStats.stats().combine( fluxStats.stats() );
-      writeStats( 2, viewKeyStruct::allRegionWrapperString(), tableFluxData, fluxStats );
-      writeStatsToCSV( csvData, fluxStats );
+      gatherStatsForLog( 2, viewKeyStruct::allRegionWrapperString(), tableFluxData, fluxStats );
+      gatherStatsForCSV( csvData, fluxStats );
 
       outputStatsToLog( 2, fluxStats.getFluxName(), tableFluxData );
       outputStatsToCSV( m_allRegionFluxsfilename, csvData );
 
     } );
-    writeStats( 1, viewKeyStruct::allRegionWrapperString(), tableMeshData, meshLevelStats );
-    writeStatsToCSV( csvData, meshLevelStats );
+    gatherStatsForLog( 1, viewKeyStruct::allRegionWrapperString(), tableMeshData, meshLevelStats );
+    gatherStatsForCSV( csvData, meshLevelStats );
 
     outputStatsToLog( 1, meshLevelStats.getFluxName(), tableMeshData );
     outputStatsToCSV( m_allRegionWrapperFluxFilename, csvData );
