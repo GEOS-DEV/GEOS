@@ -137,7 +137,7 @@ DECLARE_FIELD( StiffnessVectorA,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "acoustic attenuation stiffness vector." );
+               "Acoustic attenuation stiffness vector." );
 
 DECLARE_FIELD( DampingVector,
                "dampingVector",

@@ -663,6 +663,11 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::Pressure_p_np1::key() } );
     fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::Pressure_q_np1::key() } );
 
+   if( m_slsReferenceAngularFrequencies.size( 0 ) > 0 )
+   {
+     fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::DivPsi_p::key(), acousticvtifields::DivPsi_q::key() } );
+   }
+
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
                                   mesh,

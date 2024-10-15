@@ -1031,11 +1031,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     GEOS_MARK_SCOPE ( updateP );
     if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
     {
-      AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
-                                                 rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
-    }
-    else
-    {
       arrayView1d< real32 > const stiffnessVectorA = nodeManager.getField< acousticfields::StiffnessVectorA >();
       arrayView2d< real32 > const divpsi = nodeManager.getField< acousticfields::DivPsi >();
       arrayView1d< real32 > const referenceFrequencies = m_slsReferenceAngularFrequencies.toView();
@@ -1043,6 +1038,11 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
       AcousticTimeSchemeSEM::AttenuationLeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, divpsi, mass, stiffnessVector, stiffnessVectorA, 
                                                             damping, rhs, freeSurfaceNodeIndicator, solverTargetNodesSet, referenceFrequencies,
                                                             anelasticityCoefficients );
+    }
+    else
+    {
+      AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
+                                                 rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
     }
   }
   else
@@ -1127,6 +1127,11 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   /// synchronize pressure fields
   FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addFields( FieldLocation::Node, { acousticfields::Pressure_np1::key() } );
+
+  if( m_slsReferenceAngularFrequencies.size( 0 ) > 0 )
+  {
+    fieldsToBeSync.addFields( FieldLocation::Node, { acousticfields::DivPsi::key() } );
+  }
 
   if( m_usePML )
   {

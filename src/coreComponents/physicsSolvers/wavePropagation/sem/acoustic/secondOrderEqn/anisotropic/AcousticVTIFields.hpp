@@ -80,7 +80,7 @@ DECLARE_FIELD( StiffnessVectorA_p,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "p-type acoustic attenuation stiffness vector." );
+               "P-type acoustic attenuation stiffness vector." );
 
 DECLARE_FIELD( StiffnessVectorA_q,
                "stiffnessVectorA_q",
@@ -88,7 +88,7 @@ DECLARE_FIELD( StiffnessVectorA_q,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "q-type acoustic attenuation stiffness vector." );
+               "Q-type acoustic attenuation stiffness vector." );
 
 DECLARE_FIELD( Pressure_p_nm1,
                "pressure_p_nm1",
