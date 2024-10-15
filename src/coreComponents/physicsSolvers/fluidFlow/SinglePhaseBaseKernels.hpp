@@ -152,6 +152,7 @@ public:
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
     m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
+    m_wellBoreVolume( subRegion.template getField< fields::flow::wellBoreVolume >() ),
     m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
     m_density( fluid.density() ),
@@ -213,7 +214,7 @@ public:
               StackVariables & stack ) const
   {
     // initialize the pore volume
-    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosity[ei][0];
+    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosity[ei][0] + m_wellBoreVolume[ei];
     stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
 
     // set row index and degrees of freedom indices for this element
@@ -308,6 +309,7 @@ protected:
   /// View on the element volumes
   arrayView1d< real64 const > const m_volume;
   arrayView1d< real64 const > const m_deltaVolume;
+  arrayView1d< real64 const > const m_wellBoreVolume;
 
   /// Views on the porosity
   arrayView2d< real64 const > const m_porosity;

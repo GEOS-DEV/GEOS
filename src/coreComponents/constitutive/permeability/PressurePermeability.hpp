@@ -44,7 +44,7 @@ public:
 
   PressurePermeabilityUpdate( PressureModelType const & presModelType,
                               R1Tensor const pressureDependenceConstants,
-                              real64 const & referencePressure,
+                              arrayView1d< real64 > const & referencePressure,
                               real64 const & maxPermeability,
                               arrayView3d< real64 > const & referencePermeability,
                               arrayView3d< real64 > const & permeability,
@@ -80,7 +80,7 @@ public:
   {
     GEOS_UNUSED_VAR( q, porosity );
 
-    real64 const deltaPressure = pressure - m_referencePressure;
+    real64 const deltaPressure = pressure - m_referencePressure[k];
 
     real64 referencePermeability[3];
 
@@ -127,7 +127,7 @@ private:
   R1Tensor m_pressureDependenceConstants;
 
   /// Reference pressure in the model
-  real64 const m_referencePressure;
+  arrayView1d< real64 >  const m_referencePressure;
 
   /// Maximum permeability
   real64 const m_maxPermeability;
@@ -175,6 +175,7 @@ public:
   {
     static constexpr char const * referencePermeabilityComponentsString() { return "referencePermeabilityComponents"; }
     static constexpr char const * pressureDependenceConstantsString() { return "pressureDependenceConstants"; }
+    static constexpr char const * defaultReferencePressureString() { return "defaultReferencePressure"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * referencePermeabilityString() { return "referencePermeability"; }
     static constexpr char const * maxPermeabilityString() { return "maxPermeability"; }
@@ -196,7 +197,8 @@ private:
   R1Tensor m_pressureDependenceConstants;
 
   /// Reference pressure in the model
-  real64 m_referencePressure;
+  real64 m_defaultReferencePressure;
+  array1d< real64 > m_referencePressure;
 
   /// Maximum permeability
   real64 m_maxPermeability;
