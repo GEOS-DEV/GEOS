@@ -60,7 +60,7 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::pressureModelTypeString(), &m_presModelType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( PressureModelType::Hyperbolic ).
+    setApplyDefaultValue( PressureModelType::Exponential ).
     setDescription( "Type of the pressure dependence model. " );
 }
 
