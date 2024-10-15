@@ -45,7 +45,7 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string representing a row
    */
-  void addRow( std::vector< string > const & row );
+  void addRow( std::vector< string >  & row );
 
   /**
    * @brief Reset data in the table

@@ -22,7 +22,7 @@
 namespace geos
 {
 
-void TableData::addRow( std::vector< string > const & row )
+void TableData::addRow( std::vector< string > & row )
 {
   if( m_rows.size() != 0 && row.size() != m_rows[m_rows.size() - 1].size() )
   {

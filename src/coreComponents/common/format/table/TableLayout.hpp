@@ -181,6 +181,8 @@ public:
 
   };
 
+  using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
+
   TableLayout() = default;
 
   /**
@@ -189,10 +191,38 @@ public:
    * @param args An initializer_list containing string / column
    */
   TableLayout( string_view title,
-               std::initializer_list< std::variant< string, TableLayout::Column > > args )
+               std::vector< TableLayout::Column > & columns )
   {
     setMargin( MarginValue::medium );
     setTitle( title );
+    for( auto const & column :columns )
+    {
+      addToColumns( column );
+    }
+  }
+
+  /**
+   * @brief Construct a new Table Layout object
+   * @param title The table title
+   * @param args An initializer_list containing string / column
+   */
+  TableLayout( string_view title,
+               TableLayoutArgs args )
+  {
+    setMargin( MarginValue::medium );
+    setTitle( title );
+    processArguments( args );
+  }
+
+  /**
+   * @brief Construct a new Table Layout object
+   * @param title The table title
+   * @param args An initializer_list containing string / column
+   */
+
+  TableLayout( TableLayoutArgs  args )
+  {
+    setMargin( MarginValue::medium );
     processArguments( args );
   }
 
@@ -207,18 +237,6 @@ public:
     setMargin( MarginValue::medium );
     setTitle( title );
     addToColumns( args );
-  }
-
-  /**
-   * @brief Construct a new Table Layout object
-   * @tparam Args Process only string, vector < string > and Column  type
-   * @param args Variadics to be processed
-   */
-  template< typename ... Args >
-  TableLayout( Args &&... args )
-  {
-    setMargin( MarginValue::medium );
-    processArguments( std::forward< Args >( args )... );
   }
 
   /**
@@ -295,7 +313,7 @@ private:
    * @brief Add a column to the table given an initializer_list of string & TableColumnData
    * @param args An initializer_list containing string / column
    */
-  void processArguments( std::initializer_list< std::variant< string, TableLayout::Column > > args )
+  void processArguments( TableLayoutArgs args )
   {
     for( auto const & arg : args )
     {
