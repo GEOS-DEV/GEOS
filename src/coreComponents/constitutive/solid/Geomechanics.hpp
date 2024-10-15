@@ -110,7 +110,7 @@ public:
                        real64 const & cr,
                        real64 const & fluidBulkModulus,
                        real64 const & fluidInitialPressure,
-                       int const & creep,
+                       int const & enableCreep,
                        real64 const & creepC0,
                        real64 const & creepC1,
                        real64 const & creepA,
@@ -163,7 +163,7 @@ public:
     m_cr( cr ),
     m_fluidBulkModulus( fluidBulkModulus ),
     m_fluidInitialPressure( fluidInitialPressure ),
-    m_creep( creep ),
+    m_enableCreep( enableCreep ),
     m_creepC0( creepC0 ),
     m_creepC1( creepC1 ),
     m_creepA( creepA ),
@@ -420,13 +420,8 @@ public:
 		                           const real64 & coher,
                                const real64 & hardening ) const;
 
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  virtual void saveConvergedState( localIndex const k,
-                                   localIndex const q ) const override final
-  {
-    SolidBaseUpdates::saveConvergedState( k, q );
-  }
+  /// Use base version of saveConvergedState
+  using SolidBaseUpdates::saveConvergedState;
 
 private:
   real64 const & m_b0;
@@ -455,7 +450,7 @@ private:
   real64 const & m_cr;
   real64 const & m_fluidBulkModulus;
   real64 const & m_fluidInitialPressure;
-  int const & m_creep;
+  int const & m_enableCreep;
   real64 const & m_creepC0;
   real64 const & m_creepC1;
   real64 const & m_creepA;
@@ -559,6 +554,16 @@ void GeomechanicsUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                 endRotation,
                                                 stress );
 
+  // GEOS_LOG_RANK( "After stress update | k: " << k << ", " << 
+  //                 "porosity: " << m_porosity[k] << ", " << 
+  //                 "damage: " << m_damage[k] << ", " << 
+  //                 "stress: {" << stress[0] << ", " << 
+  //                               stress[1] << ", " << 
+  //                               stress[2] << ", " << 
+  //                               stress[3] << ", " << 
+  //                               stress[4] << ", " << 
+  //                               stress[5] << "}" );
+
   // save new stress and return
   saveStress( k, q, stress );
 }
@@ -576,6 +581,9 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   // GEOS_UNUSED_VAR( timeIncrement );
   // GEOS_UNUSED_VAR( endRotation );
   
+  real64 beginningRotationTranspose[3][3] = { { 0.0 } };
+  LvArray::tensorOps::transpose< 3, 3 >( beginningRotationTranspose, beginningRotation );
+
   //  temp matrix for computing rotations.
   real64 tempMat[ 3 ][ 3 ]= { { 0 } };
   
@@ -597,29 +605,28 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // unrotated beginning-of-step stress:  sigma_old_unrotated = R_old^T*sigma_old*R_old
   real64 oldStress[6] = { 0 };
-  real64 denseStress[3][3] = { { 0 } };
-  LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q] ); 
-  LvArray::tensorOps::symmetricToDense<3>( denseStress, oldStress );
-  LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( tempMat, beginningRotation, denseStress );
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( denseStress, tempMat, beginningRotation );
-  LvArray::tensorOps::denseToSymmetric<3>( oldStress, denseStress );
-  
+  LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q] );
+
   // unrotated beginning-of-step plastic strain
-  real64 oldPlasticStrain[6] = {0.};
-  real64 densePlasticStrain[3][3] = { { 0 } };
-  LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] ); 
-  LvArray::tensorOps::symmetricToDense<3>( densePlasticStrain, oldPlasticStrain );
-  LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( tempMat, beginningRotation, densePlasticStrain );
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( densePlasticStrain, tempMat, beginningRotation );
-  LvArray::tensorOps::denseToSymmetric<3>( oldPlasticStrain, densePlasticStrain );
-   
+  real64 oldPlasticStrain[6] = { 0.0 };
+  m_plasticStrain[k][q][3] *= 0.5;
+  m_plasticStrain[k][q][4] *= 0.5;
+  m_plasticStrain[k][q][5] *= 0.5;
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( oldPlasticStrain, beginningRotationTranspose, m_plasticStrain[k][q] );
+  m_plasticStrain[k][q][3] *= 2.0;
+  m_plasticStrain[k][q][4] *= 2.0;
+  m_plasticStrain[k][q][5] *= 2.0; // This gets overriden at end of scope so might not need to correct it again, but here just in case
+  oldPlasticStrain[3] *= 2.0;
+  oldPlasticStrain[4] *= 2.0;
+  oldPlasticStrain[5] *= 2.0;
+
   // Update effective elastic properties
   m_bulkModulus[k] = m_b0 + m_b1;
   m_shearModulus[k] = m_g0;
   
   // MH:TODO set wavespeed based on actual pressure-dependent bulk modulus, not the high-pressure limit.
   // m_wavespeed[k][0] = sqrt( ( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
-  m_wavespeed[k][0] = sqrt( ( m_b0 + m_b1 + (4.0/3.0) * m_g0 ) / m_density[k][0] );  //MH: should this be [0] or [q]?
+  m_wavespeed[k][0] = sqrt( ( m_b0 + m_b1 + (4.0/3.0) * m_g0 ) / m_density[k][q] );  //MH: should this be [0] or [q]?
 
   real64 characteristicLength = m_lengthScale[k];
   real64 oldZeta = 0.0;
@@ -631,39 +638,53 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 newStress[6] = {0.};
   real64 newPlasticStrain[6] = {0.};
 
-  int errorFlag;
-  errorFlag = computeStep( D,               // strain "rate"
-               timeIncrement,                     // time step (s)
-               characteristicLength,                    // length scale
-               oldZeta,                 // trace of isotropic backstress at start of step(t_n)
-               oldCoher,                // scalar-valued coherence at start of step(t_n)
-						   oldPorosity,             // scalar-valued coherence at start of step(t_n)
-						   oldStress,         // unrotated stress at start of step(t_n)
-               oldPlasticStrain,            // plastic strain at start of step(t_n)
-               newZeta,                        // trace of isotropic backstress at end of step(t_n+1)
-               newCoher,                       // scalar-valued coherence at end of step(t_n+1)
-						   newPorosity,                    // scalar-valued porosity at end of step(t_n+1)
-						   newStress,         // unrotated stress at end of step(t_n+1)
-               newPlasticStrain );           // plastic strain at end of step(t_n+1)
+  int errorFlag = computeStep( D,               // strain "rate"
+                               timeIncrement,                     // time step (s)
+                               characteristicLength,                    // length scale
+                               oldZeta,                 // trace of isotropic backstress at start of step(t_n)
+                               oldCoher,                // scalar-valued coherence at start of step(t_n)
+						                   oldPorosity,             // scalar-valued coherence at start of step(t_n)
+						                   oldStress,         // unrotated stress at start of step(t_n)
+                               oldPlasticStrain,            // plastic strain at start of step(t_n)
+                               newZeta,                        // trace of isotropic backstress at end of step(t_n+1)
+                               newCoher,                       // scalar-valued coherence at end of step(t_n+1)
+						                   newPorosity,                    // scalar-valued porosity at end of step(t_n+1)
+						                   newStress,         // unrotated stress at end of step(t_n+1)
+                               newPlasticStrain );           // plastic strain at end of step(t_n+1)
+
+  // GEOS_LOG_RANK( "k: " << k << ", " << 
+  //                "errorFlag: " << errorFlag << ", "
+  //                 "oldPorosity: " << oldPorosity << ", " << 
+  //                 "newPorosity: " << newPorosity << ", " << 
+  //                 "damage: " << m_damage[k] << ", " << 
+  //                 "oldStress: {" << oldStress[0] << ", " << 
+  //                                   oldStress[1] << ", " << 
+  //                                   oldStress[2] << ", " << 
+  //                                   oldStress[3] << ", " << 
+  //                                   oldStress[4] << ", " << 
+  //                                   oldStress[5] << "}, " << 
+  //                 "newStress: {" << newStress[0] << ", " << 
+  //                                newStress[1] << ", " << 
+  //                                newStress[2] << ", " << 
+  //                                newStress[3] << ", " << 
+  //                                newStress[4] << ", " << 
+  //                                newStress[5] << "}" );
 
   if (errorFlag == 1)
   {
-    GEOS_ERROR( "geomechanics model failed to converge." );
+    GEOS_ERROR( "Geomechanics model failed to converge." );
   }
 
-  // re-rotate end-of-step stress: sigma_new = R_new*sigma_new*R_new^T
-  LvArray::tensorOps::symmetricToDense<3>( denseStress, newStress );
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( tempMat, endRotation, denseStress );
-  LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( denseStress, tempMat, endRotation );
-  LvArray::tensorOps::denseToSymmetric<3>( newStress, denseStress );
   LvArray::tensorOps::copy< 6 >( stress, newStress ); // Copy to material data:
 
   // re-rotate end-of-step plastic strain: ep_new = R_new*ep_new*R_new^T
-  LvArray::tensorOps::symmetricToDense<3>( densePlasticStrain, newPlasticStrain );
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( tempMat, endRotation, densePlasticStrain );
-  LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( densePlasticStrain, tempMat, endRotation );
-  LvArray::tensorOps::denseToSymmetric<3>( newPlasticStrain, densePlasticStrain );
-  LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain ); // Copy to material data:
+  newPlasticStrain[3] *= 0.5;
+  newPlasticStrain[4] *= 0.5;
+  newPlasticStrain[5] *= 0.5;
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( m_plasticStrain[k][q], endRotation, newPlasticStrain );
+  m_plasticStrain[k][q][3] *= 2.0;
+  m_plasticStrain[k][q][4] *= 2.0;
+  m_plasticStrain[k][q][5] *= 2.0;
 
   m_damage[k][q] = 1. - newCoher; // Copy to material data:
   m_porosity[k][q] = newPorosity; // Copy to material data:
@@ -736,10 +757,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
           coher_new;  								                // coher at end of substep
 
 
-  real64 sigma_old[6];                                // sigma at start of substep
-  real64 sigma_new[6];                                // sigma at end of substep
-  real64 ep_old[6];                                   // plastic strain at start of substep
-  real64 ep_new[6];                                   // plastic strain at end of substep
+  real64 sigma_old[6] = { 0.0 };                                // sigma at start of substep
+  real64 sigma_new[6] = { 0.0 };                                // sigma at end of substep
+  real64 ep_old[6] = { 0.0 };                                   // plastic strain at start of substep
+  real64 ep_new[6] = { 0.0 };                                   // plastic strain at end of substep
 
   real64 bulk, shear;
 
@@ -750,6 +771,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
   // of substeps and stable time steps.
   computeElasticProperties( bulk, 
                             shear ); 
+
   //Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
   real64 sigma_trial[6] = { 0 };
   computeHypoelasticTrialStress( Dt,              // full time step
@@ -818,7 +840,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 	// -------------------------------------------------------------------------------
 	// Apply creep to relax deviatoric stress for the whole step, this will be
   // the starting point for the plasticity solution.
-	if ( m_creep == 1 )
+	if ( m_enableCreep == 1 )
 	{
 		real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
@@ -999,9 +1021,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     return stepFlag;
 
   // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
+  // CC: TODO pass model particle delete flag
   failedStep:
     // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-    Zeta_p    = Zeta_n;
+    Zeta_p = Zeta_n;
     coher_p = coher_n;
     // sigma_p   = sigma_n;
     // ep_p      = ep_n;
@@ -2489,7 +2512,7 @@ public:
     static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
 
     /// string/key for creep flag
-    static constexpr char const * creepString() { return "creep"; }
+    static constexpr char const * creepString() { return "enableCreep"; }
 
     /// string/key for creep C0 parameter
     static constexpr char const * creepC0String() { return "creepC0"; }
@@ -2566,7 +2589,7 @@ public:
                                 m_cr,
                                 m_fluidBulkModulus,
                                 m_fluidInitialPressure,
-                                m_creep,
+                                m_enableCreep,
                                 m_creepC0,
                                 m_creepC1,
                                 m_creepA,
@@ -2626,7 +2649,7 @@ public:
                           m_cr,
                           m_fluidBulkModulus,
                           m_fluidInitialPressure,
-                          m_creep,
+                          m_enableCreep,
                           m_creepC0,
                           m_creepC1,
                           m_creepA,
@@ -2766,7 +2789,9 @@ protected:
   real64 m_fluidBulkModulus;
   real64 m_fluidInitialPressure;
 
-  int m_creep;
+  // Flag to enable creep
+  int m_enableCreep;
+
   // deviatoric creep parameters
   real64 m_creepC0;
   real64 m_creepC1;

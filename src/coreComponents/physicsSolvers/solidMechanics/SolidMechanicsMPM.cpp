@@ -2192,15 +2192,27 @@ void SolidMechanicsMPM::initializeConstitutiveModelDependencies( ParticleManager
     // Get constitutive model reference
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    
     if( constitutiveModel.hasWrapper( "strengthScale" ) )
     {
-      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       arrayView1d< real64 > const particleStrengthScale = subRegion.getParticleStrengthScale();
       arrayView1d< real64 > const constitutiveStrengthScale = constitutiveModel.getReference< array1d< real64 > >( "strengthScale" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveStrengthScale[p] = particleStrengthScale[p];
+      } );
+    }
+
+    if( constitutiveModel.hasWrapper( "porosity" ) )
+    {
+      arrayView1d< real64 > const particlePorosity = subRegion.getParticlePorosity();
+      arrayView2d< real64 > const constitutivePorosity = constitutiveModel.getReference< array2d< real64 > >( "porosity" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        constitutivePorosity[p][0] = particlePorosity[p];
       } );
     }
   } );
@@ -5555,7 +5567,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if(  constitutiveModel.hasWrapper( "density" ) )
+    if(  constitutiveModel.hasWrapper( "density" ) ) // This may also need to be updated in the solver after a stress solve for models that change it
     {
       arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
       arrayView2d< real64 > const constitutiveDensity = constitutiveModel.getReference< array2d< real64 > >( "density" );
