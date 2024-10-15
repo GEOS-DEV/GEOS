@@ -329,12 +329,16 @@ private:
                                                                   string_view elementSetName );
 
   /**
-   * @brief If requested, output in the log and CSV the given statistics.
-   * @param minLogLevel    the min log level to output any line.
-   * @param elementSetName the region / sub-subregion name concerned by the statistics.
-   * @param stats          the statistics that must be output in the log.
+   * @brief  If requested, collect statistics in a tableData.
+   * @param logLevel  the min log level to collect any statistics.
+   * @param regionName The region name where we collect statistics
+   * @param tableData The table data where we collect all region statistics
+   * @param wrappedStats the statistics that must be retrieved.
    */
-  void writeStatsToLog( integer minLogLevel, TableData & tableData, WrappedStats const & stats );
+  void writeStats( int logLevel,
+                   string_view regionName,
+                   TableData & tableData,
+                   WrappedStats const & wrappedStats );
   /**
    * @brief If CSV is enabled, create or append a new CSV file.
    * @param elementSetName the region / sub-subregion name concerned by the statistics.
@@ -342,6 +346,14 @@ private:
    * @param writeHeader    If true, create the CSV with the header. If false, append it with the statistics.
    */
   void writeStatsToCSV( string_view elementSetName, WrappedStats const & stats, bool writeHeader );
+
+  /**
+   * @brief If requested, output statistics in the log.
+   * @param logLevel the min log level to output any statistics.
+   * @param statsName The stat name where we collect
+   * @param tableMeshData The TableData where we have all collected statistics
+   */
+  void outputStatsToLog( int logLevel, string_view statsName, TableData tableMeshData );
 
 };
 
