@@ -5,6 +5,7 @@ set( functions_headers
      FunctionBase.hpp
      FunctionManager.hpp
      TableFunction.hpp
+     PythonFunction.hpp
    )
 
 #
@@ -15,6 +16,7 @@ set( functions_sources
      FunctionManager.cpp
      TableFunction.cpp
      MultivariableTableFunction.cpp
+     PythonFunction.cpp
    )
 
 if( ENABLE_MATHPRESSO )

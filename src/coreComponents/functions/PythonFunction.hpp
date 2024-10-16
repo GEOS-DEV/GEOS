@@ -77,29 +77,11 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  PythonFunction( const string & name,
-                  Group * const parent ): 
-                                  dataRepository::Group( name, parent ),
-                                  py_evaluate_func(nullptr), 
-                                  py_derivative_func(nullptr)
-  {
-    // Initialize Python if needed (ensure Python interpreter is initialized)
-    if (!Py_IsInitialized()) 
-      Py_Initialize();
-  }
+  PythonFunction( const string & name, Group * const parent );
   /**
    * @brief Desctructor of a wrapper of python function
    */
-  ~PythonFunction() 
-  {
-    // Decrement reference count for the evaluation function if set
-    if (py_evaluate_func)
-      Py_XDECREF(py_evaluate_func);
-
-    // Decrement reference count for the derivative function if set (optional)
-    if (py_derivative_func)
-      Py_XDECREF(py_derivative_func);
-  }
+  ~PythonFunction();
   /**
    * @brief The catalog name interface
    * @return name of the PythonFunction in the FunctionBase catalog
@@ -111,74 +93,29 @@ public:
    * @param[in] pyFunc pointer to the function
    * @param[in] pyDerivativeFunc pointer to the function evaluating derivatives
    */
-  void setEvaluateFunction(PyObject* pyFunc, PyObject* pyDerivativeFunc = nullptr) 
-  {
-    // Set the evaluation function (required)
-    if (PyCallable_Check(pyFunc)) 
-    {
-      Py_XINCREF(pyFunc);  // Increment reference count for the new function
-      Py_XDECREF(py_evaluate_func);  // Decrement reference count of the old function
-      py_evaluate_func = pyFunc;  // Assign the new function
-    } 
-    else 
-    {
-      throw std::runtime_error("Provided Python evaluation function is not callable.");
-    }
-
-    // Set the derivative function (optional)
-    if (pyDerivativeFunc) 
-    {
-      if (PyCallable_Check(pyDerivativeFunc)) 
-      {
-        Py_XINCREF(pyDerivativeFunc);  // Increment reference count for the new derivative function
-        Py_XDECREF(py_derivative_func); // Decrement reference count of the old derivative function
-        py_derivative_func = pyDerivativeFunc;  // Assign the new derivative function
-      } 
-      else 
-      {
-        throw std::runtime_error("Provided Python derivative function is not callable.");
-      }
-    }
-  }
-
+  void setEvaluateFunction(PyObject* pyFunc, PyObject* pyDerivativeFunc = nullptr);
+  /**
+   * @brief Set dimensions of input and output mapping spaces
+   * 
+   * @param[in] numberOfDimesions dimension of input states
+   * @param[in] numberOfOperators dimension of output operators
+   */
   void setDimensions( integer numberOfDimesions,
-                      integer numberOfOperators )
-  {
-    numDims = numberOfDimesions;
-    numOps = numberOfOperators;
-    numVerts = 1 << numDims;
-  }
-
+                      integer numberOfOperators );
+  /**
+   * @brief Set the properties of parametrization
+   * 
+   * @param[in] numberOfDimesions dimension of input states
+   * @param[in] numberOfOperators dimension of output operators
+   * @param[in] axisMinimums array with state axes' minimums
+   * @param[in] axisMaximums array with state axes' maximums
+   * @param[in] axisPoints array defining number of points along each state axis
+   */
   void setAxes( integer numberOfDimesions,
                 integer numberOfOperators,
                 real64_array axisMinimums,
                 real64_array axisMaximums,
-                integer_array axisPoints )
-  {
-    numDims = numberOfDimesions;
-    numOps = numberOfOperators;
-    numVerts = 1 << numDims;
-
-    m_axisMinimums = axisMinimums;
-    m_axisMaximums = axisMaximums;
-    m_axisPoints = axisPoints;
-
-    m_axisSteps.resize(numDims);
-    m_axisStepInvs.resize(numDims);
-    m_axisHypercubeMults.resize(numDims);
-
-    for( integer dim = 0; dim < numDims; dim++ )
-    {
-      m_axisSteps[dim] = (m_axisMaximums[dim] - m_axisMinimums[dim]) / (m_axisPoints[dim] - 1);
-      m_axisStepInvs[dim] = 1 / m_axisSteps[dim];
-    }
-
-    m_axisHypercubeMults[numDims - 1] = 1;
-    for( integer dim = numDims - 2; dim >= 0; --dim )
-    {
-      m_axisHypercubeMults[dim] = m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1);
-    }
-  }
+                integer_array axisPoints );
   /**
    * @brief interpolate all operators values at a given point
    * 
@@ -358,8 +295,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   unordered_map<longIndex, array1d<real64>> const & 
-  getPointData() const 
-  { return m_pointData; }
+  getPointData() const { return m_pointData; }
   /**
    * @brief Retrieves modifiable point data.
    * @return unordered_map<longIndex, array1d<real64>>&
@@ -368,8 +304,7 @@ public:
   GEOS_HOST_DEVICE  
   inline
   unordered_map<longIndex, array1d<real64>> & 
-  getPointData() 
-  { return m_pointData; }
+  getPointData() { return m_pointData; }
   /**
    * @brief Retrieves constant hypercube data.
    * @return const unordered_map<longIndex, array1d<real64>>&
@@ -378,8 +313,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   unordered_map<longIndex, array1d<real64>> const & 
-  getHypercubeData() const 
-  { return m_hypercubeData; }
+  getHypercubeData() const { return m_hypercubeData; }
   /**
    * @brief Retrieves modifiable hypercube data.
    * @return unordered_map<longIndex, array1d<real64>>&
@@ -388,8 +322,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   unordered_map<longIndex, array1d<real64>> & 
-  getHypercubeData() 
-  { return m_hypercubeData; }
+  getHypercubeData() { return m_hypercubeData; }
     /**
    * @brief Get the axes minimums
    * @return a reference to an array of axes minimums
