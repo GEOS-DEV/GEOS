@@ -35,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/IHU2PhaseFlux.hpp"
 
 namespace geos
 {
@@ -300,6 +301,32 @@ public:
           else if( m_kernelFlags.isSet( FluxComputeKernelFlags::IHU ) )
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
+          }
+          else if( m_kernelFlags.isSet( FluxComputeKernelFlags::IHU2 ) )
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::IHU2PhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),

@@ -50,12 +50,13 @@ enum class FluxComputeKernelFlags
   /// Flag indicating whether C1-PPU is used or not
   C1PPU = 1 << 2, // 4
   /// Flag indicating whether IHU is used or not
-  IHU = 1 << 3 // 8
-        /// Add more flags like that if needed:
-        // Flag5 = 1 << 4, // 16
-        // Flag6 = 1 << 5, // 32
-        // Flag7 = 1 << 6, // 64
-        // Flag8 = 1 << 7  //128
+  IHU = 1 << 3, // 8
+  /// Flag indicating whether IHU 2-phase simplified version is used or not
+  IHU2 = 1 << 4 // 16
+         /// Add more flags like that if needed:
+         // Flag6 = 1 << 5, // 32
+         // Flag7 = 1 << 6, // 64
+         // Flag8 = 1 << 7  //128
 };
 
 /******************************** FluxComputeKernelBase ********************************/
