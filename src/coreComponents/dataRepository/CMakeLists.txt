@@ -21,6 +21,8 @@ set( dataRepository_headers
      InputFlags.hpp
      KeyIndexT.hpp
      KeyNames.hpp
+     LogLevelsInfo.hpp
+     LogLevelsRegistry.hpp
      MappedVector.hpp
      ObjectCatalog.hpp
      ReferenceWrapper.hpp
@@ -47,6 +49,7 @@ set( dataRepository_sources
      xmlWrapper.cpp
      DataContext.cpp
      GroupContext.cpp
+     LogLevelsRegistry.cpp
      WrapperContext.cpp )
 
 set( dependencyList ${parallelDeps} codingUtilities )
