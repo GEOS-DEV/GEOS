@@ -195,14 +195,15 @@ void packNewAndModifiedObjectsToOwningRanks(  NeighborCommunicator & neighbor,
   bufferSize += faceManager.packGlobalMapsSize( newFacePackListArray, 0 );
   bufferSize += elemManager.packGlobalMapsSize( newElemPackList );
 
+  bufferSize += nodeManager.packParentChildMapsSize( newNodePackListArray );
+  bufferSize += edgeManager.packParentChildMapsSize( newEdgePackListArray );
+  bufferSize += faceManager.packParentChildMapsSize( newFacePackListArray );
+  bufferSize += elemManager.packFaceElementToFaceSize( newElemPackList );
+
   bufferSize += nodeManager.packUpDownMapsSize( newNodePackListArray );
   bufferSize += edgeManager.packUpDownMapsSize( newEdgePackListArray );
   bufferSize += faceManager.packUpDownMapsSize( newFacePackListArray );
   bufferSize += elemManager.packUpDownMapsSize( newElemPackList );
-
-  bufferSize += nodeManager.packParentChildMapsSize( newNodePackListArray );
-  bufferSize += edgeManager.packParentChildMapsSize( newEdgePackListArray );
-  bufferSize += faceManager.packParentChildMapsSize( newFacePackListArray );
 
   bufferSize += nodeManager.packSize( newNodePackListArray, 0, false, sizeEvents );
   bufferSize += edgeManager.packSize( newEdgePackListArray, 0, false, sizeEvents );
@@ -237,14 +238,16 @@ void packNewAndModifiedObjectsToOwningRanks(  NeighborCommunicator & neighbor,
   packedSize += faceManager.packGlobalMaps( sendBufferPtr, newFacePackListArray, 0 );
   packedSize += elemManager.packGlobalMaps( sendBufferPtr, newElemPackList );
 
+  packedSize += nodeManager.packParentChildMaps( sendBufferPtr, newNodePackListArray );
+  packedSize += edgeManager.packParentChildMaps( sendBufferPtr, newEdgePackListArray );
+  packedSize += faceManager.packParentChildMaps( sendBufferPtr, newFacePackListArray );
+  packedSize += elemManager.packFaceElementToFace( sendBufferPtr, newElemPackList );
+
+
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, newNodePackListArray );
   packedSize += edgeManager.packUpDownMaps( sendBufferPtr, newEdgePackListArray );
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, newFacePackListArray );
   packedSize += elemManager.packUpDownMaps( sendBufferPtr, newElemPackList );
-
-  packedSize += nodeManager.packParentChildMaps( sendBufferPtr, newNodePackListArray );
-  packedSize += edgeManager.packParentChildMaps( sendBufferPtr, newEdgePackListArray );
-  packedSize += faceManager.packParentChildMaps( sendBufferPtr, newFacePackListArray );
 
   packedSize += nodeManager.pack( sendBufferPtr, newNodePackListArray, 0, false, packEvents );
   packedSize += edgeManager.pack( sendBufferPtr, newEdgePackListArray, 0, false, packEvents );
@@ -316,14 +319,17 @@ localIndex unpackNewObjectsOnOwningRanks(  NeighborCommunicator & neighbor,
   }
 
   // if we move to device + async packing here, add polling of events or pass out
-  parallelDeviceEvents events;
   int unpackedSize = 0;
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newLocalNodes, 0 );
   unpackedSize += edgeManager.unpackGlobalMaps( receiveBufferPtr, newLocalEdges, 0 );
   unpackedSize += faceManager.unpackGlobalMaps( receiveBufferPtr, newLocalFaces, 0 );
   unpackedSize += elemManager.unpackGlobalMaps( receiveBufferPtr, newLocalElements );
 
-  waitAllDeviceEvents( events );
+  unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, newLocalNodes );
+  unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, newLocalEdges );
+  unpackedSize += faceManager.unpackParentChildMaps( receiveBufferPtr, newLocalFaces );
+  unpackedSize += elemManager.unpackFaceElementToFace( receiveBufferPtr, newLocalElements, true );
+  
 
   std::set< localIndex > & allNewNodes      = receivedObjects.newNodes;
   std::set< localIndex > & allNewEdges      = receivedObjects.newEdges;
@@ -584,10 +590,6 @@ localIndex unpackNewAndModifiedObjectsDataOnOwningRanks(  NeighborCommunicator &
   unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, newLocalEdges, true, true );
   unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, newLocalFaces, true, true );
   unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, newLocalElements, true );
-
-  unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, newLocalNodes );
-  unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, newLocalEdges );
-  unpackedSize += faceManager.unpackParentChildMaps( receiveBufferPtr, newLocalFaces );
 
   unpackedSize += nodeManager.unpack( receiveBufferPtr, newLocalNodes, 0, false, events );
   unpackedSize += edgeManager.unpack( receiveBufferPtr, newLocalEdges, 0, false, events );
@@ -1066,16 +1068,18 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                    receivedObjects,
                                    step1bUnpackData[count] );
   }
+
   nodeManager.inheritGhostRankFromParent( receivedObjects.newNodes );
   edgeManager.inheritGhostRankFromParent( receivedObjects.newEdges );
   faceManager.inheritGhostRankFromParent( receivedObjects.newFaces );
-  // elemManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
-  //                                                                        localIndex const esr,
-  //                                                                        ElementRegionBase &,
-  //                                                                        FaceElementSubRegion & subRegion )
-  // {
-  //   subRegion.inheritGhostRankFromParentFace( faceManager, receivedObjects.newElements[{er, esr}] );
-  // } );
+  std::cout<<"***** Step 1b: inheritGhostRankFromParent *****"<<std::endl;
+  elemManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
+                                                                         localIndex const esr,
+                                                                         ElementRegionBase &,
+                                                                         FaceElementSubRegion & subRegion )
+  {
+    subRegion.inheritGhostRankFromParentFace( faceManager, receivedObjects.newElements[{er, esr}] );
+  } );
 
   MpiWrapper::waitAll( commData1.size(),
                        commData1.mpiSendBufferSizeRequest(),

@@ -511,14 +511,6 @@ int ElementRegionManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-//template int
-//ElementRegionManager::
-//PackUpDownMapsImpl<true>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
-//template int
-//ElementRegionManager::
-//PackUpDownMapsImpl<false>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
 int
 ElementRegionManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
@@ -553,6 +545,130 @@ ElementRegionManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   return unpackedSize;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int ElementRegionManager::packFaceElementToFaceSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packFaceElementToFaceImpl< false >( junk, packList );
+}
+
+int ElementRegionManager::packFaceElementToFace( buffer_unit_type * & buffer,
+                                          ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  return packFaceElementToFaceImpl< true >( buffer, packList );
+}
+
+template< bool DO_PACKING, typename T >
+int ElementRegionManager::packFaceElementToFaceImpl( buffer_unit_type * & buffer,
+                                              T const & packList ) const
+{
+  int packedSize = 0;
+
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
+
+
+
+    localIndex numFaceElementSubregions = 0;
+    elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >(
+      [&]( localIndex const esr, FaceElementSubRegion const & subRegion )
+    {
+      ++numFaceElementSubregions;
+    } );
+
+
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, numFaceElementSubregions );
+
+    elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >(
+      [&]( localIndex const esr, FaceElementSubRegion const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex > const elemList = packList[kReg][esr];
+      if( DO_PACKING )
+      {
+        packedSize += subRegion.packToFaceRelation( buffer, elemList );
+      }
+      else
+      {
+        packedSize += subRegion.packToFaceRelationSize( elemList );
+      }
+    } );
+  }
+
+  return packedSize;
+}
+
+
+int
+ElementRegionManager::unpackFaceElementToFace( buffer_unit_type const * & buffer,
+                                        ElementReferenceAccessor< localIndex_array > & packList,
+                                        bool const overwriteMap )
+{
+  int unpackedSize = 0;
+
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
+
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  {
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
+
+    ElementRegionBase & elemRegion = getRegion( regionName );
+
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >(
+      [&]( localIndex const kSubReg, FaceElementSubRegion & subRegion )
+    {
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+
+      localIndex_array & elemList = packList[kReg][kSubReg];
+      unpackedSize += subRegion.unpackToFaceRelation( buffer, elemList, false, overwriteMap );
+    } );
+  }
+
+  return unpackedSize;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int ElementRegionManager::packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
                                                      string const fractureRegionName ) const
