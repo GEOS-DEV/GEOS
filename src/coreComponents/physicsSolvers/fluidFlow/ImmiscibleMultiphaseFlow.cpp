@@ -284,6 +284,7 @@ void ImmiscibleMultiphaseFlow::updateFluidState( ElementSubRegionBase & subRegio
   GEOS_MARK_FUNCTION;
 
   updateFluidModel( subRegion );
+  updatePhaseVolumeFraction( subRegion );
   updatePhaseMass( subRegion );
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
@@ -529,6 +530,7 @@ ImmiscibleMultiphaseFlow::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( t
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
+      updatePhaseVolumeFraction( subRegion );
       updateFluidState( subRegion );
 
       // after the update, save the new saturation
@@ -639,7 +641,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
         }
 
         // compute accumulation
-
+        int signPotDiff[2] = {1, -1};
 
         for( integer ip = 0; ip < numofPhases; ++ip )
         {
@@ -653,8 +655,17 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
           localJacobian[ip][0] += dPhaseMass_dP;
 
           real64 const dPhaseMass_dS = poreVolume * phaseDens[ei][0][ip];
+          
+          
+          // if ( ip == 0)
+          // {
+          //   localJacobian[ip][1] += dPhaseMass_dS;
+          // } else {
+          //   localJacobian[ip][1] -= dPhaseMass_dS;
+          // }
 
-          localJacobian[ip][1] += dPhaseMass_dS;
+          localJacobian[ip][1] += signPotDiff[ip] * dPhaseMass_dS;
+
         }
 
         // complete
@@ -745,9 +756,17 @@ void ImmiscibleMultiphaseFlow::applyBoundaryConditions( real64 const time_n,
                                                         arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
+  
   // apply pressure boundary conditions.
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+
+  //   for( localIndex row = 0; row < localMatrix.toViewConstSizes().numRows(); ++row )
+  // {
+  //   std::cout << "row " << row << std::endl;
+  //   std::cout << "\tcolumns: " << localMatrix.toViewConstSizes().getColumns( row ) << std::endl;
+  //   std::cout << "\tvalues: " << localMatrix.toViewConstSizes().getEntries( row ) << std::endl;
+  // }
+
 }
 
 namespace
@@ -884,7 +903,11 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
       subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
        fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
 
+    //  GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction));
+
       integer const numPhase = m_numPhases;
+
+
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         localIndex const ei = targetSet[a];
@@ -905,6 +928,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                     bcPres[ei],
                                                     pres[ei] );
         localRhs[localRow] = rhsValue;
+    //    GEOS_LOG_RANK_0(GEOS_FMT("BC Pressure {}", bcPres[ei]));
+     //   GEOS_LOG_RANK_0(GEOS_FMT("Pressure {}", pres[ei]));
 
         // 3.2. For each phase, apply target saturation value
         for( integer ip = 0; ip < numPhase-1; ++ip )
@@ -916,11 +941,15 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                       bcPhaseVolFraction[ei][ip],
                                                       phaseVolFraction[ei][ip] );
           localRhs[localRow + ip + 1] = rhsValue;
+
+       // GEOS_LOG_RANK_0(GEOS_FMT("BC Saturation {}", bcPhaseVolFraction[ei][ip]));
+       // GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction[ei][ip]));
         }
       } );
     } );
   } );
 }
+
 
 real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                         real64 const & GEOS_UNUSED_PARAM( dt ),
@@ -1019,7 +1048,7 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
   GEOS_UNUSED_VAR( dt );
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
-  DofManager::CompMask PhaseMask( m_numDofPerCell, 1, m_numPhases );
+  //DofManager::CompMask PhaseMask( m_numDofPerCell, 1, m_numPhases );
 
   // 1. apply the pressure update
 
@@ -1035,7 +1064,7 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
                                 viewKeyStruct::elemDofFieldString(),
                                 fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
                                 scalingFactor,
-                                PhaseMask );
+                                ~pressureMask );
 
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1049,8 +1078,25 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
+
 }
 
+
+void ImmiscibleMultiphaseFlow::updatePhaseVolumeFraction( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+  integer const numofPhases = 2;
+  
+  //arrayView1d< real64 const> const singleSaturation = subRegion.getField< fields::immiscibleMultiphaseFlow::singleSaturation >();
+  arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVolumeFraction = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+  
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+      // phaseVolumeFraction[ei][0] = singleSaturation[ei];
+      phaseVolumeFraction[ei][1] = 1.0 - phaseVolumeFraction[ei][0];
+    }
+   );
+}   
 
 void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & domain )
 {
@@ -1193,6 +1239,7 @@ void ImmiscibleMultiphaseFlow::updateState( DomainPartition & domain )
       // update porosity, permeability, and solid internal energy
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
+      updatePhaseVolumeFraction( subRegion );
       updateFluidState( subRegion );
     } );
   } );

@@ -963,15 +963,30 @@ public:
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
+    real64 massNormalizer = 0;
+      for( integer idof = 0; idof < m_numPhases; ++idof )
+    {
+       massNormalizer += LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
+    }  
+
     for( integer idof = 0; idof < m_numPhases; ++idof )
     {
-      real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
       real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / massNormalizer;
       if( valMass > stack.localValue[0] )
       {
         stack.localValue[0] = valMass;
       }
     }
+    
+    // for( integer idof = 0; idof < m_numPhases; ++idof )
+    // {
+    //   real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
+    //   real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / massNormalizer;
+    //   if( valMass > stack.localValue[0] )
+    //   {
+    //     stack.localValue[0] = valMass;
+    //   }
+    // }
 
   }
 

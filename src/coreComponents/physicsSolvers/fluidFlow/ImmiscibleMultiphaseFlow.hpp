@@ -125,6 +125,8 @@ public:
 
   void updateFluidState( ElementSubRegionBase & subRegion ) const;
 
+  void updatePhaseVolumeFraction( ElementSubRegionBase & subRegion ) const;
+
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
