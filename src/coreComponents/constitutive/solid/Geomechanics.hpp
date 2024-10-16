@@ -818,7 +818,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 	// -------------------------------------------------------------------------------
 	// Apply creep to relax deviatoric stress for the whole step, this will be
   // the starting point for the plasticity solution.
-	if ( m_creep == 1 )
+  	if ( m_creep == 1 )
 	{
 		real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
