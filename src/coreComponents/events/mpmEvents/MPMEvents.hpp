@@ -22,6 +22,7 @@
 #include "events/mpmEvents/MPMEventBase.hpp"
 #include "events/mpmEvents/MaterialSwapMPMEvent.hpp"
 #include "events/mpmEvents/AnnealMPMEvent.hpp"
+#include "events/mpmEvents/InitializeStressMPMEvent.hpp"
 #include "events/mpmEvents/HealMPMEvent.hpp"
 #include "events/mpmEvents/CrystalHealMPMEvent.hpp"
 #include "events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"

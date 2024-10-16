@@ -2191,8 +2191,11 @@ void SolidMechanicsMPM::initializeConstitutiveModelDependencies( ParticleManager
 {
   // Load strength scale into constitutive model (for ceramic)
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    // Get constitutive model reference
+  { 
+    // TODO: check if porosity etc for geomechanics model need initialization here
+    
+
+    // Get constitutive model referencen
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
     if( constitutiveModel.hasWrapper( "strengthScale" ) )
@@ -2922,6 +2925,60 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                 interpolationType );
      
         //sevent.setIsComplete( 1 );
+      }
+      if( event.getName() == "InitializeStress" )
+      {
+        /// Simple event to initialize a hydrostatic stress.   A more sophisticated approach to initialized a general state
+        // with consistent state variables would be good.  This won't work with anything hyperelastic and might cause
+        // misbehavior if the initial stress state is inelastic or the material isn't in equlibrium with the BC.
+        InitializeStressMPMEvent & initializeStress = dynamicCast< InitializeStressMPMEvent & >( event );
+
+        particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
+        {
+          if( region.getName() == initializeStress.getTargetRegion() || initializeStress.getTargetRegion() == "all" )
+          {
+            auto & targetSubRegions = region.getSubRegions();
+            for( int r=0; r < targetSubRegions.size(); ++r)
+            {
+              ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
+
+              // Get constitutive model reference
+              string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+              ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( targetSubRegion, solidMaterialName );
+
+              GEOS_ERROR_IF( !constitutiveModel.hasWrapper( "oldStress" ), "Cannot InitializeStress for constitutive model that does not have oldStress wrapper!");
+              arrayView3d< real64 > const constitutiveOldStress = constitutiveModel.getReference< array3d< real64 > >( "oldStress" );
+
+              real64 initialMeanStress = -1.0*initializeStress.getPressure(); // negative in compression
+                          
+              // SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+              forAll< serialPolicy >( constitutiveOldStress.size(0), [=] GEOS_HOST ( localIndex const p )
+              {
+
+                  // Decompose stress and set to zero. (should only be done where deviator is zero, but written this way in case we use it for something else)
+                  real64 stress[6] = {0};
+                  LvArray::tensorOps::copy< 6 >( stress, constitutiveOldStress[p][0]);
+
+                  real64 trialP;
+                  real64 trialQ;
+                  real64 deviator[6];
+                  twoInvariant::stressDecomposition( stress,
+                                                    trialP, // this is actually mean stress, negative in compression
+                                                    trialQ,
+                                                    deviator );
+
+                  twoInvariant::stressRecomposition( initialMeanStress,
+                                                    trialQ,
+                                                    deviator,
+                                                    stress );
+                  LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
+
+
+              } );
+            }
+          }
+        });
+        event.setIsComplete( 1 );
       }
 
       if( event.getName() == "Anneal" )
