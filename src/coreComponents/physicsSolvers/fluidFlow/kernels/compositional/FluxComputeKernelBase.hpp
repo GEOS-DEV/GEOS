@@ -51,8 +51,8 @@ enum class FluxComputeKernelFlags
   C1PPU = 1 << 2, // 4
   /// Flag indicating whether IHU is used or not
   IHU = 1 << 3, // 8
-  /// Flag indicating whether IHU 2-phase simplified version is used or not
-  IHU2 = 1 << 4 // 16
+  /// Flag indicating whether HU 2-phase simplified version is used or not
+  HU2PH = 1 << 4 // 16
          /// Add more flags like that if needed:
          // Flag6 = 1 << 5, // 32
          // Flag7 = 1 << 6, // 64

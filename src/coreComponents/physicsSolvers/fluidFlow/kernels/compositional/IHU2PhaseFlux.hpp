@@ -106,6 +106,7 @@ struct IHU2PhaseFlux
            real64 ( & dCompFlux_dC )[numFluxSupportPoints][numComp][numComp] )
   {
     // viscout part
+    std::cout << "computeViscousFlux" << std::endl; 
     computeViscousFlux< numComp, numFluxSupportPoints >( ip, numPhase, hasCapPressure,
                                                          seri, sesri, sei,
                                                          trans, dTrans_dPres,
@@ -120,6 +121,7 @@ struct IHU2PhaseFlux
                                                          compFlux, dCompFlux_dP, dCompFlux_dC );
 
     // gravity part
+    std::cout << "computeGravityFlux" << std::endl; 
     computeGravityFlux< numComp, numFluxSupportPoints >( ip, numPhase,
                                                                seri, sesri, sei,
                                                                trans, dTrans_dPres, gravCoef,

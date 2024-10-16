@@ -324,7 +324,7 @@ public:
               dCompFlux_dP,
               dCompFlux_dC );
           }
-          else if( m_kernelFlags.isSet( FluxComputeKernelFlags::IHU2 ) )
+          else if( m_kernelFlags.isSet( FluxComputeKernelFlags::HU2PH ) )
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::IHU2PhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
@@ -579,7 +579,8 @@ public:
         kernelFlags.set( FluxComputeKernelFlags::C1PPU );
       else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
         kernelFlags.set( FluxComputeKernelFlags::IHU );
-
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::HU2PH )
+        kernelFlags.set( FluxComputeKernelFlags::HU2PH );
 
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
