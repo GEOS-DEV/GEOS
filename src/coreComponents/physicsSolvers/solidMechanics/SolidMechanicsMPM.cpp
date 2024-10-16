@@ -2046,7 +2046,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         throw std::ios_base::failure( std::strerror( errno ) );
       }
       file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, volume" << std::endl;
+      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, mat volume, mat porosity" << std::endl;
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX ); // wait for the header to be written
 
@@ -5793,6 +5793,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   real64 boxInternalEnergy = 0.0;
   real64 boxKineticEnergy = 0.0;
   real64 boxMatVolume = 0.0; // Sum volume of all particles
+  real64 boxMatPorosity = 0.0; //Volume average of particle porosity
 
   // real64 boxInternalForce[3] = { 0.0 };
   // real64 boxCohesiveForce[3] = { 0.0 };
@@ -5815,10 +5816,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
     arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView1d< real64 const > const particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
+    arrayView1d< real64 const > const particlePorosity = subRegion.getParticlePorosity();
 
     // Accumulate values
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleReferenceVolume, &boxStress, &boxPlasticStrain, &boxDamage, &boxMatVolume, &boxInternalEnergy, & boxKineticEnergy] GEOS_HOST ( localIndex const pp ) // This
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleReferenceVolume, &boxStress, &boxPlasticStrain, &boxDamage, &boxMatVolume, &boxInternalEnergy, &boxKineticEnergy, &boxMatPorosity] GEOS_HOST ( localIndex const pp ) // This
                                                                                                                                                                                 // can
                                                                                                                                                                                 // be
                                                                                                                                                                                 // parallelized
@@ -5844,13 +5846,14 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           boxPlasticStrain[i] += particlePlasticStrain[p][i] * particleVolume[p];
         }
         boxDamage += particleDamage[p] * particleReferenceVolume[p]; // reference volume weighted average, will normalize later.
+        boxMatPorosity += particlePorosity[p] * particleVolume[p];
       }
     } );
   } );
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
   // Check the voigt indexing of stress
-  real64 boxSums[18];
+  real64 boxSums[19];
   boxSums[0] = boxStress[0];       // sig_xx * volume
   boxSums[1] = boxStress[1];       // sig_yy * volume
   boxSums[2] = boxStress[2];       // sig_zz * volume
@@ -5869,10 +5872,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[15] = boxPlasticStrain[4]; // plasticStrain_xz
   boxSums[16] = boxPlasticStrain[5]; // plasticStrain_xy
   boxSums[17] = boxMatVolume;
+  boxSums[18] = boxMatPorosity; // Material porosity
       
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
-  for( localIndex i = 0; i < 18; i++ )
+  for( localIndex i = 0; i < 19; i++ )
   {
     real64 localSum = boxSums[i];
     real64 globalSum;
@@ -5937,7 +5941,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ", "
          << boxSums[16] / boxVolume
          << ", "
-         << boxSums[17] << std::endl;
+         << boxSums[17]
+         << ", " 
+         << boxSums[18] / boxSums[17] << std::endl;
     file.close();
   }
 }
@@ -9156,6 +9162,16 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
 
+    if(  constitutiveModel.hasWrapper( "porosity" ) )
+    {
+      arrayView1d< real64 > const particlePorosity = subRegion.getParticlePorosity();
+      arrayView2d< real64 const > const constitutivePorosity = constitutiveModel.getReference< array2d< real64 > >( "porosity" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particlePorosity[p] = constitutivePorosity[p][0]; 
+      } );
+    }
     
     if(  constitutiveModel.hasWrapper( "wavespeed" ) )
     {
