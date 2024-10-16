@@ -119,7 +119,7 @@ struct IHU2PhaseFlux
                                                          phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
                                                          phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
                                                          compFlux, dCompFlux_dP, dCompFlux_dC );
-
+/*
     // gravity part
     std::cout << "computeGravityFlux" << std::endl; 
     computeGravityFlux< numComp, numFluxSupportPoints >( ip, numPhase,
@@ -131,7 +131,7 @@ struct IHU2PhaseFlux
                                                                phaseMassDens, dPhaseMassDens,
                                                                phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
                                                                compFlux, dCompFlux_dP, dCompFlux_dC );
-
+*/
 /*
     // capillary part
     if( hasCapPressure )
@@ -150,68 +150,6 @@ struct IHU2PhaseFlux
                                                              compFlux, dCompFlux_dP, dCompFlux_dC );
     }
 */
-  }
-
-  template< localIndex numComp, localIndex numFluxSupportPoints >
-  GEOS_HOST_DEVICE
-  static void
-  computeTotalFlux( integer const & numPhase, const integer & hasCapPressure,
-                    localIndex const (&seri)[numFluxSupportPoints],
-                    localIndex const (&sesri)[numFluxSupportPoints],
-                    localIndex const (&sei)[numFluxSupportPoints],
-                    real64 const (&trans)[2], real64 const (&dTrans_dPres)[2],
-                    ElementViewConst< arrayView1d< const real64 > > const & pres,
-                    ElementViewConst< arrayView1d< const real64 > > const & gravCoef,
-                    ElementViewConst< arrayView2d< const real64, 1 > > const & phaseMob,
-                    ElementViewConst< arrayView3d< const real64 > > const & dPhaseMob,
-                    ElementViewConst< arrayView3d< const real64 > > const & dPhaseVolFrac,
-                    ElementViewConst< arrayView4d< const real64 > > const & phaseCompFrac,
-                    ElementViewConst< arrayView5d< const real64, 4 > > const & dPhaseCompFrac,
-                    ElementViewConst< arrayView3d< const real64 > > const & dCompFrac_dCompDens,
-                    ElementViewConst< arrayView3d< const real64 > > const & phaseMassDens,
-                    ElementViewConst< arrayView4d< const real64 > > const & dPhaseMassDens,
-                    ElementViewConst< arrayView3d< const real64 > > const & phaseCapPressure,
-                    ElementViewConst< arrayView4d< const real64 > > const & dPhaseCapPressure_dPhaseVolFrac,
-                    real64 & totFlux, real64 dTotFlux_dP[numFluxSupportPoints], real64 dTotFlux_dC[numFluxSupportPoints][numComp] )
-  {
-    localIndex k_up_ppu = -1;
-    real64 potGrad;
-    // working arrays for phase flux
-    real64 phaseFlux;
-    real64 dPhaseFlux_dP[numFluxSupportPoints];
-    real64 dPhaseFlux_dC[numFluxSupportPoints][numComp];
-    // unelegant but need dummy when forming PPU total velocity
-    real64 dummy[numComp];
-    real64 dDummy_dP[numFluxSupportPoints][numComp];
-    real64 dDummy_dC[numFluxSupportPoints][numComp][numComp];
-
-    for( integer jp = 0; jp < numPhase; ++jp )
-    {
-      PPUPhaseFlux::compute( numPhase, jp, hasCapPressure,
-                             seri, sesri, sei,
-                             trans, dTrans_dPres,
-                             pres, gravCoef,
-                             phaseMob, dPhaseMob,
-                             dPhaseVolFrac,
-                             phaseCompFrac, dPhaseCompFrac,
-                             dCompFrac_dCompDens,
-                             phaseMassDens, dPhaseMassDens,
-                             phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                             k_up_ppu, potGrad,
-                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-                             dummy, dDummy_dP, dDummy_dC );
-
-      totFlux += phaseFlux;
-
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-        dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
-        for( localIndex jc = 0; jc < numComp; ++jc )
-        {
-          dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
-        }
-      }
-    }
   }
 
 protected:
@@ -244,6 +182,7 @@ protected:
     real64 dTotFlux_dP[numFluxSupportPoints]{};
     real64 dTotFlux_dC[numFluxSupportPoints][numComp]{};
 
+std::cout << "computeTotalFlux" << std::endl;
     computeTotalFlux( numPhase, hasCapPressure,
                       seri, sesri, sei,
                       trans, dTrans_dPres,
@@ -255,6 +194,8 @@ protected:
                       phaseMassDens, dPhaseMassDens,
                       phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
                       totFlux, dTotFlux_dP, dTotFlux_dC );
+
+    std::cout << "totFlux=" << totFlux << std::endl;
 
     // and the fractional flow for viscous part as \lambda_i^{up}/\sum_{NP}(\lambda_j^{up})
 
@@ -269,7 +210,7 @@ protected:
 
     for( localIndex jp = 0; jp < numPhase; ++jp )
     {
-      if( jp == ip )
+      if( jp == ip ) // ip will be computed later
         continue;
 
       // upwind based on totFlux sign
@@ -320,12 +261,13 @@ protected:
     {
       dFractionalFlow_dC[jc] = dMob_dC[jc] / totMob;
     }
-
     dFractionalFlow_dP -= fractionalFlow * dTotMob_dP / totMob;
     for( localIndex jc = 0; jc < numComp; ++jc )
     {
       dFractionalFlow_dC[jc] -= fractionalFlow * dTotMob_dC[jc] / totMob;
     }
+
+    std::cout << "fractionalFlow=" << fractionalFlow << std::endl;
 
     /// Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
 
@@ -338,6 +280,8 @@ protected:
     {
       dViscousPhaseFlux_dC[k_up][jc] += dFractionalFlow_dC[jc] * totFlux;
     }
+
+    std::cout << "viscousPhaseFlux=" << viscousPhaseFlux << std::endl;
 
     // NON-FIXED UT -- to be canceled out if considered fixed
     for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -364,6 +308,9 @@ protected:
       for( localIndex ic = 0; ic < numComp; ++ic )
         dPhaseFlux_dC[ke][ic] += dViscousPhaseFlux_dC[ke][ic];
     }
+
+    std::cout << "phaseFlux=" << phaseFlux << std::endl;
+    
   }
 
   template< localIndex numComp, localIndex numFluxSupportPoints >
@@ -506,10 +453,10 @@ protected:
         real64 const mobTotInv2 = mobTotInv * mobTotInv;
         for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
         {
-          dGravPhaseFlux_dP[ke] += mob_i * mob_j * dMobTot_dP[ke] * mobTotInv2 * potDiff;
+          dGravPhaseFlux_dP[ke] -= mob_i * mob_j * dMobTot_dP[ke] * mobTotInv2 * potDiff;
           for( localIndex jc = 0; jc < numComp; ++jc )
           {
-            dGravPhaseFlux_dC[ke][jc] += mob_i * mob_j * dMobTot_dC[ke][jc] * mobTotInv2 * potDiff;
+            dGravPhaseFlux_dC[ke][jc] -= mob_i * mob_j * dMobTot_dC[ke][jc] * mobTotInv2 * potDiff;
           }
         }
 
@@ -617,6 +564,69 @@ protected:
     }
   }
 */
+
+  template< localIndex numComp, localIndex numFluxSupportPoints >
+  GEOS_HOST_DEVICE
+  static void
+  computeTotalFlux( integer const & numPhase, const integer & hasCapPressure,
+                    localIndex const (&seri)[numFluxSupportPoints],
+                    localIndex const (&sesri)[numFluxSupportPoints],
+                    localIndex const (&sei)[numFluxSupportPoints],
+                    real64 const (&trans)[2], real64 const (&dTrans_dPres)[2],
+                    ElementViewConst< arrayView1d< const real64 > > const & pres,
+                    ElementViewConst< arrayView1d< const real64 > > const & gravCoef,
+                    ElementViewConst< arrayView2d< const real64, 1 > > const & phaseMob,
+                    ElementViewConst< arrayView3d< const real64 > > const & dPhaseMob,
+                    ElementViewConst< arrayView3d< const real64 > > const & dPhaseVolFrac,
+                    ElementViewConst< arrayView4d< const real64 > > const & phaseCompFrac,
+                    ElementViewConst< arrayView5d< const real64, 4 > > const & dPhaseCompFrac,
+                    ElementViewConst< arrayView3d< const real64 > > const & dCompFrac_dCompDens,
+                    ElementViewConst< arrayView3d< const real64 > > const & phaseMassDens,
+                    ElementViewConst< arrayView4d< const real64 > > const & dPhaseMassDens,
+                    ElementViewConst< arrayView3d< const real64 > > const & phaseCapPressure,
+                    ElementViewConst< arrayView4d< const real64 > > const & dPhaseCapPressure_dPhaseVolFrac,
+                    real64 & totFlux, real64 (& dTotFlux_dP)[numFluxSupportPoints], real64 (& dTotFlux_dC)[numFluxSupportPoints][numComp] )
+  {
+    localIndex k_up_ppu = -1;
+    real64 potGrad;
+    // working arrays for phase flux
+    real64 phaseFlux;
+    real64 dPhaseFlux_dP[numFluxSupportPoints];
+    real64 dPhaseFlux_dC[numFluxSupportPoints][numComp];
+    // unelegant but need dummy when forming PPU total velocity
+    real64 dummy[numComp];
+    real64 dDummy_dP[numFluxSupportPoints][numComp];
+    real64 dDummy_dC[numFluxSupportPoints][numComp][numComp];
+
+    for( integer jp = 0; jp < numPhase; ++jp )
+    {
+      std::cout << jp << " PPUPhaseFlux::compute" << std::endl;
+      PPUPhaseFlux::compute( numPhase, jp, hasCapPressure,
+                             seri, sesri, sei,
+                             trans, dTrans_dPres,
+                             pres, gravCoef,
+                             phaseMob, dPhaseMob,
+                             dPhaseVolFrac,
+                             phaseCompFrac, dPhaseCompFrac,
+                             dCompFrac_dCompDens,
+                             phaseMassDens, dPhaseMassDens,
+                             phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
+                             k_up_ppu, potGrad,
+                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
+                             dummy, dDummy_dP, dDummy_dC );
+
+      totFlux += phaseFlux;
+      std::cout << " totFlux=" << totFlux << " phaseFlux=" << phaseFlux << std::endl;
+      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+        dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
+        for( localIndex jc = 0; jc < numComp; ++jc )
+        {
+          dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
+        }
+      }
+    }
+  }
 
   template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
