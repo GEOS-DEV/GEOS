@@ -56,43 +56,81 @@ struct TaperKernel
                      real32 const r,
                      arrayView1d< real32 > const taperCoeff )
   {
-    /// Loop over elements in the subregion, 'l' is the element index within the target set
+
+    ///Seek the global maximum and minimum of the domain
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinGlobal( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxGlobal( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinInterior( LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxInterior( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
+    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
+                                                                                
+    real32 xGlobalMin[3]{};                                                     
+    real32 xGlobalMax[3]{};                                                     
+                                                                                
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )    
+    {                                                                           
+      xMinGlobal.min( nodeCoords[a][0] );                                       
+      yMinGlobal.min( nodeCoords[a][1] );                                       
+      zMinGlobal.min( nodeCoords[a][2] );                                       
+      xMaxGlobal.max( nodeCoords[a][0] );                                       
+      yMaxGlobal.max( nodeCoords[a][1] );                                       
+      zMaxGlobal.max( nodeCoords[a][2] );                                       
+    } );                                                                        
+                                                                                
+    xGlobalMin[0] = xMinGlobal.get();                                           
+    xGlobalMin[1] = yMinGlobal.get();                                           
+    xGlobalMin[2] = zMinGlobal.get();                                           
+    xGlobalMax[0] = xMaxGlobal.get();                                           
+    xGlobalMax[1] = yMaxGlobal.get();                                           
+    xGlobalMax[2] = zMaxGlobal.get();                                           
+                                                                                
+                                                                                
+     for( integer i=0; i<3; ++i )                                               
+    {                                                                           
+      xGlobalMin[i] = MpiWrapper::min( xGlobalMin[i] );                         
+      xGlobalMax[i] = MpiWrapper::max( xGlobalMax[i] );                         
+    }   
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      real32 const dxMin = -((3*vMax)/(2*dMin[0]))*log( r )*pow((xMin[0]-nodeCoords[a][0])/dMin[0], 2 );
-      real32 const dyMin = -((3*vMax)/(2*dMin[1]))*log( r )*pow((xMin[1]-nodeCoords[a][1])/dMin[1], 2 );
-      real32 const dzMin = -((3*vMax)/(2*dMin[2]))*log( r )*pow((xMin[2]-nodeCoords[a][2])/dMin[2], 2 );
-      real32 const dxMax = -((3*vMax)/(2*dMax[0]))*log( r )*pow((xMax[0]-nodeCoords[a][0])/dMax[0], 2 );
-      real32 const dyMax = -((3*vMax)/(2*dMax[1]))*log( r )*pow((xMax[1]-nodeCoords[a][1])/dMax[1], 2 );
-      real32 const dzMax = -((3*vMax)/(2*dMax[2]))*log( r )*pow((xMax[2]-nodeCoords[a][2])/dMax[2], 2 );
+      real32 dist=0;                                                            
+                                                                                
+      real32 distXmin = LvArray::math::abs(nodeCoords[a][0]-xGlobalMin[0]);     
+      real32 distXmax = LvArray::math::abs(nodeCoords[a][0]-xGlobalMax[0]);     
+      real32 distYmin = LvArray::math::abs(nodeCoords[a][1]-xGlobalMin[1]);     
+      real32 distYmax = LvArray::math::abs(nodeCoords[a][1]-xGlobalMax[1]);     
+      real32 distZmax = LvArray::math::abs(nodeCoords[a][2]-xGlobalMax[2]);     
+                                                                                
+      dist=LvArray::math::min(distXmin,(LvArray::math::min(distXmax,LvArray::math::min(distYmin,(LvArray::math::min(distYmax,distZmax))))));
+                                                                                
+      taperCoeff[a] = dist;  
 
-      if( xMin[0]>nodeCoords[a][0] )
+
+    } );
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+
+      real32 dist = taperCoeff[a];
+
+      if(dist<dMin[0] )
       {
-        taperCoeff[a] = LvArray::math::exp( -dxMin*dt );
+        taperCoeff[a] = LvArray::math::exp((((3*vMax)/(2*dMin[0]))*log( r )*pow((dMin[0]-dist)/dMin[0], 2 ))*dt);
       }
-      else if( nodeCoords[a][0] > xMax[0] )
+      else
       {
-        taperCoeff[a] = LvArray::math::exp( -dxMax*dt );
-      }
-      else if( xMin[1]>nodeCoords[a][1] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -dyMin*dt );
-      }
-      else if( nodeCoords[a][1] > xMax[1] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -dyMax*dt );
-      }
-      else if( xMin[2]>nodeCoords[a][2] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -dzMin*dt );
-      }
-      else if( nodeCoords[a][2] > xMax[2] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -dzMax*dt );
+        taperCoeff[a] = 1.0;
       }
 
     } );
+
   }
 
 
