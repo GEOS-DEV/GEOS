@@ -35,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/IHU2PhaseFlux.hpp"
 
 namespace geos
 {
@@ -323,6 +324,32 @@ public:
               dCompFlux_dP,
               dCompFlux_dC );
           }
+          else if( m_kernelFlags.isSet( FluxComputeKernelFlags::HU2PH ) )
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::IHU2PhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
+          }
           else
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
@@ -552,7 +579,8 @@ public:
         kernelFlags.set( FluxComputeKernelFlags::C1PPU );
       else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
         kernelFlags.set( FluxComputeKernelFlags::IHU );
-
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::HU2PH )
+        kernelFlags.set( FluxComputeKernelFlags::HU2PH );
 
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
