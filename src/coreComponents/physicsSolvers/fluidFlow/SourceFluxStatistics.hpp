@@ -346,12 +346,12 @@ private:
    * @param tableData The table data where we collect statistics
    * @param wrappedStats the statistics that must be retrieved.
    */
-  void gatherStatsForLog( int logLevel,
-                          string_view regionName,
+  void gatherStatsForLog( bool logLevelActive,
+                          string_view elementSetName,
                           TableData & tableData,
                           WrappedStats const & wrappedStats );
   /**
-   * @brief If CSV is enabled, create or append a new CSV file.
+   * @brief  If requested, collect statistics in a tableData.
    * @param tableData The TableData where we collect the statistics
    * @param stats the statistics that must be retrieved.
    */
@@ -363,7 +363,7 @@ private:
    * @param statsName The stat name where we collect
    * @param tableMeshData The TableData where we have all collected statistics
    */
-  void outputStatsToLog( int logLevel, string_view statsName, TableData const & tableMeshData );
+  void outputStatsToLog( bool logLevelActive, string_view elementSetName, TableData const & tableMeshData );
 
   /**
    * @brief If requested, output statistics in csv.
