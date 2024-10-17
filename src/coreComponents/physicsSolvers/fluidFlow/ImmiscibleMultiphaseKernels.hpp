@@ -815,6 +815,7 @@ public:
 
     arraySlice1d< real64, immiscibleFlow::USD_PHASE - 1 > const phaseMob = m_phaseMob[ei];
     arraySlice2d< real64, immiscibleFlow::USD_PHASE_DS - 1 > const dPhaseMob = m_dPhaseMob[ei];
+    int sign[2] = {1, -1};
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
@@ -830,11 +831,11 @@ public:
       phaseMob[ip] = mobility;
       dPhaseMob[ip][Deriv::dP] = mobility * (dDens_dP / density - dVisc_dP / viscosity);
 
-      for( integer jp = 0; jp < numPhase-1; ++jp )
-      {
-        real64 const dRelPerm_dS = m_dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][jp];
-        dPhaseMob[ip][Deriv::dS+jp] = dRelPerm_dS * density / viscosity;
-      }
+     // for( integer jp = 0; jp < numPhase-1; ++jp )
+     // {
+        real64 const dRelPerm_dS = sign[ip] * m_dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][ip];
+        dPhaseMob[ip][Deriv::dS] = dRelPerm_dS * density / viscosity;
+      // }
 
       // call the lambda in the phase loop to allow the reuse of the relperm, density, viscosity, and mobility
       // possible use: assemble the derivatives wrt temperature
