@@ -67,7 +67,7 @@ private:
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    constexpr static char const * filePathString() { return "file"; }
+    static constexpr char const * filePathString() { return "file"; }
   };
   /// @endcond
 
@@ -80,7 +80,6 @@ private:
 
   /// Path to the mesh file
   Path m_filePath;
-
 };
 
 } // namespace geos
