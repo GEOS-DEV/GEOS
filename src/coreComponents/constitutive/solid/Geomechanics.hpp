@@ -2142,7 +2142,7 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
   real64 eta_out = 1.0,
          eta_in  = 0.0,
          eta_mid,
-         TOL = 1.0e-6,
+         TOL = 1.0e-10,
          r_test,
          z_test;
 
