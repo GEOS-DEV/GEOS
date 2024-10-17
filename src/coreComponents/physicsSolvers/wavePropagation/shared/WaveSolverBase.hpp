@@ -119,6 +119,13 @@ public:
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
+    static constexpr char const * useTaperString() {return "useTaper";}
+    static constexpr char const * reflectivityCoeffString() {return "reflectivityCoeff";}
+    static constexpr char const * xMinTaperString() {return "xMinTaper";}
+    static constexpr char const * xMaxTaperString() {return "xMaxTaper";}
+    static constexpr char const * thicknessMinXYZTaperString() {return "thicknessMinXYZTaper";}
+    static constexpr char const * thicknessMaxXYZTaperString() {return "thicknessMaxXYZTaper";}
+
     static constexpr char const * receiverElemString() { return "receiverElem"; }
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
@@ -241,6 +248,11 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
+  /**
+   * @brief Method to get the maximum wavespeed on a mesh (usually the P-wavespeed)
+   */
+  virtual real32 getGlobalMaxWavespeed( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
+
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -315,6 +327,9 @@ protected:
   /// Flag to apply PML
   integer m_usePML;
 
+  ///Flag to use a taper
+  integer m_useTaper;
+
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
 
@@ -357,6 +372,18 @@ protected:
   /// A set of target nodes IDs that will be handled by the current solver
   SortedArray< localIndex > m_solverTargetNodesSet;
 
+  /// Mininum (x,y,z) coordinates of inner PML boundaries
+  R1Tensor32 m_xMinTaper;
+
+  /// Maximum (x,y,z) coordinates of inner PML boundaries
+  R1Tensor32 m_xMaxTaper;
+
+  /// Thickness of the PML region, used to compute the damping profile
+  R1Tensor32 m_thicknessMinXYZTaper;
+  R1Tensor32 m_thicknessMaxXYZTaper;
+
+  real32 m_reflectivityCoeff;
+
   struct parametersPML
   {
     /// Mininum (x,y,z) coordinates of inner PML boundaries
@@ -377,6 +404,7 @@ protected:
     R1Tensor32 waveSpeedMaxXYZPML;
   };
 
+
 };
 
 namespace fields
@@ -389,6 +417,14 @@ DECLARE_FIELD( referencePosition32,
                NOPLOT,
                WRITE_AND_READ,
                "Copy of the referencePosition from NodeManager in 32 bits integer" );
+DECLARE_FIELD( taperCoeff,
+               "taperCoeff",
+               array1d< real32 >,
+               1.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Array continaing the coefficients for the taper" );
+
 }
 } /* namespace geos */
 
