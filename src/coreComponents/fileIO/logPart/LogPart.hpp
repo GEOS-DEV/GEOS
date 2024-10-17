@@ -26,9 +26,9 @@ namespace geos
 {
 
 /**
- * @brief Class for displaying different steps of simulation  
+ * @brief Class for displaying different steps of simulation
  */
-class LogPart 
+class LogPart
 {
 public:
 
