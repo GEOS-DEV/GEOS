@@ -36,10 +36,10 @@ void TableLayout::addToColumns( string_view columnName )
 
 void TableLayout::addToColumns( Column const & column )
 {
-  if( !column.subColumns.empty())
+  if( !column.subColumnNames.empty())
   {
     std::vector< TableLayout::TableColumnData > subColumns;
-    for( const auto & subColumnsName : column.subColumns )
+    for( const auto & subColumnsName : column.subColumnNames )
     {
       subColumns.push_back(
         TableLayout::TableColumnData {

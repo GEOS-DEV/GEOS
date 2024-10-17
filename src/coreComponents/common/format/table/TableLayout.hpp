@@ -33,6 +33,7 @@ class TableLayout
 {
 
 public:
+
   /// Type of aligment for a column
   enum Alignment { right, left, center };
 
@@ -55,7 +56,7 @@ public:
    */
   struct ColumnAlignment
   {
-    /// Alignment for  column name. By default aligned to center
+    /// Alignment for column name. By default aligned to center
     Alignment headerAlignment = Alignment::center;
     /// Alignment for column values. By default aligned to right side
     Alignment valueAlignment = Alignment::right;
@@ -73,21 +74,21 @@ public:
     /// A boolean to display a colummn
     bool enabled = true;
     /// Vector containing sub columns name
-    std::vector< string > subColumns;
+    std::vector< string > subColumnNames;
     /// Vector containing substring column name delimited by "\n"
     std::vector< string > splitColumnNames = {""};
 
     /**
-     * @brief Construct a Column object with the specified name
-     * @param name The name of the column
+     * @brief Construct a Column object with the given parameters
+     * @param name The Column name
      */
     Column( string_view name )
       : columnName( name )
     {}
 
     /**
-     * @brief Construct a Column object with the specified name and alignments.
-     * @param name The name of the column
+     * @brief Construct a Column object with the given parameters
+     * @param name The Column name
      * @param headerAlign The column name alignment
      */
     Column( string_view name, Alignment headerAlign )
@@ -95,17 +96,17 @@ public:
     {}
 
     /**
-     * @brief Construct a Column object with the specified name and alignments.
-     * @param name The name of the column
-     * @param subsColumns Vector containing subcolumn values
+     * @brief Construct a Column object with the given parameters
+     * @param name The Column name
+     * @param subColumnNames Vector containing subcolumn names
      */
-    Column( string_view name, std::vector< string > subsColumns )
-      : columnName( name ), subColumns( subsColumns )
+    Column( string_view name, std::vector< string > && subColumnNamesInit )
+      : columnName( name ), subColumnNames( subColumnNamesInit )
     {}
 
     /**
-     * @brief Construct a Column object with the specified name, alignments, and display flag.
-     * @param name The name of the column
+     * @brief Construct a Column object with the given parameters
+     * @param name The Column name
      * @param headerAlign The column name alignment
      * @param display Flag indicating whether the column is enabled
      */
@@ -116,29 +117,29 @@ public:
     {}
 
     /**
-     * @brief Construct a Column object with the specified name, alignments, and display flag.
-     * @param name The name of the column
+     * @brief Construct a Column object with the given parameters
+     * @param name The Column name
      * @param headerAlign The column name alignment
      * @param display Flag indicating whether the column is enabled
-     * @param subsColumns Vector containing subcolumn values
+     * @param subsColumns Vector containing subcolumn names
      */
-    Column( string_view name, Alignment headerAlign, bool display, std::vector< string > subsColumns )
+    Column( string_view name, Alignment headerAlign, bool display, std::vector< string > && subColumnNamesInit )
       : columnName( name ),
       alignmentSettings( {headerAlign, Alignment::right} ),
       enabled( display ),
-      subColumns( subsColumns )
+      subColumnNames( subColumnNamesInit )
     {}
   };
 
   /**
-   * @brief Struct for a column.
-   * Each column contains its own parameters (such as name, alignment, etc.) and column values.
+   * @brief Struct for a TableColumnData.
+   * Each column contains its own parameters (such as name, alignment, etc.).
    */
   struct TableColumnData
   {
     /// Structure who contains parameters for a column
     Column column;
-    /// A vector containing all columns values
+    /// A vector containing all the values of a column
     std::vector< string > columnValues;
     /// The largest string(s) in the column
     std::vector< string > maxStringSize;
@@ -154,7 +155,7 @@ public:
     {}
 
     /**
-     * @brief Constructs a TableColumnData  with the given parameters.
+     * @brief Constructs a TableColumnData with the given parameters.
      * @param col The parameters for the column.
      * @param subColumnInit The subcolumns contained in the colum
      */
@@ -220,7 +221,7 @@ public:
    * @param args An initializer_list containing string / column
    */
 
-  TableLayout( TableLayoutArgs  args )
+  TableLayout( TableLayoutArgs args )
   {
     setMargin( MarginValue::medium );
     processArguments( args );
@@ -242,7 +243,6 @@ public:
   /**
    * @return The columns vector
    */
-
   std::vector< TableColumnData > const & getColumns() const;
 
   /**
