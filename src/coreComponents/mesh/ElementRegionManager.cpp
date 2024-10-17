@@ -632,21 +632,25 @@ ElementRegionManager::unpackFaceElementToFace( buffer_unit_type const * & buffer
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
-
+  //std::cout<<"numRegionsRead: "<<numRegionsRead<<std::endl;
   for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
-
+    //std::cout<<"regionName: "<<regionName<<std::endl;
     ElementRegionBase & elemRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    //std::cout<<"numSubRegionsRead: "<<numSubRegionsRead<<std::endl;
     elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >(
       [&]( localIndex const kSubReg, FaceElementSubRegion & subRegion )
     {
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+      //std::cout<<"subRegionName: "<<subRegionName<<std::endl;
+      GEOS_ERROR_IF( subRegionName != subRegion.getName(),
+                     "Unpacked subregion name (" << subRegionName << ") does not equal object name (" << subRegion.getName() << ")" );
 
       localIndex_array & elemList = packList[kReg][kSubReg];
       unpackedSize += subRegion.unpackToFaceRelation( buffer, elemList, false, overwriteMap );

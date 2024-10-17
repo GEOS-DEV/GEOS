@@ -236,6 +236,9 @@ localIndex NodeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::edgeListString() ) );
+  std::cout<<"viewKeyStruct::edgeListString(): "<<viewKeyStruct::edgeListString()<<std::endl;
+
+
   packedSize += bufferOps::Pack< DO_PACKING >( buffer,
                                                m_toEdgesRelation.toArrayOfArraysView(),
                                                m_unmappedGlobalIndicesInToEdges,
@@ -271,6 +274,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
+  std::cout<<"temp: "<<temp<<std::endl;
   GEOS_ERROR_IF_NE( temp, viewKeyStruct::edgeListString() );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,

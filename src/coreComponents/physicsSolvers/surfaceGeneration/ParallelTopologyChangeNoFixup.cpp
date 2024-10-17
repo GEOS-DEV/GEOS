@@ -243,6 +243,7 @@ void packNewAndModifiedObjectsToOwningRanks(  NeighborCommunicator & neighbor,
   packedSize += faceManager.packParentChildMaps( sendBufferPtr, newFacePackListArray );
   packedSize += elemManager.packFaceElementToFace( sendBufferPtr, newElemPackList );
 
+  std::cout<<"packedSize ( "<<MpiWrapper::commRank()<<" -> "<<neighbor.neighborRank()<<"): "<<packedSize<<std::endl;
 
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, newNodePackListArray );
   packedSize += edgeManager.packUpDownMaps( sendBufferPtr, newEdgePackListArray );
@@ -319,7 +320,7 @@ localIndex unpackNewObjectsOnOwningRanks(  NeighborCommunicator & neighbor,
   }
 
   // if we move to device + async packing here, add polling of events or pass out
-  int unpackedSize = 0;
+  buffer_type::size_type & unpackedSize = unpackStateData.m_size;
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newLocalNodes, 0 );
   unpackedSize += edgeManager.unpackGlobalMaps( receiveBufferPtr, newLocalEdges, 0 );
   unpackedSize += faceManager.unpackGlobalMaps( receiveBufferPtr, newLocalFaces, 0 );
@@ -329,7 +330,9 @@ localIndex unpackNewObjectsOnOwningRanks(  NeighborCommunicator & neighbor,
   unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, newLocalEdges );
   unpackedSize += faceManager.unpackParentChildMaps( receiveBufferPtr, newLocalFaces );
   unpackedSize += elemManager.unpackFaceElementToFace( receiveBufferPtr, newLocalElements, true );
-  
+
+  std::cout<<"unpackedSize ( "<<neighbor.neighborRank()<<" -> "<<MpiWrapper::commRank()<<"): "<<unpackedSize<<std::endl;
+  std::cout<<" end of 1b receiveBufferPtr ("<<neighbor.neighborRank()<<" -> "<<MpiWrapper::commRank()<<" ) = "<<reinterpret_cast<void const *>(receiveBufferPtr)<<std::endl;
 
   std::set< localIndex > & allNewNodes      = receivedObjects.newNodes;
   std::set< localIndex > & allNewEdges      = receivedObjects.newEdges;
@@ -555,6 +558,8 @@ localIndex unpackNewAndModifiedObjectsDataOnOwningRanks(  NeighborCommunicator &
 
   buffer_unit_type const * & receiveBufferPtr = unpackStateData.m_bufferPtr;
 
+  std::cout<<" start of 3a receiveBufferPtr ("<<neighbor.neighborRank()<<" -> "<<MpiWrapper::commRank()<<" ) = "<<reinterpret_cast<void const *>(receiveBufferPtr)<<std::endl;
+
   localIndex_array & newLocalNodes = unpackStateData.m_nodes;
   localIndex_array & newLocalEdges = unpackStateData.m_edges;
   localIndex_array & newLocalFaces = unpackStateData.m_faces;
@@ -584,7 +589,7 @@ localIndex unpackNewAndModifiedObjectsDataOnOwningRanks(  NeighborCommunicator &
 
   // if we move to device + async packing here, add polling of events or pass out
   parallelDeviceEvents events;
-  int unpackedSize = 0;
+  buffer_type::size_type & unpackedSize = unpackStateData.m_size;
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, newLocalNodes, true, true );
   unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, newLocalEdges, true, true );
@@ -1002,7 +1007,15 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //***********************************************************************************************
 
   std::cout<<"***** Step 1a *****"<<std::endl;
-  MPI_iCommData commData1( CommunicationTools::getInstance().getCommID() );
+
+  CommID const commID1 = CommunicationTools::getInstance().getCommID();
+  std::cout<<"commID1 = "<<commID1<<std::endl;
+  MPI_iCommData commData1( commID1 );
+
+
+  MPI_iCommData commData1( std::move(CommunicationTools::getInstance().getCommID() ) );
+  std::cout<<"commData1.commID() = "<<commData1.commID()<<std::endl;
+
   commData1.resize( neighbors.size() );
   for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
   {
@@ -1037,7 +1050,9 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                      MPI_COMM_GEOS );
   }
 
+  MpiWrapper::barrier();
   std::cout<<"***** Step 1b *****"<<std::endl;
+
   //***********************************************************************************************
   // 1b) On the OR, unpack the new objects that are owned by the rank that has the changes. DO NOT 
   //     unpack the maps as they will potentially contain indices that are not on the OR.
@@ -1066,13 +1081,13 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                    mesh,
                                    commData1.commID(),
                                    receivedObjects,
-                                   step1bUnpackData[count] );
+                                   step1bUnpackData[neighborIndex] );
+
   }
 
   nodeManager.inheritGhostRankFromParent( receivedObjects.newNodes );
   edgeManager.inheritGhostRankFromParent( receivedObjects.newEdges );
   faceManager.inheritGhostRankFromParent( receivedObjects.newFaces );
-  std::cout<<"***** Step 1b: inheritGhostRankFromParent *****"<<std::endl;
   elemManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
                                                                          localIndex const esr,
                                                                          ElementRegionBase &,
@@ -1089,6 +1104,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                        commData1.mpiSendBufferRequest(),
                        commData1.mpiSendBufferSizeStatus() );
 
+  modifiedObjects.insert( receivedObjects );
 
 
   //************************************************************************************************
@@ -1102,7 +1118,12 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
 
   // a new MPI_iCommData object is created to avoid overwriting the previous one which isn't 
   // finished unpacking
-  MPI_iCommData commData2( CommunicationTools::getInstance().getCommID() );
+  // CommID const commID2 = CommunicationTools::getInstance().getCommID();
+  // std::cout<<"commID2 = "<<commID2<<std::endl;
+  // MPI_iCommData commData2( commID2 );
+  MPI_iCommData commData2( std::move( CommunicationTools::getInstance().getCommID() ) );
+  std::cout<<"commData2.commID() = "<<commData2.commID()<<std::endl;
+
   commData2.resize( neighbors.size());
 
   // pack the new objects to send to ghost ranks

@@ -71,8 +71,6 @@ struct TopologyChangeStepData
   localIndex_array m_faces;
   ElementRegionManager::ElementReferenceAccessor< localIndex_array > m_elements;
   array1d< array1d< localIndex_array > > m_elementsData;
-  array1d< buffer_type > m_buffer;
-  buffer_unit_type * m_bufferPtr;
   buffer_type::size_type m_size;
 
 };

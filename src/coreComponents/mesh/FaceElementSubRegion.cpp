@@ -1117,9 +1117,6 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
   arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   for( localIndex const & index: indices )
   {
-    std::cout<<"index = "<<index<<std::endl;
-    std::cout<<"m_toFacesRelation.sizeOfArray( index ) = "<<m_toFacesRelation.sizeOfArray( index )<<std::endl;
-    std::cout<<"m_toFacesRelation[index][0] = "<<m_toFacesRelation[index][0]<<std::endl;
     m_ghostRank[index] = faceGhostRank[m_toFacesRelation[index][0]];
   }
 }
