@@ -60,7 +60,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_creepC( 0.0 ),
   m_strainHardeningN( 0.0 ),
   m_strainHardeningK( 0.0 ),
-  m_plasticStrainTolerance( 1.0e-6 ),
+  m_plasticStrainTolerance( 1.0e-10 ),
   m_stressReturnTolerance( 1.0e-6 ),
   m_maxAllowedSubcycles( 256 ),
   m_failedStepResponse( 0 ),
@@ -253,7 +253,6 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point length scale values" );
-
 }
 
 
