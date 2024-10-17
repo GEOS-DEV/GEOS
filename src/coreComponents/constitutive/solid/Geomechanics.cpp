@@ -52,7 +52,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_cr( 0.0 ),
   m_fluidBulkModulus(0.0 ),
   m_fluidInitialPressure( 0.0 ),
-  m_creep( 0 ),
+  m_enableCreep( 0 ),
   m_creepC0( 0.0),
   m_creepC1( 0.0 ),
   m_creepA( 0.0 ),
@@ -168,7 +168,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Nonassociativity parameter" );
 
-  registerWrapper( viewKeyStruct::creepString(), &m_creep ).
+  registerWrapper( viewKeyStruct::creepString(), &m_enableCreep ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep flag" );
 
