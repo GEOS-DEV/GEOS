@@ -193,6 +193,10 @@ public:
     GEOS_UNUSED_VAR( m_p4 );
     GEOS_UNUSED_VAR( m_t1RateDependence );
     GEOS_UNUSED_VAR( m_t2RateDependence );
+    GEOS_UNUSED_VAR( m_plasticStrainTolerance );
+    GEOS_UNUSED_VAR( m_stressReturnTolerance );
+    GEOS_UNUSED_VAR( m_maxAllowedSubcycles );
+    GEOS_UNUSED_VAR( m_failedStepResponse );
   }
 
   /// Default copy constructor
@@ -758,7 +762,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
   // All stress values within computeStep are quasistatic.
   int n,
-      chimax = 16,                                  // max allowed subcycle multiplier
+      chimax = 1,                                   // max allowed subcycle multiplier
       chi = 1,                                      // subcycle multiplier
       stepFlag,                                     // 0/1 good/bad step
       substepFlag;                                  // 0/1 good/bad substep
@@ -1026,7 +1030,6 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       // ep_old    = ep_new;
       LvArray::tensorOps::copy< 6 >( sigma_old, sigma_new );
       LvArray::tensorOps::copy< 6 >( ep_old, ep_new );
-
       n++;
       goto computeSubstep;
     }
@@ -1227,7 +1230,9 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   // compute the number of step divisions (substeps) based on a comparison
   // of the trial stress relative to the size of the yield surface, as well
   // as change in elastic properties between sigma_n and sigma_trial.
-  int nmax = m_maxAllowedSubcycles;
+  int subcycling_characteristic_number = 256;
+  int nmax = ceil(subcycling_characteristic_number);
+  //   int nmax = m_maxAllowedSubcycles;
 
   // Compute change in bulk modulus:
   real64 bulk_n,
@@ -1286,7 +1291,8 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   // throw warning and delete particle.
   int nsub = std::max( n_bulk, n_yield);
 
-  if( nsub > nmax && ( m_failedStepResponse == 2 || m_failedStepResponse == 3 ) )
+  //if( nsub > nmax && ( m_failedStepResponse == 2 || m_failedStepResponse == 3 ) )
+  if( nsub > subcycling_characteristic_number )
   {
     // We could return an error here (set nsub=-1) if the code is asking for more than
     // the allowable max number of substeps, or just set n=nmax and run.
@@ -1297,10 +1303,10 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   }
   else
   {
-    if (nsub > nmax && m_failedStepResponse == 1)
-    {
-      GEOS_LOG_RANK( "Requesting too many subcycles in geomechanics model, solution may be innaccurate" );
-    }
+    //if (nsub > nmax && m_failedStepResponse == 1)
+    //{
+    //  GEOS_LOG_RANK( "Requesting too many subcycles in geomechanics model, solution may be innaccurate" );
+    //}
     nsub = std::min( std::max( nsub, 1 ), nmax  );
   }
   return nsub;
@@ -1599,8 +1605,8 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
   // (5) Compute non-hardening return to initial yield surface:
   //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
     real64 I1_0,       // I1 at stress update for non-hardening return
-           rJ2_0;      // rJ2 at stress update for non-hardening return
-           //TOL = 1e-10; // bisection convergence tolerance on vol. plastic strain (if decreased, you may need to change imax)
+           rJ2_0,      // rJ2 at stress update for non-hardening return
+           TOL = 1e-10; // bisection convergence tolerance on vol. plastic strain (if decreased, you may need to change imax)
     real64 S_0[6],        // S (deviator) at stress update for non-hardening return
            d_ep_0[6],     // increment in plastic strain for non-hardening return
            S_old[6];
@@ -1806,11 +1812,10 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
     LvArray::tensorOps::copy< 6 >( ep_new, ep_old );
     LvArray::tensorOps::add< 6 >( ep_new, d_ep_new );
 
-    // Check for convergence.  We can put a limit on |eta_out-eta_in| which is equivalent to just having
-    // a fixed number of iterations.  or we can put an actual tolerance on the vol plastic strain
-    // which will make it iterate less in cases where there isn't much cap motion.
-    //if( fabs( d_evp_new - d_evp_0 ) < m_plasticStrainTolerance || ( i = imax && m_failedStepResponse <= 1 ) ){ // Solution is converged or option is to accept regardless.
-    if( fabs(eta_out-eta_in) < m_plasticStrainTolerance ){ // Solution is converged
+    // Check for convergence
+    // This could be a check against m_plasticStrainTolerance where we actually look at the strain
+    // error.  In the current version the tolerance is bigger if |d_evp_new-d_evp_0| is bigger 
+    if( fabs(eta_out-eta_in) < TOL ){ // Solution is converged
        // sigma_new = Identity; // one_third*I1_new*Identity + S_new;
       // sigma_new *= one_third*I1_new;
       // sigma_new += S_new;
@@ -2191,11 +2196,12 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
   real64 eta_out = 1.0,
          eta_in  = 0.0,
          eta_mid,
+         TOL = 1.0e-6,
          r_test,
          z_test;
 
   // (2) Test for convergence
-  while ( eta_out-eta_in > m_stressReturnTolerance ){
+  while (eta_out-eta_in > TOL){ // TODO: use m_stressReturnTolerance
 
     // (3) Transformed test point
     eta_mid = 0.5*(eta_out+eta_in);
