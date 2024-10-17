@@ -133,7 +133,7 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
-      subRegion.registerField< bcPhaseVolumeFraction>( getName() ).
+      subRegion.registerField< bcPhaseVolumeFraction >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
       subRegion.registerField< phaseMass >( getName() ).
@@ -302,7 +302,6 @@ void ImmiscibleMultiphaseFlow::updatePhaseMass( ElementSubRegionBase & subRegion
   TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
   CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-  integer const numofPhases = 2;
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
   arrayView2d< real64 const > const porosity = solid.getPorosity();
 
@@ -655,8 +654,8 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
           localJacobian[ip][0] += dPhaseMass_dP;
 
           real64 const dPhaseMass_dS = poreVolume * phaseDens[ei][0][ip];
-          
-          
+
+
           // if ( ip == 0)
           // {
           //   localJacobian[ip][1] += dPhaseMass_dS;
@@ -756,7 +755,7 @@ void ImmiscibleMultiphaseFlow::applyBoundaryConditions( real64 const time_n,
                                                         arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-  
+
   // apply pressure boundary conditions.
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
@@ -871,7 +870,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
     // 2. Apply saturation BC (phase volume fraction) and store in a separate field
     applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
                                              fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
-     fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+                                             fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -890,8 +889,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
       arrayView1d< real64 const > const bcPres =
         subRegion.getReference< array1d< real64 > >( fields::flow::bcPressure::key() );
       arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const bcPhaseVolFraction =
-      subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
-       fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+        subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
+          fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
 
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -900,10 +899,10 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
       arrayView1d< real64 const > const pres =
         subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
       arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFraction =
-      subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
-       fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
+        subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
+          fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
 
-    //  GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction));
+      //  GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction));
 
       integer const numPhase = m_numPhases;
 
@@ -928,8 +927,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                     bcPres[ei],
                                                     pres[ei] );
         localRhs[localRow] = rhsValue;
-    //    GEOS_LOG_RANK_0(GEOS_FMT("BC Pressure {}", bcPres[ei]));
-     //   GEOS_LOG_RANK_0(GEOS_FMT("Pressure {}", pres[ei]));
+        //    GEOS_LOG_RANK_0(GEOS_FMT("BC Pressure {}", bcPres[ei]));
+        //   GEOS_LOG_RANK_0(GEOS_FMT("Pressure {}", pres[ei]));
 
         // 3.2. For each phase, apply target saturation value
         for( integer ip = 0; ip < numPhase-1; ++ip )
@@ -942,8 +941,8 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                       phaseVolFraction[ei][ip] );
           localRhs[localRow + ip + 1] = rhsValue;
 
-       // GEOS_LOG_RANK_0(GEOS_FMT("BC Saturation {}", bcPhaseVolFraction[ei][ip]));
-       // GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction[ei][ip]));
+          // GEOS_LOG_RANK_0(GEOS_FMT("BC Saturation {}", bcPhaseVolFraction[ei][ip]));
+          // GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction[ei][ip]));
         }
       } );
     } );
@@ -979,9 +978,6 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
     {
       real64 subRegionResidualNorm[numNorm]{};
       real64 subRegionResidualNormalizer[numNorm]{};
-
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
@@ -1040,10 +1036,10 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
 }
 
 void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManager,
-                                                arrayView1d< real64 const > const & localSolution,
-                                                real64 const scalingFactor,
-                                                real64 const dt,
-                                                DomainPartition & domain )
+                                                    arrayView1d< real64 const > const & localSolution,
+                                                    real64 const scalingFactor,
+                                                    real64 const dt,
+                                                    DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( dt );
 
@@ -1053,18 +1049,18 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
   // 1. apply the pressure update
 
   dofManager.addVectorToField( localSolution,
-                                viewKeyStruct::elemDofFieldString(),
-                                fields::flow::pressure::key(),
-                                scalingFactor,
-                                pressureMask );
+                               viewKeyStruct::elemDofFieldString(),
+                               fields::flow::pressure::key(),
+                               scalingFactor,
+                               pressureMask );
 
   // 2. apply the phaseVolumeFraction update
 
   dofManager.addVectorToField( localSolution,
-                                viewKeyStruct::elemDofFieldString(),
-                                fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
-                                scalingFactor,
-                                ~pressureMask );
+                               viewKeyStruct::elemDofFieldString(),
+                               fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
+                               scalingFactor,
+                               ~pressureMask );
 
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1085,18 +1081,15 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
 void ImmiscibleMultiphaseFlow::updatePhaseVolumeFraction( ElementSubRegionBase & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
-  integer const numofPhases = 2;
-  
-  //arrayView1d< real64 const> const singleSaturation = subRegion.getField< fields::immiscibleMultiphaseFlow::singleSaturation >();
+
   arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVolumeFraction = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
-  
+
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
-      // phaseVolumeFraction[ei][0] = singleSaturation[ei];
-      phaseVolumeFraction[ei][1] = 1.0 - phaseVolumeFraction[ei][0];
-    }
-   );
-}   
+    phaseVolumeFraction[ei][1] = 1.0 - phaseVolumeFraction[ei][0];
+  } );
+}
+
 
 void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & domain )
 {

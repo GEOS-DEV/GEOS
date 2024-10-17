@@ -831,10 +831,10 @@ public:
       phaseMob[ip] = mobility;
       dPhaseMob[ip][Deriv::dP] = mobility * (dDens_dP / density - dVisc_dP / viscosity);
 
-     // for( integer jp = 0; jp < numPhase-1; ++jp )
-     // {
-        real64 const dRelPerm_dS = sign[ip] * m_dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][ip];
-        dPhaseMob[ip][Deriv::dS] = dRelPerm_dS * density / viscosity;
+      // for( integer jp = 0; jp < numPhase-1; ++jp )
+      // {
+      real64 const dRelPerm_dS = sign[ip] * m_dPhaseRelPerm_dPhaseVolFrac[ei][0][ip][ip];
+      dPhaseMob[ip][Deriv::dS] = dRelPerm_dS * density / viscosity;
       // }
 
       // call the lambda in the phase loop to allow the reuse of the relperm, density, viscosity, and mobility
@@ -965,10 +965,10 @@ public:
                             LinfStackVariables & stack ) const override
   {
     real64 massNormalizer = 0;
-      for( integer idof = 0; idof < m_numPhases; ++idof )
+    for( integer idof = 0; idof < m_numPhases; ++idof )
     {
-       massNormalizer += LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
-    }  
+      massNormalizer += LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
+    }
 
     for( integer idof = 0; idof < m_numPhases; ++idof )
     {
@@ -978,7 +978,7 @@ public:
         stack.localValue[0] = valMass;
       }
     }
-    
+
     // for( integer idof = 0; idof < m_numPhases; ++idof )
     // {
     //   real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_phaseMass_n[ei][idof] );
