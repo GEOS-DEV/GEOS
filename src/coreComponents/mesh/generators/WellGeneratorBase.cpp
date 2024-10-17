@@ -552,12 +552,12 @@ void WellGeneratorBase::logInternalWell() const
 
   string const wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
   TableLayout tableWellLayout(
-    "Element no.",
-    "CoordX",
-    "CoordY",
-    "CoordZ",
-    "Prev\nElement",
-    "Next\nElement" );
+    {"Element no.",
+     "CoordX",
+     "CoordY",
+     "CoordZ",
+     "Prev\nElement",
+     "Next\nElement"} );
   tableWellLayout.setTitle( wellTitle );
 
   TableTextFormatter const tableFormatter( tableWellLayout );
@@ -572,8 +572,8 @@ void WellGeneratorBase::logPerforationTable() const
     tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  TableLayout const tableLayoutPerfo ( {"Perforation no.", "Coordinates", "Well element no."},
-                                       GEOS_FMT( "Well '{}' Perforation Table", getName() ) );
+  TableLayout const tableLayoutPerfo ( GEOS_FMT( "Well '{}' Perforation Table", getName()),
+                                       { "Perforation no.", "Coordinates", "Well element no." } );
   TableTextFormatter const tablePerfoLog( tableLayoutPerfo );
   GEOS_LOG_RANK_0( tablePerfoLog.toString( tablePerfoData ));
 }

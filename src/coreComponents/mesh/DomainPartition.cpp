@@ -411,10 +411,10 @@ void DomainPartition::outputPartitionInformation() const
         GEOS_LOG_RANK_0( "  MeshBody: " + meshBody.getName() + " MeshLevel: " + meshLevel.getName() + "\n" );
 
         TableLayout tableLayout( "Rank",
-                                 TableLayout::Column{"Nodes", {"local", "ghost"}},
-                                 TableLayout::Column{"Edges", {"local", "ghost"}},
-                                 TableLayout::Column{"Faces", {"local", "ghost"}},
-                                 TableLayout::Column{"Elems", {"local", "ghost"}} );
+                                 {TableLayout::Column{"Nodes", {"local", "ghost"}},
+                                  TableLayout::Column{"Edges", {"local", "ghost"}},
+                                  TableLayout::Column{"Faces", {"local", "ghost"}},
+                                  TableLayout::Column{"Elems", {"local", "ghost"}}} );
         tableLayout.setMargin( TableLayout::MarginValue::large );
         tableLayout.disableLineWrap();
 
@@ -460,7 +460,7 @@ void DomainPartition::outputPartitionInformation() const
         TableTextFormatter tableLog( tableLayout );
         GEOS_LOG_RANK_0( tableLog.toString( tableData ));
 
-        TableLayout tableLayoutRatio( "Rank", "Nodes ", "Edges ", "Faces ", "Elems " );
+        TableLayout tableLayoutRatio( {"Rank", "Nodes ", "Edges ", "Faces ", "Elems "} );
         tableLayout.setMargin( TableLayout::MarginValue::large );
 
         TableData tableDataRatio;

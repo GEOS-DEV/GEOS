@@ -235,11 +235,10 @@ void NonlinearSolverParameters::print() const
     tableData.addRow( "Sequential convergence criterion", m_sequentialConvergenceCriterion );
     tableData.addRow( "Subcycling", m_subcyclingOption );
   }
-  TableLayout tableLayout = TableLayout(
-    TableLayout::Column{"Parameter", TableLayout::Alignment::left},
-    TableLayout::Column{"Value", TableLayout::Alignment::left}
-    );
-  tableLayout.setTitle( GEOS_FMT( "{}: nonlinear solver", getParent().getName() ));
+  TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: nonlinear solver", getParent().getName() ),
+                                               { TableLayout::Column{"Parameter", TableLayout::Alignment::left},
+                                                 TableLayout::Column{"Value", TableLayout::Alignment::left} }
+                                               );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
 }
