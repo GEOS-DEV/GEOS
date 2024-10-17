@@ -136,6 +136,11 @@ public:
                                  real64 ( &elasticStrain )[6] ) const override final;
 
   GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( &elasticStrainInc )[6] ) const override final;
+  
+  GEOS_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
     return m_bulkModulus[k];
@@ -228,6 +233,23 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
   elasticStrain[5] = m_newStress[k][q][5] / m_shearModulus[k];
 }
 
+GEOS_HOST_DEVICE
+inline
+void ElasticIsotropicUpdates::getElasticStrainInc( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 ( & elasticStrainInc)[6] ) const
+{
+  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
+
+  elasticStrainInc[0] = (    (m_newStress[k][q][0] - m_oldStress[k][q][0]) - nu*(m_newStress[k][q][1] - m_oldStress[k][q][1]) - nu*(m_newStress[k][q][2] - m_oldStress[k][q][2]))/E;
+  elasticStrainInc[1] = (-nu*(m_newStress[k][q][0] - m_oldStress[k][q][0]) +    (m_newStress[k][q][1] - m_oldStress[k][q][1]) - nu*(m_newStress[k][q][2] - m_oldStress[k][q][2]))/E;
+  elasticStrainInc[2] = (-nu*(m_newStress[k][q][0] - m_oldStress[k][q][0]) - nu*(m_newStress[k][q][1] - m_oldStress[k][q][1]) +    (m_newStress[k][q][2] - m_oldStress[k][q][2]))/E;
+
+  elasticStrainInc[3] = (m_newStress[k][q][3] - m_oldStress[k][q][3]) / m_shearModulus[k];
+  elasticStrainInc[4] = (m_newStress[k][q][4] - m_oldStress[k][q][4]) / m_shearModulus[k];
+  elasticStrainInc[5] = (m_newStress[k][q][5] - m_oldStress[k][q][5]) / m_shearModulus[k];
+}
 
 GEOS_HOST_DEVICE
 inline
