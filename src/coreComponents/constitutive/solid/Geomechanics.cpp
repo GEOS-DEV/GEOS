@@ -60,6 +60,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_creepC( 0.0 ),
   m_strainHardeningN( 0.0 ),
   m_strainHardeningK( 0.0 ),
+  m_plasticStrainTolerance( 1.0e-6 ),
+  m_stressReturnTolerance( 1.0e-6 ),
+  m_maxAllowedSubcycles( 256 ),
+  m_failedStepResponse( 0 ),
   m_bulkModulus(),
   m_shearModulus(),
   m_velocityGradient(),
@@ -200,6 +204,22 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Strain Hardening K parameter" );
 
+  registerWrapper( viewKeyStruct::plasticStrainToleranceString(), &m_plasticStrainTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Tolerance in the volumetric plastic strain consistency bisection - units of strain" );
+
+  registerWrapper( viewKeyStruct::stressReturnToleranceString(), &m_stressReturnTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Dimensionless precision of the non-hardening return relative to the trial stress increment" );
+
+  registerWrapper( viewKeyStruct::maxAllowedSubcyclesString(), &m_maxAllowedSubcycles ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of subcycles allowed before step is deemed to fail" );
+
+  registerWrapper( viewKeyStruct::failedStepResponseString(), &m_failedStepResponse ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Treatment if step fails, 0: accept solution, 1: log error and continue, 2: abort run, 3: log error and delete particle" );
+
   // register fields
   registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
     setInputFlag( InputFlags::FALSE ).
@@ -233,6 +253,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point length scale values" );
+
 }
 
 
