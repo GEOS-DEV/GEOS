@@ -25,7 +25,10 @@
 namespace geos
 {
 
-class LogPart
+/**
+ * @brief Class for displaying different steps of simulation  
+ */
+class LogPart 
 {
 public:
 
@@ -109,7 +112,7 @@ private:
    * after accounting for borders and margins
    */
   void formatDescription( std::ostringstream & oss,
-                          string_view description,
+                          string const & description,
                           integer const remainingLength ) const;
 
 /**

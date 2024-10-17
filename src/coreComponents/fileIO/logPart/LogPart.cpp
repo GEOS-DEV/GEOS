@@ -73,7 +73,7 @@ string LogPart::constructDescriptionsFromVector( std::vector< string > const & d
 }
 
 void LogPart::formatDescription( std::ostringstream & oss,
-                                 string_view description,
+                                 string const & description,
                                  integer const remainingLength ) const
 {
   string const borderCharacters = GEOS_FMT( "{:#<{}}", "", m_nbBorderChar );
