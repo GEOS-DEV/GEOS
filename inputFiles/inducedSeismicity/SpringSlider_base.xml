@@ -88,13 +88,21 @@
       setNames="{all}"/>
     
     <FieldSpecification
-      name="shearTraction"
+      name="shearTraction1"
       fieldName="traction"
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="1"
       scale="30"
       setNames="{all}"/>
+    <FieldSpecification
+      name="shearTraction2"
+      fieldName="traction"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="2"
+      scale="0."
+      setNames="{all}"/>  
     <FieldSpecification
       name="stateVariable"
       fieldName="stateVariable"
