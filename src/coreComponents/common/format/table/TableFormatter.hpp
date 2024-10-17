@@ -244,7 +244,7 @@ private:
                           string_view sectionSeparatingLine,
                           std::ostringstream & rows,
                           integer const nbRows,
-                          TableLayout::Section const section ) const;
+                          TableLayout::LogPart const section ) const;
 };
 
 /**
