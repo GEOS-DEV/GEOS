@@ -170,9 +170,9 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-    LogPart section( "TIMESTEP START" );
-    outputTime( section );
-    section.beginSection();
+    LogPart logPart( "TIMESTEP START" );
+    outputTime( logPart );
+    logPart.begin();
 
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
@@ -209,7 +209,7 @@ bool EventManager::run( DomainPartition & domain )
       }
     }
 
-    section.endSection();
+    logPart.end();
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
     ++m_cycle;
@@ -227,7 +227,7 @@ bool EventManager::run( DomainPartition & domain )
   return false;
 }
 
-void EventManager::outputTime( LogPart & section ) const
+void EventManager::outputTime( LogPart & logPart ) const
 {
   const bool isTimeLimited = m_maxTime < std::numeric_limits< real64 >::max();
   const bool isCycleLimited = m_maxCycle < std::numeric_limits< integer >::max();
@@ -254,10 +254,10 @@ void EventManager::outputTime( LogPart & section ) const
   string const timeInfosUnfolded = timeInfo.toUnfoldedString() + timeCompletionUnfolded;
   string const timeCompletionSeconds = timeInfo.toSecondsString() + timeCompletionSecond;
 
-  section.addDescription( "Time", timeInfosUnfolded, timeCompletionSeconds );
-  section.addDescription( "Delta Time", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
-  section.addDescription( "Cycle", m_cycle, cycleLimited );
-  section.setMinWidth( 70 );
+  logPart.addDescription( "Time", timeInfosUnfolded, timeCompletionSeconds );
+  logPart.addDescription( "Delta Time", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
+  logPart.addDescription( "Cycle", m_cycle, cycleLimited );
+  logPart.setMinWidth( 70 );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )

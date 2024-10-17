@@ -1,6 +1,6 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testSection.cpp )
+     testLogPart.cpp )
 
 set( dependencyList gtest fileIO ${parallelDeps} )
 

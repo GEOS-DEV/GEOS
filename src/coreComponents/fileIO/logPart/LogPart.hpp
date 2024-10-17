@@ -75,13 +75,13 @@ public:
    * @brief Draw the first part of the section. It include the title and optionnaly, the description(s);
    * @param os An output stream (by default, std::cout)
    */
-  void beginSection( std::ostream & os = std::cout );
+  void begin( std::ostream & os = std::cout );
 
   /**
    * @brief Draw the last part of the section. It include the title
    * @param oss An output stream (by default, std::cout)
    */
-  void endSection( std::ostream & oss = std::cout ) const;
+  void end( std::ostream & oss = std::cout ) const;
 
 private:
 

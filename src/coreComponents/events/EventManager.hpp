@@ -19,7 +19,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "EventBase.hpp"
-#include "fileIO/section/LogPart.hpp"
+#include "fileIO/logPart/LogPart.hpp"
 
 namespace geos
 {

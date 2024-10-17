@@ -82,7 +82,7 @@ void LogPart::formatDescription( std::ostringstream & oss,
   oss << borderCharacters << '\n';
 }
 
-void LogPart::beginSection( std::ostream & os )
+void LogPart::begin( std::ostream & os )
 {
   m_sectionWidth = std::max( m_sectionWidth, m_rowMinWidth );
   horizontalBorder =  GEOS_FMT( "{:#>{}}\n", "", m_sectionWidth );
@@ -107,7 +107,7 @@ void LogPart::beginSection( std::ostream & os )
   os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
 }
 
-void LogPart::endSection( std::ostream & os ) const
+void LogPart::end( std::ostream & os ) const
 {
   string const footerTitle = GEOS_FMT( "{}{}", m_footerTitle, m_sectionTitle );
   string const lineSection = GEOS_FMT( "{:#^{}}\n", "", m_sectionWidth );

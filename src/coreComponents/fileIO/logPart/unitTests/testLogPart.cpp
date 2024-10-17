@@ -13,7 +13,7 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "fileIO/section/LogPart.hpp"
+#include "fileIO/logPart/LogPart.hpp"
 #include <gtest/gtest.h>
 
 using namespace geos;
@@ -21,8 +21,8 @@ using namespace geos;
 TEST( testSection, sectionWithTitle )
 {
   std::ostringstream oss;
-  LogPart section( "section name" );
-  section.beginSection( oss );
+  LogPart logPart( "section name" );
+  logPart.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n######################################################################\n"
              "##                           section name                           ##\n"
@@ -31,7 +31,7 @@ TEST( testSection, sectionWithTitle )
   oss.clear();
   oss.str( "" );
 
-  section.endSection( oss );
+  logPart.end( oss );
   EXPECT_EQ( oss.str(),
              "\n##                        End : section name                        ##\n"
              "######################################################################\n\n"
@@ -42,9 +42,9 @@ TEST( testSection, sectionWithTitle )
 TEST( testSection, sectionWithTitleAndOneDescription )
 {
   std::ostringstream oss;
-  LogPart section( "section name" );
-  section.addDescription( "description name" );
-  section.beginSection( oss );
+  LogPart logPart( "section name" );
+  logPart.addDescription( "description name" );
+  logPart.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n######################################################################\n"
              "##                           section name                           ##\n"
@@ -57,11 +57,11 @@ TEST( testSection, sectionWithTitleAndOneDescription )
 TEST( testSection, sectionWithSetWidth )
 {
   std::ostringstream oss;
-  LogPart section( "section name" );
-  section.addDescription( "description name 1" );
-  section.addDescription( "description name 2" );
-  section.setMinWidth( 100 );
-  section.beginSection( oss );
+  LogPart logPart( "section name" );
+  logPart.addDescription( "description name 1" );
+  logPart.addDescription( "description name 2" );
+  logPart.setMinWidth( 100 );
+  logPart.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n####################################################################################################\n"
              "##                                          section name                                          ##\n"
@@ -72,7 +72,7 @@ TEST( testSection, sectionWithSetWidth )
   oss.clear();
   oss.str( "" );
 
-  section.endSection( oss );
+  logPart.end( oss );
   EXPECT_EQ( oss.str(),
              "\n##                                       End : section name                                       ##\n"
              "####################################################################################################\n\n"
@@ -83,12 +83,12 @@ TEST( testSection, sectionWithSetWidth )
 TEST( testSection, sectionMultipleDescriptions )
 {
   std::ostringstream oss;
-  LogPart section( "TIMESTEP START" );
-  section.addDescription( "Time", "00h08m20s out of 2d, 21h26m40s (0% completed)", "500 s / 250000 s" );
-  section.addDescription( "Delta Time", "00h16m40s (1000 s)" );
-  section.addDescription( "- Cycle: 1" );
-  section.setMinWidth( 70 );
-  section.beginSection( oss );
+  LogPart logPart( "TIMESTEP START" );
+  logPart.addDescription( "Time", "00h08m20s out of 2d, 21h26m40s (0% completed)", "500 s / 250000 s" );
+  logPart.addDescription( "Delta Time", "00h16m40s (1000 s)" );
+  logPart.addDescription( "- Cycle: 1" );
+  logPart.setMinWidth( 70 );
+  logPart.begin( oss );
   EXPECT_EQ ( oss.str(),
               "\n######################################################################\n"
               "##                          TIMESTEP START                          ##\n"
@@ -101,7 +101,7 @@ TEST( testSection, sectionMultipleDescriptions )
   oss.clear();
   oss.str( "" );
 
-  section.endSection( oss );
+  logPart.end( oss );
   EXPECT_EQ( oss.str(),
              "\n##                       End : TIMESTEP START                       ##\n"
              "######################################################################\n\n"
@@ -112,15 +112,15 @@ TEST( testSection, sectionMultipleDescriptions )
 TEST( testSection, sectionEndDescription )
 {
   std::ostringstream oss;
-  LogPart section( "TIMESTEP START" );
-  section.addDescription( "description" );
-  section.addEndDescription( "test end description" );
-  section.setMinWidth( 70 );
-  section.beginSection( oss );
+  LogPart logPart( "TIMESTEP START" );
+  logPart.addDescription( "description" );
+  logPart.addEndDescription( "test end description" );
+  logPart.setMinWidth( 70 );
+  logPart.begin( oss );
   oss.clear();
   oss.str( "" );
 
-  section.endSection( oss );
+  logPart.end( oss );
 
   std::cout << " end section \n" << oss.str() << std::endl;
 
