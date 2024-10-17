@@ -109,8 +109,18 @@ private:
    * after accounting for borders and margins
    */
   void formatDescription( std::ostringstream & oss,
-                          string const & description,
+                          string_view description,
                           integer const remainingLength ) const;
+
+/**
+ * @brief Formats a log section with a title and optional descriptions.
+ * @param title The title of the log section to be formatted.
+ * @param titleRowLength The length of the title row
+ * @param descriptions Optional descriptions to include below the title;
+ *        if empty, only the title will be displayed.
+ * @return A formatted string containing the top and bottom parts of the log section
+ */
+  string formatLogSection( string_view title, integer titleRowLength, string_view descriptions ) const;
 
   /// Vector containing all descriptions
   std::vector< string > m_descriptions;
@@ -127,10 +137,10 @@ private:
   /// description border margin
   static constexpr integer m_marginBorder = 2;
   /// numbers of character used as border
-  static constexpr integer m_nbSpecialChar = 2;
+  static constexpr integer m_nbBorderChar = 2;
 
   /// String containing horizontal border
-  string horizontalBorder;
+  string m_horizontalBorder;
 
   /// Start title footer string
   static string_view constexpr m_footerTitle = "End : ";

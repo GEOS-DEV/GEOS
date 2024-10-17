@@ -46,9 +46,9 @@ void LogPart::formatAndInsertDescriptions( std::vector< string > & descriptionCo
                                            string_view descriptionName,
                                            std::vector< string > const & descriptionValues )
 {
-  string descriptionNameFormatted =  GEOS_FMT( "- {}: ", string( descriptionName ));
+  string const descriptionNameFormatted =  GEOS_FMT( "- {}: ", string( descriptionName ));
   string const descriptionFormatted = GEOS_FMT( "{}{}", descriptionNameFormatted, descriptionValues[0] );
-  integer spacesFromBorder = m_marginBorder * 2 + m_nbSpecialChar * 2;
+  integer const spacesFromBorder = m_marginBorder * 2 + m_nbBorderChar * 2;
   integer const completeDescriptionLength = descriptionFormatted.length() + spacesFromBorder;
   descriptionContainer.push_back( descriptionFormatted );
 
@@ -66,17 +66,17 @@ string LogPart::constructDescriptionsFromVector( std::vector< string > const & d
   std::ostringstream oss;
   for( const auto & description : descriptions )
   {
-    integer const rowDescriptionLength = m_sectionWidth - m_nbSpecialChar * 2 - m_marginBorder;
+    integer const rowDescriptionLength = m_sectionWidth - m_nbBorderChar * 2 - m_marginBorder;
     formatDescription( oss, description, rowDescriptionLength );
   }
   return oss.str();
 }
 
 void LogPart::formatDescription( std::ostringstream & oss,
-                                 string const & description,
+                                 string_view description,
                                  integer const remainingLength ) const
 {
-  string borderCharacters = GEOS_FMT( "{:#<{}}", "", m_nbSpecialChar );
+  string const borderCharacters = GEOS_FMT( "{:#<{}}", "", m_nbBorderChar );
   oss << borderCharacters;
   oss << GEOS_FMT( "{:<{}}{:<{}}", " ", m_marginBorder, description, remainingLength );
   oss << borderCharacters << '\n';
@@ -85,47 +85,44 @@ void LogPart::formatDescription( std::ostringstream & oss,
 void LogPart::begin( std::ostream & os )
 {
   m_sectionWidth = std::max( m_sectionWidth, m_rowMinWidth );
-  horizontalBorder =  GEOS_FMT( "{:#>{}}\n", "", m_sectionWidth );
-  string const borderCharacters =  GEOS_FMT( "{:#<{}}", "", m_nbSpecialChar );
+  integer const titleRowLength = m_sectionWidth - m_nbBorderChar * 2;
 
-  integer const titleLength = m_sectionWidth - m_nbSpecialChar * 2;
   string descriptions;
-
   if( !m_descriptions.empty())
   {
     descriptions = constructDescriptionsFromVector( m_descriptions );
   }
-
+  string const borderCharacters =  GEOS_FMT( "{:#<{}}", "", m_nbBorderChar );
   string titleRowFormatted =  GEOS_FMT( "{}{:^{}}{}\n",
                                         borderCharacters,
                                         m_sectionTitle,
-                                        titleLength,
+                                        titleRowLength,
                                         borderCharacters );
 
-  string topPart = GEOS_FMT( "{}{}{}", horizontalBorder, titleRowFormatted, horizontalBorder );
-  string bottomPart = descriptions;
+  m_horizontalBorder =  GEOS_FMT( "{:#>{}}\n", "", m_sectionWidth );
+  string const topPart = GEOS_FMT( "{}{}{}", m_horizontalBorder, titleRowFormatted, m_horizontalBorder );
+  string const bottomPart = descriptions;
   os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
 }
 
 void LogPart::end( std::ostream & os ) const
 {
-  string const footerTitle = GEOS_FMT( "{}{}", m_footerTitle, m_sectionTitle );
-  string const lineSection = GEOS_FMT( "{:#^{}}\n", "", m_sectionWidth );
-  string const borderCharacters =  GEOS_FMT( "{:#<{}}", "", m_nbSpecialChar );
-  integer const titleLength = m_sectionWidth - m_nbSpecialChar * 2;
   string topPart;
-
   if( !m_endLogMessages.empty() )
   {
-    topPart =  GEOS_FMT( "{}{}", constructDescriptionsFromVector( m_endLogMessages ), horizontalBorder );
+    topPart =  GEOS_FMT( "{}{}", constructDescriptionsFromVector( m_endLogMessages ), m_horizontalBorder );
   }
 
+  string const borderCharacters =  GEOS_FMT( "{:#<{}}", "", m_nbBorderChar );
+  string const footerTitle = GEOS_FMT( "{}{}", m_footerTitle, m_sectionTitle );
+  integer const titleRowLength = m_sectionWidth - m_nbBorderChar * 2;
   string titleRowFormatted = GEOS_FMT( "{}{:^{}}{}\n",
                                        borderCharacters,
                                        footerTitle,
-                                       titleLength,
+                                       titleRowLength,
                                        borderCharacters );
-  string bottomPart = GEOS_FMT( "{}{}", titleRowFormatted, horizontalBorder );
+  string const bottomPart = GEOS_FMT( "{}{}", titleRowFormatted, m_horizontalBorder );
   os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
 }
+
 }
