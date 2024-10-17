@@ -347,6 +347,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                          m_componentMolarWeight,
                                          pvtOutputOpts );
 
+
   // 2) Create the flash model
   if( !m_flashModelParaFile.empty())
   {
