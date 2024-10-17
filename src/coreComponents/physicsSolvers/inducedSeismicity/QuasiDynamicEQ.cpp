@@ -238,17 +238,13 @@ void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    slipRate_n[k][0]    = slipRate[k][0];
-    slipRate_n[k][0]    = slipRate[k][0];
+    LvArray::tensorOps::copy< 2 >(slipRate_n[k], slipRate[k]);
     stateVariable_n[k]  = stateVariable[k];
     deltaSlip[k][0]     = slipRate[k][0] * dt;
     deltaSlip[k][1]     = slipRate[k][1] * dt;
     // Update tangential components of the displacement jump
     dispJump[k][1]      = dispJump[k][1] + slipRate[k][0] * dt;
     dispJump[k][2]      = dispJump[k][2] + slipRate[k][1] * dt;
-    // std::cout << "slip" << slip[k] << std::endl;
-    // std::cout << "slipRate" << slipRate[k] << std::endl;
-    // std::cout << "stateVariable" << stateVariable[k] << std::endl;
   } );
 }
 
