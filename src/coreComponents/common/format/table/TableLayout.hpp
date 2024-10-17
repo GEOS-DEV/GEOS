@@ -98,7 +98,7 @@ public:
     /**
      * @brief Construct a Column object with the given parameters
      * @param name The Column name
-     * @param subColumnNames Vector containing subcolumn names
+     * @param subColumnNamesInit Vector containing subcolumn names
      */
     Column( string_view name, std::vector< string > && subColumnNamesInit )
       : columnName( name ), subColumnNames( subColumnNamesInit )
@@ -121,7 +121,7 @@ public:
      * @param name The Column name
      * @param headerAlign The column name alignment
      * @param display Flag indicating whether the column is enabled
-     * @param subsColumns Vector containing subcolumn names
+     * @param subColumnNamesInit Vector containing subcolumn names
      */
     Column( string_view name, Alignment headerAlign, bool display, std::vector< string > && subColumnNamesInit )
       : columnName( name ),
@@ -182,6 +182,7 @@ public:
 
   };
 
+  /// Alias for an initializer list of variants that can contain either a string or a layout column.
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
   TableLayout() = default;
@@ -189,7 +190,7 @@ public:
   /**
    * @brief Construct a new Table Layout object
    * @param title The table title
-   * @param args An initializer_list containing string / column
+   * @param columns A vector containing all column initialized
    */
   TableLayout( string_view title,
                std::vector< TableLayout::Column > & columns )
@@ -217,7 +218,6 @@ public:
 
   /**
    * @brief Construct a new Table Layout object
-   * @param title The table title
    * @param args An initializer_list containing string / column
    */
 
