@@ -173,14 +173,12 @@ private:
  * @brief Displays the complete table
  * @param tableOutput The output stream
  * @param tableColumnsData  Vector containg all tableColumnsData
- * @param tableData Vector containing all rows filled with values
  * @param nbHeaderRows A variable to be calculated which will contain the number of header lines
  * @param sectionSeparatingLine Separator string used between sections of the table
  * @param topSeparator The table top separator
  */
   void outputTable( std::ostringstream & tableOutput,
                     std::vector< TableLayout::TableColumnData > & tableColumnsData,
-                    TableData const & tableData,
                     size_t & nbHeaderRows,
                     string_view sectionSeparatingLine,
                     string_view topSeparator ) const;

@@ -193,9 +193,38 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
   prepareAndBuildTable( tableColumnsData, tableData, nbHeaderRows, sectionSeparatingLine, topSeparator );
 
   std::ostringstream tableOutput;
-  outputTable( tableOutput, tableColumnsData, tableData, nbHeaderRows, sectionSeparatingLine, topSeparator );
+  outputTable( tableOutput, tableColumnsData, nbHeaderRows, sectionSeparatingLine, topSeparator );
 
   return tableOutput.str();
+}
+
+void addSeparatorToTable( TableLayout::TableColumnData & tableColumnData, std::vector< string > const & maxStringSize )
+{
+
+  if( !tableColumnData.subColumn.empty())
+  {
+    for( auto & subColumn :  tableColumnData.subColumn )
+    {
+      addSeparatorToTable( subColumn, subColumn.maxStringSize );
+    }
+  }
+  else
+  {
+    bool modified = false;
+    for( auto & value : tableColumnData.columnValues )
+    {
+      if( !value.compare( "*" ) )
+      {
+        value = std::string( maxStringSize[0].length(), '-' );
+        modified = true;
+      }
+    }
+    if( modified )
+    {
+      tableColumnData.columnValues.pop_back();
+    }
+  }
+
 }
 
 void TableTextFormatter::prepareAndBuildTable( std::vector< TableLayout::TableColumnData > & tableColumnsData,
@@ -218,19 +247,21 @@ void TableTextFormatter::prepareAndBuildTable( std::vector< TableLayout::TableCo
   {
     findAndSetLongestColumnString( tableColumnData, tableColumnData.maxStringSize, 0 );
   }
-
+  for( auto & tableColumnData : tableColumnsData )
+  {
+    addSeparatorToTable( tableColumnData, tableColumnData.maxStringSize );
+  }
   computeTableWidth( tableColumnsData );
   buildTableSeparators( tableColumnsData, sectionSeparatingLine, topSeparator );
 }
 
 void TableTextFormatter::outputTable( std::ostringstream & tableOutput,
                                       std::vector< TableLayout::TableColumnData > & tableColumnsData,
-                                      TableData const & tableData,
                                       size_t & nbHeaderRows,
                                       string_view sectionSeparatingLine,
                                       string_view topSeparator ) const
 {
-  integer const nbValuesRows = tableData.getTableDataRows().size();
+  integer const nbValuesRows = tableColumnsData[0].columnValues.size();
 
   if( m_tableLayout.isLineWrapEnabled())
   {

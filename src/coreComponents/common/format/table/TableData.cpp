@@ -18,6 +18,7 @@
  */
 
 #include "TableData.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {
@@ -33,6 +34,17 @@ void TableData::addRow( std::vector< string > & row )
     }
   }
   m_rows.push_back( row );
+}
+
+void TableData::addSeparator()
+{
+  if( m_rows.empty())
+  {
+    GEOS_ERROR( "You must have filled values in TableData before using addSeparator()" );
+  }
+  integer rowSize = m_rows[0].size();
+  m_rows.emplace_back( std::vector< string >( rowSize, "*" )); // Separator = '\1' ou un autre char ascii reservé ET
+                                                                                       // disponible
 }
 
 void TableData::clear()

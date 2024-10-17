@@ -48,6 +48,12 @@ public:
   void addRow( std::vector< string >  & row );
 
   /**
+   * @brief Add a line separator to the table
+   * You must have filled values in TableData before using it
+   */
+  void addSeparator();
+
+  /**
    * @brief Reset data in the table
    */
   void clear();
