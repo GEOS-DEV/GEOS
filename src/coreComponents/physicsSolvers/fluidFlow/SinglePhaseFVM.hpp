@@ -191,6 +191,8 @@ public:
 
   /**@}*/
 
+protected:
+
   virtual void
   applyAquiferBC( real64 const time,
                   real64 const dt,

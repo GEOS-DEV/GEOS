@@ -151,6 +151,8 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
+protected:
+
   virtual void
   applyAquiferBC( real64 const time,
                   real64 const dt,
@@ -163,8 +165,6 @@ public:
   saveAquiferConvergedState( real64 const & time,
                              real64 const & dt,
                              DomainPartition & domain ) override;
-
-  virtual void updatePressureGradient( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces

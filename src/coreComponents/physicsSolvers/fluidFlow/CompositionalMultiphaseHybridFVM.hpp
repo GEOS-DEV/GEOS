@@ -142,9 +142,6 @@ public:
                                arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
-  updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
-
-  virtual void
   applyAquiferBC( real64 const time,
                   real64 const dt,
                   DofManager const & dofManager,
@@ -164,14 +161,16 @@ public:
     static constexpr char const * faceDofFieldString() { return "faceCenteredVariables"; }
   };
 
-  virtual void initializePostInitialConditionsPreSubGroups() override;
+protected:
 
   virtual void initializePreSubGroups() override;
 
-protected:
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /// precompute the minGravityCoefficient for the buoyancy term
   void precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+
+  virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
 
 private:
 
