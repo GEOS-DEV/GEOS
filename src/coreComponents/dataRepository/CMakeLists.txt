@@ -1,4 +1,14 @@
+#==================================================================================================
+# Package: dataRepository
+#
+# Provides the building blocks for the data structure of GEOS objects.
+# Also contains a wrapper to process entries from an xml file into data types.
+#
+#==================================================================================================
+
+#
 # Specify all headers
+#
 set( dataRepository_headers
      BufferOps.hpp
      BufferOpsDevice.hpp
@@ -26,7 +36,9 @@ set( dataRepository_headers
      GroupContext.hpp
      WrapperContext.hpp )
 
+#
 # Specify all sources
+#
 set( dataRepository_sources
      BufferOpsDevice.cpp
      ConduitRestart.cpp

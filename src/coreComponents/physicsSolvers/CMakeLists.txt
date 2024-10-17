@@ -1,4 +1,16 @@
+#==================================================================================================
+# Package: physicsSolvers
+#
+# Contains:
+#  - physics solvers base and manager classes.
+#  - implementations of different physics models.
+#  - physics solver wrapper designed for PyGEOSX interface.
+#
+#==================================================================================================
+
+#
 # Specify solver headers
+#
 set( physicsSolvers_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
@@ -9,7 +21,9 @@ set( physicsSolvers_headers
      FieldStatisticsBase.hpp
      LogLevelsInfo.hpp )
 
+#
 # Specify solver sources
+#
 set( physicsSolvers_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
@@ -37,7 +51,7 @@ endif()
 if( GEOS_ENABLE_SIMPLEPDE )
   add_subdirectory( simplePDE )
 endif()
-  
+
 if( GEOS_ENABLE_SOLIDMECHANICS )
   add_subdirectory( solidMechanics )
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)

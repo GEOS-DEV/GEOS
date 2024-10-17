@@ -1,3 +1,11 @@
+#==================================================================================================
+# Package: finiteVolume
+#
+# Implementation and access to finite volume method. The main data structures of this package are
+#  the stencils: connection values at the interfaces of the volume elements.
+#
+#==================================================================================================
+
 #
 # Specify all headers
 #

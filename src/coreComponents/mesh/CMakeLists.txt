@@ -1,4 +1,17 @@
+#==================================================================================================
+# Package: mesh
+#
+# Contains:
+#  - components allowing to import, store and access the mesh.
+#  - partitioning and communication tools (ParMETIS, Scotch and VTK interfaces).
+#  - GEOS components defining simple geometric objects.
+#  - basic geometric and mesh utilities.
+#
+#==================================================================================================
+
+#
 # Specify all headers
+#
 set( mesh_headers
      BufferOps.hpp
      CellElementRegion.hpp
@@ -78,13 +91,15 @@ set( mesh_headers
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/PlanarGeometricObject.hpp
      simpleGeometricObjects/ThickPlane.hpp
-     utilities/AverageOverQuadraturePointsKernel.hpp     
+     utilities/AverageOverQuadraturePointsKernel.hpp
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
      utilities/StructuredGridUtilities.hpp )
 
+#
 # Specify all sources
+#
 set( mesh_sources
      BufferOps.cpp
      CellElementRegion.cpp
@@ -169,7 +184,7 @@ if( ENABLE_VTK )
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
-         )    
+         )
     list( APPEND dependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       list( APPEND dependencyList VTK::IOParallelXML VTK::ParallelMPI )

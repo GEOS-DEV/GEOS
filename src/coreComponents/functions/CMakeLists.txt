@@ -1,3 +1,10 @@
+#==================================================================================================
+# Package : functions
+#
+# Contains classes for storing and computing arbitrary N-dimensional functions.
+#
+#==================================================================================================
+
 #
 # Specify all headers
 #

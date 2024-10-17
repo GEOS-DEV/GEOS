@@ -1,3 +1,13 @@
+#==================================================================================================
+# Package: mainInterface
+#
+# Contains:
+#  - GEOS `main` entry point.
+#  - the class managing the operation flow of the problem being ran in GEOS.
+#  - basic initialization and environment setup routines.
+#
+#==================================================================================================
+
 #
 # Specify all headers
 #

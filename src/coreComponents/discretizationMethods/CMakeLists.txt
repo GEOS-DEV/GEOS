@@ -1,3 +1,10 @@
+#==================================================================================================
+# Package: discretizationMethods
+#
+# Gives access to the discretization methods and their components for applications to the mesh.
+#
+#==================================================================================================
+
 #
 # Specify all headers
 #

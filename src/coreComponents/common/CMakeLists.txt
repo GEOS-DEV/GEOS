@@ -1,3 +1,12 @@
+#==================================================================================================
+# Package: common
+#
+# Contains the definition of the basic static types of GEOS.
+# Also provides commonly used components for such as logging, formatting, memory and wrapper of
+#  dependencies.
+#
+#==================================================================================================
+
 #
 # Specify all headers
 #

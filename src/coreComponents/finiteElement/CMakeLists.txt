@@ -1,3 +1,10 @@
+#==================================================================================================
+# Package: finiteElement
+#
+# Contains the interface and implementation of finite element formulations.
+#
+#==================================================================================================
+
 #
 # Specify all headers
 #
