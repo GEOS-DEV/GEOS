@@ -118,6 +118,10 @@ public:
                        real64 const & creepC,
                        real64 const & strainHardeningN,
                        real64 const & strainHardeningK,
+                       real64 const & plasticStrainTolerance,
+                       real64 const & stressReturnTolerance,
+                       int const & maxAllowedSubcycles,
+                       int const & failedStepResponse,
                        arrayView1d< real64 > const bulkModulus,
                        arrayView1d< real64 > const shearModulus,
                        arrayView3d< real64 const > const velocityGradient,
@@ -171,6 +175,10 @@ public:
     m_creepC( creepC ),
     m_strainHardeningN( strainHardeningN ),
     m_strainHardeningK( strainHardeningK ),
+    m_plasticStrainTolerance(plasticStrainTolerance),
+    m_stressReturnTolerance(stressReturnTolerance),
+    m_maxAllowedSubcycles(maxAllowedSubcycles),
+    m_failedStepResponse(failedStepResponse),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_velocityGradient( velocityGradient ),
@@ -458,6 +466,10 @@ private:
   real64 const & m_creepC;
   real64 const & m_strainHardeningN;
   real64 const & m_strainHardeningK;
+  real64 const & m_plasticStrainTolerance;
+  real64 const & m_stressReturnTolerance;
+  int const & m_maxAllowedSubcycles;
+  int const & m_failedStepResponse;
 
   /// A reference to the ArrayView holding the bulk modulus for each element/particle.
   arrayView1d< real64 > const m_bulkModulus;
@@ -621,7 +633,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   oldPlasticStrain[3] *= 2.0;
   oldPlasticStrain[4] *= 2.0;
   oldPlasticStrain[5] *= 2.0;
-   
+
   // Update effective elastic properties
   m_bulkModulus[k] = m_b0 + m_b1;
   m_shearModulus[k] = m_g0;
@@ -654,26 +666,39 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
 						   newStress,         // unrotated stress at end of step(t_n+1)
                newPlasticStrain );           // plastic strain at end of step(t_n+1)
 
-  // GEOS_LOG_RANK( "k: " << k << ", " << 
-  //                "errorFlag: " << errorFlag << ", "
-  //                 "oldPorosity: " << oldPorosity << ", " << 
-  //                 "newPorosity: " << newPorosity << ", " << 
-  //                 "damage: " << m_damage[k] << ", " << 
-  //                 "oldStress: {" << oldStress[0] << ", " << 
-  //                                   oldStress[1] << ", " << 
-  //                                   oldStress[2] << ", " << 
-  //                                   oldStress[3] << ", " << 
-  //                                   oldStress[4] << ", " << 
-  //                                   oldStress[5] << "}, " << 
-  //                 "newStress: {" << newStress[0] << ", " << 
-  //                                newStress[1] << ", " << 
-  //                                newStress[2] << ", " << 
-  //                                newStress[3] << ", " << 
-  //                                newStress[4] << ", " << 
-  //                                newStress[5] << "}" );
+
 
   if (errorFlag == 1)
   {
+    GEOS_LOG_RANK( "k: " << k << ", " << 
+                  "errorFlag: " << errorFlag << ", "
+                   "oldPorosity: " << oldPorosity << ", " << 
+                   "newPorosity: " << newPorosity << ", " << 
+                   "damage: " << m_damage[k] << ", " << 
+                   "oldStress: {" << oldStress[0] << ", " << 
+                                     oldStress[1] << ", " << 
+                                     oldStress[2] << ", " << 
+                                     oldStress[3] << ", " << 
+                                     oldStress[4] << ", " << 
+                                     oldStress[5] << "}, " << 
+                  "strainRate: {" << D[0] << ", " << 
+                                     D[1] << ", " << 
+                                     D[2] << ", " << 
+                                     D[3] << ", " << 
+                                     D[4] << ", " << 
+                                     D[5] << "}, " << 
+                  "oldPlasticStrain: {" << oldPlasticStrain[0] << ", " << 
+                                     oldPlasticStrain[1] << ", " << 
+                                     oldPlasticStrain[2] << ", " << 
+                                     oldPlasticStrain[3] << ", " << 
+                                     oldPlasticStrain[4] << ", " << 
+                                     oldPlasticStrain[5] << "}, " << 
+                   "newStress: {" << newStress[0] << ", " << 
+                                  newStress[1] << ", " << 
+                                  newStress[2] << ", " << 
+                                  newStress[3] << ", " << 
+                                  newStress[4] << ", " << 
+                                  newStress[5] << "}" );
     GEOS_ERROR( "Geomechanics model failed to converge." );
   }
 
@@ -733,7 +758,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
   // All stress values within computeStep are quasistatic.
   int n,
-      chimax = 1,                                   // max allowed subcycle multiplier
+      chimax = 16,                                  // max allowed subcycle multiplier
       chi = 1,                                      // subcycle multiplier
       stepFlag,                                     // 0/1 good/bad step
       substepFlag;                                  // 0/1 good/bad substep
@@ -816,7 +841,13 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                   ev0,
                                   phi_i);
 
-  if ( nsub < 0 ) { // nsub > m_mat_geo_subcycling_characteristic_number[p_mat]. Delete particle
+  if ( nsub < 0 ) { 
+    // step divisions asked for nsub > nmax (e.g. 256) subdivisions.
+    // The time step is too big for this strain rate, and so we will
+    // delete the particle.  you could change nmax, but if running
+    // with this much deformation in a single step, you might want
+    // to run with small er actual time steps so you get better
+    // kinematics (here D would be constant for all substeps)
     goto failedStep;
   }
 
@@ -995,6 +1026,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       // ep_old    = ep_new;
       LvArray::tensorOps::copy< 6 >( sigma_old, sigma_new );
       LvArray::tensorOps::copy< 6 >( ep_old, ep_new );
+
       n++;
       goto computeSubstep;
     }
@@ -1195,8 +1227,7 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   // compute the number of step divisions (substeps) based on a comparison
   // of the trial stress relative to the size of the yield surface, as well
   // as change in elastic properties between sigma_n and sigma_trial.
-  int subcycling_characteristic_number = 256;
-  int nmax = ceil(subcycling_characteristic_number);
+  int nmax = m_maxAllowedSubcycles;
 
   // Compute change in bulk modulus:
   real64 bulk_n,
@@ -1255,12 +1286,21 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   // throw warning and delete particle.
   int nsub = std::max( n_bulk, n_yield);
 
-  if( nsub > subcycling_characteristic_number )
+  if( nsub > nmax && ( m_failedStepResponse == 2 || m_failedStepResponse == 3 ) )
   {
+    // We could return an error here (set nsub=-1) if the code is asking for more than
+    // the allowable max number of substeps, or just set n=nmax and run.
+    // doing the latter will let the plastic strain convergence criteria determine
+    // whether subcycling is necessary.  
+    GEOS_LOG_RANK( "Requesting too many subcycles in geomechanics model, solution may be innaccurate" );
     nsub = -1;
   }
   else
   {
+    if (nsub > nmax && m_failedStepResponse == 1)
+    {
+      GEOS_LOG_RANK( "Requesting too many subcycles in geomechanics model, solution may be innaccurate" );
+    }
     nsub = std::min( std::max( nsub, 1 ), nmax  );
   }
   return nsub;
@@ -1559,8 +1599,8 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
   // (5) Compute non-hardening return to initial yield surface:
   //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
     real64 I1_0,       // I1 at stress update for non-hardening return
-           rJ2_0,      // rJ2 at stress update for non-hardening return
-           TOL = 1e-10; // bisection convergence tolerance on eta (if changed, change imax)
+           rJ2_0;      // rJ2 at stress update for non-hardening return
+           //TOL = 1e-10; // bisection convergence tolerance on vol. plastic strain (if decreased, you may need to change imax)
     real64 S_0[6],        // S (deviator) at stress update for non-hardening return
            d_ep_0[6],     // increment in plastic strain for non-hardening return
            S_old[6];
@@ -1766,9 +1806,12 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
     LvArray::tensorOps::copy< 6 >( ep_new, ep_old );
     LvArray::tensorOps::add< 6 >( ep_new, d_ep_new );
 
-    // Check for convergence
-    if( fabs(eta_out-eta_in) < TOL ){ // Solution is converged
-      // sigma_new = Identity; // one_third*I1_new*Identity + S_new;
+    // Check for convergence.  We can put a limit on |eta_out-eta_in| which is equivalent to just having
+    // a fixed number of iterations.  or we can put an actual tolerance on the vol plastic strain
+    // which will make it iterate less in cases where there isn't much cap motion.
+    //if( fabs( d_evp_new - d_evp_0 ) < m_plasticStrainTolerance || ( i = imax && m_failedStepResponse <= 1 ) ){ // Solution is converged or option is to accept regardless.
+    if( fabs(eta_out-eta_in) < m_plasticStrainTolerance ){ // Solution is converged
+       // sigma_new = Identity; // one_third*I1_new*Identity + S_new;
       // sigma_new *= one_third*I1_new;
       // sigma_new += S_new;
       LvArray::tensorOps::copy< 6 >( sigma_new, identity );
@@ -1778,6 +1821,12 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
       // If out of range, scale back isotropic plastic strain.
       if( LvArray::tensorOps::symTrace< 3 >( ep_new ) < -m_p3 ) //ep_new.Trace()<-p3){
       { // decompose new uncorrected plastic strain:
+        // // force value to be maximum limit evp=-p3
+        // evp_new = -m_p3;
+        // // increment in evp (used for fluid backstress update.)
+        // d_evp_new = evp_new - LvArray::tensorOps::symTrace< 3 >( ep_old ); //ep_old.Trace();
+        // LvArray::tensorOps::addIdentity<6>(ep_new,one_third*(evp_new - LvArray::tensorOps::symTrace<3>(ep_new)));
+
         real64 ep_new_iso[6];
         real64 ep_new_dev[6];
         LvArray::tensorOps::copy< 6 >( ep_new_iso, identity );
@@ -2142,12 +2191,11 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
   real64 eta_out = 1.0,
          eta_in  = 0.0,
          eta_mid,
-         TOL = 1.0e-10,
          r_test,
          z_test;
 
   // (2) Test for convergence
-  while (eta_out-eta_in > TOL){
+  while ( eta_out-eta_in > m_stressReturnTolerance ){
 
     // (3) Transformed test point
     eta_mid = 0.5*(eta_out+eta_in);
@@ -2537,6 +2585,18 @@ public:
     /// string/key for strain-hardening K parameter
     static constexpr char const * strainHardeningKString() { return "strainHardeningK"; }
 
+    //string/key for element/particle shear modulus value
+    static constexpr char const * plasticStrainToleranceString() { return "plasticStrainTolerance"; }
+
+    //string/key for element/particle shear modulus value
+    static constexpr char const * stressReturnToleranceString() { return "stressReturnTolerance"; }
+
+    //string/key for element/particle shear modulus value
+    static constexpr char const * maxAllowedSubcyclesString() { return "maxAllowedSubcycles"; }
+
+    //string/key for element/particle shear modulus value
+    static constexpr char const * failedStepResponseString() { return "failedStepResponse"; }
+
     //string/key for element/particle bulk modulus value
     static constexpr char const * bulkModulusString() { return "bulkModulus"; }
 
@@ -2599,6 +2659,10 @@ public:
                                 m_creepC,
                                 m_strainHardeningN,
                                 m_strainHardeningK,
+                                m_plasticStrainTolerance,
+                                m_stressReturnTolerance,
+                                m_maxAllowedSubcycles,
+                                m_failedStepResponse,
                                 m_bulkModulus,
                                 m_shearModulus,
                                 m_velocityGradient,
@@ -2659,6 +2723,10 @@ public:
                           m_creepC,
                           m_strainHardeningN,
                           m_strainHardeningK,
+                          m_plasticStrainTolerance,
+                          m_stressReturnTolerance,
+                          m_maxAllowedSubcycles,
+                          m_failedStepResponse,
                           m_bulkModulus,
                           m_shearModulus,
                           m_velocityGradient,
@@ -2805,6 +2873,12 @@ protected:
   // strain-hardening parameters
   real64 m_strainHardeningN;
   real64 m_strainHardeningK;
+
+  // Solution iteration control parameters
+  real64 m_plasticStrainTolerance;
+  real64 m_stressReturnTolerance;
+  int m_maxAllowedSubcycles;
+  int m_failedStepResponse;
 
   /// The bulk modulus for each element/particle
   array1d< real64 > m_bulkModulus;
