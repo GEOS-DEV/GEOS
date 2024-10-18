@@ -902,8 +902,6 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
         subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
           fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
 
-      //  GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction));
-
       integer const numPhase = m_numPhases;
 
 
@@ -927,8 +925,6 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                     bcPres[ei],
                                                     pres[ei] );
         localRhs[localRow] = rhsValue;
-        //    GEOS_LOG_RANK_0(GEOS_FMT("BC Pressure {}", bcPres[ei]));
-        //   GEOS_LOG_RANK_0(GEOS_FMT("Pressure {}", pres[ei]));
 
         // 3.2. For each phase, apply target saturation value
         for( integer ip = 0; ip < numPhase-1; ++ip )
@@ -940,9 +936,6 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                       bcPhaseVolFraction[ei][ip],
                                                       phaseVolFraction[ei][ip] );
           localRhs[localRow + ip + 1] = rhsValue;
-
-          // GEOS_LOG_RANK_0(GEOS_FMT("BC Saturation {}", bcPhaseVolFraction[ei][ip]));
-          // GEOS_LOG_RANK_0(GEOS_FMT("Saturation {}", phaseVolFraction[ei][ip]));
         }
       } );
     } );
@@ -957,7 +950,6 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
                                                         arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-  integer constexpr numNorm = 1; // mass balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
   localResidualNorm.resize( numNorm );

@@ -203,6 +203,12 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  /**
+   * @brief Function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  void updatePhaseMass( ElementSubRegionBase & subRegion ) const;  
+
 private:
 
   virtual void postInputInitialization() override;
@@ -214,12 +220,6 @@ private:
    * @param dataGroup the group storing the required fields
    */
   void updateFluidModel( ObjectManagerBase & dataGroup ) const;
-
-  /**
-   * @brief Function to update fluid mass
-   * @param subRegion subregion that contains the fields
-   */
-  void updatePhaseMass( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Update all relevant relperm models using current values of phase volume fraction
