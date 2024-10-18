@@ -201,6 +201,36 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
 
+  registerWrapper( viewKeyStruct::useTaperString(), &m_useTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply taper" );
+
+  registerWrapper( viewKeyStruct::reflectivityCoeffString(), &m_reflectivityCoeff ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.001 ).
+    setDescription( "Reflectivity coeff for taper" );
+
+  registerWrapper( viewKeyStruct::xMinTaperString(), &m_xMinTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( {0, 0, 0} ).
+    setDescription( "Minimal coordinates for taper (left,bottom,front)" );
+
+  registerWrapper( viewKeyStruct::xMaxTaperString(), &m_xMaxTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( {0, 0, 0} ).
+    setDescription( "Maximal coordinates for taper (right,top,back)" );
+
+  registerWrapper( viewKeyStruct::thicknessMinXYZTaperString(), &m_thicknessMinXYZTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( {0, 0, 0} ).
+    setDescription( "Size for the taper layer (left,bottom,front)" );
+
+  registerWrapper( viewKeyStruct::thicknessMaxXYZTaperString(), &m_thicknessMaxXYZTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( {0, 0, 0} ).
+    setDescription( "Size for the taper layer (left,bottom,front)" );
+
   registerWrapper( viewKeyStruct::slsReferenceAngularFrequenciesString(), &m_slsReferenceAngularFrequencies ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
@@ -254,6 +284,10 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
         nodeCoords32[i][j] = X[i][j];
       }
     }
+
+
+    nodeManager.registerField< fields::taperCoeff >( this->getName());
+
   } );
 }
 
