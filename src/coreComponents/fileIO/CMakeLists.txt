@@ -6,6 +6,7 @@ set( fileIO_headers
      Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
+     logPart/LogPart.hpp
      Outputs/TimeHistoryOutput.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
@@ -22,6 +23,7 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
+     logPart/LogPart.cpp
      Outputs/TimeHistoryOutput.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
@@ -94,6 +96,10 @@ blt_add_library( NAME       fileIO
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS fileIO LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( logPart/unitTests )
+endif( )
 
 
 
