@@ -35,7 +35,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/IHU2PhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HU2PhaseFlux.hpp"
 
 namespace geos
 {
@@ -326,7 +326,7 @@ public:
           }
           else if( m_kernelFlags.isSet( FluxComputeKernelFlags::HU2PH ) )
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::IHU2PhaseFlux::compute< numComp, numFluxSupportPoints >
+            isothermalCompositionalMultiphaseFVMKernelUtilities::HU2PhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
@@ -376,6 +376,14 @@ public:
               dCompFlux_dP,
               dCompFlux_dC );
           }
+
+    std::cout << ip << " " << phaseFlux << std::endl;
+    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+    {
+      std::cout << dPhaseFlux_dP[ke] << std::endl;
+      for( localIndex ic = 0; ic < numComp; ++ic )
+        std::cout << dPhaseFlux_dC[ke][ic] << std::endl;
+    }
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase

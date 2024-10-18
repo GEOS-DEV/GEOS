@@ -109,7 +109,6 @@ struct PPUPhaseFlux
                                                        gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
                                                        phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
                                                        dPresGrad_dC, dGravHead_dP, dGravHead_dC );
-    std::cout << "potGrad=" << potGrad << std::endl;
 
     // *** upwinding ***
 
@@ -122,37 +121,35 @@ struct PPUPhaseFlux
 
     real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
-    std::cout << "mobility=" << mobility << std::endl;
+    // compute phase flux using upwind mobility
+    phaseFlux = mobility * potGrad;
+
+    std::cout << "phaseFlux=" << phaseFlux << " mobility=" << mobility << " potGrad=" << potGrad << std::endl;
 
     // pressure gradient depends on all points in the stencil
     for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
     {
-      dPhaseFlux_dP[ke] += mobility*(dPresGrad_dP[ke] - dGravHead_dP[ke]);
+      dPhaseFlux_dP[ke] += mobility * (dPresGrad_dP[ke] - dGravHead_dP[ke]);
+      std::cout << "dPhaseFlux_dP[ke]="<<dPhaseFlux_dP[ke]<<" dPresGrad_dP[ke]="<<dPresGrad_dP[ke]<<std::endl;
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseFlux_dC[ke][jc] += mobility*(dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc]);
+        dPhaseFlux_dC[ke][jc] += mobility * (dPresGrad_dC[ke][jc] - dGravHead_dC[ke][jc]);
       }
     }
-    // compute phase flux using upwind mobility.
-    phaseFlux = mobility * potGrad;
-
-    std::cout << "phaseFlux=" << phaseFlux << std::endl;
 
     real64 const dMob_dP = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-    arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
-      dPhaseMob[er_up][esr_up][ei_up][ip];
+    arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dMob_dC = dPhaseMob[er_up][esr_up][ei_up][ip];
 
     // add contribution from upstream cell mobility derivatives
     dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
+      dPhaseFlux_dC[k_up][jc] += dMob_dC[Deriv::dC+jc] * potGrad;
     }
 
     //distribute on phaseComponentFlux here
     PhaseComponentFlux::compute( ip, k_up, seri, sesri, sei, phaseCompFrac, dPhaseCompFrac, dCompFrac_dCompDens, phaseFlux
                                  , dPhaseFlux_dP, dPhaseFlux_dC, compFlux, dCompFlux_dP, dCompFlux_dC );
-
   }
 };
 
