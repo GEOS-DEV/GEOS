@@ -27,6 +27,7 @@ Contains:
 set( mesh_headers
      BufferOps.hpp
      CellElementRegion.hpp
+     CellElementRegionSelector.hpp
      CellElementSubRegion.hpp
      DomainPartition.hpp
      EdgeManager.hpp
@@ -114,6 +115,7 @@ set( mesh_headers
 set( mesh_sources
      BufferOps.cpp
      CellElementRegion.cpp
+     CellElementRegionSelector.cpp
      CellElementSubRegion.cpp
      DomainPartition.cpp
      EdgeManager.cpp
