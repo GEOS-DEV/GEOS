@@ -99,7 +99,7 @@ public:
     fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
 
     // extract data views from both fluids
-#define GET_FLUID_DATA( FLUID, TRAIT ) \
+    #define GET_FLUID_DATA( FLUID, TRAIT ) \
       FLUID.getReference< TRAIT::type >( TRAIT::key() )[0][0]
 
     constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseVisc {

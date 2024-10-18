@@ -207,7 +207,7 @@ public:
    * @brief Function to update fluid mass
    * @param subRegion subregion that contains the fields
    */
-  void updatePhaseMass( ElementSubRegionBase & subRegion ) const;  
+  void updatePhaseMass( ElementSubRegionBase & subRegion ) const;
 
 private:
 
