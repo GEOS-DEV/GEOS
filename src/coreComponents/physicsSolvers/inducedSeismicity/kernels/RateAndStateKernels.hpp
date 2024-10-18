@@ -45,6 +45,7 @@ public:
     m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
     m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable_n >() ),
     m_traction( subRegion.getField< fields::contact::traction >() ),
+    m_slipVelocity( subRegion.getField< fields::rateAndState::slipVelocity >() ),
     m_shearImpedance( shearImpedance ),
     m_frictionLaw( frictionLaw.createKernelUpdates()  )
   {}
@@ -73,48 +74,23 @@ public:
               StackVariables & stack ) const
   {
     real64 const normalTraction = m_traction[k][0];
-    real64 const shearTraction = LvArray::math::sqrt( m_traction[k][1]*m_traction[k][1] + m_traction[k][2]*m_traction[k][2] );
-
-    // Eq 1: shear stress balance
-    real64 const tauFriction     = m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction;
-    // std::cout << "tauFriction: " << tauFriction << std::endl;
-    real64 const dTauFriction[2] = { m_frictionLaw.dfrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction,
-                                     m_frictionLaw.dfrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) * normalTraction };
-
-    // std::cout << "force balance" << std::endl;
-    stack.rhs[0] = shearTraction - tauFriction - m_shearImpedance * m_slipRate[k];
+    real64 const shearTractionMagnitude = LvArray::math::sqrt( m_traction[k][1] * m_traction[k][1] + m_traction[k][2] * m_traction[k][2] );
+    // Eq 1: Scalar force balance for slipRate and shear traction magnitude
+    stack.rhs[0] = shearTractionMagnitude - m_shearImpedance * m_slipRate[k]
+                                          - normalTraction * m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] );
+    real64 const dFriction[2] = { -normalTraction * m_frictionLaw.dFrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
+                                  -m_shearImpedance - normalTraction * m_frictionLaw.dFrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) };
 
     // Eq 2: slip law
-    real64 const dStateVariabledT = m_frictionLaw.dStateVariabledT( k, m_slipRate[k], m_stateVariable[k] );
-    stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - dStateVariabledT;
-    real64 const dStateEvolutionLaw[2] = { 1 / dt - m_frictionLaw.dStateVariabledT_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
-                                           -m_frictionLaw.dStateVariabledT_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) };
+    stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.stateEvolution( k, m_slipRate[k], m_stateVariable[k] );
+    real64 const dStateEvolutionLaw[2] = { 1 / dt - m_frictionLaw.dStateEvolution_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
+                                           -m_frictionLaw.dStateEvolution_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) } ;
 
     // Assemble Jacobian matrix
-    // derivative shear stress balance w.r.t. theta
-    stack.jacobian[0][0] = -dTauFriction[0];
-    // derivative shear stress balance w.r.t. slip_velocity
-    stack.jacobian[0][1] = -dTauFriction[1] - m_shearImpedance;
-    // derivative slip law w.r.t. theta
-    stack.jacobian[1][0] = dStateEvolutionLaw[0];
-    // derivative slip law w.r.t. slip_velocity
-    stack.jacobian[1][1] = dStateEvolutionLaw[1];
-
-
-    /// Matteo: debugging tools.
-    // printf("dStateVariabledT = %.10e\n", dStateVariabledT);
-    // printf("m_stateVariable = %.10e\n", m_stateVariable[k]);
-    // printf("m_stateVariable_n = %.10e\n", m_stateVariable_n[k]);
-    // printf("dt = %.10e\n", dt);
-
-    // for( int i = 0; i < 2; i++ )
-    // {
-    //   printf( "rhs[%d] = %.10e\n", i, stack.rhs[i] );
-    //   for( int j = 0; j < 2; j++ )
-    //   {
-    //     printf( "j(%d,%d) = %.10e\n", i, j, stack.jacobian[i][j] );
-    //   }
-    // }
+    stack.jacobian[0][0] = dFriction[0];          // derivative of Eq 1 w.r.t. stateVariable
+    stack.jacobian[0][1] = dFriction[1];          // derivative of Eq 1 w.r.t. slipRate
+    stack.jacobian[1][0] = dStateEvolutionLaw[0]; // derivative of Eq 2 w.r.t. stateVariable
+    stack.jacobian[1][1] = dStateEvolutionLaw[1]; // derivative of Eq 2 w.r.t. m_slipRate
   }
 
   GEOS_HOST_DEVICE
@@ -123,19 +99,21 @@ public:
   {
     /// Solve 2x2 system
     real64 solution[2] = {0.0, 0.0};
-
     denseLinearAlgebra::solve< 2 >( stack.jacobian, stack.rhs, solution );
 
-    /// Update variables
-    m_stateVariable[k] -= solution[0];
-    m_slipRate[k]      -= solution[1];
+    // Update variables
+    m_stateVariable[k]  -=  solution[0];
+    m_slipRate[k]       -=  solution[1];
+  }
 
-    /// Matteo: debugging tools.
-    // printf("solution[0] = %.10e\n", solution[0]);
-    // printf("solution[1] = %.10e\n", solution[1]);
-
-    // printf("m_stateVariable[%d] = %.10e\n", k, m_stateVariable[k]);
-    // printf("m_slipRate[%d] = %.10e\n", k, m_slipRate[k]);
+  GEOS_HOST_DEVICE
+  void projectSlipRate( localIndex const k) const
+  {
+    // Project slip rate onto shear traction to get slip velocity components
+    real64 const frictionForce = m_traction[k][0] * m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] );
+    real64 const projectionScaling = 1.0 / ( m_shearImpedance +  frictionForce / m_slipRate[k] );
+    m_slipVelocity[k][0] = projectionScaling * m_traction[k][1];
+    m_slipVelocity[k][1] = projectionScaling * m_traction[k][2];
   }
 
   GEOS_HOST_DEVICE
@@ -156,6 +134,8 @@ private:
   arrayView1d< real64 const > const m_stateVariable_n;
 
   arrayView2d< real64 const > const m_traction;
+
+  arrayView2d< real64 > const m_slipVelocity;
 
   real64 const m_shearImpedance;
 
@@ -215,6 +195,10 @@ createAndLaunch( SurfaceElementSubRegion & subRegion,
   {
     GEOS_ERROR( " Failed to converge" );
   }
+  forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      kernel.projectSlipRate( k );
+  } );
 }
 
 } /* namespace rateAndStateKernels */

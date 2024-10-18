@@ -88,13 +88,21 @@
       setNames="{all}"/>
     
     <FieldSpecification
-      name="shearTraction"
+      name="shearTraction1"
       fieldName="traction"
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="1"
-      scale="30"
+      scale="21.2132034356"
       setNames="{all}"/>
+    <FieldSpecification
+      name="shearTraction2"
+      fieldName="traction"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="2"
+      scale="21.2132034356"
+      setNames="{all}"/>  
     <FieldSpecification
       name="stateVariable"
       fieldName="stateVariable"
@@ -108,6 +116,22 @@
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       scale="1.0e-6"
+      setNames="{all}"/>
+    <FieldSpecification
+      name="slipVelocity1"
+      fieldName="slipVelocity"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="0."
+      setNames="{all}"/>               
+    <FieldSpecification
+      name="slipVelocity2"
+      fieldName="slipVelocity"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="0."
       setNames="{all}"/>               
   </FieldSpecifications>
 
@@ -126,7 +150,7 @@
     <PackCollection
       name="slipCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
-      fieldName="slip"/>
+      fieldName="displacementJump"/>
     
     <PackCollection
       name="slipRateCollection"
