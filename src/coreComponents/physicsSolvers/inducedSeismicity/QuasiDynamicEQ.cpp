@@ -44,7 +44,7 @@ QuasiDynamicEQ::QuasiDynamicEQ( const string & name,
 {
   this->registerWrapper( viewKeyStruct::maxNumberOfNewtonIterationsString(), &m_maxNewtonIterations ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 5 ).
+    setApplyDefaultValue( 10 ).
     setDescription( "Maximum number of Newton iterations string." );
 
   this->registerWrapper( viewKeyStruct::shearImpedanceString(), &m_shearImpedance ).
@@ -95,12 +95,14 @@ void QuasiDynamicEQ::registerDataOnMesh( Group & meshBodies )
       // Scalar functions on fault
       subRegion.registerField< rateAndState::stateVariable >( getName() );
       subRegion.registerField< rateAndState::stateVariable_n >( getName() );
+      subRegion.registerField< rateAndState::slipRate >( getName() );
       
       // Tangent (2-component) functions on fault
       string const labels2Comp[2] = {"tangent1", "tangent2" };
-      subRegion.registerField< rateAndState::slipRate >( getName() ).setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
-      subRegion.registerField< rateAndState::slipRate_n >( getName() ).setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
-      subRegion.registerField< rateAndState::deltaSlip >( getName() ).setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
+      subRegion.registerField< rateAndState::slipVelocity >( getName() ).
+        setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
+      subRegion.registerField< rateAndState::deltaSlip >( getName() ).
+        setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
 
       if( !subRegion.hasWrapper( contact::dispJump::key() ))
       {
@@ -201,8 +203,8 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
                                                                                   SurfaceElementSubRegion & subRegion )
       {
 
-        arrayView2d< real64 const > const deltaSlip        = subRegion.getField< rateAndState::deltaSlip >();
-        arrayView2d< real64 > const traction   = subRegion.getField< fields::contact::traction >();
+        arrayView2d< real64 const > const deltaSlip = subRegion.getField< rateAndState::deltaSlip >();
+        arrayView2d< real64 > const traction        = subRegion.getField< fields::contact::traction >();
 
         string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         RateAndStateFriction const & frictionLaw = getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
@@ -217,8 +219,10 @@ real64 QuasiDynamicEQ::updateStresses( real64 const & time_n,
                                                                                   frictionKernelWrapper.getDcCoefficient( k ) );
 
 
-          traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt - springSliderParameters.springStiffness * deltaSlip[k][0];
-          traction[k][2] = 0.0;
+          traction[k][1] = traction[k][1] + springSliderParameters.tauRate * dt
+                                          - springSliderParameters.springStiffness * deltaSlip[k][0];
+          traction[k][2] = traction[k][2] + springSliderParameters.tauRate * dt
+                                          - springSliderParameters.springStiffness * deltaSlip[k][1];
         } );
       } );
     } );
@@ -230,21 +234,19 @@ void QuasiDynamicEQ::saveOldStateAndUpdateSlip( ElementSubRegionBase & subRegion
 {
   arrayView1d< real64 > const stateVariable   = subRegion.getField< rateAndState::stateVariable >();
   arrayView1d< real64 > const stateVariable_n = subRegion.getField< rateAndState::stateVariable_n >();
-  arrayView2d< real64 > const slipRate        = subRegion.getField< rateAndState::slipRate >();
-  arrayView2d< real64 > const slipRate_n      = subRegion.getField< rateAndState::slipRate_n >();
+  arrayView2d< real64 > const slipVelocity    = subRegion.getField< rateAndState::slipVelocity >();
   arrayView2d< real64 > const deltaSlip       = subRegion.getField< rateAndState::deltaSlip >();
 
   arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    LvArray::tensorOps::copy< 2 >(slipRate_n[k], slipRate[k]);
     stateVariable_n[k]  = stateVariable[k];
-    deltaSlip[k][0]     = slipRate[k][0] * dt;
-    deltaSlip[k][1]     = slipRate[k][1] * dt;
+    deltaSlip[k][0]     = slipVelocity[k][0] * dt;
+    deltaSlip[k][1]     = slipVelocity[k][1] * dt;
     // Update tangential components of the displacement jump
-    dispJump[k][1]      = dispJump[k][1] + slipRate[k][0] * dt;
-    dispJump[k][2]      = dispJump[k][2] + slipRate[k][1] * dt;
+    dispJump[k][1]      = dispJump[k][1] + slipVelocity[k][0] * dt;
+    dispJump[k][2]      = dispJump[k][2] + slipVelocity[k][1] * dt;
   } );
 }
 
@@ -264,12 +266,12 @@ real64 QuasiDynamicEQ::setNextDt( real64 const & currentDt, DomainPartition & do
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion const & subRegion )
     {
-      arrayView2d< real64 const > const slipRate = subRegion.getField< rateAndState::slipRate >();
+      arrayView1d< real64 const > const slipRate = subRegion.getField< rateAndState::slipRate >();
 
       RAJA::ReduceMax< parallelDeviceReduce, real64 > maximumSlipRateOnThisRegion( 0.0 );
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        maximumSlipRateOnThisRegion.max( LvArray::math::sqrt( slipRate[k][0]*slipRate[k][0] +  slipRate[k][1]*slipRate[k][1]) );
+        maximumSlipRateOnThisRegion.max( slipRate[k] );
       } );
       if( maximumSlipRateOnThisRegion.get() > maxSlipRateOnThisRank )
         maxSlipRateOnThisRank = maximumSlipRateOnThisRegion.get();

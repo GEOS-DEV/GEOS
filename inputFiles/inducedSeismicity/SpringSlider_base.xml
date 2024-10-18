@@ -93,7 +93,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="1"
-      scale="30"
+      scale="21.2132034356"
       setNames="{all}"/>
     <FieldSpecification
       name="shearTraction2"
@@ -101,7 +101,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="2"
-      scale="0."
+      scale="21.2132034356"
       setNames="{all}"/>  
     <FieldSpecification
       name="stateVariable"
@@ -111,16 +111,23 @@
       scale="0.6"
       setNames="{all}"/>
     <FieldSpecification
-      name="slipRate1"
+      name="slipRate"
       fieldName="slipRate"
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
-      component="0"
       scale="1.0e-6"
+      setNames="{all}"/>
+    <FieldSpecification
+      name="slipVelocity1"
+      fieldName="slipVelocity"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="0."
       setNames="{all}"/>               
     <FieldSpecification
-      name="slipRate2"
-      fieldName="slipRate"
+      name="slipVelocity2"
+      fieldName="slipVelocity"
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="1"
