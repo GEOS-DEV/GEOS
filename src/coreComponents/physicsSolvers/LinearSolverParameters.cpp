@@ -341,10 +341,9 @@ void LinearSolverParametersInput::print()
       tableData.addRow( "ILU(T) threshold factor", m_parameters.ifact.threshold );
     }
   }
-  TableLayout const tableLayout = TableLayout( {
-      TableLayout::ColumnParam{"Parameter", TableLayout::Alignment::left},
-      TableLayout::ColumnParam{"Value", TableLayout::Alignment::left},
-    }, GEOS_FMT( "{}: linear solver", getParent().getName() ) );
+  TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: linear solver", getParent().getName() ),
+                                               { TableLayout::Column{"Parameter", TableLayout::Alignment::left},
+                                                 TableLayout::Column{"Value", TableLayout::Alignment::left} } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
 }
