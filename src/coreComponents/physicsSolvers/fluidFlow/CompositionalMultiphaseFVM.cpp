@@ -480,9 +480,10 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
   real64 scalingFactor = 1.0;
   real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
-  std::vector< std::tuple< real64, globalIndex > > maxRegionDeltaPresLoc;
-  std::vector< std::tuple< real64, globalIndex > > maxRegionDeltaTempLoc;
-  std::vector< std::tuple< real64, globalIndex > > maxRegionDeltaCompDensLoc;
+
+  std::vector< valueLocType > regionDeltaPresMaxLoc;
+  std::vector< valueLocType > regionDeltaTempMaxLoc;
+  std::vector< valueLocType > regionDeltaCompDensMaxLoc;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -525,30 +526,29 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
           scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
         }
 
-        maxRegionDeltaPresLoc.push_back( {subRegionData.localMaxDeltaPres, localToGlobalMap[subRegionData.localMaxDeltaPresLoc]} );
+        regionDeltaPresMaxLoc.push_back( valueLocType( subRegionData.localMaxDeltaPres, localToGlobalMap[subRegionData.localMaxDeltaPresLoc] ) );
         minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
 
-        maxRegionDeltaCompDensLoc.push_back( {subRegionData.localMaxDeltaCompDens, localToGlobalMap[subRegionData.localMaxDeltaCompDensLoc]} );
+        regionDeltaCompDensMaxLoc.push_back( valueLocType( subRegionData.localMaxDeltaCompDens, localToGlobalMap[subRegionData.localMaxDeltaCompDensLoc] ) );
         minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
 
         if( m_isThermal )
         {
-          maxRegionDeltaTempLoc.push_back( {subRegionData.localMaxDeltaTemp, localToGlobalMap[subRegionData.localMaxDeltaTempLoc]} );
+          regionDeltaTempMaxLoc.push_back( valueLocType( subRegionData.localMaxDeltaTemp, localToGlobalMap[subRegionData.localMaxDeltaTempLoc] ) );
           minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
         }
       }
     } );
   } );
 
-  auto [localMaxDeltaPres, localMaxPresLoc] = *max_element( begin( maxRegionDeltaPresLoc ), end( maxRegionDeltaPresLoc ), []( auto & lhs, auto & rhs )   {
-    return std::get< 0 >( lhs ) < std::get< 0 >( rhs );
+  auto [localDeltaPresMax, localPresMaxLoc] = *std::max_element( begin( regionDeltaPresMaxLoc ), end( regionDeltaPresMaxLoc ), []( auto & lhs, auto & rhs )   {
+    return lhs.value   < rhs.value;
   } );
-  auto globalMaxDeltaPres = MpiWrapper::tupleMaxLoc( std::tuple< real64, globalIndex >( localMaxDeltaPres, localMaxPresLoc ));
-
-  auto [ localMaxDeltaCompDens, localMaxCompDensLoc ] = *max_element( begin( maxRegionDeltaCompDensLoc ), end( maxRegionDeltaCompDensLoc ), []( auto & lhs, auto & rhs )   {
-    return std::get< 0 >( lhs ) < std::get< 0 >( rhs );
+  auto globalDeltaPresMax = MpiWrapper::maxValLoc( valueLocType( localDeltaPresMax, localPresMaxLoc ));
+  auto [ localDeltaCompDensMax, localCompDensMaxLoc ] = *std::max_element( begin( regionDeltaCompDensMaxLoc ), end( regionDeltaCompDensMaxLoc ), []( auto & lhs, auto & rhs )   {
+    return lhs.value   < rhs.value;
   } );
-  auto globalMaxDeltaCompDens = MpiWrapper::tupleMaxLoc( std::tuple< real64, globalIndex >( localMaxDeltaCompDens, localMaxCompDensLoc ));
+  auto globalDeltaCompDensMax = MpiWrapper::maxValLoc( valueLocType( localDeltaCompDensMax, localCompDensMaxLoc ));
 
   scalingFactor = MpiWrapper::min( scalingFactor );
   minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
@@ -556,20 +556,20 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling) at cell {}",
-                                      getName(), GEOS_FMT( "{:.{}f}", std::get< 0 >( globalMaxDeltaPres ), 3 ), std::get< 1 >( globalMaxDeltaPres ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", globalDeltaPresMax.value, 3 ), globalDeltaPresMax.location ) );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max component density change = {} {} (before scaling) at cell {}",
-                                      getName(), GEOS_FMT( "{:.{}f}", std::get< 0 >( globalMaxDeltaCompDens ), 3 ), massUnit, std::get< 1 >( globalMaxDeltaCompDens )) );
+                                      getName(), GEOS_FMT( "{:.{}f}", globalDeltaCompDensMax.value, 3 ), massUnit, globalDeltaCompDensMax.location ) );
 
   if( m_isThermal )
   {
-    auto [localMaxDeltaTemp, localMaxDeltaTempLoc  ] = *max_element( begin( maxRegionDeltaTempLoc ), end( maxRegionDeltaTempLoc ), []( auto & lhs, auto & rhs ) -> integer {
-      return std::get< 0 >( lhs ) < std::get< 0 >( rhs );
+    auto [localDeltaTempMax, localDeltaTempMaxLoc  ] = *std::max_element( begin( regionDeltaTempMaxLoc ), end( regionDeltaTempMaxLoc ), []( auto & lhs, auto & rhs )   {
+      return lhs.value   < rhs.value;
     } );
-    auto globalMaxDeltaTemp = MpiWrapper::tupleMaxLoc( std::tuple< real64, globalIndex >( localMaxDeltaTemp, localMaxDeltaTempLoc ));
+    auto globalMaxDeltaTemp = MpiWrapper::maxValLoc( valueLocType( localDeltaTempMax, localDeltaTempMaxLoc ));
 
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling) at cell {}",
-                                        getName(), GEOS_FMT( "{:.{}f}", std::get< 0 >( globalMaxDeltaTemp ), 3 ), std::get< 1 >( globalMaxDeltaTemp ) ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling) at cell maxRegionDeltaTempLoc {}",
+                                        getName(), GEOS_FMT( "{:.{}f}", globalMaxDeltaTemp.value, 3 ), globalMaxDeltaTemp.location ) );
   }
 
   if( m_scalingType == ScalingType::Local )
