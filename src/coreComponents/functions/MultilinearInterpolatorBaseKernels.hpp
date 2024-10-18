@@ -359,7 +359,7 @@ protected:
   GEOS_HOST_DEVICE
   inline
   void
-  getPointCoordinates(longIndex pointIndex, stackArray1d<real64, numDims> & coordinates) const
+  getPointCoordinates(longIndex pointIndex, array1d< real64 > & coordinates) const
   {
     longIndex axisIdx, remainderIdx = pointIndex;
     for (integer i = 0; i < numDims; ++i)
@@ -399,7 +399,7 @@ protected:
   // inputs: where to interpolate
 
   /// Coordinates in numDims-dimensional space where interpolation is requested
-  mutable stackArray1d< real64, numDims > m_coordinates;
+  mutable array1d< real64 > m_coordinates;
 };
 
 } /* namespace geos */

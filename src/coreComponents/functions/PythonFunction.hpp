@@ -23,6 +23,7 @@
 #include <Python.h>
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
+#include "LvArray/src/python/PyFunc.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
   #include "python/PyPythonFunctionType.hpp"
@@ -48,6 +49,9 @@ namespace geos
  * @class PythonFunction
  * @brief A wrapper class to interface Python functions for use in C++ computations.
  *
+ * @tparam IN_ARRAY type of input array of coordinates
+ * @tparam OUT_ARRAY type of output array of values
+ * @tparam OUT_2D_ARRAY type of output array of derivatives
  * @tparam INDEX_T datatype used for indexing in multidimensional space 
  */
 template< typename INDEX_T = __uint128_t >
@@ -66,22 +70,30 @@ public:
   /// Datatype used for indexing
   typedef INDEX_T longIndex;
 
+  typedef LvArray::python::PythonFunction<array1d<real64> const &, array1d<real64> &> PyEvaluateFunction;
+  typedef LvArray::python::PythonFunction<array1d<real64> const &, array2d<real64> &> PyDerivativeFunction;
+
   /// Python function reference to be called in evaluate
-  PyObject* py_evaluate_func = nullptr;
+  // PyObject* py_evaluate_func = nullptr;
+  mutable std::unique_ptr<PyEvaluateFunction> py_evaluate_func;
 
   /// Python function reference to be called for evaluation of derivatives
-  PyObject* py_derivative_func = nullptr;
+  // PyObject* py_derivative_func = nullptr;
+  mutable std::unique_ptr<PyDerivativeFunction> py_derivative_func;
 
   /**
    * @brief Construct a new wrapper for python function
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  PythonFunction( const string & name, Group * const parent );
-  /**
-   * @brief Desctructor of a wrapper of python function
-   */
-  ~PythonFunction();
+  PythonFunction( const string & name, Group * const parent ):
+      dataRepository::Group( name, parent ),
+      py_evaluate_func(nullptr),
+      py_derivative_func(nullptr)
+  {
+    if (!Py_IsInitialized()) 
+      Py_Initialize();
+  }
   /**
    * @brief The catalog name interface
    * @return name of the PythonFunction in the FunctionBase catalog
@@ -93,7 +105,23 @@ public:
    * @param[in] pyFunc pointer to the function
    * @param[in] pyDerivativeFunc pointer to the function evaluating derivatives
    */
-  void setEvaluateFunction(PyObject* pyFunc, PyObject* pyDerivativeFunc = nullptr);
+  void setEvaluateFunction(PyObject* pyFunc, PyObject* pyDerivativeFunc = nullptr)
+  {
+    // Set the evaluation function (required)
+    if (PyCallable_Check(pyFunc)) 
+      py_evaluate_func = std::make_unique<PyEvaluateFunction>(pyFunc);
+    else 
+      GEOS_THROW( GEOS_FMT( "{}: Provided Python function is not callable.", getName()), InputError );
+
+    // Set the derivative function (optional)
+    if (pyDerivativeFunc) 
+    {
+      if (PyCallable_Check(pyDerivativeFunc)) 
+        py_derivative_func = std::make_unique<PyDerivativeFunction>(pyDerivativeFunc);
+      else 
+        GEOS_THROW( GEOS_FMT( "{}: Provided Python derivative function is not callable.", getName()), InputError );
+    }
+  }
   /**
    * @brief Set dimensions of input and output mapping spaces
    * 
@@ -101,7 +129,12 @@ public:
    * @param[in] numberOfOperators dimension of output operators
    */
   void setDimensions( integer numberOfDimesions,
-                      integer numberOfOperators );
+                      integer numberOfOperators )
+  {
+    numDims = numberOfDimesions;
+    numOps = numberOfOperators;
+    numVerts = 1 << numDims;
+  }
   /**
    * @brief Set the properties of parametrization
    * 
@@ -115,177 +148,73 @@ public:
                 integer numberOfOperators,
                 real64_array axisMinimums,
                 real64_array axisMaximums,
-                integer_array axisPoints );
+                integer_array axisPoints )
+  {
+    numDims = numberOfDimesions;
+    numOps = numberOfOperators;
+    numVerts = 1 << numDims;
+
+    m_axisMinimums = axisMinimums;
+    m_axisMaximums = axisMaximums;
+    m_axisPoints = axisPoints;
+
+    m_axisSteps.resize(numDims);
+    m_axisStepInvs.resize(numDims);
+    m_axisHypercubeMults.resize(numDims);
+
+    for( integer dim = 0; dim < numDims; dim++ )
+    {
+      m_axisSteps[dim] = (m_axisMaximums[dim] - m_axisMinimums[dim]) / (m_axisPoints[dim] - 1);
+      m_axisStepInvs[dim] = 1 / m_axisSteps[dim];
+    }
+
+    m_axisHypercubeMults[numDims - 1] = 1;
+    for( integer dim = numDims - 2; dim >= 0; --dim )
+    {
+      m_axisHypercubeMults[dim] = m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1);
+    }
+  }
   /**
    * @brief interpolate all operators values at a given point
    * 
-   * @tparam IN_ARRAY type of input array of coordinates
-   * @tparam OUT_ARRAY type of output array of values
    * @param[in] state function arguments
    * @param[out] values function values
    */
-  template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOS_HOST_DEVICE   
   inline  
   void 
-  evaluate( IN_ARRAY const & state, 
-            OUT_ARRAY && values ) const
+  evaluate( array1d<real64> const & state, 
+            array1d<real64> & values ) const
   {
-    if (py_evaluate_func && PyCallable_Check(py_evaluate_func))
-    {
-      // Prepare Python arguments (state and values as lists)
-      PyObject* py_state = PyList_New(numDims);
-      PyObject* py_values = PyList_New(numOps);
-
-      for (integer i = 0; i < numDims; ++i)
-        PyList_SetItem(py_state, i, PyFloat_FromDouble(state[i]));
-
-      for (integer i = 0; i < numOps; ++i)
-        PyList_SetItem(py_values, i, PyFloat_FromDouble(values[i]));
-
-      // Pack arguments into a tuple
-      PyObject* args = PyTuple_New(2);
-      PyTuple_SetItem(args, 0, py_state);
-      PyTuple_SetItem(args, 1, py_values);
-
-      // Call the Python function
-      PyObject* result = PyObject_CallObject(py_evaluate_func, args);
-
-      if (result == nullptr) 
-      {
-        PyErr_Print();  // Print Python error if any
-        throw std::runtime_error("Python function call failed.");
-      } 
-      else 
-      {
-        // Update values with results from Python function
-        for (integer i = 0; i < numOps; ++i)
-          values[i] = PyFloat_AsDouble(PyList_GetItem(py_values, i));
-
-        Py_DECREF(result);  // Decrement reference count of result
-      }
-
-      // Clean up references
-      Py_DECREF(args);
-    }
+    if (py_evaluate_func)
+      (*py_evaluate_func)(state, values);
     else
-    {
-      throw std::runtime_error("No valid Python function set or the function is not callable.");
-    }
+      GEOS_THROW( GEOS_FMT( "{}: Evaluation function not set.", getName()), InputError );
   }
 
   /**
    * @brief interpolate all operators values at a given point
    * 
-   * @tparam IN_ARRAY type of input array of coordinates
-   * @tparam OUT_ARRAY type of output array of values
-   * @tparam OUT_2D_ARRAY type of output array of derivatives
    * @param[in] state function arguments
    * @param[out] values function values
    * @param[out] derivatives derivatives of function values w.r.t. arguments
    */
-  template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
   GEOS_HOST_DEVICE   
   inline  
   void 
-  evaluate(IN_ARRAY const & state,
-           OUT_ARRAY && values, 
-           OUT_2D_ARRAY && derivatives) const
+  evaluate( array1d<real64> const & state,
+            array1d<real64> & values, 
+            array2d<real64> & derivatives) const
   {
-    // Values
-    if (py_evaluate_func && PyCallable_Check(py_evaluate_func))
-    {
-      // Prepare Python arguments (state, values, and derivatives as lists)
-      PyObject* py_state = PyList_New(numDims);
-      PyObject* py_values = PyList_New(numOps);
-
-      // Populate Python lists with initial values for state 
-      for (integer i = 0; i < numDims; ++i)
-        PyList_SetItem(py_state, i, PyFloat_FromDouble(state[i]));
-
-      for (integer i = 0; i < numOps; ++i)
-        PyList_SetItem(py_values, i, PyFloat_FromDouble(values[i]));
-
-      // Pack arguments into a tuple
-      PyObject* args = PyTuple_New(2);
-      PyTuple_SetItem(args, 0, py_state);
-      PyTuple_SetItem(args, 1, py_values);
-
-      // Call the Python function
-      PyObject* result = PyObject_CallObject(py_evaluate_func, args);
-
-      if (result == nullptr) 
-      {
-        PyErr_Print();  // Print Python error if any
-        throw std::runtime_error("Python function call failed.");
-      } 
-      else 
-      {
-        // Update values with results from Python function
-        for (integer i = 0; i < numOps; ++i)
-          values[i] = PyFloat_AsDouble(PyList_GetItem(py_values, i));
-
-        Py_DECREF(result);  // Decrement reference count of result
-      }
-
-      // Clean up references
-      Py_DECREF(args);
-    }
+    if (py_evaluate_func)
+      (*py_evaluate_func)(state, values);
     else
-    {
-      throw std::runtime_error("No valid Python function set or the function is not callable.");
-    }
+      GEOS_THROW( GEOS_FMT( "{}: Evaluation function not set.", getName()), InputError );
 
-    // Derivatives
-    if (py_derivative_func && PyCallable_Check(py_derivative_func))
-    {
-      // Prepare Python arguments (state and derivatives as lists)
-      PyObject* py_state = PyList_New(numDims);
-      PyObject* py_derivatives = PyList_New(numOps);
-
-      for (integer i = 0; i < numDims; ++i)
-        PyList_SetItem(py_state, i, PyFloat_FromDouble(state[i]));
-
-      for (integer i = 0; i < numOps; ++i)
-      {
-        PyObject* py_derivative = PyList_New(numDims);
-        for (integer j = 0; j < numDims; ++j)
-        {
-          PyList_SetItem(py_derivative, j, PyFloat_FromDouble(derivatives(i, j)));
-        }
-        PyList_SetItem(py_derivatives, i, py_derivative);
-      }
-
-      // Pack arguments into a tuple
-      PyObject* args = PyTuple_New(2);  // Only two arguments for derivatives
-      PyTuple_SetItem(args, 0, py_state);
-      PyTuple_SetItem(args, 1, py_derivatives);
-
-      // Call the Python derivative function
-      PyObject* result = PyObject_CallObject(py_derivative_func, args);
-
-      if (result == nullptr)
-      {
-        PyErr_Print();
-        throw std::runtime_error("Python derivative function call failed.");
-      }
-      else
-      {
-        // Update derivatives with results from Python function
-        for (integer i = 0; i < numOps; ++i)
-        {
-          PyObject* py_derivative = PyList_GetItem(py_derivatives, i);
-          for (integer j = 0; j < numDims; ++j)
-          {
-            derivatives(i, j) = PyFloat_AsDouble(PyList_GetItem(py_derivative, j));
-          }
-        }
-        Py_DECREF(result);
-      }
-
-      // Clean up references
-      Py_DECREF(args);
-    }
+    if (py_derivative_func)
+      (*py_derivative_func)(state, derivatives);
+    else 
+      GEOS_THROW( GEOS_FMT( "{}: Derivative function not set.", getName()), InputError );
   }
   /**
    * @brief Retrieves constant point data.

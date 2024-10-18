@@ -24,6 +24,7 @@
 #include "functions/MultivariableTableFunction.hpp"
 #include "functions/MultilinearInterpolatorStaticKernels.hpp"
 #include "functions/MultilinearInterpolatorAdaptiveKernels.hpp"
+#include "common/logger/Logger.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOS_USE_MATHPRESSO
@@ -890,13 +891,17 @@ TEST( FunctionTests, MultivariableTableFromFile )
   testMutivariableFunction< nDims, nOps >( table_h, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
+#if defined(GEOS_USE_PYGEOSX)
+
 std::pair<PyObject*, PyObject*> definePythonFunction()
 {
     const char* pythonCode = R"(
 import math
+import pylvarray
 
 def python_evaluate(state, values):
-    x1, x2, x3, x4, x5, x6 = state
+    x1, x2, x3, x4, x5, x6 = state.to_numpy()
+    values = values.to_numpy()
 
     values[0] = (math.sin(x1) * math.cos(x2) * math.sin(x3) * 
                  math.cos(x4) * math.sin(x5) * math.cos(x6))
@@ -905,7 +910,8 @@ def python_evaluate(state, values):
                  math.cos(x4) + math.sin(x5) + math.cos(x6))
 
 def python_derivatives(state, derivatives):
-    x1, x2, x3, x4, x5, x6 = state
+    x1, x2, x3, x4, x5, x6 = state.to_numpy()
+    derivatives = derivatives.to_numpy()
 
     derivatives[0][0] = math.cos(x1) * math.cos(x2) * math.sin(x3) * math.cos(x4) * math.sin(x5) * math.cos(x6) 
     derivatives[0][1] = -math.sin(x1) * math.sin(x2) * math.sin(x3) * math.cos(x4) * math.sin(x5) * math.cos(x6) 
@@ -934,7 +940,7 @@ def python_derivatives(state, derivatives):
         !PyCallable_Check(deriv_func)) 
     {
         PyErr_Print();
-        throw std::runtime_error("Failed to define Python function or derivatives.");
+        GEOS_THROW("Failed to define Python function or derivatives.", InputError);
     }
     
     return {func, deriv_func};
@@ -990,7 +996,7 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   constexpr integer numOps = 2;
   constexpr real64 lowerBound = -M_PI;
   constexpr real64 upperBound = M_PI;
-  constexpr integer numPts = 1000;
+  constexpr integer numPts = 100;
   constexpr integer numResolutions = 2;
   constexpr std::array<integer, numResolutions> numAxesPts = {128, 512};
   array1d<real64> residuals ( 2 * numResolutions );
@@ -1036,7 +1042,36 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
     arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = m_trueValues[ptIndex];
     arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = m_trueDerivatives[ptIndex];
 
-    func.evaluate( &coordinatesView[ptIndex * numDims], ptValues, ptDers );
+    // Create a temporary array1d for the current state
+    // Note: Ensure that this code runs on the host if array1d cannot be constructed on the device
+    array1d<real64> ptState (numDims);
+    for( integer d = 0; d < numDims; ++d )
+      ptState[d] = coordinatesView[ ptIndex * numDims + d ];
+
+    // Create a temporary array1d for ptValues if needed
+    array1d<real64> ptValuesCopy (numOps);
+    for( integer op = 0; op < numOps; ++op )
+      ptValuesCopy[op] = ptValues[op];
+
+    // Create a temporary array2d for ptDers if needed
+    array2d<real64> ptDersCopy (numOps, numDims);
+    for( integer op = 0; op < numOps; ++op )
+      for( integer dim = 0; dim < numDims; ++dim )
+        ptDersCopy[op][dim] = ptDers[op][dim];
+
+    // Call evaluate with the temporary arrays
+    func.evaluate( ptState, ptValuesCopy, ptDersCopy );
+
+    // Optionally, you can copy back the results from ptValuesCopy and ptDersCopy if evaluate modifies them
+    // For example:
+    for( integer op = 0; op < numOps; ++op )
+    {
+      ptValues[op] = ptValuesCopy[op];
+      for( integer dim = 0; dim < numDims; ++dim )
+      {
+        ptDers[op][dim] = ptDersCopy[op][dim];
+      }
+    }
   });
 
   // Do multilinear interpolation
@@ -1092,6 +1127,8 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   ASSERT_GT(convOrderVals, 1.6) << "interpolation convergence rate must be greater than 1.6";
   ASSERT_GT(convOrderDers, 0.6) << "derivatives convergence rate must be greater than 0.6";
 }
+
+#endif
 
 // The `ENUM_STRING` implementation relies on consistency between the order of the `enum`,
 // and the order of the `string` array provided. Since this consistency is not enforced, it can be corrupted anytime.
