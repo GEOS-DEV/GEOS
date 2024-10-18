@@ -950,7 +950,7 @@ template< integer NUM_DIMS, integer NUM_OPS >
 void getMultilinearAdaptiveInterpolation( integer numAxisPts,
                                           real64 lowerBound, 
                                           real64 upperBound,
-                                          array1d<real64> const & coordinates,
+                                          std::vector<array1d<real64>> const & coordinates,
                                           arrayView2d< real64, compflow::USD_OBL_VAL > const & values,
                                           arrayView3d< real64, compflow::USD_OBL_DER > const & derivatives )
 {
@@ -976,22 +976,25 @@ void getMultilinearAdaptiveInterpolation( integer numAxisPts,
   // Create interpolation kernel
   MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > kernel( &func );
 
-  arrayView1d< real64 const > const coordinatesView = coordinates.toViewConst();
-
   // Evaluation
-  const integer numPts = coordinates.size() / NUM_DIMS;
+  const integer numPts = coordinates.size();
   forAll< geos::parallelDevicePolicy< > >( numPts, 
   [=] GEOS_HOST_DEVICE ( localIndex const ptIndex )
   {
+    arrayView1d< real64 const > const coordinatesView = coordinates[ptIndex].toViewConst();
     arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = values[ptIndex];
     arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = derivatives[ptIndex];
 
-    kernel.compute( &coordinatesView[ptIndex * NUM_DIMS], ptValues, ptDers );
+    kernel.compute( coordinatesView, ptValues, ptDers );
   });
 }
 
 TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
 {
+  // Test the convergence rate of multilinear adaptive interpolation
+  // Calculates exact values and derivatives defined by Python functions in random points
+  // Then interpolates using two resolutions and estimate convergence rate  
+
   constexpr integer numDims = 6;
   constexpr integer numOps = 2;
   constexpr real64 lowerBound = -M_PI;
@@ -1002,27 +1005,25 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   array1d<real64> residuals ( 2 * numResolutions );
 
   // Fill array of coordinates
-  array1d<real64> states ( numPts * numDims );
+  std::vector< array1d<real64> > states ( numPts, array1d< real64 >( numDims ) );
   std::default_random_engine generator;
   std::uniform_real_distribution< double > distribution( lowerBound, upperBound );
-  for (integer i = 0; i < numPts * numDims; ++i)
+  for (integer i = 0; i < numPts; ++i)
   {
-    states[i] = distribution( generator );
+    arrayView1d< real64 > const stateView = states[i].toView();
+    for (integer j = 0; j < numDims; ++j)
+      stateView[j] = distribution( generator );
   }
 
   // Initialize output arrays
   using array2dLayoutOBLOpVals = array2d< real64, compflow::LAYOUT_OBL_OPERATOR_VALUES >;
   using array3dLayoutOBLOpDers = array3d< real64, compflow::LAYOUT_OBL_OPERATOR_DERIVATIVES >;
+  array2dLayoutOBLOpVals evaluatedValues( numPts, numOps );
+  array3dLayoutOBLOpDers evaluatedDerivatives ( numPts, numOps, numDims );
 
-  array2dLayoutOBLOpVals  trueValues( numPts, numOps ), 
-                          evaluatedValues( numPts, numOps );
-  array3dLayoutOBLOpDers  trueDerivatives( numPts, numOps, numDims ), 
-                          evaluatedDerivatives ( numPts, numOps, numDims );
-
-  arrayView2d< real64, compflow::USD_OBL_VAL > const m_trueValues (trueValues);
-  arrayView3d< real64, compflow::USD_OBL_DER > const m_trueDerivatives (trueDerivatives);
-  arrayView2d< real64, compflow::USD_OBL_VAL > const m_evaluatedValues (evaluatedValues);
-  arrayView3d< real64, compflow::USD_OBL_DER > const m_evaluatedDerivatives (evaluatedDerivatives);
+  // Other types for exact values due to restriction on type of arguments of Python function
+  std::vector<array1d< real64 >> trueValues(numPts, array1d< real64 >(numOps));
+  std::vector<array2d< real64 >> trueDerivatives(numPts, array2d< real64 >(numOps, numDims));
 
   // Create interface to Python functions for evaluation of exact values
   FunctionManager * functionManager = &FunctionManager::getInstance();
@@ -1035,46 +1036,15 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
   Py_Initialize();
 
   // Do exact evaluations
-  arrayView1d< real64 const > const coordinatesView = states.toViewConst();
   forAll< geos::parallelDevicePolicy< > >( numPts, 
   [&] GEOS_HOST_DEVICE ( localIndex const ptIndex )
   {
-    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptValues = m_trueValues[ptIndex];
-    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptDers = m_trueDerivatives[ptIndex];
-
-    // Create a temporary array1d for the current state
-    // Note: Ensure that this code runs on the host if array1d cannot be constructed on the device
-    array1d<real64> ptState (numDims);
-    for( integer d = 0; d < numDims; ++d )
-      ptState[d] = coordinatesView[ ptIndex * numDims + d ];
-
-    // Create a temporary array1d for ptValues if needed
-    array1d<real64> ptValuesCopy (numOps);
-    for( integer op = 0; op < numOps; ++op )
-      ptValuesCopy[op] = ptValues[op];
-
-    // Create a temporary array2d for ptDers if needed
-    array2d<real64> ptDersCopy (numOps, numDims);
-    for( integer op = 0; op < numOps; ++op )
-      for( integer dim = 0; dim < numDims; ++dim )
-        ptDersCopy[op][dim] = ptDers[op][dim];
-
-    // Call evaluate with the temporary arrays
-    func.evaluate( ptState, ptValuesCopy, ptDersCopy );
-
-    // Optionally, you can copy back the results from ptValuesCopy and ptDersCopy if evaluate modifies them
-    // For example:
-    for( integer op = 0; op < numOps; ++op )
-    {
-      ptValues[op] = ptValuesCopy[op];
-      for( integer dim = 0; dim < numDims; ++dim )
-      {
-        ptDers[op][dim] = ptDersCopy[op][dim];
-      }
-    }
+    func.evaluate( states[ptIndex], trueValues[ptIndex], trueDerivatives[ptIndex] );
   });
 
   // Do multilinear interpolation
+  arrayView2d< real64, compflow::USD_OBL_VAL > const m_evaluatedValues (evaluatedValues);
+  arrayView3d< real64, compflow::USD_OBL_DER > const m_evaluatedDerivatives (evaluatedDerivatives);
   for (integer i = 0; i < numResolutions; ++i)
   {
     getMultilinearAdaptiveInterpolation<numDims, numOps>( numAxesPts[i], 
@@ -1087,8 +1057,8 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
     residuals[2 * i] = residuals[2 * i + 1] = 0.0;
     for (integer ptIndex = 0; ptIndex < numPts; ++ptIndex)
     {
-      arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptTrueValues = m_trueValues[ptIndex];
-      arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptTrueDers = m_trueDerivatives[ptIndex];
+      arrayView1d< real64 > const ptTrueValues = trueValues[ptIndex].toView();
+      arrayView2d< real64 > const ptTrueDers = trueDerivatives[ptIndex].toView();
 
       arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & ptEvalValues = m_evaluatedValues[ptIndex];
       arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & ptEvalDers = m_evaluatedDerivatives[ptIndex];
@@ -1116,6 +1086,7 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
 
   Py_Finalize();
 
+  // Calculate convergence rate
   const real64 dLogDx = log((upperBound - lowerBound) / numAxesPts[numResolutions - 1]) - 
                         log((upperBound - lowerBound) / numAxesPts[numResolutions - 2]);
   const real64 convOrderVals = (log(residuals[2 * (numResolutions - 1)]) - 
@@ -1124,8 +1095,8 @@ TEST( FunctionTests, MultilinearInterpolatorAdaptiveKernels )
                                   log(residuals[2 * (numResolutions - 2) + 1])) / dLogDx;        
   // printf("Covergence order: values %f, \t derivatives %f \n", convOrderVals, convOrderDers);  
 
-  ASSERT_GT(convOrderVals, 1.6) << "interpolation convergence rate must be greater than 1.6";
-  ASSERT_GT(convOrderDers, 0.6) << "derivatives convergence rate must be greater than 0.6";
+  ASSERT_GT(convOrderVals, 1.8) << "interpolation convergence rate must be greater than 1.8";
+  ASSERT_GT(convOrderDers, 0.8) << "derivatives convergence rate must be greater than 0.8";
 }
 
 #endif
