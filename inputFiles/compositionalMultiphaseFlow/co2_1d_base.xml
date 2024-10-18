@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
+  <Solvers gravityVector="{-1, 0, 0}">
     <CompositionalMultiphaseFVM
         name="compflow"
         logLevel="1"
@@ -16,20 +16,6 @@
           directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
-
-  <Mesh>
-    <InternalMesh
-        name="mesh1"
-        elementTypes="{ C3D8 }"
-        xCoords="{ 0, 1 }"
-        yCoords="{ 0, 1 }"
-        zCoords="{ 0, 100 }"
-        nx="{ 1 }"
-        ny="{ 1 }"
-        nz="{ 100 }"
-        cellBlockNames="{ block1 }"/>
-  </Mesh>
-
 
   <Geometry>
     <Box
@@ -57,31 +43,22 @@
         target="/Outputs/restartOutput"/>
   </Events>
 
-  <NumericalMethods>
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-          name="fluidTPFA"
-          upwindingScheme="HU2PH"
-      />
-    </FiniteVolume>
-  </NumericalMethods>
-
   <ElementRegions>
     <CellElementRegion
         name="Region1"
         cellBlocks="{ block1 }"
-        materialList="{ fluid1, rock, relperm }"/>
-<!--        materialList="{ fluid1, rock, relperm, cappres }"/>-->
+        materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
-    <DeadOilFluid
-        name="fluid1"
-        phaseNames="{ gas, oil }"
-        surfaceDensities="{ 100.0, 1000.0 }"
-        componentMolarWeight="{ 16e-3, 114e-3 }"
-        tableFiles="{ pvdg.txt, pvdo.txt}"/>
-
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      logLevel="1"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+      flashModelParaFile="co2flash.txt"/>
 
     <CompressibleSolidConstantPermeability
         name="rock"
@@ -100,22 +77,14 @@
 
     <BrooksCoreyRelativePermeability
         name="relperm"
-        phaseNames="{ gas, oil }"
+        phaseNames="{ gas, water }"
         phaseMinVolumeFraction="{ 0.0, 0.0 }"
         phaseRelPermExponent="{ 2.0, 2.5 }"
         phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
 
-    <BrooksCoreyCapillaryPressure
-        name="cappres"
-        phaseNames="{ gas, oil }"
-        phaseMinVolumeFraction="{ 0.0, 0.0 }"
-        phaseCapPressureExponentInv="{ 4 , 0 }"
-        phaseEntryPressure="{ 0.75e6, 0 }"
-        capPressureEpsilon="1e-8"/>
-
     <ConstantPermeability
         name="rockPerm"
-        permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+        permeabilityComponents="{ 5.0e-15, 5.0e-15, 5.0e-15 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -129,78 +98,51 @@
         scale="7.5e6"/>
 
     <FieldSpecification
-        name="initialComposition_gas"
+        name="initialComposition_co2"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/Region1/block1"
         fieldName="globalCompFraction"
         component="0"
-        functionName="initial_gas"
+        functionName="initial_co2"
         scale="1"/>
 
     <FieldSpecification
-        name="initialComposition_oil"
+        name="initialComposition_water"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/Region1/block1"
         fieldName="globalCompFraction"
         component="1"
-        functionName="initial_oil"
+        functionName="initial_water"
         scale="1"/>
 
 <!--
-    <FieldSpecification
-        name="sourceTermPressure"
+    <SourceFlux
+        name="sourceTerm"
+        logLevel="10"
         objectPath="ElementRegions/Region1/block1"
-        fieldName="pressure"
-        scale="1e7"
-        setNames="{ source }"/>
-
-    <FieldSpecification
-        name="sourceTermComposition_oil"
-        setNames="{ source }"
-        objectPath="ElementRegions/Region1/block1"
-        fieldName="globalCompFraction"
-        component="1"
-        scale="1.0"/>
-
-    <FieldSpecification
-        name="sourceTermComposition_gas"
-        setNames="{ source }"
-        objectPath="ElementRegions/Region1/block1"
-        fieldName="globalCompFraction"
         component="0"
-        scale="0.0"/>
+        scale="-1e-3"
+        setNames="{ source }"/>
 -->
 
-		<SourceFlux name="sourceTerm"
-		            logLevel="10"
-		            objectPath="ElementRegions/Region1/block1"
-		            component="0"
-		            scale="-1e-3"
-		            setNames="{ source }"/>
-
-    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
   </FieldSpecifications>
 
   <Functions>
-    <TableFunction name="initial_gas"
+    <TableFunction name="initial_co2"
                    inputVarNames="{elementCenter}"
-                   coordinates="{0.0, 35., 36.}"
-                   values="{0.0, 0.0, 0.0}"
+                   coordinates="{0.0, 4., 5., 10.}"
+                   values="{1.0, 1.0, 0.0, 0.0}"
     />
-    <TableFunction name="initial_oil"
+    <TableFunction name="initial_water"
                    inputVarNames="{elementCenter}"
-                   coordinates="{0.0, 35. , 36.}"
-                   values="{1.0, 1.0, 1.0}"
+                   coordinates="{0.0, 4., 5., 10.}"
+                   values="{0.0, 0.0, 1.0, 1.0}"
     />
   </Functions>
 
   <Outputs>
-    <VTK
-        name="vtkOutput"
-        plotFileRoot="2ph_grav_1d_hu2ph"/>
-
     <Restart
         name="restartOutput"/>
   </Outputs>
