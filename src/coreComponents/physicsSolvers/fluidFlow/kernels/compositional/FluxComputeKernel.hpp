@@ -35,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HU2PhaseFlux.hpp"
 
 namespace geos
 {
@@ -323,6 +324,32 @@ public:
               dCompFlux_dP,
               dCompFlux_dC );
           }
+          else if( m_kernelFlags.isSet( FluxComputeKernelFlags::HU2PH ) )
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::HU2PhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
+          }
           else
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
@@ -348,6 +375,14 @@ public:
               compFlux,
               dCompFlux_dP,
               dCompFlux_dC );
+          }
+
+          std::cout << ip << " " << phaseFlux << std::endl;
+          for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+          {
+            std::cout << dPhaseFlux_dP[ke] << std::endl;
+            for( localIndex ic = 0; ic < numComp; ++ic )
+              std::cout << dPhaseFlux_dC[ke][ic] << std::endl;
           }
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
@@ -552,7 +587,8 @@ public:
         kernelFlags.set( FluxComputeKernelFlags::C1PPU );
       else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
         kernelFlags.set( FluxComputeKernelFlags::IHU );
-
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::HU2PH )
+        kernelFlags.set( FluxComputeKernelFlags::HU2PH );
 
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
