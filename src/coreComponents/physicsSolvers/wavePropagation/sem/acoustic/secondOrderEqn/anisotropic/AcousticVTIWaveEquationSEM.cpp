@@ -108,6 +108,10 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< acousticvtifields::Epsilon >( getName() );
       subRegion.registerField< acousticvtifields::F >( getName() );
       subRegion.registerField< acousticfields::AcousticVelocity >( getName() );
+      if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+      {
+        subRegion.registerField< acousticfields::AcousticQualityFactor >( getName() );
+      }
     } );
   } );
 }
