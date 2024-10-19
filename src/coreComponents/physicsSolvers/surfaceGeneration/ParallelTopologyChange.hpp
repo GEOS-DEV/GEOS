@@ -49,6 +49,7 @@ struct TopologyChangeStepData
     m_edges.resize(0) ;
     m_faces.resize(0) ;
     m_elements.resize( elemManager.numRegions() );
+    m_elementsView.resize( elemManager.numRegions() );
     m_elementsData.resize(elemManager.numRegions() );
     m_size = 0 ;
 
@@ -56,11 +57,13 @@ struct TopologyChangeStepData
     {
       ElementRegionBase const & elemRegion = elemManager.getRegion( er );
       m_elements[er].resize( elemRegion.numSubRegions());
+      m_elementsView[er].resize( elemRegion.numSubRegions());
       m_elementsData[er].resize( elemRegion.numSubRegions());
       for( localIndex esr=0; esr<elemRegion.numSubRegions(); ++esr )
       {
         m_elementsData[er][esr].resize(0);
         m_elements[er][esr].set( m_elementsData[er][esr] );
+        m_elementsView[er][esr] = m_elementsData[er][esr];
       }
     }
   }
@@ -70,6 +73,8 @@ struct TopologyChangeStepData
   localIndex_array m_edges;
   localIndex_array m_faces;
   ElementRegionManager::ElementReferenceAccessor< localIndex_array > m_elements;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > > m_elementsView;
+
   array1d< array1d< localIndex_array > > m_elementsData;
   buffer_type::size_type m_size;
 
@@ -85,7 +90,6 @@ struct TopologyChangeUnpackStepData : public TopologyChangeStepData
   }
 
   buffer_unit_type const * m_bufferPtr;
-
 };
 
 }
