@@ -36,6 +36,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HU2PhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseComponentFlux.hpp"
 
 namespace geos
 {
@@ -229,6 +230,7 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
+    using namespace isothermalCompositionalMultiphaseFVMKernelUtilities;
 
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
@@ -270,11 +272,9 @@ public:
           real64 dPhaseFlux_dP[numFluxSupportPoints]{};
           real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-          localIndex k_up = -1;
-
           if( m_kernelFlags.isSet( FluxComputeKernelFlags::C1PPU ) )
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+            C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
@@ -285,22 +285,17 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
+              dPhaseFlux_dC );
           }
           else if( m_kernelFlags.isSet( FluxComputeKernelFlags::IHU ) )
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
+            IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
@@ -311,22 +306,17 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
+              dPhaseFlux_dC );
           }
           else if( m_kernelFlags.isSet( FluxComputeKernelFlags::HU2PH ) )
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::HU2PhaseFlux::compute< numComp, numFluxSupportPoints >
+            HU2PhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
@@ -337,22 +327,17 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
+              dPhaseFlux_dC );
           }
           else
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+            PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( FluxComputeKernelFlags::CapPressure ),
@@ -363,27 +348,21 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
+              dPhaseFlux_dC );
           }
 
-          std::cout << ip << " " << phaseFlux << std::endl;
-          for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-          {
-            std::cout << dPhaseFlux_dP[ke] << std::endl;
-            for( localIndex ic = 0; ic < numComp; ++ic )
-              std::cout << dPhaseFlux_dC[ke][ic] << std::endl;
-          }
+          // choose upstream cell for composition upwinding
+          localIndex const k_up = (phaseFlux >= 0) ? 0 : 1;
+
+          //distribute on phaseComponentFlux here
+          PhaseComponentFlux::compute( ip, k_up, seri, sesri, sei, m_phaseCompFrac, m_dPhaseCompFrac, m_dCompFrac_dCompDens,
+                                       phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, compFlux, dCompFlux_dP, dCompFlux_dC );
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
@@ -391,7 +370,7 @@ public:
                             k_up, seri[k_up], sesri[k_up], sei[k_up], potGrad,
                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
-        }                                 // loop over phases
+        }   // loop over phases
 
         /// populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )

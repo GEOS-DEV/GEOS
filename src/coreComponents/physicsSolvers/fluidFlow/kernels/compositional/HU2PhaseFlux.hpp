@@ -89,46 +89,35 @@ struct HU2PhaseFlux
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
-           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-           ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
            ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-           localIndex & GEOS_UNUSED_PARAM( k_up ),
            real64 & GEOS_UNUSED_PARAM( potGrad ),
            real64 ( &phaseFlux ),
            real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
-           real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp],
-           real64 ( & compFlux )[numComp],
-           real64 ( & dCompFlux_dP )[numFluxSupportPoints][numComp],
-           real64 ( & dCompFlux_dC )[numFluxSupportPoints][numComp][numComp] )
+           real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
-    /**/
-    // viscout part
+    // viscous part
     computeViscousFlux< numComp, numFluxSupportPoints >( ip, numPhase, hasCapPressure,
                                                          seri, sesri, sei,
                                                          trans, dTrans_dPres,
                                                          pres, gravCoef,
-                                                         phaseCompFrac, dPhaseCompFrac,
                                                          dCompFrac_dCompDens,
                                                          phaseMassDens, dPhaseMassDens,
                                                          phaseMob, dPhaseMob,
                                                          dPhaseVolFrac,
                                                          phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                                                         phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-                                                         compFlux, dCompFlux_dP, dCompFlux_dC );
+                                                         phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
     // gravity part
     computeGravityFlux< numComp, numFluxSupportPoints >( ip, numPhase,
-                                                               seri, sesri, sei,
-                                                               trans, dTrans_dPres, gravCoef,
-                                                               phaseMob, dPhaseMob,
-                                                               phaseCompFrac, dPhaseCompFrac,
-                                                               dCompFrac_dCompDens,
-                                                               phaseMassDens, dPhaseMassDens,
-                                                               phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-                                                               compFlux, dCompFlux_dP, dCompFlux_dC );
+                                                         seri, sesri, sei,
+                                                         trans, dTrans_dPres, gravCoef,
+                                                         phaseMob, dPhaseMob,
+                                                         dCompFrac_dCompDens,
+                                                         phaseMassDens, dPhaseMassDens,
+                                                         phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
 /*
     // capillary part
@@ -147,7 +136,7 @@ struct HU2PhaseFlux
                                                              phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
                                                              compFlux, dCompFlux_dP, dCompFlux_dC );
     }
-*/
+ */
   }
 
 protected:
@@ -162,8 +151,6 @@ protected:
                       const real64 (& trans)[2], const real64 (& dTrans_dPres)[2],
                       const ElementViewConst< arrayView1d< const real64 > > & pres,
                       const ElementViewConst< arrayView1d< const real64 > > & gravCoef,
-                      ElementViewConst< arrayView4d< const real64 > > const & phaseCompFrac,
-                      ElementViewConst< arrayView5d< const real64, 4 > > const & dPhaseCompFrac,
                       ElementViewConst< arrayView3d< const real64 > > const & dCompFrac_dCompDens,
                       const ElementViewConst< arrayView3d< const real64 > > & phaseMassDens,
                       const ElementViewConst< arrayView4d< const real64 > > & dPhaseMassDens,
@@ -172,8 +159,7 @@ protected:
                       const ElementViewConst< arrayView3d< const real64 > > & dPhaseVolFrac,
                       const ElementViewConst< arrayView3d< const real64 > > & phaseCapPressure,
                       const ElementViewConst< arrayView4d< const real64 > > & dPhaseCapPressure_dPhaseVolFrac,
-                      real64 ( &phaseFlux ), real64 ( & dPhaseFlux_dP )[numFluxSupportPoints], real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp],
-                      real64 ( & compFlux )[numComp], real64 ( & dCompFlux_dP )[numFluxSupportPoints][numComp], real64 ( & dCompFlux_dC )[numFluxSupportPoints][numComp][numComp] )
+                      real64 ( &phaseFlux ), real64 ( & dPhaseFlux_dP )[numFluxSupportPoints], real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
     // form total velocity and derivatives (TODO move it OUT!)
     real64 totFlux{};
@@ -186,13 +172,10 @@ protected:
                       pres, gravCoef,
                       phaseMob, dPhaseMob,
                       dPhaseVolFrac,
-                      phaseCompFrac, dPhaseCompFrac,
                       dCompFrac_dCompDens,
                       phaseMassDens, dPhaseMassDens,
                       phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
                       totFlux, dTotFlux_dP, dTotFlux_dC );
-
-std::cout << "totFlux=" << totFlux << std::endl;
 
     localIndex k_up = -1;
     real64 mob{};
@@ -266,8 +249,6 @@ std::cout << "totFlux=" << totFlux << std::endl;
     real64 dViscousPhaseFlux_dP[numFluxSupportPoints]{};
     real64 dViscousPhaseFlux_dC[numFluxSupportPoints][numComp]{};
 
-    std::cout << "viscousPhaseFlux=" << viscousPhaseFlux << " fractionalFlow=" << fractionalFlow << " totFlux=" << totFlux << " mob=" << mob << " totMob=" << totMob << std::endl;
-
     // fractionalFlow derivatives
     dViscousPhaseFlux_dP[k_up] += dFractionalFlow_dP * totFlux;
     for( localIndex jc = 0; jc < numComp; ++jc )
@@ -279,19 +260,11 @@ std::cout << "totFlux=" << totFlux << std::endl;
     for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
     {
       dViscousPhaseFlux_dP[ke] += fractionalFlow * dTotFlux_dP[ke];
-      std::cout << "dViscousPhaseFlux_dP[ke]="<<dViscousPhaseFlux_dP[ke]<<" dTotFlux_dP[ke]="<<dTotFlux_dP[ke] << " " << dTotFlux_dP[ke]/totMob << std::endl;
       for( localIndex jc = 0; jc < numComp; ++jc )
       {
         dViscousPhaseFlux_dC[ke][jc] += fractionalFlow * dTotFlux_dC[ke][jc];
       }
     }
-
-    // distribute on phaseComponentFlux here
-    PhaseComponentFlux::compute( ip, k_up,
-                                 seri, sesri, sei,
-                                 phaseCompFrac, dPhaseCompFrac, dCompFrac_dCompDens,
-                                 viscousPhaseFlux, dViscousPhaseFlux_dP, dViscousPhaseFlux_dC,
-                                 compFlux, dCompFlux_dP, dCompFlux_dC );
 
     // accumulate in the flux and its derivatives (need to be very careful doing that)
     phaseFlux += viscousPhaseFlux;
@@ -307,20 +280,17 @@ std::cout << "totFlux=" << totFlux << std::endl;
   GEOS_HOST_DEVICE
   static void
   computeGravityFlux( const integer & ip, const integer & numPhase,
-                            const localIndex (& seri)[numFluxSupportPoints],
-                            const localIndex (& sesri)[numFluxSupportPoints],
-                            const localIndex (& sei)[numFluxSupportPoints],
-                            const real64 (& trans)[2], const real64 (& dTrans_dPres)[2],
-                            const ElementViewConst< arrayView1d< const real64 > > & gravCoef,
-                            const ElementViewConst< arrayView2d< const real64, 1 > > & phaseMob,
-                            const ElementViewConst< arrayView3d< const real64 > > & dPhaseMob,
-                            ElementViewConst< arrayView4d< const real64 > > const & phaseCompFrac,
-                            ElementViewConst< arrayView5d< const real64, 4 > > const & dPhaseCompFrac,
-                            ElementViewConst< arrayView3d< const real64 > > const & dCompFrac_dCompDens,
-                            const ElementViewConst< arrayView3d< const real64 > > & phaseMassDens,
-                            const ElementViewConst< arrayView4d< const real64 > > & dPhaseMassDens,
-                            real64 & phaseFlux, real64 (& dPhaseFlux_dP)[numFluxSupportPoints], real64 (& dPhaseFlux_dC)[numFluxSupportPoints][numComp],
-                            real64 (& compFlux)[numComp], real64 (& dCompFlux_dP)[numFluxSupportPoints][numComp], real64 (& dCompFlux_dC)[numFluxSupportPoints][numComp][numComp] )
+                      const localIndex (& seri)[numFluxSupportPoints],
+                      const localIndex (& sesri)[numFluxSupportPoints],
+                      const localIndex (& sei)[numFluxSupportPoints],
+                      const real64 (& trans)[2], const real64 (& dTrans_dPres)[2],
+                      const ElementViewConst< arrayView1d< const real64 > > & gravCoef,
+                      const ElementViewConst< arrayView2d< const real64, 1 > > & phaseMob,
+                      const ElementViewConst< arrayView3d< const real64 > > & dPhaseMob,
+                      ElementViewConst< arrayView3d< const real64 > > const & dCompFrac_dCompDens,
+                      const ElementViewConst< arrayView3d< const real64 > > & phaseMassDens,
+                      const ElementViewConst< arrayView4d< const real64 > > & dPhaseMassDens,
+                      real64 & phaseFlux, real64 (& dPhaseFlux_dP)[numFluxSupportPoints], real64 (& dPhaseFlux_dC)[numFluxSupportPoints][numComp] )
   {
     /// Assembling the gravitational flux (and derivatives)
     real64 gravPhaseFlux{};
@@ -383,31 +353,31 @@ std::cout << "totFlux=" << totFlux << std::endl;
         real64 dMob_i_dP{};
         real64 dMob_i_dC[numComp]{};
         upwindMobility< numComp, numFluxSupportPoints >( ip,
-                                                        seri,
-                                                        sesri,
-                                                        sei,
-                                                        potDiff,
-                                                        phaseMob,
-                                                        dPhaseMob,
-                                                        k_up_i,
-                                                        mob_i,
-                                                        dMob_i_dP,
-                                                        dMob_i_dC );
+                                                         seri,
+                                                         sesri,
+                                                         sei,
+                                                         potDiff,
+                                                         phaseMob,
+                                                         dPhaseMob,
+                                                         k_up_i,
+                                                         mob_i,
+                                                         dMob_i_dP,
+                                                         dMob_i_dC );
         localIndex k_up_j = -1;
         real64 mob_j{};
         real64 dMob_j_dP{};
         real64 dMob_j_dC[numComp]{};
         upwindMobility< numComp, numFluxSupportPoints >( jp,
-                                                        seri,
-                                                        sesri,
-                                                        sei,
-                                                        -potDiff,
-                                                        phaseMob,
-                                                        dPhaseMob,
-                                                        k_up_j,
-                                                        mob_j,
-                                                        dMob_j_dP,
-                                                        dMob_j_dC );
+                                                         seri,
+                                                         sesri,
+                                                         sei,
+                                                         -potDiff,
+                                                         phaseMob,
+                                                         dPhaseMob,
+                                                         k_up_j,
+                                                         mob_j,
+                                                         dMob_j_dP,
+                                                         dMob_j_dC );
 
         real64 const mobTot = LvArray::math::max( mob_i + mob_j, minTotMob );
         real64 const mobTotInv = 1 / mobTot;
@@ -424,24 +394,18 @@ std::cout << "totFlux=" << totFlux << std::endl;
         // Assembling gravitational flux phase-wise as \phi_{i,g} = \sum_{k\nei} \lambda_k^{up,g} f_k^{up,g} (G_i - G_k)
         gravPhaseFlux += mob_i * mob_j * mobTotInv * potDiff;
 
-std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << mob_j << " " << mobTotInv << " " << potDiff << std::endl;
-
         // mob_i derivatives
         dGravPhaseFlux_dP[k_up_i] += dMob_i_dP * mob_j * mobTotInv * potDiff;
-        std::cout << "dGravPhaseFlux_dP[k_up_i]=" << dGravPhaseFlux_dP[k_up_i] << " " << dMob_i_dP << std::endl;
         for( localIndex jc = 0; jc < numComp; ++jc )
         {
           dGravPhaseFlux_dC[k_up_i][jc] += dMob_i_dC[jc] * mob_j * mobTotInv * potDiff;
-        std::cout << "dGravPhaseFlux_dC[k_up_i][jc]=" << dGravPhaseFlux_dC[k_up_i][jc] << " " << dMob_i_dC[jc] << std::endl;
         }
 
         // mob_j derivatives
         dGravPhaseFlux_dP[k_up_j] += mob_i * dMob_j_dP * mobTotInv * potDiff;
-        std::cout << "dGravPhaseFlux_dP[k_up_j]=" << dGravPhaseFlux_dP[k_up_j] << " " << dMob_j_dP << std::endl;
         for( localIndex jc = 0; jc < numComp; ++jc )
         {
           dGravPhaseFlux_dC[k_up_j][jc] += mob_i * dMob_j_dC[jc] * mobTotInv * potDiff;
-        std::cout << "dGravPhaseFlux_dC[k_up_j][jc]=" << dGravPhaseFlux_dC[k_up_j][jc] << " " << dMob_j_dC[jc] << std::endl;
         }
 
         // mobTot derivatives
@@ -449,11 +413,9 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
         for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           dGravPhaseFlux_dP[ke] -= mob_i * mob_j * dMobTot_dP[ke] * mobTotInv2 * potDiff;
-        std::cout << "dGravPhaseFlux_dP[ke]=" << dGravPhaseFlux_dP[ke] << " " << dMobTot_dP[ke] << std::endl;
           for( localIndex jc = 0; jc < numComp; ++jc )
           {
             dGravPhaseFlux_dC[ke][jc] -= mob_i * mob_j * dMobTot_dC[ke][jc] * mobTotInv2 * potDiff;
-        std::cout << "dGravPhaseFlux_dC[ke][jc]=" << dGravPhaseFlux_dC[ke][jc] << " " << dMobTot_dC[ke][jc] << std::endl;
           }
         }
 
@@ -461,22 +423,13 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
         for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           dGravPhaseFlux_dP[ke] += mob_i * mob_j * mobTotInv * dPotDiff_dP[ke];
-        std::cout << "dGravPhaseFlux_dP[ke]=" << dGravPhaseFlux_dP[ke] << " " << dPotDiff_dP[ke] << std::endl;
           for( localIndex jc = 0; jc < numComp; ++jc )
           {
             dGravPhaseFlux_dC[ke][jc] += mob_i * mob_j * mobTotInv * dPotDiff_dC[ke][jc];
-        std::cout << "dGravPhaseFlux_dC[ke][jc]=" << dGravPhaseFlux_dC[ke][jc] << " " << dPotDiff_dC[ke][jc] << std::endl;
           }
         }
       }
     }
-
-    // distribute on phaseComponentFlux here, upwind using combined gravPhaseFlux sign
-    PhaseComponentFlux::compute( ip, (gravPhaseFlux > 0) ? 0 : 1,
-                                 seri, sesri, sei,
-                                 phaseCompFrac, dPhaseCompFrac, dCompFrac_dCompDens,
-                                 gravPhaseFlux, dGravPhaseFlux_dP, dGravPhaseFlux_dC,
-                                 compFlux, dCompFlux_dP, dCompFlux_dC );
 
     // update phaseFlux from gravitational
     phaseFlux += gravPhaseFlux;
@@ -489,10 +442,10 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
   }
 
 /*
-  template< localIndex numComp, localIndex numFluxSupportPoints >
-  GEOS_HOST_DEVICE
-  static void
-  computeCapillaryFlux( const integer & ip, const integer & numPhase, const integer & hasCapPressure,
+   template< localIndex numComp, localIndex numFluxSupportPoints >
+   GEOS_HOST_DEVICE
+   static void
+   computeCapillaryFlux( const integer & ip, const integer & numPhase, const integer & hasCapPressure,
                         const localIndex (& seri)[numFluxSupportPoints],
                         const localIndex (& sesri)[numFluxSupportPoints],
                         const localIndex (& sei)[numFluxSupportPoints],
@@ -509,9 +462,11 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
                         const ElementViewConst< arrayView4d< const real64 > > & dPhaseMassDens,
                         const ElementViewConst< arrayView3d< const real64 > > & phaseCapPressure,
                         const ElementViewConst< arrayView4d< const real64 > > & dPhaseCapPressure_dPhaseVolFrac,
-                        real64 & phaseFlux, real64 (& dPhaseFlux_dP)[numFluxSupportPoints], real64 (& dPhaseFlux_dC)[numFluxSupportPoints][numComp],
-                        real64 (& compFlux)[numComp], real64 (& dCompFlux_dP)[numFluxSupportPoints][numComp], real64 (& dCompFlux_dC)[numFluxSupportPoints][numComp][numComp] )
-  {
+                        real64 & phaseFlux, real64 (& dPhaseFlux_dP)[numFluxSupportPoints], real64 (&
+                           dPhaseFlux_dC)[numFluxSupportPoints][numComp],
+                        real64 (& compFlux)[numComp], real64 (& dCompFlux_dP)[numFluxSupportPoints][numComp], real64 (&
+                           dCompFlux_dC)[numFluxSupportPoints][numComp][numComp] )
+   {
     /// Assembling the capillary flux (and derivatives) from fractional flow and total velocity as \phi_{g} = f_i^{up,g} uT
     localIndex k_up_pc = -1;
     localIndex k_up_opc = -1;
@@ -561,8 +516,8 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
       for( localIndex ic = 0; ic < numComp; ++ic )
         dPhaseFlux_dC[ke][ic] += capillaryPhaseFlux_dC[ke][ic];
     }
-  }
-*/
+   }
+ */
 
   template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
@@ -577,8 +532,6 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
                     ElementViewConst< arrayView2d< const real64, 1 > > const & phaseMob,
                     ElementViewConst< arrayView3d< const real64 > > const & dPhaseMob,
                     ElementViewConst< arrayView3d< const real64 > > const & dPhaseVolFrac,
-                    ElementViewConst< arrayView4d< const real64 > > const & phaseCompFrac,
-                    ElementViewConst< arrayView5d< const real64, 4 > > const & dPhaseCompFrac,
                     ElementViewConst< arrayView3d< const real64 > > const & dCompFrac_dCompDens,
                     ElementViewConst< arrayView3d< const real64 > > const & phaseMassDens,
                     ElementViewConst< arrayView4d< const real64 > > const & dPhaseMassDens,
@@ -586,32 +539,23 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
                     ElementViewConst< arrayView4d< const real64 > > const & dPhaseCapPressure_dPhaseVolFrac,
                     real64 & totFlux, real64 (& dTotFlux_dP)[numFluxSupportPoints], real64 (& dTotFlux_dC)[numFluxSupportPoints][numComp] )
   {
-    localIndex k_up_ppu = -1;
-    real64 potGrad;
-    // working arrays for phase flux
-    real64 phaseFlux{};
-    real64 dPhaseFlux_dP[numFluxSupportPoints]{};
-    real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
-    // unelegant but need dummy when forming PPU total velocity
-    real64 dummy[numComp]{};
-    real64 dDummy_dP[numFluxSupportPoints][numComp]{};
-    real64 dDummy_dC[numFluxSupportPoints][numComp][numComp]{};
-
     for( integer jp = 0; jp < numPhase; ++jp )
     {
+      // working arrays for phase flux
+      real64 potGrad{};
+      real64 phaseFlux{};
+      real64 dPhaseFlux_dP[numFluxSupportPoints]{};
+      real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
       PPUPhaseFlux::compute( numPhase, jp, hasCapPressure,
                              seri, sesri, sei,
                              trans, dTrans_dPres,
                              pres, gravCoef,
                              phaseMob, dPhaseMob,
                              dPhaseVolFrac,
-                             phaseCompFrac, dPhaseCompFrac,
                              dCompFrac_dCompDens,
                              phaseMassDens, dPhaseMassDens,
                              phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                             k_up_ppu, potGrad,
-                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-                             dummy, dDummy_dP, dDummy_dC );
+                             potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
       totFlux += phaseFlux;
       for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -637,7 +581,7 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
                   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
                   localIndex & upwindDir,
                   real64 & mobility,
-                  real64( &dMobility_dP),
+                  real64 & dMobility_dP,
                   real64 ( & dMobility_dC)[numComp] )
   {
     upwindDir = (pot > 0) ? 0 : 1;
@@ -657,18 +601,18 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
   template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void computeGravityPotential( localIndex const ip,
-                      localIndex const (&seri)[numFluxSupportPoints],
-                      localIndex const (&sesri)[numFluxSupportPoints],
-                      localIndex const (&sei)[numFluxSupportPoints],
-                      real64 const (&trans)[2],
-                      real64 const (&dTrans_dPres)[2],
-                      ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                      ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-                      ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-                      ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
-                      real64 & gravPot,
-                      real64 ( & dGravPot_dP )[numFluxSupportPoints],
-                      real64 ( & dGravPot_dC )[numFluxSupportPoints][numComp] )
+                                       localIndex const (&seri)[numFluxSupportPoints],
+                                       localIndex const (&sesri)[numFluxSupportPoints],
+                                       localIndex const (&sei)[numFluxSupportPoints],
+                                       real64 const (&trans)[2],
+                                       real64 const (&dTrans_dPres)[2],
+                                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                                       ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                                       ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
+                                       ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+                                       real64 & gravPot,
+                                       real64 ( & dGravPot_dP )[numFluxSupportPoints],
+                                       real64 ( & dGravPot_dC )[numFluxSupportPoints][numComp] )
   {
     // init
     gravPot = 0.0;
@@ -696,8 +640,7 @@ std::cout << ip << " gravPhaseFlux=" << gravPhaseFlux << " " << mob_i << " " << 
       // density
       real64 const density = phaseMassDens[er][esr][ei][0][ip];
       real64 const dDens_dPres = dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
-
-      real64 dDens_dC[numComp];
+      real64 dDens_dC[numComp]{};
       applyChainRule( numComp,
                       dCompFrac_dCompDens[er][esr][ei],
                       dPhaseMassDens[er][esr][ei][0][ip],
