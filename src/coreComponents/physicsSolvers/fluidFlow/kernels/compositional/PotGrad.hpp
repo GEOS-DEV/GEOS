@@ -86,8 +86,6 @@ struct PotGrad
     real64 gravHead = 0.0;
     real64 dCapPressure_dC[numComp]{};
 
-    real64 dProp_dC[numComp]{};
-
     // calculate quantities on primary connected cells
     for( integer i = 0; i < numFluxSupportPoints; ++i )
     {
@@ -98,11 +96,11 @@ struct PotGrad
       // density
       real64 const density  = phaseMassDens[er][esr][ei][0][ip];
       real64 const dDens_dP = dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
-
+      real64 dDens_dC[numComp]{};
       applyChainRule( numComp,
                       dCompFrac_dCompDens[er][esr][ei],
                       dPhaseMassDens[er][esr][ei][0][ip],
-                      dProp_dC,
+                      dDens_dC,
                       Deriv::dC );
 
       // average density and derivatives
@@ -110,7 +108,7 @@ struct PotGrad
       dDensMean_dP[i] = 0.5 * dDens_dP;
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
+        dDensMean_dC[i][jc] = 0.5 * dDens_dC[jc];
       }
     }
 
