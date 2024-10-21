@@ -95,7 +95,7 @@ private:
     m_disableCoordCollection = true;
   }
 
-  /// @copydoc geos::HistoryCollection::collect
+  /// @copydoc geos::HistoryCollectionBase::collect
   void collect( DomainPartition const & domain,
                 localIndex const collectionIdx,
                 buffer_unit_type * & buffer ) override;
