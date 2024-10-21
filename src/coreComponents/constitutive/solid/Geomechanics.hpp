@@ -2117,7 +2117,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   real64 d_ee[6] = { 0.0 }; 
   real64 d_ee_2[6] = { 0.0 };
 
-  LvArray::tensorOps::scaledCopy< 6 >( d_ee, identity, (one_ninth / bulk - one_sixth / shear) * LvArray::tensorOps::symTrace< 3 >( d_sigma ) );
+  LvArray::tensorOps::symAddIdentity< 3 >( d_ee, (one_ninth / bulk - one_sixth / shear) * LvArray::tensorOps::symTrace< 3 >( d_sigma ) );
 
   LvArray::tensorOps::scaledCopy< 6 >( d_ee_2, d_sigma, 0.5 / shear );
   LvArray::tensorOps::add< 6 >( d_ee, d_ee_2 );
