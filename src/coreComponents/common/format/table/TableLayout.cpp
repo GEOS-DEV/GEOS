@@ -25,7 +25,7 @@ void TableLayout::addToColumns( const std::vector< string > & columnNames )
 {
   for( const auto & columnName : columnNames )
   {
-    addToColumns( string( columnName ) );
+    addToColumns( columnName );
   }
 }
 
