@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Included>
+    <File
+      name="./SpringSlider_base.xml"/>
+  </Included>
+
+  <Events
+    maxTime="4.5e4">
+
+    <SoloEvent 
+      name="generateFault"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>  
+      
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="1e4"
+      target="/Solvers/SpringSlider"/>
+
+    <PeriodicEvent
+      name="seismicRateCollection"
+      cycleFrequency="1"
+      target="/Tasks/slipCollection"/>
+
+    <PeriodicEvent
+      name="slipRateCollection"
+      cycleFrequency="1"
+      target="/Tasks/slipRateCollection"/>
+      
+    <PeriodicEvent
+      name="stateVariableCollection"
+      cycleFrequency="1"
+      target="/Tasks/stateVariableCollection"/>  
+      
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/timeHistoryOutput" />    
+  </Events>
+</Problem>
