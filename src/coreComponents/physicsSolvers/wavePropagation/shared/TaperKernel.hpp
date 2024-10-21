@@ -70,47 +70,47 @@ struct TaperKernel
     RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
-                                                                                
-    real32 xGlobalMin[3]{};                                                     
-    real32 xGlobalMax[3]{};                                                     
-                                                                                
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )    
-    {                                                                           
-      xMinGlobal.min( nodeCoords[a][0] );                                       
-      yMinGlobal.min( nodeCoords[a][1] );                                       
-      zMinGlobal.min( nodeCoords[a][2] );                                       
-      xMaxGlobal.max( nodeCoords[a][0] );                                       
-      yMaxGlobal.max( nodeCoords[a][1] );                                       
-      zMaxGlobal.max( nodeCoords[a][2] );                                       
-    } );                                                                        
-                                                                                
-    xGlobalMin[0] = xMinGlobal.get();                                           
-    xGlobalMin[1] = yMinGlobal.get();                                           
-    xGlobalMin[2] = zMinGlobal.get();                                           
-    xGlobalMax[0] = xMaxGlobal.get();                                           
-    xGlobalMax[1] = yMaxGlobal.get();                                           
-    xGlobalMax[2] = zMaxGlobal.get();                                           
-                                                                                
-                                                                                
-     for( integer i=0; i<3; ++i )                                               
-    {                                                                           
-      xGlobalMin[i] = MpiWrapper::min( xGlobalMin[i] );                         
-      xGlobalMax[i] = MpiWrapper::max( xGlobalMax[i] );                         
-    }   
+
+    real32 xGlobalMin[3]{};
+    real32 xGlobalMax[3]{};
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      real32 dist=0;                                                            
-                                                                                
-      real32 distXmin = LvArray::math::abs(nodeCoords[a][0]-xGlobalMin[0]);     
-      real32 distXmax = LvArray::math::abs(nodeCoords[a][0]-xGlobalMax[0]);     
-      real32 distYmin = LvArray::math::abs(nodeCoords[a][1]-xGlobalMin[1]);     
-      real32 distYmax = LvArray::math::abs(nodeCoords[a][1]-xGlobalMax[1]);     
-      real32 distZmax = LvArray::math::abs(nodeCoords[a][2]-xGlobalMax[2]);     
-                                                                                
-      dist=LvArray::math::min(distXmin,(LvArray::math::min(distXmax,LvArray::math::min(distYmin,(LvArray::math::min(distYmax,distZmax))))));
-                                                                                
-      taperCoeff[a] = dist;  
+      xMinGlobal.min( nodeCoords[a][0] );
+      yMinGlobal.min( nodeCoords[a][1] );
+      zMinGlobal.min( nodeCoords[a][2] );
+      xMaxGlobal.max( nodeCoords[a][0] );
+      yMaxGlobal.max( nodeCoords[a][1] );
+      zMaxGlobal.max( nodeCoords[a][2] );
+    } );
+
+    xGlobalMin[0] = xMinGlobal.get();
+    xGlobalMin[1] = yMinGlobal.get();
+    xGlobalMin[2] = zMinGlobal.get();
+    xGlobalMax[0] = xMaxGlobal.get();
+    xGlobalMax[1] = yMaxGlobal.get();
+    xGlobalMax[2] = zMaxGlobal.get();
+
+
+    for( integer i=0; i<3; ++i )
+    {
+      xGlobalMin[i] = MpiWrapper::min( xGlobalMin[i] );
+      xGlobalMax[i] = MpiWrapper::max( xGlobalMax[i] );
+    }
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+      real32 dist=0;
+
+      real32 distXmin = LvArray::math::abs( nodeCoords[a][0]-xGlobalMin[0] );
+      real32 distXmax = LvArray::math::abs( nodeCoords[a][0]-xGlobalMax[0] );
+      real32 distYmin = LvArray::math::abs( nodeCoords[a][1]-xGlobalMin[1] );
+      real32 distYmax = LvArray::math::abs( nodeCoords[a][1]-xGlobalMax[1] );
+      real32 distZmax = LvArray::math::abs( nodeCoords[a][2]-xGlobalMax[2] );
+
+      dist=LvArray::math::min( distXmin, (LvArray::math::min( distXmax, LvArray::math::min( distYmin, (LvArray::math::min( distYmax, distZmax ))))));
+
+      taperCoeff[a] = dist;
 
 
     } );
@@ -120,9 +120,9 @@ struct TaperKernel
 
       real32 dist = taperCoeff[a];
 
-      if(dist<dMin[0] )
+      if( dist<dMin[0] )
       {
-        taperCoeff[a] = LvArray::math::exp((((3*vMax)/(2*dMin[0]))*log( r )*pow((dMin[0]-dist)/dMin[0], 2 ))*dt);
+        taperCoeff[a] = LvArray::math::exp((((3*vMax)/(2*dMin[0]))*log( r )*pow((dMin[0]-dist)/dMin[0], 2 ))*dt );
       }
       else
       {
