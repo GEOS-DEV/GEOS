@@ -84,5 +84,7 @@ set( physicsSolvers_sources
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp 
      PARENT_SCOPE )
-
-
+     
+if( GEOS_ENABLE_TESTS )
+     add_subdirectory( unitTests )
+endif()
