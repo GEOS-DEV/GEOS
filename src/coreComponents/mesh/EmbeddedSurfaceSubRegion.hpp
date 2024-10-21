@@ -26,8 +26,13 @@
 #include "EdgeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
+#include "mesh/generators/EmbeddedSurfaceBlockABC.hpp"
 //Do we really need this include Rectangle?
 #include "simpleGeometricObjects/Rectangle.hpp"
+
+//#include "mainInterface/GeosxState.hpp"
+//#include "mainInterface/ProblemManager.hpp"
+//#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -145,6 +150,27 @@ public:
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
                               PlanarGeometricObject const * fracture );
+
+  array1d< localIndex > getEdfmNodeParentEdgeIndex( ArrayOfArraysView< real64 > const & elemNodesLocations,
+                                                    ArrayOfArraysView< localIndex > const & elemToNodes,
+                                                    ToCellRelation< ArrayOfArrays< localIndex > > const & elemTo3dElem,
+                                                    FixedOneToManyRelation const & cellToEdges,
+                                                    arrayView2d< localIndex const > const & edgeToNodes,
+                                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord );
+
+  bool addAllEmbeddedSurfaces( localIndex const regionIndex,
+                               localIndex const subRegionIndex,
+                               NodeManager const & nodeManager,
+                               EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                               EdgeManager const & edgeManager,
+                               FixedOneToManyRelation const & cellToEdges,
+                               EmbeddedSurfaceBlockABC const & embeddedSurfaceBlock );
+
+  /**
+   * @brief Fill @p EmbeddedSurfaceSubRegion  by copying the data from the source embedded surface block
+   *
+   * **/
+  bool copyFromCellBlock( EmbeddedSurfaceBlockABC const & embeddedSurfaceBlock );
 
   /**
    * @brief inherit ghost rank from cell elements.

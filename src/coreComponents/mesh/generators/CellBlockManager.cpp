@@ -32,6 +32,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
   this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
   this->registerGroup< Group >( viewKeyStruct::lineBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::embeddedSurfaceBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
@@ -668,6 +669,8 @@ void CellBlockManager::buildMaps()
   buildNodeToEdges();
 
   fillElementToEdgesOfCellBlocks( m_faceToEdges.toViewConst(), this->getCellBlocks() );
+
+  //buildEmbeddedSurfaceMaps();
 }
 
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
@@ -685,6 +688,12 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToFaces() const
 ToCellRelation< array2d< localIndex > > CellBlockManager::getFaceToElements() const
 {
   return m_faceToCells;
+}
+
+ToCellRelation< localIndex > CellBlockManager::getEmbeddedSurfaceToElements() const
+{
+
+  return m_embeddedSurfToCells;
 }
 
 const Group & CellBlockManager::getCellBlocks() const
@@ -707,6 +716,15 @@ Group & CellBlockManager::getFaceBlocks()
   return this->getGroup( viewKeyStruct::faceBlocks() );
 }
 
+Group const & CellBlockManager::getEmbeddedSurfaceBlocks() const
+{
+  return this->getGroup( viewKeyStruct::embeddedSurfaceBlocks() );
+}
+
+Group & CellBlockManager::getEmbeddedSurfaceBlocks()
+{
+  return this->getGroup( viewKeyStruct::embeddedSurfaceBlocks() );
+}
 Group & CellBlockManager::getLineBlocks()
 {
   return this->getGroup( viewKeyStruct::lineBlocks() );
@@ -735,6 +753,11 @@ CellBlock const & CellBlockManager::getCellBlock( localIndex const blockIndex ) 
 localIndex CellBlockManager::numFaces() const
 {
   return m_numFaces;
+}
+
+localIndex CellBlockManager::numEmbeddedSurfaces() const
+{
+  return m_numEmbeddedSurfElem;
 }
 
 ArrayOfArrays< localIndex > CellBlockManager::getEdgeToFaces() const
@@ -785,6 +808,12 @@ FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
 LineBlock & CellBlockManager::registerLineBlock( string const & name )
 {
   return this->getLineBlocks().registerGroup< LineBlock >( name );
+}
+
+EmbeddedSurfaceBlock & CellBlockManager::registerEmbeddedSurfaceBlock( string const & name )
+{
+
+  return this->getEmbeddedSurfaceBlocks().registerGroup< EmbeddedSurfaceBlock >( name );
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const

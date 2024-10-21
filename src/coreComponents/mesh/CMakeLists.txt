@@ -52,6 +52,8 @@ set( mesh_headers
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
+     generators/EmbeddedSurfaceBlock.hpp
+     generators/EmbeddedSurfaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
@@ -126,6 +128,7 @@ set( mesh_sources
      generators/LineBlock.cpp
      generators/ExternalMeshGeneratorBase.cpp
      generators/FaceBlock.cpp
+     generators/EmbeddedSurfaceBlock.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
@@ -157,6 +160,7 @@ if( ENABLE_VTK )
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
+         generators/VTKEmbeddedSurfaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
          generators/VTKWellGenerator.hpp
@@ -165,6 +169,7 @@ if( ENABLE_VTK )
     set( mesh_sources ${mesh_sources}
          generators/CollocatedNodes.cpp
          generators/VTKFaceBlockUtilities.cpp
+         generators/VTKEmbeddedSurfaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKWellGenerator.cpp
@@ -206,3 +211,6 @@ if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
 
+
+#add_dependencies(mesh mainInterface)
+#add_dependencies(mesh linearAlgebra)
