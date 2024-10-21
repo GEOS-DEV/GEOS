@@ -347,6 +347,7 @@ protected:
   real64 const *
   getHypercubeData( longIndex const hypercubeIndex ) const
   {
+     (void)hypercubeIndex;  // Suppress unused parameter warning
     return nullptr;
   }
   /**
