@@ -293,6 +293,8 @@ public:
     // transp(B)DB
     LvArray::tensorOps::Rij_eq_AikBjk< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
 
+    /// FIX: add old Equilibrium operator times oldStress (in Voigt notation)
+
     // multiply by determinant and add to element matrix
     LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );

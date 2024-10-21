@@ -294,10 +294,12 @@ complete( localIndex const k,
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
   // Add traction contribution tranction
+  /// FIX: effective traction treatment: add fracture pressure here
   LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.tractionVec, -1 );
   LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
 
   // JumpFractureFlowJacobian
+  /// FIX: effective traction treatment: remove m_dTraction_dPressure but add pressure 
   real64 const localJumpFracPressureJacobian = -m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
 
   // Mass balance accumulation

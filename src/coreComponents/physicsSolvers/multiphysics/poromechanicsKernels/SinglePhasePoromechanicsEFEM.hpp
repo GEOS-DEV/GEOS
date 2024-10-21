@@ -361,6 +361,7 @@ struct StateUpdateKernel
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
       // traction on the fracture to include the pressure contribution
+      /// FIX: effective traction treatment
       fractureTraction[k][0] -= pressure[k];
       dFractureTraction_dPressure[k] = -1.0;
 
