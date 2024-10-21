@@ -399,19 +399,20 @@ void DomainPartition::outputPartitionInformation() const
         real64 maxRatios[4] = {0};
         MpiWrapper::allReduce( ratios, minRatios, 4, MPI_MIN, MPI_COMM_WORLD );
         MpiWrapper::allReduce( ratios, maxRatios, 4, MPI_MAX, MPI_COMM_WORLD );
-        // real64 const minNodeRatio = minRatios[0];
-        // real64 const maxNodeRatio = maxRatios[0];
-        // real64 const minEdgeRatio = minRatios[1];
-        // real64 const maxEdgeRatio = maxRatios[1];
-        // real64 const minFaceRatio = minRatios[2];
-        // real64 const maxFaceRatio = maxRatios[2];
-        // real64 const minElemRatio = minRatios[3];
-        // real64 const maxElemRatio = maxRatios[3];
+        real64 const minNodeRatio = minRatios[0];
+        real64 const maxNodeRatio = maxRatios[0];
+        real64 const minEdgeRatio = minRatios[1];
+        real64 const maxEdgeRatio = maxRatios[1];
+        real64 const minFaceRatio = minRatios[2];
+        real64 const maxFaceRatio = maxRatios[2];
+        real64 const minElemRatio = minRatios[3];
+        real64 const maxElemRatio = maxRatios[3];
 
         GEOS_LOG_RANK_0( "  MeshBody: " + meshBody.getName() + " MeshLevel: " + meshLevel.getName() + "\n" );
 
         TableLayout tableLayout( "Rank",
-                                 {TableLayout::Column{"Nodes", {"local", "ghost"}},
+                                 {" ",
+                                  TableLayout::Column{"Nodes", {"local", "ghost"}},
                                   TableLayout::Column{"Edges", {"local", "ghost"}},
                                   TableLayout::Column{"Faces", {"local", "ghost"}},
                                   TableLayout::Column{"Elems", {"local", "ghost"}}} );
@@ -439,45 +440,44 @@ void DomainPartition::outputPartitionInformation() const
                           addCommaSeparators( maxNumGhostElems ));
 
         // output in rank order
-        // int const thisRank = MpiWrapper::commRank();
-        // for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
-        // {
-        //   if( rank == thisRank )
-        //   {
-        //     tableData.addRow( rank,
-        //                       addCommaSeparators( numLocalNodes ),
-        //                       addCommaSeparators( numGhostNodes ),
-        //                       addCommaSeparators( numLocalEdges ),
-        //                       addCommaSeparators( numGhostEdges ),
-        //                       addCommaSeparators( numLocalFaces ),
-        //                       addCommaSeparators( numGhostFaces ),
-        //                       addCommaSeparators( numLocalElems ),
-        //                       addCommaSeparators( numGhostElems ));
-        //   }
-        //   MpiWrapper::barrier();
-        // }
-        // MpiWrapper::barrier();
-        // TableTextFormatter tableLog( tableLayout );
-        // GEOS_LOG_RANK_0( tableLog.toString( tableData ));
+        int const thisRank = MpiWrapper::commRank();
+        for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+        {
+          if( rank == thisRank )
+          {
+            tableData.addRow( rank,
+                              addCommaSeparators( numLocalNodes ),
+                              addCommaSeparators( numGhostNodes ),
+                              addCommaSeparators( numLocalEdges ),
+                              addCommaSeparators( numGhostEdges ),
+                              addCommaSeparators( numLocalFaces ),
+                              addCommaSeparators( numGhostFaces ),
+                              addCommaSeparators( numLocalElems ),
+                              addCommaSeparators( numGhostElems ));
+          }
+          MpiWrapper::barrier();
+        }
+        MpiWrapper::barrier();
+        TableTextFormatter tableLog( tableLayout );
+        GEOS_LOG_RANK_0( tableLog.toString( tableData ));
 
-        // TableLayout tableLayoutRatio( {"Rank", "Nodes ", "Edges ", "Faces ", "Elems "} );
-        // tableLayout.setMargin( TableLayout::MarginValue::large );
+        TableLayout tableLayoutRatio( {"Rank", "Nodes ", "Edges ", "Faces ", "Elems "} );
+        tableLayoutRatio.setMargin( TableLayout::MarginValue::large );
 
-        // TableData tableDataRatio;
-        // tableDataRatio.addRow( "min(local/total)",
-        //                        minNodeRatio,
-        //                        minEdgeRatio,
-        //                        minFaceRatio,
-        //                        minElemRatio );
-        // tableDataRatio.addRow( "min(local/total)",
-        //                        maxNodeRatio,
-        //                        maxEdgeRatio,
-        //                        maxFaceRatio,
-        //                        maxElemRatio );
+        TableData tableDataRatio;
+        tableDataRatio.addRow( "min(local/total)",
+                               minNodeRatio,
+                               minEdgeRatio,
+                               minFaceRatio,
+                               minElemRatio );
+        tableDataRatio.addRow( "min(local/total)",
+                               maxNodeRatio,
+                               maxEdgeRatio,
+                               maxFaceRatio,
+                               maxElemRatio );
 
-        // tableLayout.removeSubColumn();
-        // TableTextFormatter tableLogRatio( tableLayoutRatio );
-        // GEOS_LOG_RANK_0( tableLogRatio.toString( tableDataRatio ));
+        TableTextFormatter tableLogRatio( tableLayoutRatio );
+        GEOS_LOG_RANK_0( tableLogRatio.toString( tableDataRatio ));
       }
     } );
   }
