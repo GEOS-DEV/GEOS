@@ -22,9 +22,11 @@
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
-#include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include <hdf5.h>
 #include "dataRepository/Group.hpp"
+#include <fstream>
+
 // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
@@ -225,7 +227,7 @@ TEST( testStatOutputController, checkSinglePhaseFluxStatistics )
   OutputBase::setOutputDirectory( "." );
   setupProblemFromXML( problem, testSet.data() );
 
-  std::vector< string > const packCollectionPaths{
+  std::vector< string > const groupPaths{
     "/Tasks/packCollectionreservoiraveragePressure",
     "/Tasks/packCollectionreservoirminPressure",
     "/Tasks/packCollectionreservoirmaxPressure",
@@ -240,18 +242,18 @@ TEST( testStatOutputController, checkSinglePhaseFluxStatistics )
     "/Outputs/compFlowHistoryreservoir"
   };
 
-  string const outputPath = " /Outputs/compFlowHistoryreservoir";
-
-  for( string const & path : packCollectionPaths )
+  for( string const & path : groupPaths )
   {
     Group const & group = problem.getGroupByPath( path );
     ASSERT_STREQ( path.c_str(), group.getPath().c_str() );
   }
 
-
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
+  int64_t fileId = H5Fopen( "./generatedHDFStatreservoir.hdf5", H5F_ACC_RDWR, 0 );
+  EXPECT_TRUE( fileId != -1 );
+  H5Fclose( fileId );
 }
 }
 
