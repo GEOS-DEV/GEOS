@@ -2304,6 +2304,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2318,14 +2320,24 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--thicknessMaxXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMaxXYZTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--thicknessMinXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMinXYZTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useTaper => Flag to apply taper-->
+		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--xMaxTaper => Maximal coordinates for taper (right,top,back)-->
+		<xsd:attribute name="xMaxTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--xMinTaper => Minimal coordinates for taper (left,bottom,front)-->
+		<xsd:attribute name="xMinTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2385,6 +2397,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2399,14 +2413,24 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--thicknessMaxXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMaxXYZTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--thicknessMinXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMinXYZTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useTaper => Flag to apply taper-->
+		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--xMaxTaper => Maximal coordinates for taper (right,top,back)-->
+		<xsd:attribute name="xMaxTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--xMinTaper => Minimal coordinates for taper (left,bottom,front)-->
+		<xsd:attribute name="xMinTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2456,6 +2480,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2470,14 +2496,24 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--thicknessMaxXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMaxXYZTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--thicknessMinXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMinXYZTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useTaper => Flag to apply taper-->
+		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--xMaxTaper => Maximal coordinates for taper (right,top,back)-->
+		<xsd:attribute name="xMaxTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--xMinTaper => Minimal coordinates for taper (left,bottom,front)-->
+		<xsd:attribute name="xMinTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2909,6 +2945,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2923,14 +2961,24 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--thicknessMaxXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMaxXYZTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--thicknessMinXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMinXYZTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useTaper => Flag to apply taper-->
+		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--xMaxTaper => Maximal coordinates for taper (right,top,back)-->
+		<xsd:attribute name="xMaxTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--xMinTaper => Minimal coordinates for taper (left,bottom,front)-->
+		<xsd:attribute name="xMinTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2980,6 +3028,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2998,16 +3048,26 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="sourceMoment" type="R2SymTensor" default="{1,1,1,0,0,0}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--thicknessMaxXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMaxXYZTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--thicknessMinXYZTaper => Size for the taper layer (left,bottom,front)-->
+		<xsd:attribute name="thicknessMinXYZTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useTaper => Flag to apply taper-->
+		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--useVTI => Flag to apply VTI anisotropy. The default is to use isotropic physic.-->
 		<xsd:attribute name="useVTI" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--xMaxTaper => Maximal coordinates for taper (right,top,back)-->
+		<xsd:attribute name="xMaxTaper" type="R1Tensor32" default="{0,0,0}" />
+		<!--xMinTaper => Minimal coordinates for taper (left,bottom,front)-->
+		<xsd:attribute name="xMinTaper" type="R1Tensor32" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

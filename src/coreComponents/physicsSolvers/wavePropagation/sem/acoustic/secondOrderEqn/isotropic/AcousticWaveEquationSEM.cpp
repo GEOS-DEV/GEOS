@@ -33,6 +33,7 @@
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
 #include "events/EventManager.hpp"
 #include "AcousticPMLSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/shared/TaperKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
@@ -119,9 +120,38 @@ void AcousticWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
+real32 AcousticWaveEquationSEM::getGlobalMaxWavespeed( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+{
+
+  real32 localMaxWavespeed = 0;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
+  {
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+    real32 subRegionMaxWavespeed = *std::max_element( velocity.begin(), velocity.end());
+    if( localMaxWavespeed < subRegionMaxWavespeed )
+    {
+      localMaxWavespeed = subRegionMaxWavespeed;
+    }
+  } );
+
+  real32 const globalMaxWavespeed = MpiWrapper::max( localMaxWavespeed );
+
+  return globalMaxWavespeed;
+
+}
+
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
+
+  //This two variables are used for for Taper
+  NodeManager & nodeManager = mesh.getNodeManager();
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 =
+    nodeManager.getField< fields::referencePosition32 >().toViewConst();
+
+
   GEOS_MARK_FUNCTION;
 
   arrayView1d< globalIndex const > const nodeLocalToGlobalMap = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
@@ -155,6 +185,17 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
+  }
+
+
+  if( m_useTaper==1 )
+  {
+    real32 vMax;
+    vMax = getGlobalMaxWavespeed( mesh, regionNames );
+
+    arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, vMax, m_reflectivityCoeff,
+                                                   taperCoeff );
   }
 
   mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -961,6 +1002,8 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
   arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
+  arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+
   arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
@@ -990,6 +1033,13 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     GEOS_MARK_SCOPE ( updateP );
     AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
                                                rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+
+
+    if( m_useTaper==1 )
+    {
+      TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_np1 );
+      TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_n );
+    }
   }
   else
   {

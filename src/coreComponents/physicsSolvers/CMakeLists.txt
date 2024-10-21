@@ -37,7 +37,7 @@ endif()
 if( GEOS_ENABLE_SIMPLEPDE )
   add_subdirectory( simplePDE )
 endif()
-  
+
 if( GEOS_ENABLE_SOLIDMECHANICS )
   add_subdirectory( solidMechanics )
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
