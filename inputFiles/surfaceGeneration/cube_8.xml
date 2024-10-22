@@ -8,7 +8,6 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2 }"
-      surfaceGeneratorName="SurfaceGen"
       >
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
@@ -20,17 +19,18 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
+      logLevel="1"
       targetRegions="{ Region2 }"
-      rockToughness="1e6"
+      rockToughness="1e60"
       mpiCommOrder="1" />
   </Solvers>
 
   <Mesh>
-    <!--VTKMesh
+    <VTKMesh
       name="cube8"
-      file="cube_8.vtu"/-->
+      file="cube_8.vtu"/>
 
-    <InternalMesh
+    <!--InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -1, 1 }"
@@ -39,7 +39,7 @@
       nx="{ 2 }"
       ny="{ 2 }"
       nz="{ 2 }"
-      cellBlockNames="{ 3_hexahedra }"/>
+      cellBlockNames="{ 3_hexahedra }"/-->
   </Mesh>
 
   <Geometry>
@@ -90,35 +90,42 @@
   </Geometry>
 
   <Events
-    maxTime="1.0">
+    maxTime="4.0">
+
     <SoloEvent
       name="initialPlot"
       target="/Outputs/siloOutput"/>
 
     <SoloEvent
-      name="preFracture"
+      name="fracture1"
       target="/Solvers/SurfaceGen"/>
 
-    <SoloEvent
+    <PeriodicEvent
+      name="solverApplications1"
+      forceDt="1.0"
+      beginTime="0.0"
+      endTime="4.0"
+      target="/Solvers/lagSolve"/>
+
+
+    <!--SoloEvent
       name="preFracturePlot"
       target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="0.5"
-      target="/Solvers/lagSolve"/>
+    <SoloEvent
+      name="preFracture2"
+      target="/Solvers/SurfaceGen"/>
+
+    <SoloEvent
+      name="preFracturePlot2"
+      target="/Outputs/siloOutput"/> -->
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="0.5"
+      timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -163,7 +170,7 @@
       component="0"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="-0.1"
+      scale="-0.2"
       setNames="{ xneg }"/>
 
     <FieldSpecification
@@ -171,7 +178,7 @@
       component="0"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="0.1"
+      scale="0.2"
       setNames="{ xpos }"/>
 
     <FieldSpecification
@@ -179,7 +186,7 @@
       component="2"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="-0.1"
+      scale="-0.2"
       setNames="{ zneg }"/>
 
     <FieldSpecification
@@ -187,7 +194,7 @@
       component="2"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="0.1"
+      scale="0.2"
       setNames="{ zpos }"/>
 
     <FieldSpecification
@@ -195,7 +202,7 @@
       component="1"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="-0.1"
+      scale="-0.2"
       setNames="{ yneg }"/>
 
     <FieldSpecification
@@ -203,7 +210,7 @@
       component="1"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
-      scale="0.1"
+      scale="0.2"
       setNames="{ ypos }"/>
   </FieldSpecifications>
 

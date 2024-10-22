@@ -180,12 +180,12 @@ void packNewAndModifiedObjectsToOwningRanks(  NeighborCommunicator & neighbor,
       if( modifiedObjects.newElements.count( {er, esr} ) > 0 )
       {
         std::set< localIndex > const & elemList = modifiedObjects.newElements.at( {er, esr} );
-        std::cout<<"modifiedObjects.newElements{ "<<er<<", "<<esr<<" } ( "<<MpiWrapper::commRank()<<" -> "<<neighbor.neighborRank()<<"): ";
-        for( auto const & index : elemList )
-        {
-          std::cout<<index<<", ";
-        }
-        std::cout<<std::endl;
+//        std::cout<<"modifiedObjects.newElements{ "<<er<<", "<<esr<<" } ( "<<MpiWrapper::commRank()<<" -> "<<neighbor.neighborRank()<<"): ";
+        // for( auto const & index : elemList )
+        // {
+        //   std::cout<<index<<", ";
+        // }
+        // std::cout<<std::endl;
         filterNonOwnedFromContainer( newElemData[er][esr], elemList, subRegionGhostRank, neighborRank );
       }
 
@@ -1014,7 +1014,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //     their OR.
   //***********************************************************************************************
 
-  std::cout<<"***** Step 1a *****"<<std::endl;;
+//  std::cout<<"***** Step 1a *****"<<std::endl;;
   MPI_iCommData commData1;
   commData1.resize( neighbors.size() );
   for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
@@ -1051,7 +1051,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   }
 
   MpiWrapper::barrier();
-  std::cout<<"***** Step 1b *****"<<std::endl;
+//  std::cout<<"***** Step 1b *****"<<std::endl;
 
   //***********************************************************************************************
   // 1b) On the OR, unpack the new objects that are owned by the rank that has the changes. DO NOT 
@@ -1113,7 +1113,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //************************************************************************************************
   
   MpiWrapper::barrier();
-  std::cout<<"***** Step 2a *****"<<std::endl;
+//  std::cout<<"***** Step 2a *****"<<std::endl;
   MpiWrapper::barrier();
 
   // a new MPI_iCommData object is created to avoid overwriting the previous one which isn't 
@@ -1139,7 +1139,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                          MPI_COMM_GEOS );
   }
   MpiWrapper::barrier();
-  std::cout<<"***** Step 2a - bp2 *****"<<std::endl;
+//  std::cout<<"***** Step 2a - bp2 *****"<<std::endl;
   MpiWrapper::barrier();
 
   // send/recv buffer sizes
@@ -1163,7 +1163,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   // 2b) On the GR, unpack the new objects.
   //************************************************************************************************
   MpiWrapper::barrier();
-  std::cout<<"***** Step 2b *****"<<std::endl;
+//  std::cout<<"***** Step 2b *****"<<std::endl;
   MpiWrapper::barrier();
 
   for( unsigned int count=0; count<neighbors.size(); ++count )
@@ -1196,7 +1196,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //************************************************************************************************
   // 3a) On the OR, unpack the map modification on owning ranks from 1b).
   //************************************************************************************************
-  std::cout<<"***** Step 3a *****"<<std::endl;
+//  std::cout<<"***** Step 3a *****"<<std::endl;
 
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {
@@ -1214,7 +1214,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //************************************************************************************************
   // 3b) On the OR, pack the map/field modification and send to the GR.
   //************************************************************************************************ 
-  std::cout<<"***** Step 3b *****"<<std::endl;
+//  std::cout<<"***** Step 3b *****"<<std::endl;
 
   // a new MPI_iCommData object is created...just because.
   MPI_iCommData commData3;
@@ -1237,7 +1237,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                          MPI_COMM_GEOS );
   }
 
-  std::cout<<"***** Step 3b - bp2 *****"<<std::endl;
+//  std::cout<<"***** Step 3b - bp2 *****"<<std::endl;
   // send/recv buffer sizes
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {
@@ -1261,7 +1261,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   // 3c) On the GR, unpack the map/field modifications.
   //************************************************************************************************
 
-  std::cout<<"***** Step 3c *****"<<std::endl;
+//  std::cout<<"***** Step 3c *****"<<std::endl;
 
 
   for( unsigned int count=0; count<neighbors.size(); ++count )
@@ -1310,74 +1310,74 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   //   }
   // }
 
-  for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
-  {
-    MpiWrapper::barrier();
-    if( rank != MpiWrapper::commRank() )
-    {
-      for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
-      {
-        NeighborCommunicator & neighbor = neighbors[neighborIndex];
-        localIndex_array const & nodeGhostsToSend = nodeManager.getNeighborData( neighbor.neighborRank() ).ghostsToSend();
-        localIndex_array const & nodeGhostsToRecv = nodeManager.getNeighborData( neighbor.neighborRank() ).ghostsToReceive();
-        arrayView1d< globalIndex const > const & nodeGlobalIndices = nodeManager.localToGlobalMap();
+  // for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+  // {
+  //   MpiWrapper::barrier();
+  //   if( rank != MpiWrapper::commRank() )
+  //   {
+  //     for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  //     {
+  //       NeighborCommunicator & neighbor = neighbors[neighborIndex];
+  //       localIndex_array const & nodeGhostsToSend = nodeManager.getNeighborData( neighbor.neighborRank() ).ghostsToSend();
+  //       localIndex_array const & nodeGhostsToRecv = nodeManager.getNeighborData( neighbor.neighborRank() ).ghostsToReceive();
+  //       arrayView1d< globalIndex const > const & nodeGlobalIndices = nodeManager.localToGlobalMap();
 
-        localIndex_array const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor.neighborRank() ).ghostsToSend();
-        localIndex_array const & edgeGhostsToRecv = edgeManager.getNeighborData( neighbor.neighborRank() ).ghostsToReceive();
-        arrayView1d< globalIndex const > const & edgeGlobalIndices = edgeManager.localToGlobalMap();
+  //       localIndex_array const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor.neighborRank() ).ghostsToSend();
+  //       localIndex_array const & edgeGhostsToRecv = edgeManager.getNeighborData( neighbor.neighborRank() ).ghostsToReceive();
+  //       arrayView1d< globalIndex const > const & edgeGlobalIndices = edgeManager.localToGlobalMap();
 
-        localIndex_array const & faceGhostsToSend = faceManager.getNeighborData( neighbor.neighborRank() ).ghostsToSend();
-        localIndex_array const & faceGhostsToRecv = faceManager.getNeighborData( neighbor.neighborRank() ).ghostsToReceive();
-        arrayView1d< globalIndex const > const & faceGlobalIndices = faceManager.localToGlobalMap();
+  //       localIndex_array const & faceGhostsToSend = faceManager.getNeighborData( neighbor.neighborRank() ).ghostsToSend();
+  //       localIndex_array const & faceGhostsToRecv = faceManager.getNeighborData( neighbor.neighborRank() ).ghostsToReceive();
+  //       arrayView1d< globalIndex const > const & faceGlobalIndices = faceManager.localToGlobalMap();
 
-        std::cout<< "Rank: " << MpiWrapper::commRank() << " Neighbor: " << neighbor.neighborRank() << std::endl;
+  //       std::cout<< "Rank: " << MpiWrapper::commRank() << " Neighbor: " << neighbor.neighborRank() << std::endl;
 
-        std::cout<< "  nodeGhostsToSend: " ;
-        for( localIndex const & k : nodeGhostsToSend )
-        {
-          std::cout << nodeGlobalIndices[k] << ", ";
-        }
-        std::cout<< std::endl;
+  //       std::cout<< "  nodeGhostsToSend: " ;
+  //       for( localIndex const & k : nodeGhostsToSend )
+  //       {
+  //         std::cout << nodeGlobalIndices[k] << ", ";
+  //       }
+  //       std::cout<< std::endl;
 
-        std::cout<< "  nodeGhostsToRecv: ";
-        for( localIndex const & k : nodeGhostsToRecv )
-        {
-          std::cout << nodeGlobalIndices[k] << ", ";
-        }
-        std::cout<< std::endl;
+  //       std::cout<< "  nodeGhostsToRecv: ";
+  //       for( localIndex const & k : nodeGhostsToRecv )
+  //       {
+  //         std::cout << nodeGlobalIndices[k] << ", ";
+  //       }
+  //       std::cout<< std::endl;
 
-        std::cout<< "  edgeGhostsToSend: ";
-        for( localIndex const & k : edgeGhostsToSend )
-        {
-          std::cout << edgeGlobalIndices[k] << ", ";
-        }
-        std::cout<< std::endl;
+  //       std::cout<< "  edgeGhostsToSend: ";
+  //       for( localIndex const & k : edgeGhostsToSend )
+  //       {
+  //         std::cout << edgeGlobalIndices[k] << ", ";
+  //       }
+  //       std::cout<< std::endl;
 
-        std::cout<< "  edgeGhostsToRecv: ";
-        for( localIndex const & k : edgeGhostsToRecv )
-        {
-          std::cout << edgeGlobalIndices[k] << ", ";
-        }
-        std::cout<< std::endl;
+  //       std::cout<< "  edgeGhostsToRecv: ";
+  //       for( localIndex const & k : edgeGhostsToRecv )
+  //       {
+  //         std::cout << edgeGlobalIndices[k] << ", ";
+  //       }
+  //       std::cout<< std::endl;
 
-        std::cout<< "  faceGhostsToSend: ";
-        for( localIndex const & k : faceGhostsToSend )
-        {
-          std::cout << faceGlobalIndices[k] << ", ";
-        }
-        std::cout<< std::endl;
+  //       std::cout<< "  faceGhostsToSend: ";
+  //       for( localIndex const & k : faceGhostsToSend )
+  //       {
+  //         std::cout << faceGlobalIndices[k] << ", ";
+  //       }
+  //       std::cout<< std::endl;
 
-        std::cout<< "  faceGhostsToRecv: ";
-        for( localIndex const & k : faceGhostsToRecv )
-        {
-          std::cout << faceGlobalIndices[k] << ", ";
-        }
-        std::cout<< std::endl;
+  //       std::cout<< "  faceGhostsToRecv: ";
+  //       for( localIndex const & k : faceGhostsToRecv )
+  //       {
+  //         std::cout << faceGlobalIndices[k] << ", ";
+  //       }
+  //       std::cout<< std::endl;
 
-      }
-    }
-    MpiWrapper::barrier();
-  }
+  //     }
+  //   }
+  //   MpiWrapper::barrier();
+  // }
 
 
 

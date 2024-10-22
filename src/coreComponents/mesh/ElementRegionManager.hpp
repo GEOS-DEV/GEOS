@@ -1164,6 +1164,8 @@ public:
                                ElementReferenceAccessor< localIndex_array > & packList,
                                string const fractureRegionName );
 
+  virtual void outputObjectConnectivity() const override final;
+
 
 private:
 

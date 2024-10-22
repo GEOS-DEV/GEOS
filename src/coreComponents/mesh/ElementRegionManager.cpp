@@ -803,6 +803,94 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
   return blockMap;
 }
 
+void ElementRegionManager::outputObjectConnectivity() const
+{
+  int const numRanks = MpiWrapper::commSize();
+  int const thisRank = MpiWrapper::commRank();
+
+  for( int rank=0; rank<numRanks; ++rank )
+  {
+    if( rank==thisRank )
+    {
+      printf( "rank %d\n", rank );
+      printf( "ElementManager: %s\n", this->getName().c_str() );
+
+      forElementRegions< CellElementRegion >( [&]( CellElementRegion const & elemRegion )
+      {
+        elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+        {
+          printf( "  %s\n", subRegion.getName().c_str() );
+
+          CellElementSubRegion::NodeMapType const & elemToNodeRelation = subRegion.nodeList();
+          arrayView2d< localIndex const > const elemToNode = elemToNodeRelation;
+          arrayView1d< globalIndex const > const & elemLocalToGlobal = subRegion.localToGlobalMap();
+          auto const & elemGlobalToLocal = subRegion.globalToLocalMap();
+          arrayView1d< globalIndex const > const & nodeLocalToGlobal = elemToNodeRelation.relatedObjectLocalToGlobal();
+          auto const & refCoords = getParent().getGroup< NodeManager >( "nodeManager" ).referencePosition();
+          
+          printf( "  ElementToNodes map:\n" );
+          for( localIndex k=0; k<elemToNode.size( 0 ); ++k )
+          {
+            printf( "  %3d( %3lld ): ", k, elemLocalToGlobal( k ) );
+            for( localIndex a=0; a<elemToNode.size( 1 ); ++a )
+            {
+              printf( "%3d", elemToNode( k, a ) );
+              if( a != elemToNode.size( 1 )-1 )
+              {
+                printf( ", " );
+              }
+            }
+            printf( " )\n" );
+          }
+
+          printf( "\n  ElementToNodes map ( global nodes sorted by global elems):\n" );
+          map< globalIndex, localIndex > const sortedGlobalToLocalMap( elemGlobalToLocal.begin(), 
+                                                                       elemGlobalToLocal.end());
+          for( auto indexPair : sortedGlobalToLocalMap )
+          {
+            globalIndex const gk = indexPair.first;
+            localIndex const k = indexPair.second;
+
+            printf( "  %3d( %3lld ): ", k, gk );
+            for( localIndex a=0; a<elemToNode.size( 1 ); ++a )
+            {
+              printf( "%3lld", nodeLocalToGlobal( elemToNode( k, a ) ) );
+              if( a != elemToNode.size( 1 )-1 )
+              {
+                printf( ", " );
+              }
+            }
+            printf( " )\n" );
+          }
+
+          // printf( "\n  ElementToNodes coords:\n" );
+          // for( auto indexPair : sortedGlobalToLocalMap )
+          // {
+          //   globalIndex const gk = indexPair.first;
+          //   localIndex const k = indexPair.second;
+
+          //   printf( "  %3d( %3lld ): ", k, gk );
+          //   for( localIndex a=0; a<elemToNode.size( 1 ); ++a )
+          //   {
+          //     localIndex const b = elemToNode( k, a );
+          //     printf( "( %4.1f, %4.1f, %4.1f )", refCoords( b, 0), refCoords( b, 1 ), refCoords( b, 2 ) );
+          //     if( a != elemToNode.size( 1 )-1 )
+          //     {
+          //       printf( ", " );
+          //     }
+          //   }
+          //   printf( " )\n" );
+          // }
+
+        } );
+      } );
+      std::cout<<std::endl;
+    }
+    MpiWrapper::barrier();
+  }
+}
+
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }
