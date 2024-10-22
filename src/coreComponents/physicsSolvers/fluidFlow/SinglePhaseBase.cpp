@@ -399,105 +399,12 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
-  {
-    FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { fields::flow::pressure::key() },
-                                     regionNames );
-
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
-
-    // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
-    // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                                                   auto & subRegion )
-    {
-      // Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
-      computeHydrostaticEquilibrium();
-
-      // 1. update porosity, permeability, and density/viscosity
-      // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
-      arrayView1d< real64 const > const netToGross = subRegion.template getField< fields::flow::netToGross >();
-      CoupledSolidBase const & porousSolid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      PermeabilityBase const & permeabilityModel =
-        getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
-      permeabilityModel.scaleHorizontalPermeability( netToGross );
-      porousSolid.scaleReferencePorosity( netToGross );
-      saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
-      updatePorosityAndPermeability( subRegion );
-
-      SingleFluidBase const & fluid =
-        getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-      updateFluidState( subRegion );
-
-      // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
-      fluid.initializeState();
-
-      // 3. save the initial/old porosity
-      porousSolid.initializeState();
-
-      // 4. initialize the rock thermal quantities: conductivity and solid internal energy
-      if( m_isThermal )
-      {
-        // initialized porosity
-        arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
-
-        string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-        SinglePhaseThermalConductivityBase const & conductivityMaterial =
-          getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
-        conductivityMaterial.initializeRockFluidState( porosity );
-        // note that there is nothing to update here because thermal conductivity is explicit for now
-
-        updateSolidInternalEnergyModel( subRegion );
-        string const & solidInternalEnergyName = subRegion.template getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
-        SolidInternalEnergy const & solidInternalEnergyMaterial =
-          getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
-        solidInternalEnergyMaterial.saveConvergedState();
-      }
-    } );
-
-    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
-                                                                     [&]( localIndex const,
-                                                                          SurfaceElementRegion & region )
-    {
-      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-      {
-        subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
-          setApplyDefaultValue( region.getDefaultAperture() );
-      } );
-    } );
-
-    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                                  ElementSubRegionBase & subRegion )
-    {
-      // Save initial pressure field
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 > const initPres = subRegion.getField< fields::flow::initialPressure >();
-      arrayView1d< real64 const > const & temp = subRegion.template getField< fields::flow::temperature >();
-      arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
-      initPres.setValues< parallelDevicePolicy<> >( pres );
-      initTemp.setValues< parallelDevicePolicy<> >( temp );
-
-      // finally update mass and energy
-      updateMass( subRegion );
-      if( m_isThermal )
-        updateEnergy( subRegion );
-    } );
-  } );
-
-  // report to the user if some pore volumes are very small
-  // note: this function is here because: 1) porosity has been initialized and 2) NTG has been applied
-  validatePoreVolumes( domain );
+  FlowSolverBase::initialize( domain );
 }
 
-void SinglePhaseBase::computeHydrostaticEquilibrium()
+void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
@@ -671,6 +578,48 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   } );
 }
 
+void SinglePhaseBase::initializeFluid( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+{
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                 auto & subRegion )
+  {
+    SingleFluidBase const & fluid =
+      getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString()));
+    updateFluidState( subRegion );
+
+    // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
+    fluid.initializeState();
+
+    updateMass( subRegion );
+  } );
+}
+
+void SinglePhaseBase::initializeThermal( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+{
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                 auto & subRegion )
+  {
+    // initialized porosity
+    CoupledSolidBase const & porousSolid =
+      getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+    arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+
+    string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString());
+    SinglePhaseThermalConductivityBase const & conductivityMaterial =
+      getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
+    conductivityMaterial.initializeRockFluidState( porosity );
+    // note that there is nothing to update here because thermal conductivity is explicit for now
+
+    updateSolidInternalEnergyModel( subRegion );
+    string const & solidInternalEnergyName = subRegion.template getReference< string >( viewKeyStruct::solidInternalEnergyNamesString());
+    SolidInternalEnergy const & solidInternalEnergyMaterial =
+      getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
+    solidInternalEnergyMaterial.saveConvergedState();
+
+    updateEnergy( subRegion );
+  } );
+}
+
 void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                          real64 const & GEOS_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
@@ -711,7 +660,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
       porousSolid.saveConvergedState();
 
-      saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
+      saveConvergedState( subRegion );   // necessary for a meaningful porosity update in sequential schemes
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 
@@ -765,11 +714,11 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
       if( m_keepFlowVariablesConstantDuringInitStep )
       {
-        porousSolid.ignoreConvergedState(); // newPorosity <- porosity_n
+        porousSolid.ignoreConvergedState();   // newPorosity <- porosity_n
       }
       else
       {
-        porousSolid.saveConvergedState(); // porosity_n <- porosity
+        porousSolid.saveConvergedState();   // porosity_n <- porosity
       }
 
       if( m_isThermal )
@@ -1125,7 +1074,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           // add the value to the mass balance equation
           globalIndex const massRowIndex   = dofNumber[ei] - rankOffset;
           globalIndex const energyRowIndex = massRowIndex + 1;
-          real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+          real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;   // scale the contribution by the sizeScalingFactor
+                                                                                     // here!
           localRhs[massRowIndex] += rhsValue;
           massProd += rhsValue;
           //add the value to the energy balance equation if the flux is positive (i.e., it's a producer)
@@ -1229,7 +1179,7 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    pres[ei], // freeze the current pressure value
+                                                    pres[ei],   // freeze the current pressure value
                                                     pres[ei] );
         localRhs[localRow] = rhsValue;
 
@@ -1240,7 +1190,7 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
                                                       rankOffset,
                                                       localMatrix,
                                                       rhsValue,
-                                                      temp[ei], // freeze the current temperature value
+                                                      temp[ei],   // freeze the current temperature value
                                                       temp[ei] );
           localRhs[localRow + 1] = rhsValue;
         }
