@@ -274,23 +274,16 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     }
 
     string statPrefix = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Pressure (min, average, max): {}, {}, {} Pa",
-                                          statPrefix, regionStatistics.minPressure, regionStatistics.averagePressure, regionStatistics.maxPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Delta pressure (min, max): {}, {} Pa",
-                                          statPrefix, regionStatistics.minDeltaPressure, regionStatistics.maxDeltaPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Temperature (min, average, max): {}, {}, {} K",
-                                          statPrefix, regionStatistics.minTemperature, regionStatistics.averageTemperature,
-                                          regionStatistics.maxTemperature ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Total dynamic pore volume: {} rm^3",
-                                          statPrefix, regionStatistics.totalPoreVolume ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Total fluid mass: {} kg",
-                                          statPrefix, regionStatistics.totalMass ) );
-
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Pressure (min, average, max): {}, {}, {} Pa",
+                                                               statPrefix, minPressure, averagePressure, maxPressure ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Delta pressure (min, max): {}, {} Pa",
+                                                               statPrefix, minDeltaPressure, maxDeltaPressure ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Temperature (min, average, max): {}, {}, {} K",
+                                                               statPrefix, minTemperature, averageTemperature, maxTemperature ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Total dynamic pore volume: {} rm^3",
+                                                               statPrefix, totalPoreVolume ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Total fluid mass: {} kg",
+                                                               statPrefix, totalMass ) );
     if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
       std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );

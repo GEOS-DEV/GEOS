@@ -423,8 +423,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     }
     else
     {
-      regionStatistics.averagePressure = 0.0;
-      regionStatistics.averageTemperature = 0.0;
+      averagePressure = 0.0;
+      averageTemperature = 0.0;
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
                                   GEOS_FMT( "{}, {}: Cannot compute average pressure because region pore volume is zero.", getName(), regionNames[i] ) );
     }
@@ -441,45 +441,33 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
     string statPrefix = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Pressure (min, average, max): {}, {}, {} Pa",
-                                          statPrefix, regionStatistics.minPressure, regionStatistics.averagePressure, regionStatistics.maxPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Delta pressure (min, max): {}, {} Pa",
-                                          statPrefix, regionStatistics.minDeltaPressure, regionStatistics.maxDeltaPressure ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Temperature (min, average, max): {}, {}, {} K",
-                                          statPrefix, regionStatistics.minTemperature, regionStatistics.averageTemperature,
-                                          regionStatistics.maxTemperature ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Total dynamic pore volume: {} rm^3",
-                                          statPrefix, regionStatistics.totalPoreVolume ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Phase dynamic pore volume: {} rm^3",
-                                          statPrefix, regionStatistics.phasePoreVolume ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Phase mass: {} {}",
-                                          statPrefix, regionStatistics.phaseMass, massUnit ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Pressure (min, average, max): {}, {}, {} Pa",
+                                                               statPrefix, minPressure, averagePressure, maxPressure ));
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Delta pressure (min, max): {}, {} Pa",
+                                                               statPrefix, minDeltaPressure, maxDeltaPressure ));
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Temperature (min, average, max): {}, {}, {} K",
+                                                               statPrefix, minTemperature, averageTemperature, maxTemperature ));
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Total dynamic pore volume: {} rm^3",
+                                                               statPrefix, totalPoreVolume ));
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Phase dynamic pore volume: {} rm^3",
+                                                               statPrefix, phasePoreVolume ));
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Phase mass: {} {}",
+                                                               statPrefix, phaseMass, massUnit ));
 
     // metric 1: trapping computed with the Land trapping coefficient (similar to Eclipse)
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Trapped phase mass (metric 1): {} {}",
-                                          statPrefix, regionStatistics.trappedPhaseMass, massUnit ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Non-trapped phase mass (metric 1): {} {}",
-                                          statPrefix, nonTrappedPhaseMass, massUnit ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Trapped phase mass (metric 1): {} {}",
+                                                               statPrefix, trappedPhaseMass, massUnit ));
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Non-trapped phase mass (metric 1): {} {}",
+                                                               statPrefix, nonTrappedPhaseMass, massUnit ));
 
     // metric 2: immobile phase mass computed with a threshold on relative permeability
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Immobile phase mass (metric 2): {} {}",
-                                          statPrefix, regionStatistics.immobilePhaseMass, massUnit ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Mobile phase mass (metric 2): {} {}",
-                                          statPrefix, mobilePhaseMass, massUnit ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Immobile phase mass (metric 2): {} {}",
+                                                               statPrefix, immobilePhaseMass, " ", massUnit ));
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Mobile phase mass (metric 2): {} {}",
+                                                               statPrefix, mobilePhaseMass, massUnit ));
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                GEOS_FMT( "{} Component mass: {} {}",
-                                          statPrefix, regionStatistics.componentMass, massUnit ) );
+    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics, GEOS_FMT( "{} Component mass: {} {}",
+                                                               statPrefix, dissolvedComponentMass, massUnit ));
 
     if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
