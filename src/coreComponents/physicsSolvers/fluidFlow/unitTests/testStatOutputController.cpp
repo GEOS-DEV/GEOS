@@ -25,7 +25,8 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
 #include <hdf5.h>
 #include "dataRepository/Group.hpp"
-#include <fstream>
+#include <filesystem>
+#include "fileIO/Outputs/TimeHistoryOutput.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -36,22 +37,6 @@ using namespace geos::dataRepository;
 using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
-
-/**
- * @brief this struct is used to provide the input data of each flow tests
- */
-struct TestInputs
-{
-  string xmlInput;
-};
-
-/**
- * @brief this struct computes from the test inputs the values to expect from the simulation.
- */
-struct TestSet
-{
-  TestInputs const inputs;
-};
 
 namespace ComponentsGeneration
 {
@@ -122,29 +107,6 @@ TEST( testStatOutputController, checkSinglePhaseFluxStatistics )
                           permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }" />
   </Constitutive>
 
-  <FieldSpecifications>
-    <!-- The rates are positive, but we need negative values for injection (scale = -1) -->
-    <SourceFlux name="sourceFlux"
-                objectPath="ElementRegions/reservoir"
-                component="1"
-                scale="-1"
-                functionName="FluxRate"
-                setNames="{ sourceBox }" />
-    <!-- sink is producing 3x source rate -->
-    <SourceFlux name="sinkFlux"
-                objectPath="ElementRegions/reservoir"
-                component="1"
-                scale="3"
-                functionName="FluxRate"
-                setNames="{ sinkBox }"/>
-
-    <HydrostaticEquilibrium name="equil"
-                            objectPath="ElementRegions"
-                            maxNumberOfEquilibrationIterations="100"
-                            datumElevation="-5"
-                            datumPressure="1.895e7" />
-  </FieldSpecifications>
-
   <Geometry>
     <!-- source selects 2 elements -->
     <Box name="sourceBox"
@@ -157,7 +119,7 @@ TEST( testStatOutputController, checkSinglePhaseFluxStatistics )
   </Geometry>
 
   <Events
-    maxTime="5500.0">
+    maxTime="1000.0">
     <PeriodicEvent name="solverApplications"
                    forceDt="500.0"
                    target="/Solvers/testSolver" />
@@ -177,8 +139,6 @@ TEST( testStatOutputController, checkSinglePhaseFluxStatistics )
       values="{       0.000,  0.000,  0.767,  0.894,  0.561,  0.234,  0.194,  0.178,  0.162,  0.059,  0.000,  0.000 }"
     />
   </Functions>
-
-  <Outputs></Outputs>
 
   <Tasks>
 
@@ -221,32 +181,61 @@ TEST( testStatOutputController, checkSinglePhaseFluxStatistics )
 
 )xml";
 
-
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
   OutputBase::setOutputDirectory( "." );
   setupProblemFromXML( problem, testSet.data() );
 
-  std::vector< string > const groupPaths{
-    "/Tasks/packCollectionreservoiraveragePressure",
-    "/Tasks/packCollectionreservoirminPressure",
-    "/Tasks/packCollectionreservoirmaxPressure",
-    "/Tasks/packCollectionreservoirminDeltaPressure",
-    "/Tasks/packCollectionreservoirmaxDeltaPressure",
-    "/Tasks/packCollectionreservoirtotalMass",
-    "/Tasks/packCollectionreservoiraverageTemperature",
-    "/Tasks/packCollectionreservoirminTemperature",
-    "/Tasks/packCollectionreservoirmaxTemperature",
-    "/Tasks/packCollectionreservoirtotalPoreVolume",
-    "/Tasks/packCollectionreservoirtotalUncompactedPoreVolume",
-    "/Outputs/compFlowHistoryreservoir"
-  };
+  { // verify component creation
+    std::vector< string > const groupPaths{
+      "/Tasks/packCollectionreservoiraveragePressure",
+      "/Tasks/packCollectionreservoirminPressure",
+      "/Tasks/packCollectionreservoirmaxPressure",
+      "/Tasks/packCollectionreservoirminDeltaPressure",
+      "/Tasks/packCollectionreservoirmaxDeltaPressure",
+      "/Tasks/packCollectionreservoirtotalMass",
+      "/Tasks/packCollectionreservoiraverageTemperature",
+      "/Tasks/packCollectionreservoirminTemperature",
+      "/Tasks/packCollectionreservoirmaxTemperature",
+      "/Tasks/packCollectionreservoirtotalPoreVolume",
+      "/Tasks/packCollectionreservoirtotalUncompactedPoreVolume",
+      "/Outputs/compFlowHistoryreservoir"
+    };
 
-  for( string const & path : groupPaths )
-  {
-    Group const & group = problem.getGroupByPath( path );
-    ASSERT_STREQ( path.c_str(), group.getPath().c_str() );
+    for( string const & path : groupPaths )
+    {
+      EXPECT_NO_THROW( {
+          Group const & group = problem.getGroupByPath( path );
+          ASSERT_STREQ( path.c_str(), group.getPath().c_str() );
+        } );
+    }
   }
+
+  { // check all timeHistory paths
+    TimeHistoryOutput & timeHistory = problem.getGroupByPath< TimeHistoryOutput >( "/Outputs/compFlowHistoryreservoir" );
+    string_array & collectorPaths =  timeHistory.getReference< string_array >( TimeHistoryOutput::viewKeys::timeHistoryOutputTargetString() );
+
+    std::vector< string > refCollectorPaths =
+    {
+      "/Tasks/packCollectionreservoiraveragePressure/",
+      "/Tasks/packCollectionreservoirminPressure/",
+      "/Tasks/packCollectionreservoirmaxPressure/",
+      "/Tasks/packCollectionreservoirminDeltaPressure/",
+      "/Tasks/packCollectionreservoirmaxDeltaPressure/",
+      "/Tasks/packCollectionreservoirtotalMass/",
+      "/Tasks/packCollectionreservoiraverageTemperature/",
+      "/Tasks/packCollectionreservoirminTemperature/",
+      "/Tasks/packCollectionreservoirmaxTemperature/",
+      "/Tasks/packCollectionreservoirtotalPoreVolume/",
+      "/Tasks/packCollectionreservoirtotalUncompactedPoreVolume/",
+    };
+
+    for( size_t idxPath = 0; idxPath < refCollectorPaths.size(); idxPath++ )
+    {
+      ASSERT_STREQ( refCollectorPaths[idxPath].c_str(), collectorPaths[idxPath].c_str() );
+    }
+  }
+
 
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
@@ -254,6 +243,10 @@ TEST( testStatOutputController, checkSinglePhaseFluxStatistics )
   int64_t fileId = H5Fopen( "./generatedHDFStatreservoir.hdf5", H5F_ACC_RDWR, 0 );
   EXPECT_TRUE( fileId != -1 );
   H5Fclose( fileId );
+
+  integer status = std::remove( "./generatedHDFStatreservoir.hdf5" );
+  EXPECT_TRUE( status == 0 );
+
 }
 }
 
