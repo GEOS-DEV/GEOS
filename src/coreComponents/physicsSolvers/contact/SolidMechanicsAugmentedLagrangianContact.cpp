@@ -24,6 +24,7 @@
 #include "physicsSolvers/contact/SolidMechanicsALMSimultaneousKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsALMJumpUpdateKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsALMBubbleKernels.hpp"
+#include "physicsSolvers/contact/SolidMechanicsALML2Error.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
@@ -740,6 +741,31 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                         kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
+
+      solidMechanicsALMKernels::ALML2ErrorFactory kernelFactory1( dispDofNumber,
+                                                                  dofManager.rankOffset(),
+                                                                  voidMatrix.toViewConstSizes(),
+                                                                  voidRhs.toView(),
+                                                                  dt,
+                                                                  faceElementList );
+    
+      real64 l2Error = finiteElement::
+                             interfaceBasedKernelApplication
+                           < parallelDevicePolicy< >,
+                             constitutive::NullModel >( mesh,
+                                                        fractureRegionName,
+                                                        faceElementList,
+                                                        subRegionFE,
+                                                        "",
+                                                        kernelFactory1 );
+      // Test case: verticalFaultOffset                                           
+      //l2Error = sqrt(l2Error) / (25000000.0*225.0);
+
+      // Test case: singleCrackCompression
+      //l2Error = sqrt(l2Error) / (50.0*2.0);
+      l2Error = sqrt(l2Error) / (100*2.0);
+    
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  ALM l2-norm: {:.6e}\n", l2Error  ));
 
     } );
   } );
@@ -1730,9 +1756,12 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
             // Finally, compute tolerances for the given fracture element
-            normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
+            normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+16;
             slidingTolerance[kfe] = sqrt( pow( rotatedInvStiffApprox[ 1 ][ 1 ], 2 ) +
-                                          pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus / 2.e+5;
+                                          pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus / 2.e+16;
+
+            normalDisplacementTolerance[kfe] = 1.e-11;
+            slidingTolerance[kfe] = 1.e-11;
             normalTractionTolerance[kfe] = (1.0 / 2.0) * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
             iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0*area);

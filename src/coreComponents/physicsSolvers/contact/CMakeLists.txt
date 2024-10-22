@@ -15,6 +15,7 @@ set( physicsSolvers_headers
      contact/SolidMechanicsALMKernelsHelper.hpp
      contact/SolidMechanicsALMJumpUpdateKernels.hpp
      contact/SolidMechanicsALMBubbleKernels.hpp 
+     contact/SolidMechanicsALML2Error.hpp 
      PARENT_SCOPE )
 
 

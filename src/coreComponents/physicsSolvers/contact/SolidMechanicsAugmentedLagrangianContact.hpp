@@ -252,7 +252,7 @@ private:
 
   /// Tolerance for the sliding check: the tangential traction must exceed (1 + m_slidingCheckTolerance) * t_lim to activate the sliding
   /// condition
-  real64 const m_slidingCheckTolerance = 0.05;
+  real64 const m_slidingCheckTolerance = 1.e-06;
 
   /// Flag to update the Lagrange multiplier at each Newton iteration (true), or only after the Newton loop has converged (false)
   int m_simultaneous = 1;
