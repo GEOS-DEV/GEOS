@@ -88,7 +88,6 @@ void createAMG( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond.ptr, 1 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond.ptr, logLevel ) );
-  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.dofsPerNode ) );
 
   // Set maximum number of multigrid levels (default 25)
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxLevels( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.maxLevels ) ) );
@@ -174,7 +173,9 @@ void createAMG( LinearSolverParameters const & params,
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( precond.ptr, params.amg.interpolationMaxNonZeros ) );
   }
 
+  // Unknown-based AMG parameters
   GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.amg.numFunctions ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( precond.ptr, params.amg.separateComponents ) );
 
   if( params.amg.aggressiveNumLevels )
   {
