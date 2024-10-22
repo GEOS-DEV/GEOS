@@ -547,6 +547,10 @@
 					<xsd:selector xpath="SourceFluxStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksStatOutputControllerUniqueName">
+					<xsd:selector xpath="StatOutputController" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksTriaxialDriverUniqueName">
 					<xsd:selector xpath="TriaxialDriver" />
 					<xsd:field xpath="@name" />
@@ -4436,6 +4440,16 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
+			<xsd:element name="StatOutputController" type="StatOutputControllerType">
+				<xsd:unique name="TasksStatOutputControllerCompositionalMultiphaseStatisticsUniqueName">
+					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksStatOutputControllerSinglePhaseStatisticsUniqueName">
+					<xsd:selector xpath="SinglePhaseStatistics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -4700,6 +4714,14 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => Write statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="StatOutputControllerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
+		</xsd:choice>
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

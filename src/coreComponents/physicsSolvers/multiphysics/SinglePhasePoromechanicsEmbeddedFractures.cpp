@@ -444,7 +444,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                          localMatrix,
                                          localRhs,
                                          jumpDofKey );
-
   } );
 
 }
