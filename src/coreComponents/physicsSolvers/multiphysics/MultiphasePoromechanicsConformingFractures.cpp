@@ -251,9 +251,10 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
         numRows += subRegion.size();
       } );
       // TODO
+      numCol = numRows;
       numRows *= numComp;
 
-      derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+      derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numCol );
       derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
 
       derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
@@ -288,7 +289,7 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
             for( integer ic = 0; ic < numComp; ic++ )
             {
               // TODO
-              derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1] * numComp + ic, 0.0 );
+              derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1], 0.0 );
             }
           }
         }
