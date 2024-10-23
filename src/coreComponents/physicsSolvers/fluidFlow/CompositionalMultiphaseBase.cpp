@@ -424,7 +424,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   GEOS_THROW_IF( fluidName.empty(),
-                 GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                 GEOS_FMT( "{}: multiphase fluid model not found on subregion {}",
                            getDataContext(), subRegion.getDataContext() ),
                  InputError );
 

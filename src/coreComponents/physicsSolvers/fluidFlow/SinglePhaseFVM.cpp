@@ -635,8 +635,6 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
       }
     } );
   } );
-
-
 }
 
 template< typename BASE >
