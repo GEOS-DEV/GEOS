@@ -40,12 +40,12 @@ public:
 
   /**
    * @brief Add a description to the section by concatening a description name and descriptions values.
-   * @param descriptionName The description name
+   * @param name The description name
    * @param args Descriptions values to be concatened.
    * Descriptions values can be be any types and will be aligned
    */
   template< typename ... Args >
-  void addDescription( string_view descriptionName, Args const & ... args );
+  void addDescription( string_view name, Args const & ... args );
 
   /**
    * @brief Add a description to the section
@@ -55,12 +55,12 @@ public:
 
   /**
    * @brief Add a description to the end of the section by concatening a description name and descriptions values.
-   * @param descriptionName The description name
+   * @param name The description name
    * @param args Descriptions values to be concatened.
    * Descriptions values can be be any types and will be aligned
    */
   template< typename ... Args >
-  void addEndDescription( string_view descriptionName, Args const & ... args );
+  void addEndDescription( string_view name, Args const & ... args );
 
   /**
    * @brief Add a description to the end of the section
@@ -90,40 +90,24 @@ private:
 
   /**
    * @brief Build a description from the name and description values
-   * @param descriptionName The decription name
+   * @param name The decription name
    * @param decriptionsValues The description values
    */
   void formatAndInsertDescriptions( std::vector< string > & descriptionContainer,
-                                    string_view descriptionName,
+                                    string_view name,
                                     std::vector< string > const & decriptionsValues );
 
   /**
-   * @brief Constructs a string from a vector of descriptions.
-   * @param descriptions A vector of string containing the descriptions
-   * @return A string containing all the formatted descriptions.
+   * @brief Constructs the string section title of the log part.
+   * @param title The title to be set
    */
-  string constructDescriptionsFromVector( std::vector< string > const & descriptions ) const;
+  string buildTitlePart( string_view title ) const;
 
   /**
-   * @brief Formats a description and adds it to an output stream
-   * @param oss The output stream
-   * @param description The description to be formatted
-   * @param remainingLength The remaining length available for the description
-   * after accounting for borders and margins
+   * @brief Constructs the string section descriptions of the log part.
+   * @param descriptions The description to be formatted
    */
-  void formatDescription( std::ostringstream & oss,
-                          string const & description,
-                          integer const remainingLength ) const;
-
-/**
- * @brief Formats a log section with a title and optional descriptions.
- * @param title The title of the log section to be formatted.
- * @param titleRowLength The length of the title row
- * @param descriptions Optional descriptions to include below the title;
- *        if empty, only the title will be displayed.
- * @return A formatted string containing the top and bottom parts of the log section
- */
-  string formatLogSection( string_view title, integer titleRowLength, string_view descriptions ) const;
+  string buildDescriptionPart( std::vector< string > const & descriptions ) const;
 
   /// Vector containing all descriptions
   std::vector< string > m_descriptions;
@@ -132,6 +116,8 @@ private:
 
   /// title of section
   string m_sectionTitle;
+  /// Start title footer string
+  string m_footerTitle;
   /// section length
   integer m_sectionWidth;
   /// min width of section length
@@ -144,36 +130,32 @@ private:
 
   /// String containing horizontal border
   string m_horizontalBorder;
-
-  /// Start title footer string
-  static string_view constexpr m_footerTitle = "End : ";
-
 };
 
 template< typename ... Args >
-void LogPart::addDescription( string_view descriptionName, Args const &... args )
+void LogPart::addDescription( string_view name, Args const &... args )
 {
-  std::vector< string > descriptionsValues;
+  std::vector< string > values;
   ( [&] {
     static_assert( has_formatter_v< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
-    descriptionsValues.push_back( value );
+    values.push_back( value );
   } (), ...);
 
-  formatAndInsertDescriptions( m_descriptions, descriptionName, descriptionsValues );
+  formatAndInsertDescriptions( m_descriptions, name, values );
 }
 
 template< typename ... Args >
-void LogPart::addEndDescription( string_view descriptionName, Args const &... args )
+void LogPart::addEndDescription( string_view name, Args const &... args )
 {
-  std::vector< string > descriptionsValues;
+  std::vector< string > values;
   ( [&] {
     static_assert( has_formatter_v< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
-    descriptionsValues.push_back( value );
+    values.push_back( value );
   } (), ...);
 
-  formatAndInsertDescriptions( m_endLogMessages, descriptionName, descriptionsValues );
+  formatAndInsertDescriptions( m_endLogMessages, name, values );
 }
 }
 
