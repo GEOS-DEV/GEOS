@@ -684,9 +684,11 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
       // TODO
       // flux derivative
       bool skipAssembly = true;
-      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
+              for( integer ic = 0; ic < numComp; ic++ )
+              {
+      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe * Nc + ic );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe * Nc + ic );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe * Nc + ic );
 
       skipAssembly &= !isFractureOpen;
 
@@ -719,9 +721,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
-              for( integer ic = 0; ic < numComp; ic++ )
-              {
-                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dR_dAper[ic] * dAper_dU;
+
+              dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dR_dAper[ic] * dAper_dU;
               }
             }
           }
