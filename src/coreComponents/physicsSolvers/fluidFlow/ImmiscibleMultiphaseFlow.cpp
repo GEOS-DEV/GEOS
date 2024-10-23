@@ -1108,7 +1108,7 @@ void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & do
 
       arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVolFrac =
         subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
-      phaseVolFrac.setValues< parallelDevicePolicy<> >( phaseVolFrac );
+      phaseVolFrac.setValues< parallelDevicePolicy<> >( phaseVolFrac_n );
 
       arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const & phaseMass_n =
         subRegion.template getField< fields::immiscibleMultiphaseFlow::phaseMass_n >();
