@@ -330,14 +330,10 @@ private:
    * @param arg The first argument to be processed
    * @param args The remaining arguments to be processed
    */
-  template< typename T, typename ... Ts >
-  void processArguments( T && arg, Ts &&... args )
+  template< typename ... Ts >
+  void processArguments( Ts &... args )
   {
-    addToColumns( std::forward< T >( arg ));
-    if constexpr (sizeof...(args) > 0)
-    {
-      processArguments( std::forward< Ts >( args )... );
-    }
+    addToColumns( args ... );
   }
 
   /**
