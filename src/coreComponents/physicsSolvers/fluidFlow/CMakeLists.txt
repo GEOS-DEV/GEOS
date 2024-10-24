@@ -7,6 +7,8 @@ set( physicsSolvers_headers
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
+     fluidFlow/ImmiscibleMultiphaseFlow.hpp
+     fluidFlow/ImmiscibleMultiphaseFlowFields.hpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
@@ -62,6 +64,7 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp
+     fluidFlow/ImmiscibleMultiphaseFlow.cpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
