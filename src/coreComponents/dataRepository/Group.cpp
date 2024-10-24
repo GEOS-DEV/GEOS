@@ -147,6 +147,11 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
 {
   xmlDocument.addIncludedXML( targetNode );
 
+  if( nodePos.isFound() )
+  {
+    m_dataContext = std::make_unique< DataFileContext >( targetNode, nodePos );
+  }
+
   // Handle the case where the node was imported from a different input file
   // Set the path prefix to make sure all relative Path variables are interpreted correctly
   string const oldPrefix = std::string( Path::getPathPrefix() );
@@ -162,9 +167,12 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
   {
     xmlWrapper::xmlNodePos childNodePos = xmlDocument.getNodePosition( childNode );
 
+    GEOS_ERROR_IF( childNode.type() != xmlWrapper::xmlNodeType::node_element,
+                   GEOS_FMT( "Error in {}: GEOS XML nodes cannot contain text data nor anything but XML nodes.",
+                             getDataContext() ));
+
     // Get the child tag and name
     string childName;
-
     try
     {
       xmlWrapper::readAttributeAsType( childName, "name",
@@ -212,12 +220,6 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
 void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
                               xmlWrapper::xmlNodePos const & nodePos )
 {
-  if( nodePos.isFound() )
-  {
-    m_dataContext = std::make_unique< DataFileContext >( targetNode, nodePos );
-  }
-
-
   std::set< string > processedAttributes;
   for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
