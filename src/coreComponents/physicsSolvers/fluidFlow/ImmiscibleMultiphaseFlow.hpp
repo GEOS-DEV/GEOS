@@ -209,6 +209,14 @@ public:
    */
   void updatePhaseMass( ElementSubRegionBase & subRegion ) const;
 
+  struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
+  {
+    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
+    static constexpr char const * relPermNamesString() { return "relPermNames"; }
+    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+  };
+
+
 private:
 
   virtual void postInputInitialization() override;
@@ -265,12 +273,7 @@ private:
   /// flag to determine whether or not to use total velocity formulation
   integer m_useTotalMassEquation;
 
-  struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
-  {
-    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * relPermNamesString() { return "relPermNames"; }
-    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
-  };
+
 
 private:
 
