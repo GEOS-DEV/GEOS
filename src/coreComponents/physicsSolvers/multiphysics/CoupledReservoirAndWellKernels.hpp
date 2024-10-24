@@ -463,7 +463,7 @@ public:
         localIndex localDofIndexPres = ke * resNumDOF;
         localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
         localPerfJacobian[TAG::WELL ][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-        //localDofIndexPres += 1;
+
         // populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
         {

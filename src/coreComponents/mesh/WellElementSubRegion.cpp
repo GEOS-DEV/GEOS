@@ -148,6 +148,7 @@ void collectElementNodes( CellElementSubRegion const & subRegion,
  * @param[inout] erMatched the region index of the reservoir element that contains "location", if any
  * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
+ * @param[inout] giMatched the element global index of the reservoir element that contains "location", if any
  */
 bool visitNeighborElements( MeshLevel const & mesh,
                             real64 const (&location)[3],
@@ -294,6 +295,7 @@ void initializeLocalSearch( MeshLevel const & mesh,
  * @param[inout] erMatched the region index of the reservoir element that contains "location", if any
  * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
+ * @param[inout] giMatched the element global index of the reservoir element that contains "location", if any
  */
 bool searchLocalElements( MeshLevel const & mesh,
                           real64 const (&location)[3],
