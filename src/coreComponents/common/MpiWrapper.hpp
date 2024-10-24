@@ -608,6 +608,16 @@ public:
    */
   template< typename T >
   static void max( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOS );
+
+
+  /**
+   * @brief Convenience function for MPI_Gather using a MPI_MAX operation on struct of value and location
+   * @brief Max is performed on value and location (global indice)
+   * @param[in] struct to send into the max gather.
+   * @return struct with max val and location
+   */
+  template< typename valLoc_type > static valLoc_type maxValLoc( valLoc_type l_valLoc, MPI_Comm comm = MPI_COMM_GEOS );
+
 };
 
 namespace internal
@@ -1115,6 +1125,47 @@ void MpiWrapper::reduce( Span< T const > const src, Span< T > const dst, Reducti
   reduce( src.data(), dst.data(), LvArray::integerConversion< int >( src.size() ), getMpiOp( op ), root, comm );
 }
 
+// Mpi helper function to return  struct containing the max value and location across ranks
+template< typename valLoc_type >
+valLoc_type
+MpiWrapper::maxValLoc( valLoc_type l_valLoc, MPI_Comm comm )
+{
+  // Force struct to have only 2 data members
+  GEOS_ASSERT_EQ((sizeof(valLoc_type::value)+sizeof(valLoc_type::location)), sizeof(valLoc_type));
+  // Ensure members are not pointers
+  if constexpr ( std::is_pointer_v< decltype(&valLoc_type::value) >) {
+    GEOS_ERROR_IF( false, "Attempting to use pointer for maxValLoc comparison" );
+  }
+  if constexpr ( std::is_pointer_v< decltype(&valLoc_type::location) >) {
+    GEOS_ERROR_IF( false, "Attempting to use pointer for maxValLoc comparison" );
+  }
+  //These generate compile error
+  //GEOS_ERROR_IF(constexpr (std::is_pointer_v<decltype(&valLoc_type::value)>),"Attempting to use pointer for maxValLoc comparison" );
+  //GEOS_ERROR_IF(constexpr (std::is_pointer_v<decltype(&valLoc_type::location)>),"Attempting to use pointer for maxValLoc comparison" );
+
+  // Serialize to char
+  unsigned char *sendbuf = new unsigned char[sizeof(valLoc_type)];
+  std::memcpy( sendbuf, &l_valLoc, sizeof(valLoc_type));
+
+  // recieve buffer
+  int const numProcs =  commSize( comm );
+  unsigned char *recvbuf = new unsigned char[numProcs*sizeof(valLoc_type)];
+
+  MPI_Allgather( sendbuf, sizeof(valLoc_type), MPI_BYTE, recvbuf, sizeof(valLoc_type), MPI_BYTE, comm );
+
+  // Unpack buffer and find max
+  std::vector< valLoc_type > g_valLoc( numProcs );
+  for( int i = 0; i< numProcs; i++ )
+  {
+    std::memcpy( &g_valLoc[i], &recvbuf[sizeof(valLoc_type)*i], sizeof(valLoc_type));
+  }
+  valLoc_type maxValLoc= *max_element( begin( g_valLoc ), end( g_valLoc ), []( auto & lhs, auto & rhs ) -> integer {return lhs.value  <  rhs.value; } );
+
+  delete[] sendbuf;
+  delete[] recvbuf;
+
+  return maxValLoc;
+}
 
 } /* namespace geos */
 

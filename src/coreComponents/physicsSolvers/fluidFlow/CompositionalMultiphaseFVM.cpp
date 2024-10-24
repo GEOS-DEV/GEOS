@@ -475,8 +475,12 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
-  real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
   real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
+
+
+  std::vector< valueLocType > regionDeltaPresMaxLoc;
+  std::vector< valueLocType > regionDeltaTempMaxLoc;
+  std::vector< valueLocType > regionDeltaCompDensMaxLoc;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -486,6 +490,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      arrayView1d< globalIndex const > const localToGlobalMap = subRegion.localToGlobalMap();
       auto const subRegionData =
         m_isThermal
   ? thermalCompositionalMultiphaseBaseKernels::
@@ -511,38 +516,57 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      dofKey,
                                                      subRegion,
                                                      localSolution );
-
-      if( m_scalingType == ScalingType::Global )
+      if( subRegion.size() > 0 || subRegion.size() !=  subRegion.getNumberOfGhosts() )
       {
-        scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
+        if( m_scalingType == ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
+        }
+
+        regionDeltaPresMaxLoc.push_back( valueLocType( subRegionData.localMaxDeltaPres, localToGlobalMap[subRegionData.localMaxDeltaPresLoc] ) );
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
+
+        regionDeltaCompDensMaxLoc.push_back( valueLocType( subRegionData.localMaxDeltaCompDens, localToGlobalMap[subRegionData.localMaxDeltaCompDensLoc] ) );
+        minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
+
+        if( m_isThermal )
+        {
+          regionDeltaTempMaxLoc.push_back( valueLocType( subRegionData.localMaxDeltaTemp, localToGlobalMap[subRegionData.localMaxDeltaTempLoc] ) );
+          minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
+        }
       }
-      maxDeltaPres  = std::max( maxDeltaPres, subRegionData.localMaxDeltaPres );
-      maxDeltaCompDens = std::max( maxDeltaCompDens, subRegionData.localMaxDeltaCompDens );
-      maxDeltaTemp = std::max( maxDeltaTemp, subRegionData.localMaxDeltaTemp );
-      minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
-      minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
-      minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
     } );
   } );
 
+  auto [localDeltaPresMax, localPresMaxLoc] = *std::max_element( begin( regionDeltaPresMaxLoc ), end( regionDeltaPresMaxLoc ), []( auto & lhs, auto & rhs )   {
+    return lhs.value   < rhs.value;
+  } );
+  auto globalDeltaPresMax = MpiWrapper::maxValLoc( valueLocType( localDeltaPresMax, localPresMaxLoc ));
+  auto [ localDeltaCompDensMax, localCompDensMaxLoc ] = *std::max_element( begin( regionDeltaCompDensMaxLoc ), end( regionDeltaCompDensMaxLoc ), []( auto & lhs, auto & rhs )   {
+    return lhs.value   < rhs.value;
+  } );
+  auto globalDeltaCompDensMax = MpiWrapper::maxValLoc( valueLocType( localDeltaCompDensMax, localCompDensMaxLoc ));
+
   scalingFactor = MpiWrapper::min( scalingFactor );
-  maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
-  maxDeltaCompDens = MpiWrapper::max( maxDeltaCompDens );
   minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
   minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
 
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max component density change = {} {} (before scaling)",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling) at cell {}",
+                                                      getName(), GEOS_FMT( "{:.{}f}", globalDeltaPresMax.value, 3 ), globalDeltaPresMax.location ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max component density change = {} {} (before scaling) at cell {}",
+                                                      getName(), GEOS_FMT( "{:.{}f}", globalDeltaCompDensMax.value, 3 ), massUnit, globalDeltaCompDensMax.location ) );
 
   if( m_isThermal )
   {
-    maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+    auto [localDeltaTempMax, localDeltaTempMaxLoc  ] = *std::max_element( begin( regionDeltaTempMaxLoc ), end( regionDeltaTempMaxLoc ), []( auto & lhs, auto & rhs )   {
+      return lhs.value   < rhs.value;
+    } );
+    auto globalMaxDeltaTemp = MpiWrapper::maxValLoc( valueLocType( localDeltaTempMax, localDeltaTempMaxLoc ));
+
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
-                                                             getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling) at cell maxRegionDeltaTempLoc {}",
+                                                        getName(), GEOS_FMT( "{:.{}f}", globalMaxDeltaTemp.value, 3 ), globalMaxDeltaTemp.location ) );
   }
 
   if( m_scalingType == ScalingType::Local )

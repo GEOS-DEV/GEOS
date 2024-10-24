@@ -174,6 +174,19 @@ public:
     Local            ///< Scale the Newton update locally (modifies the Newton direction)
   };
 
+  /**
+   * @brief Storage for value and element location, used to determine global max + location
+   */
+  template< typename value_type, typename index_type >
+  struct valueLoc
+  {
+    valueLoc(){}
+    valueLoc( value_type val, index_type loc ): value( val ), location( loc ){}
+    value_type value;
+    index_type location;
+  };
+  typedef valueLoc< real64, globalIndex > valueLocType;
+
 protected:
 
   virtual void postInputInitialization() override;
