@@ -43,7 +43,7 @@ constitutive
 
 More information:
     - :ref:`constitutiveModelsDoc`
-    - :ref:`PVTPackage`
+    - **ref/link to PVT package** see `PVTPAckage <../coreComponents/constitutive/PVTPackage/docs/main.html>`_
 
 
 constitutiveDrivers
