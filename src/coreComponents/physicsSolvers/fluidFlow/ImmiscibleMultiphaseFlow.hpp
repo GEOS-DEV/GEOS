@@ -192,6 +192,13 @@ public:
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs ) const;
 
+void
+  applySourceFluxBC( real64 const time_n,
+                     real64 const dt,
+                     DomainPartition & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const;
   /**
    * @brief function to set the next time step size
    * @param[in] currentDt the current time step size
