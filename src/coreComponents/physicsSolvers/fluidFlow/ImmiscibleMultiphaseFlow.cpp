@@ -759,6 +759,9 @@ void ImmiscibleMultiphaseFlow::applyBoundaryConditions( real64 const time_n,
   // apply pressure boundary conditions.
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
+// apply flux boundary conditions
+  applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+    
   //   for( localIndex row = 0; row < localMatrix.toViewConstSizes().numRows(); ++row )
   // {
   //   std::cout << "row " << row << std::endl;
@@ -942,12 +945,12 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
   } );
 }
 
-void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time_n,
-                                         real64 const dt,
-                                         DomainPartition & domain,
-                                         DofManager const & dofManager,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                         arrayView1d< real64 > const & localRhs ) const
+void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
+                                                     real64 const dt,
+                                                     DofManager const & dofManager,
+                                                     DomainPartition & domain,
+                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -976,7 +979,7 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time_n,
 
   array1d< globalIndex > bcAllSetsSize( bcNameToBcId.size() );
 
-  computeSourceFluxSizeScalingFactor( time_n,
+  computeSourceFluxSizeScalingFactor( time,
                                       dt,
                                       domain,
                                       bcNameToBcId,
@@ -988,18 +991,25 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time_n,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & )
   {
-    integer const isThermal = 0;
 
     fsManager.apply< ElementSubRegionBase,
-                     SourceFluxBoundaryCondition >( time_n + dt,
+                     SourceFluxBoundaryCondition >( time + dt,
                                                     mesh,
                                                     SourceFluxBoundaryCondition::catalogName(),
-                                                    [&, isThermal]( SourceFluxBoundaryCondition const & fs,
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
                                                                     string const & setName,
                                                                     SortedArrayView< localIndex const > const & targetSet,
                                                                     ElementSubRegionBase & subRegion,
                                                                     string const & )
     {
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
+                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
+
       if( targetSet.size() == 0 )
       {
         return;
@@ -1029,7 +1039,7 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time_n,
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       fs.computeRhsContribution< FieldSpecificationAdd,
                                  parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time_n + dt,
+                                                           time + dt,
                                                            dt,
                                                            subRegion,
                                                            dofNumber,
