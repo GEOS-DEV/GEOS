@@ -258,20 +258,35 @@ public:
       integer constexpr NUM_DIMS = ENABLE_ENERGY + NUM_COMPS;
       integer constexpr NUM_OPS  = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
 
-      if ( oblFluid->getInterpolatorMode() == constitutive::OBLInterpolatorMode::Static )
+      if( oblFluid->getInterpolatorMode() == constitutive::OBLInterpolatorMode::Static )
       {
-        MultivariableTableFunction const& function = oblFluid->getTable();
-        MultilinearInterpolatorStaticKernel< NUM_DIMS, NUM_OPS > const interpolationKernel( 
-                                                                           function.getAxisMinimums(),
-                                                                           function.getAxisMaximums(),
-                                                                           function.getAxisPoints(),
-                                                                           function.getAxisSteps(),
-                                                                           function.getAxisStepInvs(),
-                                                                           function.getAxisHypercubeMults(),
-                                                                           function.getHypercubeData()
-                                                                           );
+        MultivariableTableFunction const & function = oblFluid->getTable();
 
-        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel);
+        GEOS_THROW_IF_NE_MSG( NUM_DIMS, function.numDims(),
+                              GEOS_FMT( "The number of degrees of freedom per cell used in the solver has a value of {}, "
+                                        "whereas it as a value of {} in the operator table (at {}).",
+                                        NUM_DIMS, function.numDims(),
+                                        function.getName() ),
+                              InputError );
+
+        GEOS_THROW_IF_NE_MSG( NUM_OPS, function.numOps(),
+                              GEOS_FMT( "The number of operators per cell used in the solver has a value of {}, "
+                                        "whereas it as a value of {} in the operator table (at {}).",
+                                        NUM_OPS, function.numOps(),
+                                        function.getName() ),
+                              InputError );
+
+        MultilinearInterpolatorStaticKernel< NUM_DIMS, NUM_OPS > const interpolationKernel(
+          function.getAxisMinimums(),
+          function.getAxisMaximums(),
+          function.getAxisPoints(),
+          function.getAxisSteps(),
+          function.getAxisStepInvs(),
+          function.getAxisHypercubeMults(),
+          function.getHypercubeData()
+          );
+
+        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel );
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
       }
       else /* if ( oblFluid->getInterpolatorMode() == constitutive::OBLInterpolatorMode::Adaptive ) */
@@ -279,13 +294,13 @@ public:
         // Check if Python function was assigned to wrapper
         auto pyFunctionPtr = oblFluid->getPythonFunction();
 
-        GEOS_ERROR_IF( pyFunctionPtr->py_evaluate_func == nullptr, 
-                        GEOS_FMT( "{}: py_evaluate_func is not specified", 
-                            pyFunctionPtr->getName())
-                            );
+        GEOS_ERROR_IF( pyFunctionPtr->py_evaluate_func == nullptr,
+                       GEOS_FMT( "{}: py_evaluate_func is not specified",
+                                 pyFunctionPtr->getName())
+                       );
         MultilinearInterpolatorAdaptiveKernel< NUM_DIMS, NUM_OPS > const interpolationKernel( pyFunctionPtr );
 
-        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel);
+        OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel );
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
       }
     } );
@@ -298,4 +313,3 @@ public:
 } // namespace geos
 
 #endif //GEOS_CONSTITUTIVE_FLUID_OBLFLUIDKERNELS_HPP_
-

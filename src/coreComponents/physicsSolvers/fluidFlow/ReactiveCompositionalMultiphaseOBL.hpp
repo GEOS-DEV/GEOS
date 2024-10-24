@@ -326,9 +326,6 @@ private:
   /// the number of OBL operators
   integer m_numOBLOperators;
 
-  /// OBL operators table function tabulated vs all primary variables
-  // MultivariableTableFunction const * m_OBLOperatorsTable;
-
   /// flag indicating whether energy balance will be enabled or not
   integer m_enableEnergyBalance;
 

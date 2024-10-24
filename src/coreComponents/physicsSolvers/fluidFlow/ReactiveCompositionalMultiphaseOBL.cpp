@@ -176,31 +176,11 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
                                   getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
                         InputError );
 
-  // m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
-
   // Equations: [NC] Molar mass balance, ([1] energy balance if enabled)
   // Primary variables: [1] pressure, [NC-1] global component fractions, ([1] temperature)
   m_numDofPerCell = m_numComponents + m_enableEnergyBalance;
 
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
-
-  /* 
-  GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                        GEOS_FMT( "The number of degrees of freedom per cell used in the solver (at {}) has a value of {}, "
-                                  "whereas it as a value of {} in the operator table (at {}).",
-                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
-                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                                  m_OBLOperatorsTableFile ),
-                        InputError );
-
-  GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                        GEOS_FMT( "The number of operators per cell used in the solver (at {}) has a value of {}, "
-                                  "whereas it as a value of {} in the operator table (at {}).",
-                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
-                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                                  m_OBLOperatorsTableFile ),
-                        InputError ); 
-  */
 }
 
 void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies )
@@ -1324,10 +1304,10 @@ void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase &
 
         OBLOperatorsKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                    m_numComponents,
-                                                    m_enableEnergyBalance,
-                                                    dataGroup,
-                                                    oblFluid );
+                                                     m_numComponents,
+                                                     m_enableEnergyBalance,
+                                                     dataGroup,
+                                                     oblFluid );
       }
     }
   }

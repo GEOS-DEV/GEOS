@@ -31,9 +31,9 @@ namespace geos
  *
  * @tparam NUM_DIMS number of dimensions (inputs)
  * @tparam NUM_OPS number of interpolated functions (outputs)
- * @tparam INDEX_T datatype used for indexing in multidimensional space 
+ * @tparam INDEX_T datatype used for indexing in multidimensional space
  */
-template< integer NUM_DIMS, integer NUM_OPS, typename INDEX_T = __uint128_t>
+template< integer NUM_DIMS, integer NUM_OPS, typename INDEX_T = __uint128_t >
 class MultilinearInterpolatorBaseKernel
 {
 public:
@@ -60,26 +60,26 @@ public:
    * @param[in] axisStepInvs inversions of axis interval lengths (axes are discretized uniformly)
    * @param[in] axisHypercubeMults hypercube index mult factors for each axis
    */
-  MultilinearInterpolatorBaseKernel(arrayView1d< real64 const > const & axisMinimums,
-                                    arrayView1d< real64 const > const & axisMaximums,
-                                    arrayView1d< integer const > const & axisPoints,
-                                    arrayView1d< real64 const > const & axisSteps,
-                                    arrayView1d< real64 const > const & axisStepInvs,
-                                    arrayView1d< longIndex const > const & axisHypercubeMults):
-      m_axisMinimums(axisMinimums),
-      m_axisMaximums(axisMaximums),
-      m_axisPoints(axisPoints),
-      m_axisSteps(axisSteps),
-      m_axisStepInvs(axisStepInvs),
-      m_axisHypercubeMults(axisHypercubeMults),
-      m_axisPointMults(numDims),
-      m_coordinates(numDims)
+  MultilinearInterpolatorBaseKernel( arrayView1d< real64 const > const & axisMinimums,
+                                     arrayView1d< real64 const > const & axisMaximums,
+                                     arrayView1d< integer const > const & axisPoints,
+                                     arrayView1d< real64 const > const & axisSteps,
+                                     arrayView1d< real64 const > const & axisStepInvs,
+                                     arrayView1d< longIndex const > const & axisHypercubeMults ):
+    m_axisMinimums( axisMinimums ),
+    m_axisMaximums( axisMaximums ),
+    m_axisPoints( axisPoints ),
+    m_axisSteps( axisSteps ),
+    m_axisStepInvs( axisStepInvs ),
+    m_axisHypercubeMults( axisHypercubeMults ),
+    m_axisPointMults( numDims ),
+    m_coordinates( numDims )
   {
     // fill remaining properties
     m_axisPointMults[numDims - 1] = 1;
-    for (integer i = numDims - 2; i >= 0; --i)
+    for( integer i = numDims - 2; i >= 0; --i )
     {
-        m_axisPointMults[i] = m_axisPointMults[i + 1] * m_axisPoints[i + 1];
+      m_axisPointMults[i] = m_axisPointMults[i + 1] * m_axisPoints[i + 1];
     }
   }
 
@@ -154,7 +154,7 @@ public:
                     real64 const * const hypercubeData,
                     real64 const * const axisLows,
                     real64 const * const axisStepInvs,
-                    OUT_ARRAY && values ) const 
+                    OUT_ARRAY && values ) const
   {
     integer pwr = numVerts / 2;   // distance between high and low values
     real64 workspace[numVerts][numOps];
@@ -265,7 +265,7 @@ public:
   }
   /**
    * @brief interpolate all operators at a given point
-   * 
+   *
    * @tparam IN_ARRAY type of input array of coordinates
    * @tparam OUT_ARRAY type of output array of values
    * @param[in] coordinates point coordinates
@@ -320,19 +320,19 @@ public:
 
     for( int i = 0; i < numDims; ++i )
     {
-      integer const axisIndex = this->getAxisIntervalIndexLowMult(coordinates[i],
-                                                                  m_axisMinimums[i], m_axisMaximums[i],
-                                                                  m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
-                                                                  axisLows[i], axisMults[i] );
+      integer const axisIndex = this->getAxisIntervalIndexLowMult( coordinates[i],
+                                                                   m_axisMinimums[i], m_axisMaximums[i],
+                                                                   m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
+                                                                   axisLows[i], axisMults[i] );
       hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
     }
 
-    interpolatePointWithDerivatives(  coordinates,
-                                      getHypercubeData( hypercubeIndex ),
-                                      &axisLows[0], &axisMults[0],
-                                      &m_axisStepInvs[0],
-                                      values,
-                                      derivatives );
+    interpolatePointWithDerivatives( coordinates,
+                                     getHypercubeData( hypercubeIndex ),
+                                     &axisLows[0], &axisMults[0],
+                                     &m_axisStepInvs[0],
+                                     values,
+                                     derivatives );
   }
 protected:
   /**
@@ -347,7 +347,7 @@ protected:
   real64 const *
   getHypercubeData( longIndex const hypercubeIndex ) const
   {
-     (void)hypercubeIndex;  // Suppress unused parameter warning
+    (void)hypercubeIndex;   // Suppress unused parameter warning
     return nullptr;
   }
   /**
@@ -360,10 +360,10 @@ protected:
   GEOS_HOST_DEVICE
   inline
   void
-  getPointCoordinates(longIndex pointIndex, array1d< real64 > & coordinates) const
+  getPointCoordinates( longIndex pointIndex, array1d< real64 > & coordinates ) const
   {
     longIndex axisIdx, remainderIdx = pointIndex;
-    for (integer i = 0; i < numDims; ++i)
+    for( integer i = 0; i < numDims; ++i )
     {
       axisIdx = remainderIdx / m_axisPointMults[i];
       remainderIdx = remainderIdx % m_axisPointMults[i];
@@ -394,8 +394,8 @@ protected:
   ///  Array [numDims] of hypercube index mult factors for each axis
   arrayView1d< longIndex const > const m_axisHypercubeMults;
 
-  /// Array [numDims] of point index mult factors for each axis 
-  array1d< longIndex > const m_axisPointMults;     
+  /// Array [numDims] of point index mult factors for each axis
+  array1d< longIndex > const m_axisPointMults;
 
   // inputs: where to interpolate
 

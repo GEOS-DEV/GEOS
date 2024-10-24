@@ -68,7 +68,7 @@ static PyObject * PyPythonFunction_new( PyTypeObject *type, PyObject *args, PyOb
  */
 static PyObject * PyPythonFunction_repr( PyObject * const obj ) noexcept
 {
-  PyPythonFunction const * const pyPythonFunc = reinterpret_cast<PyPythonFunction *>( obj );
+  PyPythonFunction const * const pyPythonFunc = reinterpret_cast< PyPythonFunction * >( obj );
   if( pyPythonFunc == nullptr )
   {
     return nullptr;
@@ -85,16 +85,16 @@ static PyObject * PyPythonFunction_repr( PyObject * const obj ) noexcept
 /**
  * @brief Expose the setAxes function to Python
  */
-static PyObject* PyPythonFunction_setAxes(PyPythonFunction* self, PyObject* args)
+static PyObject * PyPythonFunction_setAxes( PyPythonFunction * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
 
-  PythonFunction<>* func = self->group;
+  PythonFunction<> * func = self->group;
 
-  if (func == nullptr)
+  if( func == nullptr )
   {
-    PyErr_SetString(PyExc_RuntimeError, "Not a valid PythonFunction instance.");
+    PyErr_SetString( PyExc_RuntimeError, "Not a valid PythonFunction instance." );
     return nullptr;
   }
 
@@ -102,32 +102,32 @@ static PyObject* PyPythonFunction_setAxes(PyPythonFunction* self, PyObject* args
   integer numDims, numOps;
   PyObject *axisMinList, *axisMaxList, *axisPointsList;
 
-  if (!PyArg_ParseTuple(args, "iiOOO", &numDims, &numOps, &axisMinList, &axisMaxList, &axisPointsList))
+  if( !PyArg_ParseTuple( args, "iiOOO", &numDims, &numOps, &axisMinList, &axisMaxList, &axisPointsList ))
   {
     return nullptr;
   }
 
   // Check list lengths
-  if (PyList_Size(axisMinList) != numDims || PyList_Size(axisMaxList) != numDims || PyList_Size(axisPointsList) != numDims)
+  if( PyList_Size( axisMinList ) != numDims || PyList_Size( axisMaxList ) != numDims || PyList_Size( axisPointsList ) != numDims )
   {
-    PyErr_SetString(PyExc_ValueError, "List lengths do not match numDims.");
+    PyErr_SetString( PyExc_ValueError, "List lengths do not match numDims." );
     return nullptr;
   }
 
   // Convert Python lists to internal array representations
-  real64_array axisMinimums(numDims);
-  real64_array axisMaximums(numDims);
-  integer_array axisPoints(numDims);
+  real64_array axisMinimums( numDims );
+  real64_array axisMaximums( numDims );
+  integer_array axisPoints( numDims );
 
-  for (integer i = 0; i < numDims; ++i)
+  for( integer i = 0; i < numDims; ++i )
   {
-    axisMinimums[i] = PyFloat_AsDouble(PyList_GetItem(axisMinList, i));
-    axisMaximums[i] = PyFloat_AsDouble(PyList_GetItem(axisMaxList, i));
-    axisPoints[i] = PyLong_AsLong(PyList_GetItem(axisPointsList, i));
+    axisMinimums[i] = PyFloat_AsDouble( PyList_GetItem( axisMinList, i ));
+    axisMaximums[i] = PyFloat_AsDouble( PyList_GetItem( axisMaxList, i ));
+    axisPoints[i] = PyLong_AsLong( PyList_GetItem( axisPointsList, i ));
   }
 
   // Call the C++ function to set axes
-  func->setAxes(numDims, numOps, axisMinimums, axisMaximums, axisPoints);
+  func->setAxes( numDims, numOps, axisMinimums, axisMaximums, axisPoints );
 
   Py_RETURN_NONE;
 }
@@ -135,35 +135,35 @@ static PyObject* PyPythonFunction_setAxes(PyPythonFunction* self, PyObject* args
 /**
  * @brief Expose the setEvaluateFunction function to Python
  */
-static PyObject* PyPythonFunction_setEvaluateFunction(PyPythonFunction* self, PyObject* args)
+static PyObject * PyPythonFunction_setEvaluateFunction( PyPythonFunction * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
 
-  PythonFunction<>* func = self->group;
+  PythonFunction<> * func = self->group;
 
-  if (func == nullptr)
+  if( func == nullptr )
   {
-    PyErr_SetString(PyExc_RuntimeError, "Not a valid PythonFunction instance.");
+    PyErr_SetString( PyExc_RuntimeError, "Not a valid PythonFunction instance." );
     return nullptr;
   }
 
-  PyObject* pyFuncObj;
+  PyObject * pyFuncObj;
 
-  if (!PyArg_ParseTuple(args, "O", &pyFuncObj))
+  if( !PyArg_ParseTuple( args, "O", &pyFuncObj ))
   {
     return nullptr;
   }
 
   // Ensure pyFuncObj is callable
-  if (!PyCallable_Check(pyFuncObj))
+  if( !PyCallable_Check( pyFuncObj ))
   {
-    PyErr_SetString(PyExc_TypeError, "Argument must be callable.");
+    PyErr_SetString( PyExc_TypeError, "Argument must be callable." );
     return nullptr;
   }
 
   // Call the C++ function to set the evaluate function
-  func->setEvaluateFunction(pyFuncObj);
+  func->setEvaluateFunction( pyFuncObj );
 
   Py_RETURN_NONE;
 }
@@ -181,14 +181,14 @@ static PyMethodDef PyPythonFunction_methods[] = {
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyTypeObject PyPythonFunctionType = {
-  PyVarObject_HEAD_INIT(nullptr, 0)
-  .tp_name = "pygeosx.PythonFunction",
+  PyVarObject_HEAD_INIT( nullptr, 0 )
+    .tp_name = "pygeosx.PythonFunction",
   .tp_basicsize = sizeof(PyPythonFunction),
   .tp_repr = PyPythonFunction_repr,
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
   .tp_doc = PyPythonFunction::docString,
   .tp_methods = PyPythonFunction_methods,
-  .tp_base = getPyGroupType(),  
+  .tp_base = getPyGroupType(),
   .tp_new = PyPythonFunction_new,
 };
 

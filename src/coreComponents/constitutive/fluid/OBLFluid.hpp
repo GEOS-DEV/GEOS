@@ -57,7 +57,7 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
-  */
+   */
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     // input
@@ -69,7 +69,7 @@ public:
    * @brief getter to the pointer to OBL operators table
    * @return pointer to OBL operators table.
    */
-  MultivariableTableFunction const& getTable() const
+  MultivariableTableFunction const & getTable() const
   {
     GEOS_ERROR_IF( m_OBLOperatorsTable == nullptr, "m_OBLOperatorsTable is not initialized" );
     return *m_OBLOperatorsTable;
@@ -78,8 +78,8 @@ public:
    * @brief getter to the Python-based evaluator
    * @return pointer to the Python-based evaluator.
    */
-  template <typename INDEX_T = longIndex>
-  PythonFunction<INDEX_T> * getPythonFunction()
+  template< typename INDEX_T = longIndex >
+  PythonFunction< INDEX_T > * getPythonFunction()
   {
     GEOS_ERROR_IF( m_pythonFunction == nullptr, "m_pythonFunction is not initialized" );
     return m_pythonFunction;
@@ -123,15 +123,15 @@ private:
   /// OBL operators table function tabulated vs all primary variables
   MultivariableTableFunction const * m_OBLOperatorsTable;
 
-  /// OBL operators with access to Python-base exact evaluator 
-  PythonFunction<longIndex> * m_pythonFunction;
+  /// OBL operators with access to Python-base exact evaluator
+  PythonFunction< longIndex > * m_pythonFunction;
 
   /// Flag to check if contitutive is initialized or not
   bool m_isInitialized = false;
 
   /**
    * @copydoc dataRepository::Group::postInputInitialization()
-   */  
+   */
   virtual void postInputInitialization() override;
 };
 

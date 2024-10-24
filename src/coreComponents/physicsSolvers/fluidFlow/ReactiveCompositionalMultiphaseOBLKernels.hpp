@@ -777,13 +777,13 @@ public:
         real64 phaseCompGrad = OBLValsJ[GRAD_OP + p * numDofs + c] - OBLValsI[GRAD_OP + p * numDofs + c];
 
         // phase existence check
-        if (OBLValsI[UPSAT_OP + p] * OBLValsJ[UPSAT_OP + p] > phaseExistenceTolerance)
+        if( OBLValsI[UPSAT_OP + p] * OBLValsJ[UPSAT_OP + p] > phaseExistenceTolerance )
           phasePresenceMult = 1.0;
         else
           phasePresenceMult = 0.0;
 
         // use arithmetic mean for multiplier
-        real64 phaseGammaDDiff = m_dt * phasePresenceMult * transD * (m_referencePorosity[erI][esrI][eiI] * OBLValsI[UPSAT_OP + p] + 
+        real64 phaseGammaDDiff = m_dt * phasePresenceMult * transD * (m_referencePorosity[erI][esrI][eiI] * OBLValsI[UPSAT_OP + p] +
                                                                       m_referencePorosity[erJ][esrJ][eiJ] * OBLValsJ[UPSAT_OP + p]) * 0.5;
 
         stack.localFlux[c] -= phaseGammaDDiff * phaseCompGrad;         // diffusion term

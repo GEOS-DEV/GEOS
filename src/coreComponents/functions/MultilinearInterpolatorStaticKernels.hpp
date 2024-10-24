@@ -32,22 +32,22 @@ namespace geos
  *
  * @tparam NUM_DIMS number of dimensions (inputs)
  * @tparam NUM_OPS number of interpolated functions (outputs)
- * @tparam INDEX_T datatype used for indexing in multidimensional space 
+ * @tparam INDEX_T datatype used for indexing in multidimensional space
  */
 template< integer NUM_DIMS, integer NUM_OPS, typename INDEX_T = __uint128_t >
-class MultilinearInterpolatorStaticKernel : public MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>
+class MultilinearInterpolatorStaticKernel : public MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >
 {
 public:
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::numDims;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::numOps;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::numVerts;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisMinimums;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisMaximums;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisPoints;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisSteps;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisStepInvs;
-  using MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::m_axisHypercubeMults;
-  using typename MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS, INDEX_T>::longIndex;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::numDims;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::numOps;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::numVerts;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::m_axisMinimums;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::m_axisMaximums;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::m_axisPoints;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::m_axisSteps;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::m_axisStepInvs;
+  using MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::m_axisHypercubeMults;
+  using typename MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS, INDEX_T >::longIndex;
 
   /**
    * @brief Construct a new Multilinear Interpolator Static Kernel object
@@ -60,19 +60,19 @@ public:
    * @param[in] axisHypercubeMults  hypercube index mult factors for each axis
    * @param[in] hypercubeData table data stored per hypercube
    */
-  MultilinearInterpolatorStaticKernel(arrayView1d< real64 const > const & axisMinimums,
-                                      arrayView1d< real64 const > const & axisMaximums,
-                                      arrayView1d< integer const > const & axisPoints,
-                                      arrayView1d< real64 const > const & axisSteps,
-                                      arrayView1d< real64 const > const & axisStepInvs,
-                                      arrayView1d< longIndex const > const & axisHypercubeMults,
-                                      arrayView1d< real64 const > const & hypercubeData ):
-    MultilinearInterpolatorBaseKernel<NUM_DIMS, NUM_OPS>( axisMinimums,
-                                                          axisMaximums,
-                                                          axisPoints,
-                                                          axisSteps,
-                                                          axisStepInvs,
-                                                          axisHypercubeMults),
+  MultilinearInterpolatorStaticKernel( arrayView1d< real64 const > const & axisMinimums,
+                                       arrayView1d< real64 const > const & axisMaximums,
+                                       arrayView1d< integer const > const & axisPoints,
+                                       arrayView1d< real64 const > const & axisSteps,
+                                       arrayView1d< real64 const > const & axisStepInvs,
+                                       arrayView1d< longIndex const > const & axisHypercubeMults,
+                                       arrayView1d< real64 const > const & hypercubeData ):
+    MultilinearInterpolatorBaseKernel< NUM_DIMS, NUM_OPS >( axisMinimums,
+                                                            axisMaximums,
+                                                            axisPoints,
+                                                            axisSteps,
+                                                            axisStepInvs,
+                                                            axisHypercubeMults ),
     m_hypercubeData ( hypercubeData )
   {};
 protected:
