@@ -359,6 +359,8 @@ private:
                           ParticleBlockManagerABC & particleBlockManager,
                           arrayView1d< string const > const & );
 
+  void generateEmbeddedFractures();
+
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate
    *   number of quadrature point.
