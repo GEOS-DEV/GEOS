@@ -116,6 +116,9 @@ public:
                        real64 const & creepA,
                        real64 const & creepB,
                        real64 const & creepC,
+                       real64 const & creepD,
+                       real64 const & creepE,
+                       real64 const & creepF,
                        real64 const & strainHardeningN,
                        real64 const & strainHardeningK,
                        real64 const & plasticStrainTolerance,
@@ -173,6 +176,9 @@ public:
     m_creepA( creepA ),
     m_creepB( creepB ),
     m_creepC( creepC ),
+    m_creepD( creepD ),
+    m_creepE( creepE ),
+    m_creepF( creepF ),
     m_strainHardeningN( strainHardeningN ),
     m_strainHardeningK( strainHardeningK ),
     m_plasticStrainTolerance(plasticStrainTolerance),
@@ -468,6 +474,9 @@ private:
   real64 const & m_creepA;
   real64 const & m_creepB;
   real64 const & m_creepC;
+  real64 const & m_creepD;
+  real64 const & m_creepE;
+  real64 const & m_creepF;
   real64 const & m_strainHardeningN;
   real64 const & m_strainHardeningK;
   real64 const & m_plasticStrainTolerance;
@@ -638,14 +647,6 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   oldPlasticStrain[4] *= 2.0;
   oldPlasticStrain[5] *= 2.0;
 
-  // Update effective elastic properties
-  m_bulkModulus[k] = m_b0 + m_b1;
-  m_shearModulus[k] = m_g0;
-  
-  // MH:TODO set wavespeed based on actual pressure-dependent bulk modulus, not the high-pressure limit.
-  // m_wavespeed[k][0] = sqrt( ( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
-  m_wavespeed[k][0] = sqrt( ( m_b0 + m_b1 + (4.0/3.0) * m_g0 ) / m_density[k][q] );  //MH: should this be [0] or [q]?
-
   real64 characteristicLength = m_lengthScale[k];
   real64 oldZeta = 0.0;
   real64 oldCoher = 1.0 - m_damage[k][q];
@@ -655,6 +656,27 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 newPorosity;
   real64 newStress[6] = {0.};
   real64 newPlasticStrain[6] = {0.};
+
+  computeElasticProperties( oldStress,
+                            oldPlasticStrain,
+		                        0.,
+		                        0.,
+		                        0.,             // Matrix bulk modulus
+		                        0,             // Fluid bulk modulus
+		                        0.,             // Term to simplify the fluid model expressions
+		                        0.,            // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
+		                        0.,			    // Initial porosity (inferred from crush curve, used for fluid model/
+		                        m_bulkModulus[k],
+		                        m_shearModulus[k] = m_g0
+  );
+
+    // // Update effective elastic properties
+    // m_bulkModulus[k] = m_b0 + m_b1;
+    // m_shearModulus[k] = m_g0;
+  
+  // MH:TODO set wavespeed based on actual pressure-dependent bulk modulus, not the high-pressure limit.
+  // m_wavespeed[k][0] = sqrt( ( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
+  m_wavespeed[k][0] = sqrt( ( m_b0 + m_b1 + (4.0/3.0) * m_g0 ) / m_density[k][q] );  //MH: should this be [0] or [q]?
 
   int errorFlag = computeStep( D,               // strain "rate"
                timeIncrement,                     // time step (s)
@@ -796,6 +818,13 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
   real64 bulk, shear;
 
+
+  real64 p_old;
+  real64 evp_old;
+  real64 p_new;
+  real64 evp_new;
+  real64 trDdt;
+
   // (1) Define conservative elastic properties based on the high-pressure
   // limit of the bulk modulus function. The bulk modulus function can be
   // without stress and plastic strain arguments to return the
@@ -885,6 +914,9 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 A = m_creepA;  // volumetric creep rate parameter
     real64 B = m_creepB;  // volumetric creep rate parameter
     real64 C = m_creepC;  // volumetric creep rate parameter
+    real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
+    real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
+    real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
 
     real64 stress_iso[6] = { 0 };
     real64 stress_dev[6] = { 0 };
@@ -915,8 +947,21 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     ep_iso[2] = ep_iso_old;
 
    	real64 sigma_vm_old = sqrt( 3.0 * J2_old );
-		computeElasticProperties( bulk,
-                              shear );
+
+  // Compute actual elastic properties, above we computed the "conservative" upper limit
+  // for elastic properties to be used in the step division calc.
+   computeElasticProperties( sigma_old,
+                              ep_old,
+                              m_p3,
+                              fluid_pressure_initial,
+                              Km,             // Matrix bulk modulus
+                              Kf,             // Fluid bulk modulus
+                              C1,             // Term to simplify the fluid model expressions
+                              ev0,            // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
+                              phi_i,			    // Initial porosity (inferred from crush curve, used for fluid model/
+                              bulk,
+                              shear
+    );
 		real64 elasticVMShearStrain = sigma_vm_old / ( 3 * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
 
 		if ( elasticVMShearStrain > 1.e-12 )
@@ -941,8 +986,6 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 		}
 
 	  // volumetric creep ----------------
-
-
     real64 p = -iso_old;  // hydrostatic pressure, positive in compression
 
     // volumetric plastic strain, negative in compression
@@ -950,24 +993,34 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A*exp(-p/B));    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset );    
 
     // uncomment for debugging:
-    //		  std::cout<<"evp = "<<evp<<", phi_p = "<<phi_p<<", phi_e = "<<phi_e<<std::endl;
+    //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
 
-    if ( (phi_p > phi_e) && (p > 1.e-12) && (C > 0) )
+    // TODO: have the creep model use actual bulk, not the conservative bulk=b0+b1
+
+    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 0) && ( evp + m_p3 > 1.e-10 ) )
  		  {  // creep compaction
- 			  real64 dphidt = -1.0*p*C*( phi_p - phi_e );  // creep compaction rate:
+ 			  real64 dphidt = -1.0*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
  			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
  			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
- 			  real64 devp = evp_c - evp;  // creep vol. strain increment
- 			  real64 p_c = std::max( 0., p + bulk*devp );  // relaxed pressure after creep.
+ 			  evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
+        real64 devp = evp_c - evp;  // creep vol. strain increment
 
-        // uncomment for debugging:
-        // real64 evp_0 = log( (phi_i - 1. ) / ( phi_p - 1. ) ); // vol. strain before creep, computed from porosity (uncomment for debugging)
-        // std::cout<<"creep compaction:phi_p = "<<phi_p<<", phi_e = "<<phi_e<<", phi_c = "<<phi_c<<", dphiDt = "<<dphidt
-        // <<", evp_0 = "<<evp_0<<", evp = "<<evp<<", devp = "<<devp<<", bulk = "<<bulk
-        // <<", p_old = "<<p<<", p_c = "<<p_c<<std::endl;
+        real64 p_c;  // pressure after relaxation.
+
+        // We don't want to allow more plastic vol strain than the current elastic vol strain.
+        if ( devp < - p / bulk )
+        { // increment in p. vol strain is greater than current elastic vol strain.
+           devp = -p/bulk;
+           p_c = 0.;
+           evp_c = evp + devp;
+        }
+        else
+        {
+          p_c = std::max( 0., p + bulk*devp );  // relaxed pressure after creep.
+        }
 
         // update stress and plastic strain values after creep
         stress_iso[0] = -1.0*p_c;
@@ -985,6 +1038,9 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
         0.0, // Term to simplify the fluid model expressions
         0.0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
         0.0 );
+
+        // uncomment for debugging:
+        //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
  		  }
 
 	    // Reassemble the stress with a scaled deviatoric stress tensor
@@ -1018,6 +1074,15 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                   X_new,
                                   Zeta_new,
                                   coher_new );
+
+    p_old = (-1./3.)*( sigma_old[0] + sigma_old[1] + sigma_old[2] );
+    evp_old = ( ep_old[0] + ep_old[1] + ep_old[2] );
+    p_new = (-1./3.)*( sigma_new[0] + sigma_new[1] + sigma_new[2] );
+    evp_new = ( ep_new[0] + ep_new[1] + ep_new[2] );
+    trDdt = ( D[0] + D[1] + D[2] )*dt;
+
+    std::cout<<"Substep: trDdt = "<<trDdt<<", p_old = "<<p_old<<", evp_old = "<<evp_old<<", X_old = "<<X_old<<", p_new = "<<p_new<<", evp_new = "<<evp_new<<", X_new = "<<X_new<<std::endl;
+
 
 
   // (6) Check error flag from substep calculation:
@@ -1163,11 +1228,12 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 		}
 
 		// Elastic-plastic coupling
-		if ( evp < 0.0 )
+		if ( evp < -1.e-12 )
         {
             bulk = bulk - m_b3 * exp( m_b4 / evp );
         }
 	}
+
 
 
     // In  compression, or with fluid effects if the strain is more compressive
@@ -1210,7 +1276,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 	//
 	// If the user has specified a nonzero value of G1, the shear modulus will be defined
   // from a poisson's ratio nu = g1+g2*exp(g3/I1)
-	// to vary with pressure so the drained Poisson's ratio transitions from G1 to G1+G2 as
+	// to vary with pressure so the drained Poisson's ratio transitions from G1+G2 to G1 as
 	// the pressure increases relative to g3.  Treatment of fluid effects has not yet been developed.
   
   shear = m_g0;  // Default behavior is constant shear modulus
@@ -1226,6 +1292,8 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
     nu = std::min( std::max( nu, 0.5 ), 0.0  );
 		shear = 1.5 * bulk * ( 1.0 - 2.0 * nu ) / ( 1.0 + nu );
 	}
+
+  shear = fmax(shear, m_g0);
 }
 
 // [nsub] = computeStepDivisions(X,Zeta,ep,sigma_n,sigma_trial)
@@ -1378,7 +1446,7 @@ void GeomechanicsUpdates::computeCoher( const real64 & lch,       // length scal
 ) const
 {
 	coher_new = coher_old;
-	if( Gf > 0 )
+	if( Gf > 1.e-16 )
 	{
 		// real64 d_I1 = I1_trial - I1_0; // Seemed unused
 		if ( d_evp > 0 && ( I1_trial - I1_0 ) > 0 )
@@ -1807,7 +1875,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
     //if(fabs(I1_trial - I1_new)>(m_mat_geo_B0[p_mat]*TOL) && Sign(I1_trial - I1_new)!=Sign(I1_trial - I1_0)){
     real64 sgnI1tmn = ( (I1_trial - I1_new) < 0.0 ) ? ( -1.0 ) : ( 1.0 );
     real64 sgnI1tm0 = ( (I1_trial - I1_0) < 0.0 ) ? ( -1.0 ) : ( 1.0 );
-    if( std::abs( sgnI1tmn - sgnI1tm0 ) > 1e-12 ){
+    if( abs( sgnI1tmn - sgnI1tm0 ) > 1e-12 ){
       eta_out = eta_mid;
       if( i >= imax ){
         // solution failed to converge within the allowable iterations, which means
@@ -2567,6 +2635,9 @@ public:
     /// string/key for rate dependence parameter 2
     static constexpr char const * t2RateDependenceString() { return "t2RateDependence"; }
 
+    /// string/key for fracture energy release rate
+    static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
+
     /// string/key for peak t1 shear limit parameter
     static constexpr char const * peakT1String() { return "peakT1"; }
 
@@ -2581,9 +2652,6 @@ public:
 
     /// string/key for nonassociativity parameter
     static constexpr char const * betaString() { return "beta"; }
-
-    /// string/key for fracture energy release rate
-    static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
 
     /// string/key for creep flag
     static constexpr char const * creepString() { return "enableCreep"; }
@@ -2602,6 +2670,15 @@ public:
 
     /// string/key for creep C parameter
     static constexpr char const * creepCString() { return "creepC"; }
+
+    /// string/key for creep C parameter
+    static constexpr char const * creepDString() { return "creepD"; }
+
+    /// string/key for creep C parameter
+    static constexpr char const * creepEString() { return "creepE"; }
+
+    /// string/key for creep C parameter
+    static constexpr char const * creepFString() { return "creepF"; }
 
     /// string/key for strain-hardening N parameter
     static constexpr char const * strainHardeningNString() { return "strainHardeningN"; }
@@ -2681,6 +2758,9 @@ public:
                                 m_creepA,
                                 m_creepB,
                                 m_creepC,
+                                m_creepD,
+                                m_creepE,
+                                m_creepF,
                                 m_strainHardeningN,
                                 m_strainHardeningK,
                                 m_plasticStrainTolerance,
@@ -2745,6 +2825,9 @@ public:
                           m_creepA,
                           m_creepB,
                           m_creepC,
+                          m_creepD,
+                          m_creepE,
+                          m_creepF,
                           m_strainHardeningN,
                           m_strainHardeningK,
                           m_plasticStrainTolerance,
@@ -2846,6 +2929,7 @@ protected:
   real64 m_b3;
   real64 m_b4;
 
+
   // Tangent elastic shear modulus parameters
   real64 m_g0;
   real64 m_g1;
@@ -2893,6 +2977,9 @@ protected:
   real64 m_creepA;
   real64 m_creepB;
   real64 m_creepC;
+  real64 m_creepD;
+  real64 m_creepE;
+  real64 m_creepF;
 
   // strain-hardening parameters
   real64 m_strainHardeningN;

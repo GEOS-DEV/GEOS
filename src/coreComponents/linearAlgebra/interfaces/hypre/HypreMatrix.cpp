@@ -1049,21 +1049,12 @@ void HypreMatrix::getRowCopy( globalIndex const globalRowIndex,
   GEOS_LAI_ASSERT_GE( values.size(), numEntries );
 
   // XXX: this is only correct on host! We should deprecate row-wise functions.
-  // GEOS_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
-  //                                                      -1,
-  //                                                      &numEntries,
-  //                                                      &row,
-  //                                                      hypre::toHypreBigInt( colIndices ),
-  //                                                      values ) );
   GEOS_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
-                                                    -1,
-                                                    &numEntries,
-                                                    &row,
-                                                    nullptr,
-                                                    hypre::toHypreBigInt( colIndices ),
-                                                    values, 
-                                                    0 ) );
-
+                                                       -1,
+                                                       &numEntries,
+                                                       &row,
+                                                       hypre::toHypreBigInt( colIndices ),
+                                                       values ) );
 }
 
 void HypreMatrix::extractDiagonal( HypreVector & dst ) const

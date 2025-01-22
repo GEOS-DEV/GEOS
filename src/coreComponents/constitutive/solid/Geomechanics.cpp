@@ -58,6 +58,9 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_creepA( 0.0 ),
   m_creepB( 0.0 ),
   m_creepC( 0.0 ),
+  m_creepD( 1.0 ),
+  m_creepE( 0.0 ),
+  m_creepF( 1.0 ),
   m_strainHardeningN( 0.0 ),
   m_strainHardeningK( 0.0 ),
   m_plasticStrainTolerance( 1.0e-10 ),
@@ -152,6 +155,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Rate dependence parameter 2" );
 
+  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Fracture energy release rate parameter" );
+
   registerWrapper( viewKeyStruct::peakT1String(), &m_peakT1 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Peak T1 shear limit parameter" );
@@ -195,6 +202,18 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::creepCString(), &m_creepC ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep C parameter" );
+  
+  registerWrapper( viewKeyStruct::creepDString(), &m_creepD ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep D parameter" );
+
+  registerWrapper( viewKeyStruct::creepEString(), &m_creepE ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep E parameter" );
+
+  registerWrapper( viewKeyStruct::creepFString(), &m_creepF ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep F parameter" );
 
   registerWrapper( viewKeyStruct::strainHardeningNString(), &m_strainHardeningN ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -253,6 +272,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point length scale values" );
+
 }
 
 
@@ -306,6 +326,7 @@ void Geomechanics::postInputInitialization()
     GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
     // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
     // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
+
 }
 
 

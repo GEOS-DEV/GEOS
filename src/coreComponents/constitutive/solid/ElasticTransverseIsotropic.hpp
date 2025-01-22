@@ -336,6 +336,14 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   v[2][0] = -rotationAxis[1];
   v[2][1] = rotationAxis[0];
 
+  real64 v_copy[3][3] = { { 0 } };
+  v_copy[0][1] = -rotationAxis[2];
+  v_copy[0][2] = rotationAxis[1];
+  v_copy[1][2] = -rotationAxis[0];
+  v_copy[1][0] = rotationAxis[2];
+  v_copy[2][0] = -rotationAxis[1];
+  v_copy[2][1] = rotationAxis[0];
+
   real64 c = LvArray::tensorOps::AiBi< 3 >( axis, unrotatedMaterialDirection );
   real64 s = LvArray::tensorOps::l2Norm< 3 >( rotationAxis );
 
@@ -344,7 +352,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   LvArray::tensorOps::add< 3, 3 >( R, v);
 
   real64 temp[3][3] = { {0} };
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v, v );
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v_copy, v );
   LvArray::tensorOps::scale< 3, 3 >( temp, ( 1 - c ) / ( s * s ));
   LvArray::tensorOps::add< 3, 3 >( R, temp );
 
