@@ -1185,7 +1185,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 & bulk,
     bulk  = m_b0 + m_b1;  // Bulk Modulus
 
     shear = m_g0;  // Default behavior is constant shear modulus   
-    if(m_g1 != 0.0) // Poisson ratio control.
+    if( isNotZero( m_g1 ) ) // Poisson ratio control.  // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
     {
       real64 nu = m_g1 + m_g2; // high-pressure limit.
 
@@ -1238,7 +1238,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 
     // In  compression, or with fluid effects if the strain is more compressive
     // than the zero fluid pressure volumetric strain:
-	if ( evp <= ev0 && Kf != 0.0 )
+	if ( evp <= ev0 && std::abs( Kf ) > DBL_EPSILON )   // Avoid GCC [-Werror=float-equal]
     {   // ..........................................................Undrained
 		// Compute the porosity from the strain using Homel's simplified model, and
 		// then use this in the Biot-Gassmann formula to compute the bulk modulus.
@@ -1281,7 +1281,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
   
   shear = m_g0;  // Default behavior is constant shear modulus
   
-  if(m_g1 != 0.0) // Poisson ratio control.
+  if( isNotZero( m_g1 ) ) // Poisson ratio control.  // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
   {
     real64 nu = m_g1;
     if ( I1 < -1.e-12 ) // in compression scale the poisson ratio
@@ -1504,7 +1504,7 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
       X = m_p0 * std::pow( 1.0 + evp, 1.0 / ( m_p0 * m_p1 * m_p3 ) );
     }
 
-    if( Kf !=0.0 && evp <= ev0 ) { // ------------------------------------------- Fluid Effects
+    if( isNotZero( Kf )  && evp <= ev0 ) { // ------------------------------------------- Fluid Effects  // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
       // First we evaluate the elastic volumetric strain to yield from the
       // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
       // the drained material.  Xfit was computed as X above.
@@ -1740,7 +1740,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 
 	// If there is no porosity (p3=0) and no fluid effects (Kf=0) then the nonhardening
 	// return will be the solution
-	if ( (m_p3 == 0.0)&&(Kf==0.0) ){
+	if ( isZero( m_p3) && isZero( Kf ) ){   // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
         Zeta_new = Zeta_old,
 		X_new = X_old;
 
@@ -2192,7 +2192,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   rJ2_new = r_to_rJ2*r_0;
 
   LvArray::tensorOps::copy< 6 >( S_new, S_trial );
-  if ( rJ2_trial != 0.0 )
+  if ( isNotZero( rJ2_trial ) ) // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
   {
 	  // S_new = S_trial; //S_trial*rJ2_new/rJ2_trial;
 	  // S_new *= rJ2_new/rJ2_trial;
@@ -2449,7 +2449,7 @@ real64 GeomechanicsUpdates::computedZetadevp( real64 const & fluid_pressure_init
   // plastic strain (evp).
   real64 dZetadevp = 0.0;           // Evolution rate of isotropic backstress
 
-  if (evp <= ev0 && Kf != 0.0) { // .................................... Fluid effects are active
+  if (evp <= ev0 && isNotZero( Kf ) ) { // .................................... Fluid effects are active // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
     real64 pfi = fluid_pressure_initial; // initial fluid pressure
 
     // This is an expensive calculation, but fasterexp() seemed to cause errors.
@@ -2488,21 +2488,21 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
     peakT1_h = m_peakT1;
   }
 
-  if (m_fSlope > 0.0 && m_peakT1 >= 0.0 && m_stren == 0.0 && m_ySlope == 0.0)
+  if (m_fSlope > 0.0 && m_peakT1 >= 0.0 && isZero( m_stren ) && isZero( m_ySlope ) )  // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
   {// ----------------------------------------------Linear Drucker-Prager
     a1 = m_peakT1 * m_fSlope;
     a2 = 0.0;
     a3 = 0.0;
     a4 = m_fSlope;
   }
-  else if (m_fSlope == 0.0 && m_peakT1 == 0.0 && m_stren > 0.0 && m_ySlope == 0.0)
+  else if ( isZero( m_fSlope ) && isZero( m_peakT1 ) && m_stren > 0.0 && isZero( m_ySlope ) )  // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
   { // ------------------------------------------------------- Von Mises
     a1 = stren_h;
     a2 = 0.0;
     a3 = 0.0;
     a4 = 0.0;
   }
-  else if (m_fSlope > 0.0 && m_ySlope  == 0.0 && m_stren > 0.0 && m_peakT1 == 0.0)
+  else if (m_fSlope > 0.0 && isZero( m_ySlope ) && m_stren > 0.0 && isZero( m_peakT1 ) ) // Avoid GCC [-Werror=float-equal] by using isEqual utility (Jay A)
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
     a1 = stren_h;
     a2 = m_fSlope / stren_h;
