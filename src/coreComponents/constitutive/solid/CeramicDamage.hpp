@@ -592,7 +592,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   else
   { // PLASTIC
     real64 oldAccumulatedModeIWork = m_accumulatedModeIWork[k];  // beginning-of-step stress work
-    real64 elasticStrainEnergy; // elastic strain energy computed from end-of-step stress.
+    real64 elasticStrainEnergy = 0.0; // elastic strain energy computed from end-of-step stress.  ( initialized to 0.0 to avoid GCC [-werror=maybe-uninitialized])
     
     if( m_enableEnergyFailureCriterion )   
     { // Adjust damage so that the total dissiaption associated with setting damage = 1 is consistent

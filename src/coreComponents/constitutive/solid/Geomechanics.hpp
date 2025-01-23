@@ -1653,10 +1653,10 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 		}
    }
 
-  real64 a1,
-         a2,
-         a3,
-         a4;
+  real64 a1 = 0.0,
+         a2 = 0.0,
+         a3 = 0.0,
+         a4 = 0.0;   // initialized to 0.0 to avoid GCC [-Werror=maybe-uninitialized] 
   computeLimitParameters( a1,
                           a2,
                           a3,
@@ -2111,10 +2111,10 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   // Compute the a1,a2,a3,a4 parameters from FSLOPE,YSLOPE,STREN and PEAKI1,
   // which are perturbed by variability according to coher.  These are then
   // passed down to the computeYieldFunction, to avoid the expense of computing a3
-  real64 a1,
-         a2,
-         a3,
-         a4;
+  real64 a1 = 0.0,
+         a2 = 0.0,
+         a3 = 0.0,
+         a4 = 0.0;
   computeLimitParameters( a1,
                           a2,
                           a3,
