@@ -1,14 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!--maxCompFractionChange="0.005" -->
   <Solvers>
     <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
       temperature="368.15"
-      formulationType="OverallComposition"
       minScalingFactor="1e-10"
       maxCompFractionChange="0.2"
       useMass="1"

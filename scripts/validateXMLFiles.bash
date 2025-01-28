@@ -1,18 +1,8 @@
 #!/bin/bash
 
-# check if -a or --all is provided as 1st arg
-METHOD=all
-case $1 in
-    -a|--all) METHOD=all; shift
-    ;;
-    -g|--git) METHOD=git; shift
-    ;;
-    *)
-esac
-
 # nothing to do if schema file not given
 if [ -z "$1" ]; then
-    echo "Usage: $0 [-a|--all|-g|--git] <schema> [<path>...]"
+    echo "Usage: $0 <schema> [<path>...]"
     exit
 fi
 
@@ -33,45 +23,49 @@ if ! hash xmllint &> /dev/null; then
     exit
 fi
 
-# check if git is present, if needed
-if [ "$METHOD" = "git" ] && ! (hash git &> /dev/null); then
-    >&2 echo "Error: git is required when -g or --git is specified"
-    exit
-fi
-
 abs_path ()
 {
     if [ "$#" -gt 0 ]; then
-        realpath -s "$@"
+        #realpath -s "$@"
+        realpath "$@"
     fi
 }
 
-list_xml_files_all () 
+list_xml_files_at_path() 
 {
-    abs_path $(find $1 -name "*.xml" -not -path "*/\.*")
-}
-
-# git does not have -C flag prior to 1.8.5, so we emulate it with cd
-# this is actually the most reliable way, although not the fastest
-# run in a subprocess so as to avoid having to cd back
-list_xml_files_git ()
-{
-    local git_root=$(cd $path; git rev-parse --show-toplevel 2>/dev/null)
-    if ! [ $? -eq 0 ]; then
-        >&2 echo "Error: $path does not appear to be part of a git repository"
-        exit 1
-    fi
-    local prefix=$(cd $path; git rev-parse --show-prefix 2>/dev/null)
-    git --git-dir=$git_root/.git ls-files $prefix | grep -e .*[.]xml$ | sed "s|^|$git_root/|g"
+    abs_path $(find . -type f -name "*.xml" -not -path "*/\.*")
 }
 
 # create/nullify the log file
 echo -n > $LOGFILE
-
 # validate each path separately and write results in the log
 for path in "$@"; do
-    list_xml_files_$METHOD $path | $XARGS xmllint --schema $SCHEMA --noout >> $LOGFILE 2>&1
+    # emit location and check directory
+    echo "Validating in directory: $path"
+    if [ ! -d "$path" ]; then
+        echo "Directory not found: $path" >&2
+        exit 1
+    fi
+    
+    cd "$path" || continue
+    collected_xml_files=$(list_xml_files_at_path)
+
+    if [ -z "$collected_xml_files" ]; then
+        echo "No XML files found in: $path"
+        continue
+    fi
+    
+    echo "List of xml files to validate:"
+    echo "$collected_xml_files"
+    
+    for xml_file in $collected_xml_files; do
+        xmllint --schema $SCHEMA --noout "$xml_file" >> $LOGFILE 2>&1
+        if [ $? -ne 0 ]; then
+            echo "Validation failed for $xml_file" >> $LOGFILE
+        fi
+    done    
 done
+
 
 # print any failed validations on the stderr
 grep -v validates $LOGFILE >&2
