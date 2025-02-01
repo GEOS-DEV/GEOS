@@ -104,9 +104,11 @@ void ImplicitQDRateAndState::updateSlip( ElementSubRegionBase & subRegion, real6
   } );
 }
 
-real64 ImplicitQDRateAndState::setNextDt( real64 const & currentDt, DomainPartition & domain )
+real64 ImplicitQDRateAndState::setNextDt( real64 const & currentTime,
+                                          real64 const & currentDt,
+                                          DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( currentDt );
+  GEOS_UNUSED_VAR( currentTime, currentDt );
 
   real64 maxSlipRate = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
