@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR  #3227 (2024-02-01)
+=====================
+Add targetRegion for perforations (optional).
+
 PR  #3395 (2024-01-22)
 =====================
 Add new fields and change the default input for some tests.
