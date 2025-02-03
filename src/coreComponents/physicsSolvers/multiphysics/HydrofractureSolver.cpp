@@ -1161,7 +1161,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( d
 
               if( newFractureElements.count( fractureElementIndex ) == 0 )
               {
-                initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
+                initialPressure = std::min( initialPressure, fluidPressure[fractureElementIndex] );
                 initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
               }
             }
