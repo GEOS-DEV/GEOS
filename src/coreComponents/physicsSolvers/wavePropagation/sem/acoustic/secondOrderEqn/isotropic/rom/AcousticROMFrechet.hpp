@@ -109,8 +109,8 @@ public:
     static constexpr char const * orderFrechetString() { return "orderFrechet"; }
     static constexpr char const * orderGSString() { return "orderGS"; }
     static constexpr char const * epsilonGSString() { return "epsilonGS"; }
-    static constexpr char const * count_qString() { return "count_q"; }
-    static constexpr char const * totcount_qString() { return "totcount_q"; }
+    static constexpr char const * sizePOD_fString() { return "sizePOD_f"; }
+    static constexpr char const * sizePODString() { return "sizePOD"; }
     static constexpr char const * selectionOrderString() { return "selectionOrder"; }
     static constexpr char const * cycleOrderString() { return "cycleOrder"; }
 
@@ -166,11 +166,28 @@ public:
 			   localIndex const nq,
 			   std::string path);
 
-  void writeInitialConditionsPOD(arrayView1d< real32 const > const stiffnessVector,
-				 int const ordF,
-				 int const cycle);
 
-  void writeInitialConditionsPODFinal(arrayView1d< integer const > const nodeGhostRank);
+  void computeReducedMatrices( arrayView2d< real32 > const massPOD,
+			       arrayView2d< real32 > const massPerturbationPOD,
+			       arrayView2d< real32 > const dampingPOD,
+			       arrayView2d< real32 > const dampingPerturbationPOD,
+			       arrayView1d< real32 const > const mass,
+			       arrayView1d< real32 const > const massPerturbation,
+			       arrayView1d< real32 const > const damping,
+			       arrayView1d< real32 const > const dampingPerturbation,
+			       arrayView1d< localIndex const > const nodesGhostRank );
+
+
+  void computeSeismoTracePOD( real64 const time_n,
+			      real64 const dt,
+			      real64 const timeSeismo,
+			      localIndex iSeismo,
+			      arrayView2d< real64 const > const receiverConstants,
+			      arrayView1d< localIndex const > const receiverIsLocal,
+			      localIndex const nsamplesSeismoTrace,
+			      arrayView1d< real32 const > const var_np1,
+			      arrayView1d< real32 const > const var_n,
+			      arrayView2d< real32 > varAtReceivers );
 
 protected:
 
@@ -202,15 +219,72 @@ private:
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
 
-  /// Pressure_np1 at the receiver location for each time step for each receiver
+  //Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
+
+  //Order of the Frechet derivatives
   localIndex m_orderFrechet;
+
+  //Order of Gram-Schmidt process
   localIndex m_orderGS;
+
+  //Tolerance for Gram-Schmidt process
   real32 m_epsilonGS;
-  array1d< int > m_count_q;
-  localIndex m_totcount_q;
+
+  //Table of selected selected Frechet order and size by time causality
   array2d< int > m_selectionOrder;
+
+  //Table of selected time step for each order by time causality
   array2d< int > m_cycleOrder;
+
+  //Flag to use the ROM solver
+  int m_solverROM;
+
+  //Mass Matrix in the POD basis forward
+  array2d< real32 > m_massPOD;
+
+  //Mass Matrix with perturbation in the pod basis
+  array2d< real32 > m_massPerturbationPOD;
+
+  //Damping Matrix in the POD basis forward
+  array2d< real32 > m_dampingPOD;
+
+  //Damping Matrix with perturbation in the pod basis
+  array2d< real32 > m_dampingPerturbationPOD;
+
+  //Distance of perturbation along the gradient
+  real32 m_alpha;
+
+  //Perturbation for Frechet derivative computation
+  array1d< real32 > m_perturbation;
+
+  //Operator to compute a_np1
+  array2d< real64 > m_OpPOD;
+
+  //Coefficient of the solution in the POD basis at time n+1
+  array1d< real32 > m_a_np1;
+
+  //Coefficient of the solution in the POD basis at time n
+  array1d< real32 > m_a_n;
+
+  //Coefficient of the solution in the POD basis at time n-1
+  array1d< real32 > m_a_nm1;
+
+  //Contribution on POD basis for the source
+  array2d< real64 > m_sourceConstantsPOD;
+
+  //Contribution on POD basis for the receivers
+  array2d< real64 > m_receiverConstantsPOD;
+
+  // Right hand side in the POD basis
+  array1d< real32 > m_rhsPOD;
+
+  //Size of POD basis for each Frechet order
+  array1d< int > m_sizePOD_f;
+
+  //Size of final POD basis
+  int m_sizePOD;
+
 };
 
 
@@ -245,14 +319,21 @@ DECLARE_FIELD( PressureFrechet_np1,
                WRITE_AND_READ,
                "Scalar Frechet derivative of pressure at time n+1." );
 
-
-DECLARE_FIELD( AcousticMassVectorFrechet,
-               "acousticMassVectorFrechet",
+DECLARE_FIELD( AcousticMassPerturbationVector,
+               "acousticMassPerturbationVector",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Diagonal of the Mass Matrix with gradient." );
+               "Diagonal of the Mass Matrix with perturbation." );
+
+DECLARE_FIELD( DampingPerturbationVector,
+               "dampingPerturbationVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Damping Matrix with perturbation." );
 
 DECLARE_FIELD( ForcingRHS_fp1,
                "rhs_fp1",
