@@ -129,7 +129,7 @@ void runTestCase( PairTestCase< FIRST, SECOND > const & testCase, int rankId, in
   std::vector< MpiWrapper::PairType< FIRST, SECOND > > localPairs;
   if( nbRanks == 1 )
   {
-    // Cas spécial : tous les rangs sont combinés en un seul
+    // Special case when we test on only one rank : all rank data are combined
     for( auto const & rankPairs : testCase.pairs )
     {
       localPairs.insert( localPairs.end(), rankPairs.begin(), rankPairs.end());
@@ -137,7 +137,7 @@ void runTestCase( PairTestCase< FIRST, SECOND > const & testCase, int rankId, in
   }
   else
   {
-    // Cas standard : chaque rang récupère ses propres données
+    // MPI testing : each ranks get its own data
     ASSERT_EQ( testCase.pairs.size(), nbRanks )
       << "Test case " << testCase.testName << ": The number of ranks does not match the test case data.";
     localPairs = testCase.pairs[rankId];
