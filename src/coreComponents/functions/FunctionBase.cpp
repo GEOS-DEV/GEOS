@@ -18,6 +18,7 @@
  */
 
 #include "FunctionBase.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -81,6 +82,12 @@ void FunctionBase::setOutputDirectory( string const & dir )
 {
   string & outputDirectory = const_cast< string & >( getOutputDirectory() );
   outputDirectory = dir;
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    makeDirsForPath( dir );
+  }
+  MpiWrapper::barrier( MPI_COMM_GEOS );
 }
 
 
