@@ -101,6 +101,8 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
       subRegion.registerField< fields::contact::slip >( getName() );
 
+      subRegion.registerField< fields::contact::tangentialTraction >( getName() );
+
       subRegion.registerField< fields::contact::deltaSlip >( getName() ).
         setDimLabels( 1, labelsTangent ).reference().resizeDimension< 1 >( 2 );
 
@@ -184,10 +186,9 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
 
   array1d< globalIndex > totalCounter( 4 );
 
-  MpiWrapper::allReduce( localCounter.data(),
-                         totalCounter.data(),
-                         4,
-                         MPI_SUM,
+  MpiWrapper::allReduce( localCounter,
+                         totalCounter,
+                         MpiWrapper::Reduction::Sum,
                          MPI_COMM_GEOS );
 
   numStick    = totalCounter[0];
