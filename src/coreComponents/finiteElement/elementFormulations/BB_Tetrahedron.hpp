@@ -167,8 +167,12 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void calcN( localIndex const,
-                     real64 (&)[numNodes] )
+                     real64 (& N)[numNodes] )
   {
+    for( int a=0; a < numNodes; ++a )
+    {
+      N[ a ] = 0;
+    }
     GEOS_ERROR( "Bernstein-Bézier basis is modal, not nodal. No quadrature points are defined." );
   }
 
