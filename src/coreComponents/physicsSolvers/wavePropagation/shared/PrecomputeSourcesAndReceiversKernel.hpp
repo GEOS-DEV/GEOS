@@ -77,7 +77,9 @@ struct PreComputeSourcesAndReceivers
                                        real64 const dt,
                                        real32 const timeSourceFrequency,
                                        real32 const timeSourceDelay,
-                                       localIndex const rickerOrder )
+                                       localIndex const rickerOrder,
+                                       arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
+                                       bool useSourceWaveletTables)
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
@@ -129,7 +131,15 @@ struct PreComputeSourcesAndReceivers
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
+              real64 const time_n = cycle * dt;
+              if(useSourceWaveletTables)
+              {
+                sourceValue[cycle][isrc]= sourceWaveletTableWrappers[ isrc ].compute( &time_n );
+              }
+              else
+              {
               sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              }
             }
 
           }
