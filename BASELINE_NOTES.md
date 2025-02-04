@@ -6,7 +6,7 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3502 (2025-02-03)
+PR #3502 (2025-02-04)
 =====================
 Add array to store the source values in time inside wave solvers
 
