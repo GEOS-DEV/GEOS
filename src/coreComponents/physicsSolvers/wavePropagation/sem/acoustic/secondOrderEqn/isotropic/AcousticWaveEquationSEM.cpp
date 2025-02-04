@@ -146,8 +146,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-   arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers = m_sourceWaveletTableWrappers.toViewConst();
-   bool useSourceWaveletTables = m_useSourceWaveletTables;
+  arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers = m_sourceWaveletTableWrappers.toViewConst();
+  bool useSourceWaveletTables = m_useSourceWaveletTables;
 
   //Correct size for sourceValue
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
@@ -228,7 +228,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
           m_timeSourceDelay,
           m_rickerOrder,
           sourceWaveletTableWrappers,
-          useSourceWaveletTables);
+          useSourceWaveletTables );
       }
     } );
     elementSubRegion.faceList().freeOnDevice();
