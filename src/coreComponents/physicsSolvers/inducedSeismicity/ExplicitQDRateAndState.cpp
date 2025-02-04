@@ -300,12 +300,12 @@ real64 ExplicitQDRateAndState::setNextDt( real64 const & currentDt, DomainPartit
   if( m_successfulStep )
   {
     GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps,
-                                GEOS_FMT( "Adaptive time step successful. The next dt will be {:.2e} s", nextDt ));
+                           GEOS_FMT( "Adaptive time step successful. The next dt will be {:.2e} s", nextDt ));
   }
   else
   {
     GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps,
-                                GEOS_FMT( "Adaptive time step failed. Retry step with dt {:.2e} s", nextDt ));
+                           GEOS_FMT( "Adaptive time step failed. Retry step with dt {:.2e} s", nextDt ));
   }
   return nextDt;
 }

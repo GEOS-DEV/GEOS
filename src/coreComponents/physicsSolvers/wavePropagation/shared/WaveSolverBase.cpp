@@ -332,7 +332,7 @@ void WaveSolverBase::postInputInitialization()
   {
     GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, "Modeling linear DAS data is activated" );
     GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, GEOS_FMT( "Linear DAS formulation: {}",
-                                                            m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
+                                                       m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );

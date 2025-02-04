@@ -44,7 +44,7 @@ struct BHP
 
 struct Rates
 {
-   static constexpr int getMinLogLevel() { return 1; }
+  static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Print rates"; }
 };
 

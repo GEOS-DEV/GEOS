@@ -97,6 +97,7 @@ isLogLevelActive( integer level )
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] logInfoStruct Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
+ * @param[in] group Targetted group to get the log level
  */
 #define GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfoStruct, msg, group ) GEOS_LOG_RANK_0_IF( isLogLevelActive< logInfoStruct >( group.getLogLevel() ), msg );
 

@@ -697,8 +697,8 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
   // time-step when maxForce = 0;
 
-    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( RBubbleDisp ) = ( {:4.2e} )", bubbleResidualNorm ));
-  
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( RBubbleDisp ) = ( {:4.2e} )", bubbleResidualNorm ));
+
 
   return sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
 
@@ -960,10 +960,10 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
   int hasConfigurationConvergedGlobally = (totCondNotConv == 0) ? true : false;
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
-                              GEOS_FMT( "  ALM convergence summary:"
-                                        " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
-                                        globalCondConv[0], globalCondConv[1], globalCondConv[2],
-                                        globalCondConv[3], globalCondConv[4] ));
+                         GEOS_FMT( "  ALM convergence summary:"
+                                   " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
+                                   globalCondConv[0], globalCondConv[1], globalCondConv[2],
+                                   globalCondConv[3], globalCondConv[4] ));
 
   if( hasConfigurationConvergedGlobally )
   {

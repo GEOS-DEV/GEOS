@@ -103,7 +103,7 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
     }
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
-                                GEOS_FMT( "  Iteration: {}, FlowSolver: ", iter+1 ) );
+                           GEOS_FMT( "  Iteration: {}, FlowSolver: ", iter+1 ) );
 
     dtReturnTemporary = flowSolver()->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
 
@@ -119,12 +119,12 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
     {
       m_solverStatistics.logNonlinearIteration();
       GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
-                                  GEOS_FMT( "***** The iterative coupling has converged in {} iterations *****", iter ) );
+                             GEOS_FMT( "***** The iterative coupling has converged in {} iterations *****", iter ) );
       break;
     }
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
-                                GEOS_FMT( "  Iteration: {}, Proppant Solver: ", iter+1 ) );
+                           GEOS_FMT( "  Iteration: {}, Proppant Solver: ", iter+1 ) );
 
     dtReturnTemporary = proppantTransportSolver()->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
 

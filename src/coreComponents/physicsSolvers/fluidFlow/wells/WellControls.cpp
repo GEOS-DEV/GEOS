@@ -348,7 +348,7 @@ void WellControls::postInputInitialization()
   {
     m_targetBHP = isProducer() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
     GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                                GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
+                           GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
   }
 
   // 6.2) Check incoherent information

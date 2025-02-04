@@ -147,7 +147,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   GEOS_LOG_LEVEL_BY_RANK( logInfo::DataCollectorInitialization,
-                               GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
+                          GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
   for( auto collectorPath : m_collectorPaths )
   {
     try

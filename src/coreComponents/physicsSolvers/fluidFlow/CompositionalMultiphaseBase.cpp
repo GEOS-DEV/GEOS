@@ -1495,9 +1495,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       if( !subRegion.hasWrapper( dofKey ) )
       {
         GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
-                                      GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                                getDataContext(), setName, subRegion.getName() ),
-                                      fs );
+                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), setName, subRegion.getName() ),
+                                         fs );
         return;
       }
 

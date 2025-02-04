@@ -87,8 +87,8 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
     if( m_resetDisplacements )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::SolverExecution,
-                                  GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
-                                            getName(), time_n, m_solidSolverName ) );
+                             GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
+                                       getName(), time_n, m_solidSolverName ) );
 
       NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -120,10 +120,10 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       Group & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::SolverExecutionDetails,
-                                  GEOS_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",//2
-                                            getName(), time_n, solidMaterialName,
-                                            m_disableInelasticity ? "OFF" : "ON",
-                                            subRegion.getName() ) );
+                             GEOS_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",     //2
+                                       getName(), time_n, solidMaterialName,
+                                       m_disableInelasticity ? "OFF" : "ON",
+                                       subRegion.getName() ) );
 
       SolidBase & constitutiveRelation = constitutiveModels.getGroup< SolidBase >( solidMaterialName );
       constitutiveRelation.disableInelasticity( m_disableInelasticity );

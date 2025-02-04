@@ -188,7 +188,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     }
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps,
-                                GEOS_FMT( "{} '{}': redistributing mesh...", catalogName(), getName() ) );
+                           GEOS_FMT( "{} '{}': redistributing mesh...", catalogName(), getName() ) );
     vtk::AllMeshes redistributedMeshes =
       vtk::redistributeMeshes( getLogLevel(), allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
     m_vtkMesh = redistributedMeshes.getMainMesh();

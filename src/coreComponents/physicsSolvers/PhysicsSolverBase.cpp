@@ -377,7 +377,7 @@ real64 PhysicsSolverBase::setNextDt( real64 const & currentDt,
                                   m_nonlinearSolverParameters );
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
   GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
-                   GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
+                         GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
 
   if( ( m_numTimestepsSinceLastDtCut >= 0 ) && ( m_numTimestepsSinceLastDtCut < minTimeStepIncreaseInterval ) )
   {
@@ -1086,7 +1086,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                                  GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
+                             GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
 
       if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
       {
@@ -1416,8 +1416,8 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
     if( maxTime > 0 )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::Timers,
-                                          GEOS_FMT( "{}: {} time = {} s (min), {} s (max)",
-                                                    getName(), timer.first, minTime, maxTime ) );
+                             GEOS_FMT( "{}: {} time = {} s (min), {} s (max)",
+                                       getName(), timer.first, minTime, maxTime ) );
     }
   }
 

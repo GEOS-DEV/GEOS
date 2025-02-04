@@ -176,8 +176,8 @@ bool VTKOutput::execute( real64 const time_n,
 {
   {
     GEOS_LOG_LEVEL( logInfo::OutputEvents,
-                         GEOS_FMT( "{}: writing {} at time {} s (cycle number {})",
-                                   getName(), m_fieldNames, time_n + dt, cycleNumber ));
+                    GEOS_FMT( "{}: writing {} at time {} s (cycle number {})",
+                              getName(), m_fieldNames, time_n + dt, cycleNumber ));
     Timer timer( m_outputTimer );
 
     m_writer.setWriteGhostCells( m_writeGhostCells );
