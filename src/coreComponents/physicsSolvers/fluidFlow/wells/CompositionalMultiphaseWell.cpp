@@ -691,6 +691,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::SurfaceCondition >( wellControls.getLogLevel());
   string const massUnit = m_useMass ? "kg" : "mol";
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
@@ -736,6 +737,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                   dPhaseDens,
                                   phaseFrac,
                                   dPhaseFrac,
+                                  logSurfaceCondition,
                                   &useSurfaceConditions,
                                   &surfacePres,
                                   &surfaceTemp,
@@ -761,7 +763,11 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         {
           // we need to compute the surface density
           fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
-
+          if( logSurfaceCondition )
+          {
+            GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
+                                     wellControlsName, surfacePres, surfaceTemp ) );
+          }
 #ifdef GEOS_USE_HIP
           GEOS_UNUSED_VAR( wellControlsName );
 #endif
@@ -797,6 +803,12 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         if constexpr ( IS_THERMAL )
         {
           dCurrentTotalVolRate[COFFSET_WJ::dT] = ( useSurfaceConditions ==  0 ) * currentTotalRate * -dTotalDens[iwelemRef][0][Deriv::dT] * totalDensInv * totalDensInv;
+        }
+
+        if( logSurfaceCondition && useSurfaceConditions )
+        {
+          GEOS_LOG_RANK( GEOS_FMT( "{}: total fluid density at surface conditions = {} {}/sm3, total rate = {} {}/s, total surface volumetric rate = {} sm3/s",
+                                   wellControlsName, totalDens[iwelemRef][0], massUnit, connRate[iwelemRef], massUnit, currentTotalVolRate ) );
         }
 
         dCurrentTotalVolRate[COFFSET_WJ::dQ] = totalDensInv;
@@ -842,25 +854,14 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
             dCurrentPhaseVolRate[ip][COFFSET_WJ::dC+ic] *= currentTotalRate;
           }
           applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], &dCurrentPhaseVolRate[ip][COFFSET_WJ::dC], work.data() );
+
+          if( logSurfaceCondition && useSurfaceConditions )
+          {
+            GEOS_LOG_RANK( GEOS_FMT( "{}: density of phase {} at surface conditions = {} {}/sm3, phase surface volumetric rate = {} sm3/s",
+                                     wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] )  );
+          }
         }
       } );
-
-      if( useSurfaceConditions )
-      {
-        GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceCondition,
-                                GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
-                                          wellControlsName, surfacePres, surfaceTemp ) );
-
-        GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceCondition,
-                                GEOS_FMT( "{}: total fluid density at surface conditions = {} {}/sm3, total rate = {} {}/s, total surface volumetric rate = {} sm3/s",
-                                          wellControlsName, totalDens[iwelemRef][0], massUnit, connRate[iwelemRef], massUnit, currentTotalVolRate ) );
-        for( integer ip = 0; ip < numPhase; ++ip )
-        {
-          GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceCondition,
-                                  GEOS_FMT( "{}: density of phase {} at surface conditions = {} {}/sm3, phase surface volumetric rate = {} sm3/s",
-                                            wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
-        }
-      }
     } );
   } );
 }

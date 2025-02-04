@@ -237,6 +237,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::SurfaceCondition >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
 
@@ -257,6 +258,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
                                 connRate,
                                 dens,
                                 dDens_dPres,
+                                logSurfaceCondition,
                                 &useSurfaceConditions,
                                 &surfacePres,
                                 &currentVolRate,
@@ -274,6 +276,13 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         // we need to compute the surface density
         fluidWrapper.update( iwelemRef, 0, surfacePres );
 
+        if( logSurfaceCondition )
+        {
+
+          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
+                                   wellControlsName, surfacePres ) );
+        }
+
 #ifdef GEOS_USE_HIP
         GEOS_UNUSED_VAR( wellControlsName );
 #endif
@@ -290,19 +299,14 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
       dCurrentVolRate_dRate = densInv;
 
+
+      if( logSurfaceCondition && useSurfaceConditions )
+      {
+        GEOS_LOG_RANK( GEOS_FMT( "{}: total fluid density at surface conditions = {} kg/sm3, total rate = {} kg/s, total surface volumetric rate = {} sm3/s",
+                                 wellControlsName, dens[iwelemRef][0], connRate[iwelemRef], currentVolRate ));
+      }
+
     } );
-
-    if( useSurfaceConditions )
-    {
-      GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceCondition,
-                              GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
-                                        wellControlsName, surfacePres ) );
-
-      GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceCondition,
-                              GEOS_FMT( "{}: total fluid density at surface conditions = {} kg/sm3, total rate = {} kg/s, total surface volumetric rate = {} sm3/s",
-                                        wellControlsName, dens[iwelemRef][0], connRate[iwelemRef], currentVolRate ) );
-    }
-
   } );
 }
 
