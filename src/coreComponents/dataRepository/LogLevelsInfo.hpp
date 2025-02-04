@@ -57,34 +57,62 @@ isLogLevelActive( integer level )
   return level >= LOG_LEVEL_INFO::getMinLogLevel();
 }
 
-/** ThOSE 3 macros would replace the ones in Logger.hpp  */
+
 /**
  * @brief Output messages based on current Group's log level.
  * @param[in] logInfoStruct Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_INFO( logInfoStruct, msg ) GEOS_LOG_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+#define GEOS_LOG_LEVEL( logInfoStruct, msg ) GEOS_LOG_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] logInfoStruct Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_INFO_RANK_0( logInfoStruct, msg ) GEOS_LOG_RANK_0_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+#define GEOS_LOG_LEVEL_RANK_0( logInfoStruct, msg ) GEOS_LOG_RANK_0_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
 
 /**
  * @brief Output messages (with one line per rank) based on current Group's log level.
  * @param[in] logInfoStruct Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfoStruct, msg ) GEOS_LOG_RANK_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+#define GEOS_LOG_LEVEL_BY_RANK( logInfoStruct, msg ) GEOS_LOG_RANK_IF( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level without the line return.
  * @param[in] logInfoStruct Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfoStruct, msg ) GEOS_LOG_RANK_0_IF_NLR( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+#define GEOS_LOG_LEVEL_RANK_0_NLR( logInfoStruct, msg ) GEOS_LOG_RANK_0_IF_NLR( isLogLevelActive< logInfoStruct >( this->getLogLevel() ), msg );
+
+/**
+ * @brief Output messages based on current Group's log level.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_INFO_ON_GROUP( logInfoStruct, msg, group ) GEOS_LOG_IF( isLogLevelActive< logInfoStruct >( group.getLogLevel() ), msg );
+
+/**
+ * @brief Output messages (only on rank 0) based on current Group's log level.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfoStruct, msg, group ) GEOS_LOG_RANK_0_IF( isLogLevelActive< logInfoStruct >( group.getLogLevel() ), msg );
+
+/**
+ * @brief Output messages (with one line per rank) based on current Group's log level.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfoStruct, msg, group ) GEOS_LOG_RANK_IF( isLogLevelActive< logInfoStruct >( group.getLogLevel() ), msg );
+
+/**
+ * @brief Output messages (only on rank 0) based on current Group's log level without the line return.
+ * @param[in] logInfoStruct Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_RANK_0_NLR_ON_GROUP( logInfoStruct, msg, group ) GEOS_LOG_RANK_0_IF_NLR( isLogLevelActive< logInfoStruct >( group.getLogLevel() ), msg );
 
 }
 

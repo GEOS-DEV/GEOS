@@ -510,10 +510,7 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
 
   return sqrt( stickResidual * stickResidual );
 }
@@ -965,7 +962,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 

@@ -33,6 +33,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/contact/kernels/SolidMechanicsEFEMKernels.hpp"
 #include "physicsSolvers/contact/kernels/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/contact/kernels/SolidMechanicsEFEMJumpUpdateKernels.hpp"
@@ -92,9 +93,9 @@ void SolidMechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::LinearSolverConfiguration,
-                              GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                        EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -665,10 +666,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
   real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
                                                                                                 // time-step when maxForce = 0;
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm ));
 
   return fractureResidualNorm;
 }

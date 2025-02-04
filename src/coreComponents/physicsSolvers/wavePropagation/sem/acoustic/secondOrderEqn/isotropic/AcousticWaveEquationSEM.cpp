@@ -756,7 +756,7 @@ void AcousticWaveEquationSEM::initializePML()
     /// so it can be used by the PML application
     indicatorPML.zero();
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::PMLParameters,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::PMLParameters,
                                 "PML parameters are: \n"
                                 << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
                                 << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"

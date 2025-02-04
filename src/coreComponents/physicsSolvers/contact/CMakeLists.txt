@@ -3,6 +3,7 @@ set( physicsSolvers_headers
      ${physicsSolvers_headers}
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
+     contact/LogLevelsInfo.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
      contact/SolidMechanicsLagrangeContact.hpp
      contact/SolidMechanicsLagrangeContactBubbleStab.hpp

@@ -51,7 +51,7 @@ void VTKWellGenerator::fillPolylineDataStructure( )
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading well from {}", catalogName(), getName(), m_filePath ) );
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::VTKSteps, "  reading the dataset..." );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  reading the dataset..." );
     vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", array1d< string >());
     vtkSmartPointer< vtkDataSet > loadedMesh = allMeshes.getMainMesh();
     controller->Broadcast( loadedMesh, 0 );

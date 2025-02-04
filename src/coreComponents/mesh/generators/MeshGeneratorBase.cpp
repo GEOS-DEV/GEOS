@@ -15,6 +15,7 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/ParticleBlockManager.hpp"
 #include "mesh/generators/MeshComponentBase.hpp"
 namespace geos
@@ -25,6 +26,7 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  addLogLevel< logInfo::ImportFields >();
 }
 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )

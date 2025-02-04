@@ -19,6 +19,7 @@
 #include "CO2BrineFluid.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "common/Units.hpp"
 #include "functions/TableFunction.hpp"
@@ -118,6 +119,7 @@ CO2BrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
+  addLogLevel< logInfo::PVT >();
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
@@ -333,6 +335,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
   };
+
 
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",
                                          phase1InputParams,

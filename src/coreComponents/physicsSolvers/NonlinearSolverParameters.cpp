@@ -16,6 +16,7 @@
 #include "NonlinearSolverParameters.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/table/TableFormatter.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -178,6 +179,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( NonlinearAccelerationType::None ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
+
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::NonlinearSolver >();
+  addLogLevel< logInfo::LineSearch >();
+  addLogLevel< logInfo::TimeStep >();
 
 }
 

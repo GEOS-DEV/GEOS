@@ -330,8 +330,8 @@ void WaveSolverBase::postInputInitialization()
 
   if( m_useDAS != WaveSolverUtils::DASType::none )
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::DASType, "Modeling linear DAS data is activated" );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::DASType, GEOS_FMT( "Linear DAS formulation: {}",
+    GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, GEOS_FMT( "Linear DAS formulation: {}",
                                                             m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,

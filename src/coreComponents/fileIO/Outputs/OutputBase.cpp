@@ -121,7 +121,7 @@ void OutputBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
   real64 const maxTime = MpiWrapper::max( time );
   if( maxTime > 0 )
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::OutputTimers,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::OutputTimers,
                                 GEOS_FMT( "{}: file writing time = {} s (min), {} s (max)",
                                           getName(), minTime, maxTime ) );
   }

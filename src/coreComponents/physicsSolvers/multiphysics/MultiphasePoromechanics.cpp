@@ -310,7 +310,7 @@ void MultiphasePoromechanics<>::setMGRStrategy()
       linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
     }
   }
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::LinearSolverConfiguration
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration
                               , GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                           EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -337,7 +337,7 @@ void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidM
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
                               GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                         EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }

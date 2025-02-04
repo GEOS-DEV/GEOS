@@ -28,6 +28,7 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -517,9 +518,9 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1]  + globalResidualNorm[2] * globalResidualNorm[2] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence,
-                                    GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                              globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+                               GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                         globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
   }
   else
   {
@@ -535,8 +536,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
-                                                                    globalResidualNorm[0], globalResidualNorm[1] ) );
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
+                                                               globalResidualNorm[0], globalResidualNorm[1] ) );
   }
 
   return residualNorm;
@@ -647,18 +648,18 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
   minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
 
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                              GEOS_FMT( "        {}: Max pressure change = {:.3f} Pa (before scaling) at cell {}",
-                                        getName(),
-                                        globalDeltaPresMax.value,
-                                        globalDeltaPresMax.location ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                         GEOS_FMT( "        {}: Max pressure change = {:.3f} Pa (before scaling) at cell {}",
+                                   getName(),
+                                   globalDeltaPresMax.value,
+                                   globalDeltaPresMax.location ) );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                              GEOS_FMT( "        {}: Max component density change = {:.3f} {} (before scaling) at cell {}",
-                                        getName(),
-                                        globalDeltaCompDensMax.value,
-                                        massUnit,
-                                        globalDeltaCompDensMax.location ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                         GEOS_FMT( "        {}: Max component density change = {:.3f} {} (before scaling) at cell {}",
+                                   getName(),
+                                   globalDeltaCompDensMax.value,
+                                   massUnit,
+                                   globalDeltaCompDensMax.location ) );
 
   if( m_isThermal )
   {
@@ -668,23 +669,23 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
     auto globalMaxDeltaTemp = MpiWrapper::maxValLoc( valueAndLocationType( localDeltaTempMax, localDeltaTempMaxLoc ));
 
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell maxRegionDeltaTempLoc {}",
-                                          getName(),
-                                          globalMaxDeltaTemp.value,
-                                          globalMaxDeltaTemp.location ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell maxRegionDeltaTempLoc {}",
+                                     getName(),
+                                     globalMaxDeltaTemp.value,
+                                     globalMaxDeltaTemp.location ) );
   }
 
   if( m_scalingType == ScalingType::Local )
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Min component density scaling factor = {}", getName(), minCompDensScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Min component density scaling factor = {}", getName(), minCompDensScalingFactor ) );
     if( m_isThermal )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                  GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
     }
   }
 
@@ -778,18 +779,18 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
   numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
   if( numNegPres > 0 )
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                          getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                     getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
   if( numNegDens > 0 )
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
-                                          getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
+                                     getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
   if( minTotalDens > 0 )
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
-                                          getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
+                                     getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
 
   return MpiWrapper::min( localCheck );
 }
@@ -1222,12 +1223,14 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                        string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-      if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   getName(), time+dt, bc.getCatalogName(), bc.getName(),
-                                   setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+                                        GEOS_FMT( faceBcLogMessage,
+                                                  getName(), time+dt, bc.getCatalogName(), bc.getName(),
+                                                  setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
+                                        bc );
       }
 
       if( stencil.size() == 0 )
@@ -1370,10 +1373,10 @@ real64 CompositionalMultiphaseFVM::setNextDtBasedOnCFL( const geos::real64 & cur
 
   computeCFLNumbers( domain, currentDt, maxPhaseCFL, maxCompCFL );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep,
-                              GEOS_FMT( "{}: max phase CFL number = {}", getName(), maxPhaseCFL ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep,
-                              GEOS_FMT( "{}: max component CFL number = {} ", getName(), maxCompCFL ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
+                         GEOS_FMT( "{}: max phase CFL number = {}", getName(), maxPhaseCFL ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
+                         GEOS_FMT( "{}: max component CFL number = {} ", getName(), maxCompCFL ) );
 
   return std::min( m_targetFlowCFL * currentDt / maxCompCFL,
                    m_targetFlowCFL * currentDt / maxPhaseCFL );

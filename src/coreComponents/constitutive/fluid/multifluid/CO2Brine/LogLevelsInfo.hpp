@@ -18,56 +18,28 @@
  * This file contains common log level informations for physics solvers
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
-#define GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_HPP
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_HPP
 
 #include "common/DataTypes.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"
 
 namespace geos
 {
 
 namespace logInfo
 {
-
 /**
  * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
  */
 ///@{
 
-/// @cond DO_NOT_DOCUMENT
-
-struct ImportFields
+struct PVT
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on imported fields"; }
+  static constexpr std::string_view getDescription() { return "Output PVT table"; }
 };
 
-struct MeshState
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Well phase volume fraction change information"; }
-};
-
-struct Statistics
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "well statistics information"; }
-};
-
-struct PartitionCommunication
-{
-  static constexpr int getMinLogLevel() { return 3; }
-  static constexpr std::string_view getDescription() { return "Domain partition setup communication"; }
-};
-
-struct VTKSteps
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Display VTK mesh generator steps"; }
-};
-
-
+/// @cond DO_NOT_DOCUMENT
 /// @endcond
 ///@}
 
@@ -75,4 +47,4 @@ struct VTKSteps
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
+#endif // GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_HPP

@@ -93,9 +93,9 @@ void SolidMechanicsLagrangeContact::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::LinearSolverConfiguration,
-                              GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                        EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
@@ -446,11 +446,11 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
     } );
   } );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration,
-                              GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
-                                        this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
-                                        minSlidingTolerance, maxSlidingTolerance,
-                                        minNormalTractionTolerance, maxNormalTractionTolerance ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration,
+                         GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
+                                   this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
+                                   minSlidingTolerance, maxSlidingTolerance,
+                                   minNormalTractionTolerance, maxNormalTractionTolerance ) );
 }
 
 void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition & domain )
@@ -867,10 +867,9 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   openNormalizer = MpiWrapper::max( openNormalizer );
   openResidual = sqrt( openResidual ) / ( openNormalizer + 1.0 );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )", stickResidual, slipResidual, openResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )",
+                                   stickResidual, slipResidual, openResidual ));
 
   return sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
 }
@@ -2341,8 +2340,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   // and total area of fracture elements
   totalArea = MpiWrapper::sum( totalArea );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration,
-                              GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration,
+                         GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
 
   // Assume converged if changed area is below certain fraction of total area
   return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;

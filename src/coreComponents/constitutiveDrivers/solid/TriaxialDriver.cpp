@@ -18,6 +18,8 @@
  */
 
 #include "TriaxialDriver.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+
 
 namespace geos
 {
@@ -66,6 +68,9 @@ TriaxialDriver::TriaxialDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  addLogLevel< logInfo::Initialisation >();
+  addLogLevel< logInfo::Results >();
 }
 
 
@@ -401,19 +406,16 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   // depending on logLevel, print some useful info
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "Launching Triaxial Driver" );
-    GEOS_LOG_RANK_0( "  Material .......... " << m_solidMaterialName );
-    GEOS_LOG_RANK_0( "  Type .............. " << baseSolid.getCatalogName() );
-    GEOS_LOG_RANK_0( "  Mode .............. " << m_mode );
-    GEOS_LOG_RANK_0( "  Axial Control ..... " << m_axialFunctionName );
-    GEOS_LOG_RANK_0( "  Radial Control .... " << m_radialFunctionName );
-    GEOS_LOG_RANK_0( "  Initial Stress .... " << m_initialStress );
-    GEOS_LOG_RANK_0( "  Steps ............. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ............ " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline .......... " << m_baselineFile );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching Triaxial Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Material .......... " << m_solidMaterialName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type .............. " << baseSolid.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Mode .............. " << m_mode );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Axial Control ..... " << m_axialFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Radial Control .... " << m_radialFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Initial Stress .... " << m_initialStress );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps ............. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ............ " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline .......... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -579,10 +581,7 @@ void TriaxialDriver::compareWithBaseline()
 
   // success
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "  Comparison ........ Internal results consistent with baseline." );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ........ Internal results consistent with baseline." );
 
   file.close();
 }

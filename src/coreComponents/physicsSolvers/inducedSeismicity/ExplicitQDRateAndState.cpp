@@ -84,7 +84,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
 
   real64 dtAdaptive = dt;
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverSteps, "Rate and State solver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and State solver" );
   while( true ) // Adaptive time step loop. Performs a Runge-Kutta time stepping with error control on state and slip
   {
     real64 dtStress; GEOS_UNUSED_VAR( dtStress );
@@ -240,7 +240,7 @@ void ExplicitQDRateAndState::updateSlipVelocity( real64 const & time_n,
                                                  real64 const & dt,
                                                  DomainPartition & domain ) const
 {
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverSteps, "Rate and State solver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and State solver" );
   integer const maxIterNewton = m_nonlinearSolverParameters.m_maxIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -299,12 +299,12 @@ real64 ExplicitQDRateAndState::setNextDt( real64 const & currentDt, DomainPartit
   real64 const nextDt = m_stepUpdateFactor*currentDt;
   if( m_successfulStep )
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverSteps,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps,
                                 GEOS_FMT( "Adaptive time step successful. The next dt will be {:.2e} s", nextDt ));
   }
   else
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverSteps,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps,
                                 GEOS_FMT( "Adaptive time step failed. Retry step with dt {:.2e} s", nextDt ));
   }
   return nextDt;

@@ -63,6 +63,7 @@ set( constitutive_headers
      fluid/multifluid/blackOil/BlackOilFluid.hpp
      fluid/multifluid/blackOil/DeadOilFluid.hpp
      fluid/multifluid/blackOil/PVTOData.hpp
+     fluid/multifluid/CO2Brine/LogLevelsInfo.hpp
      fluid/multifluid/CO2Brine/CO2BrineFluid.hpp
      fluid/multifluid/CO2Brine/PhaseModel.hpp
      fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp

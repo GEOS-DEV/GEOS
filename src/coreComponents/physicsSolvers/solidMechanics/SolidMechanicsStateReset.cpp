@@ -86,7 +86,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverExecution,
+      GEOS_LOG_LEVEL_RANK_0( logInfo::SolverExecution,
                                   GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is resetting total displacement and velocity to zero",
                                             getName(), time_n, m_solidSolverName ) );
 
@@ -119,7 +119,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       string const & solidMaterialName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() );
       Group & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverExecutionDetails,
+      GEOS_LOG_LEVEL_RANK_0( logInfo::SolverExecutionDetails,
                                   GEOS_FMT( "Task `{}`: at time {}s, solid model `{}` is setting inelastic behavior to `{}` on subRegion `{}`. ",//2
                                             getName(), time_n, solidMaterialName,
                                             m_disableInelasticity ? "OFF" : "ON",

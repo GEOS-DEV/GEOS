@@ -84,6 +84,11 @@ struct NonlinearSolver
   static constexpr std::string_view getDescription() { return "Nonlinear solver information"; }
 };
 
+struct ResidualNorm
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Output residual norm"; }
+};
 
 struct Solution
 {

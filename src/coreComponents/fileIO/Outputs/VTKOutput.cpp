@@ -175,7 +175,7 @@ bool VTKOutput::execute( real64 const time_n,
                          DomainPartition & domain )
 {
   {
-    GEOS_LOG_LEVEL_INFO( logInfo::OutputEvents,
+    GEOS_LOG_LEVEL( logInfo::OutputEvents,
                          GEOS_FMT( "{}: writing {} at time {} s (cycle number {})",
                                    getName(), m_fieldNames, time_n + dt, cycleNumber ));
     Timer timer( m_outputTimer );

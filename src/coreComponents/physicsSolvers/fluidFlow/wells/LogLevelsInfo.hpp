@@ -36,6 +36,24 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
+struct BHP
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Output current BHP"; }
+};
+
+struct Rates
+{
+   static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Print rates"; }
+};
+
+struct SurfaceCondition
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Information on surface condition"; }
+};
+
 struct SystemSolution
 {
   static constexpr int getMinLogLevel() { return 1; }

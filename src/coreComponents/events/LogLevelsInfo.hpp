@@ -41,6 +41,12 @@ struct EventExecution
   static constexpr std::string_view getDescription() { return "Informations on events execution"; }
 };
 
+struct SubEventExecution
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Informations on sub events execution"; }
+};
+
 /// @endcond
 ///@}
 

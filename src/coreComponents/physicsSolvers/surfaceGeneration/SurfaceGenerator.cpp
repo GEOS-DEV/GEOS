@@ -786,7 +786,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   real64 ruptureRate = calculateRuptureRate( elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::RuptureRate, GEOS_FMT( "Rupture rate = {}", ruptureRate ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::RuptureRate, GEOS_FMT( "Rupture rate = {}", ruptureRate ) );
   if( ruptureRate > 0 )
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
@@ -1771,7 +1771,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
     {
       s << *i << " ";
     }
-    GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo::SurfaceGenerator,
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceGenerator,
                                  GEOS_FMT( "Splitting node {} along separation plane faces: {}", nodeID, s.str() ) );
   }
 
@@ -1811,7 +1811,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 // >("usedFaces")[newNodeIndex];
 //  usedFacesNew = usedFaces[nodeID];
 
-  GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo::SurfaceGenerator,
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceGenerator,
                                GEOS_FMT( "Done splitting node {} into nodes {} and {}", nodeID, nodeID, newNodeIndex ) );
 
   // split edges
@@ -1833,7 +1833,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
-      GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo::SurfaceGenerator,
+      GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceGenerator,
                                    GEOS_FMT ( "Split edge {} into edges {} and {}", parentEdgeIndex, parentEdgeIndex, newEdgeIndex ) );
 
       splitEdges[parentEdgeIndex] = newEdgeIndex;
@@ -1890,7 +1890,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
       if( faceManager.splitObject( faceIndex, rank, newFaceIndex ) )
       {
-        GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo::SurfaceGenerator,
+        GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceGenerator,
                                      GEOS_FMT ( "Split face {} into faces {} and {}", faceIndex, faceIndex, newFaceIndex ) );
 
         splitFaces[faceIndex] = newFaceIndex;
@@ -1976,7 +1976,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                                                     this->m_originalFaceToEdges.toViewConst(),
                                                                     faceIndices );
           m_faceElemsRupturedThisSolve.insert( newFaceElement );
-          GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo::SurfaceGenerator,
+          GEOS_LOG_LEVEL_BY_RANK( logInfo::SurfaceGenerator,
                                        GEOS_FMT ( "Created new FaceElement {} when creating face {} from {}",
                                                   newFaceElement, newFaceIndex, faceIndex ) );
           modifiedObjects.newElements[ {fractureElementRegion.getIndexInParent(), 0} ].insert( newFaceElement );
@@ -2161,19 +2161,19 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
             faceToElementMap[faceIndex][1] = -1;
           }
 
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][0]      = "<<faceToElementMap[newFaceIndex][0] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][1] = "<<faceToSubRegionMap[newFaceIndex][1] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][1]      = "<<faceToElementMap[newFaceIndex][1] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][0]      = "<<faceToElementMap[newFaceIndex][0] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][1] = "<<faceToSubRegionMap[newFaceIndex][1] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][1]      = "<<faceToElementMap[newFaceIndex][1] );
 
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
 
           for( int i = 0; i < 2; i++ )
           {

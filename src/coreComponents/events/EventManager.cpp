@@ -81,6 +81,8 @@ EventManager::EventManager( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Format of the time in the GEOS log." );
+
+    addLogLevel< logInfo::SubEventExecution >();
 }
 
 
@@ -181,7 +183,7 @@ bool EventManager::run( DomainPartition & domain )
       subEvent->checkEvents( m_time, m_dt, m_cycle, domain );
 
       // Print debug information for logLevel >= 1
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::EventExecution,
+      GEOS_LOG_LEVEL_RANK_0( logInfo::SubEventExecution,
                                   GEOS_FMT( "Event: {} ({}), dt_request={}, forecast={}", m_currentSubEvent,
                                             subEvent->getName(), subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ) );
 

@@ -87,9 +87,9 @@ real64 ImplicitQDRateAndState::solverStep( real64 const & time_n,
                                            DomainPartition & domain )
 {
   applyInitialConditionsToFault( cycleNumber, domain );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverSteps, "Stress solver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Stress solver" );
   updateStresses( time_n, dt, cycleNumber, domain );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverSteps, "Rate and state solver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and state solver" );
   solveRateAndStateEquations( time_n, dt, domain );
   saveState( domain );
   return dt;
@@ -137,7 +137,7 @@ real64 ImplicitQDRateAndState::setNextDt( real64 const & currentDt, DomainPartit
 
   real64 const nextDt = m_targetSlipIncrement / maxSlipRate;
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverSteps, GEOS_FMT( "The next dt will be {:.2e} s", nextDt ));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, GEOS_FMT( "The next dt will be {:.2e} s", nextDt ));
 
   return nextDt;
 }

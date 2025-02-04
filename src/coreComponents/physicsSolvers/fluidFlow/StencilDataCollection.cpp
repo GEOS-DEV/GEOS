@@ -110,9 +110,9 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
     m_cellBGlobalId.resize( connCount );
     m_transmissibilityAB.resize( connCount );
     m_transmissibilityBA.resize( connCount );
-    GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo::StencilInitialization,
-                                 GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
-                                           getName(), connCount, m_discretization->getName() ) );
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::StencilInitialization,
+                            GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
+                                      getName(), connCount, m_discretization->getName() ) );
     ++supportedStencilCount;
   } );
   GEOS_ERROR_IF( supportedStencilCount == 0,
@@ -288,8 +288,8 @@ void StencilDataCollection::storeConnectionData( string_view stencilName,
 void StencilDataCollection::logStoredConnections( string_view stencilName )
 {
   integer const connCount = MpiWrapper::sum( m_cellAGlobalId.size() );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::StencilConnection, GEOS_FMT( "{}: {} connections stored for '{}'.",
-                                                                    getName(), connCount, stencilName ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::StencilConnection, GEOS_FMT( "{}: {} connections stored for '{}'.",
+                                                               getName(), connCount, stencilName ) );
 }
 
 

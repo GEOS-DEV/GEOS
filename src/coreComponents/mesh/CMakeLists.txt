@@ -77,6 +77,7 @@ set( mesh_headers
      generators/CellBlockUtilities.hpp
      generators/LineBlock.hpp
      generators/LineBlockABC.hpp
+     generators/LogLevelsInfo.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
