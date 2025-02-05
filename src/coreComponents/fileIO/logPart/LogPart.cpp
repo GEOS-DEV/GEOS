@@ -114,7 +114,7 @@ void LogPart::formatDescriptions( LogPart::Description & description )
   size_t & logPartMaxNameWidth =  description.m_logPartMaxNameWidth;
   std::vector< string > & formattedLines = description.m_formattedDescriptionLines;
 
-  size_t buildingChars = m_nbBorderChar * 2 + m_borderMargin;
+  size_t buildingChars = m_nbBorderChar *2 + m_borderMargin;
   for( size_t idxName = 0; idxName < names.size(); idxName++ )
   {
     string const & name = names[idxName];
