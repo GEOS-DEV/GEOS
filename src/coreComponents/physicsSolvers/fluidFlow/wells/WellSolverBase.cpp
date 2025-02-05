@@ -59,7 +59,7 @@ WellSolverBase::WellSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Write rates into a CSV file" );
+    setDescription( "When set to 1, write the rates into a CSV file" );
 
   addLogLevel< logInfo::WellControl >();
   addLogLevel< logInfo::Crossflow >();

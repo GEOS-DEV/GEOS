@@ -106,7 +106,7 @@ CO2BrineFluid( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Write PVT tables into a CSV file" ).
+    setDescription( "When set to 1, write PVT tables into a CSV file" ).
     setDefaultValue( 0 );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
