@@ -203,7 +203,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+    !isClone && getLogLevel() >= 0, // writeInLog
   };
 
   // then, we are ready to instantiate the phase models
