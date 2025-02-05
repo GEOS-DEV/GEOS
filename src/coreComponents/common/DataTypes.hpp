@@ -170,7 +170,6 @@ using R1Tensor32 = Tensor< real32, 3 >;
 /// Alias for a local (stack-based) rank-2 Voigt tensor type
 using R2SymTensor = Tensor< real64, 6 >;
 
-
 /// Alias for 1D array.
 template< typename T >
 using array1d = Array< T, 1 >;
