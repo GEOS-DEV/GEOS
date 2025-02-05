@@ -18,8 +18,10 @@
  */
 
 #include "TableFunction.hpp"
+#include "LogLevelsInfo.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <algorithm>
 
@@ -57,6 +59,14 @@ TableFunction::TableFunction( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) ).
     setApplyDefaultValue( m_interpolationMethod );
+
+  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, write the table into a CSV file" );
+
+  addLogLevel< logInfo::TableDataOutput >();
 }
 
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
@@ -281,6 +291,15 @@ void TableFunction::outputPVTTableData( OutputOptions const pvtOutputOpts ) cons
     TableCSVFormatter csvFormatter;
     logStream << csvFormatter.toString( *this );
   }
+}
+
+void TableFunction::initializePostSubGroups()
+{
+  // Output user defined tables (not generated PVT tables)
+  outputTableData( OutputOptions{
+      m_writeCSV,   // writeCSV
+      isLogLevelEnabled< logInfo::TableDataOutput >()   // writeInLog
+    } );
 }
 
 template<>

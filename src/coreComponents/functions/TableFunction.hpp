@@ -51,9 +51,9 @@ public:
   /// Struct containing output options
   struct OutputOptions
   {
-    /// Output PVT in CSV file
+    /// Request table output in CSV file
     bool writeCSV;
-    /// Output PVT in log
+    /// Request table output in log
     bool writeInLog;
   };
 
@@ -218,6 +218,8 @@ private:
    */
   void reInitializeFunction();
 
+  void initializePostSubGroups() override;
+
   /**
    * @brief Method to evaluate a function on a target object
    * @param group a pointer to the object holding the function arguments
@@ -361,6 +363,8 @@ private:
     static constexpr char const * coordinateFilesString() { return "coordinateFiles"; }
     /// @return Key for name of file containing table values
     static constexpr char const * voxelFileString() { return "voxelFile"; }
+    /// @return Key for name of file containing table values
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
@@ -401,6 +405,8 @@ private:
   /// Kernel wrapper object used in evaluate() interface
   KernelWrapper m_kernelWrapper;
 
+  /// Output table in a CSV file
+  integer m_writeCSV;
 };
 /// @cond DO_NOT_DOCUMENT
 template< typename IN_ARRAY >
