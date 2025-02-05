@@ -194,6 +194,10 @@ public:
 
   static int init( int * argc, char * * * argv );
 
+  /**
+   * @brief Free MPI managed resources, then call MPI_Finalize().
+   * Please note that once called, MPI functions, communicators and resources can no longer be used.
+   */
   static void finalize();
 
   static MPI_Comm commDup( MPI_Comm const comm );
@@ -748,6 +752,28 @@ private:
 namespace internal
 {
 
+/// @brief The list of MPI resources, managed by this class, that need to be freed at mpi finalization.
+struct ManagedResources
+{
+  // The list of managed MPI_Op instances
+  std::set< MPI_Op > m_mpiOps;
+
+  // The list of managed MPI_Type instances
+  std::set< MPI_Datatype > m_mpiTypes;
+
+  /**
+   * @brief Simply free the MPI managed resources and clear the resource sets. To be called just
+   * before MPI_Finalize().
+   */
+  void finalize();
+};
+
+/**
+ * @brief For internal use.
+ * @return The ManagedResources set.
+ */
+ManagedResources & getManagedResources();
+
 template< typename T, typename ENABLE = void >
 struct MpiTypeImpl {};
 
@@ -789,7 +815,6 @@ MPI_Datatype getMpiPairType()
   static_assert( "no default implementation, please add a template specialization and add it in the \"testMpiWrapper\" unit test." );
   return {};
 }
-
 template<> MPI_Datatype getMpiPairType< int, int >();
 template<> MPI_Datatype getMpiPairType< long int, int >();
 template<> MPI_Datatype getMpiPairType< long int, long int >();
@@ -829,8 +854,11 @@ MPI_Op getMpiPairReductionOp()
 
     MPI_Op mpiOp;
     GEOS_ERROR_IF_NE( MPI_Op_create( customOpFunc, 1, &mpiOp ), MPI_SUCCESS );
+    // Resource registered to be destroyed at MpiWrapper::finalize().
+    internal::getManagedResources().m_mpiOps.emplace( mpiOp );
     return mpiOp;
   };
+  // Static storage to ensure the MPI operation is created only once and reused for all calls to this function.
   static MPI_Op mpiOp{ createOpHolder() };
   return mpiOp;
 }

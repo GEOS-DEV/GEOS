@@ -131,9 +131,31 @@ int MpiWrapper::init( int * argc, char * * * argv )
 #endif
 }
 
+internal::ManagedResources & internal::getManagedResources()
+{
+  static ManagedResources instance;
+  return instance;
+}
+
+void internal::ManagedResources::finalize()
+{
+  for( MPI_Op resource : m_mpiOps )
+  {
+    MPI_CHECK_ERROR( MPI_Op_free( &resource ) );
+  }
+  m_mpiOps.clear();
+
+  for( MPI_Datatype resource : m_mpiTypes )
+  {
+    MPI_CHECK_ERROR( MPI_Type_free( &resource ) );
+  }
+  m_mpiTypes.clear();
+}
+
 void MpiWrapper::finalize()
 {
 #ifdef GEOS_USE_MPI
+  internal::getManagedResources().finalize();
   MPI_CHECK_ERROR( MPI_Finalize() );
 #endif
 }
@@ -450,14 +472,19 @@ MPI_Datatype getMpiCustomPairType()
     using PAIR_T = MpiWrapper::PairType< FIRST, SECOND >;
     static_assert( std::is_standard_layout_v< PAIR_T > );
     static_assert( std::is_trivially_copyable_v< PAIR_T > );
+
     MPI_Datatype types[2] = { getMpiType< FIRST >(), getMpiType< SECOND >() };
     MPI_Aint offsets[2] = { offsetof( PAIR_T, first ), offsetof( PAIR_T, second ) };
     int blocksCount[2] = { 1, 1 };
+
     MPI_Datatype mpiType;
     GEOS_ERROR_IF_NE( MPI_Type_create_struct( 2, blocksCount, offsets, types, &mpiType ), MPI_SUCCESS );
     GEOS_ERROR_IF_NE( MPI_Type_commit( &mpiType ), MPI_SUCCESS );
+    // Resource registered to be destroyed at MpiWrapper::finalize().
+    internal::getManagedResources().m_mpiTypes.emplace( mpiType );
     return mpiType;
   };
+  // Static storage to ensure the MPI operation is created only once and reused for all calls to this function.
   static MPI_Datatype mpiType{ createTypeHolder() };
   return mpiType;
 }
