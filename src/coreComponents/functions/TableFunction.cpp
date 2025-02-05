@@ -341,6 +341,7 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
 template<>
 string TableTextFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
+  static constexpr integer maxRows = 500;
   ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
   units::Unit const valueUnit = tableFunction.getValueUnit();
   arrayView1d< real64 const > const values = tableFunction.getValues();
@@ -348,9 +349,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   std::string_view filename = tableFunction.getName();
   string logOutput;
 
-  GEOS_LOG_RANK_0( GEOS_FMT( "Values in the table are represented by : {}", units::getDescription( valueUnit )));
-
-  if( numDimensions == 1 )
+  if( numDimensions == 1 && coordinates[0].size() < maxRows )
   {
     TableData tableData;
     arraySlice1d< real64 const > const coords = coordinates[0];
@@ -365,31 +364,28 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     TableTextFormatter const logTable( tableLayout );
     logOutput = logTable.toString( tableData );
   }
-  else if( numDimensions == 2 )
+  else if( numDimensions == 2 && ( coordinates[0].size() * coordinates[1].size() ) < maxRows )
   {
-    integer const nX = coordinates[0].size();
-    integer const nY = coordinates[1].size();
-    if( nX * nY <= 500 )
-    {
-      TableData2D tableData2D;
-      TableData2D::TableDataHolder tableConverted;
-      tableConverted = tableData2D.convertTable2D( values,
-                                                   valueUnit,
-                                                   coordinates,
-                                                   units::getDescription( tableFunction.getDimUnit( 0 ) ),
-                                                   units::getDescription( tableFunction.getDimUnit( 1 ) ));
+    TableData2D tableData2D;
+    TableData2D::TableDataHolder tableConverted;
+    tableConverted = tableData2D.convertTable2D( values,
+                                                 valueUnit,
+                                                 coordinates,
+                                                 units::getDescription( tableFunction.getDimUnit( 0 ) ),
+                                                 units::getDescription( tableFunction.getDimUnit( 1 ) ));
 
-      TableLayout const tableLayout( filename, tableConverted.headerNames );
-      TableTextFormatter const table2DLog( tableLayout );
-      logOutput =  table2DLog.toString( tableConverted.tableData );
-    }
-    else
-    {
-      string const log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv", filename );
-      TableLayout const tableLayoutInfos( filename, {log} );
-      TableTextFormatter const tableLog( tableLayoutInfos );
-      logOutput = tableLog.toString();
-    }
+    TableLayout const tableLayout( filename, tableConverted.headerNames );
+    TableTextFormatter const table2DLog( tableLayout );
+    logOutput =  table2DLog.toString( tableConverted.tableData );
+  }
+  else
+  {
+    string const tooLongOutputMsg = GEOS_FMT( "The {} table is too heavy for log output.\n"
+                                              "To visualize the table, please refer to the generated csv.",
+                                              filename, maxRows );
+    TableLayout const tableLayoutInfos( filename, {tooLongOutputMsg} );
+    TableTextFormatter const tableLog( tableLayoutInfos );
+    logOutput = tableLog.toString();
   }
   return logOutput;
 }
