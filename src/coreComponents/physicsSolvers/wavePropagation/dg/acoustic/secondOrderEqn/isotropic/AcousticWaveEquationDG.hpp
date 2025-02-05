@@ -99,7 +99,6 @@ public:
     static constexpr char const * sourceElemString() { return "sourceElem"; }
     static constexpr char const * sourceRegionString() { return "sourceRegion"; }
     static constexpr char const * receiverElemString() { return "receiverElem"; }
-    static constexpr char const * receiverRegionString() { return "receiverRegion"; }
 
   } waveEquationViewKeys;
 
@@ -133,7 +132,7 @@ public:
 
 protected:
 
-  //virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   //Nothing to do inside ? (no global mass or damping)
   virtual void initializePostInitialConditionsPreSubGroups() override final;
@@ -169,13 +168,6 @@ private:
 
   /// Array containing the elements which contain the region which the source belongs
   array1d< localIndex > m_sourceRegion;
-
-
-  /// Array containing the elements which contain a receiver
-  array1d< localIndex > m_receiverElem;
-
-  /// Array containing the elements which contain the region which the receiver belongs
-  array1d< localIndex > m_receiverRegion;
 
   /// Inverse of the mass matrix in the reference element for each subregion
   ArrayOfArrays< array2d< real64 > > m_referenceInvMassMatrix;

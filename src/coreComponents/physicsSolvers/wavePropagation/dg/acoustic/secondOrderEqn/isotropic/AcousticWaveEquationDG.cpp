@@ -54,15 +54,20 @@ AcousticWaveEquationDG::AcousticWaveEquationDG( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Element containing the sources" );
 
-  registerWrapper( viewKeyStruct::receiverElemString(), &m_receiverElem ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Element containing the receivers" );
+  // registerWrapper( viewKeyStruct::receiverElemString(), &m_receiverElem ).
+  //   setInputFlag( InputFlags::FALSE ).
+  //   setSizedFromParent( 0 ).
+  //   setDescription( "Element containing the receivers" );
 
-  registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
+  // registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
+  //   setInputFlag( InputFlags::FALSE ).
+  //   setSizedFromParent( 0 ).
+  //   setDescription( "Region containing the receivers" );
+    
+  registerWrapper( viewKeyStruct::sourceRegionString(), &m_sourceRegion ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
-    setDescription( "Region containing the receivers" );
+    setDescription( "Region containing the sources" );
 
 }
 
@@ -74,6 +79,7 @@ AcousticWaveEquationDG::~AcousticWaveEquationDG()
 void AcousticWaveEquationDG::initializePreSubGroups()
 {
   WaveSolverBase::initializePreSubGroups();
+  
 }
 
 
@@ -129,6 +135,21 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
+void AcousticWaveEquationDG::postInputInitialization()
+{
+  WaveSolverBase::postInputInitialization();
+
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+
+  m_sourceElem.resize( numSourcesGlobal );
+  m_sourceRegion.resize( numSourcesGlobal );
+  m_receiverElem.resize( numReceiversGlobal );
+  m_receiverRegion.resize( numReceiversGlobal );
+
+}
 
 void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                               arrayView1d< string const > const & regionNames )
@@ -144,6 +165,8 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
   arrayView1d< localIndex > const sourceElem = m_sourceElem.toView();
+  arrayView1d< localIndex > const sourceRegion = m_sourceRegion.toView();
+
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstants.setValues< EXEC_POLICY >( -1 );
   sourceIsAccessible.zero();
@@ -153,6 +176,7 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   arrayView1d< localIndex > const receiverElem = m_receiverElem.toView();
+  arrayView1d< localIndex > const receiverRegion = m_receiverRegion.toView();
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
@@ -186,6 +210,7 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
+          er,
           facesToNodes,
           nodeCoords,
           nodeLocalToGlobalMap,
@@ -201,11 +226,13 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
           sourceElem,
           sourceNodeIds,
           sourceConstants,
+          sourceRegion,
           receiverCoordinates,
           receiverIsLocal,
           receiverElem,
           receiverNodeIds,
-          receiverConstants );
+          receiverConstants,
+          receiverRegion );
     } );
   } );
 
@@ -518,7 +545,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
           using FE_TYPE = TYPEOFREF( finiteElement );
 
 
-          printf("before call");
+          //printf("before call");
 
           AcousticWaveEquationDGKernels::
           PressureComputationKernel::
@@ -546,6 +573,10 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
 
         } );
 
+        arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
+        compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, p_np1, p_n, pReceivers );
+
+
   } );
 
   // /// calculate your time integrators
@@ -568,7 +599,10 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
   {
-     
+
+    arrayView2d< real32 const > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
+    arrayView2d< real32 const > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
+
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( {acousticfieldsdg::Pressure_nm1::key(), acousticfieldsdg::Pressure_n::key(), acousticfieldsdg::Pressure_np1::key()}, regionNames );
 
@@ -577,6 +611,13 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
                                 mesh,
                                 domain.getNeighbors(),
                                 true );
+
+    //     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
+    //     printf("sizeregion2=%d\n",m_receiverRegion.size());
+    // compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, p_np1, p_n, pReceivers );
+
+    incrementIndexSeismoTrace( time_n );
+
 
 
   } );
@@ -629,16 +670,21 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
       arrayView2d< real32 const > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
 
       arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+
       compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, p_np1, p_n, pReceivers );
+
+      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                               m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers, pReceivers, pReceivers );
+
 
     } );
   } );
 
   // increment m_indexSeismoTrace
-  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-  {
-    m_indexSeismoTrace++;
-  }
+  // while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+  // {
+  //   m_indexSeismoTrace++;
+  // }
 }
 
 void AcousticWaveEquationDG::initializePML()
