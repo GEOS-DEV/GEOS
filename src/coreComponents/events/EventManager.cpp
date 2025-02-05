@@ -200,7 +200,6 @@ bool EventManager::run( DomainPartition & domain )
 
         if( subEvent->getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
         {
-
           subStepDt = subEvent->getSubStepDt();
           numTimeSteps = subEvent->getNumOfSubSteps();
         }
@@ -269,7 +268,7 @@ void EventManager::outputTime( LogPart & logPart ) const
   logPart.addDescription( "- Time : ", timeInfosUnfolded, timeCompletionSeconds );
   logPart.addDescription( "- Delta Time : ", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
   logPart.addDescription( "- Cycle : ", m_cycle, cycleLimited );
-  logPart.setMaxWidth(70 );
+  logPart.setMaxWidth( 70 );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )
@@ -318,7 +317,7 @@ void EventManager::logEndOfCycleInformation( LogPart & logpart,
   std::cout << units::TimeFormatInfo::fromSeconds( subStepDt[0] ).toString() << std::endl;
   for( integer i = 0; i < numOfSubSteps; ++i )
   {
-    if (i > 0)
+    if( i > 0 )
     {
       logMessage << ", ";
     }

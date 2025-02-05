@@ -291,7 +291,9 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
-    getNumOfSubSteps()++;
+
+    setNumOfSubSteps( subStep );
+
     subStepDt[subStep] = dtAccepted;
 
     // increment the cumulative number of nonlinear and linear iterations

@@ -167,8 +167,16 @@ public:
    */
   void getExecutionOrder( array1d< integer > & eventCounters );
 
+  /**
+   * @brief Get the track of substeps
+   * @return A vector containing the the track of substeps
+   */
   std::vector< real64 > const & getSubStepDt() const {  return m_target->getSubStepDt(); }
 
+  /**
+   * @brief Get number of time sub-steps allowed for the solver
+   * @return Number of time sub-steps allowed
+   */
   integer const & getNumOfSubSteps() const {  return m_target->getNumOfSubSteps(); }
 
 
