@@ -268,7 +268,7 @@ void EventManager::outputTime( LogPart & logPart ) const
   logPart.addDescription( "- Time : ", timeInfosUnfolded, timeCompletionSeconds );
   logPart.addDescription( "- Delta Time : ", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
   logPart.addDescription( "- Cycle : ", m_cycle, cycleLimited );
-  logPart.setMaxWidth( 70 );
+  logPart.setMinWidth( 65 );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )

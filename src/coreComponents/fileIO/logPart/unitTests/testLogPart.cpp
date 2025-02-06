@@ -183,6 +183,28 @@ TEST( testSection, valuesMultiLines )
   oss.clear();
 }
 
+TEST( testSection, multiLineWithExtraSpace )
+{
+  std::ostringstream oss;
+  LogPart logPart( "TIMESTEP" );
+  logPart.addDescription( "- Time : ", "00h00m00s out of 2y, 269d, 12h21m36s (0% completed), 0 s / 86400000 s" );
+  logPart.addDescription( "- Delta Time : ", "00h00m00s (0.001 s)" );
+  logPart.addDescription( "- Cycle : ", "0" );
+  logPart.setMaxWidth( 60 );
+  logPart.begin( oss );
+
+  EXPECT_EQ( oss.str(),
+             "\n###########################################################\n"
+             "##                       TIMESTEP                        ##\n"
+             "###########################################################\n"
+             "##  - Time :       00h00m00s out of 2y, 269d, 12h21m36s  ##\n"
+             "##                 (0% completed), 0 s / 86400000 s      ##\n"
+             "##  - Delta Time : 00h00m00s (0.001 s)                   ##\n"
+             "##  - Cycle :      0                                     ##\n\n" );
+  oss.clear();
+  oss.str( "" );
+}
+
 int main( int argc, char * * argv )
 {
   testing::InitGoogleTest( &argc, argv );

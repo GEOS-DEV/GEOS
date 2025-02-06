@@ -291,7 +291,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
-    setNumOfSubSteps( subStep );
+    setNumOfSubSteps( subStep + 1 );
     std::cout << " 1 substep " << subStep << std::endl;
 
     subStepDt[subStep] = dtAccepted;
