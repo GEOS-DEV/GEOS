@@ -6,9 +6,13 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR  #3227 (2024-02-01)
+PR  #3227 (2024-02-06)
 =====================
 Add targetRegion for perforations (optional).
+
+PR #3502 (2025-02-04)
+=====================
+Add array to store the source values in time inside wave solvers
 
 PR  #3395 (2024-01-22)
 =====================
@@ -132,7 +136,7 @@ Add routine for automatic time steps in waveSolvers with new attributes
 
 PR #3156 (2024-10-29)
 ====================
-Restart check errors due to 1) schema node added to enable thermal option in well model and 2) arrays removed/added for option.  Max difference errors due treatment of shutin wells.  Previously non-zero rate value reported for shutin well, new code will set rate arrays to zero. 
+Restart check errors due to 1) schema node added to enable thermal option in well model and 2) arrays removed/added for option.  Max difference errors due treatment of shutin wells.  Previously non-zero rate value reported for shutin well, new code will set rate arrays to zero.
 
 PR #2878 (2024-10-17)
 =====================

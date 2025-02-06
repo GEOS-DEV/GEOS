@@ -1,7 +1,7 @@
 baselines:
   bucket: geosx
-  baseline: integratedTests/baseline_integratedTests-pr3227-9990-ce2e7bf
-  
+  baseline: integratedTests/baseline_integratedTests-pr3227-10037-26bd879
+
 allow_fail:
   all: ''
   streak: ''

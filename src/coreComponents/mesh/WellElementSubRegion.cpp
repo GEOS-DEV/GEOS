@@ -337,7 +337,6 @@ void initializeLocalSearch( MeshLevel const & mesh,
                             localIndex & eiInit )
 {
   ElementSubRegionBase const & subRegion = mesh.getElemManager().getRegion( targetRegionIndex ).getSubRegion( targetSubRegionIndex );
-
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   resElemCenter = mesh.getElemManager().constructViewAccessor< array2d< real64 >,
                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
