@@ -30,7 +30,7 @@ TaskBase::TaskBase( string const & name,
   ExecutableGroup( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  
+
 }
 
 TaskBase::~TaskBase()
