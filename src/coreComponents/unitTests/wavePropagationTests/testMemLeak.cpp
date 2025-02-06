@@ -204,9 +204,8 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
     }
     propagator->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  arrayView1d< string const > const & )
     {
-      NodeManager & nodeManager = mesh.getNodeManager();
       FieldIdentifiers fieldsToBeSync;
       fieldsToBeSync.addFields( FieldLocation::Node, { fields::acousticfields::Pressure_np1::key() } );
       CommunicationTools & syncFields = CommunicationTools::getInstance();
