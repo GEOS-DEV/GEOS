@@ -33,6 +33,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "LvArray/src/output.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -514,11 +515,9 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
         {
           locallyFractured = 1;
         }
-        MpiWrapper::allReduce( &locallyFractured,
-                               &globallyFractured,
-                               1,
-                               MPI_MAX,
-                               MPI_COMM_GEOS );
+        globallyFractured = MpiWrapper::allReduce( locallyFractured,
+                                                   MpiWrapper::Reduction::Max,
+                                                   MPI_COMM_GEOS );
       }
       if( globallyFractured == 0 )
       {

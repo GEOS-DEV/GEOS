@@ -232,6 +232,8 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+  void checkDiscretizationName() const;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) { GEOS_UNUSED_VAR( domain ); }
