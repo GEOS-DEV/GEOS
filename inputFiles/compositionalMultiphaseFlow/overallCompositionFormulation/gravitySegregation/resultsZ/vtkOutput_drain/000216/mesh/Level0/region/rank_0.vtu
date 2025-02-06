@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <FieldData>
+      <DataArray type="Float64" Name="TIME" NumberOfTuples="1" format="binary" RangeMin="75600" RangeMax="75600">
+        AQAAAACAAAAIAAAADgAAAA==eJxjYACC0k8OAAOLAag=
+      </DataArray>
+    </FieldData>
+    <Piece NumberOfPoints="404" NumberOfCells="100">
+      <PointData>
+        <DataArray type="Int64" Name="localToGlobalMap" format="binary" RangeMin="0" RangeMax="403">
+          AQAAAACAAACgDAAAmwIAAA==eJw11dViEAQAQFF6dDdjdHd3d3c3bHTH2IjR3SAoKKGgdHejdDdKKqmEQYcSDxzvy/mEGynS5yIzCqMyGqMzBgMYk7EYm3EYl/EYnwmYkImYmEmYlMmYnCmYkqmYmmkYyLQMYjqmZwZmZCZmZhZmZTZmZw7mZC7mZh7mZT7mZwEWZCEWZhEWZTEWZwmWZCmWZhmWZTmWZwVWZCVWZhVWZTVWZw3WZC3WZh3WZT3WZwM2ZCM2ZhM2ZTM2Zwu2ZCu2Zhu2ZTu2Zwd2ZCcGM4Sd2YVd2Y3d2YM92Yu92Yd92Y/9OYADOYihHMwwhnMIh3IYhzOCIziSoziaYziW4zieEziRkziZUziV0zidMziTszibc/gF53Iev+RXnM8F/JrfcCEXcTGX8Ft+x6Vcxu/5A5dzBVdyFVdzDddyHddzAzdyEzdzC7dyG7dzB3dyF3dzD/dyH/fzAH/kTzzIQzzMIzzKYzzOEzzJUzzNMzzLczzPC7zIS7zMK/yZv/Aqr/E6b/Amb/FX/sbbvMO7vMf7fMDf+Qcf8hEf8wn/5F/8m//wKZ/xOV/wJV/xNd/wLd/xX/7H9/zAj/x//JEZhVEZjdEZgwGMyViMzTiMy3iMzwRMyERMzCRMymRMzhRMyVRMzTQMZFoGMR3TMwMzMhMzMwuzMhuzMwdzMhdzMw/zMh/zswALshALswiLshiLswRLshRLswzLshzLswIrshIrswqrshqrswZrshZrsw7rsh7rswEbshEbswmbshmbswVbshVbsw3bsh3bswM7shODGcLO7MKu7Mbu7MGe7MXe7MO+7Mf+HMCBHMRQDmYYwzmEQzmMwxnBERzJURzNMRzLcRzPCZzISZzMKZzKaZzOGZzJWZzNOfwElqaqkw==
+        </DataArray>
+        <DataArray type="Int32" Name="ghostRank" format="binary" RangeMin="-2" RangeMax="-2">
+          AQAAAACAAABQBgAAGQAAAA==eJz79////3+jeBSP4lE8ikcxhRgA6flIdw==
+        </DataArray>
+      </PointData>
+      <CellData>
+        <DataArray type="Float64" Name="relperm_phaseTrappedVolFraction" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="0" RangeMax="0">
+          AQAAAACAAABABgAAFQAAAA==eJxjYBgFo2AUjIJRMApIBwAGQAAB
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              0
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="relperm_phaseRelPerm" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="0.35768054288465495" RangeMax="1">
+          AQAAAACAAABABgAAzAQAAA==eJy9zfs3FHgYx/Euuyvl1o7LLI6Rw0o0e5KakzaPTW112jWtKC21G+vSWoxboU2MEcWWXBY5GJMZ0jTGZaemtDVdXCbSUCfGYK5GtKGkpqHW93t2/4Td9y/Pef3wOc/Bllfi/n6GV9qVxdRc3SQESx7STp1geFXx72WULVib4JONrCeLsN+PXatAply5iX16ltyCHOR6HftWOVuMfPiSADt+wFaB7O/cjD3HK3qD7M5uwH5la2ySveApBy52kcMpR+RKZh32EtEHT2R3Ozb2qjcp3yHzyquxC+7PRCCbfVaJ7e1GS0MO/v0CNnPN8yLkPEIJdoIo8jIyN78Qu2JKI0JuMs7Hjrwa2o//n8nDNrNSvkCmGZzGppoc/jhnwR6MLGxxhdwGWbqIjh1+/0d35J9OpGFPMhQ7kWW6VGzyUMgPyF5Hj2F/3q1OQqa/TMCmBUTkITfF0LAlSeMs5I7xX7AdyTFCZHH4EWx92sseZJ4yDHv2yLFR5PRDIdgbDFznkQ36DmH7Br5qzFuwG1ecjmwfHadStTG8iMwtVmcX/GsgYWNNkdZrZPVmB+fOSSg1PT7BzD8J5YlL/aXMcWBUBzydWfknbOnckfwJZxAio3vLDpj1QtAzkuowqQuGZV3dsVefQsJiRod96V2wMgroruFIwW54vDre+jZk1nxBTU6TQWpU9/rowFag+Ca1n+8ZAlfZ3cKeh0I4+JojDX0yDPnJfRdyZq4CxbF8hMYdgSXeYqEoQwAn6T6uhu5yOL9iP2up3x9w1M5cwqHLIZion7mzpwX8i3dOa8Vy2FBr25AS1wzsdI/wBiMFOLcqbQ25TTBRQb7zzS4F7Kjf/mLsXSM0LaMRmzIU0NcVTnD7vhHiBW9ZhQIF+Lq/EU618SHVXLLl+JgCqIwyuiHwQa4ZHXpspYS5tVmq3zIaQL5h46PZbUqoXBtzq7aYB57zSYHONCWQ9anEzdeuQKqnsIpZpoQb/CinU1oukGwUWYUiJaRmXjtIcOBCqUVgk8uYEtbNXT5aF34ZtsZNk7KNVeApCeva1FIPrOXNux+sU4Ez1UIpN6wHI07tqk8DVEAPzTF/En4Jzu29cT3xmAoizEsUYeI6cNoeqjMsU0Fgf1jA7Po6uBEbZ6oVqqDNa9m3OlYtbI0Mfk2SqsBHsMbvhWUtGAySpO06FcieBcsPneNAtndGwTRRDW87v34+uIIDGT7TJnyKGsyLTuboc9lg2lEgt9ynBt68S+Y+UzYQ98T2eyaqgaOP6c0qroFWnvUj9wI13FlsW06yq4Ge9bpGIl8NM2dCTjfXXQS9hUi5/KEaCn52JLR5XIR7KQ+8yc/VUKUr/UgsYoEoysmkcbkGpLL9QVZUFiy5T9rb46IBD0pd79BgNaSUhPEGdmmglG8XahZRDc9W7d7tHaWB+KmI4W2TTHiQaPYl+6wGkgWE1rR4JhjfdLg016KBcUZQTe1gFRjFu6V3jGiAfoD2/qywEvweSwjnVo5C9u13f9nQKiDKrK9X5jsKQZbOxa815cDIzRy9zhwFGn9oYtNEGRhXDVAe2WihMnZ6qN66BCTtTjn2ei2ECNJzY1IKwMLqCWXgq3GgGlsW9q2mwyLc1D/33/4/v/+AmvzP9n8Dkp3qGw==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.35768054288
+            </Value>
+            <Value index="1">
+              1
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="rockPorosity_referencePorosity" format="binary" RangeMin="0.2" RangeMax="0.2">
+          AQAAAACAAAAgAwAAFgAAAA==eJybNRMETtrPGqVH6VEagwYAbdXOLA==
+        </DataArray>
+        <DataArray type="Float64" Name="rockPorosity_porosity" format="binary" RangeMin="0.21294482721020708" RangeMax="0.21294589320621624">
+          AQAAAACAAAAgAwAALwIAAA==eJwd0V1IkwEYBWA1VjK92EXkNK0RbcypNSaF9sPXStM0kZb9MA3SKEMmyHRYYolkNFfQ5xw0TFpb6cWQ+BqJZBszpTbn/lxSuZriRJwwN1lUlG22s6vn5n0PHI6F6tO4hDMES6wj4dVnhm4ovzMpherfs9fg4/SlGigxhkshf0fsMPweTOPC5ubMTLgq59BhGVG46cQfSQShqbPSB+e2XXJCN7vBDEf9Egp2HWnXQkFBtxLaxhX3YMVyfxs0DA9eh0m0oYvwUGykDIqUb4rghffvciHxcDILMjasaYmcsPOfI+5Nxdw6DJvnF+AVcsEFDZv+CViavPoaGp0BHZS+mO6H3KO8Hli1V9UKPbPMBpijjlRD/ejp44ncQB4PjkxRu+DLPYspcCBiCtnjptaLvNBc/fwDdFv1FMwqansK96ti9+G+jsoWqBfWiaGPLiiBFqujIHF/hp8Bt4rFSbDrwNm1Geyg3e6BrL+94zDS+1kHN/qCCvhIaJfCpjGZGMqS14TwcjYnFw5F8hlQVBv9ZYs7mPHEB6OuP1Mwh8HWQ5aQSUKaziOD4WPna2H5V/UJeGtJy4bBKgkdTkh+hqbj9miKP8GTgcIxqMnzDUCzn3cXRofT6+Eit/EUZJGpbJjyVk6DNTvnl61xG79xTNBodKug0vxAAh1RQQlsaffshp35N35Y0D87ZIOu8iYdZFLe29AuIs7Bdb6aCzsqVrY+YncN5wv0Hqx7Bf8Db6uf+g==
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_totalDensity" format="binary" RangeMin="354.6725928203522" RangeMax="973.8362698717881">
+          AQAAAACAAAAgAwAAdwIAAA==eJyNzW8s1HEcB/CrRitiC3XmkK31ICzugaW03uTBWepBuc05kgfFYldsOPJ3Oe73/cmWboRQRt0RmeVPQ1xp4uTPyV35m6SVxZ0jSxnpq0ce9ei19977fN4/fdYLNUcTsC6pN77c9EB+A/VM4zNq+vsmavfvFqqzcytV5tdOXb3SQU1h1FTr2lfUusHX1LDlbqo9t5c6c7KP2h7eT1XeGqSWPtZSKzTvqM0GHXXU5gN1z/ExakDoBLUwY4pqqpze2umZoernZ6nh+79u9V5z1CLxd+rTrAWqx6Bg8a8xpi+zPZtWD0U5CAUJGLDvgOPdJFiWLPYZ1Jm4HSbwNEhkUAo/qosXs6EqzrSzVeagpnn2jsJOjtpxjlYZIcfu1Wv190rkeBNotJD2ymE2fWmMY5LD8bLeWWzLYP70PkzyGYRqdNKY8wz4LXrjw0gGiUe01QtpDMZlMVVVCgYBIxKuuYqBor0gyLeNQSpP9DCtn4HVt4vjE1Obf6J9ziUZGXwOX1+6yiFoMGtMeW5NYKUr+5HhRCCfqRJp3Aikvg5rlScIhFbXJ7kCguU5/oqHkOC+FzdqJYJgzamgNVZCcDj97N6aZIIcc6N7dTbBcH6LISGfoGP1po99GcGjys6IIhVBllYk4jQSlKqaXIM7Cbq6ePFPNASx8aOHLPQEp+J4SbJPBFx+3AvPBYJc353l7r8IilP9XSvMWejKk2/02rCo2YjcteHC4oFkxwWNJ4sEgeLtQX8WA0GpxqwQFsHiFUuBlIXYOzCkopKFWxTPf3GJhUuTwju4LRd1x/zq6iV5GI42JaoD8jDyz+H/dGhb3n6/vf8DNbyaTw==
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_phaseCompFraction" NumberOfComponents="4" ComponentName0="water/water" ComponentName1="water/co2" ComponentName2="gas/water" ComponentName3="gas/co2" format="binary" RangeMin="1.3852874802808806" RangeMax="1.4135069861871925">
+          AQAAAACAAACADAAA1QAAAA==eJxz+L2hdfXSd/Y8Ph+WuC9das+AAj7YO0Dl+QjI8w5yeVzutx8i/iMUP0PdfQPtv4GO/4G2n9bxP9DxO1jTL7Hlz1APv8HufkrzH6X+p7T+HWj3D3T6GmjzB9p9g739Rq77CJWPvonPpaQ93tvHXRNePOfPNAx5zXaxm+e+v7f/v+rjJd+kAAx5Naj8pU3Y5TWg8mXrsctrQ+VbV2CXh9n/EIf9MPO/bMAurwOVjyCgX3oddnktqHzyGvzu/7Icv/nKOPwPM19qNX7zz+EIHwBCLdnb
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              1.3852874803
+            </Value>
+            <Value index="1">
+              1.4135069862
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="rockPerm_permeability" NumberOfComponents="3" format="binary" RangeMin="1.5588457268119895e-12" RangeMax="1.5588457268119895e-12">
+          AQAAAACAAABgCQAAIwAAAA==eJwLWhq0tWpVvm3QKD1Kj9Kj9Cg9So/So/QoTRUaAFGCdaU=
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              1.5588457268e-12
+            </Value>
+            <Value index="1">
+              1.5588457268e-12
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_phaseViscosity" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="0.0008561451025359076" RangeMax="0.0008561451025359076">
+          AQAAAACAAABABgAAJwAAAA==eJw7IrSn6Aqnj31kO69hhfg/uyOj/FH+KH+UP8of5RPBBwC2B3lT
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.00085614510254
+            </Value>
+            <Value index="1">
+              0.00085614510254
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_phaseMassDensity" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="1031.9913639458598" RangeMax="1040.5133684219068">
+          AQAAAACAAABABgAAQgAAAA==eJz7qyC/029Sn4P7/vDmO2plDn9H+aP8Uf4of5RPFf46fad1G/IQ/EvZn8oPeiL4lwnw0dVTqp+QelLtBwAu395n
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              1031.9913639
+            </Value>
+            <Value index="1">
+              1040.5133684
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_phaseDensity" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="1031.9913639458598" RangeMax="1040.5133684219068">
+          AQAAAACAAABABgAAQgAAAA==eJz7qyC/029Sn4P7/vDmO2plDn9H+aP8Uf4of5RPFf46fad1G/IQ/EvZn8oPeiL4lwnw0dVTqp+QelLtBwAu395n
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              1031.9913639
+            </Value>
+            <Value index="1">
+              1040.5133684
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_phaseFraction" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="0.7184805621666134" RangeMax="1">
+          AQAAAACAAABABgAAxgQAAA==eJyl0Gsw1XkYB3Ck29CIJbHaTcLWQVelNvOlkAzVUWlUYlVu5TLUJrkspVZSthBaoT2t41I4x8n9HE4Xhejqumq6rFbn/6dOSnPqrD2/3+yrndkXTc+bZz4z33meZ55Jzk7xBzu5GBhwcJo5NgLTx/btG/lc6D7N6eaonGY09Ih4v1Ym9fnyjCfEfNt06rXHHYaIG3xTqVHAyIkrUo5R9yiyPxEnCROp72Q5T+KqbDsQS+27X65DfHNSNPWKs/lGxHYLo6i737qbESd7h1FLMxVWxKKkYGr7Q/xlxNdKd1M7XPByIK586EudrjnRjTheuY06rky4iZhj4UX9MdPfh7hqPZe6uUk3kHj2QXdqT+vmCOLg/LXUZv0RMcRnWlZTx7TOPkqcO2JPveHj3TTiJMMV1MdDE88Rr8NS6sOmiwuJRwIWUEtmPC8hPnBqPvUZj4wq4l6ROfXADWcxscnAbOpTCWMtxNA0oR6KKb5H7MQxpM6p2d5PbOapR52oO+dP4g9h06gjTfhxm1R+w3HsIp4ruJza1sKF5byVxiYqP+JmWhv0JKG2ZF1pftUIjKa8yJ0/0AqF0sVb5DqEZftW6p1/+gwZlqn9t1f1QTyw8Vwt/oJ2SsNFI/VOOC8bM28cHcJrC7MgLetbOGBV1plV/gpW6zc08xxvoOBgu1OQsQyxph3MzqxrqNtq7RHiL4NBoVub149SSPOudxlky6D8meXx85tVd40P3pbKsGv7hN09o00YW2Uh4Q7KYKYdOKE2oAkJHE54lyYDHd7vx9x7JUivdnxd+i2DlDXyuAINCYbvaFlXLGeQnV54Ln61GAZa920OezDwKQpPschoRPHa896HfmAgkJovsR1tQLtPyC+KKAb5upf3c/waMDN1XdD3yQwci4SNc7vqUWTb9Cokk0Gb59/F/M31GNeN3nuFx0A9AryTfXWQeLp8NVfIYHLInT1PAuowNS6C/6KJQb1hbEPfh1pohMXd1+xgwJ7W39d7uhbz1KUTs/oYCN+P3NvAUX1yhvfiokEGEtfloTdba8C6NLk6y1X331LWPgqtwfQpAQWHlQySJZ2f5ujXgNtf5rp5CosD5jl1Po3VSJgV6dajx0JbP7zMPrga3JqTj3VmsYi3z9VKNKyGj1f5rxqWLL7xSDaWtVwFb0b0peqFLF644eHqmKsYSjFvtV3JQlzx4ArX5iqsXHZUHVnD4kLHLJ9nz0XIWcSbzndnYRf1OEaSK8I0eY+4eAuLnHC7qQJPEXaF92in72QxcnRVToKWCN5Ryeq7AlX5PQ/fvrxeBY8TNs2cCNW8y6nvC+OrYLzb3+hdNItFT5ilW+2qUDoqcGtPZFG2Lagk740QFt/V2UpPsOgW23gOFwsRmXGEw55lEbrj+W9ZfkJ0Gykf7M1j4b7I0K9QX4ipS+vUQopYVPraKMqvC+Du5qc3T0D2KfdVhwlQplYfqCNmcUlhKT2qI0CJh6PoZhsL4Zl3W1oLKzFhPFgj7g8W8skVjKFJJSZ/3cz7Sc7iluVYr2JvBSyyEk3H9IZxKm/wZdrdK9BIizym4T4M2YLu7G6UYkm2f0hZ1zA6Yru8V2RehBqt1/92NbVxWiP/6y/Nf64/d95/8/8APWDqag==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.71848056217
+            </Value>
+            <Value index="1">
+              1
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="compAmount_n" NumberOfComponents="2" ComponentName0="water" ComponentName1="co2" format="binary" RangeMin="7.203731835772721" RangeMax="20.622344460587986">
+          AQAAAACAAABABgAAMwUAAA==eJwl0WlczHkcwPG5mpIovXQipelSzfynLUqj/zch2XKku1GKDqNoNoVeUmYKHbyoJlrl6nB2YNgSKmKpSYkZS7QtXZKRLh2YnZ//w/eTz5PP2+n1D4MMU/EVG69V+bKMoEF/PNtBnoK7xTQJg5U+8G7slw2P4PHIjFbC27zF4cjf6wlbNlt6IwtvEOYNF7oi+5YQxp5osZGfiQj7eaYZIx8/TJiW8k0TWW0fYbctPEWQ0nIe4f4vb+XIPC7hKdv1ncjMdYQvGza0IA/jhOtu2d1D9mYTBkXxNeSRRYS9vs0tRH49l/DHovQsZG064frhsSRk94nRX+aPR/CQb34k7HlJGoi8toNwndoqD2TVFsLNemJH5MD7hPWkiyyRbaoIj8EJPeQH5wn7BSvoyHm5hL0ZseOBSuunE844/aYHuSSR8LYGdyny8mjCQpG4EVklmPABfRMxcluW2lHkT+5Hi5H9dT4ZL1VawHuVgzx0EnsxTU/FB7ZzOvyUFgtMmujVl/HtRVx4aaz8O4NsxF4+gadpHTlxyXo+1JhN8pynDCA5+rxvl1AH6F1qGoL3DLAM1/AkLdeC71fsYviLLWFll309V08DMjV3x4sqrcC6lpvroqkOEvpRgxX5i+El+0rP5zdqsPrVfrcgB2vwmhnj60FXg4LRhNLhcmvYfLmw2SBCFYz2WDgs0bSBbvNTkQYf6JAUy7itHWYDC3r7HSoT6GDVVhOlf8kGPM5zHjXo0iFnImzOvD4beHp97fWMByowNyry+9hCW+h5bVWdlagC3TS3gKFNtnCwoTpTm60CW3hb/UaFtrDUUcjoGaJBi5TBrKyyBcdV5uT5t2jQSG4qKnljCzbtMnXVZBo4Ug57OFOY4PozdM6CNTR4fFzc0WjBhGSzp5+HdGiQrJOdLvydCfL98RaLe6nQ+mTHi/JYJiSZ90pTqqkg5XdF8Y8xITp+/5Q4mwob3gkmR8uZkOE/KBOFU6FvoPNZoIQJurEHv445UaFWcuDfux+ZcIH/JKdCmwqbxAXipXQWnNR1LSgapMB7mmzefyYsUGfzM0v+poBxZEBNC4cFjy5ea71YTIFpj0mBlj8LSiqi5hxLpYB8QZBNbRwLPOrqy/AQCuQOBGZ2ZrDgn105WmUcCiTtGxjJvMACdjt979V5FGAGJZa13WHB5NlIy2XTZEg3nbSvb2fB2OnCKecOpQ/K1HcMsCDmL5+ygloyhIZtVx0mYWDlbtXvVEgGid8szjkNDBoT+raRkslwM9Vpr6c+BmFmYjPJZjKwnivyVRgYlPIDdie4kGFZ71VGJwuDppCu2iYjMsT9scdE7oxBcqnkRdZPEsTtvFvnuwaDi+IfV8LfkSCvWbPd1RcDhUAz7tUdEnzwkruMhGMwWPaylJNPgpSFj80kfAyKS2eTsneSQGVGUUy0AIMoSnc9YwUJIrwKSa0iDE6ML9NaM5sE5nWBpp3lGHzxcR+Rn1bgigpuR8AzZf9MsJ+H/Cd+z2JzkwqJDaERs3TE3T/wZv8Q9w4uG/KoLnVho9M4z0jqYBpmB7oPZTJp2jg+UdUWVx1jD6aOFUaph57jlWC4duNZe8jzwu/vNBXh334IrZGtTXrOIHOhTwO52zUtBfmw6kr5BqXtauZvQb696c9W5JmnKgDZnzFQhXxO5mSCrL/vtxxkbuh9MrKXT2I8stCb8z5W6c4bN3yQQ0/dfIB8Nb/fAXnXEkYxcpJCTw+Zih8TIosGYWK90h25X7ci14RsfY2csHrdSuT/AcMetD8=
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              7.2037318358
+            </Value>
+            <Value index="1">
+              20.622344461
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="phaseMobility" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="864727.9603901169" RangeMax="12340794.358286548">
+          AQAAAACAAABABgAA4QQAAA==eJyV0H0w1HkcB3AkV7cV0S42i3347bJYLSWLq/30sNJim1CWMJGH69goLdIWItfUeMihi02n9VA5jVuppNgUSSPd6Zp10Zl0hamjq+Mu3d5+v93MzfRP0+e/18znPZ+HmNTg3QZXu1aTdJqHbUfiIbJzzrukrV2rpeQ0cbfemZqDZJneBVmp2NyaWRfkhokUbHPXfSLkS1t2YUsjZyKRGzWJ2E/d09KQS513Yusa/yxETiqPx97YL69H5hnFYr8pm+5AHk2MxhYYZ2iR8x5GYY9S3k4hk9dEYKvuKT7fpffxhjDs7TxDJrKOEoqd65bnjRyaHYI98mh+MLJqYjP2VpfCROShkE3YDCY5D9m4IwD7ZHuFEpnCFWOHGTJbkO2+2YBtOXauD9n8n/XYzXL3Z8iT8Wuxp8+26ZA194XYbYdEVsl6Z3uvwp40ur8M2aXGG9vTYZsf8u1FAuwtfzzbjrwp3QPbdkfqPuQ7I+7Y7pmGJcg8Mf/9/70KzyPnNfOwbzyR3ERWWDm/3/fne32peg/Pa9+I3Brd7JNYp78/32z0ut59NvmDxi2OwoRLmyNocfp/SjtrQ1ZohJLeH5e6noyBTlJ4WMsOA7jNvdaTEhYM4cXy/YwfLCBRqXvcrV4Hb5f95PbmF2uIWBT0nKf1gbtK07XzTGlwTlTRnXRxJWQtj1qzf7EdPDTVzukaWg4yxwe0PKE9rOqVUYt0bjA7pHwM9+zh7CWyIKmaD3Gc74UH19GB42Hnm1m8DPYOCHMq6ulwsuyK780YV5iaaKzLNmDAZFOgxHjMBU5EU576SRhgs6YlQ3TaGboMJM1G5Qw4sVMYXKZwguvbB2estQzwsGyt7Uvngiy6WVVOYULuNqWac8wRuL0uXsJNTDilGeDHqB2gj9cx/9xhJrS7Hcn1n+CASRO/Z2MrE+q6c+IT+BxY659RnDXBBLoiuaTjEBvOfBmrK6eyYI6XU17HrwRoDvAU/b4sCC30odN8Cah+QwmJ2sOCJ1/7yDovsiBoeHwqRcmC8enZRXedWPCF/5kC1y4WSOxfv0upZwJ3wdGs1hcs6EmnFpKcmHDMUy7gLyFgzP2a6Vw1A+I0tygXBAQMzEqLHq1mgGGix4KASALUBT2Hbe/TIbmqdwUjhwCbWsXCmDg6EIbD0nU1BESlxZaIdfbQIrOMud1NgOfzEm1WhT2UMW5pb4wRkD/zFb3Jyx4WpEXt2EBiwwmq94jNFTu4VVkaKnNmw2V5VdW3hnZA0EYTxAFsOFAhvCMMtIX6t6EHZ5LYMJocmC8/RYNws9ah4gI2jOdM7y2dsoG7Oy/UeV5gg+qlQv1MZAO7XURm5H42JKS/Clcql0KqOiFfOsWGySCVRftrKlwTa7N9LThQ2WEioIqpQBEO/ubhwYFoUtFFRpU19KvmGleHceD39SsCOl9awYSfSZEgmwMLK03EpiutIJrteeOz8xzwa6yhte2xhIyr1nFNWg44ymvqeKcoMFJZ7jZt6gDVRwv+qj9PBihq6Onb7ADru1duyTmyBI5rXkjMGxygodRsceYSCzj9am6QyM0RLg/yrpKMFkPsuCyzk+CClt2wj+xOggcRRBr9O2fw3+MwnND2t7Cc6f/iSgQfDP6rM1SStHbD/1Z9xB/2f2q++hP7P5b/cP6/orh2kA==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              864727.96039
+            </Value>
+            <Value index="1">
+              12340794.358
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="phaseVolumeFraction" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="0.7084882772477924" RangeMax="1.0000000000000002">
+          AQAAAACAAABABgAA0AQAAA==eJyl0Xs01GkYB3C6DNmiOsq6rMuuW2wTIqH6uiRFbSN1uiCxtUgnHLXUqqTY7qWppVYdXTe0Xcil1ogYY9AYl2YQpinM/EbtyEplJ7N+b7tn/+yc3e8/7/mc533Oc57z/FksSp/W6oZZVo17uColqlOvcj1/dsP2AFlmw5gjU2620I490kucoVkkpb2J/4J4WMpR0vbVfk78uQXvA21jv2fEux8KP/Maszytm7iorMOQdl51J7G1Ya8N7ZDxT4mDWpUutBne7cR//D7iQ/tKivhjPYqxirbzwyfE7Z7TN9Eu/dBCnJhkup2244JmYrGufTLt7N1C4rgJ84/QVpcKiJ3W+2bRXvO2gTh/ctB12hdd6olzzMLv0e5I4BMvyYh9RFuvgEc8PmKvkLbLAJeYl3G8m/YKZjVxvPmFl2S/bY+I9+n+OkJ7U17Fx32COdre9Hx5OfFyLcFM2p7WnI/zpkssaZtu/o14VvKAE+3BS/eJA33HedEukZQQV27XX0k74Yti4jtcn1Dah9feI34XZ3Rr8ZgLFmwlNm3jJCpr6ftNe14z5rpz6c5uSTH4bld9zY89SkxmfFNivKsYizDzcKfDK5xurNnooXwC16xsVoR2L5gXp9rZaUhxuao7P1/dhUklER3i3S/wKsM9gKXTDm+ZgWTD9R4kOwq9/AtFiJ5+0tNgw1jfU+nepoAnqJ9xKemtqBdbWzm601a1QpCm2jZ1Xh8ihhjWEnYLdK38TTQO9KGvKIanft+MdFZycE9VHwY3ai1zTWpGUai7m5+qD2cWHz0er9UM15SC0BCmDGz1+cV+V5pwSn+5RWawDFJRJKdpaRMCh5ya3x6UIcTgfPDUYSGOZWoGzMuXgRKqotm5QujLO7kdAhnEc5bs8I8Q4t3rcsaKARl0TVIHt5gJkbJMrO7Sk2O0/bLGoYpGHMg1sxPMlmNg/f61vKWNqLZObAn0l+Pd5q8KSkUClOCu6ZktclhqeqTdjhZgB3+c7f19csztGAoz1hSgP+/7s5IsOYJXW+Xtz34MgyNnKy3uynFVnPs+yeMx2jpqL/5UK0fOmc6D17oaoDg5J2qVZOx/hVdYcWoDLF+zmJFv5Ij1KFvyrV0DhAkM/14dClyHPvHW1nrIdrI4T80ohNuW62Sk1CO22+TQOmcKvunHJBeY9XBhTBmOWkrBQVZvE9Jdh6HobsowhMLcdenrsk7Wwfyas31SLIW0mNlBZt51MNJ3KDuVSoF9G3qcN3zMcbi6MP4sBR/ETvLI44OV6Bxje4NCxZfMoI1hfJxKu1tW84BCJeU2pVefj9xInmfYYwobwp+rUutqMeONp1D7GYVb9qryzn21GBl2bZAMUjCyNG9Mca4FL2fkgTZDAWnyDP0uGQ/zRYar7xkqYPFL1m3mOR7iAwtGrZgKuD+YNzHKj4eCbJsb5T4KuB0PD5v4ugYJA+oivWAFnBZp2Faya5CTaDJhdIcCBy1OKLW+roGN2sFIi61A+PgFmS8Kuejs12eLShQ4wbpZeM2cC42Vp4/ekSswWlXctDC0GrWTdsbtceyHpM1+kY57FfSkPYfzCvvx6IdtbWscKxEXVj10XvUSiRO61tsal0KDZODv95/8a81P1P+v1STK/zz/U/1/AZeV4KM=
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.70848827725
+            </Value>
+            <Value index="1">
+              1
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="globalCompFraction" NumberOfComponents="2" ComponentName0="water" ComponentName1="co2" format="binary" RangeMin="0.7130741108430001" RangeMax="0.9990005005003753">
+          AQAAAACAAABABgAACwUAAA==eJxV03s01GkYB/DdzXWVTrSyyG4r61Irl4PYzRfbtEoJXWSTiKxa2TIbXcYWrWuhQWpdKjmp3EWaMJphmMgSRUboRMdlfj8hSiel9XvZP/z5Oc/3fd73Oe95ZPcnrruj7IImC+/rxyZH0KWxmWUx5Ixx927fszN2Lo53YnyT10GceLnFjbHJsifENxuWejNOO9pMvNF810HG/Y8biOt60tiMl5jWEXfWPecwXn5eSFw7rBPJWPFVJbHFNv8Exk8decRZk3mXGP99q4Q4vXMsk7GqfCGx5weLXMbhvjnEvR6cUsatwuvEY1NCPuMvvskkbpPIi8l5TjpxzNstjxjLSi4S812SJeR+8yTid1RnL+PYxHjiItEKmrH2SAyxXpf/G8aJjhHE7qZF04wHbpwmXiWelLdk5pXhEI+mYgljM68QYvv8KA3GhpVBs/NMN+sw/lw9kNgoXv0HxvfYB4ivenhbMHZt9iUeP5ADxg8NvYgflY07MNaN3D37HyxnV8Y9T3cSHxw9L1k742jLJB/Gp0N/d/WQd4FdQ7sLZ8a54b8q6iwMx5sLnezmuyP4a2DKNaC8Hivk7Chf7hCKI3S67b7qxeUJHovT9gyFwuxzDlYDuMa53R8Y14IgBT2f1meDsOzxYZedb8SGMM2m2vghDL7nigdF9QhlnTRWfTOEhVIVm5JVD8CdfvBS0VqKCtmugI5lYtjpjnEPH5Liw8Efees21UFjx+ngnSlSXMyd1s3OroV7t6JoD0+KjNiOkWjtWqzPatK/1CbFSFCtx5VbIhz2j7VxHJECnu2yj+1FKN2kFe8oR8G4LV7c0l+DST23EkNNCiu9skx3JNVgysAw1NmIguouN6WqDTXQfzkeqGhLYe8fxus7P1Uj/LLZ2QRnCpMRJo+F/GoEqKx7sdiLglOZ0knBqWpIMuvXFARSyDgmsf2FVY3yvSz3KA4FtTBpau+ianimPllWEkMhNiX/qplEiGnWn2asFAryg0amVLYQp7ZzfZyuUZArKD9SFyzE1qVpb7vyKYgKknTPOQjhny3j8pFHwdNvuOJLLSH2WYRuLa+hcOJ7pWq1MQG27YlMXt5E4XZsf36MWAChyFy8poPCR1q/z/aKAAuU/cTvXlB4Lf6tV+uYANfSMzpPURSC42IufOYqgMoStycPJyiUV2QVPFotwPpohZ/6PlIY7elezFYQoIdvzW6Uo2dyhn7p9fdhzbHuiVtMw0x7tTL3zH14NHJUjNRpaGV8HZBgcx9HPVuVS7+l4bHwUMze91XY7WZzRs+AxkrWov6asio8T9A24ZrQkA1TCglmV2FNutqRKSsa0dqOISuNqzC60XEiyJ5GaNH1Pf40H1Rw/kt5Rxq3HJI7BTf44IUJM5u30bB9PT4W7s3Hxat5UQMeNDZPpVbXqPPxNkUUd9yPhpPDM65ZYyXU1y53ER2m8TPUQrqPV2LRq8QuAw6NSwn+msXalSj1G767OYaGZ0OybeqdCljtb9N1+oeGZfv2lnjzCshE1ET6FNDoe9pX33euHIkL8vJO/EvjUN+VVMPke7iX1lKoJTMM8+/YYRrP7+KTtrBjKHoYigqTVsW8EmzxHtDQdJjZ63bVrPQPKVgVpSZpmtmzTzljrVv2OUNvzq23Z60/5+DCWa+ec8TNWf9//kXO/PxE0fy621zdYM6aBbM2nPO+vPn9J27M76dTOD+vkTs/3zT3nv8ALOFAQg==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.71307411084
+            </Value>
+            <Value index="1">
+              0.9990005005
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="temperature" format="binary" RangeMin="300" RangeMax="300">
+          AQAAAACAAAAgAwAAFgAAAA==eJxjYACCA0UODKP0KD1KY9AA9bCQiQ==
+        </DataArray>
+        <DataArray type="Float64" Name="compAmount" NumberOfComponents="2" ComponentName0="water" ComponentName1="co2" format="binary" RangeMin="7.179093949898133" RangeMax="20.61842043001752">
+          AQAAAACAAABABgAANAUAAA==eJwtzHk81Hkcx/E55RjryCpDrkYJc4hcpd8nHnIlciVRStSDrDaiUsw+pmijE6WDqRwjIsSicjwQmXQoD6WYhhpnjSi0KDvffvvn8/F4vd+ld99iKXQu5t8Sbd7H1AVlhxupa6RJWED6vNIHmdlyuB0O/jk3IHP3DP+XV/dLRpHvjeA2EW97i2z1Djcj+mk7ssJT3OyzUIvMq/+/t79XiLyhDPeaY0ZZyNU3cW93v5yCnJ2OO6FIPh5Z6yTu01eOhCP3xeFuXTrqh3xlH+6JlYFOyFPbcGu1tVsiZ7nj9p22YSAn2eMuqxIsRq5g4X5C0SQjD+rj9v7Im+yX2Usd9xmfiX7kQTLuMe8dncj8qZxf3j8gbESWDuKuJVqXITe/wW1UfouPvEWI+9YX5XPIyx7ixhoPJyLnleAu0vsQhWzMx+2g4hGMXH8ed8HZfzYhu5/AfThHbx2yZWjTL3+zO2WK/EUpLthG5n79SjryilwGM3MxF7N6ssWlV+aj/NnPCfrlmL2v5JpASxfaZkpdvlLnMZ1uo0mHHm1Ydze4iRqoDRE3+AHvaL/D19/O6lMsjMB1yMD3PlUVLiqXPjrgZgwEe2KUYEQJ8uyq6J8aVoHy1uWc+GkF0BInq9BumMD0yLrTQ0J5wDSu72xeawrSwtLR1tlFkFZcUhlQYQp05ubHzkGLwCav628XdTNI7e0/pNwrB/t9j0dYhJpB5+l8m8FoOeAcVjPh3TYDk7jq6TE1OThWdDJ/esgMbrenbYipp8ISgfNYkD4TSkbes9ViqNAyYHtpyocJYi2fDDqLCo7DP4bzeUxoD3ckBUspYPUho2lJGRMSIiRRUxUUyDM4ktLRwwSLjCaJVQIFIvOvrVxFZEGERQP36kYKqF02l09cwYLyxEPCSg0KdLsv7KK5sYDSuf0SS0KGeFiyoLCfBc+9ixYaqslQ9bRmMDeNBYtsPV+bpZHh5d5iL8IdFngMc+UddpMBSy3UAiELlILnCl7ZksHYcEiUNMSCpcHU2AfqZNhtc/3tGzIb/HbXVL/+RAKjwKj0XXpsiJrl+is+JoFq44NIlh0bMt9nqdnkkcBJPZTu7csGZ8c8ifNfJPg5Fq0himKDpiD8uOFOEsyJ6NKBZDZkXVheVm4v2z97UXOAzwaPuXGyWIcErj9W77lczYZL62lmWfNEyPj8wnjvczac2bT+aEsvER7F6VInBtkQ5NlhvbmOCImp1gHOP9lQVXezWyeHCBuyU/0aFDkwXrPjo0YSEdzEuSFbNTkQrSzO1gwhghGZQps14IDtYsb4HBAh4Zq/Qi2TA9qv8lIzDYhQtxCkW2zLgeZ3vPQCIhG82yVFUicO9Kxp6+oTE4A+YllV4s0B0RnRd2E9AYI6SXcYIRyQb9SI7bhKADsLN6vSPziQzIidHI8hgKcondKTKPvT3UOtcSFAlxt35uIFDvhZ84SFmgTwP+ezMbmQA/Baqyu7YgGjfYqJn2vlQJeil1qbygKmXj7G2vmNA4YPpSLtZT+xg9dD6085mUMHt07KjpzHvG5+ZfHVV8OEsXV9jeF3jNUaRc1ysgTXZbzgKWEf5nr/lZ5XjiWECeIZew0zMR1eIBH5AqylIkeGvRnwlLm5eEoSLrM4xKMFOXayoBW55lBtPvIJI08BcmiuTgqysb00BTltJG4fsmj5iX3IKW6PXZFf/qvqimzfrGqKHCDIWIV83s+LhjxrrqKI7EhM+bxZ5m/F3NEwmbMfVT5D/m1mWIgclttzF/kZw6UY+T8uNrmz
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              7.1790939499
+            </Value>
+            <Value index="1">
+              20.61842043
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="elementVolume" format="binary" RangeMin="0.09999999999999734" RangeMax="0.10000000000000166">
+          AQAAAACAAAAgAwAApQAAAA==eJyNjzEKwkAURM/gRTyCXsDe00hyARFFMBuIroIgRMHSVEmZ0lKscgSPIJL5zYOvpnnM7MxsNoTPV43DD2ZiFNfiEn50/K24Ag/iTCyd3Bl6Dn0RN+Ieu9ZfiAX8iHwi3nB+Qs54Ra7BjvUmYgs/ATvs8j7rT8Uj+g/oCF1D36Ht/0fOe9jbiemf+3zn0PFtJ8X5y9njfdZ/Zj0H+fc8/TcYX8du
+        </DataArray>
+        <DataArray type="Float64" Name="deltaPressure" format="binary" RangeMin="-342758639.48964787" RangeMax="-342705339.68918943">
+          AQAAAACAAAAgAwAAkQIAAA==eJwV0n8slHEcB/BmuuUaoRvN7BjN2lVHuiwr5g/jSEjRnHK51S2nu0hGfoybObm4/ErrMKEwzDiSXNHlVNRuOEk0cVG35qIUEU+9v3+99ny/z/N8Pp/v+9sjaVf7i7s086kJ9gHwi8o9ORBqnbZ0XJjZp2cFQ+vbnbITMKekyhAChwcVvqFweb9cGQZ/DihWw+FIUVVEBLxZ0Nl2Gjo+1tMjodxuSxgFxxvdB87CDVGCUzTc5Ldn8OCkjHofA0s/RXLOQzdRd3EsrHBzNvHhLKMsKA7uOLKrQQDp+eVmF+E3uiv/Emx43qsWQt+mmD2XoUqzPSUemlk+GRVBtjyFfQUe9T52SwyZDnSjBBoOGPwTSV85A7VJZD1nkrpGvmObYq9DRX3LcArkWk+FpJI+x2Y/p0GeR7I8nZxP4UGfTFKfR61nkWdBaX82jIozL5JCW3NVXC6p+87VJw/KGP+Y+XAbtUkrgJJDC7/kULRRYCyELtrBOQU0ht6YLYZ+Qvl8KQxeMpjK4RgncbOC7PNdrO9Bhs3ivkpSz/ZFQDWZ07Eyvobk1Xy1pJb8f9q7rx5+5/9eegjvi2vcmiBN4yVohuGN6rpW+GC3h7ENXtDc9ewg/Qn/SDtJPqvRE4/IvsUr9x6yHnVS0Qs5IurHU3imbpnXD7ty/YY0JJ9WWx8tbKqr6H4J0612eg3Bc55a9Ruo43pxdZA1TPs4AikdK00P0zjOzAnS5wfByCTJPyijbJrcJ09D4gw8Tj8snSO5+rFoC9Bq7VSHEe5dCYxZhFOmMNoymftrvGoFts/c4a+Recf1ln/h29euzyjyvjpPbCbBvWpZZ9KgnTJ71AIqZfZ5ltAhSeNtA4ujs5YY8D9uHbo3
+        </DataArray>
+        <DataArray type="Float64" Name="elementCenter" NumberOfComponents="3" format="binary" RangeMin="0.7088723439378912" RangeMax="9.975093984519644">
+          AQAAAACAAABgCQAAcQEAAA==eJx10klOQkEUheEHYt8A9s8GBXaAzmUBrEPdhW4DXYFjluAUjSNHDjQxxMTEGKPBGBXz7lEnP6cmN3yp8FdRJEm2bveS33nSztbZ/+e/uRPrHK55Bd+PdQ2/6GbrBq7undl/b7oP8N0456M5zxM8vr77bPa/mO6rOf+bOU/fdN9N9wOej/lpul/mvQbm+5Pm8P05eC5mHq53oes8I/CD6BZMd9R0x+D63ejqjpvuhOlOmu6U6dLVnYYfRncG3ojurOnOmS5d3SJc/7cSPLa36ZpluP4ndL07Xd15c076IBZd3QXTpau7aLp0zSXTpatLV3fZdOm6L13dFbjena7uqunS1aWrm5r70tVdg59Gl665brp03Zeu7oa5L/077ktXd9Pcl65uxdyXrrllunR16XGvdBt+mW1v0eO6R/Q4focex+nR1a0OP2eLri5dXbq6dHVrpkuPcUyP9+rQ1aXHM6Z106XrvnR16erWmz/TXiph
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.70887234394
+            </Value>
+            <Value index="1">
+              9.9750939845
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Int32" Name="ghostRank" format="binary" RangeMin="-2" RangeMax="-2">
+          AQAAAACAAACQAQAAEQAAAA==eJz79////3+jeNBgANOZjhw=
+        </DataArray>
+        <DataArray type="Int64" Name="compflow_compositionalVariables_dofIndex" format="binary" RangeMin="0" RangeMax="297">
+          AQAAAACAAAAgAwAAzgAAAA==eJwtxVFEQwEAAMDVLGUpy1JKKU1ZjBFjjBERERExIkZERERERERERETEiIgRMSIiImJExIiIiBgREfXx7n4uFAqE3eQWt7rdHe50t3vd70EnPOJRp5z2mDPOOue8xz3hSU952jOe9ZwLnveCi170kpe94lWved0b3vSWt73jXe953wc+9JGPfeKST33mc5d94UtXfOVr3/jWd773g6t+9JOfXfOLX/3md3/403V/+ds//vWfGxuCI2521G2OOe4u97jPAx7ysJP+B8khLBE=
+        </DataArray>
+        <DataArray type="Float64" Name="pressure" format="binary" RangeMin="657241360.5103521" RangeMax="657294660.3108106">
+          AQAAAACAAAAgAwAAhQIAAA==eJwV0n0s1HEcB/AbKjaTFWrJw9TumkzN5jGGnumPbpqlWCXPU9clh+Nu/DyEzt0J3R3l5Lo8xUXIOU91KoVkZ6ymFoW4FHrATA/v71+v7fP97vt5fz77Kl8yFFpJr7/Z4cBfT6GQHnuUaMumZE+g1l6i74EpHlXeRL+2JlE3tC5XT3RBY73GhbhJrs7uhNvbm8Y6oPeBqj3EhN2SVA3sSKQG26GVU6wtMSswkK2GBsMMbRss6aRZEN3NR6Mew2/9yrZW2Dp/xYRYyHELbYG8qNX6ZpjW2fr3ERSkspjEhgoHRROc3Kv72QgZdvwjxHTuLulDOOf1fFYFIyMuehGXfqwJGqB4TvShHkp8bfcRl3qKMx7Af7H5w3XQ07luB/H9StGZWpJTsllUA0diXmiqyX484yarSH8dzZCoHXKzvw+D3/A9lXDlD/3kPdLXkhWugF2cDHYlpFEU7y4MiBHmVMABgw6BHC7Y2IjLYUFIr/gOnBjUCG/D0Dyz/DIone6jSqHp8PdkGUxayY+XwtFleZiEzHnV5cQtuOp43L2EvL/ls30xNGFuMC6C+wMa5wshv2JqSAxDnBQqEXRe/iIQQqZdS3QByffa0FcAM41GLG6Q87Sds3mkHvxOnQtn+mm51+GYKjcoB9K7z1tnw/XapMlMWK9qUVKwN2UtMgPqZmwc0mHp+NQ4H34tW7/Jg5RMfygNPpteWOSSnMVD0hR4OfSgWzKUzYj6OPBTarRvIqz+qOclQK7R6Wo2ZG0M07HgVpO365fIPzUdoMfDGnNXZhxstLTixsAya1ZlFLnv4PMqAro6Zi2Gw98uftsuwGbvRJ9z8Noxu4gw6HHKP+8s/A/qkaMT
+        </DataArray>
+        <DataArray type="Int64" Name="localToGlobalMap" format="binary" RangeMin="0" RangeMax="99">
+          AQAAAACAAAAgAwAArwAAAA==eJwtxdciAgAAAMCQWSFbJCuzsjNDiuyMyo7y///gwd3LBQL/WtzqNgfd7g53usvd7nHIYUfc6z73O+oBD3rIwx7xqMc87pgnPOm4p5zwtGc86znPO+kFL3rJy17xqlNOO+M1r3vDm97ytnec9a73vO8DH/rIOR/7xKfO+8wFF33uC5d86Stf+8a3vvO9y37wo5/87IqrrvnFr37zuz/86S/X/e0fN9z0r/8AXBwTVw==
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" RangeMin="0" RangeMax="10.099504938362077">
+          AQAAAACAAADwEgAAegQAAA==eJxt1kFEbH0Yx/Fz3SulkTJJo2RWrdr9Vy3et2c2rdq1atfqrNq1ahcRMYuIOKNFxBAtYohoMUTEGSJiaBExRIsYIlq8J8f/+X3f13u47tP/fo3n8x+3mSThs7uS/O/PP3//+996ef5XPCvnstN5nGO/9rf6nzn28TzO5dPKMu/Luex1HmffB6+f4/VzvH7uffHQBGc8j3Pcp7aifWre6zzO5RNC8L6cy17ncfb7WcH9eK/zOJdPmqbel3PZ6zzO8eF7+N/3lX/iPk3s08Q+TezT9L54L3A/Ge4nW9H9ZNi/jf3b2L+N/dveh9DBfXZwn50V3WcH3i48XXi7sHbhzeHN4c3hzeHtw9uHtw9vH94BvAN4B/AO4B3CO4R3CO8Q3sTw/pm88TzOcZ8R0z4j3us8zvF+Kqb7qXiv8zjH/aum/ave6zzO8T5rpvusea/zOMenDm8d3rrJW/c+TRfhXYR30eRd9L6XL8G7BO+SybvkffF/Gd4AbzB5g/etbBneZXiXTd5l74u3Dl6D10xe8z5NV+FdhXfV5F31vvjdAu8avGsm75r3IazDuw7vusm77n0r24B3A94Nk3fD+yTZhHcT3k2Td9P74ncdvCm8qcmbet/Lt+DdgnfL5N3yPoRteLfh3TZ5t71vZTvw7sC7Y/LueF/8DO8uvLsm7673Iexhnz3ss2faZ8/7NN3H/ezjfvZN97PvfSs7wP4H2P/AtP+B98VnAe6ziftsmu6z6X2SHMJ7CO+hyXvofQhH8B7Be2TyHnmfpsfwHsN7bPIee198NsGbwZuZvJn3vfwE3hN4T0zeE++T5BTeU3hPTd5T70M4g/cM3jOT98z74rMS3ja8bZO37X0rO4f3HN5zk/fc+15+Ae8FvBcm74X3SXIJ7yW8lybvpffFZze8HXg7Jm/H+zS9gvcK3iuT98r7VnYN7zW81ybvtfe9/AbeG3hvTN4b74vvEvB24e2avF3vQ7iF9xbeW5P31vs0vYP3Dt47k/fO+1Z2D+89vPcm7733xXcbeHN4c5M39z5JHuB9gPfB5H3wPoRHeB/hfTR5H71P0yd4n+B9MnmfvC++a8Hbh7dv8va97+XP8D7D+2zyPnufJC/wvsD7YvK+eB/CK7yv8L6avK/eF9/94B3AOzB5B963sjd43+B9M3nfvO/l7/C+w/tu8r57nyQf8H7A+2HyfnhffBeFdwjv0OQdep+mn/B+wvtp8n5638q+4P2C98vk/fK+l3/D+w3vt8n77X3xNOT9maM3nsc57vOroX1+ea/zOMf7+d3Q/fz2Xudxjvv/aWj/P97rPM7xPkcaus8R73Ue5/iMwjsK7yi8o/COwTsG7xi8Y/COwzsO7zi84/BW4K3AW4G3Au8EvBPwTsA7Ae8kvJPwTsI7Ce8UvFPwTsE7BW8V3iq8VXir8E7DOw3vNLzT8M7AOwPvDLwz8M7COwvvLLyz8NbgrcFbg7cG7xy8c/DOwTsH7zy88/DOwzsP7wK8C/AuwLsAbx3eOrx1eOuNfwDJLJKK
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              10.099504938
+            </Value>
+          </InformationKey>
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="binary" RangeMin="0" RangeMax="403">
+          AQAAAACAAAAAGQAADwMAAA==eJyN11MDGAQAhdFmbw2t1bzVbNaaa6rZtreaUc2uoSHbtm3btm37odP7vS/n4fsFd6+9/lsBFmJBFmYRFmPRsBdnCZZiybCXZhmWY9mw783yrMgKYa/EfbgvK4e9CvdjVe4f9mqszpqsEfZarM26rBP2A3gg67Ne2BuwIRuzUdibsCmbs1nYW7AlW7NV2NuwLduzXdgP4sE8hB3C3pGd2IWdw96V3Xgou4f9MPZgL/YMe2/24RE8POx92Y8D2D/sAzmIQzg47EM5jCM4POwjOYpjODrsYzmOEzg+7BM5iVM4OexTOY0zOD3sMzmLczg77HN5JOfxqLDP5wIu4sKwL+YSLuPSsC/n0TyWx4R9BVdyNVeFfQ3Xcj3XhX0DN3IzN4V9C4/jVh4f9m3czhO4I+w7uYt7uDvsJ/IknsKTw34qT+MZPD3sZ/IsnsOzw34uz+MFPD/sF/IiXsKLw34pL+MVvDzsV/IqXsOrw34tr+MNvD7sN/Im3sKbw34rb+MdvD3sd/Iu3sO7w34v7+MDvD/sD/IhPsKHw/4oH+MTfDzsT/IpPsOnw/4sn+MLfD7sL/IlvsKXw/4qX+MbfD3sb/ItvsO3w/4u3+MHfD/sH/IjfsKPw/4pP+MX/DzsX/IrfsOvw/4tv+MP/D7sP/In/sKfw/4rf+Mf/D3sf/Iv/sO/w/7/sS/AQixYIOuFWYTFWDTsxVmCpVgy7KVZhuVYNux7szwrskLYK3Ef7svKYa/C/ViV+4e9GquzJmuEvRZrsy7rhP0AHsj6rBf2BmzIxmwU9iZsyuZsFvYWbMnWbBX2NmzL9mwX9oN4MA9hh7B3ZCd2Yeewd2U3HsruYT+MPdiLPcPem314BA8Pe1/24wD2D/tADuIQDg77UA7jCA4P+0iO4hiODvtYjuMEjg/7RE7iFE4O+1RO4wxOD/tMzuIczg77XB7JeTwq7PO5gIu4MOyLuYTLuDTsy3k0j+UxYV/BlVzNVWFfw7Vcz3Vh38CN3MxNYd/C47iVx4d9G7fzBO4I+07u4h7u5r/xk1Lk
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="binary" RangeMin="8" RangeMax="800">
+          AQAAAACAAAAgAwAApgAAAA==eJwtxRFghAAAAMC2SRiGYRg+huFjGIZhGIZh+BiGYRiGYfgYhoPu5MLgETl24tSZX85d+O3SlWs3bt259+DRH0+evXj15t2HT399+Xbw8xQ6cuzEqTO/nLvw26Ur127cunPvwaM/njx78erNuw+f/vry7eD3KXTk2IlTZ345d+G3S1eu3bh1596DR388efbi1Zt3Hz799eXbwd9T6MixE/8DLbMvQA==
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="binary" RangeMin="12" RangeMax="12">
+          AQAAAACAAABkAAAADAAAAA==eJzj4aE9AADtHASx
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>
