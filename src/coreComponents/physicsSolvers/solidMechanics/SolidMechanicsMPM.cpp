@@ -5860,20 +5860,20 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
   real64 const neighborRadius = m_neighborRadius;
 
   // Get accessors for volume, position, damage, surface flag
-  ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleVolumeAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleVolume" );
-  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
-  ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleDamageAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleDamage" );
-  ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleSurfaceFlagAccessor = particleManager.constructArrayViewAccessor< int, 1 >( "particleSurfaceFlag" );
-  ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleCohesiveZoneFlagAccessor = particleManager.constructArrayViewAccessor< int, 1 >( "particleCohesiveZoneFlag" );
+  ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > const particleVolumeAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleVolume" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > const particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+  ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > const particleDamageAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleDamage" );
+  ParticleManager::ParticleViewAccessor< arrayView1d< int const > > const particleSurfaceFlagAccessor = particleManager.constructArrayViewAccessor< int, 1 >( "particleSurfaceFlag" );
+  ParticleManager::ParticleViewAccessor< arrayView1d< int const > > const particleCohesiveZoneFlagAccessor = particleManager.constructArrayViewAccessor< int, 1 >( "particleCohesiveZoneFlag" );
 
-  ParticleManager::ParticleViewConst< arrayView1d< real64 const > > particleVolumeView = particleVolumeAccessor.toNestedViewConst();
-  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePositionView = particlePositionAccessor.toNestedViewConst();
-  ParticleManager::ParticleViewConst< arrayView1d< real64 const > > particleDamageView = particleDamageAccessor.toNestedViewConst();
-  ParticleManager::ParticleViewConst< arrayView1d< int const > > particleSurfaceFlagView = particleSurfaceFlagAccessor.toNestedViewConst();
-  ParticleManager::ParticleViewConst< arrayView1d< int const > > particleCohesiveZoneFlagView = particleCohesiveZoneFlagAccessor.toNestedViewConst();  
+  ParticleManager::ParticleViewConst< arrayView1d< real64 const > > const particleVolumeView = particleVolumeAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > const particlePositionView = particlePositionAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView1d< real64 const > > const particleDamageView = particleDamageAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView1d< int const > > const particleSurfaceFlagView = particleSurfaceFlagAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView1d< int const > > const particleCohesiveZoneFlagView = particleCohesiveZoneFlagAccessor.toNestedViewConst();  
 
   // Perform neighbor operations
-  int subRegionIndex = 0;
+  // int subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Get neighbor list
@@ -5887,7 +5887,7 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
 
-   // Loop over neighbors
+  //  // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
   //   forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
   //   {
@@ -5908,20 +5908,20 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
   //       localIndex regionIndex = regionIndices[neighborIndex];
   //       localIndex subRegionIndex = subRegionIndices[neighborIndex];
   //       localIndex particleIndex = particleIndices[neighborIndex];
-  //       neighborVolumes[neighborIndex] = particleVolumeAccessor[regionIndex][subRegionIndex][particleIndex];
-  //       neighborPositions[neighborIndex][0] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][0];
-  //       neighborPositions[neighborIndex][1] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][1];
-  //       neighborPositions[neighborIndex][2] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][2];
-  //       if( particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 1 ||
-  //           particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 2 ||
-  //           particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 3 || 
-  //           particleCohesiveZoneFlag[regionIndex][subRegionIndex][particleIndex] == 1 )
+  //       neighborVolumes[neighborIndex] = particleVolumeView[regionIndex][subRegionIndex][particleIndex];
+  //       neighborPositions[neighborIndex][0] = particlePositionView[regionIndex][subRegionIndex][particleIndex][0];
+  //       neighborPositions[neighborIndex][1] = particlePositionView[regionIndex][subRegionIndex][particleIndex][1];
+  //       neighborPositions[neighborIndex][2] = particlePositionView[regionIndex][subRegionIndex][particleIndex][2];
+  //       if( particleSurfaceFlagView[regionIndex][subRegionIndex][particleIndex] == 1 ||
+  //           particleSurfaceFlagView[regionIndex][subRegionIndex][particleIndex] == 2 ||
+  //           particleSurfaceFlagView[regionIndex][subRegionIndex][particleIndex] == 3 || 
+  //           particleCohesiveZoneFlagView[regionIndex][subRegionIndex][particleIndex] == 1 )
   //       {
   //         neighborDamages[neighborIndex] = 1.0;
   //       }
   //       else
   //       {
-  //         neighborDamages[neighborIndex] = particleDamageAccessor[regionIndex][subRegionIndex][particleIndex];
+  //         neighborDamages[neighborIndex] = particleDamageView[regionIndex][subRegionIndex][particleIndex];
   //       }
   //     }
       
@@ -5938,47 +5938,72 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
     // forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     for(int pp = 0; pp < activeParticleIndices.size(); pp++ )
     {
-    printf("subRegion: %d, p: %d, neighbors: %d\n", subRegionIndex, activeParticleIndices[pp], numNeighborsAll[activeParticleIndices[pp]]);
-    printf("regionIndices[p]: %d\n", neighborRegions[activeParticleIndices[pp]].size());
-    printf("subRegionIndices[p]: %d\n", neighborSubRegions[activeParticleIndices[pp]].size());
-    printf("particleIndices[p]]: %d\n", neighborIndices[activeParticleIndices[pp]].size());
-    
-    printf("regionIndices.size(): %d\n", neighborRegions[activeParticleIndices[pp]].size());
-    printf("subRegionIndices.size(): %d\n", neighborSubRegions[activeParticleIndices[pp]].size());
-    printf("particleIndices.size(): %d\n", neighborIndices[activeParticleIndices[pp]].size());
-    fflush(stdout);
+    // localIndex const pi = activeParticleIndices[pp];
+    // localIndex const nNeighbors = numNeighborsAll[pi];
+    // printf("subRegion: %d, p: %d, neighbors: %d\n", subRegionIndex, pi, nNeighbors);
+    // printf("regionIndices.size(): %d\n", neighborRegions[pi].size());
+    // printf("subRegionIndices.size(): %d\n", neighborSubRegions[pi].size());
+    // printf("particleIndices.size(): %d\n", neighborIndices[pi].size());
+
+    // printf("neighbor indices: ");
+    // for( int nn = 0; nn < nNeighbors; nn++ )
+    // {
+    //   printf("%d (%d), ", neighborIndices[pi][nn],  particleVolumeView[neighborRegions[pi][nn]][neighborSubRegions[pi][nn]].size());
+    // }
+    // printf("\n");
+    // fflush(stdout);
+    localIndex const p = activeParticleIndices[pp];
+    localIndex const numNeighbors = numNeighborsAll[p];
+    arraySlice1d< localIndex const > const regionIndices = neighborRegions[p];
+    // printf("regionIndices.size(): %d\n", regionIndices.size());
+    arraySlice1d< localIndex const > const subRegionIndices = neighborSubRegions[p];
+    // printf("subRegionIndices.size(): %d\n", subRegionIndices.size());
+    arraySlice1d< localIndex const > const particleIndices = neighborIndices[p];
+    // printf("particleIndices.size(): %d\n", particleIndices.size());  
+    printf("p (numNeighbors): %d (%d)\n", p, numNeighbors);
+    for(int n=0; n < numNeighbors; n++)
+    {
+    localIndex const regionIndex = regionIndices[n];
+    localIndex const subRegionIndex = subRegionIndices[n];
+    localIndex const particleIndex = particleIndices[n];
+    printf("\tn: %d, ri: %d, si: %d, pi: %d, pV: %f\n", n, regionIndices[n], subRegionIndices[n], particleIndices[n], particleVolumeView[regionIndex][subRegionIndex][particleIndex]);
     forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const ppp )
     {
       GEOS_UNUSED_VAR(ppp);
-      localIndex const p = activeParticleIndices[pp];
 
-      // printf("kernel p: %d, neighbors: %d\n", p, numNeighborsAll[p]);
+      // arraySlice1d< localIndex const > const regionIndices = neighborRegions[p];
+      // printf("\t\tregionIndices.size(): %d\n", regionIndices.size());
+      // arraySlice1d< localIndex const > const subRegionIndices = neighborSubRegions[p];
+      // printf("\t\tsubRegionIndices.size(): %d\n", subRegionIndices.size());
+      // arraySlice1d< localIndex const > const particleIndices = neighborIndices[p];
+      // printf("\t\tparticleIndices.size(): %d\n", particleIndices.size());
 
-      localIndex const numNeighbors = numNeighborsAll[p];
-      arraySlice1d< localIndex const > const regionIndices = neighborRegions[p];
-      // printf("regionIndices.size(): %d\n", regionIndices.size());
-      arraySlice1d< localIndex const > const subRegionIndices = neighborSubRegions[p];
-      // printf("subRegionIndices.size(): %d\n", subRegionIndices.size());
-      arraySlice1d< localIndex const > const particleIndices = neighborIndices[p];
-      // printf("particleIndices.size(): %d\n", particleIndices.size());
-
-      // Call kernel field gradient function
-      computeKernelFieldGradientDevice( particlePosition[p],        // input
-                                        neighborRadius,
-                                        planeStrain,
-                                        numNeighbors,
-                                        regionIndices, // neighborRegions[p],         // regionIndices
-                                        subRegionIndices, // neighborSubRegions[p],      // subRegionIndices
-                                        particleIndices, // neighborIndices[p],         // particleIndices
-                                        particleVolumeView,
-                                        particlePositionView,
-                                        particleDamageView,
-                                        particleSurfaceFlagView,
-                                        particleCohesiveZoneFlagView,
-                                        particleDamageGradient[p] ); // OUTPUT
+      printf("\t\tparticleVolumeView: %f\n", particleVolumeView[0][0][0]);
+      // printf("\t\tparticlePositionView: %f, %f, %f\n", particlePositionView[regionIndex][subRegionIndex][particleIndex][0], particlePositionView[regionIndex][subRegionIndex][particleIndex][1], particlePositionView[regionIndex][subRegionIndex][particleIndex][2]);
+      // printf("\t\tparticleDamageView: %f\n", particleDamageView[regionIndex][subRegionIndex][particleIndex]);
+      // printf("\t\tparticleSurfaceFlagView: %d\n", particleSurfaceFlagView[regionIndex][subRegionIndex][particleIndex]);
+      // printf("\t\tparticleCohesiveZoneFlagView: %d\n", particleCohesiveZoneFlagView[regionIndex][subRegionIndex][particleIndex]);
+      
+      // // Call kernel field gradient function
+      // computeKernelFieldGradientDevice( particlePosition[p],        // input
+      //                                   neighborRadius,
+      //                                   planeStrain,
+      //                                   numNeighbors,
+      //                                   regionIndices, // neighborRegions[p],         // regionIndices
+      //                                   subRegionIndices, // neighborSubRegions[p],      // subRegionIndices
+      //                                   particleIndices, // neighborIndices[p],         // particleIndices
+      //                                   particleVolumeView,
+      //                                   particlePositionView,
+      //                                   particleDamageView,
+      //                                   particleSurfaceFlagView,
+      //                                   particleCohesiveZoneFlagView,
+      //                                   particleDamageGradient[p] ); // OUTPUT
     } );
+    printf("\tExited n: %d, ri: %d, si: %d, pi: %d, pV: %f\n", n, regionIndices[n], subRegionIndices[n], particleIndices[n], particleVolumeView[regionIndex][subRegionIndex][particleIndex]);
     }
-    subRegionIndex++;
+    LvArray::tensorOps::fill< 3 >( particleDamageGradient[p], 0.0);
+    }
+    // subRegionIndex++;
   } );
 }
 
@@ -9945,7 +9970,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
         gridDamage[g][fieldIndex] /= gridMass[g][fieldIndex];
-        for( int i=0; i<numDims; i++ )
+        for( int i=0; i < numDims; i++ )
         {
           real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i];
           gridAcceleration[g][fieldIndex][i] = totalForce / gridMass[g][fieldIndex];
