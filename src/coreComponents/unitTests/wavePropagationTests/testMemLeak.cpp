@@ -68,9 +68,9 @@ char const * xmlInput =
         xCoords="{ 0, 100 }"
         yCoords="{ 0, 100 }"
         zCoords="{ 0, 100 }"
-        nx="{ 100 }"
-        ny="{ 100 }"
-        nz="{ 100 }"
+        nx="{ 10 }"
+        ny="{ 10 }"
+        nz="{ 10 }"
         cellBlockNames="{ cb }"/>
     </Mesh>
     <Events
