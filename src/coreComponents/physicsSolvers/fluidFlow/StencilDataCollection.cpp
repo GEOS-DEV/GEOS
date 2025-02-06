@@ -40,9 +40,6 @@ StencilDataCollection::StencilDataCollection( const string & name,
                                               Group * const parent ):
   Base( name, parent )
 {
-  getWrapperBase( Group::viewKeyStruct::logLevelString() ).
-    setDescription( "When higher than 1: Display store events details." );
-
   registerWrapper( viewKeyStruct::solverNameString(), &m_solverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
