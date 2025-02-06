@@ -342,7 +342,7 @@ private:
    * @brief Print the table(s) in the log and/or CSV files when requested by the user.
    * @param pvtOutputOpts Struct containing output options
    */
-  void outputPVTTableData( OutputOptions const pvtOutputOpts ) const;
+  void outputTableData( OutputOptions const outputOpts ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper

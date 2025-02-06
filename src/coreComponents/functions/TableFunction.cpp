@@ -274,18 +274,18 @@ void collectValues( std::ostringstream & formatterStream,
   }
 }
 
-void TableFunction::outputPVTTableData( OutputOptions const pvtOutputOpts ) const
+void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 {
   // we only output from rank 0
   if( MpiWrapper::commRank() != 0 )
     return;
 
-  if( pvtOutputOpts.writeInLog &&  this->numDimensions() <= 2 )
+  if( outputOpts.writeInLog &&  this->numDimensions() <= 2 )
   {
     TableTextFormatter textFormatter;
     GEOS_LOG( textFormatter.toString( *this ));
   }
-  if( pvtOutputOpts.writeCSV || ( pvtOutputOpts.writeInLog && this->numDimensions() >= 3 ) )
+  if( outputOpts.writeCSV || ( outputOpts.writeInLog && this->numDimensions() >= 3 ) )
   {
     string const filename = this->getName();
     std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
@@ -301,8 +301,8 @@ void TableFunction::initializePostSubGroups()
 {
   // Output user defined tables (not generated PVT tables)
   outputTableData( OutputOptions{
-      m_writeCSV,   // writeCSV
-      isLogLevelEnabled< logInfo::TableDataOutput >()   // writeInLog
+      m_writeCSV != 0, // writeCSV
+      isLogLevelActive< logInfo::TableDataOutput >( getLogLevel() ) // writeInLog
     } );
 }
 
