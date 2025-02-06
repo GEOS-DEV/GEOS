@@ -277,7 +277,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
 
   // Keep track of substeps. It is useful to output these.
-  std::vector< real64 > & subStepDt =  getSubStepDt();
+  std::vector< real64 > & subStepDt = getSubStepDt();
   subStepDt.resize( maxSubSteps, 0.0 );
 
   setNumOfSubSteps( 0 );
@@ -291,8 +291,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
-
     setNumOfSubSteps( subStep );
+    std::cout << " 1 substep " << subStep << std::endl;
 
     subStepDt[subStep] = dtAccepted;
 

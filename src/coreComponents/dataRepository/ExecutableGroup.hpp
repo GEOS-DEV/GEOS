@@ -135,12 +135,13 @@ public:
    * @brief Get number of time sub-steps allowed for the solver
    * @return Number of time sub-steps allowed
    */
-  integer & getNumOfSubSteps()  { return m_numOfSubSteps; }
-
+  integer const & getNumOfSubSteps()  { return m_numOfSubSteps; }
+ 
   /**
    * @brief Set number of time sub-steps allowed for the solver
+   * @param nbStep Number of subtimestep to set 
    */
-  void setNumOfSubSteps( integer nbStep )  { m_numOfSubSteps =  nbStep;}
+  void setNumOfSubSteps( integer nbStep )  { m_numOfSubSteps = nbStep;}
 
 private:
 
