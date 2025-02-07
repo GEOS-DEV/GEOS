@@ -137,6 +137,13 @@ private:
    */
   void outputTime( LogPart & section ) const;
 
+  /**
+   * @brief output information about the cycle to the log
+   * @param logpart the end of section to be displayed
+   * @param cycleNumber the current cycle number
+   * @param numOfSubSteps the number of substeps taken
+   * @param subStepDt the time step size for each substep
+   */
   void logEndOfCycleInformation( LogPart & logpart,
                                  integer const cycleNumber,
                                  integer const numOfSubSteps,

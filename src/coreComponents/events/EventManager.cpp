@@ -314,7 +314,6 @@ void EventManager::logEndOfCycleInformation( LogPart & logpart,
   logpart.addEndDescription( "- Cycle: ", cycleNumber );
   logpart.addEndDescription( "- N substeps: ", numOfSubSteps );
   std::stringstream logMessage;
-  std::cout << units::TimeFormatInfo::fromSeconds( subStepDt[0] ).toString() << std::endl;
   for( integer i = 0; i < numOfSubSteps; ++i )
   {
     if( i > 0 )
@@ -323,6 +322,10 @@ void EventManager::logEndOfCycleInformation( LogPart & logpart,
     }
     logMessage << units::TimeFormatInfo::fromSeconds( subStepDt[i] ).toString();
   }
+
+  if( logMessage.rdbuf()->in_avail() == 0 )
+    logMessage << "/";
+
   logpart.addEndDescription( "- dt: ", logMessage.str() );
   logpart.end();
 }

@@ -120,26 +120,26 @@ public:
   TimesteppingBehavior getTimesteppingBehavior() const { return m_timesteppingBehavior; }
 
   /**
-   * @brief Get the track of substeps
-   * @return A vector containing the track of substeps
+   * @brief Get the track of substeps for each substep
+   * @return A vector containing the time step size for each substep
    */
   std::vector< real64 > const & getSubStepDt() const { return m_subStepDt; }
 
   /**
-   * @brief Get the track of substeps
-   * @return A const vector containing the track of substeps
+   * @brief Get the track of substeps for each substep
+   * @return A const vector containing the time step size for each substep
    */
   std::vector< real64 > & getSubStepDt() { return m_subStepDt; }
 
   /**
    * @brief Get number of time sub-steps allowed for the solver
-   * @return Number of time sub-steps allowed
+   * @return The number of substeps taken
    */
   integer const & getNumOfSubSteps()  { return m_numOfSubSteps; }
- 
+
   /**
    * @brief Set number of time sub-steps allowed for the solver
-   * @param nbStep Number of subtimestep to set 
+   * @param nbStep Number of subtimestep to set
    */
   void setNumOfSubSteps( integer nbStep )  { m_numOfSubSteps = nbStep;}
 

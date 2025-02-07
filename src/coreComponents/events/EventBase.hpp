@@ -175,7 +175,7 @@ public:
 
   /**
    * @brief Get number of time sub-steps allowed for the solver
-   * @return Number of time sub-steps allowed
+   * @return The number of substeps taken
    */
   integer const & getNumOfSubSteps() const {  return m_target->getNumOfSubSteps(); }
 
