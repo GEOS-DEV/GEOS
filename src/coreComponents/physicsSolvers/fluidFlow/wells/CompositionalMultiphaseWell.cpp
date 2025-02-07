@@ -1965,6 +1965,21 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           localMatrix,
           localRhs );
 
+       integer owner = -1;  
+       
+       // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+       // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+       // the well initialization code requires control type to by synced 
+
+        if ( subRegion.isLocallyOwned() )
+        {
+          owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+        }
+        owner = MpiWrapper::max( owner );
+        WellControls::Control well_control = wellControls.getControl();
+        MpiWrapper::broadcast( well_control, owner );
+        wellControls.setControl(well_control);
+ 
         if( controlHasSwitched )
         {
           // TODO: move the switch logic into wellControls

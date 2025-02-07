@@ -150,6 +150,12 @@ public:
   Control getControl() const { return m_currentControl; }
 
   /**
+   * @brief Set the control type for the well.
+   * @param[in] newControl type
+   */
+  void setControl(Control const & newControl)  {  m_currentControl = newControl ; }
+
+  /**
    * @brief Get the input control type for the well.
    * @return the Control enum enforced at the well
    */
