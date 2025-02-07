@@ -225,10 +225,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
             if( targetGroup.hasWrapper( fieldName ) )
             {
-              WrapperBase & targetField = targetGroup.getWrapperBase( fieldName );
+              WrapperBase const & targetField = targetGroup.getWrapperBase( fieldName );
               string const solverName = *(targetField.getRegisteringObjects().begin());
 
-              for( auto & view : targetGroup.wrappers() )
+              for( auto const & view : targetGroup.wrappers() )
               {
                 if( *(view.second->getRegisteringObjects().begin()) == solverName )
                 {
