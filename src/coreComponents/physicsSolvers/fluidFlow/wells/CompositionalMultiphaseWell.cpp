@@ -1916,9 +1916,17 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
+      integer owner = -1;  
+      // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+      if ( subRegion.isLocallyOwned() )
+      {
+          owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+      }
+      owner = MpiWrapper::max( owner );
 
       WellControls & wellControls = getWellControls( subRegion );
-
+       GEOS_LOG_RANK("constraint " << wellControls.getName() << " time_n " << time_n << " dt " << dt << " open " << wellControls.isWellOpen( time_n + dt )  );
+       GEOS_LOG_RANK("constraint - befeval " << wellControls.getName() << " " << wellControls.getControl() << " owner " << owner );
       if( wellControls.isWellOpen( time_n + dt ) && !m_keepVariablesConstantDuringInitStep )
       {
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -1965,21 +1973,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           localMatrix,
           localRhs );
 
-       integer owner = -1;  
-       
-       // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
-       // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
-       // the well initialization code requires control type to by synced 
 
-        if ( subRegion.isLocallyOwned() )
-        {
-          owner = MpiWrapper::commRank( MPI_COMM_GEOS );
-        }
-        owner = MpiWrapper::max( owner );
-        WellControls::Control well_control = wellControls.getControl();
-        MpiWrapper::broadcast( well_control, owner );
-        wellControls.setControl(well_control);
- 
         if( controlHasSwitched )
         {
           // TODO: move the switch logic into wellControls
@@ -2015,6 +2009,12 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
                                         GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName() ) );
           }
         }
+    // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened 
+       // the well initialization code requires control type to by synced 
+        WellControls::Control well_control = wellControls.getControl();
+        MpiWrapper::broadcast( well_control, owner );
+        wellControls.setControl(well_control);
+        GEOS_LOG_RANK("constraint - afteval " << wellControls.getName() << " " << wellControls.getControl() << " owner " << owner );
       }
 
     } );
