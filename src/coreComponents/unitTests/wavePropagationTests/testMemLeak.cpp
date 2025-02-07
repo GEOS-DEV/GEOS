@@ -193,31 +193,70 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
   
-  struct rusage usage;
+
   
-  for(int i = 0; i < 1000000; i++ )
+
+
+
+  printf( "                             usage0    usage1    usage2    usage3    usage4    usage5    usage6 \n");
+  for(int i = 0; i < 10000; i++ )
   {
-    if( i % 1000 == 0 )
-    {
-      getrusage(RUSAGE_SELF, &usage);
-      std::cout << "Memory usage before synchronization " << i << ": " << usage.ru_maxrss << " KB" << std::endl;
-    }
+    struct rusage usage0;
+    struct rusage usage1;
+    struct rusage usage2;
+    struct rusage usage3;
+    struct rusage usage4;
+    struct rusage usage5;
+    struct rusage usage6;
+
+    getrusage(RUSAGE_SELF, &usage0);
+
+    FieldIdentifiers fieldsToBeSync;
+    getrusage(RUSAGE_SELF, &usage1);
+    fieldsToBeSync.addFields( FieldLocation::Node, { fields::acousticfields::Pressure_np1::key() } );
+    getrusage(RUSAGE_SELF, &usage2);
+    CommunicationTools & syncFields = CommunicationTools::getInstance();
+
+    getrusage(RUSAGE_SELF, &usage3);
+
+    MeshLevel * meshLevel;
     propagator->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & )
+                                                                              MeshLevel & mesh,
+                                                                              arrayView1d< string const > const & )
     {
-      FieldIdentifiers fieldsToBeSync;
-      fieldsToBeSync.addFields( FieldLocation::Node, { fields::acousticfields::Pressure_np1::key() } );
-      CommunicationTools & syncFields = CommunicationTools::getInstance();
-      syncFields.synchronizeFields( fieldsToBeSync,
-                                    mesh,
-                                    domain.getNeighbors(),
-                                    true );
+      meshLevel = &mesh;
     } );
-    if( i % 1000 == 0 )
+    MeshLevel & mesh = *meshLevel;
+  
     {
-      getrusage(RUSAGE_SELF, &usage);
-      std::cout << "Memory usage after synchronization " << i << ": " << usage.ru_maxrss << " KB" << std::endl;
+
+      getrusage(RUSAGE_SELF, &usage4);
+      syncFields.synchronizeFields( fieldsToBeSync,
+                                  mesh,
+                                  domain.getNeighbors(),
+                                  true );
+
+      getrusage(RUSAGE_SELF, &usage5);
+    }// );
+
+    getrusage(RUSAGE_SELF, &usage6);
+
+    if( usage0.ru_maxrss != usage1.ru_maxrss ||
+        usage1.ru_maxrss != usage2.ru_maxrss ||
+        usage2.ru_maxrss != usage3.ru_maxrss ||
+        usage3.ru_maxrss != usage4.ru_maxrss ||
+        usage4.ru_maxrss != usage5.ru_maxrss ||
+        usage5.ru_maxrss != usage6.ru_maxrss )
+    {
+      printf( "Cycle %6d Memory usage: %ld  %ld  %ld  %ld  %ld  %ld  %ld \n", 
+              i, 
+              usage0.ru_maxrss,
+              usage1.ru_maxrss,
+              usage2.ru_maxrss,
+              usage3.ru_maxrss,
+              usage4.ru_maxrss,
+              usage5.ru_maxrss,
+              usage6.ru_maxrss );
     }
   }
   ASSERT_TRUE( true );
