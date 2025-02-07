@@ -33,8 +33,8 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
-#include "physicsSolvers/contact/LogLevelsInfo.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
@@ -113,6 +113,12 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setDescription( "An array that holds the rotation matrices on the fracture." ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
 
+        << << <<< HEAD: src/coreComponents/physicsSolvers/contact/SolidMechanicsLagrangeContact.cpp
+        =======
+          subRegion.registerField< contact::deltaTraction >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
+
+      >> >> >>> origin/develop: src/coreComponents/physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.cpp
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName()).

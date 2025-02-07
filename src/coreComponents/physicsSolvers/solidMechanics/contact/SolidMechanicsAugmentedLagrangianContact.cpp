@@ -20,13 +20,14 @@
 #include "mesh/DomainPartition.hpp"
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
-#include "physicsSolvers/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
-#include "physicsSolvers/contact/kernels/SolidMechanicsALMKernels.hpp"
-#include "physicsSolvers/contact/kernels/SolidMechanicsALMKernelsBase.hpp"
-#include "physicsSolvers/contact/kernels/SolidMechanicsALMSimultaneousKernels.hpp"
-#include "physicsSolvers/contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp"
-#include "physicsSolvers/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
-#include "physicsSolvers/contact/LogLevelsInfo.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMKernels.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMKernelsBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMSimultaneousKernels.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
+#include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
@@ -115,11 +116,11 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
     FaceManager & faceManager = meshLevel.getFaceManager();
 
     // Register the total bubble displacement
-    faceManager.registerField< solidMechanics::totalBubbleDisplacement >( this->getName() ).
+    faceManager.registerField< contact::totalBubbleDisplacement >( this->getName() ).
       reference().resizeDimension< 1 >( 3 );
 
     // Register the incremental bubble displacement
-    faceManager.registerField< solidMechanics::incrementalBubbleDisplacement >( this->getName() ).
+    faceManager.registerField< contact::incrementalBubbleDisplacement >( this->getName() ).
       reference().resizeDimension< 1 >( 3 );
   } );
 
@@ -181,15 +182,15 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
-  dofManager.addField( solidMechanics::totalBubbleDisplacement::key(),
+  dofManager.addField( contact::totalBubbleDisplacement::key(),
                        FieldLocation::Face,
                        3,
                        meshTargets );
 
   // Add coupling between bubble
   // Useful to create connection between bubble dofs for Augmented Lagrangian formulation
-  dofManager.addCoupling( solidMechanics::totalBubbleDisplacement::key(),
-                          solidMechanics::totalBubbleDisplacement::key(),
+  dofManager.addCoupling( contact::totalBubbleDisplacement::key(),
+                          contact::totalBubbleDisplacement::key(),
                           DofManager::Connector::Elem );
 
 }
@@ -396,7 +397,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     FaceManager const & faceManager = mesh.getFaceManager();
 
     string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const & bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const & bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
 
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -524,7 +525,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     FaceManager const & faceManager = mesh.getFaceManager();
 
     string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const & bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const & bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
 
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -620,7 +621,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
-  string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+  string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -721,13 +722,13 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                     domain );
 
   dofManager.addVectorToField( localSolution,
-                               solidMechanics::totalBubbleDisplacement::key(),
-                               solidMechanics::totalBubbleDisplacement::key(),
+                               contact::totalBubbleDisplacement::key(),
+                               contact::totalBubbleDisplacement::key(),
                                scalingFactor );
 
   dofManager.addVectorToField( localSolution,
-                               solidMechanics::totalBubbleDisplacement::key(),
-                               solidMechanics::incrementalBubbleDisplacement::key(),
+                               contact::totalBubbleDisplacement::key(),
+                               contact::incrementalBubbleDisplacement::key(),
                                scalingFactor );
 
 
@@ -742,7 +743,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
     FaceManager const & faceManager = mesh.getFaceManager();
 
     string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const & bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const & bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
 
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -788,8 +789,8 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
     FieldIdentifiers fieldsToBeSync;
 
     fieldsToBeSync.addFields( FieldLocation::Face,
-                              { solidMechanics::incrementalBubbleDisplacement::key(),
-                                solidMechanics::totalBubbleDisplacement::key() } );
+                              { contact::incrementalBubbleDisplacement::key(),
+                                contact::totalBubbleDisplacement::key() } );
 
     fieldsToBeSync.addElementFields( { contact::dispJump::key(),
                                        contact::deltaDispJump::key() },
@@ -1442,7 +1443,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPar
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -1548,7 +1549,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
 
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );

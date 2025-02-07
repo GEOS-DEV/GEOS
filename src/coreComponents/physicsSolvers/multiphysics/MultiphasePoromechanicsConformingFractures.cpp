@@ -25,6 +25,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 namespace geos
 {
