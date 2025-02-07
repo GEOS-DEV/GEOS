@@ -462,3 +462,4 @@ constexpr static localIndex unmappedLocalIndexValue = -1;
 } /* namespace geos */
 
 #endif /* GEOS_COMMON_DATATYPES_HPP */
+
