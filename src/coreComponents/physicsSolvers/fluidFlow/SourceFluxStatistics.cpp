@@ -99,7 +99,6 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group,
 
     string const logMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
     string const logRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
-    TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn } );
     TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
 
     m_logLayout = statsLogLayout;
@@ -181,8 +180,8 @@ void SourceFluxStatsAggregator::gatherStatsForLog( bool logLevelActive,
   }
 }
 
-void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view elementSetName, 
-TableData const & tableMeshData )
+void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view elementSetName,
+                                                  TableData const & tableMeshData )
 {
   if( logLevelActive && logger::internal::rank == 0 )
   {
