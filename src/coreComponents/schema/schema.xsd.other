@@ -632,6 +632,8 @@
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceRegion => Region containing the sources-->
 		<xsd:attribute name="sourceRegion" type="integer_array" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
 		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
 		<xsd:attribute name="timeStep" type="real64" />
 		<!--usePML => Flag to apply PML-->
@@ -679,6 +681,8 @@
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
 		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
 		<xsd:attribute name="timeStep" type="real64" />
 		<!--usePML => Flag to apply PML-->
@@ -720,6 +724,8 @@
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
 		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
 		<xsd:attribute name="timeStep" type="real64" />
 		<!--usePML => Flag to apply PML-->
@@ -854,6 +860,8 @@
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceRegion => Region containing the sources-->
 		<xsd:attribute name="sourceRegion" type="integer_array" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
 		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
 		<xsd:attribute name="timeStep" type="real64" />
 		<!--usePML => Flag to apply PML-->
@@ -901,6 +909,8 @@
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
 		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
 		<xsd:attribute name="timeStep" type="real64" />
 		<!--usePML => Flag to apply PML-->
