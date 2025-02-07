@@ -153,7 +153,7 @@ public:
    * @brief Set the control type for the well.
    * @param[in] newControl type
    */
-  void setControl(Control const & newControl)  {  m_currentControl = newControl ; }
+  void setControl( Control const & newControl )  {  m_currentControl = newControl; }
 
   /**
    * @brief Get the input control type for the well.
