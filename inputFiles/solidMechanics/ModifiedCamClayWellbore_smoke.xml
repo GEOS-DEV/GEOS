@@ -33,7 +33,7 @@
 
     <PeriodicEvent
       name="outputs"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
    <PeriodicEvent
       name="restarts"
