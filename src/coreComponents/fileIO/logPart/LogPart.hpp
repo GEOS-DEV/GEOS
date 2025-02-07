@@ -76,7 +76,7 @@ public:
 
   /**
    * @brief Set the minimal width of a row
-   * @param minWidth The minimal width of the table
+   * @param maxWidth The maximal width of the table
    */
   void setMaxWidth( size_t const & maxWidth );
 
