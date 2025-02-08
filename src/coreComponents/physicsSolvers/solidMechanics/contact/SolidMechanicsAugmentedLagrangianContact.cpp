@@ -281,7 +281,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
     arrayView2d< real64 > const incrBubbleDisp =
-      faceManager.getField< solidMechanics::incrementalBubbleDisplacement >();
+      faceManager.getField< contact::incrementalBubbleDisplacement >();
 
     arrayView3d< real64 > const
     rotationMatrix = subRegion.getField< contact::rotationMatrix >().toView();
