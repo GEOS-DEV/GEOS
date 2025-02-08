@@ -79,7 +79,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to determine whether or not to apply lagging update for the fracture stencil weights. " );
-  
+
   registerWrapper( viewKeyStruct::leakoffConstString(), &m_leakoffCoefficient ).
     setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -684,13 +684,13 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
 
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
 
-  if (m_leakoffCoefficient > -1.0 && !m_isMatrixPoroelastic)
-    assembleFluidLeakSource(time, dt, domain, dofManager, localMatrix, localRhs);
+  if( m_leakoffCoefficient > -1.0 && !m_isMatrixPoroelastic )
+    assembleFluidLeakSource( time, dt, domain, dofManager, localMatrix, localRhs );
 
   this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
 
-template< typename POROMECHANICS_SOLVER>
+template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::
 assembleFluidLeakSource( double time,
                          double dt,
@@ -729,26 +729,27 @@ assembleFluidLeakSource( double time,
       arrayView1d< real64 const > const area = subRegion.getElementArea();
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
 
-      arrayView1d< real64 const > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime>();
+      arrayView1d< real64 const > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime >();
 
       constexpr integer numDof = 1;
       constexpr integer numEqn = 1;
       globalIndex dofIndices[numDof]{};
       real64 localJacobian[numEqn][numDof]{};
       forAll< serialPolicy >( regionSize,
-                        [&] GEOS_HOST_DEVICE ( localIndex const kfe )
+                              [&] GEOS_HOST_DEVICE ( localIndex const kfe )
       {
-        if ( elemGhostRank[kfe] >= 0 || fabs(time - fractureCreationTime[kfe]) < 1e-12) return;
+        if( elemGhostRank[kfe] >= 0 || fabs( time - fractureCreationTime[kfe] ) < 1e-12 )
+          return;
         const globalIndex localRow = presDofNumber[kfe] - rankOffset;
         for( integer idof = 0; idof < numDof; ++idof )
           dofIndices[idof] = presDofNumber[kfe] + idof;
-        localJacobian[0][0] = m_leakoffCoefficient * area[kfe] * dDens_dPressure[kfe][0] / LvArray::math::sqrt(time + dt / 2.0 - fractureCreationTime[kfe]);
-        localMatrix.template addToRow< serialAtomic > ( localRow,
-                                                        dofIndices,
-                                                        localJacobian[0],
-                                                        numDof );
+        localJacobian[0][0] = m_leakoffCoefficient * area[kfe] * dDens_dPressure[kfe][0] / LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
+        localMatrix.template addToRow< serialAtomic >( localRow,
+                                                       dofIndices,
+                                                       localJacobian[0],
+                                                       numDof );
         // mid-point rule in time
-        localRhs[localRow] += m_leakoffCoefficient * area[kfe] * dens[kfe][0] / LvArray::math::sqrt(time + dt / 2.0 - fractureCreationTime[kfe]);
+        localRhs[localRow] += m_leakoffCoefficient * area[kfe] * dens[kfe][0] / LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
       } );
     } );
   } );
@@ -1076,7 +1077,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 }
 
 template< typename POROMECHANICS_SOLVER >
-void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( double time, 
+void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( double time,
                                                                                DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1113,7 +1114,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( d
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
         real64 const defaultDensity = fluid.defaultDensity();
         arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
-        arrayView1d< real64 > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime>();
+        arrayView1d< real64 > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime >();
 
 
         arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
