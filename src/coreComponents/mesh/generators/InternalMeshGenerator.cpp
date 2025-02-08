@@ -165,12 +165,7 @@ void InternalMeshGenerator::postInputInitialization()
   {
     if( m_elementType.size() == 1 )
     {
-      string const elementType = m_elementType[0];
-      m_elementType.resize( m_numElePerBox.size() );
-      for( size_t i = 1; i < m_elementType.size(); ++i )
-      {
-        m_elementType[i] = elementType;
-      }
+      m_elementType.resize( m_numElePerBox.size(), m_elementType[0] );
     }
     else
     {
@@ -202,12 +197,7 @@ void InternalMeshGenerator::postInputInitialization()
     {
       if( m_regionNames.size() == 1 )
       {
-        string const regionName = m_regionNames[0];
-        m_regionNames.resize( numBlocks );
-        for( size_t i = 1; i < m_regionNames.size(); ++i )
-        {
-          m_regionNames[i] = regionName;
-        }
+        m_regionNames.resize(numBlocks, m_regionNames[0]);
       }
       else
       {
