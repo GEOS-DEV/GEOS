@@ -4,11 +4,11 @@
 
 set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
 
-set( ExplicitSmallStrainPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( FixedStressThermoPoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ImplicitSmallStrainNewmarkPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
-set( ImplicitSmallStrainQuasiStaticPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( ExplicitSmallStrainPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
+set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
+set( FixedStressThermoPoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
+set( ImplicitSmallStrainNewmarkPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
+set( ImplicitSmallStrainQuasiStaticPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
 
 
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
@@ -35,6 +35,7 @@ set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Wedge_Lagrange1_Gauss6
                            H1_Tetrahedron_Lagrange1_Gauss1
+                           H1_Tetrahedron_Lagrange1_Gauss14
                            H1_Pyramid_Lagrange1_Gauss5
                            H1_Tetrahedron_VEM_Gauss1
                            H1_Prism5_VEM_Gauss1

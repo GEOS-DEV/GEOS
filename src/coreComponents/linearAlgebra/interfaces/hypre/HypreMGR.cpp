@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -19,6 +20,7 @@
 #include "HypreMGR.hpp"
 
 
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/AugmentedLagrangianContactMechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp"
@@ -26,6 +28,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/Hydrofracture.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanicsBubbleStabilization.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp"
@@ -37,6 +40,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp"
@@ -111,6 +115,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< ThermalCompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM:
+    {
+      setStrategy< ThermalCompositionalMultiphaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics:
     {
       setStrategy< HybridSinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
@@ -126,9 +135,19 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< Hydrofracture >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics:
+    {
+      setStrategy< AugmentedLagrangianContactMechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics:
     {
       setStrategy< LagrangianContactMechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab:
+    {
+      setStrategy< LagrangianContactMechanicsBubbleStabilization >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics:

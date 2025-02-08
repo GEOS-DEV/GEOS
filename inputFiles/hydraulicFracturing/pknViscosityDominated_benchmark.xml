@@ -16,7 +16,6 @@
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
       targetRegions="{ Fracture }"
-      contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">
       <NonlinearSolverParameters
@@ -38,7 +37,8 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">
+      contactRelationName="fractureContact"
+      contactPenaltyStiffness="1.0e0">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
@@ -66,7 +66,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
-      rockToughness="0.1e6"
+      initialRockToughness="0.1e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SURFACEGENERATOR_END -->
   </Solvers>

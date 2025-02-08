@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -709,7 +710,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
+#ifdef GEOS_USE_ARRAY_BOUNDS_CHECK
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
@@ -808,7 +809,7 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-#endif /* GEOSX_USE_ARRAY_BOUNDS_CHECK */
+#endif /* GEOS_USE_ARRAY_BOUNDS_CHECK */
 
 template< bool DO_PACKING, int USD >
 localIndex Pack( buffer_unit_type * & buffer,
@@ -1593,7 +1594,10 @@ Unpack( buffer_unit_type const * & buffer,
                                    relatedObjectGlobalToLocalMap,
                                    clearFlag );
 
-    unmappedGlobalIndices[li].insert( unmappedIndices.data(), unmappedIndices.size() );
+    if( unmappedIndices.size() > 0 )
+    {
+      unmappedGlobalIndices[li].insert( unmappedIndices.data(), unmappedIndices.size() );
+    }
   }
   return sizeOfUnpackedChars;
 }
@@ -1710,7 +1714,10 @@ Unpack( buffer_unit_type const * & buffer,
 
     // insert unknown global indices related to the local index into an additional mapping to resolve externally
     unmapped.resize( LvArray::sortedArrayManipulation::makeSortedUnique( unmapped.begin(), unmapped.end() ) );
-    unmappedGlobalIndices[li].insert( unmapped.begin(), unmapped.end() );
+    if( unmapped.size() > 0 )
+    {
+      unmappedGlobalIndices[li].insert( unmapped.begin(), unmapped.end() );
+    }
   }
 
   // If there were element lists that didn't fit in the map, rebuild the whole thing
@@ -1828,7 +1835,11 @@ Pack( buffer_unit_type * & buffer,
       arraySlice1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars = 0;
-  array1d< globalIndex > junk;
+  array1d< globalIndex > invalidGlobalIndices( var.size( 1 ) );
+  for( localIndex a=0; a<var.size( 1 ); ++a )
+  {
+    invalidGlobalIndices[a] = -1;
+  }
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0; a<indices.size(); ++a )
@@ -1840,7 +1851,7 @@ Pack( buffer_unit_type * & buffer,
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
-                                                junk :
+                                                invalidGlobalIndices :
                                                 iterUnmappedGI->second;
 
     sizeOfPackedChars += Pack< DO_PACKING >( buffer,
