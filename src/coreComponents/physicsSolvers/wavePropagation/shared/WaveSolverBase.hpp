@@ -375,7 +375,7 @@ protected:
   SortedArray< localIndex > m_solverTargetNodesSet;
 
   /// Names of table functions for source wavelet (time dependency)
-  array1d< string > m_sourceWaveletTableNames;
+  string_array m_sourceWaveletTableNames;
 
   /// Flag to indicate if source wavelet table functions are used
   bool m_useSourceWaveletTables;

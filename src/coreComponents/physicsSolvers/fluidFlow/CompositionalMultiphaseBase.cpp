@@ -935,7 +935,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
   } );
 }
 
-void CompositionalMultiphaseBase::initializeThermalState( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void CompositionalMultiphaseBase::initializeThermalState( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                               SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
@@ -1701,7 +1701,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         bcConsistent = false;
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
-          arrayView1d< string const > componentNames = bc.getComponentNames();
+          string_array const & componentNames = bc.getComponentNames();
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
                                                            fields::flow::globalCompFraction::key() ) );
@@ -1722,8 +1722,8 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
 
           fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & fs )
           {
-            arrayView1d< string const > componentNames = fs.getComponentNames();
-            for( int ic = 0; ic < componentNames.size(); ic++ )
+            string_array const & componentNames = fs.getComponentNames();
+            for( size_t ic = 0; ic < componentNames.size(); ic++ )
             {
               if( !compMask[ic] )
               {
@@ -2341,7 +2341,7 @@ void CompositionalMultiphaseBase::saveSequentialIterationState( DomainPartition 
   real64 maxCompDensChange = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

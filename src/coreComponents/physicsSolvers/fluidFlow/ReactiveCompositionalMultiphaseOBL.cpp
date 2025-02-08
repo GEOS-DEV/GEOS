@@ -993,7 +993,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         bcConsistent = false;
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
-          arrayView1d< string const > componentNames = bc.getComponentNames();
+          string_array const & componentNames = bc.getComponentNames();
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
                                                            fields::flow::globalCompFraction::key() ) );
@@ -1048,8 +1048,8 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
           ComponentMask< MAX_NC > const & compMask = setEntry.second;
           fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & fs )
           {
-            arrayView1d< string const > componentNames = fs.getComponentNames();
-            for( int ic = 0; ic < componentNames.size(); ic++ )
+            string_array const & componentNames = fs.getComponentNames();
+            for( size_t ic = 0; ic < componentNames.size(); ic++ )
             {
               if( !compMask[ic] )
               {

@@ -131,7 +131,7 @@ void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
   real64 densityDeriv[2]{};
   value = m_CO2ViscosityTable.compute( input, densityDeriv );
 
-  LvArray::setValueOfSlice( dValue, 0.0 );
+  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
   dValue[Deriv::dP] = densityDeriv[0];
   dValue[Deriv::dT] = densityDeriv[1];
 

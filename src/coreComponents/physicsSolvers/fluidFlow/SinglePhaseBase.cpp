@@ -580,7 +580,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseBase::initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void SinglePhaseBase::initializeFluidState( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )
@@ -596,7 +596,7 @@ void SinglePhaseBase::initializeFluidState( MeshLevel & mesh, arrayView1d< strin
   } );
 }
 
-void SinglePhaseBase::initializeThermalState( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void SinglePhaseBase::initializeThermalState( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )

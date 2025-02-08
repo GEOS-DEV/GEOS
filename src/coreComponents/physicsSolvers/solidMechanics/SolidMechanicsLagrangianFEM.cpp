@@ -1070,7 +1070,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     if( m_isFixedStressPoromechanicsUpdate )
     {
@@ -1091,13 +1091,13 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
         }
       } );
 
-      array1d< string > poromechanicsRegionNames;
+      string_array poromechanicsRegionNames;
       poromechanicsRegionNames.reserve( poromechanicsRegions.size());
       for( auto const & region : poromechanicsRegions )
       {
         poromechanicsRegionNames.emplace_back( region );
       }
-      array1d< string > mechanicsRegionNames;
+      string_array mechanicsRegionNames;
       mechanicsRegionNames.reserve( mechanicsRegions.size());
       for( auto const & region : mechanicsRegions )
       {

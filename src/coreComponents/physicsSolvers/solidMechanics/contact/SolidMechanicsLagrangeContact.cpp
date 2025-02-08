@@ -141,7 +141,7 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
 
     forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                       MeshLevel & mesh,
-                                                      arrayView1d< string const > const & )
+                                                      string_array const & )
     {
       FaceManager & faceManager = mesh.getFaceManager();
 
@@ -175,13 +175,13 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
                                                                        [&]( localIndex const,
                                                                             SurfaceElementRegion const & region )
       {
-        array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+        string_array & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
         stencilTargetRegions.emplace_back( region.getName() );
       } );
     } );
@@ -642,7 +642,7 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel const & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
     {
       assembleForceResidualPressureContribution( mesh, regionNames, dofManager, localMatrix, localRhs );
     } );
@@ -669,7 +669,7 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
 
 void SolidMechanicsLagrangeContact::
   assembleForceResidualPressureContribution( MeshLevel const & mesh,
-                                             arrayView1d< string const > const & regionNames,
+                                             string_array const & regionNames,
                                              DofManager const & dofManager,
                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                              arrayView1d< real64 > const & localRhs )

@@ -69,7 +69,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
   // pressureGradient is specific for HybridFVM
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -641,7 +641,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 

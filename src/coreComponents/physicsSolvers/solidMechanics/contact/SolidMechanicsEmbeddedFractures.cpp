@@ -100,11 +100,6 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-  using namespace fields::contact;
-
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & mesh,
-                                                    string_array const & regionNames )
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
@@ -126,9 +121,6 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
   SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
 
   // reset displacementJump
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
     fractureRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
@@ -222,19 +214,9 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
     map< std::pair< string, string >, string_array > meshTargets;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel const & meshLevel,
-                                                                  string_array const & regionNames )
+                                                                  string_array const & )
     {
       string_array regions;
-      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
-      elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
-                                                                      [&]( localIndex const,
-                                                                           SurfaceElementRegion const & region )
-      {
-        regions.emplace_back( region.getName() );
-      } );
-                                                                  arrayView1d< string const > const & )
-    {
-      array1d< string > regions;
       regions.emplace_back( getUniqueFractureRegionName() );
       meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
     } );
@@ -778,9 +760,6 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
@@ -823,8 +802,6 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
 {
   int hasConfigurationConverged = true;
-
-  using namespace fields::contact;
 
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {

@@ -357,7 +357,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 cons
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {

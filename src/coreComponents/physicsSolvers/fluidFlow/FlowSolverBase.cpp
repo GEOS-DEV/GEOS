@@ -507,7 +507,7 @@ void FlowSolverBase::initializeState( DomainPartition & domain )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     initializePorosityAndPermeability( mesh, regionNames );
     initializeHydraulicAperture( mesh, regionNames );
@@ -533,7 +533,7 @@ void FlowSolverBase::initializeState( DomainPartition & domain )
   validatePoreVolumes( domain );
 }
 
-void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, string_array const & regionNames )
 {
   // Update porosity and permeability
   // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
@@ -566,7 +566,7 @@ void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, arrayV
   } );
 }
 
-void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, const arrayView1d< const string > & regionNames )
+void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
                                                                    [&]( localIndex const,
@@ -577,7 +577,7 @@ void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, const arrayV
   } );
 }
 
-void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, const arrayView1d< const string > & regionNames )
+void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                 ElementSubRegionBase & subRegion )
