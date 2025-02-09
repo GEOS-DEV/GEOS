@@ -94,7 +94,6 @@ echo -n > $LOGFILE
 for path in "$@"; do
     # emit location
     echo $path
-    chown -R nobody:nobody "$path"
     cd "$path" || { echo "Directory not found: $path"; exit 1; }
     pwd
     ls -la

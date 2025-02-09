@@ -269,6 +269,7 @@ jobs:
 
         echo running "docker run \
           --user nobody \
+          --group-add sudo \
           ${docker_args[@]} \
           -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
