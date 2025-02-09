@@ -268,6 +268,7 @@ jobs:
         fi
 
         echo running "docker run \
+          --user nobody \
           ${docker_args[@]} \
           -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
