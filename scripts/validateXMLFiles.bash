@@ -93,16 +93,16 @@ echo -n > $LOGFILE
 # validate each path separately and write results in the log
 for path in "$@"; do
     # emit location
-    # echo $path
-    # cd "$path" || { echo "Directory not found: $path"; exit 1; }
-    # pwd
+    echo $path
+    cd "$path" || { echo "Directory not found: $path"; exit 1; }
+    pwd
     # ls -la
     # git status
-    # git_root_c=$(git rev-parse --show-toplevel 2>/dev/null)
-    # prefix_c=$(git rev-parse --show-prefix 2>/dev/null)
-    # echo $git_root_c
-    # echo $prefix_c
-    # echo $git_root_c"/.git"
+    git_root_c=$(git rev-parse --show-toplevel 2>/dev/null)
+    prefix_c=$(git rev-parse --show-prefix 2>/dev/null)
+    echo $git_root_c
+    echo $prefix_c
+    echo $git_root_c"/.git"
     collected_xml_files=$(list_xml_files_$METHOD $path)
     echo $collected_xml_files
     $collected_xml_files | $XARGS xmllint --schema $SCHEMA --noout >> $LOGFILE 2>&1
