@@ -96,13 +96,15 @@ for path in "$@"; do
     echo $path
     cd "$path" || { echo "Directory not found: $path"; exit 1; }
     pwd
-    # ls -la
+    ls -la
     # git status
+    echo "begin:: invoking git ... "
     git_root_c=$(git rev-parse --show-toplevel 2>/dev/null)
     prefix_c=$(git rev-parse --show-prefix 2>/dev/null)
     echo $git_root_c
     echo $prefix_c
     echo $git_root_c"/.git"
+    echo "end:: invoking git ... "
     collected_xml_files=$(list_xml_files_$METHOD $path)
     echo $collected_xml_files
     $collected_xml_files | $XARGS xmllint --schema $SCHEMA --noout >> $LOGFILE 2>&1
