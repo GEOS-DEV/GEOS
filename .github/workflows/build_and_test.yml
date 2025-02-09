@@ -111,14 +111,14 @@ jobs:
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
-      uses: 'google-github-actions/auth@v2.1.7'
+      uses: 'google-github-actions/auth@v2.1.8'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
 
     - name: 'Set up Cloud SDK'
       if: inputs.GCP_BUCKET
-      uses: 'google-github-actions/setup-gcloud@v2.1.2'
+      uses: 'google-github-actions/setup-gcloud@v2.1.4'
       with:
         version: '>= 363.0.0'
 
@@ -335,7 +335,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v4.6.0
+      uses: codecov/codecov-action@v5.3.1
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true
