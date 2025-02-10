@@ -563,7 +563,7 @@ public:
    * @param[in] l2
    * @param[in] dim the dimension, 2 or 3
    * @return the correction factor to be applied to the superposition integral
-   */ 
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static constexpr real64 correctionFactorDerivative(int const i1, int const j1, int const k1, int const l1, int const i2, int const j2, int const k2, int const l2, int const dim)
@@ -796,7 +796,7 @@ public:
               constexpr int l1 = ORDER - i1 - j1 - k1;
               constexpr int c1 = dofIndex< i1, j1, k1 >();
               ( ( (i1 == Is) &&
-               ( void( func( 
+               ( void( func(
                        std::integral_constant<int, 0>{},
                        std::integral_constant<int, i1>{},
                        std::integral_constant<int, c1>{},
@@ -804,7 +804,7 @@ public:
                        std::integral_constant<int, k1>{},
                        std::integral_constant<int, l1>{} ) ), 1 ) ) || ... );
               ( ( (j1 == Is) &&
-               ( void( func( 
+               ( void( func(
                       std::integral_constant<int, 1>{},
                       std::integral_constant<int, j1>{},
                       std::integral_constant<int, c1>{},
@@ -812,7 +812,7 @@ public:
                       std::integral_constant<int, l1>{},
                       std::integral_constant<int, i1>{} ) ), 1 ) ) || ... );
               ( ( (k1 == Is) &&
-               ( void( func( 
+               ( void( func(
                       std::integral_constant<int, 2>{},
                       std::integral_constant<int, k1>{},
                       std::integral_constant<int, c1>{},
@@ -820,7 +820,7 @@ public:
                       std::integral_constant<int, i1>{},
                       std::integral_constant<int, j1>{} ) ), 1 ) ) || ... );
               ( ( (l1 == Is) &&
-               ( void( func( 
+               ( void( func(
                       std::integral_constant<int, 3>{},
                       std::integral_constant<int, l1>{},
                       std::integral_constant<int, c1>{},
@@ -962,27 +962,25 @@ public:
       dLambdadX[3][j] = ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
       dLambdadX[0][j] = -dLambdadX[1][j] - dLambdadX[2][j] - dLambdadX[3][j];
     }
-    basisLoop( [&func, &dLambdadX] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
+    basisLoop( [&func, &dLambdadX,&detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
     {
       constexpr int c1 = cc1;
       constexpr int i1 = ci1;
       constexpr int j1 = cj1;
       constexpr int k1 = ck1;
       constexpr int l1 = cl1;
-      basisLoop( [&func, &dLambdadX] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
+      basisLoop( [&func, &dLambdadX,&detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
       {
         constexpr int c2 = cc2;
         constexpr int i2 = ci2;
         constexpr int j2 = cj2;
         constexpr int k2 = ck2;
         constexpr int l2 = cl2;
-        barycentricCoordinateLoop( [&func, &dLambdadX] ( auto const cd1 )
+        barycentricCoordinateLoop( [&func, &dLambdadX,&detJ] ( auto const cd1 )
         {
           constexpr int d1 = cd1;
-          barycentricCoordinateLoop( [&func, &dLambdadX] ( auto const d2 )
+          barycentricCoordinateLoop( [&func, &dLambdadX,&detJ] ( auto const d2 )
           {
-            constexpr real64 factor1 = correctionFactorDerivative( i1, j1, k1, l1, ii1, ij1, ik1, il1, 3 );
-            constexpr real64 factor2 = correctionFactorDerivative( i1, j1, k2, l2, ii2, ij2, ik2, il2, 3 );
             constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
             constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
             constexpr int ik1 = k1 + ( d1 == 2 ) * ( -1 );
@@ -991,6 +989,8 @@ public:
             constexpr int ij2 = j2 + ( d2 == 1 ) * ( -1 );
             constexpr int ik2 = k2 + ( d2 == 2 ) * ( -1 );
             constexpr int il2 = l2 + ( d2 == 3 ) * ( -1 );
+            constexpr real64 factor1 = correctionFactorDerivative( i1, j1, k1, l1, ii1, ij1, ik1, il1, 3 );
+            constexpr real64 factor2 = correctionFactorDerivative( i1, j1, k2, l2, ii2, ij2, ik2, il2, 3 );
             if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0 && il1 >= 0 &&
                           ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
             {
@@ -1032,12 +1032,12 @@ public:
 
     conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf] ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
     {
-      constexpr int f1 = cf1; 
-      constexpr int d = cd; 
-      constexpr int c1 = cc1; 
-      constexpr int i1 = ci1; 
-      constexpr int j1 = cj1; 
-      constexpr int k1 = ck1; 
+      constexpr int f1 = cf1;
+      constexpr int d = cd;
+      constexpr int c1 = cc1;
+      constexpr int i1 = ci1;
+      constexpr int j1 = cj1;
+      constexpr int k1 = ck1;
       conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf ] ( auto const f2, auto const, auto const c2, auto const i2, auto const j2, auto const k2 )
       {
         if constexpr ( f1 == f2 )
