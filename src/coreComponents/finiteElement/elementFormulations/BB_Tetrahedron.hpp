@@ -129,7 +129,7 @@ public:
         m[ i ][ j ] = X[ i + 1 ][ j ] - X[ 0 ][ j ];
       }
     }
-    return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( m ) ) / 2.0;
+    return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( m ) );
   }
 
   /**
@@ -154,7 +154,7 @@ public:
     real64 term1 = ab[1] * ac[2] - ab[2] * ac[1];
     real64 term2 = ab[2] * ac[0] - ab[0] * ac[2];
     real64 term3 = ab[0] * ac[1] - ab[1] * ac[0];
-    return LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) / 3.0 );
+    return LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) );
   }
 
   /**
