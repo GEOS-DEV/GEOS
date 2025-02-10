@@ -16,8 +16,8 @@
  * @file LogPart.hpp
  */
 
-#ifndef GEOS_COMMON_SECTION_HPP
-#define GEOS_COMMON_SECTION_HPP
+#ifndef GEOS_COMMON_FORMAT_LOGPART_HPP
+#define GEOS_COMMON_FORMAT_LOGPART_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
@@ -75,19 +75,19 @@ public:
   void setMinWidth( size_t const & minWidth );
 
   /**
-   * @brief Set the minimal width of a row
+   * @brief Set the maximal width of a row
    * @param maxWidth The maximal width of the table
    */
   void setMaxWidth( size_t const & maxWidth );
 
   /**
-   * @brief Draw the first part of the logPart. It include the title and optionnaly, the end description(s).
+   * @brief Draw the first part of the logPart. It include the title and optionnaly the description(s).
    * @param os An output stream (by default, std::cout)
    */
   void begin( std::ostream & os = std::cout );
 
   /**
-   * @brief Draw the last part of the logPart. It include the title
+   * @brief Draw the last part of the logPart. It include the title and optionnaly the end description(s).
    * @param oss An output stream (by default, std::cout)
    */
   void end( std::ostream & oss = std::cout );
@@ -112,7 +112,7 @@ private:
     size_t m_logPartMaxWidth;
     /// min width of logPart length
     size_t m_logPartMinWidth;
-    /// min width of logPart length
+    /// max width of logPart length
     size_t m_logPartMaxNameWidth;
   };
 

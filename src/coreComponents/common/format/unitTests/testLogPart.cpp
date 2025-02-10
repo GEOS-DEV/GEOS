@@ -13,12 +13,12 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "fileIO/logPart/LogPart.hpp"
+#include "common/format/LogPart.hpp"
 #include <gtest/gtest.h>
 
 using namespace geos;
 
-TEST( testSection, sectionWithTitle )
+TEST( testLogPart, sectionWithTitle )
 {
   std::ostringstream oss;
   LogPart logPart( "section name" );
@@ -39,7 +39,7 @@ TEST( testSection, sectionWithTitle )
   oss.clear();
 }
 
-TEST( testSection, sectionWithTitleAndOneDescription )
+TEST( testLogPart, sectionWithTitleAndOneDescription )
 {
   std::ostringstream oss;
   LogPart logPart( "section name" );
@@ -54,7 +54,7 @@ TEST( testSection, sectionWithTitleAndOneDescription )
   oss.clear();
 }
 
-TEST( testSection, sectionWithSetWidth )
+TEST( testLogPart, sectionWithSetWidth )
 {
   std::ostringstream oss;
   LogPart logPart( "section name" );
@@ -80,7 +80,7 @@ TEST( testSection, sectionWithSetWidth )
   oss.clear();
 }
 
-TEST( testSection, sectionMultipleDescriptions )
+TEST( testLogPart, sectionMultipleDescriptions )
 {
   std::ostringstream oss;
   LogPart logPart( "TIMESTEP START" );
@@ -109,7 +109,7 @@ TEST( testSection, sectionMultipleDescriptions )
   oss.clear();
 }
 
-TEST( testSection, sectionEndDescription )
+TEST( testLogPart, sectionEndDescription )
 {
   std::ostringstream oss;
   LogPart logPart( "TIMESTEP START" );
@@ -130,7 +130,7 @@ TEST( testSection, sectionEndDescription )
   oss.clear();
 }
 
-TEST( testSection, valuesMultiLines )
+TEST( testLogPart, valuesMultiLines )
 {
   std::ostringstream oss;
   LogPart logPart( "TIMESTEP START" );
@@ -183,7 +183,7 @@ TEST( testSection, valuesMultiLines )
   oss.clear();
 }
 
-TEST( testSection, multiLineWithExtraSpace )
+TEST( testLogPart, multiLineWithExtraSpace )
 {
   std::ostringstream oss;
   LogPart logPart( "TIMESTEP" );
