@@ -438,10 +438,11 @@ struct PressureComputationKernel
                       localIndex const regionIndex,
                       arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-                      arrayView2d< real32 const > const p_n,
+                      arrayView2d< real32  const > const p_n,
                       arrayView2d< real32 const > const p_nm1,
                       arrayView2d< localIndex > const & elemsToOpposite,
                       arrayView2d< integer > const & elemsToOppositePermutation,
+                      ArrayOfArrays< array2d< real64 > > referenceInvMassMatrix,
                       arrayView2d< real64 const > const sourceConstants,
                       arrayView1d< localIndex const > const sourceIsAccessible,
                       arrayView1d< localIndex const > const sourceElem,
@@ -465,6 +466,8 @@ struct PressureComputationKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
+      printf("nbelem=%d\n",size);
+
       real64 const dt2 = pow(dt,2);
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -481,147 +484,217 @@ struct PressureComputationKernel
           //printf("a=%d,i=%d,coord=%f\n",a,i,xLocal[a][i]);
         }
       }
-
-      //Mass matrix declaration and computation
-      real32 mass[numNodesPerElem][numNodesPerElem];
+      //printf("######################################\n");
+      //printf("Current element:%d\n",k);      
 
       //Multiply by p_{n } by 2*Mass
       FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
       {
-
-         flowx[j] = 2.0*val*p_n[k][i];
+         // printf("i=%d\n",i);
+         // printf("j=%d\n",j);
+         //printf("i=%d,j=%d,valMatrix=%f\n",i,j,val);
+         //printf("pnbefore=%f\n",p_n[k][j]);
+         flowx[j] += 2.0*val*p_n[k][i];
+         //printf("pn=%f\n",p_n[k][j]);
+         //printf("i=%d,flowxmasspn=%f\n",i,flowx[i]);
          flowx[j] -= val*p_nm1[k][i];
+         //printf("pnm1=%f\n",p_nm1[k][j]);
+         //printf("flowxmasspnm1=%f\n",flowx[j]);
       } );
-
+      // printf("\n");
 
 
 
       //First stiffness part (volume)
       FE_TYPE::computeStiffnessTerm(xLocal, [&] (const int i, const int j, real64 val)
       {
-
+         //flowx[i] -= dt2*val*p_n[k][j];
          flowx[j] -= dt2*val*p_n[k][i];
+         printf("i=%d,j=%d, stiff=%f, pn=%f, dt2,=%f,flowstiffness=%f\n",i,j,val,p_n[k][j],dt2,flowx[i]);
       } );
+      
 
-
-      // m_finiteElement.template computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
-      // {
+      // //m_finiteElement.template computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
+      // //{
       //   //We take the neighbour element
-      //   const localIndex elemNeigh = elemsToOpposite(k,f1);
-      // FE_TYPE::computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
-      // {
-      //   //We take the neighbour element
-      //   //printf("current element=%d\n",k);
-      //   //printf("\n");
-      //   const localIndex elemNeigh = elemsToOpposite(k,f1);
+      //  // const localIndex elemNeigh = elemsToOpposite(k,f1);
+//       FE_TYPE::computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
+//       {
+//         //We take the neighbour element
+//         printf("current element=%d\n",k);
+//         printf("\n");
+//         const localIndex elemNeigh = elemsToOpposite(k,f1);
 
-      //   if(elemNeigh >= 0)
-      //   {
-      //     //printf("neighbour element=%d\n",elemNeigh);
-      //     //printf("\n");
-      //     // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
-      //     // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
-      //     // permutation value contained inside elemsToOppositePermutation permutation
+//         if(elemNeigh >= 0)
+//         {
+//           printf("neighbour element=%d\n",elemNeigh);
+//           printf("\n");
+//           // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
+//           // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
+//           // permutation value contained inside elemsToOppositePermutation permutation
 
-      //     const int perm = elemsToOppositePermutation(elemNeigh,f1);
+//           const int perm = elemsToOppositePermutation(elemNeigh,f1);
   
-      //     //printf("global permutation=%d\n",perm);
-      //     //printf("\n");
-      //     const int p1 = perm%4-1;
-      //     const int p2 = (perm/4)%4-1;
-      //     const int p3 = (perm/16)%4-1;
+//           printf("global permutation=%d\n",perm);
+//           printf("\n");
+//           const int p1 = perm%4-1;
+//           const int p2 = (perm/4)%4-1;
+//           const int p3 = (perm/16)%4-1;
   
-      //     //printf("permutations value for 3 indices: p1=%d, p2=%d, p3=%d\n",p1,p2,p3);
-      //     //printf("\n");
-      //     // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
-      //     // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negati
-      //     const int Indices[3] = {i2,j2,k2};
+//           printf("permutations value for 3 indices: p1=%d, p2=%d, p3=%d\n",p1,p2,p3);
+//           printf("\n");
+//           // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
+//           // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negati
+//           const int Indices[3] = {i2,j2,k2};
     
-      //     //printf("Index before permutation: i2=%d, j2=%d, k2=%d\n",i2,j2,k2);
-      //     //printf("\n");
-      //     const int neighIndexBfPerm= FE_TYPE::dofIndex( i2, j2, k2 );
+//           printf("Index before permutation: i2=%d, j2=%d, k2=%d\n",i2,j2,k2);
+//           printf("\n");
+//           const int neighIndexBfPerm= FE_TYPE::dofIndex( i2, j2, k2 );
      
-      //     //printf("neighIndexBfPerm=%d\n",neighIndexBfPerm);
-      //     //printf("\n");
+//           printf("neighIndexBfPerm=%d\n",neighIndexBfPerm);
+//           printf("\n");
   
-      //     const int ii2 = p1 < 0 ? 0 : Indices[p1];
-      //     const int jj2 = p2 < 0 ? 0 : Indices[p2];
-      //     const int kk2 = p3 < 0 ? 0 : Indices[p3];
+//           const int ii2 = p1 < 0 ? 0 : Indices[p1];
+//           const int jj2 = p2 < 0 ? 0 : Indices[p2];
+//           const int kk2 = p3 < 0 ? 0 : Indices[p3];
            
-      //     //printf("Rotated indexes: ii2=%d, jj2=%d, kk2=%d\n", ii2,jj2,kk2);
-      //     // printf("\n");
-      //     // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
+//           printf("Rotated indexes: ii2=%d, jj2=%d, kk2=%d\n", ii2,jj2,kk2);
+//            printf("\n");
+//           // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
   
-      //     const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
+//           const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
   
-      //     //printf("Value of the neighbor dof :%d\n",neighDof);
-      //     // printf("\n");
-      //      //Flux computation
+//           printf("Value of the neighbor dof :%d\n",neighDof);
+//            printf("\n");
+//            //Flux computation
   
-      //      //printf("Values of dof and penalization matrix: c1=%d, c2=%d, neighDof=%d, val=%f\n",c1,c2,neighDof,val);
-      //      flowx[c1] -= 0.5*dt2*val*p_n[k][c2];
-      //      flowx[c1] += 0.5*dt2*val*p_n[elemNeigh][neighDof];
-      //     //printf("##########################################################################\n");
-      //   }
+//            //flowx[c1] -= 0.5*dt2*val*p_n[k][c2];
+//            //flowx[c1] += 0.5*dt2*val*p_n[elemNeigh][neighDof];
+//            flowx[c1] += 0.5*dt2*val*p_n[k][c2];
+//            flowx[c1] -= 0.5*dt2*val*p_n[elemNeigh][neighDof];
 
-      //  },
-      //  [&] (const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val)
-      //  {
-      //    //We take the neighbour element
-      //     const int elemNeigh = elemsToOpposite(k,f1);
+//           printf("Values of dof and penalization matrix: c1=%d, c2=%d, neighDof=%d, val=%f,pn=%f, pnvois=%f,flowx=%f\n",c1,c2,neighDof,val,p_n[k][c2],p_n[elemNeigh][neighDof],flowx[c1]);
+//           printf("##########################################################################\n");
+//         }
 
-      //    // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
-      //    // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
-      //    // permutation value contained inside elemsToOppositePermutation permutation
+//        },
+//        [&] (const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val)
+//        {
 
-      //    const int perm = elemsToOppositePermutation(elemNeigh,f1);
+//           printf("################################Flux term#############################\n");
+//          //We take the neighbour element
+//           const int elemNeigh = elemsToOpposite(k,f1);
 
-      //    const int p1 = perm%4-1;
-      //    const int p2 = (perm/4)%4-1;
-      //    const int p3 = (perm/16)%4-1;
-      //    // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
-      //    // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negative
+// printf("current element=%d\n",k);
+//         printf("\n");
+//          // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
+//          // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
+//          // permutation value contained inside elemsToOppositePermutation permutation
+//          if (elemNeigh >= 0)
+//          {
+       
+//           printf("neighbour element=%d\n",elemNeigh);
+//           printf("\n");
 
-      //    const int Indices[3] = {i2,j2,k2};
+//          const int perm = elemsToOppositePermutation(elemNeigh,f1);
 
-
-      //    const int ii2 = p1 < 0 ? 0 : Indices[p1];
-      //    const int jj2 = p2 < 0 ? 0 : Indices[p2];
-      //    const int kk2 = p3 < 0 ? 0 : Indices[p3];
-
-      //    // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
-
-
-      //   const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
-
-      //    //Flux computation
-
-      //    flowx[c1] += 0.5*dt2*val*p_n[elemNeigh][neighDof];
-      //    flowx[c1] -= 0.5*dt2*val*p_n[k][c2];
-
-      //    //Then we need a second time where we take the transpose of the previous values:
+//           printf("global permutation=%d\n",perm);
+//           printf("\n");
 
 
-      //    const int IndicesTranspose[3] = {i1,j1,k1};
+//          const int p1 = perm%4-1;
+//          const int p2 = (perm/4)%4-1;
+//          const int p3 = (perm/16)%4-1;
+//                    printf("permutations value for 3 indices: p1=%d, p2=%d, p3=%d\n",p1,p2,p3);
+//           printf("\n");
 
-      //    const int ii1 = p1 < 0 ? 0 : IndicesTranspose[p1];
-      //    const int jj1 = p2 < 0 ? 0 : IndicesTranspose[p2];
-      //    const int kk1 = p3 < 0 ? 0 : IndicesTranspose[p3];
+//          // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
+//          // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negative
 
-      //    // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
+         
 
-      //   const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
+//          const int Indices[3] = {i2,j2,k2};
+//          printf("Index before permutation: i2=%d, j2=%d, k2=%d\n",i2,j2,k2);
+//           printf("\n");
 
-      //    //Flux computation
+//          const int ii2 = p1 < 0 ? 0 : Indices[p1];
+//          const int jj2 = p2 < 0 ? 0 : Indices[p2];
+//          const int kk2 = p3 < 0 ? 0 : Indices[p3];
 
-      //    flowx[c2] -= 0.5*dt2*val*p_n[elemNeigh][neighDof2];
-      //    flowx[c2] += 0.5*dt2*val*p_n[k][c1];
+//           const int neighIndexBfPerm= FE_TYPE::dofIndex( i2, j2, k2 );
+//           printf("neighIndexBfPerm=%d\n",neighIndexBfPerm);
+//           printf("\n");
 
 
-      //  } );
-          //printf("################################End One element################################\n");
+//           printf("Rotated indexes: ii2=%d, jj2=%d, kk2=%d\n", ii2,jj2,kk2);
+//            printf("\n");
+
+//          // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
 
 
+//         const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
+//            printf("Value of the neighbor dof :%d\n",neighDof);
+//            printf("\n");
+//          //Flux computation
+
+//          //flowx[c1] += 0.5*dt2*val*p_n[elemNeigh][neighDof];
+//          //flowx[c1] -= 0.5*dt2*val*p_n[k][c2];
+//           flowx[c1] -= 0.5*dt2*val*p_n[elemNeigh][neighDof];
+//          flowx[c1] += 0.5*dt2*val*p_n[k][c2];
+//          printf("Values of dof and flux matrix: c1=%d, c2=%d, neighDof=%d, val=%f,pn=%f, pnvois=%f,flowx=%f\n",c1,c2,neighDof,val,p_n[k][c2],p_n[elemNeigh][neighDof],flowx[c1]);
+//           printf("##########################################################################\n");
+
+//          //Then we need a second time where we take the transpose of the previous values:
+
+
+//          const int IndicesTranspose[3] = {i1,j1,k1};
+//           const int neighIndexBfPerm2= FE_TYPE::dofIndex( i1, j1, k1 );
+//           printf("neighIndexBfPerm2=%d\n",neighIndexBfPerm2);
+//           printf("\n");
+
+//          const int ii1 = p1 < 0 ? 0 : IndicesTranspose[p1];
+//          const int jj1 = p2 < 0 ? 0 : IndicesTranspose[p2];
+//          const int kk1 = p3 < 0 ? 0 : IndicesTranspose[p3];
+
+//                 printf("Rotated indexes 2: ii1=%d, jj1=%d, kk1=%d\n", ii1,jj1,kk1);
+//            printf("\n");
+
+
+//          // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
+
+//         const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
+//             printf("Value of the neighbor2 dof :%d\n",neighDof);
+//            printf("\n");
+
+//          //Flux computation
+
+//          //flowx[c2] -= 0.5*dt2*val*p_n[elemNeigh][neighDof2];
+//          //flowx[c2] += 0.5*dt2*val*p_n[k][c1];
+//          flowx[c2] += 0.5*dt2*val*p_n[elemNeigh][neighDof2];
+//          flowx[c2] -= 0.5*dt2*val*p_n[k][c1];
+//                   printf("Values of dof and penalization matrix second part: c1=%d, c2=%d, neighDof2=%d, val=%f,pn=%f, pnvois=%f,flowx=%f\n",c1,c2,neighDof2,val,p_n[k][c1],p_n[elemNeigh][neighDof2],flowx[c2]);
+//           printf("##########################################################################\n");
+
+//          }
+//        } );
+//           printf("################################End One element################################\n");
+
+
+     
+
+      real64 const det = FE_TYPE::jacobianDeterminant(xLocal);
+      real64 fx=0.0;
+      for (localIndex i = 0; i < numNodesPerElem; ++i)
+      {
+        for (localIndex j = 0; j < numNodesPerElem; ++j)
+        {
+          fx+= referenceInvMassMatrix[0][0](i,j)*flowx[j]; 
+        }
+        p_np1[k][i]=fx/det;
+          
+      }
+
+      real64 amp; 
       //Source Injection
       for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
       {
@@ -629,116 +702,36 @@ struct PressureComputationKernel
         {
           if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
+            // Add inversemass matrix to sourceconstants
+            for (localIndex i = 0; i < numNodesPerElem; ++i)
+            {
+              amp=0.0;
+              for (localIndex j = 0; j < numNodesPerElem; ++j)
+              {
+                amp+= referenceInvMassMatrix[0][0](i,j)*sourceConstants[isrc][j];
+              }
+              
+            }
+            amp=amp/det;
+            
+            //printf("Hé la source est là ! : %d\n",k);
             real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              flowx[i]+= dt2*(sourceConstants[isrc][i]*srcValue);
+              p_np1[k][i]+= dt2*(amp*srcValue);
+              //printf("sourceValue=%f\n",srcValue);
+              //printf("i=%d, amplitude=%f\n",i,amp);
             }
           }
         }
       }
-
-      for (localIndex i = 0; i < size; ++i)
-      {
-        p_np1[k][i]= flowx[i];
-      }
       
 
+      //printf("######################End of element#########################\n");
+
+
     } );
-
-
-  //    //Mass and Damping matrix declaration
-  //    real64 mass[numNodesPerelem][numNodesPerElem];
-  //    //real64 damping[numNodesPerelem][numNodesPerElem];
-
-
-  //    //Computation of the mass and damping matrix
-  //    computeMassMatrix(mass);
-
-  //    //First steps for time scheme
-  //    for (localindex i = 0; i < numNodesPerElem; ++i)
-  //    {
-  //     p_np1[]
-  //    }
-
-
-
-
-
-  //    real32 flow[numNodesPerElem]  = {0.0};
-
-
-  //    // Volume  + fluxes computation integration
-  //    for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-  //    {
-
-
-  //      //Stiffness terms
-  //      m_finiteElement.template computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
-  //      {
-  //        //Maybe reverse j and i
-  //        flow[i] += val * p_n[k][j];
-  //      } );
-
-  //      //Fluxes
-  //      for( localIndex f = 0; f < numFacesPerElem; ++f )
-  //      {
-  //        //Possible way:
-  //        //Get the global number of face using elemeToFaces :
-  //        localIndex face_glob = elemToFaces[k][f];
-  //        //Use faceToElemIndex map to know which element shared this global face: faceToElemIndex is a 2d array which knowing a face and a
-  //        // index between 0 and 1 can give you the two
-  //        // element which share the face and if you get -1 it means that the element will be in the boundary.
-  //        // Initialize the storage value for contributions:
-  //        real32 fp = 0.0;
-  //        for( localIndex m = 0; m < 2; ++m )
-  //        {
-  //          localIndex elem = faceToElemIndex[face_glob][m];
-  //          //We start by the test on the boundaries to skip it directly:
-  //          if( elem == -1 )
-  //          {
-  //            //Nothing we continue the loop
-  //          }
-  //          else if( elem == k )
-  //          {
-  //            //Here we compute the fluxes part corresponding to the element itself (the (K,K) part seen in the latex document). We can both
-  //            // compute the "classical" flux part + the penalization one:
-  //            //PS: Not sure about how to include the normals so I'll just put "normals" (surely missing something with the gradient inside
-  //            // the flux matrix)
-  //            // Inside the matrix computation: we need the volumic Jacobian (its inverse) and the surface determinant. Due to the
-  //            // fact that we take the inverse of the jacobian
-  //            // we will have the ratio surface/volume.
-
-  //            m_finiteElement.template computeKKFluxMatrix(q,xLocal,f [&] (int i, int j, real64 val)
-  //            {
-  //              fp += 0.5* val *  p_n[k][i] + gamma[k]* val * p_n[k][i];
-  //            //Needs normals at some point
-  //            //flow[j] += fp*faceNormal
-  //            } );
-  //          }
-  //          else
-  //          {
-  //            //It remains the case where we look at the neighbour element and we need to add the (K,L) contribution.
-  //            //It will be transparent here, but inside the mathematical computation we need to be careful on which degrees of freedom we
-  //            // send back for the pressure as we get the contribution
-  //            //of the neighbour so we need to get the correct dof (can be taken in account inside the math stuff)
-  //            m_finiteElement.template computeKLFluxMatrix(q, xLocal,f [&] (int i, int j, real32 val)
-  //            {
-  //              fp += 0.5* val * p_n[k][i] - gamma[k]* val * p_n[elem][j];
-  //              //Again, needs normals at some point
-  //              //flow[j] += fp*normals
-  //            } );
-  //          }
-  //        }
-
-  //      }
-
-
-
-  //    }
-
-  //  } );
-
+    //exit(2);
 
  }
 
