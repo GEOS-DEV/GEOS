@@ -101,10 +101,11 @@
 
   <!-- SPHINX_WELLBORE_OUTPUT -->
   <Outputs>
-    <Silo 
-      name="siloOutput"
-      parallelThreads="1"
-      plotFileRoot="plot"
+    <vtkOutput 
+      name="vtkOutput"
+      plotLevel="2"
+      format="binary"
+      plotFileRoot="mccWellbore"
     />
     <Restart
       name="restartOutput"/>
