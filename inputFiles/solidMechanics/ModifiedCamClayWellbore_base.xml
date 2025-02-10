@@ -101,7 +101,7 @@
 
   <!-- SPHINX_WELLBORE_OUTPUT -->
   <Outputs>
-    <vtkOutput 
+    <VTK 
       name="vtkOutput"
       plotLevel="2"
       format="binary"
