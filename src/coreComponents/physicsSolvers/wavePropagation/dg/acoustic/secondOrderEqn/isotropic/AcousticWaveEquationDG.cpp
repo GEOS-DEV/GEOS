@@ -467,6 +467,13 @@ real64 AcousticWaveEquationDG::explicitStepForward( real64 const & time_n,
                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&] ( string const &,
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & GEOS_UNUSED_PARAM ( regionNames ) )
+  {
+      prepareNextTimestep( mesh );
+  } );
   return dtOut;
 }
 
@@ -488,24 +495,33 @@ void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView2d< real32 > const p_nm1 = nodeManager.getField< acousticfieldsdg::Pressure_nm1 >();
-  arrayView2d< real32 > const p_n   = nodeManager.getField< acousticfieldsdg::Pressure_n >();
-  arrayView2d< real32 > const p_np1 = nodeManager.getField< acousticfieldsdg::Pressure_np1 >();
-
+  localIndex regionNames;
   //arrayView2d< real32 > const stiffnessVector = nodeManager.getField< acousticfieldsdg::StiffnessVector >();
   //arrayView2d< real32 > const rhs = nodeManager.getField< acousticfieldsdgdgdg::ForcingRHS >();
 
-  SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >([&]( CellElementSubRegion & elementSubRegion )
+    {
 
-  // forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-  // {
-  //   localIndex const a = solverTargetNodesSet[n];
+        arrayView2d< real32  > const p_nm1 = elementSubRegion.getField< acousticfieldsdg::Pressure_nm1 >();
+        arrayView2d< real32  > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
+        arrayView2d< real32 >  p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
 
-  //   p_nm1[a] = p_n[a];
-  //   p_n[a]   = p_np1[a];
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+      
+          for (localIndex i = 0; i < 4; i++)
+          {
+             p_nm1[k][i] = p_n[k][i];
+             p_n[k][i]   = p_np1[k][i];
 
-  //   stiffnessVector[a] = rhs[a] = 0.0;
-  // } );
+          }
+          
+      
+        } );
+
+
+    } );
+
 
 }
 
@@ -558,6 +574,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
           p_nm1,
           elemsToOpposite,
           elemsToOppositePermutation,
+          m_referenceInvMassMatrix,
           sourceConstants,
           sourceIsAccessible,
           sourceElem,
