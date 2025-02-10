@@ -22,7 +22,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
@@ -761,23 +761,16 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
       for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
-        nodeMap.resizeArray( kfe, 8 );
 
         localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
+        nodeMap.resizeArray( kfe, 2*numNodesInFace );
         for( localIndex a = 0; a < numNodesInFace; ++a )
         {
 
-          // TODO HACK need to generalize to something other than quads
-          //wu40: I temporarily make it work for tet mesh. Need further check with Randy.
           nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], a );
           nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], a );
         }
 
-        if( numNodesInFace == 3 )
-        {
-          nodeMap[kfe][6] = faceToNodeMap( faceMap[ kfe ][ 0 ], 2 );
-          nodeMap[kfe][7] = faceToNodeMap( faceMap[ kfe ][ 1 ], 2 );
-        }
       }
     } );
   }
@@ -4587,12 +4580,9 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
     maxRuptureRate = std::max( maxRuptureRate, ruptureRate( faceElemIndex ) );
   }
 
-  real64 globalMaxRuptureRate;
-  MpiWrapper::allReduce( &maxRuptureRate,
-                         &globalMaxRuptureRate,
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOS );
+  real64 const globalMaxRuptureRate = MpiWrapper::allReduce( maxRuptureRate,
+                                                             MpiWrapper::Reduction::Max,
+                                                             MPI_COMM_GEOS );
 
   return globalMaxRuptureRate;
 }

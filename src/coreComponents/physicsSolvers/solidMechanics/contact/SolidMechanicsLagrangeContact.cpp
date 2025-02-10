@@ -30,19 +30,18 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
-#include "physicsSolvers/contact/LogLevelsInfo.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
 #include "linearAlgebra/solvers/PreconditionerBlockJacobi.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
+#include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp"
 #include "finiteElement/elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -111,7 +110,7 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setDescription( "An array that holds the rotation matrices on the fracture." ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
 
-      subRegion.registerField< fields::contact::deltaTraction >( getName() ).
+      subRegion.registerField< contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
@@ -522,8 +521,8 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
         arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
-        arrayView1d< real64 > const slip = subRegion.getField< fields::contact::slip >();
-        arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
+        arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
+        arrayView1d< real64 > const aperture = subRegion.getField< elementAperture >();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
