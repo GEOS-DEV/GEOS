@@ -65,12 +65,24 @@ WellSolverBase::WellSolverBase( string const & name,
   addLogLevel< logInfo::Crossflow >();
 }
 
-Group *WellSolverBase::createChild( string const & childKey, string const & childName )
+Group * WellSolverBase::createChild( string const & childKey, string const & childName )
 {
-  const auto childTypes = { keys::wellControls };
-  GEOS_ERROR_IF( childKey != keys::wellControls,
-                 PhysicsSolverBase::CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
-  return &registerGroup< WellControls >( childName );
+  static std::set< string > const childTypes = {
+    keys::wellControls,
+    PhysicsSolverBase::groupKeyStruct::linearSolverParametersString(),
+    PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
+  };
+  GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+  if( childKey == keys::wellControls )
+  {
+    return &registerGroup< WellControls >( childName );
+  }
+  else
+  {
+    PhysicsSolverBase::createChild( childKey, childName );
+    return nullptr;
+  }
 }
 
 void WellSolverBase::expandObjectCatalogs()
