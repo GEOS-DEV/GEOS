@@ -50,7 +50,7 @@ DECLARE_FIELD( dMobility,
                array2dLayoutFluid,
                0,
                NOPLOT,
-               WRITE_AND_READ,
+               NO_WRITE,
                "dMobility" );
 
 }
