@@ -171,13 +171,13 @@ public:
    * @brief Get the track of substeps
    * @return A vector containing the the track of substeps
    */
-  std::vector< real64 > const & getSubStepDt() const {  return m_target->getSubStepDt(); }
+  std::vector< real64 > const & getSubStepDts() const {  return m_target->getSubStepDts(); }
 
   /**
    * @brief Get number of time sub-steps allowed for the solver
    * @return The number of substeps taken
    */
-  integer const & getNumOfSubSteps() const {  return m_target->getNumOfSubSteps(); }
+  size_t getNumOfSubSteps() const {  return m_target->getSubStepDts().size(); }
 
 
   /**

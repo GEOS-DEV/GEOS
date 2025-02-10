@@ -276,12 +276,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
 
-  // Keep track of substeps. It is useful to output these.
-  std::vector< real64 > & subStepDt = getSubStepDt();
-  subStepDt.resize( maxSubSteps, 0.0 );
-
-  setNumOfSubSteps( 0 );
-
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
@@ -291,10 +285,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
-    setNumOfSubSteps( subStep + 1 );
-    std::cout << " 1 substep " << subStep << std::endl;
 
-    subStepDt[subStep] = dtAccepted;
+    getSubStepDts().push_back( dtAccepted );
 
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();

@@ -174,7 +174,7 @@ bool EventManager::run( DomainPartition & domain )
     LogPart logPart( "TIMESTEP" );
     outputTime( logPart );
     logPart.begin();
-    std::vector< real64 > subStepDt;
+    std::vector< real64 > subStepDts;
     integer numTimeSteps = 0;
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
@@ -200,7 +200,7 @@ bool EventManager::run( DomainPartition & domain )
 
         if( subEvent->getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
         {
-          subStepDt = subEvent->getSubStepDt();
+          subStepDts = subEvent->getSubStepDts();
           numTimeSteps = subEvent->getNumOfSubSteps();
         }
 
@@ -219,7 +219,7 @@ bool EventManager::run( DomainPartition & domain )
     }
 
 
-    logEndOfCycleInformation( logPart, m_cycle, numTimeSteps, subStepDt );
+    logEndOfCycleInformation( logPart, m_cycle, numTimeSteps, subStepDts );
 
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
@@ -309,7 +309,7 @@ void EventManager::outputTime( LogPart & logPart ) const
 void EventManager::logEndOfCycleInformation( LogPart & logpart,
                                              integer const cycleNumber,
                                              integer const numOfSubSteps,
-                                             std::vector< real64 > const & subStepDt ) const
+                                             std::vector< real64 > const & subStepDts ) const
 {
   logpart.addEndDescription( "- Cycle: ", cycleNumber );
   logpart.addEndDescription( "- N substeps: ", numOfSubSteps );
@@ -320,7 +320,7 @@ void EventManager::logEndOfCycleInformation( LogPart & logpart,
     {
       logMessage << ", ";
     }
-    logMessage << units::TimeFormatInfo::fromSeconds( subStepDt[i] ).toString();
+    logMessage << units::TimeFormatInfo::fromSeconds( subStepDts[i] ).toString();
   }
 
   if( logMessage.rdbuf()->in_avail() == 0 )

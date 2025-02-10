@@ -108,11 +108,11 @@ private:
 
     /// logPart length
     size_t m_logPartWidth;
-    /// logPart length
+    /// logPart max length
     size_t m_logPartMaxWidth;
-    /// min width of logPart length
+    /// logPart min length
     size_t m_logPartMinWidth;
-    /// max width of logPart length
+    /// max length name of a logPart
     size_t m_logPartMaxNameWidth;
   };
 

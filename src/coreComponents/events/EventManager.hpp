@@ -142,12 +142,12 @@ private:
    * @param logpart the end of section to be displayed
    * @param cycleNumber the current cycle number
    * @param numOfSubSteps the number of substeps taken
-   * @param subStepDt the time step size for each substep
+   * @param subStepDts the time step size for each substep
    */
   void logEndOfCycleInformation( LogPart & logpart,
                                  integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< real64 > const & subStepDt ) const;
+                                 std::vector< real64 > const & subStepDts ) const;
 
   /// Min time for a simulation
   real64 m_minTime;
