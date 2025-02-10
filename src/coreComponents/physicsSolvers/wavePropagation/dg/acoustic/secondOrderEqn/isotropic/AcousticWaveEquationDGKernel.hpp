@@ -484,23 +484,45 @@ struct PressureComputationKernel
           //printf("a=%d,i=%d,coord=%f\n",a,i,xLocal[a][i]);
         }
       }
+
+      array2d< real64 > massMatrix;
+      massMatrix.resize( FE_TYPE::numNodes, FE_TYPE::numNodes );
+      massMatrix.zero();
+      FE_TYPE::computeReferenceMassMatrix( massMatrix );
+
+      real64 const det = FE_TYPE::jacobianDeterminant(xLocal);
+      for (localIndex i = 0; i < numNodesPerElem; ++i)
+      {
+        real64 fx1=0.0;
+        real64 fx2=0.0;
+        for (localIndex j = 0; j < numNodesPerElem; ++j)
+        {
+          fx1+= 2.0*massMatrix(i,j)*p_n[k][j]; 
+          fx2+= massMatrix(i,j)*p_nm1[k][j];
+        }
+        flowx[i]+=fx1*det;
+        flowx[i]-=fx2*det;
+          
+      }
+
+      
       //printf("######################################\n");
       //printf("Current element:%d\n",k);      
 
       //Multiply by p_{n } by 2*Mass
-      FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
-      {
-         // printf("i=%d\n",i);
-         // printf("j=%d\n",j);
-         //printf("i=%d,j=%d,valMatrix=%f\n",i,j,val);
-         //printf("pnbefore=%f\n",p_n[k][j]);
-         flowx[j] += 2.0*val*p_n[k][i];
-         //printf("pn=%f\n",p_n[k][j]);
-         //printf("i=%d,flowxmasspn=%f\n",i,flowx[i]);
-         flowx[j] -= val*p_nm1[k][i];
-         //printf("pnm1=%f\n",p_nm1[k][j]);
-         //printf("flowxmasspnm1=%f\n",flowx[j]);
-      } );
+      // FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
+      // {
+      //    // printf("i=%d\n",i);
+      //    // printf("j=%d\n",j);
+      //    //printf("i=%d,j=%d,valMatrix=%f\n",i,j,val);
+      //    //printf("pnbefore=%f\n",p_n[k][j]);
+      //    flowx[i] += 2.0*val*p_n[k][j];
+      //    //printf("pn=%f\n",p_n[k][j]);
+      //    //printf("i=%d,flowxmasspn=%f\n",i,flowx[i]);
+      //    flowx[i] -= val*p_nm1[k][j];
+      //    //printf("pnm1=%f\n",p_nm1[k][j]);
+      //    //printf("flowxmasspnm1=%f\n",flowx[j]);
+      // } );
       // printf("\n");
 
 
@@ -508,9 +530,8 @@ struct PressureComputationKernel
       //First stiffness part (volume)
       FE_TYPE::computeStiffnessTerm(xLocal, [&] (const int i, const int j, real64 val)
       {
-         //flowx[i] -= dt2*val*p_n[k][j];
-         flowx[j] -= dt2*val*p_n[k][i];
-         printf("i=%d,j=%d, stiff=%f, pn=%f, dt2,=%f,flowstiffness=%f\n",i,j,val,p_n[k][j],dt2,flowx[i]);
+         flowx[i] -= dt2*val*p_n[k][j];
+         //printf("i=%d,j=%d, stiff=%f, pn=%f, dt2,=%f,flowstiffness=%f\n",i,j,val,p_n[k][j],dt2,flowx[i]);
       } );
       
 
@@ -682,10 +703,9 @@ struct PressureComputationKernel
 
      
 
-      real64 const det = FE_TYPE::jacobianDeterminant(xLocal);
-      real64 fx=0.0;
       for (localIndex i = 0; i < numNodesPerElem; ++i)
       {
+        real64 fx=0.0;
         for (localIndex j = 0; j < numNodesPerElem; ++j)
         {
           fx+= referenceInvMassMatrix[0][0](i,j)*flowx[j]; 
