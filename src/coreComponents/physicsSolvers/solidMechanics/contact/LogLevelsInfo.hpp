@@ -41,6 +41,12 @@ struct ConfigurationStatistics
   static constexpr std::string_view getDescription() { return "Output configuration statistics"; }
 };
 
+struct Tolerance
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Output Tolerance computed the given fracture element"; }
+};
+
 /// @endcond
 ///@}
 

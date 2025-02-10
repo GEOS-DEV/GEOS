@@ -24,7 +24,7 @@
 #include "kernels/ExplicitRateAndStateKernels.hpp"
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
