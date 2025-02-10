@@ -551,6 +551,28 @@ public:
   }
 
   /**
+   * @brief Computes the correction factor for the superposition integral in case a function has been derived once.
+   *   The indices of the original function are ii1, j1, k1 and l1, and those of the once-derived one are i2, j2, k2 and l2
+   * @param[in] i1
+   * @param[in] j1
+   * @param[in] k1
+   * @param[in] l1
+   * @param[in] i2
+   * @param[in] j2
+   * @param[in] k2
+   * @param[in] l2
+   * @param[in] dim the dimension, 2 or 3
+   * @return the correction factor to be applied to the superposition integral
+   */ 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static constexpr real64 correctionFactorDerivative(int const i1, int const j1, int const k1, int const l1, int const i2, int const j2, int const k2, int const l2, int const dim)
+  {
+      return (i1+j1+k1+l1+dim)* (i2==0 ? 1 : i2) * (j2==0 ? 1 : j2)* (k2==0 ? 1 : k2)* (l2==0 ? 1 : l2);
+  }
+
+
+  /**
    * @brief Computes the superposition integral between Bernstein-Bézier functions indexed by
    *  (i1, j1, k1, l1) and (i1, j2, k2, l2)
    * @param[in] i1
@@ -761,12 +783,12 @@ public:
     loop( [&func] ( auto const i )
     {
       constexpr int i1 = ORDER - i;
-      loop( [&func] ( auto const j )
+      loop( [&func, i1] ( auto const j )
       {
         constexpr int j1 = ORDER - j;
         if constexpr ( j1 <= ORDER - i1 )
         {
-          loop( [&func] ( auto const k )
+          loop( [&func, i1, j1] ( auto const k )
           {
             constexpr int k1 = ORDER - k;
             if constexpr ( k1 <= ORDER - i1 - j1 )
@@ -959,21 +981,21 @@ public:
           constexpr int d1 = cd1;
           barycentricCoordinateLoop( [&func, &dLambdadX] ( auto const d2 )
           {
-            constexpr real64 factor1 = ( i1 + j1 + k1 + l1 + 3 ) / ( i1 +j1 + k1 + l1 + 2);
-            constexpr real64 factor2 = ( i2 + j2 + k2 + l2 + 3 ) / ( i2 +j2 + k2 + l2 + 2);
-            constexpr int ii1 = ( d1 != 0 ) * i1 + ( d1 == 0 ) * ( i1 - 1 );
-            constexpr int ij1 = ( d1 != 1 ) * j1 + ( d1 == 1 ) * ( j1 - 1 );
-            constexpr int ik1 = ( d1 != 2 ) * k1 + ( d1 == 2 ) * ( k1 - 1 );
-            constexpr int il1 = ( d1 != 3 ) * l1 + ( d1 == 3 ) * ( l1 - 1 );
-            constexpr int ii2 = ( d2 != 0 ) * i2 + ( d2 == 0 ) * ( i2 - 1 );
-            constexpr int ij2 = ( d2 != 1 ) * j2 + ( d2 == 1 ) * ( j2 - 1 );
-            constexpr int ik2 = ( d2 != 2 ) * k2 + ( d2 == 2 ) * ( k2 - 1 );
-            constexpr int il2 = ( d2 != 3 ) * l2 + ( d2 == 3 ) * ( l2 - 1 );
+            constexpr real64 factor1 = correctionFactorDerivative( i1, j1, k1, l1, ii1, ij1, ik1, il1, 3 );
+            constexpr real64 factor2 = correctionFactorDerivative( i1, j1, k2, l2, ii2, ij2, ik2, il2, 3 );
+            constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
+            constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
+            constexpr int ik1 = k1 + ( d1 == 2 ) * ( -1 );
+            constexpr int il1 = l1 + ( d1 == 3 ) * ( -1 );
+            constexpr int ii2 = i2 + ( d2 == 0 ) * ( -1 );
+            constexpr int ij2 = j2 + ( d2 == 1 ) * ( -1 );
+            constexpr int ik2 = k2 + ( d2 == 2 ) * ( -1 );
+            constexpr int il2 = l2 + ( d2 == 3 ) * ( -1 );
             if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0 && il1 >= 0 &&
                           ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
             {
               constexpr real64 val = computeSuperpositionIntegral( ii1, ij1, ik1, il1, ii2, ij2, ik2, il2 ) * factor1 * factor2;
-              func( c1, c2, val * ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] + dLambdadX[d1][2]*dLambdadX[d2][2] ) );
+              func( c1, c2, val * detJ * ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] + dLambdadX[d1][2]*dLambdadX[d2][2] ) );
             }
           } );
         } );
