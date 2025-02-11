@@ -249,7 +249,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       }
 
       // If at least one region has a capillary pressure model, consider it enabled for all
-      if( !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty() )
+      m_hasCapPressure = !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty();
       {
         m_hasCapPressure = true;
       }
