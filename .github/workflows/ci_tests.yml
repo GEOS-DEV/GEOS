@@ -204,7 +204,7 @@ jobs:
             GCP_BUCKET: geosx/Sherlock-CPU
             HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
             RUNS_ON: ubuntu-22.04
-            USE_SCCACHE: false
+            USE_SCCACHE: true
 
     uses: ./.github/workflows/build_and_test.yml
     with:

@@ -209,6 +209,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
 
+  GEOS_LOG_RANK_0( "Create a dummy discretization ..... " );
   conduit::Node node;
   dataRepository::Group rootGroup( "root", node );
   dataRepository::Group discretization( "discretization", &rootGroup );
@@ -220,6 +221,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // base type to a known model type.  the lambda here then executes the
   // appropriate test driver. note that these calls will move data to device if available.
 
+  GEOS_LOG_RANK_0( "Pass the fluid through the ConstitutivePassThru ..... " );
   constitutiveUpdatePassThru( baseFluid, [&] ( auto & selectedFluid )
   {
     using FLUID_TYPE = TYPEOFREF( selectedFluid );
@@ -233,6 +235,8 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   {
     outputResults();
   }
+
+  GEOS_LOG_RANK_0( "Compare ..... " );
 
   if( m_baselineFile != "none" )
   {
