@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -1013,10 +1013,10 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
       computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, dasReceivers, m_linearDASVectorY.toView(), true );
       computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, dasReceivers, m_linearDASVectorZ.toView(), true );
       // sum contributions from all MPI ranks, since some receivers might be split among multiple ranks
-      MpiWrapper::allReduce( dasReceivers.data(),
-                             dasReceivers.data(),
+      MpiWrapper::allReduce( dasReceivers,
+                             dasReceivers,
                              m_linearDASGeometry.size( 0 ),
-                             MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                             MpiWrapper::Reduction::Sum,
                              MPI_COMM_GEOS );
       WaveSolverUtils::writeSeismoTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ),
                                          m_receiverIsLocal, m_nsamplesSeismoTrace, dasReceivers );

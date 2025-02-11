@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -22,7 +22,6 @@
 
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
@@ -42,6 +41,7 @@ FiniteVolumeManager::~FiniteVolumeManager()
 
 Group * FiniteVolumeManager::createChild( string const & childKey, string const & childName )
 {
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   if( childKey == HybridMimeticDiscretization::catalogName() )
   {
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
@@ -49,7 +49,8 @@ Group * FiniteVolumeManager::createChild( string const & childKey, string const 
   }
   else
   {
-    std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::factory( childKey, childName, this );
+    std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::factory( childKey, getDataContext(),
+                                                                                                        childName, this );
     return &this->registerGroup< FluxApproximationBase >( childName, std::move( approx ));
   }
 }

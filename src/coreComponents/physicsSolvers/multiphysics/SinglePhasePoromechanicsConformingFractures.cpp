@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -31,6 +31,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 
 namespace geos
@@ -44,11 +45,22 @@ template< typename FLOW_SOLVER >
 SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromechanicsConformingFractures( const string & name,
                                                                                                          Group * const parent )
   : Base( name, parent )
+{}
+
+template<>
+void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
 {
-  LinearSolverParameters & params = this->m_linearSolverParameters.get();
-  params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
-  params.mgr.separateComponents = true;
-  params.dofsPerNode = 3;
+  LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
+
+  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
+    return;
+
+  linearSolverParameters.mgr.separateComponents = true;
+  linearSolverParameters.dofsPerNode = 3;
+
+  linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template< typename FLOW_SOLVER >
@@ -61,7 +73,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( 
 
   // 2. Traction - pressure coupling in the fracture
   dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
-                          fields::contact::traction::key(),
+                          contact::traction::key(),
                           DofManager::Connector::Elem );
 }
 
@@ -591,7 +603,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
-    arrayView1d< integer const > const & fractureState = subRegion.getField< fields::contact::fractureState >();
+    arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
 
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
     {
@@ -609,7 +621,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
       stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
 
-      bool const isFractureOpen = ( fractureState[kfe] == fields::contact::FractureState::Open );
+      bool const isFractureOpen = ( fractureState[kfe] == contact::FractureState::Open );
 
       // Accumulation derivative
       if( isFractureOpen )
@@ -670,7 +682,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         real64 const dR_dAper = values[kfe1];
         localIndex const kfe2 = columns[kfe1];
 
-        bool const isOpen = ( fractureState[kfe2] == fields::contact::FractureState::Open );
+        bool const isOpen = ( fractureState[kfe2] == contact::FractureState::Open );
         skipAssembly &= !isOpen;
 
         for( localIndex kf=0; kf<2; ++kf )
@@ -751,9 +763,9 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       arrayView2d< real64 const > const dispJump           = subRegion.getField< contact::dispJump >();
       arrayView1d< real64 const > const area               = subRegion.getElementArea();
       arrayView1d< real64 const > const volume             = subRegion.getElementVolume();
-      arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
-      arrayView1d< real64 const > const pressure           = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
+      arrayView2d< real64 const > const fractureTraction   = subRegion.getField< contact::traction >();
+      arrayView1d< real64 const > const pressure           = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
 
       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();

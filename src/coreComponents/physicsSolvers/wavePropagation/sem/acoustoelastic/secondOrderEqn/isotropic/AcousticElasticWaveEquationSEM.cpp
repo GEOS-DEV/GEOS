@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -129,7 +129,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
 real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
                                                    real64 const & dt,
-                                                   int const,
+                                                   integer const cycleNumber,
                                                    DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -174,7 +174,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
     elasSolver->synchronizeUnknowns( time_n, dt, domain, mesh, m_elasRegions );
 
-    acousSolver->computeUnknowns( time_n, dt, domain, mesh, m_acousRegions );
+    acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
 
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const in )
     {

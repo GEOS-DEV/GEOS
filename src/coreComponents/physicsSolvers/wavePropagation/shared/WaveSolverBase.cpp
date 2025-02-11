@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -53,6 +53,13 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
+
+  registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Array which contains the value of the Ricker wavelets at each time-steps" );
+
 
   registerWrapper( viewKeyStruct::timeSourceDelayString(), &m_timeSourceDelay ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -484,9 +491,19 @@ void WaveSolverBase::computeTargetNodeSet( arrayView2d< localIndex const, cells:
 
 void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n )
 {
-  while( (m_dtSeismoTrace * m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+  if( m_forward )
   {
-    m_indexSeismoTrace++;
+    while( (m_dtSeismoTrace * m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+    {
+      m_indexSeismoTrace++;
+    }
+  }
+  else
+  {
+    while( (m_dtSeismoTrace * m_indexSeismoTrace) >= (time_n - epsilonLoc) && m_indexSeismoTrace > 0 )
+    {
+      m_indexSeismoTrace--;
+    }
   }
 }
 
@@ -515,12 +532,14 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
   if( m_nsamplesSeismoTrace == 0 )
     return;
   integer const dir = m_forward ? +1 : -1;
-  for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
+  integer const beginIndex = m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace;
+  for( localIndex iSeismo = beginIndex; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
-    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
-    if( dir * timeSeismo > dir * (time_n + epsilonLoc) )
+    localIndex seismoIndex = m_forward ? iSeismo : m_nsamplesSeismoTrace-iSeismo;
+    real64 const timeSeismo = m_dtSeismoTrace * seismoIndex;
+    if( dir * timeSeismo > dir * time_n + epsilonLoc )
       break;
-    WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
+    WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, seismoIndex, m_receiverNodeIds,
                                          m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );
   }
 }
@@ -535,12 +554,14 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
   if( m_nsamplesSeismoTrace == 0 )
     return;
   integer const dir = m_forward ? +1 : -1;
-  for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
+  integer const beginIndex = m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace;
+  for( localIndex iSeismo = beginIndex; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
-    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
-    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+    localIndex seismoIndex = m_forward ? iSeismo : m_nsamplesSeismoTrace-iSeismo;
+    real64 const timeSeismo = m_dtSeismoTrace * seismoIndex;
+    if( dir * timeSeismo > dir * time_n + epsilonLoc )
       break;
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_receiverElem,
+    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, seismoIndex, m_receiverElem,
                                                    m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
   }
 }

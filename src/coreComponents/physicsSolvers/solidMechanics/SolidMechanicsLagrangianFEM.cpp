@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -33,6 +33,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "LvArray/src/output.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -130,6 +131,7 @@ void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
 
+  // configure AMG
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
@@ -161,6 +163,8 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       setConstitutiveNamesCallSuper( subRegion );
 
       subRegion.registerField< solidMechanics::strain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::plasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -454,6 +458,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
         m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
                               m_nonSendOrReceiveNodes.end() );
 
+
       } );
     } );
 
@@ -509,11 +514,9 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
         {
           locallyFractured = 1;
         }
-        MpiWrapper::allReduce( &locallyFractured,
-                               &globallyFractured,
-                               1,
-                               MPI_MAX,
-                               MPI_COMM_GEOS );
+        globallyFractured = MpiWrapper::allReduce( locallyFractured,
+                                                   MpiWrapper::Reduction::Max,
+                                                   MPI_COMM_GEOS );
       }
       if( globallyFractured == 0 )
       {
@@ -945,23 +948,36 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
     {
       string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-      constitutiveRelation.saveConvergedState();
+
 
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
+      solidMechanics::arrayView2dLayoutStrain plasticStrain = subRegion.getField< solidMechanics::plasticStrain >();
 
-      finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
-      finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+      constitutive::ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, [&] ( auto & solidModel )
       {
-        using FE_TYPE = decltype( finiteElement );
-        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
-                                                                                                                                  mesh.getEdgeManager(),
-                                                                                                                                  mesh.getFaceManager(),
-                                                                                                                                  subRegion,
-                                                                                                                                  finiteElement,
-                                                                                                                                  disp,
-                                                                                                                                  strain );
+
+        using SOLID_TYPE = TYPEOFREF( solidModel );
+
+        finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
+        finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+        {
+          using FE_TYPE = decltype( finiteElement );
+          AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< FE_TYPE, SOLID_TYPE, parallelDevicePolicy<> >( nodeManager,
+                                                                                                                          mesh.getEdgeManager(),
+                                                                                                                          mesh.getFaceManager(),
+                                                                                                                          subRegion,
+                                                                                                                          finiteElement,
+                                                                                                                          solidModel,
+                                                                                                                          disp,
+                                                                                                                          uhat,
+                                                                                                                          strain,
+                                                                                                                          plasticStrain );
+        } );
+
+
       } );
 
+      constitutiveRelation.saveConvergedState();
 
     } );
   } );
