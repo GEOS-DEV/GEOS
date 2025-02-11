@@ -268,7 +268,6 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
   m_CO2EnthalpyTable->outputTableData( pvtOutputOpts );
-  m_CO2EnthalpyTable->outputTableData( pvtOutputOpts );
 }
 
 
