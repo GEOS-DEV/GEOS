@@ -268,7 +268,8 @@ void EventManager::outputTime( LogPart & logPart ) const
   logPart.addDescription( "- Time : ", timeInfosUnfolded, timeCompletionSeconds );
   logPart.addDescription( "- Delta Time : ", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
   logPart.addDescription( "- Cycle : ", m_cycle, cycleLimited );
-  logPart.setMinWidth( 65 );
+  logPart.setMinWidth( 80 );
+  logPart.setMaxWidth( 80 );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )
@@ -313,6 +314,8 @@ void EventManager::logEndOfCycleInformation( LogPart & logpart,
 {
   logpart.addEndDescription( "- Cycle: ", cycleNumber );
   logpart.addEndDescription( "- N substeps: ", numOfSubSteps );
+  logpart.setMinWidth( 80 );
+  logpart.setMaxWidth( 80 );
   std::stringstream logMessage;
   for( integer i = 0; i < numOfSubSteps; ++i )
   {
@@ -320,7 +323,7 @@ void EventManager::logEndOfCycleInformation( LogPart & logpart,
     {
       logMessage << ", ";
     }
-    logMessage << units::TimeFormatInfo::fromSeconds( subStepDts[i] ).toString();
+    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
   }
 
   if( logMessage.rdbuf()->in_avail() == 0 )

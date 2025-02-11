@@ -275,7 +275,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
-
+  getSubStepDts().clear( );
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
@@ -325,7 +325,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                   GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-
   GEOS_ERROR_IF( dtRemaining > 0.0, getDataContext() << ": Maximum allowed number of sub-steps"
                                                         " reached. Consider increasing maxSubSteps." );
 
