@@ -52,12 +52,14 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_fractureEnergyReleaseRate( 0.0 ),
   m_fractureSofteningExponent( 1.0 ),
   m_fractureStress( 0.0 ),
+  m_damageEvolutionCriterion( 0 ),
   m_cr( 0.0 ),
   m_fluidBulkModulus(0.0 ),
   m_fluidInitialPressure( 0.0 ),
   m_enableCreep( 0 ),
   m_creepC0( 0.0),
   m_creepC1( 0.0 ),
+  m_creepC2( 0.0 ),
   m_creepA( 0.0 ),
   m_creepB( 0.0 ),
   m_creepC( 0.0 ),
@@ -170,6 +172,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fracture stress" );
 
+  registerWrapper( viewKeyStruct::damageEvolutionCriterionString(), &m_damageEvolutionCriterion ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "damageEvolutionCriterion" );
+
   registerWrapper( viewKeyStruct::peakI1String(), &m_peakI1 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Peak I1 shear limit parameter" );
@@ -205,6 +211,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::creepC1String(), &m_creepC1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep C1 parameter" );
+
+  registerWrapper( viewKeyStruct::creepC2String(), &m_creepC2 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep C2 parameter" );
 
   registerWrapper( viewKeyStruct::creepAString(), &m_creepA ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -318,7 +328,12 @@ void Geomechanics::postInputInitialization()
     // GEOS_THROW_IF( m_b3 <= 0.0, "b3 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_b4 <= 0.0, "b4 must be greater than 0", InputError );
 
-    GEOS_THROW_IF( m_g0 < 0.0, "g0 must be greater than or equalt to 0", InputError );
+    //GEOS_THROW_IF( m_damageEvolutionCriterionPressure == 0. && m_damageEvolutionCriterionDilation == 0., "choose pressure or dilation", InputError );
+
+    //GEOS_THROW_IF( m_damageEvolutionCriterionPressure > 0. && m_damageEvolutionCriterionDilation > 0., "choose pressure or dilation", InputError );
+
+
+    GEOS_THROW_IF( m_g0 < 0.0, "g0 must be greater than or equal to 0", InputError );
     // GEOS_THROW_IF( m_g1 <= 0.0, "g1 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_g2 <= 0.0, "g2 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_g3 <= 0.0, "g3 must be greater than 0", InputError );
