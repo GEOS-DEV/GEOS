@@ -178,8 +178,8 @@ complete( localIndex const k,
 
   stack.energyIncrement               = fluidEnergy - fluidEnergy_n;
   stack.dEnergyIncrement_dJump        = m_fluidDensity( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
-  stack.dEnergyIncrement_dPressure    = m_dFluidDensity( embSurfIndex, 0, 0 ) * m_fluidInternalEnergy( embSurfIndex, DerivOffset::dP ) * volume;
-  stack.dEnergyIncrement_dTemperature = ( m_dFluidDensity( embSurfIndex, 0, 1 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) +
+  stack.dEnergyIncrement_dPressure    = m_dFluidDensity( embSurfIndex, 0, DerivOffset::dP ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * volume;
+  stack.dEnergyIncrement_dTemperature = ( m_dFluidDensity( embSurfIndex, 0, DerivOffset::dT ) * m_fluidInternalEnergy( embSurfIndex, 0 ) +
                                           m_fluidDensity( embSurfIndex, 0 ) * m_dFluidInternalEnergy( embSurfIndex, 0, DerivOffset::dT )  ) * volume;
 
   globalIndex const fracturePressureDof        = m_fracturePresDofNumber[ embSurfIndex ];
