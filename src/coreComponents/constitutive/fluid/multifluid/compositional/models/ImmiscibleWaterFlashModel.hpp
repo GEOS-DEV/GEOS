@@ -87,10 +87,8 @@ private:
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       derivatives[Deriv::dC+ic] /= hcMoleFraction;
-      GEOS_LOG("ic = " << ic << " derivatives[Deriv::dC+ic] = " << derivatives[Deriv::dC+ic]);
     }
     derivatives[Deriv::dC+m_waterComponentIndex] = dvdzi / hcMoleFraction;
-    GEOS_LOG("derivatives[Deriv::dC+m_waterComponentIndex] = " << derivatives[Deriv::dC+m_waterComponentIndex]);
   }
 
 private:
@@ -156,8 +154,6 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
   // Total hydrocarbon mole fraction
   real64 const z_hc = 1.0 - compFraction[m_waterComponentIndex];
 
-  GEOS_LOG("z_hc = " << z_hc);
-
   if( z_hc < MultiFluidConstants::minForSpeciesPresence )
   {
     // Single phase water
@@ -179,12 +175,10 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       composition[ic] = compFraction[ic] / z_hc;
-      GEOS_LOG("ic = " << ic << " composition[ic] = " << composition[ic]);
     }
     composition[m_waterComponentIndex] = 0.0;
 
     // Perform negative two-phase flash
-    GEOS_LOG("Calling m_twoPhaseModel.compute");
     m_twoPhaseModel.compute( componentProperties,
                              pressure,
                              temperature,
@@ -192,7 +186,6 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
                              kValues,
                              phaseFraction,
                              phaseCompFraction );
-    GEOS_LOG("Returned from m_twoPhaseModel.compute");
 
     for( integer const phaseIndex : {m_liquidIndex, m_vapourIndex} )
     {
