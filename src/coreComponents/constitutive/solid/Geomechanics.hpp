@@ -983,8 +983,22 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 		if ( elasticVMShearStrain > 1.e-12 )
 		{  // only apply creep if there is elastic strain
 
-      real64 equilibriumVMShearStrain = 0.0; // this could be some other function of pressure, granular density, etc.
-      real64 creepVMStrainIncrement = c0 * std::pow( elasticVMShearStrain - equilibriumVMShearStrain, c1 ) * Dt;
+      // This determines the maximum relaxation. stress will drop until the the elastic strain reaches this limit:
+      // Make this an input parameter if we need to enforce some limit where stress doesn't creep to zero.
+      real64 equilibriumVMElasticShearStrain = 0.0; // this could be some other function of pressure, granular density, etc.
+
+      // This formulation gives creep that degrades the stress to some equilibrium value...and will creep indefinitely
+      // under a constant applied shear stress.
+      // real64 creepVMStrainIncrement = c0 * std::pow( elasticVMShearStrain - equilibriumVMElasticShearStrain, c1 ) * Dt;
+
+      // This formulation gives creep that goes to zero as the plastic shear strain approaches c1 so the creep will
+      // plateau under a constant applied shear stress.
+      real64 equilibriumVMPlasticShearStrain = c1; // this could be some other function of pressure, granular density, etc.
+      real64 plasticVMshearStrain = sqrt(2/3) * ep_J2_old;  // current von Mises equivalient plastic shear strain: MH: TODO: check scaling
+      real64 creepVMStrainIncrement = std::pow( std::max( 0.0 , elasticVMShearStrain - equilibriumVMElasticShearStrain ) , c0 ) * std::max( 0.0 , equilibriumVMShearStrain - plasticVMshearStrain ) * Dt;
+
+      // Creep strain is subtracted from the elastic shear strain, so we use the difference between pre- and post-creep values
+      // to scale the deviatoric stress:
 			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticVMShearStrain;
 
 			// increment plastic strain such that total strain is constant:  (0.5/g0)*stress_dev*( 1.0 - devStressCreepScale );
