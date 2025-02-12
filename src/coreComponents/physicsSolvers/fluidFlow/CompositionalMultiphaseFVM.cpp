@@ -564,6 +564,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
       arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
 
       const integer temperatureOffset = m_numComponents+1;
+
       auto const subRegionData = m_isThermal ?
                                  thermalCompositionalMultiphaseBaseKernels::
                                    SolutionScalingKernelFactory::
