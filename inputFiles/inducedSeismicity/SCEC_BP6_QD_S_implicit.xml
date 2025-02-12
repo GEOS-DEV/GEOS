@@ -86,7 +86,7 @@
 
 
   <Events
-    maxTime="1e6">
+    maxTime="3e7">
 
    <!-- fault generation  -->
    <SoloEvent 
