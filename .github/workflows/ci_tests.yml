@@ -200,7 +200,6 @@ jobs:
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
             GCP_BUCKET: geosx/Sherlock-CPU
             HOST_CONFIG: /spack-generated.cmake
 #            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
@@ -214,7 +213,6 @@ jobs:
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ubuntu-22.04
