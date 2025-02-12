@@ -32,7 +32,7 @@
 
     <PeriodicEvent
       name="outputs"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/siloOutput"/>
   </Events>
   <!-- SPHINX_WELLBORE_EXECUTION_END -->
 

@@ -101,8 +101,11 @@
 
   <!-- SPHINX_WELLBORE_OUTPUT -->
   <Outputs>
-    <VTK
-      name="vtkOutput"/>
+    <Silo 
+      name="siloOutput"
+      parallelThreads="1"
+      plotFileRoot="plot"
+    />
     <Restart
       name="restartOutput"/>
   </Outputs>
