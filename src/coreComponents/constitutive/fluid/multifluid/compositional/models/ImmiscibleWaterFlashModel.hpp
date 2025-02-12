@@ -184,6 +184,7 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
     composition[m_waterComponentIndex] = 0.0;
 
     // Perform negative two-phase flash
+    GEOS_LOG("Calling m_twoPhaseModel.compute");
     m_twoPhaseModel.compute( componentProperties,
                              pressure,
                              temperature,
@@ -191,6 +192,7 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
                              kValues,
                              phaseFraction,
                              phaseCompFraction );
+    GEOS_LOG("Returned from m_twoPhaseModel.compute");
 
     for( integer const phaseIndex : {m_liquidIndex, m_vapourIndex} )
     {
