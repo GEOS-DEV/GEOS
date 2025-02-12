@@ -73,7 +73,6 @@ public:
 
     // Perform stability test to check that we have 2 phases
     real64 tangentPlaneDistance = 0.0;
-    GEOS_LOG("Calling StabilityTest::compute");
     bool const stabilityStatus = StabilityTest::compute( m_numComponents,
                                                          pressure,
                                                          temperature,
@@ -82,7 +81,6 @@ public:
                                                          m_liquidEos,
                                                          tangentPlaneDistance,
                                                          kValues[0] );
-    GEOS_LOG("stabilityStatus = " << stabilityStatus);
     GEOS_ERROR_IF( !stabilityStatus,
                    GEOS_FMT( "Stability test failed at pressure {:.5e} and temperature {:.3f}", pressure, temperature ));
 
@@ -90,7 +88,6 @@ public:
     {
       // Unstable mixture
       // Iterative solve to converge flash
-      GEOS_LOG("Calling NegativeTwoPhaseFlash::compute");
       bool const flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
                                                                pressure,
                                                                temperature,
@@ -102,13 +99,12 @@ public:
                                                                phaseFraction.value[m_vapourIndex],
                                                                phaseCompFraction.value[m_liquidIndex],
                                                                phaseCompFraction.value[m_vapourIndex] );
-      GEOS_LOG("flashStatus = " << flashStatus);
+
       GEOS_ERROR_IF( !flashStatus,
                      GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e} and temperature {:.3f}",
                                pressure, temperature ));
 
       // Calculate derivatives
-      GEOS_LOG("Calling NegativeTwoPhaseFlash::computeDerivatives");
       NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,
                                                  pressure,
                                                  temperature,
@@ -122,17 +118,14 @@ public:
                                                  phaseFraction.derivs[m_vapourIndex],
                                                  phaseCompFraction.derivs[m_liquidIndex],
                                                  phaseCompFraction.derivs[m_vapourIndex] );
-      GEOS_LOG("Returned from NegativeTwoPhaseFlash::computeDerivatives");
     }
     else
     {
       // Stable mixture - simply label
-      GEOS_LOG("Calling calculateLiCorrelation");
       calculateLiCorrelation( componentProperties,
                               temperature,
                               compFraction,
                               phaseFraction.value[m_vapourIndex] );
-      GEOS_LOG("Returned from calculateLiCorrelation");
 
       LvArray::forValuesInSlice( phaseFraction.derivs[m_vapourIndex], setZero );
       LvArray::forValuesInSlice( phaseCompFraction.derivs[m_liquidIndex], setZero );
@@ -167,11 +160,9 @@ public:
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       real64 const Vz = m_componentCriticalVolume[ic] * composition[ic];
-      GEOS_LOG("ic = " << ic << " Vz = " << Vz);
       sumVz += Vz;
       sumVzt += Vz * criticalTemperature[ic];
     }
-    GEOS_LOG("sumVzt = " << sumVzt << " sumVz = " << sumVz);
     real64 const pseudoCritTemperature = sumVzt / sumVz;
     if( pseudoCritTemperature < temperature )
     {
