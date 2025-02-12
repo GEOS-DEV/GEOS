@@ -214,29 +214,30 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         {
           fs2.apply< dataRepository::Group >( mesh,
                                               [&]( FieldSpecificationBase const &,
-                                                   string const & setName,
-                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                   Group & targetGroup,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const &,
+                                                   Group & targetObject,
                                                    string const fieldName )
           {
-            GEOS_UNUSED_VAR( setName );
-            GEOS_UNUSED_VAR( isTargetSetCreated );
-            GEOS_UNUSED_VAR( targetSet );
 
-            if( targetGroup.hasWrapper( fieldName ) )
+            ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &targetObject );
+            if( targetOMB )
             {
-              WrapperBase const & targetField = targetGroup.getWrapperBase( fieldName );
-              string const solverName = *(targetField.getRegisteringObjects().begin());
-
-              for( auto const & view : targetGroup.wrappers() )
+              if( targetObject.hasWrapper( fieldName ) &&
+                  targetOMB->getRegisteredFields().count( fieldName ) > 0 )
               {
-                if( *(view.second->getRegisteringObjects().begin()) == solverName )
+                WrapperBase const & targetField = targetObject.getWrapperBase( fieldName );
+                string const solverName = *(targetField.getRegisteringObjects().begin());
+
+                for( auto const & view : targetObject.wrappers() )
                 {
-                  fieldNameAvail.insert( view.second->getName()  );
+                  if( *(view.second->getRegisteringObjects().begin()) == solverName )
+                  {
+                    fieldNameAvail.insert( view.second->getName()  );
+                  }
                 }
               }
             }
-
           } );
         } );
 
@@ -264,11 +265,11 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
       fs.apply< dataRepository::Group >( mesh,
                                          [&]( FieldSpecificationBase const & bc,
                                               string const &,
-                                              SortedArrayView< localIndex const > const & targetSet,
+                                              SortedArrayView< localIndex const > const & targetObject,
                                               Group & targetGroup,
                                               string const fieldName )
       {
-        bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+        bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
       } );
     }
   } );
