@@ -56,8 +56,8 @@ if __name__ == "__main__":
         exit(1)    
     
     # Plotting
-    _, ax1 = plt.subplots()
-    _, ax2 = plt.subplots()
+    fig1, ax1 = plt.subplots()
+    fig2, ax2 = plt.subplots()
     
     positions_along_fault = [0., 500., 1500., 2500., 3500., 5000., 7500., -1500.]
     set_names = ["source", "receiver1", "receiver2", "receiver3", "receiver4", "receiver5", "receiver6", "receiver7"]
@@ -66,28 +66,40 @@ if __name__ == "__main__":
         time, pressure = getDataFromHDF5( filePath, "pressure" , set_name)
         time_in_years = time / (365 * 24 * 3600)  # Convert time to years, assuming time is in seconds
         pressure_analytical = analytical_pressure( time, position )
-        ax1.plot(time_in_years, pressure, label=f"Pressure z = {position} m")
-        ax1.plot(time_in_years, pressure_analytical, label=f"Pressure Analytical z = {position} m", linestyle='--')
-        ax1.set_xlabel('Time (years)')
-        ax1.set_ylabel('Pressure (Pa)', color='tab:blue')
-        ax1.tick_params(axis='y', labelcolor='tab:blue')
-        ax1.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
-        
+        ax1.plot(time_in_years[:36000], pressure[:36000], label=f"z = {position} m")
+        ax1.plot(time_in_years[:36000], pressure_analytical[:36000], linestyle='--') 
         _, slipRate = getDataFromHDF5( filePath, "slipRate", set_name)
-        ax2.plot(time_in_years, slipRate, label=f"Slip Rate z = {position} m")
-        ax2.set_yscale('log')
-        ax2.tick_params(axis='y', labelcolor='tab:red')
-        ax2.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        ax2.plot(time_in_years[:36000], slipRate[:36000], label=f"z = {position} m")
+        
+    # Customize plots appearance
+    
+    # Pressure plot
+    ax1.set_xlabel('Time (years)')
+    ax1.set_ylabel('Pressure (Pa)', color='tab:blue')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    # Create custom legend
+    handles, labels = ax1.get_legend_handles_labels()
+    custom_lines = [plt.Line2D([0], [0], color='black', lw=2),
+                    plt.Line2D([0], [0], color='black', linestyle='--', lw=2)]
+    ax1.legend(custom_lines + handles, ['P (GEOS)', 'P Analytical'] + labels, loc='upper left', bbox_to_anchor=(1.05, 1))
+    # Slip rate plot
+    ax2.set_xlabel('Time (years)')
+    ax2.set_ylabel('Slip Rate (m/s)')
+    ax2.set_yscale('log')
+    ax2.tick_params(axis='y', labelcolor='tab:red')
+    ax2.legend(bbox_to_anchor=(1.01, 1.0), loc='upper left')
 
     # Set x-axis limits to 0 to 2 years
     ax1.set_xlim(0, np.max(time_in_years))
     ax2.set_xlim(0, np.max(time_in_years))
-
+    ax1.set_title("Pressure vs Time")
+    ax2.set_title("Slip Rate vs Time")
 
     # Add grid and title
-    plt.title("Pressure and Slip Rate vs Time")
-    plt.grid()
-    plt.tight_layout()
+    ax1.grid()
+    ax2.grid()
+    fig1.tight_layout()
+    fig2.tight_layout()
 
     # Show plot
     plt.show()
