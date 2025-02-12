@@ -77,15 +77,15 @@ set(CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "")
 
 set(ENABLE_CHAI ON CACHE BOOL "")
 
-set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/chai-git.df7741f1dbbdc5fff5f7d626151fdf1904e62b19_develop-ogxmfhtalme6gpcoykptldthjmg4rm4q" CACHE PATH "")
+set(CHAI_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/chai-git.df7741f1dbbdc5fff5f7d626151fdf1904e62b19_develop-ogxmfhtalme6gpcoykptldthjmg4rm4q" CACHE PATH "")
 
-set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/raja-git.4d7fcba55ebc7cb972b7cc9f6778b48e43792ea1_develop-lsyisibfnsvy4fo3qfc6ohj5l4cheu3g" CACHE PATH "")
+set(RAJA_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/raja-git.4d7fcba55ebc7cb972b7cc9f6778b48e43792ea1_develop-lsyisibfnsvy4fo3qfc6ohj5l4cheu3g" CACHE PATH "")
 
 set(ENABLE_UMPIRE ON CACHE BOOL "")
 
-set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/umpire-git.abd729f40064175e999a83d11d6b073dac4c01d2_develop-jmbjlbdi44jyb6yjcgpmnvavj7opvgmk" CACHE PATH "")
+set(UMPIRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/umpire-git.abd729f40064175e999a83d11d6b073dac4c01d2_develop-jmbjlbdi44jyb6yjcgpmnvavj7opvgmk" CACHE PATH "")
 
-set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/camp-git.0f07de4240c42e0b38a8d872a20440cb4b33d9f5_main-v3j74o2uag4ty7xyngak7ogbmvireubt" CACHE PATH "")
+set(CAMP_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/camp-git.0f07de4240c42e0b38a8d872a20440cb4b33d9f5_main-v3j74o2uag4ty7xyngak7ogbmvireubt" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # IO TPLs
@@ -93,21 +93,21 @@ set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/c
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
 
-set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-xiwon23mamhn2tkcnqks5crznnqaovjt" CACHE PATH "")
+set(CALIPER_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-xiwon23mamhn2tkcnqks5crznnqaovjt" CACHE PATH "")
 
-set(adiak_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/adiak-0.4.0-tp3jxzzp7ifbreg2erbvusm34w64jau7/lib/cmake/adiak" CACHE PATH "")
+set(adiak_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/adiak-0.4.0-tp3jxzzp7ifbreg2erbvusm34w64jau7/lib/cmake/adiak" CACHE PATH "")
 
-set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/hdf5-1.12.1-ga44aabjnhf34hg5ns7kwkt4wkamofpl" CACHE PATH "")
+set(HDF5_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/hdf5-1.12.1-ga44aabjnhf34hg5ns7kwkt4wkamofpl" CACHE PATH "")
 
-set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-kukbdfbxcpyabdugeewvpaaifiyysdhu" CACHE PATH "")
+set(CONDUIT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-kukbdfbxcpyabdugeewvpaaifiyysdhu" CACHE PATH "")
 
-set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/silo-4.11.1-bsd-ah6h4u6ukx3kyxgknlx75bk65uscgnft" CACHE PATH "")
+set(SILO_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/silo-4.11.1-bsd-ah6h4u6ukx3kyxgknlx75bk65uscgnft" CACHE PATH "")
 
-set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/pugixml-1.13-k4ydpdk7vsgycnj72t3u5dbdean33tql" CACHE PATH "")
+set(PUGIXML_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/pugixml-1.13-k4ydpdk7vsgycnj72t3u5dbdean33tql" CACHE PATH "")
 
-set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/vtk-9.3.1-6y4upz33jg7xl3vzbaerb6ztsqjxgkva" CACHE PATH "")
+set(VTK_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/vtk-9.3.1-6y4upz33jg7xl3vzbaerb6ztsqjxgkva" CACHE PATH "")
 
-set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/fmt-10.0.0-jp5lqtjl4bhgqr5k6dmb3sae5zpbxjl6" CACHE PATH "")
+set(FMT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/fmt-10.0.0-jp5lqtjl4bhgqr5k6dmb3sae5zpbxjl6" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # System Math Libraries
@@ -127,19 +127,19 @@ set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
 # Math TPLs
 #--------------------------------------------------------------------------------
 
-set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/metis-5.1.0-ni6dg7mhgm7nurp5iucvzkbg27c6ouaz" CACHE PATH "")
+set(METIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/metis-5.1.0-ni6dg7mhgm7nurp5iucvzkbg27c6ouaz" CACHE PATH "")
 
-set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/parmetis-4.0.3-xqqcnael7oe72dansvr5umz7zn236th4" CACHE PATH "")
+set(PARMETIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/parmetis-4.0.3-xqqcnael7oe72dansvr5umz7zn236th4" CACHE PATH "")
 
-set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/scotch-7.0.3-pd6fx6lybdmtsayi2dsxdifyfpngcycy" CACHE PATH "")
+set(SCOTCH_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/scotch-7.0.3-pd6fx6lybdmtsayi2dsxdifyfpngcycy" CACHE PATH "")
 
-set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/superlu-dist-git.0f6efc377df2440c235452d13d28d2c717f832a1_6.3.0-git.8-oy253csfiumkubsj7gebdv534f6z4z3d" CACHE PATH "")
+set(SUPERLU_DIST_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/superlu-dist-git.0f6efc377df2440c235452d13d28d2c717f832a1_6.3.0-git.8-oy253csfiumkubsj7gebdv534f6z4z3d" CACHE PATH "")
 
-set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/suite-sparse-5.10.1-pi4hfahsc4gez74vd5rcgxbjbtzoxe32" CACHE PATH "")
+set(SUITESPARSE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/suite-sparse-5.10.1-pi4hfahsc4gez74vd5rcgxbjbtzoxe32" CACHE PATH "")
 
-set(TRILINOS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/trilinos-16.0.0-y5prgnz22qkhximrxaounp35ewzu3w2w" CACHE PATH "")
+set(TRILINOS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/trilinos-16.0.0-y5prgnz22qkhximrxaounp35ewzu3w2w" CACHE PATH "")
 
-set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/hypre-git.c893886d15eb57e87dd36efec23693ece3ddc88e_2.32.0-git.4-3em7frh5bssabg2zlzegf5kw73rvpbg7" CACHE PATH "")
+set(HYPRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/lassen-clang-10-cuda-11_tpls/clang-10.0.1/hypre-git.c893886d15eb57e87dd36efec23693ece3ddc88e_2.32.0-git.4-3em7frh5bssabg2zlzegf5kw73rvpbg7" CACHE PATH "")
 
 set(ENABLE_HYPRE_DEVICE "CUDA" CACHE STRING "")
 
