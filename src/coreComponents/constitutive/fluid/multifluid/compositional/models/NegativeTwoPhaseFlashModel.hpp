@@ -167,9 +167,11 @@ public:
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       real64 const Vz = m_componentCriticalVolume[ic] * composition[ic];
+      GEOS_LOG("ic = " << ic << " Vz = " << Vz);
       sumVz += Vz;
       sumVzt += Vz * criticalTemperature[ic];
     }
+    GEOS_LOG("sumVzt = " << sumVzt << " sumVz = " << sumVz);
     real64 const pseudoCritTemperature = sumVzt / sumVz;
     if( pseudoCritTemperature < temperature )
     {
