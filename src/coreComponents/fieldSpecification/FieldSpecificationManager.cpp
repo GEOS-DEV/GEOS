@@ -217,27 +217,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                                    string const &,
                                                    SortedArrayView< localIndex const > const &,
                                                    Group & targetObject,
-                                                   string const fieldName )
+                                                   string const )
           {
-
             ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &targetObject );
-            if( targetOMB )
+            if( targetOMB && !targetOMB->getRegisteredFields().empty())
             {
-              if( targetObject.hasWrapper( fieldName ) &&
-                  targetOMB->getRegisteredFields().count( fieldName ) > 0 )
-              {
-                WrapperBase const & targetField = targetObject.getWrapperBase( fieldName );
-                string const solverName = *(targetField.getRegisteringObjects().begin());
-
-                for( auto const & view : targetObject.wrappers() )
-                {
-                  if( *(view.second->getRegisteringObjects().begin()) == solverName )
-                  {
-                    fieldNameAvail.insert( view.second->getName()  );
-                  }
-                }
-              }
+              fieldNameAvail.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
             }
+
           } );
         } );
 
