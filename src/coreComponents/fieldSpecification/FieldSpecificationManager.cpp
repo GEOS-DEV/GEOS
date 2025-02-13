@@ -210,22 +210,20 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath());
         std::set< string > fieldNameAvail;
-        this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs2 )
+        fs.apply< dataRepository::Group >( mesh,
+                                           [&]( FieldSpecificationBase const &,
+                                                string const &,
+                                                SortedArrayView< localIndex const > const &,
+                                                Group & targetObject,
+                                                string const )
         {
-          fs2.apply< dataRepository::Group >( mesh,
-                                              [&]( FieldSpecificationBase const &,
-                                                   string const &,
-                                                   SortedArrayView< localIndex const > const &,
-                                                   Group & targetObject,
-                                                   string const )
-          {
-            ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &targetObject );
-            if( targetOMB && !targetOMB->getRegisteredFields().empty())
-            {
-              fieldNameAvail.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
-            }
+          ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &targetObject );
+          if( targetOMB )
+          { // filter anything that is not an ObjectManagerBase type
+            // show to the user all fields which are registered under the field-specification object path
+            fieldNameAvail.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
+          }
 
-          } );
         } );
 
         for( auto it=fieldNameAvail.begin(); it!=fieldNameAvail.end(); ++it )
@@ -238,7 +236,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         }
 
         GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
-      }
+      };
     }
   } );
 }
@@ -262,4 +260,4 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
   } );
 }
 
-} /* namespace geos */
+}   /* namespace geos */
