@@ -32,6 +32,7 @@
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
 #include "events/EventManager.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #include <gtest/gtest.h>
 
@@ -192,14 +193,11 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
-  
 
-  
-
-
+  int rnk = MpiWrapper::commRank( MPI_COMM_GEOS );
 
   printf( "                             usage0    usage1    usage2    usage3    usage4    usage5    usage6 \n");
-  for(int i = 0; i < 10000; i++ )
+  for(int i = 0; i < 1000000; i++ )
   {
     struct rusage usage0;
     struct rusage usage1;
@@ -248,8 +246,9 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
         usage4.ru_maxrss != usage5.ru_maxrss ||
         usage5.ru_maxrss != usage6.ru_maxrss )
     {
-      printf( "Cycle %6d Memory usage: %ld  %ld  %ld  %ld  %ld  %ld  %ld \n", 
-              i, 
+      printf( "Cycle %6d rank %6d Memory usage: %ld  %ld  %ld  %ld  %ld  %ld  %ld \n", 
+              i,
+              rnk, 
               usage0.ru_maxrss,
               usage1.ru_maxrss,
               usage2.ru_maxrss,
