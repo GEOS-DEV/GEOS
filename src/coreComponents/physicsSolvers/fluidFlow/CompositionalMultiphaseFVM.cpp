@@ -600,24 +600,26 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                                               dofKey,
                                                                               subRegion,
                                                                               localSolution );
+
       if( subRegion.size() > 0 || subRegion.size() !=  subRegion.getNumberOfGhosts() )
       {
         if( m_scalingType == ScalingType::Global )
         {
           scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
         }
+
         regionDeltaPresMaxLoc.push_back( { subRegionData.localMaxDeltaPres,
-                                           localToGlobalMap[subRegionData.localMaxDeltaPresLoc] } );
+                                           subRegionData.localMaxDeltaPresLoc >= 0 ? localToGlobalMap[subRegionData.localMaxDeltaPresLoc] : -1 } );
         minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
 
         regionDeltaCompDensMaxLoc.push_back( { subRegionData.localMaxDeltaCompDens,
-                                               localToGlobalMap[subRegionData.localMaxDeltaCompDensLoc] } );
+                                               subRegionData.localMaxDeltaCompDensLoc >= 0 ? localToGlobalMap[subRegionData.localMaxDeltaCompDensLoc] : -1 } );
         minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
 
         if( m_isThermal )
         {
           regionDeltaTempMaxLoc.push_back( { subRegionData.localMaxDeltaTemp,
-                                             localToGlobalMap[subRegionData.localMaxDeltaTempLoc] } );
+                                             subRegionData.localMaxDeltaTempLoc >= 0 ? localToGlobalMap[subRegionData.localMaxDeltaTempLoc] : -1 } );
           minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
         }
       }
