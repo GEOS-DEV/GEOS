@@ -122,7 +122,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
   addLogLevel< logInfo::BHP >();
-  addLogLevel< logInfo::Rates >();
   addLogLevel< logInfo::SurfaceCondition >();
   addLogLevel< logInfo::WellComponents >();
   addLogLevel< logInfo::WellValidity >();

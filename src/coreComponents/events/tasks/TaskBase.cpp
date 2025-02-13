@@ -18,7 +18,6 @@
  */
 
 #include "TaskBase.hpp"
-#include "events/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -30,7 +29,6 @@ TaskBase::TaskBase( string const & name,
   ExecutableGroup( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
 }
 
 TaskBase::~TaskBase()

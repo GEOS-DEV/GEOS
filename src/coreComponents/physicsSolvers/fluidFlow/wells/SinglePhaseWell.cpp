@@ -63,7 +63,6 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
     setDescription( "Flag indicating if negative pressure is allowed" );
 
   addLogLevel< logInfo::BHP >();
-  addLogLevel< logInfo::Rates >();
   addLogLevel< logInfo::SurfaceCondition >();
   addLogLevel< logInfo::SystemSolution >();
 }
