@@ -986,12 +986,12 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 ep_iso[6] = { 0 };
     real64 ep_dev[6] = { 0 };
     real64 ep_iso_old;
-    real64 ep_J2_old;
+    real64 ep_rootJ2_old;
     twoInvariant::stressDecomposition( ep_old,
                                        ep_iso_old,
-                                       ep_J2_old,
+                                       ep_rootJ2_old, // root J2 invariant of the plastic strain tensor
                                        ep_dev); //This gives unit vector in direction of dev p. strain 
-    LvArray::tensorOps::scale< 6 >( ep_dev, sqrt(2/3) * ep_J2_old);                                       
+    LvArray::tensorOps::scale< 6 >( ep_dev, sqrt(2/3) * ep_rootJ2_old);                                       
     ep_iso[0] = ep_iso_old;
     ep_iso[1] = ep_iso_old;
     ep_iso[2] = ep_iso_old;
@@ -1016,25 +1016,27 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
 		if ( elasticVMShearStrain > 1.e-12 )
 		{  // only apply creep if there is elastic strain
-        //shear strain for TXCr tests
-        real64 equilibriumShearStrainConstant = c0;
-        real64 equilibriumShearStrainExponent = c1;
-        real64 ShearStrainRateConstant = c2;
+      //shear strain for TXCr tests
+      real64 equilibriumShearStrainConstant = c0;
+      real64 equilibriumShearStrainExponent = c1;
+      real64 shearStrainRateConstant = c2;
 
+      // relax shear stress until equivalent plastic shear strain reaches the equilibrium value for the current level of shear stress.
+      real64 plasticVMshearStrain = sqrt (2./3.) * ep_rootJ2_old;
+      real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std :: pow(vonMisesStress_old , equilibriumShearStrainExponent);
+      real64 creepVMStrainIncrement =  Dt * shearStrainRateConstant * std::max(equilibriumVMShearStrain - plasticVMshearStrain , 0.0);
 
-        real64 plasticVMshearStrain = sqrt (2./3.) * ep_J2_old;
-        real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std :: pow(vonMisesStress_old , equilibriumShearStrainExponent);
-        real64 creepVMStrainIncrement =  Dt * ShearStrainRateConstant * std::max(equilibriumVMShearStrain - plasticVMshearStrain , 0.0);
-
+      // scale back stress deviatoric tensor based on creep strain increment (creep turns elastic strain into plastic strain)
 			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticVMShearStrain;
 
 			// increment plastic strain such that total strain is constant:  (0.5/g0)*stress_dev*( 1.0 - devStressCreepScale );
 			real64 creepStrainIncrement[6];  
+
 			// creepStrainIncrement = stress_dev; // this is temporarily the dev stress
 			// creepStrainIncrement *= 0.5/g0*( 1.0 - devStressCreepScale ); // this is now the change in elastic deviatoric strain
 			// ep_old += creepStrainIncrement; // increment plastic strain such that total strain is constant
       LvArray::tensorOps::copy< 6 >( creepStrainIncrement, stress_dev );
-      LvArray::tensorOps::scale< 6 >( creepStrainIncrement,  0.5/shear*( 1.0 - devStressCreepScale ) ); // CC: TODO check if new to double off diagonal components
+      LvArray::tensorOps::scale< 6 >( creepStrainIncrement,  0.5/shear*( 1.0 - devStressCreepScale ) ); // CC: TODO check if this needs to double off-diagonal components
       LvArray::tensorOps::add< 6 >( ep_dev, creepStrainIncrement );
 
 			// relax elastic deviatoric stress due to creep

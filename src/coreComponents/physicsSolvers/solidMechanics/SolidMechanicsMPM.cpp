@@ -2937,7 +2937,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       if( event.getName() == "BoreholePressure" )
       {
         BoreholePressureMPMEvent & boreholePressure = dynamicCast< BoreholePressureMPMEvent & >( event );
-        GEOS_LOG_RANK_0("Setting borehole pressure");
+        
 
         m_boreholeRadius = boreholePressure.getBoreholeRadius();
         real64 startPressure = boreholePressure.getStartPressure();
@@ -2954,6 +2954,8 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                 endPressure,
                                 m_boreholePressure, // output, overwritten from interpolaiton.
                                 interpolationType );
+
+        GEOS_LOG_RANK_0("Setting borehole pressure"<<m_boreholePressure);
      
         //sevent.setIsComplete( 1 );
       }
@@ -2961,7 +2963,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       if( event.getName() == "ConfiningPressure" )
       {
         ConfiningPressureMPMEvent & confiningPressure = dynamicCast< ConfiningPressureMPMEvent & >( event );
-        GEOS_LOG_RANK_0("Setting confining pressure");
+        
 
         m_confiningPressureBoxMin = confiningPressure.getConfiningPressureBoxMin();
         m_confiningPressureBoxMax = confiningPressure.getConfiningPressureBoxMax();
@@ -2980,6 +2982,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                 endPressure,
                                 m_confiningPressure, // output, overwritten from interpolaiton.
                                 interpolationType );
+        GEOS_LOG_RANK_0("Setting confining pressure"<<m_confiningPressure);                              
      
         //sevent.setIsComplete( 1 );
       }
@@ -3015,6 +3018,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 particleStress[p][4] = 0.;
                 particleStress[p][5] = 0.;
               });
+              GEOS_LOG_RANK_0("Initializing hydrostatic stress: "<<initialMeanStress);
 
               // initialize constitutive model data:
               // Get constitutive model reference
@@ -8575,7 +8579,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           // why we coded it this way:
           fluidStress[0] = -m_boreholePressure;
           fluidStress[1] = -m_boreholePressure;
-          fluidStress[2] = -m_boreholePressure;
+          fluidStress[2] = 0.0;
           }
           else if ( ( fabs(m_confiningPressure) > 1.e-12 ) && 
           ( ( gridPosition[mappedNode][0] < m_confiningPressureBoxMin[0] ) || ( gridPosition[mappedNode][1] < m_confiningPressureBoxMin[1] ) || ( gridPosition[mappedNode][2] < m_confiningPressureBoxMin[2] ) || 
