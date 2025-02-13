@@ -8829,7 +8829,7 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
           output[i] = table[tableInterval][i+1] + ( table[tableInterval+1][i+1] - table[tableInterval][i+1] ) *
                       ( 10.0 * pow( timeFrac, 3 ) - 15.0 * pow( timeFrac, 4 ) + 6.0 * pow( timeFrac, 5 ) );
           outputRate[i] = ( table[tableInterval+1][i+1] - table[tableInterval][i+1] ) *
-                      ( 30.0 * pow( timeFrac, 2 ) - 60.0 * pow( timeFrac, 3 ) +30.0 * pow( timeFrac, 4 ) ) / timeInterval;
+                      ( 30.0 * pow( timeFrac, 2 ) - 60.0 * pow( timeFrac, 3 ) + 30.0 * pow( timeFrac, 4 ) ) / timeInterval;
           break;
         default:
           GEOS_ERROR( "No interpolation option of that type!" );
