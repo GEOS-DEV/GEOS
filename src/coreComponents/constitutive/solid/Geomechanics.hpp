@@ -966,19 +966,18 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
     real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
 
+
+    real64 rootTwoThirds = 0.81649658092772603273242802490196; 
+
     real64 stress_iso[6] = { 0 };
     real64 stress_dev[6] = { 0 };
     real64 iso_old;
-
     real64 vonMisesStress_old;
     twoInvariant::stressDecomposition( sigma_old,
                                        iso_old,
                                        vonMisesStress_old,
                                        stress_dev); //This gives unit vector in direction of dev stress
-    // rescale to have actual deviator
-
-    LvArray::tensorOps::scale< 6 >( stress_dev, sqrt(2/3) * vonMisesStress_old);
-                                    
+    LvArray::tensorOps::scale< 6 >( stress_dev, rootTwoThirds * vonMisesStress_old); // rescale to have actual deviator
     stress_iso[0] = iso_old;
     stress_iso[1] = iso_old;
     stress_iso[2] = iso_old;
@@ -991,12 +990,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                        ep_iso_old,
                                        ep_rootJ2_old, // root J2 invariant of the plastic strain tensor
                                        ep_dev); //This gives unit vector in direction of dev p. strain 
-    LvArray::tensorOps::scale< 6 >( ep_dev, sqrt(2/3) * ep_rootJ2_old);                                       
+    LvArray::tensorOps::scale< 6 >( ep_dev, rootTwoThirds * ep_rootJ2_old);                                       
     ep_iso[0] = ep_iso_old;
     ep_iso[1] = ep_iso_old;
     ep_iso[2] = ep_iso_old;
-
-   	//real64 sigma_vm_old = sqrt( 3.0 * J2_old );
 
   // Compute actual elastic properties, above we computed the "conservative" upper limit
   // for elastic properties to be used in the step division calc.
@@ -1012,9 +1009,9 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                               bulk,
                               shear
     );
-		real64 elasticVMShearStrain = vonMisesStress_old / ( 3 * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
+		real64 elasticVMShearStrain = vonMisesStress_old / ( 3. * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
 
-		if ( elasticVMShearStrain > 1.e-12 )
+		if ( ( elasticVMShearStrain > 1.e-12 ) && ( c2 > 1.e-16 ) )
 		{  // only apply creep if there is elastic strain
       //shear strain for TXCr tests
       real64 equilibriumShearStrainConstant = c0;
@@ -1059,7 +1056,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
     // TODO: have the creep model use actual bulk, not the conservative bulk=b0+b1
 
-    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 0) && ( evp + m_p3 > 1.e-10 ) )
+    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
  		  {  // creep compaction
  			  real64 dphidt = -1.0*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
  			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
@@ -1101,6 +1098,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
         // uncomment for debugging:
         //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
  		  }
+
 
 	    // Reassemble the stress with a scaled deviatoric stress tensor
       LvArray::tensorOps::copy< 6 >( sigma_old, stress_dev );
