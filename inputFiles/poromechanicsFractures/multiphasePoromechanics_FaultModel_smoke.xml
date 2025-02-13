@@ -20,9 +20,7 @@
         newtonMaxIter="20"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
-        solverType="direct"
-        krylovTol="1e-10"
-        preconditionerType="mgr"/> 
+        solverType="direct"/> 
     </MultiphasePoromechanicsConformingFractures>
 
     <SolidMechanicsLagrangeContact
