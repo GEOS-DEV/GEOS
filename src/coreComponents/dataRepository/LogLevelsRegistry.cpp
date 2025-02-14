@@ -22,6 +22,7 @@ void LogLevelsRegistry::addEntry( integer condition, std::string_view descriptio
 {
   if( m_logLevelsDescriptions.count( condition ) > 0 )
   {
+    std::vector< string > const & targetValues = m_logLevelsDescriptions[condition];
     if( std::find( targetValues.begin(), targetValues.end(), description ) != targetValues.end())
     {
       m_logLevelsDescriptions[condition].push_back( string( description ) );
