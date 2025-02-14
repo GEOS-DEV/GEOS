@@ -86,6 +86,11 @@ public:
                               fields::thermalconductivity::effectiveConductivity >;
 
 
+  using Base::m_dispJumpDofNumber;
+  using Base::numDof;
+  using Base::m_seri;
+  using Base::m_sesri;
+  using Base::m_sei;
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
@@ -170,6 +175,27 @@ public:
     stackArray2d< real64, maxStencilSize *3 > dEnergyFlux_dDispJump{};
 
   };
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void setup( localIndex const iconn,
+              StackVariables & stack ) const
+  {
+    // set degrees of freedom indices for this face
+    for( integer i = 0; i < stack.stencilSize; ++i )
+    {
+      localIndex localDofIndex = numDof * i;
+      stack.dofColIndices[ localDofIndex ]     = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[ localDofIndex + 1 ] = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
+      stack.dofColIndices[ localDofIndex + 2 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[ localDofIndex + 3 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
+      stack.dofColIndices[ localDofIndex + 4 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 2;
+    }
+  }
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
