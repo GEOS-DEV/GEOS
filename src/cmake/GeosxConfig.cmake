@@ -1,4 +1,4 @@
-set( PREPROCESSOR_DEFINES GEOS_ENABLE_BOUNDS_CHECK
+set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           CALIPER
                           CHAI
                           CUDA
@@ -30,7 +30,6 @@ set( PREPROCESSOR_DEFINES GEOS_ENABLE_BOUNDS_CHECK
 foreach( DEP in ${PREPROCESSOR_DEFINES} )
     if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOS_ENABLE_${DEP} )
         set( USE_${DEP} TRUE )
-        set( GEOS_USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
 	message(STATUS "GEOS_USE_${DEP} = ${GEOS_USE_${DEP}}")
     endif()

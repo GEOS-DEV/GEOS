@@ -25,10 +25,14 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "GeosxMacros.hpp"
+
 #include "BufferAllocator.hpp"
 #include "DataLayouts.hpp"
+#include "GeosxMacros.hpp"
+#include "Path.hpp"
+#include "StdContainerWrappers.hpp"
 #include "Tensor.hpp"
+
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -39,7 +43,6 @@
 #include "LvArray/src/StackBuffer.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
 
-#include "Path.hpp"
 
 // TPL includes
 #include <camp/camp.hpp>
@@ -53,16 +56,12 @@
 //#include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <map>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_map>
-#include <vector>
 
 /*
  * top level geos namespace contains all code that is specific to GEOSX
@@ -99,6 +98,15 @@ using real32 = float;
 using real64 = double;
 
 ///@}
+
+
+#if defined( GEOS_USE_BOUNDS_CHECK )
+  
+#else
+
+#endif
+
+
 
 /**
  * @name Binary buffer data types.
