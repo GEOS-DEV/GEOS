@@ -199,7 +199,7 @@ real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
   solver.forDiscretizationOnMeshTargets( problem.getDomainPartition().getMeshBodies(),
                                          [&] ( string const &,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                               string_array const & )
   {
     mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
     {

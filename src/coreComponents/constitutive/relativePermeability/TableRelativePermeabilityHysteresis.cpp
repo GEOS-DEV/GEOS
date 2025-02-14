@@ -296,7 +296,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
 
   if( numPhases == 2 )
   {
-    for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
     {
       if( ip == 0 ) // wetting phase is either water, or oil (for two-phase oil-gas systems)
       {
@@ -320,7 +320,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
 
   else if( numPhases == 3 )
   {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       if( ip == 0 ) // wetting phase is water
       {
@@ -341,7 +341,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
       }
     }
 
-    for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       if( ip == 0 ) // non-wetting phase is gas
       {
@@ -543,7 +543,7 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
 
   if( numPhases == 2 )
   {
-    for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
@@ -562,12 +562,12 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   }
   else if( numPhases == 3 )
   {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
     }
-    for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
