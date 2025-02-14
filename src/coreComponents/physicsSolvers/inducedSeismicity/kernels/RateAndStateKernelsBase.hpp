@@ -98,8 +98,10 @@ createAndLaunch( SurfaceElementSubRegion & subRegion,
   GEOS_UNUSED_VAR( time_n );
 
   string const & frictionaLawName = subRegion.getReference< string >( frictionLawNameKey );
-  constitutive::RateAndStateFriction const & frictionLaw = subRegion.getConstitutiveModel< constitutive::RateAndStateFriction >( frictionaLawName );
-  KERNEL_TYPE kernel( subRegion, frictionLaw, shearImpedance );
+  constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
+  constitutive::ConstitutivePassThru< RateAndState >::execute( frictionLaw, [=,&subRegion] ( auto & castedFrictionLaw )
+  {
+  KERNEL_TYPE kernel( subRegion, castedFrictionLaw, shearImpedance );
 
   real64 dtRemaining = totalDt;
   real64 dt = totalDt;
@@ -114,6 +116,7 @@ createAndLaunch( SurfaceElementSubRegion & subRegion,
     }
     GEOS_LOG_RANK_0( GEOS_FMT( "  sub-step = {} completed, dt = {}, remaining dt = {}", subStep, dt, dtRemaining ) );
   }
+ } );
 }
 
 } /* namespace rateAndStateKernels */

@@ -104,12 +104,15 @@ void QDRateAndStateBase::enforceRateAndVelocityConsistency( SurfaceElementSubReg
   real64 const shearImpedance = m_shearImpedance;
 
   string const & frictionaLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
-  constitutive::RateAndStateFriction const & frictionLaw = subRegion.getConstitutiveModel< constitutive::RateAndStateFriction >( frictionaLawName );
+  constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
 
-  constitutive::RateAndStateFriction::KernelWrapper frictionLawKernelWrapper = frictionLaw.createKernelUpdates();
+  constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+  { 
+    typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionLawKernelWrapper = castedFrictionLaw.createKernelUpdates();
 
-  RAJA::ReduceMax< parallelDeviceReduce, int > negativeSlipRate( 0 );
-  RAJA::ReduceMax< parallelDeviceReduce, int > bothNonZero( 0 );
+  
+    RAJA::ReduceMax< parallelDeviceReduce, int > negativeSlipRate( 0 );
+    RAJA::ReduceMax< parallelDeviceReduce, int > bothNonZero( 0 );
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
@@ -141,7 +144,7 @@ void QDRateAndStateBase::enforceRateAndVelocityConsistency( SurfaceElementSubReg
 
   GEOS_ERROR_IF( negativeSlipRate.get() > 0, "SlipRate cannot be negative." );
   GEOS_ERROR_IF( bothNonZero.get() > 0, "Only one between slipRate and slipVelocity can be specified as i.c." );
-
+  } );
 }
 
 void QDRateAndStateBase::applyInitialConditionsToFault( int const cycleNumber,

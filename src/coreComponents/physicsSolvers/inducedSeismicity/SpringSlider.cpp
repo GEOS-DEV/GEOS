@@ -121,9 +121,12 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
 
 
       string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      RateAndStateFriction const & frictionLaw = this->template getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
+      constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
 
-      RateAndStateFriction::KernelWrapper frictionKernelWrapper = frictionLaw.createKernelUpdates();
+      constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+      { 
+        typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionLawKernelWrapper = castedFrictionLaw.createKernelUpdates();
+    
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
@@ -139,6 +142,7 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
         shearTraction[k][1] = shearTraction_n[k][1] + springSliderParameters.tauRate * dt
                               - springSliderParameters.springStiffness * deltaSlip[k][1];
       } );
+    } );
     } );
   } );
   return dt;

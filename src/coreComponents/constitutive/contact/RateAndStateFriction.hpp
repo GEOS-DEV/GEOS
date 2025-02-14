@@ -36,6 +36,8 @@ namespace constitutive
  */
 
 
+ class RateAndStateFrictionBase {};
+
 /**
  * @class RateAndStateFriction
  *

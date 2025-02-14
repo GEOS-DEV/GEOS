@@ -139,8 +139,11 @@ void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, D
     {
 
       string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      RateAndStateFriction const & frictionLaw = getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
-      rateAndStateKernels::EmbeddedRungeKuttaKernel rkKernel( subRegion, frictionLaw, m_butcherTable );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, fricitonLawName );
+      constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
+      constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw ) 
+      {
+      rateAndStateKernels::EmbeddedRungeKuttaKernel rkKernel( subRegion, castedFrictionLaw, m_butcherTable );
       arrayView3d< real64 > const rkStageRates      = subRegion.getField< rateAndState::rungeKuttaStageRates >();
 
       if( m_butcherTable.FSAL && m_successfulStep )
@@ -160,6 +163,7 @@ void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, D
           rkKernel.updateStageValues( k, 1, dt );
         } );
       }
+      } );
     } );
   } );
 }
@@ -180,14 +184,17 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
     {
 
       string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      RateAndStateFriction const & frictionLaw = getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
-      rateAndStateKernels::EmbeddedRungeKuttaKernel rkKernel( subRegion, frictionLaw, m_butcherTable );
-      arrayView3d< real64 > const rkStageRates      = subRegion.getField< rateAndState::rungeKuttaStageRates >();
+      constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
+      constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw ) 
+      {      
+        rateAndStateKernels::EmbeddedRungeKuttaKernel rkKernel( subRegion, frictionLaw, m_butcherTable );
+        arrayView3d< real64 > const rkStageRates      = subRegion.getField< rateAndState::rungeKuttaStageRates >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         rkKernel.updateStageRates( k, stageIndex );
         rkKernel.updateStageValues( k, stageIndex+1, dt );
+      } );
       } );
     } );
   } );

@@ -33,12 +33,13 @@ namespace rateAndStateKernels
  *
  * @details
  */
+template< typename FRICTION_LAW_TYPE >
 class ExplicitRateAndStateKernel
 {
 public:
 
   ExplicitRateAndStateKernel( SurfaceElementSubRegion & subRegion,
-                              constitutive::RateAndStateFriction const & frictionLaw,
+                              FRICTION_LAW_TYPE const & frictionLaw,
                               real64 const shearImpedance ):
     m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
     m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
@@ -164,7 +165,7 @@ private:
 
   real64 const m_shearImpedance;
 
-  constitutive::RateAndStateFriction::KernelWrapper m_frictionLaw;
+  FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
 };
 
@@ -211,13 +212,13 @@ struct BogackiShampine32Table
  *
  * @tparam Butcher table defining the Runge-Kutta method.
  */
-template< typename TABLE_TYPE >
+template< typename TABLE_TYPE, typename FRICTION_LAW_TYPE >
 class EmbeddedRungeKuttaKernel
 {
 
 public:
   EmbeddedRungeKuttaKernel( SurfaceElementSubRegion & subRegion,
-                            constitutive::RateAndStateFriction const & frictionLaw,
+                            FRICTION_LAW_TYPE const & frictionLaw,
                             TABLE_TYPE butcherTable ):
     m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
     m_stateVariable_n( subRegion.getField< fields::rateAndState::stateVariable_n >() ),
@@ -415,7 +416,7 @@ private:
   arrayView3d< real64 > const m_stageRates;
 
   /// Friction law used for rate-and-state updates
-  constitutive::RateAndStateFriction::KernelWrapper m_frictionLaw;
+  FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
   /// Butcher table used for explicit time stepping of slip and state
   TABLE_TYPE m_butcherTable;
