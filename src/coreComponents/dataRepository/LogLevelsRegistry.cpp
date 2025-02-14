@@ -20,7 +20,13 @@ namespace geos
 
 void LogLevelsRegistry::addEntry( integer condition, std::string_view description )
 {
-  m_logLevelsDescriptions[condition].push_back( string( description ) );
+  if( m_logLevelsDescriptions.count( condition ) > 0 )
+  {
+    if( std::find( targetValues.begin(), targetValues.end(), description ) != targetValues.end())
+    {
+      m_logLevelsDescriptions[condition].push_back( string( description ) );
+    }
+  }
 }
 
 string LogLevelsRegistry::buildLogLevelDescription() const
