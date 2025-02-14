@@ -135,12 +135,12 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( getLogLevel() >= logInfo::PerforationTable::getLoglevel() && MpiWrapper::commRank() == 0 )
+  if( isLogLevelActive< logInfo::PerforationTable >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
   {
     logInternalWell();
   }
 
-  if( getLogLevel() >= logInfo::InternalWell::getLoglevel() && MpiWrapper::commRank() == 0 )
+  if( isLogLevelActive< logInfo::InternalWell >( this->getLogLevel()) && MpiWrapper::commRank() == 0 )
   {
     logPerforationTable();
   }

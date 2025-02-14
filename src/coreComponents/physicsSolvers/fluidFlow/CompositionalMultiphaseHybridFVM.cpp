@@ -54,6 +54,8 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
   m_lengthTolerance( 0 )
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM;
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )

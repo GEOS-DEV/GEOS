@@ -41,7 +41,9 @@ using namespace fields;
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
   SinglePhasePoromechanics( name, parent )
-{}
+{
+  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
+}
 
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
 {}

@@ -49,6 +49,7 @@ CompositionalMultiphaseReservoirAndWells( const string & name,
   : Base( name, parent )
 {
   Base::template addLogLevel< logInfo::Crossflow >();
+  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 template< typename RESERVOIR_SOLVER >

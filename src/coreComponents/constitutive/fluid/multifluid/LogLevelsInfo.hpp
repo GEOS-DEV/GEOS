@@ -18,8 +18,8 @@
  * This file contains common log level informations for physics solvers
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_LOGLEVELSINFO_HPP_
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_LOGLEVELSINFO_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID
 
 #include "common/DataTypes.hpp"
 
@@ -28,45 +28,18 @@ namespace geos
 
 namespace logInfo
 {
-
 /**
  * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
  */
 ///@{
 
+struct PVT
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Output PVT table"; }
+};
+
 /// @cond DO_NOT_DOCUMENT
-
-struct BoundaryConditions
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Information on boundary conditions"; }
-};
-
-struct SystemSolution
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Log single phase well system solution"; }
-};
-
-struct WellComponents
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well components information"; }
-};
-
-struct WellControl
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well control information"; }
-};
-
-struct WellValidity
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well validity information"; }
-};
-
-
 /// @endcond
 ///@}
 
@@ -74,4 +47,4 @@ struct WellValidity
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_LOGLEVELSINFO_HPP
+#endif // GEOS_CONSTITUTIVE_FLUID_MULTIFLUID

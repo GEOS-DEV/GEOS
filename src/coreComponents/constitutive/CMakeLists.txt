@@ -54,6 +54,7 @@ set( constitutive_headers
      dispersion/DispersionSelector.hpp
      dispersion/LinearIsotropicDispersion.hpp
      fluid/multifluid/Layouts.hpp
+     fluid/multifluid/LogLevelsInfo.hpp
      fluid/multifluid/MultiFluidSelector.hpp
      fluid/multifluid/MultiFluidBase.hpp
      fluid/multifluid/MultiFluidConstants.hpp
@@ -64,7 +65,6 @@ set( constitutive_headers
      fluid/multifluid/blackOil/DeadOilFluid.hpp
      fluid/multifluid/blackOil/PVTOData.hpp
      fluid/multifluid/CO2Brine/CO2BrineFluid.hpp
-     fluid/multifluid/CO2Brine/LogLevelsInfo.hpp
      fluid/multifluid/CO2Brine/PhaseModel.hpp
      fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp

@@ -63,7 +63,9 @@ template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
-{}
+{
+  BASE::template addLogLevel< logInfo::Convergence >();
+}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()

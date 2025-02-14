@@ -62,9 +62,10 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
 
-  addLogLevel< logInfo::BHP >();
-  addLogLevel< logInfo::SurfaceCondition >();
+  addLogLevel< logInfo::ResidualNorm >();
+  addLogLevel< logInfo::BoundaryConditions >();
   addLogLevel< logInfo::SystemSolution >();
+  addLogLevel< logInfo::WellControl >();
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
@@ -200,7 +201,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
     dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
   } );
 
-  GEOS_LOG_LEVEL_BY_RANK( logInfo::BHP,
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
                           GEOS_FMT( "{}: The BHP (at the specified reference elevation) = {} Pa",
                                     wellControlsName, currentBHP ) );
 
@@ -236,7 +237,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
-  bool const logSurfaceCondition = isLogLevelActive< logInfo::SurfaceCondition >( wellControls.getLogLevel());
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
 

@@ -174,6 +174,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.01 ).
     setDescription( "Minimum value for solution scaling factor" );
+
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::Solution >();
+  addLogLevel< logInfo::SourceFluxFailure >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void CompositionalMultiphaseBase::postInputInitialization()

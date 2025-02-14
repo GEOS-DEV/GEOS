@@ -128,6 +128,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< physicsSolverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
+
+  addLogLevel< logInfo::Convergence >();
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )

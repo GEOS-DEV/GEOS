@@ -91,6 +91,7 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   addLogLevel< logInfo::Configuration >();
+  addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Tolerance >();
 
   // Strategy: AMG with separate displacement components

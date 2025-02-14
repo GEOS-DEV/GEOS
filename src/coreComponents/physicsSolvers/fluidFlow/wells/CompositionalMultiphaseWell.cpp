@@ -121,10 +121,13 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
-  addLogLevel< logInfo::BHP >();
-  addLogLevel< logInfo::SurfaceCondition >();
+  addLogLevel< logInfo::ResidualNorm >();
+  addLogLevel< logInfo::BoundaryConditions >();
   addLogLevel< logInfo::WellComponents >();
+  addLogLevel< logInfo::WellControl >();
   addLogLevel< logInfo::WellValidity >();
+  addLogLevel< logInfo::Solution >();
+
 }
 
 void CompositionalMultiphaseWell::postInputInitialization()
@@ -642,7 +645,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
     } );
   } );
 
-  GEOS_LOG_LEVEL_BY_RANK( logInfo::BHP,
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
                           GEOS_FMT( "{}: BHP (at the specified reference elevation) = {} Pa",
                                     wellControlsName, currentBHP ) );
 
@@ -690,7 +693,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
-  bool const logSurfaceCondition = isLogLevelActive< logInfo::SurfaceCondition >( wellControls.getLogLevel());
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
   string const massUnit = m_useMass ? "kg" : "mol";
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();

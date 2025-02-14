@@ -98,9 +98,9 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
   addLogLevel< logInfo::Fields >();
+  addLogLevel< logInfo::LinearSolver >();
   addLogLevel< logInfo::Solution >();
   addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::ResidualNorm >();
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::Timers >();
 

@@ -82,7 +82,7 @@ EventManager::EventManager( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Format of the time in the GEOS log." );
 
-  addLogLevel< logInfo::SubEventExecution >();
+  addLogLevel< logInfo::EventExecution >();
 }
 
 

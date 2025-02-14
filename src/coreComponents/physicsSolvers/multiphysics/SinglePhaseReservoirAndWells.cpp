@@ -42,7 +42,9 @@ SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 SinglePhaseReservoirAndWells( const string & name,
                               Group * const parent )
   : Base( name, parent )
-{}
+{
+  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
+}
 
 template< typename RESERVOIR_SOLVER >
 SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::

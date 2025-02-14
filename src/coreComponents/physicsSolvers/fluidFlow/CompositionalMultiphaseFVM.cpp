@@ -117,6 +117,10 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when computing the next timestep." );
+
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::Solution >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void CompositionalMultiphaseFVM::postInputInitialization()

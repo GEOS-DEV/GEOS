@@ -44,8 +44,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
-
-  addLogLevel< logInfo::ConfigurationStatistics >();
 }
 
 void ContactSolverBase::postInputInitialization()

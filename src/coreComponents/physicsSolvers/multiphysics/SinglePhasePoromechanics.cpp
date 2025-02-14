@@ -46,7 +46,9 @@ template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
                                                                                      Group * const parent )
   : Base( name, parent )
-{}
+{
+  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
+}
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postInputInitialization()

@@ -18,8 +18,8 @@
  */
 #include "CO2BrineFluid.hpp"
 
+#include "constitutive/fluid/multifluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "common/Units.hpp"
 #include "functions/TableFunction.hpp"
@@ -333,7 +333,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
+    !isClone && (isLogLevelActive< logInfo::PVT >( this->getLogLevel())
+                 && logger::internal::rank==0), // writeInLog
   };
 
 
@@ -370,7 +371,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           {
             TableFunction::OutputOptions const flashOutputOpts = {
               !isClone && m_writeCSV,// writeCSV
-              !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
+              !isClone && ( isLogLevelActive< logInfo::PVT >( this->getLogLevel())
+                            && logger::internal::rank==0), // writeInLog
             };
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                                  strs,
@@ -416,7 +418,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
     TableFunction::OutputOptions const flashOutputOpts = {
       !isClone && m_writeCSV,// writeCSV
-      !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+      !isClone && ( isLogLevelActive< logInfo::PVT >( this->getLogLevel() )
+                    && logger::internal::rank==0), // writeInLog
     };
 
     m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),

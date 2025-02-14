@@ -57,6 +57,8 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   getWrapperBase( viewKeyStruct::contactPenaltyStiffnessString() ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
+
+  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()

@@ -61,8 +61,6 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Write rates into a CSV file" );
-
-  addLogLevel< logInfo::WellControl >();
 }
 
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )

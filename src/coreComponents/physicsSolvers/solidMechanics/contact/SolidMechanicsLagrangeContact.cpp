@@ -73,6 +73,7 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
 
   addLogLevel< logInfo::Configuration >();
+  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 void SolidMechanicsLagrangeContact::postInputInitialization()

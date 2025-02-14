@@ -121,6 +121,8 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setDescription( "List of fluid phases" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL;
+
+  addLogLevel< logInfo::Convergence >();
 }
 
 void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
