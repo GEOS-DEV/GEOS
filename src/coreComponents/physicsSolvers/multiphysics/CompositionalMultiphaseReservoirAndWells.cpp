@@ -171,7 +171,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -290,7 +290,7 @@ assembleCouplingTerms( real64 const time_n,
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     integer areWellsShut = 1;
 

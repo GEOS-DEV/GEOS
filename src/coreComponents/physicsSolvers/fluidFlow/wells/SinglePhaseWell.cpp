@@ -75,7 +75,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -358,7 +358,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -448,7 +448,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -492,7 +492,7 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -577,7 +577,7 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
   GEOS_UNUSED_VAR( dt );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -633,7 +633,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
   GEOS_UNUSED_VAR( dt );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     // TODO: change the way we access the flowSolver here
@@ -725,7 +725,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -789,7 +789,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -852,7 +852,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -873,7 +873,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -908,7 +908,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -954,7 +954,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();

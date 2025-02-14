@@ -123,7 +123,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -163,7 +163,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
 }
 
-void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_array const & regionNames )
 {
   FlowSolverBase::precomputeData( mesh, regionNames );
 
@@ -242,7 +242,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -316,7 +316,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -445,7 +445,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
                                                                                           ElementSubRegionBase & subRegion )
@@ -525,7 +525,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     // check cell-centered variables for each region
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
@@ -620,7 +620,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -774,7 +774,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -804,7 +804,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
   // 2. Reset the face-based fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 

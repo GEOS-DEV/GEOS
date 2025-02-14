@@ -102,7 +102,7 @@ void SeismicityRate::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -228,7 +228,7 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -290,7 +290,7 @@ real64 SeismicityRate::solverStep( real64 const & time_n,
   // Loop over subRegions to solve for seismicity rate
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -324,7 +324,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
     // 2. Loop over subRegions to update stress on faults
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -347,7 +347,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
 
     forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                    MeshLevel & mesh,
-                                                                   arrayView1d< string const > const & )
+                                                                   string_array const & )
     {
 
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

@@ -396,7 +396,7 @@ void SourceFluxStatsAggregator::forMeshLevelStatsWrapper( DomainPartition & doma
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                             [&] ( string const &,
                                                   MeshLevel & meshLevel,
-                                                  arrayView1d< string const > const & )
+                                                  string_array const & )
   {
     string const wrapperName = getStatWrapperName( viewKeyStruct::fluxSetWrapperString() );
     WrappedStats & stats = meshLevel.getWrapper< WrappedStats >( wrapperName ).reference();

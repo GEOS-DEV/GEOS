@@ -118,8 +118,8 @@ VTKOutput::~VTKOutput()
 void VTKOutput::postInputInitialization()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
-  m_writer.setFieldNames( m_fieldNames.toViewConst() );
-  m_writer.setLevelNames( m_levelNames.toViewConst() );
+  m_writer.setFieldNames( m_fieldNames );
+  m_writer.setLevelNames( m_levelNames );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
 
   GEOS_ERROR_IF_LT_MSG( m_numberOfTargetProcesses, 1,

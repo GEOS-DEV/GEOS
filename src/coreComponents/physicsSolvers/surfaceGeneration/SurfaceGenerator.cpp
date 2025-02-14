@@ -266,7 +266,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -338,7 +338,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );//this->getGroupByPath<DomainPartition>("/Problem/domain");
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -380,7 +380,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = meshLevel.getFaceManager();
     ElementRegionManager & elementManager = meshLevel.getElemManager();
@@ -475,7 +475,7 @@ void SurfaceGenerator::postRestartInitialization()
   // repopulate the fracture stencil
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -515,7 +515,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
 
@@ -541,7 +541,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -2914,7 +2914,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const &,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                  [&]( localIndex const,

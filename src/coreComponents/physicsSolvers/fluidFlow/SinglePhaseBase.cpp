@@ -89,7 +89,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -176,7 +176,7 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -236,7 +236,7 @@ void SinglePhaseBase::initializePreSubGroups()
   // 2. Set the value of temperature
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -456,7 +456,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
   std::set< string > regionFilter;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel &,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     for( string const & regionName : regionNames )
     {
@@ -585,7 +585,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseBase::initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void SinglePhaseBase::initializeFluidState( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )
@@ -601,7 +601,7 @@ void SinglePhaseBase::initializeFluidState( MeshLevel & mesh, arrayView1d< strin
   } );
 }
 
-void SinglePhaseBase::initializeThermalState( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void SinglePhaseBase::initializeThermalState( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )
@@ -633,7 +633,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
@@ -693,7 +693,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -812,7 +812,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -931,7 +931,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     applyAndSpecifyFieldValue( time_n, dt, mesh, rankOffset, dofKey, isFirstNonlinearIteration,
                                0, fields::flow::pressure::key(), fields::flow::bcPressure::key(),
@@ -989,7 +989,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     integer const isThermal = m_isThermal;
 
@@ -1152,7 +1152,7 @@ void SinglePhaseBase::keepVariablesConstantDuringInitStep( real64 const time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1211,7 +1211,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
@@ -1232,7 +1232,7 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
@@ -1272,7 +1272,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1313,7 +1313,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

@@ -72,7 +72,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
   // pressureGradient is specific for HybridFVM
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -124,7 +124,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -173,7 +173,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -240,7 +240,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -354,7 +354,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
-                                                                      arrayView1d< string const > const & )
+                                                                      string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -470,7 +470,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -606,7 +606,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -626,7 +626,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
   // 2. Reset the face-based fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -643,7 +643,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
