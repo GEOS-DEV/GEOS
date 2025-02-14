@@ -143,6 +143,7 @@ public:
                        arrayView2d< real64 > const porosity,
                        arrayView2d< real64 > const damage,
                        arrayView1d< real64 > const lengthScale,
+                       arrayView1d< real64 > const strengthScale,
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
                        arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -208,7 +209,8 @@ public:
     m_plasticStrain( plasticStrain ),
     m_porosity( porosity ),
     m_damage( damage ),
-    m_lengthScale( lengthScale )
+    m_lengthScale( lengthScale ),
+    m_strengthScale( strengthScale )
   {
     GEOS_UNUSED_VAR( m_g3 );
     GEOS_UNUSED_VAR( m_g4 );  
@@ -286,7 +288,8 @@ public:
   GEOS_HOST_DEVICE
   int computeStep( real64 const ( & D )[6],              
                    const real64 & Dt,
-                   const real64 & lch,                    
+                   const real64 & lch,  
+                   const real64 & strengthScale,                    
                    const real64 & Zeta_n,                
                    const real64 & coher_n,               
                    const real64 & porosity_n,            
@@ -358,6 +361,7 @@ public:
                     const real64 & I1_0,          // I1 value on yield surface
                     const real64 & rJ2_0,         // rJ2 value on yield surface
                     const real64 & lch,           // length scale
+                    const real64 & strengthScale, // strength scale
                     const real64 & coher_old,     // old coherence = 1-damage
                           real64 & coher_new     // OUPUT: new value of coherconst real64 & lch,       // length scale
 ) const;    
@@ -389,7 +393,8 @@ public:
   GEOS_HOST_DEVICE
   int computeSubstep( real64 const ( & D )[6],        
                       const real64 & dt,
-                      const real64 & lch,              
+                      const real64 & lch,
+                      const real64 & strengthScale,              
                       real64 const ( & sigma_old )[6],
                       real64 const ( & ep_old )[6],   
                       const real64 & X_old,
@@ -419,6 +424,7 @@ public:
                           const real64 & Zeta,                 
                           const real64 & coher,     
                           const real64 & hardening,          
+                          const real64 & strengthScale,
                           const real64 & bulk,                 
                           const real64 & shear,
                           real64 & I1_new,                     
@@ -435,6 +441,7 @@ public:
                              const real64 & Zeta,
                              const real64 & coher,
                              const real64 & hardening,
+                             const real64 & strengthScale,
                              const real64 & a1,
                              const real64 & a2,
                              const real64 & a3,
@@ -448,6 +455,7 @@ public:
                                 const real64 & Zeta,
 										            const real64 & coher,
                                 const real64 & hardening,
+                                const real64 & strengthScale,
 										            const real64 & a1,
 										            const real64 & a2,
 										            const real64 & a3,
@@ -461,6 +469,7 @@ public:
                             const real64 & Zeta,
 									          const real64 & coher,
                             const real64 & hardening,
+                            const real64 & strengthScale,
 									          const real64 & a1,
 									          const real64 & a2,
 									          const real64 & a3,
@@ -481,7 +490,8 @@ public:
 		                           real64 & a3,
 		                           real64 & a4,
 		                           const real64 & coher,
-                               const real64 & hardening ) const;
+                               const real64 & hardening,
+                               const real64 & strengthScale ) const;
 
   /// Use base version of saveConvergedState
   using SolidBaseUpdates::saveConvergedState;
@@ -555,6 +565,9 @@ private:
 
   /// A reference to the ArrayView holding the length scale for each element/particle.
   arrayView1d< real64 > const m_lengthScale;
+
+  /// A reference to the ArrayView holding the length scale for each element/particle.
+  arrayView1d< real64 > const m_strengthScale;
 };
 
 
@@ -699,6 +712,9 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   oldPlasticStrain[5] *= 2.0;
 
   real64 characteristicLength = m_lengthScale[k];
+  
+  real64 strengthScale = m_strengthScale[k];
+
   real64 oldZeta = 0.0;
   real64 oldCoher = 1.0 - m_damage[k][q];
   real64 oldPorosity = m_porosity[k][q];
@@ -732,6 +748,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   int errorFlag = computeStep( D,               // strain "rate"
                timeIncrement,                     // time step (s)
                characteristicLength,                    // length scale
+               strengthScale,           // scaler for strength
                oldZeta,                 // trace of isotropic backstress at start of step(t_n)
                oldCoher,                // scalar-valued coherence at start of step(t_n)
 						   oldPorosity,             // scalar-valued coherence at start of step(t_n)
@@ -802,6 +819,7 @@ GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // strain "rate"
                                       const real64 & Dt,                     // time step (s)
                                       const real64 & lch,                    // length scale
+                                      const real64 & strengthScale,          // strength scale
                                       const real64 & Zeta_n,                 // trace of isotropic backstress at start of step(t_n)
                                       const real64 & coher_n,                // scalar-valued coherence at start of step(t_n)
 						                          const real64 & porosity_n,             // scalar-valued coherence at start of step(t_n)
@@ -1011,6 +1029,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     );
 		real64 elasticVMShearStrain = vonMisesStress_old / ( 3. * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
 
+    //std::cout<<"vonMisesStress_old = "<<vonMisesStress_old<<", elasticVMShearStrain = "<<elasticVMShearStrain<<", c0 = "<<c0<<", c1 = "<<c1<<", c2 = "<<c2<<std::endl;
+
 		if ( ( elasticVMShearStrain > 1.e-12 ) && ( c2 > 1.e-16 ) )
 		{  // only apply creep if there is elastic strain
       //shear strain for TXCr tests
@@ -1019,12 +1039,16 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       real64 shearStrainRateConstant = c2;
 
       // relax shear stress until equivalent plastic shear strain reaches the equilibrium value for the current level of shear stress.
-      real64 plasticVMshearStrain = sqrt (2./3.) * ep_rootJ2_old;
-      real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std :: pow(vonMisesStress_old , equilibriumShearStrainExponent);
+      real64 plasticVMshearStrain = rootTwoThirds*ep_rootJ2_old;
+      real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std::pow(vonMisesStress_old , equilibriumShearStrainExponent);
       real64 creepVMStrainIncrement =  Dt * shearStrainRateConstant * std::max(equilibriumVMShearStrain - plasticVMshearStrain , 0.0);
+      creepVMStrainIncrement = std::min(elasticVMShearStrain, creepVMStrainIncrement);  // prevent excess accumulation of plastic vm strain.
 
       // scale back stress deviatoric tensor based on creep strain increment (creep turns elastic strain into plastic strain)
 			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticVMShearStrain;
+
+      //std::cout<<"equilibriumVMShearStrain = "<<equilibriumVMShearStrain<<", plasticVMshearStrain = "<<plasticVMshearStrain<<", creepVMStrainIncrement = "<<creepVMStrainIncrement<<", devStressCreepScale = "<<devStressCreepScale<<std::endl;
+
 
 			// increment plastic strain such that total strain is constant:  (0.5/g0)*stress_dev*( 1.0 - devStressCreepScale );
 			real64 creepStrainIncrement[6];  
@@ -1034,7 +1058,11 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 			// ep_old += creepStrainIncrement; // increment plastic strain such that total strain is constant
       LvArray::tensorOps::copy< 6 >( creepStrainIncrement, stress_dev );
       LvArray::tensorOps::scale< 6 >( creepStrainIncrement,  0.5/shear*( 1.0 - devStressCreepScale ) ); // CC: TODO check if this needs to double off-diagonal components
+
+      //std::cout<<"creepStrainIncrement = ["<<creepStrainIncrement[0]<<", "<<creepStrainIncrement[1]<<", "<<creepStrainIncrement[2]<<", "<<creepStrainIncrement[3]<<", "<<creepStrainIncrement[4]<<", "<<creepStrainIncrement[5]<<"]"<<std::endl;
+      //std::cout<<"Before: ep_dev = ["<<ep_dev[0]<<", "<<ep_dev[1]<<", "<<ep_dev[2]<<", "<<ep_dev[3]<<", "<<ep_dev[4]<<", "<<ep_dev[5]<<"]"<<std::endl;
       LvArray::tensorOps::add< 6 >( ep_dev, creepStrainIncrement );
+      //std::cout<<"After: ep_dev = ["<<ep_dev[0]<<", "<<ep_dev[1]<<", "<<ep_dev[2]<<", "<<ep_dev[3]<<", "<<ep_dev[4]<<", "<<ep_dev[5]<<"]"<<std::endl;
 
 			// relax elastic deviatoric stress due to creep
 			// stress_dev *= devStressCreepScale;
@@ -1115,6 +1143,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     substepFlag = computeSubstep( D,
                                   dt,
                                   lch,
+                                  strengthScale,
                                   sigma_old,
                                   ep_old,
                                   X_old,
@@ -1590,18 +1619,22 @@ void GeomechanicsUpdates::computeCoher( const real64 & a1,
 			                                  const real64 & I1_0,          // I1 value on yield surface
                                         const real64 & rJ2_0,         // rJ2 value on yield surface
                                         const real64 & lch,           // length scale
+                                        const real64 & strengthScale, // strength scale
                                         const real64 & coher_old,     // old coherence = 1-damage
                                               real64 & coher_new     // OUPUT: new value of coherconst real64 & lch,       // length scale
 ) const
 {
 	// material coherence (coher = 1 - damage) will remain constant unless damage criterion is met.
   coher_new = coher_old;
+
+  real64 scaledFractureStress = m_fractureStress*strengthScale;
+
 	if( m_fractureEnergyReleaseRate > 1.e-16 )  // energy release rate is 0 or negative to disable damage.
 	{
 		if ( m_damageEvolutionCriterion == 0 ) 
 		{ // This approach is designed to increment damage when there is plastic loading with dilation above some
       // threshold stress.  The damage evolution is based on dilational plastic work.
-      if (d_evp > 0 && ( I1_trial - I1_0 ) > 0 && ( (rJ2_0 > m_fractureStress || coher_old < 1 ))   &&  m_damageEvolutionCriterion == 0)
+      if (d_evp > 0 && ( I1_trial - I1_0 ) > 0 && ( (rJ2_0 > scaledFractureStress || coher_old < 1 ))   &&  m_damageEvolutionCriterion == 0)
       {
 			// increment in work per unit volume.
 			real64 d_dilationalPlasticWork = d_evp*0.5*(I1_trial - I1_0);
@@ -1619,7 +1652,7 @@ void GeomechanicsUpdates::computeCoher( const real64 & a1,
 
       // If pressure (p=-I1/3) is below the brittle ductile transition pressure, increment damage based on plastic work increment
       // relative to fracture energy regularized by length scale.
-      if ( I1_0 > I_db && ( rJ2_0 > m_fractureStress || coher_old < 1 ) )
+      if ( I1_0 > I_db && ( rJ2_0 > scaledFractureStress || coher_old < 1 ) )
       {
         // increment in work per unit volume.
         real64 d_dilationalPlasticWork = std::max(0., d_evp*0.5*(I1_trial - I1_0) );
@@ -1742,6 +1775,7 @@ GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // strain "rate" for substep D=sym(L)
 		                                     const real64 & dt,               // substep time interval
                                          const real64 & lch,              // length scale
+                                         const real64 & strengthScale,    // strength scale
 		                                     real64 const ( & sigma_old )[6], // stress at start of substep
 		                                     real64 const ( & ep_old )[6],    // plastic strain at start of substep
 		                                     const real64 & X_old,            // hydrostatic compressive strength at start of substep
@@ -1839,7 +1873,8 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                           a3,
                           a4,
                           coher_old,
-                          hardening );
+                          hardening,
+                          strengthScale );
 
   int YIELD = computeYieldFunction( I1_trial,
                                     rJ2_trial,
@@ -1847,6 +1882,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                     Zeta_old,
                                     coher_old,
                                     hardening,
+                                    strengthScale,
                                     a1,
                                     a2,
                                     a3,
@@ -1905,6 +1941,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      Zeta_old,
                                      coher_old,
                                      hardening,
+                                     strengthScale,
                                      bulk,
                                      shear,
 									                   I1_0,
@@ -1981,6 +2018,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 			            I1_0,          // I1 value on yield surface
                   rJ2_0,         // rJ2 value on yield surface
                   lch,           // length scale
+                  strengthScale, // strengthScale
                   coher_old,     // old coherence = 1-damage
                   coher_new     // OUPUT: new value of coherconst real64 & lch,       // length scale
                   );
@@ -2002,6 +2040,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                               Zeta_new,
                               coher_old,
                               hardening,
+                              strengthScale,
                               a1,
                               a2,
                               a3,
@@ -2045,6 +2084,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      Zeta_new,
                                      coher_old,
                                      hardening,
+                                     strengthScale,
                                      bulk,
                                      shear,
                                      I1_new,
@@ -2215,7 +2255,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                                              const real64 & X,                     // cap position
                                              const real64 & Zeta,                  // isotropic bacstress
                                              const real64 & coher,    
-                                             const real64 & hardening,          
+                                             const real64 & hardening,
+                                             const real64 & strengthScale,          
                                              const real64 & bulk,                  // elastic bulk modulus
                                              const real64 & shear,                 // elastic shear modulus
                                              real64 & I1_new,                      // New stress state on yield surface
@@ -2258,6 +2299,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
   fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
   peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
+  peakI1_h = strengthScale*peakI1_h;
 
   // It may be better to use an interior point at the center of the yield surface, rather than at zeta, in particular
   // when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be problematic when the user has specified
@@ -2320,7 +2362,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                           a3,
                           a4,
                           coher,
-                          hardening );
+                          hardening,
+                          strengthScale );
 
   // (3) Perform Bisection between in transformed space, to find the new point on the
   //  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
@@ -2338,6 +2381,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                           Zeta,
                           coher,
                           hardening,
+                          strengthScale,
                           a1,
                           a2,
                           a3,
@@ -2370,6 +2414,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                                      Zeta,
                                      coher,
                                      hardening,
+                                     strengthScale,
                                      a1,
                                      a2,
                                      a3,
@@ -2464,6 +2509,7 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
                                                const real64 & Zeta,
 									                             const real64 & coher,
                                                const real64 & hardening,
+                                               const real64 & strengthScale,
 									                             const real64 & a1,
 									                             const real64 & a2,
 									                             const real64 & a3,
@@ -2503,6 +2549,7 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
                                    Zeta,
                                    coher,
                                    hardening,
+                                   strengthScale,
                                    a1,
                                    a2,
                                    a3,
@@ -2531,6 +2578,7 @@ int GeomechanicsUpdates::transformedYieldFunction( const real64 & z,
                                                    const real64 & Zeta,
 										                               const real64 & coher,
                                                    const real64 & hardening,
+                                                   const real64 & strengthScale,
 										                               const real64 & a1,
 										                               const real64 & a2,
 										                               const real64 & a3,
@@ -2553,6 +2601,7 @@ int GeomechanicsUpdates::transformedYieldFunction( const real64 & z,
                                        Zeta,
                                        coher,
                                        hardening,
+                                       strengthScale,
                                        a1,
                                        a2,
                                        a3,
@@ -2569,6 +2618,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
                                                const real64 & Zeta,
 									                             const real64 & coher,
                                                const real64 & hardening,
+                                               const real64 & strengthScale,
 									                             const real64 & a1,
 									                             const real64 & a2,
 									                             const real64 & a3,
@@ -2595,6 +2645,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
   fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
   peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
+  peakI1_h = strengthScale*peakI1_h;
 
 
 	// --------------------------------------------------------------------
@@ -2686,7 +2737,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a3,
 		                                              real64 & a4,
 		                                              const real64 & coher,
-                                                  const real64 & hardening
+                                                  const real64 & hardening,
+                                                  const real64 & strengthScale
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
   // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
@@ -2706,7 +2758,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
   ySlope_h = std::min( 0.99999*fSlope_h, m_ySlope );
   peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  
+  peakI1_h = strengthScale*peakI1_h;
+
   if (fSlope_h > 0.0 && peakI1_h >= 0.0 && m_stren == 0.0 && ySlope_h == 0.0)
   {// ----------------------------------------------Linear Drucker-Prager
     a1 = peakI1_h * fSlope_h;
@@ -2960,6 +3013,9 @@ public:
 
     /// string/key for element/particle length scale
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
+
+    /// string/key for element/particle strength scale
+    static constexpr char const * strengthScaleString() { return "strengthScale"; }
   };
 
   /**
@@ -3022,6 +3078,7 @@ public:
                                 m_porosity,
                                 m_damage,
                                 m_lengthScale,
+                                m_strengthScale,
                                 m_thermalExpansionCoefficient,
                                 m_newStress,
                                 m_oldStress,
@@ -3095,6 +3152,7 @@ public:
                           m_porosity,
                           m_damage,
                           m_lengthScale,
+                          m_strengthScale,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
@@ -3271,6 +3329,9 @@ protected:
 
   /// Discretization-sized variable: The length scale for each element/particle
   array1d< real64 > m_lengthScale;
+
+  /// Discretization-sized variable: The length scale for each element/particle
+  array1d< real64 > m_strengthScale;
 };
 
 } /* namespace constitutive */

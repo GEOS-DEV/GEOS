@@ -78,7 +78,8 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_velocityGradient(),
   m_plasticStrain(),
   m_damage(),
-  m_lengthScale()
+  m_lengthScale(),
+  m_strengthScale()
 {
   // register default values
   registerWrapper( viewKeyStruct::b0String(), &m_b0 ).
@@ -302,6 +303,11 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point length scale values" );
+
+  registerWrapper( viewKeyStruct::strengthScaleString(), &m_strengthScale ).
+    setApplyDefaultValue( DBL_MIN ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Array of quadrature point strength scale values" );
 
 }
 
