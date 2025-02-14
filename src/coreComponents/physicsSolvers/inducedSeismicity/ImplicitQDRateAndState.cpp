@@ -57,7 +57,7 @@ void ImplicitQDRateAndState::solveRateAndStateEquations( real64 const time_n,
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -111,7 +111,7 @@ real64 ImplicitQDRateAndState::setNextDt( real64 const & currentDt, DomainPartit
   real64 maxSlipRate = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     real64 maxSlipRateOnThisRank  = 0.0;
