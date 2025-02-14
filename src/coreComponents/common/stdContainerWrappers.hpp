@@ -12,7 +12,7 @@ namespace geos
 
 template< typename T, 
           typename Allocator = std::allocator<T>, 
-          bool USE_BOUNDS_CHECKING = false 
+          bool USE_STD_CONTAINER_BOUNDS_CHECKING = false 
         >
 class StdVectorWrapper : public std::vector<T, Allocator>
 {
@@ -27,7 +27,7 @@ public:
   // Override operator[] to toggle between at() and []
   T & operator[](size_t const index) 
   {
-    if constexpr (USE_BOUNDS_CHECKING) 
+    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING) 
     {
       return Base::at(index);  // Throws std::out_of_range if out of bounds
     } 
@@ -39,7 +39,7 @@ public:
 
   T const & operator[](size_t const index) const 
   {
-    if constexpr (USE_BOUNDS_CHECKING) 
+    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING) 
     {
       return Base::at(index);
     } 
@@ -58,7 +58,7 @@ template< typename Key,
           template <typename, typename, typename> typename MapType, 
           typename CompareOrHash = std::less<Key>, 
           typename Allocator = std::allocator<std::pair<const Key, Value>>,
-          bool USE_BOUNDS_CHECKING = false
+          bool USE_STD_CONTAINER_BOUNDS_CHECKING = false
         >
 class MapWrapper : public MapType<Key, Value, CompareOrHash, Allocator>
 {
@@ -69,7 +69,7 @@ public:
   // Override operator[]
   Value & operator[]( Key const & key) 
   {
-    if constexpr(USE_BOUNDS_CHECKING) 
+    if constexpr(USE_STD_CONTAINER_BOUNDS_CHECKING) 
     {
       return this->at(key);  // Throws std::out_of_range if key is missing
     }
@@ -81,7 +81,7 @@ public:
 
   Value const & operator[]( Key const & key) const 
   {
-    if constexpr(USE_BOUNDS_CHECKING) 
+    if constexpr(USE_STD_CONTAINER_BOUNDS_CHECKING) 
     {
       return this->at(key);
     }

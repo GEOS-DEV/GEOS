@@ -1,10 +1,10 @@
-set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
+set( PREPROCESSOR_DEFINES GEOS_ENABLE_BOUNDS_CHECK
                           CALIPER
                           CHAI
                           CUDA
                           CUDA_NVTOOLSEXT
                           HIP
-			  FMT_CONST_FORMATTER_WORKAROUND
+                          FMT_CONST_FORMATTER_WORKAROUND
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
