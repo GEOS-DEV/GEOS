@@ -17,8 +17,11 @@ To add a log level, you must respect the following structure and add it to the a
     };
 
 If there is no ``LogLevelsInfos.hpp`` in the corresponding folder, you can create a ``LogLevelsInfos.hpp``.
-As the system filters any doubles, we encourage anyone adding a logInfo to add it in the constructor(s) of the calling class(es), 
-while ignoring any polymorphism concern (avoid adding it in base class so there will not be undesired documentation entry for other final classes).
+
+.. note::
+    We encourage anyone adding a logInfo to add it in the constructor(s) of the class(es) emitting the information,
+    while ignoring any polymorphism concern (avoid to add it in a base class, else it can result in undesired documentation entries for other inheriting classes).
+    Do not worry to add a logInfo multiple times by on an instance, the system will filter any doubles.
 
 Example of usage
 ----------------
