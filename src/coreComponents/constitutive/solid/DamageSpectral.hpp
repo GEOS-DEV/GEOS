@@ -53,12 +53,11 @@ public:
                          arrayView1d< real64 > const & inputTensileStrength,
                          arrayView1d< real64 > const & inputCompressStrength,
                          arrayView1d< real64 > const & inputDeltaCoefficient,
-                         real64 const & inputDamagePressure,
                          arrayView1d< real64 > const & inputBiotCoefficient,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputDamagePressure, inputBiotCoefficient,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -183,8 +182,8 @@ public:
 
     // get trace+ and trace-
 
-    real64 tracePlus = fmax( traceOfStrain, 0.0 );
-    real64 traceMinus = fmin( traceOfStrain, 0.0 );
+    real64 tracePlus = LvArray::math::max( traceOfStrain, 0.0 );
+    real64 traceMinus = LvArray::math::min( traceOfStrain, 0.0 );
 
     // build symmetric matrices of positive and negative eigenvalues
 
@@ -195,8 +194,8 @@ public:
     for( int i = 0; i < 3; i++ )
     {
       Itensor[i] = 1;
-      eigenPlus[i] = fmax( eigenValues[i], 0.0 );
-      eigenMinus[i] = fmin( eigenValues[i], 0.0 );
+      eigenPlus[i] = LvArray::math::max( eigenValues[i], 0.0 );
+      eigenMinus[i] = LvArray::math::min( eigenValues[i], 0.0 );
     }
 
     real64 positivePartOfStrain[6] = {};
@@ -312,7 +311,6 @@ public:
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressStrength;
   using Damage< BASE >::m_deltaCoefficient;
-  using Damage< BASE >::m_damagePressure;
   using Damage< BASE >::m_biotCoefficient;
 
   DamageSpectral( string const & name, dataRepository::Group * const parent );
@@ -339,7 +337,6 @@ public:
                                                                        m_tensileStrength.toView(),
                                                                        m_compressStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
-                                                                       m_damagePressure,
                                                                        m_biotCoefficient.toView() );
   }
 

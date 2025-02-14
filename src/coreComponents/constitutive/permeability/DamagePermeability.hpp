@@ -45,7 +45,7 @@ public:
   void updateDamagePermeability ( localIndex const k,
                                   real64 const & damage ) const
   {
-    real64 const matrixPermeability = m_bulkPermeability*exp( m_damageDependenceConstant*damage );
+    real64 const matrixPermeability = m_bulkPermeability*LvArray::math::exp( m_damageDependenceConstant*damage );
 
     for( localIndex dim=0; dim<3; ++dim )
     {

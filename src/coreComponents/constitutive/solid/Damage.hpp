@@ -84,7 +84,6 @@ public:
                  arrayView1d< real64 > const & inputTensileStrength,
                  arrayView1d< real64 > const & inputCompressStrength,
                  arrayView1d< real64 > const & inputDeltaCoefficient,
-                 real64 const & inputDamagePressure,
                  arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
@@ -102,7 +101,6 @@ public:
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
     m_deltaCoefficient( inputDeltaCoefficient ),
-    m_damagePressure( inputDamagePressure ),
     m_biotCoefficient( inputBiotCoefficient )
   {}
 
@@ -127,7 +125,7 @@ public:
 
     if( m_extDrivingForceFlag )
     {
-      pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+      pf = LvArray::math::max( LvArray::math::min( 1.0, m_newDamage( k, q )), 0.0 );
     }
     else
     {
@@ -169,7 +167,7 @@ public:
   {
     real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
 
-    return 0.5*(1 + std::cos( M_PI*pf ));
+    return 0.5*(1 + LvArray::math::cos( M_PI*pf ));
   }
 
 
@@ -177,7 +175,7 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
   {
-    return -0.5*M_PI*std::sin( M_PI*d );
+    return -0.5*M_PI*LvArray::math::sin( M_PI*d );
   }
 
 
@@ -185,7 +183,7 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
   {
-    return -0.5*M_PI*M_PI*std::cos( M_PI*d );
+    return -0.5*M_PI*M_PI*LvArray::math::cos( M_PI*d );
   }
 
   GEOS_FORCE_INLINE
@@ -334,12 +332,6 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  real64 getDamagePressure() const
-  {
-    return m_damagePressure;
-  }
-
-  GEOS_HOST_DEVICE
   virtual real64 getEnergyThreshold( localIndex const k,
                                      localIndex const q ) const
   {
@@ -370,22 +362,49 @@ public:
     m_oldDamage[k][q] = m_newDamage[k][q];
   }
 
+  /// The new damage value on all quadrature points
   arrayView2d< real64 > const m_newDamage;
-  arrayView2d< real64 > const m_oldDamage;
-  arrayView3d< real64 > const m_damageGrad;
-  arrayView2d< real64 > const m_strainEnergyDensity;
-  arrayView2d< real64 > const m_volStrain;
-  arrayView2d< real64 > const m_extDrivingForce;
-  real64 const m_lengthScale;
-  arrayView1d< real64 > const m_criticalFractureEnergy;
-  real64 const m_criticalStrainEnergy;
-  real64 const m_degradationLowerLimit;
-  integer const m_extDrivingForceFlag;
-  arrayView1d< real64 > const m_tensileStrength;
-  arrayView1d< real64 > const m_compressStrength;
-  arrayView1d< real64 > const m_deltaCoefficient;
-  real64 const m_damagePressure;
 
+  /// The old damage value on all quadrature points
+  arrayView2d< real64 > const m_oldDamage;
+
+  /// The damage gradient on all quadrature points
+  arrayView3d< real64 > const m_damageGrad;
+
+  /// The strain energy density to drive fracture at the quadrature point
+  arrayView2d< real64 > const m_strainEnergyDensity;
+
+  /// The volumetric strain at the quadrature point
+  arrayView2d< real64 > const m_volStrain;
+
+  /// The external driving force that accounts for the nucleation of fracture
+  arrayView2d< real64 > const m_extDrivingForce;
+
+  /// The phase-field regularization length
+  real64 const m_lengthScale;
+
+  /// A reference view to the critical fracture energy for each element
+  arrayView1d< real64 > const m_criticalFractureEnergy;
+
+  /// The value of the critical strain energy above which crack/damage initiates
+  real64 const m_criticalStrainEnergy;
+
+  /// The lower limit of the degradation function
+  real64 const m_degradationLowerLimit;
+
+  /// The flag to indicate if the external driving force is used for fracture nucleation
+  integer const m_extDrivingForceFlag;
+
+  /// A reference view to the tensile strength for each element
+  arrayView1d< real64 > const m_tensileStrength;
+
+  /// A reference view to the compressive strength for each element
+  arrayView1d< real64 > const m_compressStrength;
+
+  /// A reference view to the delta coefficient for each element
+  arrayView1d< real64 > const m_deltaCoefficient;
+
+  /// A reference view to the Biot coefficient for each element
   arrayView1d< real64 > const m_biotCoefficient;
 };
 
@@ -437,7 +456,6 @@ public:
                                                                        m_tensileStrength.toView(),
                                                                        m_compressStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
-                                                                       m_damagePressure,
                                                                        m_biotCoefficient.toView() );
   }
 
@@ -475,31 +493,66 @@ public:
     static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
     /// string/key for the Biot coefficient
     static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
-    /// string/key for the uniform pressure inside the crack
-    static constexpr char const * damagePressureString() { return "damagePressure"; }
   };
 
 
 protected:
+
+  /// The new damage value on all quadrature points
   array2d< real64 > m_newDamage;
+
+  /// The old damage value on all quadrature points
   array2d< real64 > m_oldDamage;
+
+  /// The damage gradient on all quadrature points
   array3d< real64 > m_damageGrad;
+
+  /// The strain energy density to drive fracture at the quadrature point
   array2d< real64 > m_strainEnergyDensity;
+
+  /// The volumetric strain at the quadrature point
   array2d< real64 > m_volStrain;
+
+  /// The external driving force that accounts for the nucleation of fracture
   array2d< real64 > m_extDrivingForce;
+
+  /// The phase-field regularization length
   real64 m_lengthScale;
+
+  /// The default value of critical fracture energy
   real64 m_defaultCriticalFractureEnergy;
+
+  /// The value of the critical strain energy above which crack/damage initiates
   real64 m_criticalStrainEnergy;
+
+  /// The lower limit of the degradation function
   real64 m_degradationLowerLimit;
+
+  /// The flag to indicate if the external driving force is used for fracture nucleation
   integer m_extDrivingForceFlag;
+
+  /// The default value of the tensile strength
   real64 m_defaultTensileStrength;
+
+  /// The default value of the compressive strength
   real64 m_defaultCompressStrength;
+
+  /// The default value of the delta coefficient (should be calibrated)
   real64 m_defaultDeltaCoefficient;
-  real64 m_damagePressure;
+
+  /// The value of Biot coefficient (to remove it)
   array1d< real64 > m_biotCoefficient;
+
+  /// The critical fracture energy for each cell
   array1d< real64 > m_criticalFractureEnergy;
+
+  /// The tensile strength for each cell
   array1d< real64 > m_tensileStrength;
+
+  /// The compressive strength for each cell
   array1d< real64 > m_compressStrength;
+
+  /// The delta coefficient for each cell
   array1d< real64 > m_deltaCoefficient;
 };
 
