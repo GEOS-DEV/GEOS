@@ -1398,16 +1398,26 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         if( m_plottableFieldsSorted.size() > 0 )
         {
           std::vector< string > const wrapperNames  = subRegion.getWrappersNames();
+
+          // Log the wrapper names
+          std::stringstream wrapperNamesStream;
+          for (const auto& name : wrapperNames) {
+              wrapperNamesStream << name << " ";
+          }
+
+          // GEOS_LOG_RANK_0("subRegion.getWrappersNames(): " << wrapperNamesStream.str());
+          // GEOS_LOG_RANK_0("m_plottableFieldsSorted:" << m_plottableFieldsSorted );
           for( const string & wrapperName : wrapperNames )
           {
             WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
-            if( !(m_plottableFieldsSorted.contains( wrapperName )) )
+            if( (m_plottableFieldsSorted.contains( wrapperName )) )
             {
-              wrapper.setPlotLevel( PlotLevel::NOPLOT );
+              GEOS_LOG_RANK_0("Plottable Field : " << wrapperName << " HAS BEEN FOUND in plottableFieldsSorted. ");
+              wrapper.setPlotLevel( PlotLevel::LEVEL_0 );
             }
             else
             {
-              wrapper.setPlotLevel( PlotLevel::LEVEL_0 );
+              wrapper.setPlotLevel( PlotLevel::NOPLOT );
             }
           }
         }
@@ -1813,6 +1823,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // LvArray::tensorOps::copy< 3 >( m_hEl0, m_hEl);
 
   // Set SPH neighbor radius if necessary
+  // sets neighborRadius to radius of sphere( circle in plane strain ) that 
+  // encompasses neighboring material points
   if( m_neighborRadius <= 0.0 )
   {
     if( m_planeStrain == 1 )
@@ -2525,10 +2537,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  GEOS_LOG_RANK_IF( m_useCrackTipDetection == 1 && m_damageFieldPartitioning == 1, "Compute crack-tip distance field" );
-  solverProfilingIf( "Compute crack-tip distance field", m_useCrackTipDetection == 1 );
+  // TODO: IS DFG required with the crack tip detection?
+  GEOS_LOG_RANK_0_IF( m_useCrackTipDetection == 1 && m_damageFieldPartitioning == 1, "Compute crack-tip distance field w/ dfg" );
+  // solverProfilingIf( "Compute crack-tip distance field", m_useCrackTipDetection == 1 );
   //#######################################################################################
-  if( m_useCrackTipDetection == 1 )
+  if( m_useCrackTipDetection == 1 && m_damageFieldPartitioning == 1 )
   {
     computeDistanceToCrackTip( particleManager );
   }
@@ -5304,8 +5317,7 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 const > const
 void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
                                                     std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
                                                     std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
-                                                    std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at
-                                                                                                // neighbor particles
+                                                    std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
                                                     arraySlice1d< real64 > const result )
 {
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
@@ -5554,12 +5566,15 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
         neighborPositions[neighborIndex][0] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][0];
         neighborPositions[neighborIndex][1] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][1];
         neighborPositions[neighborIndex][2] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][2];
-        if( particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 1 ||
+        if( particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 1 ||  // if neighbor is a surface
             particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 2 ||
             particleSurfaceFlagAccessor[regionIndex][subRegionIndex][particleIndex] == 3 || 
             particleCohesiveZoneFlag[regionIndex][subRegionIndex][particleIndex] == 1 )
         {
           neighborDamages[neighborIndex] = 1.0;
+          // Original flags surfaces as damage ^^^
+          // TODO:  ( Jay ) I've changed this to try to find a step size typo in the damage field hessian calculation
+          // neighborDamages[neighborIndex] = particleDamageAccessor[regionIndex][subRegionIndex][particleIndex];
         }
         else
         {
@@ -5622,13 +5637,17 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
                                                                                                 // method which uses class variables
+
     {
       localIndex const p = activeParticleIndices[pp];
 
       // Test for possible tip particles.  Tip particles will have a non-zero nonlocal particle damage
       // but will have a damage < 1.  Since we haven't compute the actual kernel damage field but
       // we have the damage gradient, we will use that.
-      if( ( LvArray::tensorOps::l2NormSquared< 3 >(particleDamageGradient[p]) >  0.01 / m_neighborRadius / m_neighborRadius ) and ( particleDamage[p] < 1.0 ) )  
+      if( 
+        ( LvArray::tensorOps::l2NormSquared< 3 >(particleDamageGradient[p]) >  0.01 / ( m_neighborRadius * m_neighborRadius ) ) 
+        and ( particleDamage[p] < 1.0 ) )  
+      // if( m_neighborRadius > 0 and particleDamage[p] < 1.0)
       { // Possible tip particles, compute damage field Hessian using loop over neighbors.
         
         // Get neighbor list for current particles.
@@ -5664,8 +5683,11 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
 
         
         real64 damageFieldHessianTermL2NormSquared = 0.0;  //  This tensor will be: L2norm( -0.25*m_neighbor_radius^2*gradgradKD - IdentityMatrix[3] )^2
-        real64 grad[3]; // will hold columns of Hessian output from computeKernelFieldGradient
+        
+        // real64 grad[3]; // will hold columns of Hessian output from computeKernelFieldGradient
         real64 scaleFactor = -0.25*m_neighborRadius*m_neighborRadius;
+
+        // real64 approximateHessian[3][3] = {0};
 
         // x-component
         computeKernelFieldGradient( particlePosition[p],        // input
@@ -5673,6 +5695,9 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
                                     neighborVolumes,            // input
                                     neighborDamageGradientXComponents,            // input
                                     grad ); // OUTPUT
+        // approximateHessian[0][0] = grad[0];
+        // approximateHessian[0][1] = grad[1];
+        // approximateHessian[0][2] = grad[2];
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[0] - 1.0)*(scaleFactor*grad[0] - 1.0); // [0][0]
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[1]*scaleFactor*grad[1]);               // [0][1]
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[2]*scaleFactor*grad[2]);               // [0][2]
@@ -5683,6 +5708,9 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
                                     neighborVolumes,            // input
                                     neighborDamageGradientYComponents,            // input
                                     grad ); // OUTPUT
+        // approximateHessian[1][0] = grad[0];
+        // approximateHessian[1][1] = grad[1];
+        // approximateHessian[1][2] = grad[2];
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[0]*scaleFactor*grad[0]);               // [1][0]
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[1] - 1.0)*(scaleFactor*grad[1] - 1.0); // [1][1]
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[2]*scaleFactor*grad[2]);               // [1][2]
@@ -5693,27 +5721,46 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
                                     neighborVolumes,            // input
                                     neighborDamageGradientZComponents,            // input
                                     grad ); // OUTPUT
+        // approximateHessian[2][0] = grad[0];
+        // approximateHessian[2][1] = grad[1];
+        // approximateHessian[2][2] = grad[2];
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[0]*scaleFactor*grad[0]);               // [2][0]
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[1]*scaleFactor*grad[1]);               // [2][1]
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[2] - 1.0)*(scaleFactor*grad[2] - 1.0); // [2][2]
 
-        // Compared to threshold.
-        if ( damageFieldHessianTermL2NormSquared < m_crackTipDetectionThreshold*m_crackTipDetectionThreshold )
-        { // This is a crack-tip particle, use inverse of kernel function to find distance.
+        // GEOS_LOG( damageFieldHessianTermL2NormSquared );
+/*        real64 l2Norm = 0.0;
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                l2Norm += approximateHessian[i][j] * approximateHessian[i][j];
+            }
+        }*/
 
-          // Evaluate kernel field
-          real64 particleNonlocalDamage = computeKernelField( particlePosition[p], // query point
-                                                              neighborPositions, // List of neighbor particle locations
-                                                              neighborVolumes,
-                                                              neighborDamages );
+        // real64 temp_val = 0.0;
+        // if ( l2Norm < m_crackTipDetectionThreshold * m_crackTipDetectionThreshold )
+        // {
+        //   temp_val = 1.0;
+        // }
+        
+        particleCrackTipDistance[p] = damageFieldHessianTermL2NormSquared; // l2Norm - ( m_crackTipDetectionThreshold * m_crackTipDetectionThreshold ); //damageFieldHessianTermL2NormSquared; 
+
+        // // Compared to threshold.
+        // if ( damageFieldHessianTermL2NormSquared < m_crackTipDetectionThreshold*m_crackTipDetectionThreshold )
+        // { // This is a crack-tip particle, use inverse of kernel function to find distance.
+
+        //   // Evaluate kernel field
+        //   real64 particleNonlocalDamage = computeKernelField( particlePosition[p], // query point
+        //                                                       neighborPositions, // List of neighbor particle locations
+        //                                                       neighborVolumes,
+        //                                                       neighborDamages );
                     
-           particleCrackTipDistance[p] = inverseKernel(particleNonlocalDamage);
+        //    particleCrackTipDistance[p] = inverseKernel(particleNonlocalDamage);
 
-        }
-        else
-        { // Not a crack-tip particle, becuse threshold wasn't met
-          particleCrackTipDistance[p] = 0.0;
-        }
+        // }
+        // else
+        // { // Not a crack-tip particle, becuse threshold wasn't met
+        //   particleCrackTipDistance[p] = 0.0;
+        // }
       }
       else
       { // Not a possible tip particle, either because particle is fully damaged or not near enough
