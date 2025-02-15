@@ -37,7 +37,8 @@ void constitutiveUpdatePassThru( FrictionBase const & contact,
 {
   ConstitutivePassThruHandler< FrictionlessContact,
                                CoulombFriction,
-                               RateAndStateFriction >::execute( contact, std::forward< LAMBDA >( lambda ) );
+                               RateAndStateFriction< std::integral_constant< bool, true > >,
+                               RateAndStateFriction< std::integral_constant< bool, false > > >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -46,7 +47,8 @@ void constitutiveUpdatePassThru( FrictionBase & contact,
 {
   ConstitutivePassThruHandler< FrictionlessContact,
                                CoulombFriction,
-                               RateAndStateFriction >::execute( contact, std::forward< LAMBDA >( lambda ) );
+                               RateAndStateFriction< std::integral_constant< bool, true > >,
+                               RateAndStateFriction< std::integral_constant< bool, false > > >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
 } /* namespace constitutive */

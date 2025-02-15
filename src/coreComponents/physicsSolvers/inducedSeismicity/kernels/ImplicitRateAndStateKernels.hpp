@@ -215,7 +215,7 @@ private:
 
   real64 const m_shearImpedance;
 
-  FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
+  typename FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
 };
 

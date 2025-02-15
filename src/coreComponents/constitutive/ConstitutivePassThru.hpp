@@ -96,8 +96,9 @@ struct ConstitutivePassThru< FrictionBase >
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CoulombFriction,
-                                 RateAndStateFriction >::execute( constitutiveRelation,
-                                                                  std::forward< LAMBDA >( lambda ) );
+                                 RateAndStateFriction< std::integral_constant< bool, true > >,
+                                 RateAndStateFriction< std::integral_constant< bool, false > > >::execute( constitutiveRelation,
+                                                                                                           std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -126,9 +127,9 @@ struct ConstitutivePassThru< RateAndStateFrictionBase >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< RateAndStateFriction< std::integral_constant<bool, true> >,
-                                 RateAndStateFriction< std::integral_constant<bool, false> > >::execute( constitutiveRelation,
-                                                                                                         std::forward< LAMBDA >( lambda ) );
+    ConstitutivePassThruHandler< RateAndStateFriction< std::integral_constant< bool, true > >,
+                                 RateAndStateFriction< std::integral_constant< bool, false > > >::execute( constitutiveRelation,
+                                                                                                           std::forward< LAMBDA >( lambda ) );
   }
 };
 

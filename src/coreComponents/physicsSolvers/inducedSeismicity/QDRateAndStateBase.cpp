@@ -24,8 +24,9 @@
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "constitutive/contact/RateAndStateFriction.hpp"
 #include "kernels/RateAndStateKernelsBase.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+
 
 namespace geos
 {
@@ -103,47 +104,46 @@ void QDRateAndStateBase::enforceRateAndVelocityConsistency( SurfaceElementSubReg
 
   real64 const shearImpedance = m_shearImpedance;
 
-  string const & frictionaLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
-  constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
+  string const & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+  constitutive::FrictionBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionLawName );
 
   constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
-  { 
+  {
     typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionLawKernelWrapper = castedFrictionLaw.createKernelUpdates();
 
-  
     RAJA::ReduceMax< parallelDeviceReduce, int > negativeSlipRate( 0 );
     RAJA::ReduceMax< parallelDeviceReduce, int > bothNonZero( 0 );
 
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    if( slipRate[k] < 0.0 )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      negativeSlipRate.max( 1 );
-    }
-    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 && slipRate[k] > 0.0 )
-    {
-      bothNonZero.max( 1 );
-    }
-    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 )
-    {
-      slipRate[k] = LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] );
-    }
-    else if( slipRate[k] > 0.0 )
-    {
-      real64 const frictionCoefficient = frictionLawKernelWrapper.frictionCoefficient( k, slipRate[k], stateVariable[k] );
-      rateAndStateKernels::projectSlipRateBase( k,
-                                                frictionCoefficient,
-                                                shearImpedance,
-                                                backgroundNormalStress,
-                                                backgroundShearStress,
-                                                slipRate,
-                                                slipVelocity );
-    }
-  } );
+      if( slipRate[k] < 0.0 )
+      {
+        negativeSlipRate.max( 1 );
+      }
+      else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 && slipRate[k] > 0.0 )
+      {
+        bothNonZero.max( 1 );
+      }
+      else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 )
+      {
+        slipRate[k] = LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] );
+      }
+      else if( slipRate[k] > 0.0 )
+      {
+        real64 const frictionCoefficient = frictionLawKernelWrapper.frictionCoefficient( k, slipRate[k], stateVariable[k] );
+        rateAndStateKernels::projectSlipRateBase( k,
+                                                  frictionCoefficient,
+                                                  shearImpedance,
+                                                  backgroundNormalStress,
+                                                  backgroundShearStress,
+                                                  slipRate,
+                                                  slipVelocity );
+      }
+    } );
 
 
-  GEOS_ERROR_IF( negativeSlipRate.get() > 0, "SlipRate cannot be negative." );
-  GEOS_ERROR_IF( bothNonZero.get() > 0, "Only one between slipRate and slipVelocity can be specified as i.c." );
+    GEOS_ERROR_IF( negativeSlipRate.get() > 0, "SlipRate cannot be negative." );
+    GEOS_ERROR_IF( bothNonZero.get() > 0, "Only one between slipRate and slipVelocity can be specified as i.c." );
   } );
 }
 

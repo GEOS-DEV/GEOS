@@ -165,7 +165,7 @@ private:
 
   real64 const m_shearImpedance;
 
-  FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
+  typename FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
 };
 
@@ -416,7 +416,7 @@ private:
   arrayView3d< real64 > const m_stageRates;
 
   /// Friction law used for rate-and-state updates
-  FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
+  typename FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
   /// Butcher table used for explicit time stepping of slip and state
   TABLE_TYPE m_butcherTable;

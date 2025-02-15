@@ -26,6 +26,8 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/contact/RateAndStateFriction.hpp"
 #include "ExplicitQDRateAndState.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+
 
 namespace geos
 {
@@ -120,29 +122,29 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
       arrayView1d< real64 > const normalTraction  = subRegion.getField< rateAndState::normalTraction >();
 
 
-      string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
 
       constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
-      { 
-        typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionLawKernelWrapper = castedFrictionLaw.createKernelUpdates();
-    
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        SpringSliderParameters springSliderParameters = SpringSliderParameters( normalTraction[k],
-                                                                                frictionKernelWrapper.getACoefficient( k ),
-                                                                                frictionKernelWrapper.getBCoefficient( k ),
-                                                                                frictionKernelWrapper.getDcCoefficient( k ) );
+        typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionKernelWrapper = castedFrictionLaw.createKernelUpdates();
+
+
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          SpringSliderParameters springSliderParameters = SpringSliderParameters( normalTraction[k],
+                                                                                  frictionKernelWrapper.getACoefficient( k ),
+                                                                                  frictionKernelWrapper.getBCoefficient( k ),
+                                                                                  frictionKernelWrapper.getDcCoefficient( k ) );
 
 
 
-        shearTraction[k][0] = shearTraction_n[k][0] + springSliderParameters.tauRate * dt
-                              - springSliderParameters.springStiffness * deltaSlip[k][0];
-        shearTraction[k][1] = shearTraction_n[k][1] + springSliderParameters.tauRate * dt
-                              - springSliderParameters.springStiffness * deltaSlip[k][1];
+          shearTraction[k][0] = shearTraction_n[k][0] + springSliderParameters.tauRate * dt
+                                - springSliderParameters.springStiffness * deltaSlip[k][0];
+          shearTraction[k][1] = shearTraction_n[k][1] + springSliderParameters.tauRate * dt
+                                - springSliderParameters.springStiffness * deltaSlip[k][1];
+        } );
       } );
-    } );
     } );
   } );
   return dt;

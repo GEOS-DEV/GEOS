@@ -103,30 +103,24 @@ void RateAndStateFriction< USE_SLIP_LAW >::postInputInitialization()
 
 template< typename USE_SLIP_LAW >
 void RateAndStateFriction< USE_SLIP_LAW >::allocateConstitutiveData( Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+                                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
   FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-using RateAndStateFrictionUpdatesSlipLaw = RateAndStateFriction::KernelWrapper<std::integral_constant<bool, true>>;
-using RateAndStateFrictionUpdatesAgingLaw = RateAndStateFriction::KernelWrapper<std::integral_constant<bool, false>>;
-using RateAndStateFrictionUpdates = std::variant<RateAndStateFrictionUpdatesSlipLaw, RateAndStateFrictionUpdatesAgingLaw>;
 template< typename USE_SLIP_LAW >
-RateAndStateFriction::KernelWrapper< USE_SLIP_LAW > RateAndStateFriction::createKernelUpdates() const
-{ 
-  
-  return RateAndStateFriction::KernelWrapper< USE_SLIP_LAW > ( m_displacementJumpThreshold,
-                                                               m_frictionCoefficient, m_a, m_b,
-                                                               m_Dc, m_V0, m_mu0 );
-}
+typename RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper RateAndStateFriction< USE_SLIP_LAW >::createKernelUpdates() const
+{
 
-template class RateAndStateFriction< std::integral_constant<bool, true> >;
-template class RateAndStateFriction< std::integral_constant<bool, false> >;
+  return typename RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper ( m_displacementJumpThreshold,
+                                                                        m_frictionCoefficient, m_a, m_b,
+                                                                        m_Dc, m_V0, m_mu0 );
+}
 
 namespace
 {
-typedef RateAndStateFriction< std::integral_constant<bool, true> > RateAndStateFrictionWithSlipLaw;
-typedef RateAndStateFriction< std::integral_constant<bool, false> > RateAndStateFrictionWithAgingLaw;
+typedef RateAndStateFriction< std::integral_constant< bool, true > > RateAndStateFrictionWithSlipLaw;
+typedef RateAndStateFriction< std::integral_constant< bool, false > > RateAndStateFrictionWithAgingLaw;
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, RateAndStateFrictionWithSlipLaw, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, RateAndStateFrictionWithAgingLaw, string const &, Group * const )
 }

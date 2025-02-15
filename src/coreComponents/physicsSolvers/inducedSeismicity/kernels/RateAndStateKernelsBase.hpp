@@ -20,6 +20,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/contact/RateAndStateFriction.hpp"
 #include "physicsSolvers/inducedSeismicity/rateAndStateFields.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 
 namespace geos
 {
@@ -83,10 +84,12 @@ static bool newtonSolve( SurfaceElementSubRegion & subRegion,
  * @brief Performs the kernel launch
  * @tparam POLICY the policy used in the RAJA kernels
  */
-template< typename KERNEL_TYPE, typename POLICY >
+template< template< typename FRICTION_TYPE > class KERNEL_TYPE,
+          typename POLICY,
+          typename FRICTION_TYPE >
 static void
 createAndLaunch( SurfaceElementSubRegion & subRegion,
-                 string const & frictionLawNameKey,
+                 FRICTION_TYPE & frictionLaw,
                  real64 const shearImpedance,
                  integer const maxNewtonIter,
                  real64 const newtonTol,
@@ -97,17 +100,13 @@ createAndLaunch( SurfaceElementSubRegion & subRegion,
 
   GEOS_UNUSED_VAR( time_n );
 
-  string const & frictionaLawName = subRegion.getReference< string >( frictionLawNameKey );
-  constitutive::FrictionBase const & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionaLawName );
-  constitutive::ConstitutivePassThru< RateAndState >::execute( frictionLaw, [=,&subRegion] ( auto & castedFrictionLaw )
-  {
-  KERNEL_TYPE kernel( subRegion, castedFrictionLaw, shearImpedance );
+  KERNEL_TYPE kernel( subRegion, frictionLaw, shearImpedance );
 
   real64 dtRemaining = totalDt;
   real64 dt = totalDt;
   for( integer subStep = 0; subStep < 5 && dtRemaining > 0.0; ++subStep )
   {
-    real64 dtAccepted = KERNEL_TYPE::template solveRateAndStateEquation< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
+    real64 dtAccepted = KERNEL_TYPE< FRICTION_TYPE >::template solveRateAndStateEquation< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
     dtRemaining -= dtAccepted;
 
     if( dtRemaining > 0.0 )
@@ -116,7 +115,6 @@ createAndLaunch( SurfaceElementSubRegion & subRegion,
     }
     GEOS_LOG_RANK_0( GEOS_FMT( "  sub-step = {} completed, dt = {}, remaining dt = {}", subStep, dt, dtRemaining ) );
   }
- } );
 }
 
 } /* namespace rateAndStateKernels */
