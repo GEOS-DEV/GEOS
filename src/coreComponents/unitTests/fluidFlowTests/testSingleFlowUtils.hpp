@@ -97,7 +97,7 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -212,7 +212,7 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh,
-                                                                       arrayView1d< string const > const & regionNames )
+                                                                       string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
