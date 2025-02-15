@@ -5684,7 +5684,7 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
         
         real64 damageFieldHessianTermL2NormSquared = 0.0;  //  This tensor will be: L2norm( -0.25*m_neighbor_radius^2*gradgradKD - IdentityMatrix[3] )^2
         
-        // real64 grad[3]; // will hold columns of Hessian output from computeKernelFieldGradient
+        real64 grad[3]; // will hold columns of Hessian output from computeKernelFieldGradient
         real64 scaleFactor = -0.25*m_neighborRadius*m_neighborRadius;
 
         // real64 approximateHessian[3][3] = {0};
