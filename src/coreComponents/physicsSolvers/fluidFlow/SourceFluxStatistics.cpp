@@ -125,7 +125,7 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & )
+                                                              string_array const & )
   {
     registerWrappedStats( mesh,
                           viewKeyStruct::fluxSetWrapperString(),
