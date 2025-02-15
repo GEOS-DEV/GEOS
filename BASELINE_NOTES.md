@@ -6,27 +6,39 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR  #3395 (2024-01-22)
+PR #2968 (2025-02-13)
+=====================
+Replace array1d<string> with std::vector<string>
+
+PR  #3227 (2025-02-01)
+=====================
+Add targetRegion for perforations (optional).
+
+PR #3502 (2025-02-04)
+=====================
+Add array to store the source values in time inside wave solvers
+
+PR  #3395 (2025-01-22)
 =====================
 Add new fields and change the default input for some tests.
 
-PR #3416 (2024-01-21)
+PR #3416 (2025-01-21)
 =====================
 Refactoring of induced seismicity EQ solvers to add coupling.
 
-PR #3310 (2024-01-21)
+PR #3310 (2025-01-21)
 ======================
 Scalable rock toughness required new field.
 
-PR #3228 (2024-01-15)
+PR #3228 (2025-01-15)
 =====================
 deltaVolume added in multiphase.
 
-PR #3495 (2024-01-08)
+PR #3495 (2025-01-08)
 =====================
 Add missing logic to support switching from fixed mass rate injection rate constraint to max injection pressure.
 
-PR #3384 (2024-01-07)
+PR #3384 (2025-01-07)
 =====================
 Added plastic strain output.
 
@@ -128,7 +140,7 @@ Add routine for automatic time steps in waveSolvers with new attributes
 
 PR #3156 (2024-10-29)
 ====================
-Restart check errors due to 1) schema node added to enable thermal option in well model and 2) arrays removed/added for option.  Max difference errors due treatment of shutin wells.  Previously non-zero rate value reported for shutin well, new code will set rate arrays to zero. 
+Restart check errors due to 1) schema node added to enable thermal option in well model and 2) arrays removed/added for option.  Max difference errors due treatment of shutin wells.  Previously non-zero rate value reported for shutin well, new code will set rate arrays to zero.
 
 PR #2878 (2024-10-17)
 =====================
