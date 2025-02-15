@@ -115,7 +115,7 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel const & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames, [&] ( localIndex const, SurfaceElementRegion const & region )
     {
@@ -208,7 +208,7 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel const & mesh,
-                                                                 arrayView1d< string const > const & )
+                                                                 string_array const & )
     {
       computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
 
@@ -233,7 +233,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
 
