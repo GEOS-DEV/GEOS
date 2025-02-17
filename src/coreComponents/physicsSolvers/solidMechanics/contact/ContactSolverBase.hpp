@@ -90,7 +90,7 @@ protected:
     forDiscretizationOnMeshTargets( meshBodies,
                                     [&]( string const,
                                          MeshLevel const & mesh,
-                                         arrayView1d< string const > const )
+                                         string_array const & )
     {
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -109,7 +109,7 @@ protected:
     forDiscretizationOnMeshTargets( meshBodies,
                                     [&]( string const,
                                          MeshLevel & mesh,
-                                         arrayView1d< string const > const )
+                                         string_array const & )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
