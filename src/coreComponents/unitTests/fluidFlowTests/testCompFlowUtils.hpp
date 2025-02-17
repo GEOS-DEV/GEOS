@@ -114,7 +114,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -125,7 +125,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
       constitutive::MultiFluidBase const & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
-      arrayView1d< string const > const & components = fluid.componentNames();
+      string_array const & components = fluid.componentNames();
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
         subRegion.getField< fields::flow::globalCompDensity >();
@@ -199,7 +199,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -210,8 +210,8 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
       constitutive::MultiFluidBase const & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
-      arrayView1d< string const > const & components = fluid.componentNames();
-      arrayView1d< string const > const & phases = fluid.phaseNames();
+      string_array const & components = fluid.componentNames();
+      string_array const & phases = fluid.phaseNames();
 
       arrayView1d< real64 > const pres =
         subRegion.getField< fields::flow::pressure >();
@@ -364,7 +364,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -375,8 +375,8 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
       constitutive::MultiFluidBase const & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
-      arrayView1d< string const > const & components = fluid.componentNames();
-      arrayView1d< string const > const & phases = fluid.phaseNames();
+      string_array const & components = fluid.componentNames();
+      string_array const & phases = fluid.phaseNames();
 
       arrayView1d< real64 > const pres =
         subRegion.getField< fields::flow::pressure >();
@@ -534,7 +534,7 @@ inline void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh,
-                                                                       arrayView1d< string const > const & regionNames )
+                                                                       string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
