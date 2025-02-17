@@ -57,18 +57,19 @@ public:
   using SinglePhaseFVMAbstractBase::m_dens;
 
   using SinglePhaseFVMBase = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
-  using SinglePhaseFVMBase::numDof;
   using SinglePhaseFVMBase::numEqn;
   using SinglePhaseFVMBase::maxNumElems;
   using SinglePhaseFVMBase::maxNumConns;
   using SinglePhaseFVMBase::maxStencilSize;
   using SinglePhaseFVMBase::m_stencilWrapper;
-  using SinglePhaseFVMBase::m_seri;
-  using SinglePhaseFVMBase::m_sesri;
-  using SinglePhaseFVMBase::m_sei;
   using SinglePhaseFVMBase::m_ghostRank;
 
   using Base = singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
+  using Base::m_dispJumpDofNumber;
+  using Base::numDof;
+  using Base::m_seri;
+  using Base::m_sesri;
+  using Base::m_sei;
 
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature,
@@ -84,13 +85,6 @@ public:
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
-
-
-  using Base::m_dispJumpDofNumber;
-  using Base::numDof;
-  using Base::m_seri;
-  using Base::m_sesri;
-  using Base::m_sei;
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
