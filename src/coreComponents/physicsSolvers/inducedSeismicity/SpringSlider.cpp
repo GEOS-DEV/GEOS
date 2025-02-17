@@ -53,7 +53,7 @@ void SpringSlider< RSSOLVER_TYPE >::registerDataOnMesh( Group & meshBodies )
 
   this->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                           MeshLevel & mesh,
-                                                          arrayView1d< string const > const & regionNames )
+                                                          string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -105,7 +105,7 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
   // Spring-slider shear traction computation
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+                                                                     string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
