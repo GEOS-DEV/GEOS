@@ -63,7 +63,6 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
     setDescription( "Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2" );
 
   addLogLevel< logInfo::CFL >();
-  addLogLevel< logInfo::DetailedStatisticsInformation >();
   addLogLevel< logInfo::Statistics >();
 }
 
@@ -421,7 +420,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     {
       stats.averagePressure = 0.0;
       stats.averageTemperature = 0.0;
-      GEOS_LOG_LEVEL_RANK_0( logInfo::DetailedStatisticsInformation,
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Statistics,
                              GEOS_FMT( "{}, {}: Cannot compute average pressure because region pore volume is zero.",
                                        getName(), regionNames[i] ) );
     }

@@ -183,6 +183,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::NonlinearSolver >();
   addLogLevel< logInfo::LineSearch >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void NonlinearSolverParameters::postInputInitialization()
