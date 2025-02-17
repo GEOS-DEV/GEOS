@@ -358,7 +358,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+    string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( str );
 
     TableFunction::OutputOptions const pvtOutputOpts = {
       true,// writeCSV
@@ -404,7 +404,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+    string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( str );
     TableFunction::OutputOptions const flashOutputOpts = {
       true, // writeCSV
       true, // writeInLog
