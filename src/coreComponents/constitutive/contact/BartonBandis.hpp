@@ -106,9 +106,6 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
-
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BartonBandisUpdates;
