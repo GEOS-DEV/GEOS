@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3443 (2024-02-17)
+=====================
+Added tests for overall composition (Z) formulation.
+
 PR #3547 (2025-02-17)
 =====================
 Multiphase contact bugfix, add test case to ats, removed redundant linear solver params for other tests.
