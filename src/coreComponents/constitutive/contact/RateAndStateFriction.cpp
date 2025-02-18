@@ -108,15 +108,6 @@ void RateAndStateFriction< USE_SLIP_LAW >::allocateConstitutiveData( Group & par
   FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-template< typename USE_SLIP_LAW >
-typename RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper RateAndStateFriction< USE_SLIP_LAW >::createKernelUpdates() const
-{
-
-  return typename RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper ( m_displacementJumpThreshold,
-                                                                        m_frictionCoefficient, m_a, m_b,
-                                                                        m_Dc, m_V0, m_mu0 );
-}
-
 namespace
 {
 typedef RateAndStateFriction< std::integral_constant< bool, true > > RateAndStateFrictionWithSlipLaw;

@@ -371,6 +371,15 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
 }
 
+template< typename USE_SLIP_LAW >
+typename RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper RateAndStateFriction< USE_SLIP_LAW >::createKernelUpdates() const
+{
+
+  return typename RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper ( m_displacementJumpThreshold,
+                                                                        m_frictionCoefficient, m_a, m_b,
+                                                                        m_Dc, m_V0, m_mu0 );
+}
+
 } /* namespace constitutive */
 
 } /* namespace geos */
