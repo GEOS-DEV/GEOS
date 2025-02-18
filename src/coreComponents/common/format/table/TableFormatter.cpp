@@ -546,6 +546,10 @@ void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
                       cells.size()>0 ? std::to_string( cells[0].size()) : "?",
                       nbHiddenColumns, paddingCharacters ));
 
+  // we abort if there is no lines, no columns, or if every column is hidden.
+  if( cells.size() == 0 || cells[0].size() == 0 || nbHiddenColumns >= cells[0].size() )
+    return;
+
   size_t const numRows = cells.size();
   size_t const nbColumns = cells[0].size();
   size_t const remainingPaddingForLastColumn = paddingCharacters % (nbColumns - nbHiddenColumns);
