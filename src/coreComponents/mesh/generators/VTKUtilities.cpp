@@ -69,6 +69,9 @@
 #endif
 
 #include <numeric>
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
@@ -1908,11 +1911,19 @@ void printMeshStatistics( vtkDataSet & mesh,
   {
     maxGlobalNode.max( globalPointId.GetValue( k ) );
   } );
-  globalIndex const numGlobalNodes = MpiWrapper::max( maxGlobalNode.get(), comm ) + 1;
+
+  globalIndex const sumGlobalNodes = MpiWrapper::sum( maxGlobalNode.get(), comm ) + 1;
+  globalIndex const maxGlobalNodes = MpiWrapper::max( maxGlobalNode.get(), comm ) + 1;
+  globalIndex const minGlobalNodes = MpiWrapper::min( maxGlobalNode.get(), comm ) + 1;
+  globalIndex const avgGlobalNodes = LvArray::integerConversion< globalIndex >( sumGlobalNodes / size );
+
+  std::map< ElementType, globalIndex > elemCounts;
+  std::map< ElementType, globalIndex > minLocalElemsCounts;
+  std::map< ElementType, globalIndex > avgLocalElemsCounts;
+  std::map< ElementType, globalIndex > maxLocalElemsCounts;
 
   localIndex numLocalElems = 0;
   globalIndex numGlobalElems = 0;
-  std::map< ElementType, globalIndex > elemCounts;
 
   for( auto const & typeToCells : cellMap )
   {
@@ -1924,27 +1935,43 @@ void printMeshStatistics( vtkDataSet & mesh,
     globalIndex const globalElemsOfType = MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
     numGlobalElems += globalElemsOfType;
     elemCounts[typeToCells.first] = globalElemsOfType;
+    minLocalElemsCounts[typeToCells.first] =  MpiWrapper::min( numLocalElems );
+    avgLocalElemsCounts[typeToCells.first] =  MpiWrapper::max( numLocalElems );
+    maxLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( numLocalElems ) / size );
   }
 
-  localIndex const minLocalElems = MpiWrapper::min( numLocalElems );
-  localIndex const maxLocalElems = MpiWrapper::max( numLocalElems );
-  localIndex const avgLocalElems = LvArray::integerConversion< localIndex >( numGlobalElems / size );
+  // localIndex const minLocalElems = MpiWrapper::min( numLocalElems );
+  // localIndex const maxLocalElems = MpiWrapper::max( numLocalElems );
+  // localIndex const avgLocalElems = LvArray::integerConversion< localIndex >( numGlobalElems / size );
 
   if( rank == 0 )
   {
-    int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
+    // std::vector< string > elemsHeader;
+    // std::vector< globalIndex > elemsValues;
+    // elemsHeader.reserve( elemCounts.size());
+    // elemsValues.reserve( elemCounts.size());
+
+    // for( auto const & typeCount: elemCounts )
+    // {
+    //   elemsHeader.emplace_back( toString( typeCount.first ));
+    //   elemsValues.emplace_back( typeCount.second );
+    // }
+
+    TableLayout const elemsLayout( "Load balancing, element / rank",
+                                   {"Element type",
+                                    "Total over ranks",
+                                    "minimum",
+                                    "average",
+                                    "maximum" } );
+    TableData elemsData;
+    elemsData.addRow( "nodes", sumGlobalNodes, minGlobalNodes, avgGlobalNodes, maxGlobalNodes );
     for( auto const & typeCount: elemCounts )
     {
-      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
+      elemsData.addRow( typeCount.first , typeCount.second,
+                        minLocalElemsCounts[typeCount.first], avgLocalElemsCounts[typeCount.first], maxLocalElemsCounts[typeCount.first] );
     }
-
-    int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                        widthLocal, "min", "avg", "max",
-                        minLocalElems, avgLocalElems, maxLocalElems ) );
+    TableTextFormatter elemsText( elemsLayout );
+    GEOS_LOG_RANK_0( elemsText.toString( elemsData ));
   }
 }
 
