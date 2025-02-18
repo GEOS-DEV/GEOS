@@ -32,8 +32,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
-#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 
 namespace geos
@@ -89,6 +89,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
   // setup monolithic coupled system
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
+  dofManager.printFieldInfo();
+
   if( !this->m_precond && this->m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
     createPreconditioner();
@@ -100,11 +102,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIn
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
-  arrayView1d< string const > const & poromechanicsTargetRegionNames =
-    this->template getReference< array1d< string > >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  arrayView1d< string const > const & flowTargetRegionNames =
-    this->flowSolver()->template getReference< array1d< string > >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+  string_array const & poromechanicsTargetRegionNames =
+    this->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & flowTargetRegionNames =
+    this->flowSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+  for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
@@ -277,7 +279,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
@@ -334,10 +336,10 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
 
   this->solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                               MeshLevel & mesh,
-                                                                                              arrayView1d< string const > const & regionNames )
+                                                                                              string_array const & regionNames )
   {
     // collect the target region of the mechanics solver not included in the poromechanics target regions
-    array1d< string > filteredRegionNames;
+    string_array filteredRegionNames;
     filteredRegionNames.reserve( regionNames.size() );
     for( string const & regionName : regionNames )
     {
@@ -358,7 +360,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
       this->template assemblyLaunch< constitutive::SolidBase,
                                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                dofManager,
-                                                                                               filteredRegionNames.toViewConst(),
+                                                                                               filteredRegionNames,
                                                                                                SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                                localMatrix,
                                                                                                localRhs,

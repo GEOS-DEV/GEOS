@@ -52,7 +52,7 @@
         directParallel="0"/>
     </PhaseFieldDamageFEM>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="solidMech"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"

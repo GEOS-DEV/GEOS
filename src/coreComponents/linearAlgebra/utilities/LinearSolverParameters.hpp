@@ -281,7 +281,7 @@ struct LinearSolverParameters
       thermalSinglePhasePoromechanics,           ///< thermal single phase poromechanics with finite volume single phase flow
       hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
       singlePhasePoromechanicsEmbeddedFractures, ///< single phase poromechanics with FV embedded fractures
-      singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with FV embedded fractures
+      singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with conforming fractures
       singlePhasePoromechanicsReservoirFVM,      ///< single phase poromechanics with finite volume single phase flow with wells
       compositionalMultiphaseFVM,                ///< finite volume compositional multiphase flow
       compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
@@ -295,6 +295,8 @@ struct LinearSolverParameters
       thermalMultiphasePoromechanics,            ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
       hydrofracture,                             ///< hydrofracture
       lagrangianContactMechanics,                ///< Lagrangian contact mechanics
+      augmentedLagrangianContactMechanics,       ///< Augmented Lagrangian contact mechanics
+      lagrangianContactMechanicsBubbleStab,      ///< Lagrangian contact mechanics with bubble stabilization
       solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
     };
 
@@ -387,6 +389,8 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "thermalMultiphasePoromechanics",
               "hydrofracture",
               "lagrangianContactMechanics",
+              "augmentedLagrangianContactMechanics",
+              "lagrangianContactMechanicsBubbleStab",
               "solidMechanicsEmbeddedFractures" );
 
 /// Declare strings associated with enumeration values.

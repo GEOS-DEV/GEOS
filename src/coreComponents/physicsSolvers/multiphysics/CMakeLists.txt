@@ -9,6 +9,7 @@ set( physicsSolvers_headers
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
      multiphysics/MultiphasePoromechanics.hpp
+     multiphysics/OneWayCoupledFractureFlowContactMechanics.hpp
      multiphysics/MultiphasePoromechanicsConformingFractures.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/PhaseFieldPoromechanicsSolver.hpp
@@ -51,6 +52,7 @@ set( physicsSolvers_sources
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanics.cpp
+     multiphysics/OneWayCoupledFractureFlowContactMechanics.cpp
      multiphysics/MultiphasePoromechanicsConformingFractures.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/PoromechanicsInitialization.cpp

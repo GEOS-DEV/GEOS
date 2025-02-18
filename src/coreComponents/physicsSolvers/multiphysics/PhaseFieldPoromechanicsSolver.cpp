@@ -67,7 +67,7 @@ void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( DomainPartition &
     GEOS_MARK_FUNCTION;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -128,7 +128,7 @@ void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & d
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();

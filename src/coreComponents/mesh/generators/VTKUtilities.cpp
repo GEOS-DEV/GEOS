@@ -565,7 +565,7 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames )
+                         string_array const & faceBlockNames )
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
@@ -746,8 +746,7 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   {
     // Add global ids on the fly if needed
     int const me = hasGlobalIds( mesh );
-    int everyone;
-    MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOS );
+    int const everyone = MpiWrapper::allReduce( me, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
 
     if( everyone and not me )
     {
@@ -2005,7 +2004,7 @@ void importNodesets( integer const logLevel,
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
 
-  for( int i=0; i < nodesetNames.size(); ++i )
+  for( size_t i=0; i < nodesetNames.size(); ++i )
   {
     GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 

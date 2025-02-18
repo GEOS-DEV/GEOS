@@ -99,7 +99,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
@@ -209,7 +209,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -449,7 +449,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   // Syncronize ghost nodes
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
@@ -524,7 +524,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     const NodeManager & nodeManager = mesh.getNodeManager();
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
@@ -595,7 +595,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     fsManager.template apply< NodeManager >( time,
                                              mesh,
@@ -630,7 +630,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 

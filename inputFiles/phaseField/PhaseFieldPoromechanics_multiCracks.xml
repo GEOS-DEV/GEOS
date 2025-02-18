@@ -50,7 +50,7 @@
         preconditionerType="amg"/>
     </PhaseFieldDamageFEM>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="solidMech"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
