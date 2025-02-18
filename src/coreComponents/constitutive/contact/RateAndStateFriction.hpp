@@ -331,7 +331,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::stateEvolutio
   }
   else
   {
-    return 0.0;
+    return 1.0 - slipRate * stateVariable / m_Dc[k];
   }
 }
 
@@ -347,7 +347,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
   else
   {
-    return 0.0;
+    return -slipRate / m_Dc[k];
   }
 }
 
@@ -367,7 +367,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
   else
   {
-    return 0.0;
+    return -stateVariable / m_Dc[k];
   }
 }
 
