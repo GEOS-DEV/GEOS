@@ -68,6 +68,7 @@ ThermalSinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
         fluidModelKey ),
   m_fluidInternalEnergy_n( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy_n() ),
   m_fluidInternalEnergy( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy() ),
+  m_dFluidInternalEnergy( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dInternalEnergy() ),
   m_temperature_n( embeddedSurfSubRegion.template getField< fields::flow::temperature_n >() ),
   m_temperature( embeddedSurfSubRegion.template getField< fields::flow::temperature >() ),
   m_matrixTemperature( elementSubRegion.template getField< fields::flow::temperature >() )
