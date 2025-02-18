@@ -99,7 +99,8 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group,
 
     string const logMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
     string const logRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
-    TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn } );
+    TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
+
     m_logLayout = statsLogLayout;
 
     string const csvMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
@@ -166,18 +167,21 @@ void SourceFluxStatsAggregator::gatherStatsForLog( bool logLevelActive,
     {
       tableData.addRow( elementSetName,
                         GEOS_FMT( "{}", wrappedStats.stats().m_producedMass[0] ),
-                        GEOS_FMT( "{}", wrappedStats.stats().m_productionRate[0] ) );
+                        GEOS_FMT( "{}", wrappedStats.stats().m_productionRate[0] ),
+                        GEOS_FMT( "{}", wrappedStats.stats().m_elementCount ) );
     }
     else
     {
       tableData.addRow( elementSetName,
                         GEOS_FMT( "{}", wrappedStats.stats().m_producedMass ),
-                        GEOS_FMT( "{}", wrappedStats.stats().m_productionRate ) );
+                        GEOS_FMT( "{}", wrappedStats.stats().m_productionRate ),
+                        GEOS_FMT( "{}", wrappedStats.stats().m_elementCount ) );
     }
   }
 }
 
-void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view elementSetName, TableData const & tableMeshData )
+void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view elementSetName,
+                                                  TableData const & tableMeshData )
 {
   if( logLevelActive && logger::internal::rank == 0 )
   {
