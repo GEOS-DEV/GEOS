@@ -494,7 +494,6 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
                                            string & separatorLine,
                                            size_t & nbEnabledColumn ) const
 {
-  std::string const tableTitle = std::string( tableLayout.getTitle() );
   size_t const margins = (size_t) tableLayout.getBorderMargin() * 2;
   size_t const horizontalBar = 2;
 
@@ -523,10 +522,10 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
   size_t const spacingBetweenColumns = headerColumnCount == 0 ? (size_t) tableLayout.getColumnMargin():
                                        (headerColumnCount - 1) * (size_t) tableLayout.getColumnMargin();
 
-  sectionlineLength += spacingBetweenColumns + margins + horizontalBar;
+  sectionlineLength += spacingBetweenColumns;
 
-  size_t const titleRowLength = tableTitle.length() + margins + horizontalBar;
-  size_t const maxLength = std::max( {titleRowLength, sectionlineLength} );
+  size_t const titleLineLength = tableLayout.getTitle().m_cellWidth;
+  size_t const maxLength = std::max( titleLineLength, sectionlineLength ) + margins + horizontalBar;
   if( sectionlineLength < maxLength )
   {
     size_t const paddingCharacters = maxLength - sectionlineLength;
@@ -541,7 +540,7 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
 void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
                                             size_t const nbHiddenColumns,
                                             size_t const paddingCharacters ) const
-
+{
   GEOS_LOG( GEOS_FMT( "  - adjustColumnWidth({}x{},{},{})",
                       cells.size(),
                       cells.size()>0 ? std::to_string( cells[0].size()) : "?",
@@ -598,24 +597,23 @@ void TableTextFormatter::outputTitleRow( TableLayout & tableLayout,
                                          std::ostringstream & tableOutput,
                                          string_view separatorLine ) const
 {
-  string const tableTitle = string( tableLayout.getTitle());
-  if( !tableTitle.empty() )
+  TableLayout::CellLayout const & tableTitle = tableLayout.getTitle();
+  if( !tableTitle.m_lines.empty() && !tableTitle.m_lines[0].empty() )
   {
-    tableOutput << GEOS_FMT( "{}\n", separatorLine );
-    tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, tableLayout.getBorderMargin() + 1 );
-    tableOutput << buildCell( TableLayout::Alignment::center,
-                              tableTitle,
-                              separatorLine.length() - (tableLayout.getBorderMargin() * 2) - 2 );
-    tableOutput << GEOS_FMT( "{:>{}}\n", m_verticalLine, tableLayout.getBorderMargin() + 1 );
+    for( size_t idxLine = 0; idxLine < tableTitle.m_lines.size(); idxLine++ )
+    {
+      tableOutput << GEOS_FMT( "{}\n", separatorLine );
+      tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, tableLayout.getBorderMargin() + 1 );
+      formatCell( tableOutput, tableTitle, idxLine );
+      tableOutput << GEOS_FMT( "{:>{}}\n", m_verticalLine, tableLayout.getBorderMargin() + 1 );
+    }
   }
 }
 
-void TableTextFormatter::formatCell( TableLayout & tableLayout,
-                                     std::ostringstream & tableOutput,
+void TableTextFormatter::formatCell( std::ostringstream & tableOutput,
                                      TableLayout::CellLayout const & cell,
                                      size_t idxLine ) const
 {
-  GEOS_UNUSED_VAR( tableLayout );
   tableOutput << buildCell( cell.m_alignment,
                             cell.m_lines[idxLine],
                             cell.m_cellWidth );
@@ -648,7 +646,7 @@ void TableTextFormatter::outputLines( TableLayout & tableLayout,
               tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, tableLayout.getBorderMargin() + 1 );
             }
 
-            formatCell( tableLayout, tableOutput, cell, idxSubLine );
+            formatCell( tableOutput, cell, idxSubLine );
 
             if( &cell == &(row.back()) || nbEnabledColumnTemp == 1 )
             {
@@ -667,13 +665,13 @@ void TableTextFormatter::outputLines( TableLayout & tableLayout,
             }
             if( &cell == &(row.back()) )
             {
-              formatCell( tableLayout, tableOutput, cell, idxSubLine );
+              formatCell( tableOutput, cell, idxSubLine );
               tableOutput << GEOS_FMT( "{:>{}}", m_verticalLine, tableLayout.getBorderMargin() + 1 );
             }
             nbEnabledColumnTemp--;
             break;
           case CellType::Separator:
-            formatCell( tableLayout, tableOutput, cell, idxSubLine );
+            formatCell( tableOutput, cell, idxSubLine );
             nbEnabledColumnTemp--;
             break;
           case CellType::Hidden:

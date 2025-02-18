@@ -91,7 +91,7 @@ public:
      * @param value The value to be assigned to the cell.
      * @param alignment The alignment of the cell (left, right, or center).
      */
-    CellLayout( CellType cellType, string const & value, TableLayout::Alignment alignment );
+    CellLayout( CellType cellType, string_view value, TableLayout::Alignment alignment );
   };
 
   /**
@@ -428,9 +428,9 @@ private:
   { return m_tableColumnsData; }
 
   /**
-   * @return The table name
+   * @return The table name. Returned as a const vector of strings for multiline support.
    */
-  string_view getTitle() const
+  CellLayout const & getTitle() const
   { return m_tableTitle; }
 
   /**
@@ -554,7 +554,7 @@ private:
   std::vector< size_t > m_sublineDataCounts;
   bool m_wrapLine = true;
 
-  string m_tableTitle;
+  CellLayout m_tableTitle;
 
   integer m_borderMargin;
   integer m_columnMargin;

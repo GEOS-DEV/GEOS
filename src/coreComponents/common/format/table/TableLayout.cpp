@@ -43,7 +43,7 @@ void TableLayout::addToColumns( TableLayout::Column const & column )
 
 TableLayout & TableLayout::setTitle( string_view title )
 {
-  m_tableTitle = title;
+  m_tableTitle = CellLayout( CellType::Header, title, Alignment::center );
   return *this;
 }
 
@@ -83,9 +83,9 @@ size_t TableLayout::getMaxDepth() const
   return depthMax;
 }
 
-void divideCell( std::vector< string > & lines, string const & value )
+void divideCell( std::vector< string > & lines, string_view value )
 {
-  std::istringstream strStream( value );
+  std::istringstream strStream{ string( value ) };
   std::string line;
   lines.clear();
   while( getline( strStream, line, '\n' ))
@@ -106,7 +106,7 @@ TableLayout::CellLayout::CellLayout():
   m_cellWidth( 0 )
 {}
 
-TableLayout::CellLayout::CellLayout( CellType type, string const & cellValue, TableLayout::Alignment alignment ):
+TableLayout::CellLayout::CellLayout( CellType type, string_view cellValue, TableLayout::Alignment alignment ):
   m_cellType( type ),
   m_alignment( alignment )
 {
