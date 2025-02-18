@@ -95,6 +95,7 @@ TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
+ENABLE_LVARRAY_BOUNDS_CHECK=ON
 
 eval set -- ${args}
 while :
@@ -250,9 +251,9 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOS_DIR} \
                ${BUILD_GENERATOR} \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \ 
-               -DLVARRAY_BOUNDS_CHECK=ON \
+               -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_HYPRE=${ENABLE_HYPRE} \
+               -DLVARRAY_BOUNDS_CHECK=${ENABLE_LVARRAY_BOUNDS_CHECK} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
