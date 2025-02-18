@@ -317,11 +317,12 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
   if( numDimensions != 2 )
   {
-    collectHeaders( formatterStream, tableFunction, numDimensions, valueUnit );
+    GEOS_LOG( GEOS_FMT( "[START TABLE {}] CSVing 1/ND table", tableFunction.getName()));
     collectValues( formatterStream, numDimensions, coordinates, values );
   }
   else
   {
+    GEOS_LOG( GEOS_FMT( "[START TABLE {}] CSVing 2D table", tableFunction.getName()));
     TableData2D tableData2D;
     TableData2D::TableDataHolder tableConverted;
     tableConverted = tableData2D.convertTable2D( values,
@@ -335,6 +336,7 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
     TableCSVFormatter csvFormat( tableLayout );
     formatterStream << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
   }
+  GEOS_LOG( GEOS_FMT( "[END TABLE {}]", tableFunction.getName()));
   return formatterStream.str();
 }
 
@@ -351,6 +353,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
 
   if( numDimensions == 1 && coordinates[0].size() < maxRows )
   {
+    GEOS_LOG( GEOS_FMT( "[START TABLE {}] drawing 1D table", tableFunction.getName()));
     TableData tableData;
     arraySlice1d< real64 const > const coords = coordinates[0];
     for( integer idx = 0; idx < values.size(); idx++ )
@@ -366,6 +369,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   }
   else if( numDimensions == 2 && ( coordinates[0].size() * coordinates[1].size() ) < maxRows )
   {
+    GEOS_LOG( GEOS_FMT( "[START TABLE {}] drawing 2D table", tableFunction.getName()));
     TableData2D tableData2D;
     TableData2D::TableDataHolder tableConverted;
     tableConverted = tableData2D.convertTable2D( values,
@@ -380,13 +384,14 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   }
   else
   {
-    string const tooLongOutputMsg = GEOS_FMT( "The {} table is too heavy for log output.\n"
+    GEOS_LOG( GEOS_FMT( "[START TABLE {}] drawing out of context table", tableFunction.getName()));
                                               "To visualize the table, please refer to the generated csv.",
                                               filename, maxRows );
     TableLayout const tableLayoutInfos( filename, {tooLongOutputMsg} );
     TableTextFormatter const tableLog( tableLayoutInfos );
     logOutput = tableLog.toString();
   }
+  GEOS_LOG( GEOS_FMT( "[END TABLE {}]", tableFunction.getName()));
   return logOutput;
 }
 
