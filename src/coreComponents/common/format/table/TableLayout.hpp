@@ -428,9 +428,15 @@ private:
   { return m_tableColumnsData; }
 
   /**
-   * @return The table name. Returned as a const vector of strings for multiline support.
+   * @return The table name. Returned as a for multiline support.
    */
   CellLayout const & getTitle() const
+  { return m_tableTitle; }
+
+  /**
+   * @return The table name. Returned as a for multiline support.
+   */
+  CellLayout & getTitle()
   { return m_tableTitle; }
 
   /**

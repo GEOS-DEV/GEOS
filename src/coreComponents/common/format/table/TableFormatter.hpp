@@ -160,7 +160,7 @@ private:
                              TableData const & tableData,
                              CellLayoutRows & cellsDataLayout,
                              CellLayoutRows & cellsHeaderLayout,
-                             string & separatorLine,
+                             size_t & tableTotalWidth,
                              size_t & nbEnabledColumn ) const;
 /**
  * @brief Outputs the formatted table to the provided output stream.
@@ -174,7 +174,7 @@ private:
                     std::ostringstream & tableOutput,
                     CellLayoutRows const & cellsHeader,
                     CellLayoutRows const & cellsData,
-                    string_view separatorLine,
+                    size_t tableTotalWidth,
                     size_t & nbEnabledColumn ) const;
 
   /**
@@ -226,7 +226,7 @@ private:
   void adjustTableWidth( TableLayout & tableLayout,
                          CellLayoutRows & cellsHeaderLayout,
                          CellLayoutRows & cellsDataLayout,
-                         string & separatorLine,
+                         size_t & separatorLine,
                          size_t & nbEnabledColumn ) const;
 
   /**

@@ -159,18 +159,18 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
   std::ostringstream tableOutput;
   CellLayoutRows cellsHeaderLayout;
   CellLayoutRows cellsDataLayout;
-  string separatorLine;
+  size_t tableTotalWidth = 0;
 
   TableLayout tableLayout = m_tableLayout;
   size_t nbEnabledColumn = 0;
 
   initalizeTableLayout( tableLayout, tableData,
                         cellsHeaderLayout, cellsDataLayout,
-                        separatorLine,
+                        tableTotalWidth,
                         nbEnabledColumn );
   outputTable( tableLayout, tableOutput,
                cellsHeaderLayout, cellsDataLayout,
-               separatorLine,
+               tableTotalWidth,
                nbEnabledColumn );
   return tableOutput.str();
 }
@@ -179,7 +179,7 @@ void TableTextFormatter::initalizeTableLayout( TableLayout & tableLayout,
                                                TableData const & tableData,
                                                CellLayoutRows & cellsHeaderLayout,
                                                CellLayoutRows & cellsDataLayout,
-                                               string & separatorLine,
+                                               size_t & tableTotalWidth,
                                                size_t & nbEnabledColumn ) const
 {
   setLinks( tableLayout.getColumns()  );
@@ -194,16 +194,17 @@ void TableTextFormatter::initalizeTableLayout( TableLayout & tableLayout,
 
   updateColumnMaxLength( tableLayout, cellsHeaderLayout, cellsDataLayout );
 
-  adjustTableWidth( tableLayout, cellsHeaderLayout, cellsDataLayout, separatorLine, nbEnabledColumn );
+  adjustTableWidth( tableLayout, cellsHeaderLayout, cellsDataLayout, tableTotalWidth, nbEnabledColumn );
 }
 
 void TableTextFormatter::outputTable( TableLayout & tableLayout,
                                       std::ostringstream & tableOutput,
                                       CellLayoutRows const & cellsHeader,
                                       CellLayoutRows const & cellsData,
-                                      string_view separatorLine,
+                                      size_t const tableTotalWidth,
                                       size_t & nbEnabledColumn ) const
 {
+  string const separatorLine = string( tableTotalWidth, m_horizontalLine );
   if( tableLayout.isLineBreakEnabled())
   {
     tableOutput << '\n';
@@ -491,13 +492,13 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
 void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
                                            CellLayoutRows & cellsHeaderLayout,
                                            CellLayoutRows & cellsDataLayout,
-                                           string & separatorLine,
+                                           size_t & tableTotalWidth,
                                            size_t & nbEnabledColumn ) const
 {
   size_t const margins = (size_t) tableLayout.getBorderMargin() * 2;
   size_t const horizontalBar = 2;
 
-  size_t sectionlineLength = 0;
+  size_t columnTotalWidth = 0;
   size_t nbHiddenColumns = 0;
   size_t headerColumnCount = 0;
 
@@ -513,7 +514,7 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
     }
     if( column.m_cellType == CellType::Value || column.m_cellType == CellType::Header )
     {
-      sectionlineLength += column.m_cellWidth;
+      columnTotalWidth += column.m_cellWidth;
       headerColumnCount++;
     }
   }
@@ -522,19 +523,23 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
   size_t const spacingBetweenColumns = headerColumnCount == 0 ? (size_t) tableLayout.getColumnMargin():
                                        (headerColumnCount - 1) * (size_t) tableLayout.getColumnMargin();
 
-  sectionlineLength += spacingBetweenColumns;
+  columnTotalWidth += spacingBetweenColumns;
 
-  size_t const titleLineLength = tableLayout.getTitle().m_cellWidth;
-  size_t const maxLength = std::max( titleLineLength, sectionlineLength ) + margins + horizontalBar;
-  if( sectionlineLength < maxLength )
+  size_t const titleWidth = tableLayout.getTitle().m_cellWidth;
+  size_t const maxLength = std::max( titleWidth, columnTotalWidth );
+  if( columnTotalWidth < maxLength )
   {
-    size_t const paddingCharacters = maxLength - sectionlineLength;
+    // title is wider than columns, so they need to be stretched
+    size_t const paddingCharacters = maxLength - columnTotalWidth;
     adjustColumnWidth( cellsHeaderLayout, nbHiddenColumns, paddingCharacters );
     adjustColumnWidth( cellsDataLayout, nbHiddenColumns, paddingCharacters );
-    sectionlineLength = maxLength;
+    columnTotalWidth = maxLength;
+  } else {
+    // columns are wider than the title, so it needs to be stretched
+    tableLayout.getTitle().m_cellWidth = maxLength; 
   }
 
-  separatorLine = GEOS_FMT( "{:-^{}}", m_horizontalLine, sectionlineLength );
+  tableTotalWidth = columnTotalWidth + margins + horizontalBar;
 }
 
 void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
@@ -604,9 +609,9 @@ void TableTextFormatter::outputTitleRow( TableLayout & tableLayout,
   TableLayout::CellLayout const & tableTitle = tableLayout.getTitle();
   if( !tableTitle.m_lines.empty() && !tableTitle.m_lines[0].empty() )
   {
+    tableOutput << GEOS_FMT( "{}\n", separatorLine );
     for( size_t idxLine = 0; idxLine < tableTitle.m_lines.size(); idxLine++ )
     {
-      tableOutput << GEOS_FMT( "{}\n", separatorLine );
       tableOutput << GEOS_FMT( "{:<{}}", m_verticalLine, tableLayout.getBorderMargin() + 1 );
       formatCell( tableOutput, tableTitle, idxLine );
       tableOutput << GEOS_FMT( "{:>{}}\n", m_verticalLine, tableLayout.getBorderMargin() + 1 );
