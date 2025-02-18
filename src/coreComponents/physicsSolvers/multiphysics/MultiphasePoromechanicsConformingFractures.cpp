@@ -262,7 +262,7 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
         maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
       }
       // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
-      for( localIndex row = 0; row < numRows * numComp; ++row )
+      for( localIndex row = 0; row < numRows; ++row )
       {
         derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
       }
