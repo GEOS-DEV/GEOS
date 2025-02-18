@@ -142,7 +142,7 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
 
 /**
  * @brief Subdivide the string in substrings by the specified delimiters.
- * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @tparam CONTAINER The templated class of the results container (stdVector by default).
  * @param str The string to subdivide.
  * @param delimiters String that contains the list of possible delimiters.
  * @param treatConsecutiveDelimAsOne If enabled, consecutive delimiters will be treated as one.
@@ -151,7 +151,7 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
  *                   If not enabled, those delimiters will result in in empty entries.
  * @return The container of the divided substrings.
  */
-template< template< class ... > class CONTAINER = std::vector >
+template< template< class ... > class CONTAINER = stdVector >
 CONTAINER< string > tokenize( string const & str,
                               string const & delimiters,
                               bool const treatConsecutiveDelimAsOne = true,
@@ -192,11 +192,11 @@ CONTAINER< string > tokenize( string const & str,
 /**
  * @brief Subdivide the string in substrings by whitespaces separators (see std::isspace()).
  *        Do not create any empty substrings.
- * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @tparam CONTAINER The templated class of the results container (stdVector by default).
  * @param str The string to subdivide.
- * @return CONTAINER< string > The list of the subdivided substrings (std::vector< string > for instance).
+ * @return CONTAINER< string > The list of the subdivided substrings (stdVector< string > for instance).
  */
-template< template< class ... > class CONTAINER = std::vector >
+template< template< class ... > class CONTAINER = stdVector >
 CONTAINER< string > tokenizeBySpaces( string const & str )
 {
   return tokenize< CONTAINER >( str, " \f\n\r\t\v", true, true );

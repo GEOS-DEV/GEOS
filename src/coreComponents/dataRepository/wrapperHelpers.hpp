@@ -658,7 +658,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
                    conduit::Node & fields,
                    string const & fieldName,
                    string const & topology,
-                   std::vector< string > const & componentNames )
+                   stdVector< string > const & componentNames )
 {
   GEOS_ERROR_IF_LE( var.size(), 0 );
 
@@ -717,7 +717,7 @@ void addBlueprintField( T const &,
                         conduit::Node & fields,
                         string const &,
                         string const &,
-                        std::vector< string > const & )
+                        stdVector< string > const & )
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
               "\nWas trying to write it to " << fields.path() );
@@ -728,7 +728,7 @@ template< typename T, int NDIM, int USD >
 std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
 populateMCArray( ArrayView< T const, NDIM, USD > const & var,
                  conduit::Node & node,
-                 std::vector< string > const & componentNames )
+                 stdVector< string > const & componentNames )
 {
   GEOS_ERROR_IF_LE( var.size(), 0 );
 
@@ -764,7 +764,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
 template< typename T >
 void populateMCArray( T const &,
                       conduit::Node & node,
-                      std::vector< string > const & )
+                      stdVector< string > const & )
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
               "\nWas trying to write it to " << node.path() );
@@ -828,7 +828,7 @@ int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOS_UNUSED_PARAM( var
 }
 
 template< typename T >
-int numArrayDims( std::vector< T > const & GEOS_UNUSED_PARAM( var ) )
+int numArrayDims( stdVector< T > const & GEOS_UNUSED_PARAM( var ) )
 {
   return 1;
 }

@@ -72,7 +72,7 @@ public:
   struct CellLayout
   {
     /// vector containing each cell content, separated by lines.
-    std::vector< string > m_lines;
+    stdVector< string > m_lines;
     /// The type of the cell (Header,Value, Merge, ...).
     CellType m_cellType;
     /// The alignment of the cell (left, center, right).
@@ -104,7 +104,7 @@ public:
     /// The header cell layout.
     CellLayout m_header;
     /// A vector containing all sub-columns in the column.
-    std::vector< Column > m_subColumn;
+    stdVector< Column > m_subColumn;
     /// struct containing m_alignment for the column (header and values)
     ColumnAlignement m_alignment;
 
@@ -362,7 +362,7 @@ private:
    * @param columns A vector containing all column initialized
    */
   TableLayout( string_view title,
-               std::vector< TableLayout::Column > const & columns )
+               stdVector< TableLayout::Column > const & columns )
   {
     setMargin( MarginValue::medium );
     setTitle( title );
@@ -402,7 +402,7 @@ private:
    * @param args An initializer_list containing string / column
    */
   TableLayout( string_view title,
-               std::vector< string > const & args )
+               stdVector< string > const & args )
   {
     setMargin( MarginValue::medium );
     setTitle( title );
@@ -418,13 +418,13 @@ private:
   /**
    * @return The columns vector
    */
-  std::vector< Column > & getColumns()
+  stdVector< Column > & getColumns()
   { return m_tableColumnsData; }
 
   /**
    * @return The columns vector
    */
-  std::vector< Column > const & getColumns() const
+  stdVector< Column > const & getColumns() const
   { return m_tableColumnsData; }
 
   /**
@@ -487,16 +487,16 @@ private:
 
 /**
  * @brief Get the Nb Rows object
- * @return std::vector< integer >&
+ * @return stdVector< integer >&
  */
-  std::vector< size_t > & getSublineInHeaderCounts()
+  stdVector< size_t > & getSublineInHeaderCounts()
   { return m_sublineHeaderCounts; }
 
 /**
  * @brief Get the Nb Rows object
- * @return std::vector< integer >&
+ * @return stdVector< integer >&
  */
-  std::vector< size_t > & getNbSubDataLines()
+  stdVector< size_t > & getNbSubDataLines()
   { return m_sublineDataCounts; }
 
   /**
@@ -537,7 +537,7 @@ private:
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
-  void addToColumns( std::vector< string > const & columnNames );
+  void addToColumns( stdVector< string > const & columnNames );
 
 /**
  *
@@ -547,11 +547,11 @@ private:
   void addToColumns( TableLayout::Column const & column );
 
   /// Contains the columns layout
-  std::vector< Column > m_tableColumnsData;
+  stdVector< Column > m_tableColumnsData;
   /// Contains the subdivision (line) counts for each line in header.
-  std::vector< size_t > m_sublineHeaderCounts;
+  stdVector< size_t > m_sublineHeaderCounts;
   /// Contains the subdivision (line) counts for each line in data.
-  std::vector< size_t > m_sublineDataCounts;
+  stdVector< size_t > m_sublineDataCounts;
   bool m_wrapLine = true;
 
   string m_tableTitle;

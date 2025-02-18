@@ -35,9 +35,9 @@ class TableFormatter
 
 public:
   /// Represent the TableData values
-  using RowsCellInput = std::vector< std::vector< TableData::CellData > >;
+  using RowsCellInput = stdVector< stdVector< TableData::CellData > >;
   /// Represent the Table (header or values) structured
-  using CellLayoutRows = std::vector< std::vector< TableLayout::CellLayout > >;
+  using CellLayoutRows = stdVector< stdVector< TableLayout::CellLayout > >;
 
 
 protected:
@@ -181,7 +181,7 @@ private:
    * @brief Sets parent-child relationships between columns and sub-columns.
    * @param columns A reference to a vector of `TableLayout::Column` objects.
    */
-  void setLinks( std::vector< TableLayout::Column > & columns ) const;
+  void setLinks( stdVector< TableLayout::Column > & columns ) const;
 
   /**
    * @brief Adjusts the header layout by ensuring all header layers have consistent row sizes and formats.
@@ -273,7 +273,7 @@ private:
   void outputLines( TableLayout & tableLayout,
                     CellLayoutRows const & cellsLayout,
                     std::ostringstream & tableOutput,
-                    std::vector< size_t > const & nbLinesRow,
+                    stdVector< size_t > const & nbLinesRow,
                     CellType sectionType,
                     string_view separatorLine,
                     size_t & nbEnabledColumn ) const;

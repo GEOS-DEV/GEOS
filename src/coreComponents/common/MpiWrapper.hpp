@@ -269,7 +269,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                          stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
 
   /**
    * Active blocking phased communication with multiple participants,
@@ -285,7 +285,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitOrderedCompletePhase( const int participants,
-                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                             stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
   ///@}
 
 #if !defined(GEOS_USE_MPI)
@@ -1245,7 +1245,7 @@ T MpiWrapper::maxValLoc( T localValueLocation, MPI_Comm comm )
 
   // receive "buffer"
   int const numProcs =  commSize( comm );
-  std::vector< T > recvValLoc( numProcs );
+  stdVector< T > recvValLoc( numProcs );
 
   MPI_Allgather( &localValueLocation, sizeof(T), MPI_BYTE, recvValLoc.data(), sizeof(T), MPI_BYTE, comm );
 

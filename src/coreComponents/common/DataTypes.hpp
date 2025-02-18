@@ -118,10 +118,10 @@ using buffer_unit_type = signed char;
 
 #ifdef GEOS_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
+using buffer_type = stdVector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type >;
+using buffer_type = stdVector< buffer_unit_type >;
 #endif
 
 ///@}
@@ -398,7 +398,7 @@ using real64_array = array1d< real64 >;
 
 /// A 1-dimensional array of geos::string types.
 //using string_array = string_array;
-using string_array = std::vector< string >;
+using string_array = stdVector< string >;
 
 /// A 1-dimensional array of geos::Path types
 using path_array = array1d< Path >;

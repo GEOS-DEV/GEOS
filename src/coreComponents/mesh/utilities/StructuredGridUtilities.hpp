@@ -51,7 +51,7 @@ template<> inline int dimpower< 3 >( int n ) { return n*n*n; }
 template< int dim >
 void map_index( const int index,
                 const int nnx,
-                std::vector< int > & indices );
+                stdVector< int > & indices );
 
 /// @cond DO_NOT_DOCUMENT
 
@@ -59,7 +59,7 @@ template<>
 inline
 void map_index< 1 >( const int index,
                      const int nnx,
-                     std::vector< int > & indices )
+                     stdVector< int > & indices )
 {
   GEOS_ASSERT_GT( nnx, index );
   GEOS_DEBUG_VAR( nnx );
@@ -70,7 +70,7 @@ template<>
 inline
 void map_index< 2 >( const int index,
                      const int nnx,
-                     std::vector< int > & indices )
+                     stdVector< int > & indices )
 {
   GEOS_ASSERT_GT( nnx*nnx, index );
   indices[0] = index % nnx;
@@ -81,7 +81,7 @@ template<>
 inline
 void map_index< 3 >( const int index,
                      const int nnx,
-                     std::vector< int > & indices )
+                     stdVector< int > & indices )
 {
   GEOS_ASSERT_GT( nnx*nnx*nnx, index );
   indices[0] = index % nnx;

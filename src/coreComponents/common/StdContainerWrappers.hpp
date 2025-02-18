@@ -51,14 +51,14 @@ public:
     }
   }
 };
-}
+} // namespace internal
 
 #if defined( GEOS_USE_BOUNDS_CHECK )
 template< typename T, typename Allocator = std::allocator<T> >
 using stdVector = internal::StdVectorWrapper< T, Allocator, true >;
 #else
 template< typename T, typename Allocator = std::allocator<T> >
-using stdVector = internal::StdVectorWrapper< T, Allocator, false >;
+using stdVector = std::vector< T, Allocator >;
 #endif
 
 // template< typename MapType, 
@@ -98,7 +98,7 @@ using stdVector = internal::StdVectorWrapper< T, Allocator, false >;
 //   }
 // };
 
-} //namespace internal
+//} //namespace internal
 
 // template< typename Key,
 //           typename T,

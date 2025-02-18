@@ -93,7 +93,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
 
   for( const auto & row : rowsValues )
   {
-    std::vector< string > rowConverted;
+    stdVector< string > rowConverted;
     for( const auto & item : row )
     {
       std::istringstream strStream( item.value );
@@ -220,7 +220,7 @@ void TableTextFormatter::outputTable( TableLayout & tableLayout,
   }
 }
 
-void TableTextFormatter::setLinks( std::vector< TableLayout::Column > & columns ) const
+void TableTextFormatter::setLinks( stdVector< TableLayout::Column > & columns ) const
 {
   for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
@@ -246,7 +246,7 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout & tableLayout,
 {
   cellsHeaderLayout.resize( tableLayout.getMaxDepth() );
   size_t const headerLayersCount = tableLayout.getMaxDepth();
-  std::vector< size_t > & sublineHeaderCounts = tableLayout.getSublineInHeaderCounts();
+  stdVector< size_t > & sublineHeaderCounts = tableLayout.getSublineInHeaderCounts();
   sublineHeaderCounts.resize( headerLayersCount, 1 );
 
   for( auto it = tableLayout.beginDeepFirst(); it !=  tableLayout.endDeepFirst(); ++it )
@@ -316,10 +316,10 @@ void TableTextFormatter::populateDataCellsLayout( TableLayout & tableLayout,
 {
   cellsDataLayout = {
     inputDataValues.size(),
-    std::vector< TableLayout::CellLayout >( inputDataValues[0].size(), TableLayout::CellLayout())
+    stdVector< TableLayout::CellLayout >( inputDataValues[0].size(), TableLayout::CellLayout())
   };
 
-  std::vector< size_t > & subDataLineCounts = tableLayout.getNbSubDataLines();
+  stdVector< size_t > & subDataLineCounts = tableLayout.getNbSubDataLines();
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
   {
     size_t maxLinesPerRow  = 0;
@@ -370,7 +370,7 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
                                                 CellLayoutRows & cellsHeaderLayout,
                                                 CellLayoutRows & cellsDataLayout ) const
 {
-  auto getMaxLineLength = []( std::vector< std::string > const & lines ) -> size_t
+  auto getMaxLineLength = []( stdVector< std::string > const & lines ) -> size_t
   {
     auto maxLineLength = std::max_element( lines.begin(), lines.end(),
                                            []( std::string const & a, std::string const & b ) {
@@ -397,7 +397,7 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
 
   size_t const numColumns = cellsHeaderLayout[0].size();
   //each idx per row
-  std::vector< size_t > accMaxStringColumn( cellsDataLayout.size(), 0 );
+  stdVector< size_t > accMaxStringColumn( cellsDataLayout.size(), 0 );
   for( size_t idxColumn = 0; idxColumn < numColumns; ++idxColumn )
   {
     size_t maxColumnSize = 1;
@@ -610,7 +610,7 @@ void TableTextFormatter::formatCell( TableLayout & tableLayout,
 void TableTextFormatter::outputLines( TableLayout & tableLayout,
                                       CellLayoutRows const & cellsLayout,
                                       std::ostringstream & tableOutput,
-                                      std::vector< size_t > const & nbLinesRow,
+                                      stdVector< size_t > const & nbLinesRow,
                                       CellType sectionType,
                                       string_view separatorLine,
                                       size_t & nbEnabledColumn ) const

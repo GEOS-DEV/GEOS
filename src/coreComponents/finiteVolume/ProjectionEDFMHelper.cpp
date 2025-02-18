@@ -65,7 +65,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
       CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( hostCellSubRegionIdx );
 
       // pick faces for non-neighboring pEDFM connections
-      std::vector< localIndex > const faces = selectFaces( cellSubRegion.faceList(), cellID, fracElement, fractureSubRegion );
+      stdVector< localIndex > const faces = selectFaces( cellSubRegion.faceList(), cellID, fracElement, fractureSubRegion );
       for( localIndex const faceIdx : faces )
       {
         CellDescriptor neighborCell = otherCell( faceIdx, cellID );
@@ -82,7 +82,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
   }
 }
 
-std::vector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelation const & subRegionFaces,
+stdVector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelation const & subRegionFaces,
                                                              CellDescriptor const & hostCellID,
                                                              localIndex const fracElement,
                                                              EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
@@ -95,7 +95,7 @@ std::vector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelat
   real64 distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, fracCenter, cellCenterToFracCenter );
 
   // pick faces that intersect the fracture
-  std::vector< localIndex > faces;
+  stdVector< localIndex > faces;
   for( localIndex const iface : subRegionFaces[hostCellID.index] )
   {
     if( isBoundaryFace( iface ))

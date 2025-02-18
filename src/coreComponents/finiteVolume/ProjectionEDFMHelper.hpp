@@ -96,7 +96,7 @@ private:
    * @param[in] fractureSubRegion the embeddedSurfaceSubRegion
    * @return a list of the faces that need to be disconnected.
    */
-  std::vector< localIndex > selectFaces( FixedOneToManyRelation const & subRegionFaces,
+  stdVector< localIndex > selectFaces( FixedOneToManyRelation const & subRegionFaces,
                                          CellDescriptor const & hostCellID,
                                          localIndex const fracElement,
                                          EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;

@@ -98,7 +98,7 @@ inline hid_t GetHDFArrayDataType( std::type_index const & type, hsize_t const ra
 
 HDFHistoryIO::HDFHistoryIO( string const & filename,
                             localIndex rank,
-                            std::vector< localIndex > const & dims,
+                            stdVector< localIndex > const & dims,
                             string const & name,
                             std::type_index typeId,
                             localIndex writeHead,
@@ -147,7 +147,7 @@ void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
     color = 0;
   }
 
-  std::vector< globalIndex > counts( size );
+  stdVector< globalIndex > counts( size );
   MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
 
   m_chunkSize = std::numeric_limits< hsize_t >::max( );
@@ -218,9 +218,9 @@ void HDFHistoryIO::init( bool existsOkay )
     bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
-      std::vector< hsize_t > historyFileDims( m_rank+1 );
+      stdVector< hsize_t > historyFileDims( m_rank+1 );
       historyFileDims[0] = LvArray::integerConversion< hsize_t >( m_writeLimit );
-      std::vector< hsize_t > dimChunks( m_rank+1 );
+      stdVector< hsize_t > dimChunks( m_rank+1 );
       dimChunks[0] = 1;
       for( hsize_t dd = 1; dd < m_rank+1; ++dd )
       {
@@ -230,7 +230,7 @@ void HDFHistoryIO::init( bool existsOkay )
       }
       dimChunks[1] = m_chunkSize;
       historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
-      std::vector< hsize_t > maxFileDims( historyFileDims );
+      stdVector< hsize_t > maxFileDims( historyFileDims );
       // chunking is required to create an extensible dataset
       hid_t dcplId = H5Pcreate( H5P_DATASET_CREATE );
       H5Pset_chunk( dcplId, m_rank + 1, &dimChunks[0] );
@@ -298,12 +298,12 @@ void HDFHistoryIO::write()
         hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
         hid_t filespace = H5Dget_space( dataset );
 
-        std::vector< hsize_t > fileOffset( m_rank+1 );
+        stdVector< hsize_t > fileOffset( m_rank+1 );
         fileOffset[0] = LvArray::integerConversion< hsize_t >( m_writeHead );
         // the m_globalIdxOffset will be updated for each row during the partition setup if the size has changed during buffered collection
         fileOffset[1] = LvArray::integerConversion< hsize_t >( m_globalIdxOffset );
 
-        std::vector< hsize_t > bufferedCounts( m_rank+1 );
+        stdVector< hsize_t > bufferedCounts( m_rank+1 );
         bufferedCounts[0] = LvArray::integerConversion< hsize_t >( 1 );
         bufferedCounts[1] = LvArray::integerConversion< hsize_t >( m_localIdxCounts_buffered[ row ] );
         for( hsize_t dd = 2; dd < m_rank+1; ++dd )
@@ -371,7 +371,7 @@ void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
   if( m_subcomm != MPI_COMM_NULL )
   {
     HDFFile target( m_filename, false, true, m_subcomm );
-    std::vector< hsize_t > maxFileDims( m_rank+1 );
+    stdVector< hsize_t > maxFileDims( m_rank+1 );
     maxFileDims[0] = rowLimit;
     maxFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxHighwater );
     for( hsize_t dd = 2; dd < m_rank+1; ++dd )

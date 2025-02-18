@@ -22,7 +22,7 @@
 namespace geos
 {
 
-void TableLayout::addToColumns( std::vector< string > const & columnNames )
+void TableLayout::addToColumns( stdVector< string > const & columnNames )
 {
   for( auto const & m_header : columnNames )
   {
@@ -83,7 +83,7 @@ size_t TableLayout::getMaxDepth() const
   return depthMax;
 }
 
-void divideCell( std::vector< string > & lines, string const & value )
+void divideCell( stdVector< string > & lines, string const & value )
 {
   std::istringstream strStream( value );
   std::string line;
@@ -153,7 +153,7 @@ TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
 
 TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< string > subColName )
 {
-  std::vector< TableLayout::Column > subColumns;
+  stdVector< TableLayout::Column > subColumns;
   for( auto const & name : subColName )
   {
     TableLayout::CellLayout cell{CellType::Header, name, TableLayout::Alignment::center};

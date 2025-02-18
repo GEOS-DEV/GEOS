@@ -58,7 +58,7 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string representing a row
    */
-  void addRow( std::vector< CellData > const & row );
+  void addRow( stdVector< CellData > const & row );
 
   /**
    * @brief Add a line separator to the table
@@ -74,18 +74,18 @@ public:
   /**
    * @return The rows of the table
    */
-  std::vector< std::vector< CellData > > const & getTableDataRows() const;
+  stdVector< stdVector< CellData > > const & getTableDataRows() const;
 
   /**
    * @brief Get all error messages
    * @return The vector of error messages
    */
-  std::vector< string > const & getErrorMsgs() const;
+  stdVector< string > const & getErrorMsgs() const;
 
 private:
 
   /// vector containing all rows with cell values
-  std::vector< std::vector< CellData > > m_rows;
+  stdVector< stdVector< CellData > > m_rows;
 
 };
 
@@ -106,7 +106,7 @@ public:
   {
     /// Vector containing all columns names
     /// A header value is presented as "pressure [K] = {}"
-    std::vector< string > headerNames;
+    stdVector< string > headerNames;
     /// TableData to be built
     TableData tableData;
   };
@@ -175,7 +175,7 @@ constexpr bool isCellType = std::is_same_v< T, CellType >;
 template< typename ... Args >
 void TableData::addRow( Args const &... args )
 {
-  std::vector< CellData > cells;
+  stdVector< CellData > cells;
   ( [&] {
     static_assert( has_formatter_v< decltype(args) > || isCellType< std::decay_t< decltype(args) > >, "Argument passed in addRow cannot be converted to string nor a CellType" );
     if constexpr (std::is_same_v< Args, CellType >) {

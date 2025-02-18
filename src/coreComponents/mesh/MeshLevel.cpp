@@ -305,7 +305,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   std::set< localIndex > nodeAdjacencySet;
   std::set< localIndex > edgeAdjacencySet;
   std::set< localIndex > faceAdjacencySet;
-  std::vector< std::vector< std::set< localIndex > > > elementAdjacencySet( elemManager.numRegions() );
+  stdVector< stdVector< std::set< localIndex > > > elementAdjacencySet( elemManager.numRegions() );
 
   // Add the nodes, edges, and faces connected to the volumic element.
   auto const addVolumicSupport = [&]( localIndex const er,
