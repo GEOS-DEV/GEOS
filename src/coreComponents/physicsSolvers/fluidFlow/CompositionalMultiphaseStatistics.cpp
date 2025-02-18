@@ -90,7 +90,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & regionNames )
+                                                              string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -100,7 +100,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
     // if we have to report region statistics, we have to register them first here
     if( m_computeRegionStatistics )
     {
-      for( integer i = 0; i < regionNames.size(); ++i )
+      for( size_t i = 0; i < regionNames.size(); ++i )
       {
         ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
 
@@ -197,7 +197,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & regionNames )
+                                                                          string_array const & regionNames )
   {
     if( m_computeRegionStatistics )
     {
@@ -217,7 +217,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
 
 void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const time,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames ) const
+                                                                 string_array const & regionNames ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -226,7 +226,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
   // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();
-  for( integer i = 0; i < regionNames.size(); ++i )
+  for( size_t i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
     RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
@@ -382,7 +382,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
   } );
 
   // Step 3: synchronize the results over the MPI ranks
-  for( integer i = 0; i < regionNames.size(); ++i )
+  for( size_t i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
     RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
