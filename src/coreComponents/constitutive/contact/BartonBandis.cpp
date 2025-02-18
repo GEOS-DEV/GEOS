@@ -46,6 +46,8 @@ BartonBandisUpdates BartonBandis::createKernelWrapper() const
   return KernelWrapper( m_aperture0, m_referenceNormalStress );
 }
 
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BartonBandis, string const &, Group * const )
+
 } /* namespace constitutive */
 
 } /* namespace geos */
