@@ -396,31 +396,35 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
   };
 
   size_t const numColumns = cellsHeaderLayout[0].size();
-  //each idx per row
-  std::vector< size_t > accMaxStringColumn( cellsDataLayout.size(), 0 );
+
+  // Accumulates column lengths for each line based on "MergeNext" tag.
+  std::vector< size_t > linesLength( cellsDataLayout.size(), 0 );
   for( size_t idxColumn = 0; idxColumn < numColumns; ++idxColumn )
   {
     size_t maxColumnSize = 1;
 
-    // init header column max length
-    for( size_t rowIdx = 0; rowIdx < cellsDataLayout.size(); ++rowIdx )
-    {
-      size_t const cellDataLength = getMaxLineLength( cellsDataLayout[rowIdx][idxColumn].m_lines );
-      if( idxColumn == 0 ||
-          (idxColumn > 0 && cellsDataLayout[rowIdx][idxColumn - 1].m_cellType != CellType::MergeNext))
+    
+    { // retrieves the maximum length of the current column
+      // and set each header column to maxColumnSize
+      for( size_t rowIdx = 0; rowIdx < cellsDataLayout.size(); ++rowIdx )
       {
-        maxColumnSize = std::max( maxColumnSize, cellDataLength );
+        size_t const cellDataLength = getMaxLineLength( cellsDataLayout[rowIdx][idxColumn].m_lines );
+        if( idxColumn == 0 ||
+            (idxColumn > 0 && cellsDataLayout[rowIdx][idxColumn - 1].m_cellType != CellType::MergeNext))
+        {
+          maxColumnSize = std::max( maxColumnSize, cellDataLength );
+        }
+      }
+
+      for( size_t rowIdx = 0; rowIdx < cellsHeaderLayout.size(); ++rowIdx )
+      {
+        size_t const cellHeaderLength = getMaxLineLength( cellsHeaderLayout[rowIdx][idxColumn].m_lines );
+        maxColumnSize = std::max( {maxColumnSize, cellHeaderLength} );
+        cellsHeaderLayout[rowIdx][idxColumn].m_cellWidth = maxColumnSize;
       }
     }
 
-    for( size_t rowIdx = 0; rowIdx < cellsHeaderLayout.size(); ++rowIdx )
-    {
-      size_t const cellHeaderLength = getMaxLineLength( cellsHeaderLayout[rowIdx][idxColumn].m_lines );
-      maxColumnSize = std::max( {maxColumnSize, cellHeaderLength} );
-      cellsHeaderLayout[rowIdx][idxColumn].m_cellWidth = maxColumnSize;
-    }
-
-    // update maxColumnSize for data cell
+    // updates the maximum cell size for the current column
     for( size_t rowIdx = 0; rowIdx < cellsDataLayout.size(); ++rowIdx )
     {
       TableLayout::CellLayout & dataCell = cellsDataLayout[rowIdx][idxColumn];
@@ -430,14 +434,13 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
 
       if( dataCell.m_cellType == CellType::MergeNext )
       {
-        accMaxStringColumn[rowIdx] += cellsHeaderLayout[0][idxColumn].m_cellWidth + tableLayout.getColumnMargin();
+        linesLength[rowIdx] += cellsHeaderLayout[0][idxColumn].m_cellWidth + tableLayout.getColumnMargin();
       }
-
+      
       if( idxColumn > 0 &&
           previousDataCell->m_cellType == CellType::MergeNext && dataCell.m_cellType != CellType::MergeNext )
       {
-        // root header cells know the maximum string size in the column
-        size_t const sumOfMergingCell = accMaxStringColumn[rowIdx] + cellsHeaderLayout[0][idxColumn].m_cellWidth;
+        size_t const sumOfMergingCell = linesLength[rowIdx] + cellsHeaderLayout[0][idxColumn].m_cellWidth;
         if( sumOfMergingCell <  dataCell.m_cellWidth )
         {
           maxColumnSize -= dataCell.m_cellWidth - sumOfMergingCell;
@@ -454,7 +457,7 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
           }
         }
 
-        accMaxStringColumn[rowIdx] = 0;
+        linesLength[rowIdx] = 0;
       }
       else
       {
