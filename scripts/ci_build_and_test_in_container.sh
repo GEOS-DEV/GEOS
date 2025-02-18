@@ -250,7 +250,8 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOS_DIR} \
                ${BUILD_GENERATOR} \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
+               -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \ 
+               -DLVARRAY_BOUNDS_CHECK=ON \
                -DENABLE_HYPRE=${ENABLE_HYPRE} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
