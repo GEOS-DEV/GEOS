@@ -369,9 +369,9 @@ real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTi
                                      DomainPartition & domain )
 {
   integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.minTimeStepIncreaseInterval();
-  real64 const nextDtNewton = setNextDtBasedOnIterNumber( currentDt );
-  if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDtNewton < LvArray::NumericLimits< real64 >::max )
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on number of iterations = {}", getName(), nextDtNewton ));
+  real64 const nextDtIter = setNextDtBasedOnIterNumber( currentDt );
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDtIter < LvArray::NumericLimits< real64 >::max )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on number of iterations = {}", getName(), nextDtIter ));
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDtStateChange < LvArray::NumericLimits< real64 >::max )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
@@ -383,14 +383,14 @@ real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTi
     return currentDt;
   }
 
-  if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
+  if( nextDtIter < nextDtStateChange )      // time step size decided based on convergence
   {
-    if( nextDtNewton > currentDt )
+    if( nextDtIter > currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be increased based on number of iterations.",
                                                                getName() ) );
     }
-    else if( nextDtNewton < currentDt )
+    else if( nextDtIter < currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be decreased based on number of iterations.",
                                                                getName() ) );
@@ -420,7 +420,7 @@ real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTi
     }
   }
 
-  return std::min( nextDtNewton, nextDtStateChange );
+  return std::min( nextDtIter, nextDtStateChange );
 }
 
 real64 PhysicsSolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,
