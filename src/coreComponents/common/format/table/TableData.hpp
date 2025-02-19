@@ -123,27 +123,31 @@ public:
 
   /**
    * @brief Collects all the values needed to build the table
-   * @param rowAxisValues Vector containing all row axis values
-   * @param columnAxisValues Vector containing all column axis values
-   * @param values Vector containing all table values
+   * @param dim0AxisCoordinates Vector containing all row axis values
+   * @param dim1AxisCoordinates Vector containing all column axis values
+   * @param values Array containing all table values contiguously
+   * @param columnMajorValues Set the row/column major convention
    */
-  void collectTableValues( arraySlice1d< real64 const > rowAxisValues,
-                           arraySlice1d< real64 const > columnAxisValues,
-                           arrayView1d< real64 const > values );
+  void collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
+                           arraySlice1d< real64 const > dim1AxisCoordinates,
+                           arrayView1d< real64 const > values,
+                           bool columnMajorValues );
 
   /**
    * @param values Vector containing all table values
-   * @param valueUnit The table unit value
+   * @param valueDescription The description of the value (typically, the value unit description)
+   * @param columnMajorValues Set the row/column major convention
    * @param coordinates Array containing row/column axis values
    * @param rowAxisDescription The description for a row unit value
    * @param columnAxisDescription The description for a column unit value
    * @return A struct containing the tableData converted and all header values ;
    */
-  TableData2D::TableDataHolder convertTable2D( arrayView1d< real64 const > const values,
-                                               units::Unit const valueUnit,
-                                               ArrayOfArraysView< real64 const > const coordinates,
+  TableData2D::TableDataHolder convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
                                                string_view rowAxisDescription,
-                                               string_view columnAxisDescription );
+                                               string_view columnAxisDescription,
+                                               arrayView1d< real64 const > const values,
+                                               bool columnMajorValues,
+                                               string_view valueDescription );
 
   /**
    * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table

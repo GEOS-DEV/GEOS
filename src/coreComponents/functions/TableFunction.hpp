@@ -332,11 +332,29 @@ private:
     m_valueUnit = unit;
   }
 
-/**
- * @return The table unit
- */
+  /**
+   * @return The table unit
+   */
   units::Unit getValueUnit() const { return m_valueUnit; }
 
+  /**
+   * @brief TODO
+   * @return string TODO
+   */
+  string getTableDescription() const;
+
+  /**
+   * @brief TODO
+   * @param dimId TODO
+   * @return string TODO
+   */
+  string getCoordsDescription( integer dimId ) const;
+
+  /**
+   * @brief TODO
+   * @return string TODO
+   */
+  string getValuesDescription() const;
 
   /**
    * @brief Print the table(s) in the log and/or CSV files when requested by the user.

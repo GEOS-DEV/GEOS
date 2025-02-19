@@ -50,34 +50,45 @@ std::vector< std::vector< TableData::CellData > > const & TableData::getTableDat
   return m_rows;
 }
 
-void TableData2D::collectTableValues( arraySlice1d< real64 const > rowAxisValues,
-                                      arraySlice1d< real64 const > columnAxisValues,
-                                      arrayView1d< real64 const > values )
+void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
+                                      arraySlice1d< real64 const > dim1AxisCoordinates,
+                                      arrayView1d< real64 const > values,
+                                      bool columnMajorInputValues )
 {
-  integer const nX = rowAxisValues.size();
-  integer const nY = columnAxisValues.size();
-
-  for( integer i = 0; i < nX; i++ )
+  arraySlice1d< real64 const > rowAxisCoordinates = columnMajorInputValues ? dim1AxisCoordinates : dim0AxisCoordinates;
+  arraySlice1d< real64 const > columAxisCoordinates = columnMajorInputValues ? dim0AxisCoordinates : dim1AxisCoordinates;
+  integer const nCol = columAxisCoordinates.size();
+  integer const nRow = rowAxisCoordinates.size();
+  // TODO: 1. restore the table non-blocking error system. 2. add this assert 3. add any other error to it.
+  GEOS_ASSERT( nRow * nCol == values.size() );
+  GEOS_LOG( GEOS_FMT( "Starting adding cells:\n"
+                      "  - input {} x {}\n"
+                      "  - output cols={} x rows={}",
+                      dim0AxisCoordinates.size(),
+                      dim1AxisCoordinates.size(),
+                      nCol, nRow ) );
+  // if optimisation become a concern here, we could imagine adding rows at once here, or even the whole table.
+  for( integer y = 0; y < nRow; y++ )
   {
-    for( integer y = 0; y < nY; y++ )
+    for( integer x = 0; x < nCol; x++ )
     {
-      addCell( rowAxisValues[i], columnAxisValues[y], values[ y*nX + i ] );
+      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], values[ x + y*nCol ] );
     }
   }
+  GEOS_LOG("  - SUCCESS!");
 }
 
-TableData2D::TableDataHolder TableData2D::convertTable2D( arrayView1d< real64 const > const values,
-                                                          units::Unit const valueUnit,
-                                                          ArrayOfArraysView< real64 const > const coordinates,
+TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
                                                           string_view rowAxisDescription,
-                                                          string_view columnAxisDescription )
+                                                          string_view columnAxisDescription,
+                                                          arrayView1d< real64 const > const values,
+                                                          bool columnMajorValues,
+                                                          string_view valueDescription )
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
-  collectTableValues( coordinates[0], coordinates[1], values );
-  return buildTableData( string( units::getDescription( valueUnit )),
-                         rowFmt,
-                         columnFmt );
+  collectTableValues( coordinates[0], coordinates[1], values, columnMajorValues );
+  return buildTableData( valueDescription, rowFmt, columnFmt );
 }
 
 TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit,
