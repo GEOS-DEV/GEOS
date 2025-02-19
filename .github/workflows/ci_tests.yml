@@ -27,6 +27,7 @@ jobs:
         uses: flowwer-dev/pull-request-stats@main
         with:
           period: 90
+          charts: true
 
   # Checks if PR title follows conventional semantics
   semantic_pull_request:    
