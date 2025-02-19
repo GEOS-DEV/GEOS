@@ -116,11 +116,11 @@ public:
    * @brief @return the extension of the filename
    */
   std::string extension() const
-  {
-    std::string const fname = filename();
-    size_type const pos = fname.find_last_of( '.' );
-    return pos == npos ? "" : fname.substr( pos + 1 );
-  }
+
+  /**
+   * @brief @return the complete path to the file, relative to getPathPrefix().
+   */
+  std::string relativeFilePath() const;
 
 private:
 

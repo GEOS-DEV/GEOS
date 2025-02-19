@@ -225,7 +225,8 @@ string TableFunction::getTableDescription() const
   if( !m_coordinateFiles.empty() )
   {
     for( size_t i = 0; i < numDims; ++i )
-      labels.push_back( GEOS_FMT( "Coordinates {} from file: {}", getCoordsDescription( i ), m_coordinateFiles[i] ) );
+      labels.push_back( GEOS_FMT( "Coordinates {} from file: {}",
+                                  getCoordsDescription( i ), m_coordinateFiles[i].relativeFilePath() ) );
   }
   else
   {
@@ -234,7 +235,7 @@ string TableFunction::getTableDescription() const
   }
 
   labels.push_back( !m_voxelFile.empty() ?
-                    GEOS_FMT( "Values from file: {}", m_voxelFile ) :
+                    GEOS_FMT( "Values from file: {}", m_voxelFile.relativeFilePath() ) :
                     GEOS_FMT( "Values of {}", units::getDescription( getValueUnit() ) ) );
 
   return stringutilities::join( labels, "\n" );

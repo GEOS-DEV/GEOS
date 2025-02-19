@@ -24,6 +24,14 @@
 
 namespace geos
 {
+std::string Path::relativeFilePath() const
+{ // As it may be used extensively in the log, should we store this value?
+  namespace fs = std::filesystem;
+  fs::path relativePath = fs::relative( fs::path( static_cast< std::string >( *this ) ),
+                                        fs::path( pathPrefix() ) );
+  return relativePath.generic_string();
+}
+
 
 std::string getAbsolutePath( std::string const & path )
 {
