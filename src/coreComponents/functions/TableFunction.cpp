@@ -283,9 +283,9 @@ void collectHeaders( std::ostringstream & formatterStream,
 {
   for( integer d = 0; d < numDimensions; d++ )
   {
-    formatterStream << tableFunction.getCoordsDescription( d ) << ",";
+    formatterStream << units::getDescription( tableFunction.getDimUnit( d )) << ",";
   }
-  formatterStream << tableFunction.getValuesDescription() << "\n";
+  formatterStream << units::getDescription( valueUnit ) << "\n";
 }
 
 /**
