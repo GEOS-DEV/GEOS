@@ -175,7 +175,6 @@ jobs:
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
             BUILD_SHARED_LIBS: ON
             ENABLE_LVARRAY_BOUNDS_CHECK: OFF
             HOST_CONFIG: /spack-generated.cmake
@@ -183,6 +182,7 @@ jobs:
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+            GCP_BUCKET: geosx/ubuntu22.04-gcc12
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
@@ -214,6 +214,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      ENABLE_LVARRAY_BOUNDS_CHECK: ${{ matrix.ENABLE_LVARRAY_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ubuntu-22.04
@@ -412,6 +413,7 @@ jobs:
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      ENABLE_LVARRAY_BOUNDS_CHECK: ${{ matrix.ENABLE_LVARRAY_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_ARCH: ${{ matrix.HOST_ARCH }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
