@@ -195,7 +195,7 @@ jobs:
 
         # Additional compiler flags
         if [ ! -z "${{ inputs.USE_MCMODEL_LARGE }}" ]; then
-          script_args+=(--cxx-flags "${{ inputs.USE_MCMODEL_LARGE }}")
+          script_args+=(--mcmodel-large "${{ inputs.USE_MCMODEL_LARGE }}")
         fi
 
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
