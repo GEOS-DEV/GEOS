@@ -115,7 +115,6 @@ void VTKMeshGenerator::postInputInitialization()
 
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
 {
-  std::cout << " dsfkiksdjsdf "<< std::endl;
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 

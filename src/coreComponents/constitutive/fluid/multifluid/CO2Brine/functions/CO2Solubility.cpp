@@ -167,7 +167,6 @@ makeSolubilityTables( string const & functionName,
     {
       real64 const T = tableCoords.getTemperature( j );
       //co2Solubility[j*nPressures+i] = -0.01;
-      std::cout << " mm " << co2Solubility[j*nPressures+i] << " - " << h2oSolubility[j*nPressures+i] << std::endl;
       if( co2Solubility[j*nPressures+i] < 0.0 || h2oSolubility[j*nPressures+i] < 0.0 )
       {
         badValues( badCount % maxBad, 0 ) = P;

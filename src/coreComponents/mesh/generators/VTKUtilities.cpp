@@ -1902,6 +1902,15 @@ void printMeshStatistics( vtkDataSet & mesh,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
+  std::cout << "printMeshStatistics " << std::endl;
+  auto accumulateElemsCount = []( std::map< ElementType, globalIndex > & elemsTarget ) -> globalIndex
+  {
+    return std::accumulate(
+      std::begin( elemsTarget ), std::end( elemsTarget ), globalIndex{0},   // initial value of the sum
+      []( std::size_t const previous, auto const & elems )
+    { return previous + elems.second; } );
+  };
+
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
 
@@ -1939,37 +1948,32 @@ void printMeshStatistics( vtkDataSet & mesh,
     avgLocalElemsCounts[typeToCells.first] =  MpiWrapper::max( numLocalElems );
     maxLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( numLocalElems ) / size );
   }
-
-  // localIndex const minLocalElems = MpiWrapper::min( numLocalElems );
-  // localIndex const maxLocalElems = MpiWrapper::max( numLocalElems );
-  // localIndex const avgLocalElems = LvArray::integerConversion< localIndex >( numGlobalElems / size );
-
+  std::cout << "numLocalElems :" << numLocalElems << std::endl;
   if( rank == 0 )
   {
-    // std::vector< string > elemsHeader;
-    // std::vector< globalIndex > elemsValues;
-    // elemsHeader.reserve( elemCounts.size());
-    // elemsValues.reserve( elemCounts.size());
 
-    // for( auto const & typeCount: elemCounts )
-    // {
-    //   elemsHeader.emplace_back( toString( typeCount.first ));
-    //   elemsValues.emplace_back( typeCount.second );
-    // }
+    auto sumOfElemsType = accumulateElemsCount( elemCounts );
+    auto sumOfMinElemsType = accumulateElemsCount( minLocalElemsCounts );
+    auto sumOfAvgElemsType = accumulateElemsCount( avgLocalElemsCounts );
+    auto sumOfMaxElemsType = accumulateElemsCount( maxLocalElemsCounts );
 
     TableLayout const elemsLayout( "Load balancing, element / rank",
-                                   {"Element type",
-                                    "Total over ranks",
-                                    "minimum",
-                                    "average",
-                                    "maximum" } );
+                                   { TableLayout::Column()
+                                       .setName( "Element type" )
+                                       .setValuesAlignment( TableLayout::Alignment::left ),
+                                     "Total over ranks",
+                                     "minimum",
+                                     "average",
+                                     "maximum" } );
     TableData elemsData;
     elemsData.addRow( "nodes", sumGlobalNodes, minGlobalNodes, avgGlobalNodes, maxGlobalNodes );
+    elemsData.addSeparator();
     for( auto const & typeCount: elemCounts )
     {
-      elemsData.addRow( typeCount.first , typeCount.second,
+      elemsData.addRow( typeCount.first, typeCount.second,
                         minLocalElemsCounts[typeCount.first], avgLocalElemsCounts[typeCount.first], maxLocalElemsCounts[typeCount.first] );
     }
+    elemsData.addRow( "total elements", sumOfElemsType, sumOfMinElemsType, sumOfAvgElemsType, sumOfMaxElemsType );
     TableTextFormatter elemsText( elemsLayout );
     GEOS_LOG_RANK_0( elemsText.toString( elemsData ));
   }
