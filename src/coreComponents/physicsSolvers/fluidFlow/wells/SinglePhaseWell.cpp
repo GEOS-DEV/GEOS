@@ -102,12 +102,14 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       // write rates output header
       if( m_writeCSV > 0 && subRegion.isLocallyOwned())
       {
-        string const wellControlsName = wellControls.getName();
+        string const fileName = GEOS_FMT( "{}/{}.csv", m_ratesOutputDir, wellControls.getName() );
         integer const useSurfaceConditions = wellControls.useSurfaceConditions();
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
         // format: time,bhp,total_rate,total_vol_rate
-        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
+        makeDirsForPath( m_ratesOutputDir );
+        GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+        std::ofstream outputFile( fileName );
         outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
         outputFile.close();
       }
