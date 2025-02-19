@@ -10,11 +10,3 @@ jobs:
     steps:
       - name: Run pull request stats
         uses: flowwer-dev/pull-request-stats@main
-        with:
-          token: ${{ secrets.ADD_A_PERSONAL_ACCESS_TOKEN }}
-          organization: 'piedpiper'
-          period: 7
-          charts: true
-          disableLinks: true
-          sortBy: 'totalComments'
-          stats: 'totalComments,openedPullRequests,totalReviews'
