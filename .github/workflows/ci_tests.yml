@@ -16,6 +16,13 @@ concurrency:
 # Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
+
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run pull request stats
+        uses: flowwer-dev/pull-request-stats@main
+
   # Checks if PR title follows conventional semantics
   semantic_pull_request:    
     permissions:
