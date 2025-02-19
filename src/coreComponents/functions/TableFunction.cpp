@@ -370,13 +370,11 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
   if( numDimensions != 2 )
   {
-    GEOS_LOG( GEOS_FMT( "[START TABLE {}] CSVing 1/ND table", tableFunction.getName()));
     collectHeaders( formatterStream, tableFunction, numDimensions );
     collectValues( formatterStream, numDimensions, coordinates, values );
   }
   else
   {
-    GEOS_LOG( GEOS_FMT( "[START TABLE {}] CSVing 2D table", tableFunction.getName()));
     TableData2D tableData2D;
     TableData2D::TableDataHolder tableConverted;
     tableConverted = tableData2D.convertTable2D( coordinates,
@@ -391,7 +389,6 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
     TableCSVFormatter csvFormat( tableLayout );
     formatterStream << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
   }
-  GEOS_LOG( GEOS_FMT( "[END TABLE {}]", tableFunction.getName()));
   return formatterStream.str();
 }
 
@@ -407,7 +404,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
 
   if( numDimensions == 1 && coordinates[0].size() < maxRows )
   {
-    GEOS_LOG( GEOS_FMT( "[START TABLE {}] drawing 1D table", tableFunction.getName()));
     TableData tableData;
     arraySlice1d< real64 const > const coords = coordinates[0];
     for( integer idx = 0; idx < values.size(); idx++ )
@@ -423,28 +419,22 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   }
   else if( numDimensions == 2 && ( coordinates[0].size() * coordinates[1].size() ) < maxRows )
   {
-    GEOS_LOG( GEOS_FMT( "[START TABLE {}] drawing 2D table", tableFunction.getName()));
-    for (int i=0;i<=1;++i) {
-    GEOS_LOG( "Column major mode = "<<i );
     TableData2D tableData2D;
     TableData2D::TableDataHolder tableConverted;
     tableConverted = tableData2D.convertTable2D( coordinates,
-                                                tableFunction.getCoordsDescription( 1 ),
-                                                tableFunction.getCoordsDescription( 0 ),
-                                                values,
-                                                bool(i),
-                                                tableFunction.getValuesDescription() );
+                                                 tableFunction.getCoordsDescription( 1 ),
+                                                 tableFunction.getCoordsDescription( 0 ),
+                                                 values,
+                                                 true,
+                                                 tableFunction.getValuesDescription() );
 
     TableLayout const tableLayout = TableLayout( tableTitle, tableConverted.headerNames ).
                                       setMargin( TableLayout::MarginValue::small );
     TableTextFormatter const table2DLog( tableLayout );
     logOutput =  table2DLog.toString( tableConverted.tableData );
-    GEOS_LOG(logOutput);//test
-    }
   }
   else
   {
-    GEOS_LOG( GEOS_FMT( "[START TABLE {}] drawing out of context table", tableFunction.getName()));
     string const tooLongOutputMsg = GEOS_FMT( "The table is too heavy for log output.\n"
                                               "To visualize the table, please refer to the generated csv.",
                                               maxRows );
@@ -452,7 +442,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     TableTextFormatter const tableLog( tableLayoutInfos );
     logOutput = tableLog.toString();
   }
-  GEOS_LOG( GEOS_FMT( "[END TABLE {}]", tableFunction.getName()));
   return logOutput;
 }
 

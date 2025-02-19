@@ -61,13 +61,6 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
   integer const nRow = rowAxisCoordinates.size();
   // TODO: 1. restore the table non-blocking error system. 2. add this assert 3. add any other error to it.
   GEOS_ASSERT( nRow * nCol == values.size() );
-  GEOS_LOG( GEOS_FMT( "Starting adding cells:\n"
-                      "  - input {} x {}\n"
-                      "  - output cols={} x rows={}",
-                      dim0AxisCoordinates.size(),
-                      dim1AxisCoordinates.size(),
-                      nCol, nRow ) );
-  // if optimisation become a concern here, we could imagine adding rows at once here, or even the whole table.
   for( integer y = 0; y < nRow; y++ )
   {
     for( integer x = 0; x < nCol; x++ )
@@ -75,7 +68,6 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
       addCell( rowAxisCoordinates[y], columAxisCoordinates[x], values[ x + y*nCol ] );
     }
   }
-  GEOS_LOG("  - SUCCESS!");
 }
 
 TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< real64 const > const coordinates,

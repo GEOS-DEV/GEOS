@@ -546,11 +546,6 @@ void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
                                             size_t const nbHiddenColumns,
                                             size_t const paddingCharacters ) const
 {
-  GEOS_LOG( GEOS_FMT( "  - adjustColumnWidth({}x{},{},{})",
-                      cells.size(),
-                      cells.size()>0 ? std::to_string( cells[0].size()) : "?",
-                      nbHiddenColumns, paddingCharacters ));
-
   // we abort if there is no lines, no columns, or if every column is hidden.
   if( cells.size() == 0 || cells[0].size() == 0 || nbHiddenColumns >= cells[0].size() )
     return;
@@ -563,13 +558,10 @@ void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
   {
     for( size_t idxColumn = 0; idxColumn < nbColumns; ++idxColumn )
     {
-      GEOS_LOG( GEOS_FMT( "  |---> adjusting cell[{},{}]", idxColumn, idxRow ) );
       auto & currentCell = cells[idxRow][idxColumn];
-      GEOS_LOG( GEOS_FMT( "  |     -> accessing cell", "" ) );
 
       if( currentCell.m_cellType != CellType::Hidden )
       {
-        GEOS_LOG( GEOS_FMT( "  |     -> iterating over next columns", "" ) );
         size_t nextIdxColumn = idxColumn + 1;
         while( nextIdxColumn < nbColumns &&
                cells[idxRow][nextIdxColumn].m_cellType == CellType::Hidden )
@@ -578,7 +570,6 @@ void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
         }
         bool isLastVisibleColumn = nextIdxColumn == nbColumns;
 
-        GEOS_LOG( GEOS_FMT( "  |     -> iterating over previous cells", "" ) );
         if( idxColumn > 0 && cells[idxRow][idxColumn - 1].m_cellType == CellType::MergeNext )
         {
           auto * previousCell = &cells[idxRow][idxColumn - 1];
@@ -586,20 +577,14 @@ void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
           previousCell->m_cellWidth = 0;
         }
 
-        GEOS_LOG( GEOS_FMT( "  |     -> computing additionnal padding", "" ) );
         size_t const additionalPadding = (isLastVisibleColumn || idxColumn == nbColumns - 1) ?
                                          remainingPaddingForLastColumn :
                                          0;
 
         currentCell.m_cellWidth += paddingPerColumn + additionalPadding;
-        GEOS_LOG( GEOS_FMT( "  |     -> cell completed", "" ) );
-        GEOS_LOG( GEOS_FMT( "  |", "" ) );
       }
     }
   }
-  GEOS_LOG( GEOS_FMT( "  |---> ended adjusting", "" ) );
-  GEOS_LOG( GEOS_FMT( "", "" ) );
-
 }
 
 void TableTextFormatter::outputTitleRow( TableLayout & tableLayout,
