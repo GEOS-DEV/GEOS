@@ -321,7 +321,7 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             WellElementSubRegion & subRegion )
