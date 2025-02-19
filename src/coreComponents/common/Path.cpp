@@ -21,9 +21,24 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <vector>
+#include <filesystem>
 
 namespace geos
 {
+
+std::string Path::filename() const
+{
+  size_type const pos = find_last_of( '/' );
+  return pos == npos ? static_cast< std::string >( *this ) : substr( pos + 1 );
+}
+
+std::string Path::extension() const
+{
+  std::string const fname = filename();
+  size_type const pos = fname.find_last_of( '.' );
+  return pos == npos ? "" : fname.substr( pos + 1 );
+}
+
 std::string Path::relativeFilePath() const
 { // As it may be used extensively in the log, should we store this value?
   namespace fs = std::filesystem;
@@ -32,6 +47,11 @@ std::string Path::relativeFilePath() const
   return relativePath.generic_string();
 }
 
+std::string & Path:: pathPrefix()
+{
+  static std::string s_pathPrefix = "";
+  return s_pathPrefix;
+}
 
 std::string getAbsolutePath( std::string const & path )
 {
