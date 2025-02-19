@@ -495,10 +495,11 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
                                            size_t & tableTotalWidth,
                                            size_t & nbEnabledColumn ) const
 {
+  // first, gather columns activation & width
   size_t const margins = (size_t) tableLayout.getBorderMargin() * 2;
   size_t const horizontalBar = 2;
 
-  size_t columnTotalWidth = 0;
+  size_t columnsTotalWidth = 0;
   size_t nbHiddenColumns = 0;
   size_t headerColumnCount = 0;
 
@@ -514,32 +515,32 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
     }
     if( column.m_cellType == CellType::Value || column.m_cellType == CellType::Header )
     {
-      columnTotalWidth += column.m_cellWidth;
+      columnsTotalWidth += column.m_cellWidth;
       headerColumnCount++;
     }
   }
 
-
+  // take into account inter-columns spacings
   size_t const spacingBetweenColumns = headerColumnCount == 0 ? (size_t) tableLayout.getColumnMargin():
                                        (headerColumnCount - 1) * (size_t) tableLayout.getColumnMargin();
+  columnsTotalWidth += spacingBetweenColumns;
 
-  columnTotalWidth += spacingBetweenColumns;
-
-  size_t const titleWidth = tableLayout.getTitle().m_cellWidth;
-  size_t const maxLength = std::max( titleWidth, columnTotalWidth );
-  if( columnTotalWidth < maxLength )
-  {
-    // title is wider than columns, so they need to be stretched
-    size_t const paddingCharacters = maxLength - columnTotalWidth;
+  // then, we can compute the global width of the table (and stretch in case of need)
+  size_t & titleWidth = tableLayout.getTitle().m_cellWidth;
+  tableTotalWidth = std::max( titleWidth, columnsTotalWidth );
+  if( columnsTotalWidth < tableTotalWidth )
+  { // title is wider than the columns, so they need to be stretched
+    size_t const paddingCharacters = tableTotalWidth - columnsTotalWidth;
     adjustColumnWidth( cellsHeaderLayout, nbHiddenColumns, paddingCharacters );
     adjustColumnWidth( cellsDataLayout, nbHiddenColumns, paddingCharacters );
-    columnTotalWidth = maxLength;
-  } else {
-    // columns are wider than the title, so it needs to be stretched
-    tableLayout.getTitle().m_cellWidth = maxLength; 
+    columnsTotalWidth = tableTotalWidth;
+  }
+  else if ( titleWidth < tableTotalWidth )
+  { // columns are wider than the title, so it needs to be stretched
+    titleWidth = tableTotalWidth;
   }
 
-  tableTotalWidth = columnTotalWidth + margins + horizontalBar;
+  tableTotalWidth += margins + horizontalBar;
 }
 
 void TableTextFormatter::adjustColumnWidth( CellLayoutRows & cells,
