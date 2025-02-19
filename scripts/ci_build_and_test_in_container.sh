@@ -95,6 +95,7 @@ TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
+ENABLE_LVARRAY_BOUNDS_CHECK=ON
 
 eval set -- ${args}
 while :
@@ -118,6 +119,7 @@ do
       fi
       unset DATA_BASENAME DATA_BASENAME_EXT
       shift 2;;
+    --enable-lvarray-bounds-check) ENABLE_LVARRAY_BOUNDS_CHECK=$2; shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
@@ -227,13 +229,6 @@ if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get install -y lcov
 fi
 
-if [[ "${RUN_INTEGRATED_TESTS}" = true ]] || [[ "${RUN_UNIT_TESTS}" = true ]]; then
-  LVARRAY_BOUNDS_CHECK=ON
-else
-  LVARRAY_BOUNDS_CHECK=OFF
-fi
-
-
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
@@ -261,7 +256,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
-               -DLVARRAY_BOUNDS_CHECK=${LVARRAY_BOUNDS_CHECK} \
+               -DLVARRAY_BOUNDS_CHECK=${ENABLE_LVARRAY_BOUNDS_CHECK} \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
