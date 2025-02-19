@@ -19,13 +19,14 @@ jobs:
 
   stats:
     runs-on: ubuntu-latest
-    period: 180
     permissions:
       contents: read
       pull-requests: write
     steps:
       - name: Run pull request stats
         uses: flowwer-dev/pull-request-stats@main
+        with:
+          period: 180
 
   # Checks if PR title follows conventional semantics
   semantic_pull_request:    
