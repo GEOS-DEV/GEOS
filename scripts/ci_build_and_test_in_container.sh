@@ -258,7 +258,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
-               -DGEOS_USE_LARGE_MEM_MODELT="${GEOS_USE_LARGE_MEM_MODEL}" \
+               -DGEOS_USE_LARGE_MEM_MODEL="${GEOS_USE_LARGE_MEM_MODEL}" \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
