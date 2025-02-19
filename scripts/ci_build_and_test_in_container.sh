@@ -229,6 +229,8 @@ if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get install -y lcov
 fi
 
+echo "LVARRAY_BOUNDS_CHECK IS ${ENABLE_LVARRAY_BOUNDS_CHECK}"
+
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
