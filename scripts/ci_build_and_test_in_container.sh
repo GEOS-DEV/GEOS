@@ -258,7 +258,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
-               -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS:+${CMAKE_CXX_FLAGS} }${CXX_FLAGS}" \
+               -DCMAKE_CXX_FLAGS_INIT="${CXX_FLAGS}" \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
