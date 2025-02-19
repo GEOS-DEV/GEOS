@@ -158,6 +158,7 @@ TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list<
   {
     TableLayout::CellLayout cell{CellType::Header, name, TableLayout::Alignment::center};
     TableLayout::Column col{cell};
+    col.m_alignment = m_alignment;
     subColumns.emplace_back( col );
   }
   m_subColumn = subColumns;
@@ -171,6 +172,7 @@ TableLayout::Column & TableLayout::Column::addSubColumns( std::vector< string > 
   {
     TableLayout::CellLayout cell{CellType::Header, name, TableLayout::Alignment::center};
     TableLayout::Column col{cell};
+    col.m_alignment = m_alignment;
     subColumns.emplace_back( col );
   }
   m_subColumn = subColumns;
@@ -187,6 +189,7 @@ TableLayout::Column & TableLayout::Column::addSubColumns( string const & subColN
 {
   TableLayout::CellLayout cell{CellType::Header, subColName, TableLayout::Alignment::center};
   TableLayout::Column col{cell};
+  col.m_alignment = m_alignment;
   this->m_subColumn.push_back( col );
   return *this;
 }
