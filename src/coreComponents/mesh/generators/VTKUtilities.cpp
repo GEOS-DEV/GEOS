@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -72,6 +72,7 @@
 
 namespace geos
 {
+using namespace dataRepository;
 
 namespace vtk
 {
@@ -564,7 +565,7 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames )
+                         string_array const & faceBlockNames )
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
@@ -745,8 +746,7 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   {
     // Add global ids on the fly if needed
     int const me = hasGlobalIds( mesh );
-    int everyone;
-    MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOS );
+    int const everyone = MpiWrapper::allReduce( me, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
 
     if( everyone and not me )
     {
@@ -1816,36 +1816,6 @@ void fillCellBlock( vtkDataSet & mesh,
   }
 }
 
-/**
- * @brief Returns a string describing the element.
- * @param[in] type The element type.
- * @return The name.
- * @warning This information will be visible in the input file... Consider refactoring with great care.
- */
-string getElementTypeName( ElementType const type )
-{
-  switch( type )
-  {
-    case ElementType::Hexahedron:  return "hexahedra";
-    case ElementType::Tetrahedron: return "tetrahedra";
-    case ElementType::Wedge:       return "wedges";
-    case ElementType::Pyramid:     return "pyramids";
-    case ElementType::Prism5:      return "pentagonalPrisms";
-    case ElementType::Prism6:      return "hexagonalPrisms";
-    case ElementType::Prism7:      return "heptagonalPrisms";
-    case ElementType::Prism8:      return "octagonalPrisms";
-    case ElementType::Prism9:      return "nonagonalPrisms";
-    case ElementType::Prism10:     return "decagonalPrisms";
-    case ElementType::Prism11:     return "hendecagonalPrisms";
-    case ElementType::Polyhedron:  return "polyhedra";
-    default:
-    {
-      GEOS_ERROR( "Element type '" << type << "' is not supported" );
-      return {};
-    }
-  }
-}
-
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
@@ -2034,7 +2004,7 @@ void importNodesets( integer const logLevel,
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
 
-  for( int i=0; i < nodesetNames.size(); ++i )
+  for( size_t i=0; i < nodesetNames.size(); ++i )
   {
     GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
@@ -2142,7 +2112,7 @@ void writeCells( integer const logLevel,
       GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
 
       // Create and resize the cell block.
-      CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
+      CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName, regionId );
       cellBlock.setElementType( elemType );
       cellBlock.resize( LvArray::integerConversion< localIndex >( cellIds.size() ) );
 

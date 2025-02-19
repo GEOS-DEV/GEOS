@@ -12,7 +12,7 @@
         directParallel="0"/>
     </SinglePhasePoromechanics>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="LinearElasticitySolver"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
@@ -47,7 +47,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ fluid, porousRock }"/>
   </ElementRegions>
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -23,6 +23,7 @@
 
 using namespace geos;
 using namespace geos::testing;
+using namespace geos::dataRepository;
 using namespace geos::constitutive;
 
 static constexpr char const * pvdgTableContent = "# Pg(Pa) Bg(m3/sm3) Visc(Pa.s)\n"
@@ -109,10 +110,10 @@ template< bool FROM_TABLE >
 void MultiFluidDeadOilTest< FROM_TABLE >::fillPhysicalProperties( DeadOilFluid & fluid )
 {
   string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  fill< 3 >( phaseNames, {"oil", "water", "gas"} );
+  phaseNames = {"oil", "water", "gas"};
 
   string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-  fill< 3 >( compNames, {"oil", "water", "gas"} );
+  compNames = {"oil", "water", "gas"};
 
   array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   fill< 3 >( molarWgt, {114e-3, 18e-3, 16e-3} );
@@ -185,10 +186,10 @@ DeadOilFluid * MultiFluidDeadOilTest< true >::makeDeadOilFluid( string const & n
   fillPhysicalProperties( fluid );
 
   string_array & FVFTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::formationVolumeFactorTableNamesString() );
-  fill< 2 >( FVFTableNames, {"PVDG_Bg", "PVDO_Bo"} );
+  FVFTableNames =  {"PVDG_Bg", "PVDO_Bo"};
 
   string_array & viscosityTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::viscosityTableNamesString() );
-  fill< 2 >( viscosityTableNames, {"PVDG_visc", "PVDO_visc"} );
+  viscosityTableNames = {"PVDG_visc", "PVDO_visc"};
 
   real64 & waterRefPressure = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterRefPressureString() );
   waterRefPressure = 30600000.1;

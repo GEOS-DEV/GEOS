@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -96,7 +96,8 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::elementTypesString(), &m_elementType ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Element types of each mesh block" );
+    setDescription( GEOS_FMT( "Element types of each mesh block. Use \"C3D8\" for linear brick element. Possible values are: {}.",
+                              stringutilities::join( EnumStrings< ElementType >::get(), ", " ) ) );
 
   registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
@@ -160,12 +161,11 @@ void InternalMeshGenerator::postInputInitialization()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( m_elementType.size() != m_numElePerBox.size() )
+  if( LvArray::integerConversion< int >( m_elementType.size() ) != m_numElePerBox.size() )
   {
     if( m_elementType.size() == 1 )
     {
-      string const elementType = m_elementType[0];
-      m_elementType.resizeDefault( m_numElePerBox.size(), elementType );
+      m_elementType.resize( m_numElePerBox.size(), m_elementType[0] );
     }
     else
     {
@@ -193,12 +193,11 @@ void InternalMeshGenerator::postInputInitialization()
     {
       numBlocks *= m_nElems[i].size();
     }
-    if( numBlocks != m_regionNames.size() )
+    if( numBlocks != LvArray::integerConversion< localIndex >( m_regionNames.size()) )
     {
       if( m_regionNames.size() == 1 )
       {
-        string const regionName = m_regionNames[0];
-        m_regionNames.resizeDefault( numBlocks, regionName );
+        m_regionNames.resize(numBlocks, m_regionNames[0]);
       }
       else
       {
@@ -602,10 +601,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       elemCenterCoordsLocal[k] = m_min[dim] + ( m_max[dim] - m_min[dim] ) * ( k + 0.5 ) / m_numElemsTotal[dim];
     }
-    MpiWrapper::allReduce( elemCenterCoordsLocal.data(),
-                           elemCenterCoords[dim].data(),
-                           m_numElemsTotal[dim],
-                           MPI_MAX,
+    MpiWrapper::allReduce( elemCenterCoordsLocal,
+                           elemCenterCoords[dim],
+                           MpiWrapper::Reduction::Max,
                            MPI_COMM_GEOS );
   }
 
@@ -795,7 +793,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   {
     array1d< integer > numElements;
-    array1d< string > elementRegionNames;
+    string_array elementRegionNames;
     std::map< string, localIndex > localElemIndexInRegion;
 
     for( auto const & numElemsInRegion : numElemsInRegions )
@@ -809,7 +807,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
     // Assign global numbers to elements
     regionOffset = 0;
-    SortedArray< string > processedRegionNames;
     localIndex iR = 0;
 
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -108,19 +108,13 @@ using TestTypes = ::testing::Types< int,
                                     std::vector< int >,
                                     // std::vector< string > bufferOps currently can't pack this
                                     array1d< double >,
-                                    array1d< string >,
+                                    string_array,
                                     array1d< array1d< double > >,
-                                    array1d< array1d< string > >,
                                     array2d< double >,
-                                    array2d< string >,
                                     array2d< double, RAJA::PERM_JI >,
-                                    array2d< string, RAJA::PERM_JI >,
                                     array3d< double >,
-                                    array3d< string >,
                                     array3d< double, RAJA::PERM_KJI >,
-                                    array3d< string, RAJA::PERM_IKJ >,
                                     SortedArray< int >,
-                                    SortedArray< string >,
                                     map< string, int >,
                                     unordered_map< string, int >,
                                     map< long, int >,

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -98,14 +98,14 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
   integer const NC = numFluidComponents();
   integer const NP = numFluidPhases();
 
-  auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
+  auto const checkInputSize = [&]( auto const & array, auto const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                           InputError );
 
   };
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+  checkInputSize( m_equationsOfState, LvArray::integerConversion< size_t >( NP ), viewKeyStruct::equationsOfStateString() );
   checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
   checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );

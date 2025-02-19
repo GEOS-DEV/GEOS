@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -55,9 +55,9 @@ void checkDerivative( arraySlice1d< real64 const, USD1 > const & valueEps,
                       real64 const absTol,
                       string const & name,
                       string const & var,
-                      arrayView1d< string const > const & labels )
+                      string_array const & labels )
 {
-  localIndex const size = labels.size( 0 );
+  localIndex const size = labels.size();
 
   for( localIndex i = 0; i < size; ++i )
   {
@@ -75,10 +75,10 @@ void checkDerivative( ArraySlice< real64 const, DIM, USD1 > const & valueEps,
                       real64 const absTol,
                       string const & name,
                       string const & var,
-                      arrayView1d< string const > const & labels,
+                      string_array const & labels,
                       Args ... label_lists )
 {
-  localIndex const size = labels.size( 0 );
+  localIndex const size = labels.size();
 
   for( localIndex i = 0; i < size; ++i )
   {
@@ -95,7 +95,7 @@ void checkDerivative( ArraySlice< real64 const, DIM, USD1 > const & valueEps,
                       real64 const relTol,
                       string const & name,
                       string const & var,
-                      arrayView1d< string const > const & labels,
+                      string_array const & labels,
                       Args ... label_lists )
 { return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, label_lists ... ); }
 

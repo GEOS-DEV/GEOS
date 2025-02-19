@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -33,9 +33,6 @@ namespace geos
 namespace testing
 {
 
-using namespace geos::constitutive;
-using namespace geos::constitutive::multifluid;
-
 inline
 void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             arrayView1d< real64 const > const & residualOrig,
@@ -50,6 +47,19 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
     {
       jacobian.addToRow< parallelDeviceAtomic >( row, &dofIndex, &dRdX, 1 );
     }
+  } );
+}
+
+inline
+void setNumericalJacobianValue( localIndex const rowIndex,
+                                globalIndex const colIndex,
+                                real64 const val,
+                                CRSMatrixView< real64, const globalIndex > const jacobian )
+{
+  forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    GEOS_UNUSED_VAR( k );
+    jacobian.addToRow< parallelDeviceAtomic >( rowIndex, &colIndex, &val, 1 );
   } );
 }
 
@@ -104,7 +114,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -114,8 +124,8 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-      arrayView1d< string const > const & components = fluid.componentNames();
+      constitutive::MultiFluidBase const & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
+      string_array const & components = fluid.componentNames();
 
       arrayView2d< real64, compflow::USD_COMP > const compDens =
         subRegion.getField< fields::flow::globalCompDensity >();
@@ -181,7 +191,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
                                                   real64 const perturbParameter,
                                                   real64 const relTol )
 {
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
@@ -189,7 +199,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -199,9 +209,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-      arrayView1d< string const > const & components = fluid.componentNames();
-      arrayView1d< string const > const & phases = fluid.phaseNames();
+      constitutive::MultiFluidBase const & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
+      string_array const & components = fluid.componentNames();
+      string_array const & phases = fluid.phaseNames();
 
       arrayView1d< real64 > const pres =
         subRegion.getField< fields::flow::pressure >();
@@ -346,7 +356,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                                             real64 const perturbParameter,
                                             real64 const relTol )
 {
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   integer const numComp = solver.numFluidComponents();
   integer const numPhase = solver.numFluidPhases();
@@ -354,7 +364,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -364,9 +374,9 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-      arrayView1d< string const > const & components = fluid.componentNames();
-      arrayView1d< string const > const & phases = fluid.phaseNames();
+      constitutive::MultiFluidBase const & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
+      string_array const & components = fluid.componentNames();
+      string_array const & phases = fluid.phaseNames();
 
       arrayView1d< real64 > const pres =
         subRegion.getField< fields::flow::pressure >();
@@ -524,7 +534,7 @@ inline void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh,
-                                                                       arrayView1d< string const > const & regionNames )
+                                                                       string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

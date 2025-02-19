@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -31,6 +31,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -55,10 +56,10 @@ using namespace constitutive;
 
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_solverProfiling( 0 ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
-  m_iComm( CommunicationTools::getInstance().getCommID() ),
+//  m_iComm( CommunicationTools::getInstance().getCommID() ),
   m_prescribedBcTable( 0 ),
   m_boundaryConditionTypes(),
   m_bcTable(),
@@ -292,7 +293,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
 void SolidMechanicsMPM::postInputInitialization()
 {
-  SolverBase::postInputInitialization();
+  PhysicsSolverBase::postInputInitialization();
 
   // Activate neighbor list if necessary
   if( m_damageFieldPartitioning == 1 || m_surfaceDetection == 1 /*|| m_directionalOverlapCorrection == 1*/ )
@@ -330,7 +331,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ParticleManager & particleManager = meshLevel.getParticleManager();
 
@@ -351,7 +352,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     if( meshBody.hasParticles() ) // Particle field registration? TODO: What goes here?
@@ -467,7 +468,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
 void SolidMechanicsMPM::initializePreSubGroups()
 {
-  SolverBase::initializePreSubGroups();
+  PhysicsSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -475,7 +476,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
@@ -487,7 +488,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
                                                                                     ParticleSubRegion & subRegion )
       {
         string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-        solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+        solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
       } );
     }
   } );
@@ -528,7 +529,7 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
+  PhysicsSolverBase * const surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( "SurfaceGen" );
 
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
@@ -940,6 +941,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   MeshLevel & mesh = grid.getBaseDiscretization();
   NodeManager & nodeManager = mesh.getNodeManager();
 
+  MPI_iCommData m_iComm;
   m_iComm.resize( domain.getNeighbors().size() );
 
 
@@ -1257,6 +1259,9 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
   FieldIdentifiers fieldsToBeSynced;
   fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+
+  MPI_iCommData m_iComm;
+  m_iComm.resize( neighbors.size() );
 
   // (2) Swap send and receive indices so we can sum from ghost to master
   for( size_t n=0; n<neighbors.size(); n++ )
@@ -1974,7 +1979,7 @@ void SolidMechanicsMPM::setParticlesConstitutiveNames( ParticleSubRegionBase & s
     setSizedFromParent( 0 );
 
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-  solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+  solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
   GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 }
 
@@ -3309,23 +3314,17 @@ void SolidMechanicsMPM::printProfilingResults()
 
   // Get total CPU time for the entire time step
   real64 totalStepTimeThisRank = m_profilingTimes[numIntervals] - m_profilingTimes[0];
-  real64 totalStepTimeAllRanks;
-  MpiWrapper::allReduce< real64 >( &totalStepTimeThisRank,
-                                   &totalStepTimeAllRanks,
-                                   1,
-                                   MPI_SUM,
-                                   MPI_COMM_GEOS );
+  real64 const totalStepTimeAllRanks = MpiWrapper::allReduce( totalStepTimeThisRank,
+                                                              MpiWrapper::Reduction::Sum,
+                                                              MPI_COMM_GEOS );
 
   // Get total CPU times for each queried time interval
   for( unsigned int i = 0; i < numIntervals; i++ )
   {
     real64 timeIntervalThisRank = ( m_profilingTimes[i+1] - m_profilingTimes[i] );
-    real64 timeIntervalAllRanks;
-    MpiWrapper::allReduce< real64 >( &timeIntervalThisRank,
-                                     &timeIntervalAllRanks,
-                                     1,
-                                     MPI_SUM,
-                                     MPI_COMM_GEOS );
+    real64 const timeIntervalAllRanks = MpiWrapper::allReduce( timeIntervalThisRank,
+                                                               MpiWrapper::Reduction::Sum,
+                                                               MPI_COMM_GEOS );
     if( rank == 0 )
     {
       timeIntervalsAllRanks[i] = timeIntervalAllRanks;
@@ -4059,5 +4058,5 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )
 }

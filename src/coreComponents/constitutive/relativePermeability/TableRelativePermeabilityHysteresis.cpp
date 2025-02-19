@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -22,7 +22,6 @@
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
-#include "constitutive/relativePermeability/RelpermDriver.hpp"
 
 namespace geos
 {
@@ -297,7 +296,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
 
   if( numPhases == 2 )
   {
-    for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
     {
       if( ip == 0 ) // wetting phase is either water, or oil (for two-phase oil-gas systems)
       {
@@ -321,7 +320,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
 
   else if( numPhases == 3 )
   {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       if( ip == 0 ) // wetting phase is water
       {
@@ -342,7 +341,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
       }
     }
 
-    for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       if( ip == 0 ) // non-wetting phase is gas
       {
@@ -489,7 +488,7 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
     ipNonWetting = m_phaseOrder[PhaseType::GAS];
   }
 
-  // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
+  // Note: for simplicity, the notations are taken reservoir simulation literature (although this breaks our phaseVolFrac naming convention)
 
   // Step 1: Land parameter for the wetting phase
 
@@ -544,7 +543,7 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
 
   if( numPhases == 2 )
   {
-    for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
@@ -563,12 +562,12 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   }
   else if( numPhases == 3 )
   {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
     }
-    for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
