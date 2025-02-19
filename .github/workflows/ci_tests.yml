@@ -271,10 +271,10 @@ jobs:
       CMAKE_BUILD_TYPE: Debug
       CODE_COVERAGE: true
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
-      GCP_BUCKET: geosx/ubuntu22.04-gcc11
+      GCP_BUCKET: geosx/ubuntu22.04-gcc12
       RUNS_ON: Runner_4core_16GB
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
