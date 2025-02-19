@@ -205,6 +205,14 @@ jobs:
 #            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
             BUILD_SHARED_LIBS: ON
 
+          - name: Pangea4 (centos 8, gcc 12.1.0, hpcx 2.20.0, mkl 2023.2.0)
+            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only"
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/pangea4-gcc12.1-hpcxompi2.20.0-onemkl2023.2.0
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            HOST_CONFIG: /spack-generated.cmake
+
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_SHARED_LIBS: ${{ matrix.BUILD_SHARED_LIBS }}
