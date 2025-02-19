@@ -38,6 +38,8 @@ Usage: $0
       run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
+  --enable-lvarray-bounds-check
+      Either ON or OFF (default is ON). Build geos with LVArray bounds check. 
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypre-device
@@ -77,7 +79,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,enable-lvarray-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -228,8 +230,6 @@ if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get update
   or_die apt-get install -y lcov
 fi
-
-echo "LVARRAY_BOUNDS_CHECK IS ${ENABLE_LVARRAY_BOUNDS_CHECK}"
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
