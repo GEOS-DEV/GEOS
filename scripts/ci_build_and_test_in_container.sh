@@ -77,7 +77,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,cxx-flags:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -95,6 +95,7 @@ TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
+CXX_FLAGS=""
 
 eval set -- ${args}
 while :
@@ -118,6 +119,7 @@ do
       fi
       unset DATA_BASENAME DATA_BASENAME_EXT
       shift 2;;
+    --cxx-flags)             CXX_FLAGS=$2;               shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
@@ -256,6 +258,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
+               -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} ${CXX_FLAGS}" \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 

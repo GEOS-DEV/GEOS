@@ -75,6 +75,9 @@ on:
         required: false
         type: string
         default: '--ninja'
+      CXX_FLAGS:
+        required: false
+        type: string         
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -188,6 +191,11 @@ jobs:
 
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
+        fi
+
+        # Additional compiler flags
+        if [ ! -z "${{ inputs.CXX_FLAGS }}" ]; then
+          script_args+=(--cxx-flags "${{ inputs.CXX_FLAGS }}")
         fi
 
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
