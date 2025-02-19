@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -124,7 +124,7 @@ struct Fluid< 4 >
   static void fillProperties( Group & fluid )
   {
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-    fill< 4 >( componentNames, {"N2", "C10", "C20", "H20"} );
+    componentNames = {"N2", "C10", "C20", "H20"};
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
     fill< 4 >( molarWeight, {28e-3, 134e-3, 275e-3, 18e-3} );
@@ -153,11 +153,11 @@ makeFluid( string const & name, Group * parent )
   CompositionalMultiphaseFluidPVTPackage & fluid = parent->registerGroup< CompositionalMultiphaseFluidPVTPackage >( name );
 
   string_array & phaseNames = fluid.getReference< string_array >( string( MultiFluidBase::viewKeyStruct::phaseNamesString()) );
-  fill< 2 >( phaseNames, {"oil", "gas"} );
+  phaseNames = {"oil", "gas"};
 
   string const eosName = EnumStrings< EOS_TYPE >::toString( EOS );
   string_array & equationOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::equationsOfStateString() );
-  fill< 2 >( equationOfState, {eosName, eosName} );
+  equationOfState = {eosName, eosName};
 
   Fluid< NUM_COMP >::fillProperties( fluid );
 

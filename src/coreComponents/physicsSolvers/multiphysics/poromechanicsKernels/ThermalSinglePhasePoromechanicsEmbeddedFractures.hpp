@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -42,7 +42,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using SinglePhaseFVMAbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using SinglePhaseFVMAbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = SinglePhaseFVMAbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
@@ -56,19 +56,20 @@ public:
   using SinglePhaseFVMAbstractBase::m_mob;
   using SinglePhaseFVMAbstractBase::m_dens;
 
-  using SinglePhaseFVMBase = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
-  using SinglePhaseFVMBase::numDof;
+  using SinglePhaseFVMBase = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using SinglePhaseFVMBase::numEqn;
   using SinglePhaseFVMBase::maxNumElems;
   using SinglePhaseFVMBase::maxNumConns;
   using SinglePhaseFVMBase::maxStencilSize;
   using SinglePhaseFVMBase::m_stencilWrapper;
-  using SinglePhaseFVMBase::m_seri;
-  using SinglePhaseFVMBase::m_sesri;
-  using SinglePhaseFVMBase::m_sei;
   using SinglePhaseFVMBase::m_ghostRank;
 
   using Base = singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
+  using Base::m_dispJumpDofNumber;
+  using Base::numDof;
+  using Base::m_seri;
+  using Base::m_sesri;
+  using Base::m_sei;
 
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature,
@@ -84,8 +85,6 @@ public:
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
-
-
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
@@ -172,6 +171,27 @@ public:
   };
 
   /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void setup( localIndex const iconn,
+              StackVariables & stack ) const
+  {
+    // set degrees of freedom indices for this face
+    for( integer i = 0; i < stack.stencilSize; ++i )
+    {
+      localIndex localDofIndex = numDof * i;
+      stack.dofColIndices[ localDofIndex ]     = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[ localDofIndex + 1 ] = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
+      stack.dofColIndices[ localDofIndex + 2 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[ localDofIndex + 3 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
+      stack.dofColIndices[ localDofIndex + 4 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 2;
+    }
+  }
+
+  /**
    * @brief Compute the local flux contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the computation of the flux
    * @param[in] iconn the connection index
@@ -204,25 +224,25 @@ public:
       real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
       real64 dMassFlux_dT[2]{};
 
-      fluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
-                                              trans,
-                                              m_enthalpy,
-                                              m_dEnthalpy_dPres,
-                                              m_dEnthalpy_dTemp,
-                                              m_gravCoef,
-                                              m_dDens_dTemp,
-                                              m_dMob_dTemp,
-                                              alpha,
-                                              mobility,
-                                              potGrad,
-                                              massFlux,
-                                              dMassFlux_dTrans,
-                                              dMassFlux_dP,
-                                              dMassFlux_dT,
-                                              stack.energyFlux,
-                                              stack.dEnergyFlux_dTrans,
-                                              stack.dEnergyFlux_dP,
-                                              stack.dEnergyFlux_dT );
+      singlePhaseFluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
+                                                         trans,
+                                                         m_enthalpy,
+                                                         m_dEnthalpy_dPres,
+                                                         m_dEnthalpy_dTemp,
+                                                         m_gravCoef,
+                                                         m_dDens_dTemp,
+                                                         m_dMob_dTemp,
+                                                         alpha,
+                                                         mobility,
+                                                         potGrad,
+                                                         massFlux,
+                                                         dMassFlux_dTrans,
+                                                         dMassFlux_dP,
+                                                         dMassFlux_dT,
+                                                         stack.energyFlux,
+                                                         stack.dEnergyFlux_dTrans,
+                                                         stack.dEnergyFlux_dP,
+                                                         stack.dEnergyFlux_dT );
 
       for( localIndex i=0; i < 3; i++ )
       {
@@ -271,7 +291,7 @@ public:
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // Step 2: compute temperature difference at the interface
-        fluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
+        singlePhaseFluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
@@ -343,7 +363,7 @@ private:
 
 
 /**
- * @class FaceBasedAssemblyKernelFactory
+ * @class ConnectorBasedAssemblyKernelFactory
  */
 class ConnectorBasedAssemblyKernelFactory
 {

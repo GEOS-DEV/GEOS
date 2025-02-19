@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,7 @@
 #include "ImmiscibleWaterFlashModel.hpp"
 #include "ImmiscibleWaterParameters.hpp"
 #include "EquationOfState.hpp"
+#include "CriticalVolume.hpp"
 
 namespace geos
 {
@@ -55,7 +56,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
-  array1d< real64 > componentCriticalVolume( m_componentProperties.getNumberOfComponents());
+  CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
                         liquidIndex,
@@ -64,7 +65,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
                         m_waterComponentIndex,
                         liquidEos,
                         vapourEos,
-                        componentCriticalVolume );
+                        criticalVolume->m_componentCriticalVolume );
 }
 
 ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(

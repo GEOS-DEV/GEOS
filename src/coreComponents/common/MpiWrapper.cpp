@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -131,9 +131,31 @@ int MpiWrapper::init( int * argc, char * * * argv )
 #endif
 }
 
+internal::ManagedResources & internal::getManagedResources()
+{
+  static ManagedResources instance;
+  return instance;
+}
+
+void internal::ManagedResources::finalize()
+{
+  for( MPI_Op resource : m_mpiOps )
+  {
+    MPI_CHECK_ERROR( MPI_Op_free( &resource ) );
+  }
+  m_mpiOps.clear();
+
+  for( MPI_Datatype resource : m_mpiTypes )
+  {
+    MPI_CHECK_ERROR( MPI_Type_free( &resource ) );
+  }
+  m_mpiTypes.clear();
+}
+
 void MpiWrapper::finalize()
 {
 #ifdef GEOS_USE_MPI
+  internal::getManagedResources().finalize();
   MPI_CHECK_ERROR( MPI_Finalize() );
 #endif
 }
@@ -439,6 +461,63 @@ int MpiWrapper::nodeCommSize()
   MPI_Comm_size( nodeComm, &nodeCommSize );
   return nodeCommSize;
 }
+
+namespace internal
+{
+
+template< typename FIRST, typename SECOND >
+MPI_Datatype getMpiCustomPairType()
+{
+  static auto const createTypeHolder = [] () {
+    using PAIR_T = MpiWrapper::PairType< FIRST, SECOND >;
+    static_assert( std::is_standard_layout_v< PAIR_T > );
+    static_assert( std::is_trivially_copyable_v< PAIR_T > );
+
+    MPI_Datatype types[2] = { getMpiType< FIRST >(), getMpiType< SECOND >() };
+    MPI_Aint offsets[2] = { offsetof( PAIR_T, first ), offsetof( PAIR_T, second ) };
+    int blocksCount[2] = { 1, 1 };
+
+    MPI_Datatype mpiType;
+    GEOS_ERROR_IF_NE( MPI_Type_create_struct( 2, blocksCount, offsets, types, &mpiType ), MPI_SUCCESS );
+    GEOS_ERROR_IF_NE( MPI_Type_commit( &mpiType ), MPI_SUCCESS );
+    // Resource registered to be destroyed at MpiWrapper::finalize().
+    internal::getManagedResources().m_mpiTypes.emplace( mpiType );
+    return mpiType;
+  };
+  // Static storage to ensure the MPI operation is created only once and reused for all calls to this function.
+  static MPI_Datatype mpiType{ createTypeHolder() };
+  return mpiType;
+}
+
+template<> MPI_Datatype getMpiPairType< int, int >()
+{ return MPI_2INT; }
+
+template<> MPI_Datatype getMpiPairType< long int, int >()
+{ return MPI_LONG_INT; }
+
+template<> MPI_Datatype getMpiPairType< long int, long int >()
+{ return getMpiCustomPairType< long int, long int >(); }
+
+template<> MPI_Datatype getMpiPairType< long long int, long long int >()
+{ return getMpiCustomPairType< long long int, long long int >(); }
+
+template<> MPI_Datatype getMpiPairType< float, int >()
+{ return MPI_FLOAT_INT; }
+
+template<> MPI_Datatype getMpiPairType< double, int >()
+{ return MPI_DOUBLE_INT; }
+
+template<> MPI_Datatype getMpiPairType< double, long int >()
+{ return getMpiCustomPairType< double, long int >(); }
+
+template<> MPI_Datatype getMpiPairType< double, long long int >()
+{ return getMpiCustomPairType< double, long long int >(); }
+
+template<> MPI_Datatype getMpiPairType< double, double >()
+{ return getMpiCustomPairType< double, double >(); }
+
+} /* namespace internal */
+
 } /* namespace geos */
 
 #if defined(__clang__)

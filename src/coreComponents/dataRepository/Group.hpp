@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -27,6 +27,8 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
+#include "LogLevelsInfo.hpp"
+#include "LogLevelsRegistry.hpp"
 
 
 #include <iostream>
@@ -143,7 +145,7 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< Group, string const &, Group * const >;
 
   /**
-   * @brief Get the singleton catalog for this class.
+   * @brief Get the singleton catalog for this Group.
    * @return reference to the catalog object
    */
   static CatalogInterface::CatalogType & getCatalog();
@@ -245,24 +247,6 @@ public:
     T & rval = registerGroup< T >( keyIndex.key(), std::make_unique< T >( keyIndex.key(), this ) );
     keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key() ) );
     return rval;
-  }
-
-  /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
-   *
-   * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
-   * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
-   * @param[in] name        The name of the group to use as a string key.
-   * @param[in] catalogName The catalog name of the new type.
-   * @return                A pointer to the newly registered Group.
-   *
-   * Creates and registers a Group or class derived from Group as a subgroup of this Group.
-   */
-  template< typename T = Group, typename TBASE = Group >
-  T & registerGroup( string const & name, string const & catalogName )
-  {
-    std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
-    return registerGroup< T >( name, std::move( newGroup ) );
   }
 
   /**
@@ -455,7 +439,6 @@ public:
   {
     using T = std::conditional_t< std::is_const< CONTAINERTYPE >::value, CASTTYPE const, CASTTYPE >;
     T * const castedContainer = dynamic_cast< T * >( &container );
-
     if( castedContainer != nullptr )
     {
       lambda( *castedContainer );
@@ -596,6 +579,7 @@ public:
   void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA && lambda )
   {
     localIndex counter = 0;
+
     for( auto const & subgroup : subGroupKeys )
     {
       applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
@@ -768,6 +752,26 @@ public:
   void postRestartInitializationRecursive();
 
   /**
+   * @return The validated name for a given Group from its xml value: If the node has a "name"
+   *         attribute, it is validated after the `groupName` rtType regex, and its value is
+   *         returned. Else if the Group name is not "Required", the node tag name is used.
+   * @param targetNode The XML node whose name is to be processed. It throws if not of element type.
+   * @param targetNodePos The position of the target node within the XML document.
+   * @param parentNodeName The name of the parent node, used for error reporting.
+   * @param parentNodePos The position of the parent node, used for error reporting.
+   * @param siblingNames A set containing the names of sibling nodes (to verify that there are no
+   *                     duplicates). The function will populate this set if the attribute name is
+   *                     used and if no error is found.
+   * @throws InputError if the node type is not an xml element or if there are duplicate names
+   *         among xml siblings.
+   */
+  static string processInputName( xmlWrapper::xmlNode const & targetNode,
+                                  xmlWrapper::xmlNodePos const & targetNodePos,
+                                  string_view parentNodeName,
+                                  xmlWrapper::xmlNodePos const & parentNodePos,
+                                  std::set< string > & siblingNames );
+
+  /**
    * @brief Recursively read values using ProcessInputFile() from the input
    * file and put them into the wrapped values for this group.
    * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
@@ -781,11 +785,11 @@ public:
    * but allow to reuse an existing xmlNodePos.
    * @param[in] xmlDocument the XML document that contains the targetNode.
    * @param[in] targetNode the XML node that to extract input values from.
-   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   * @param[in] targetNodePos the target node position, typically obtained with xmlDocument::getNodePosition().
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode,
-                                  xmlWrapper::xmlNodePos const & nodePos );
+                                  xmlWrapper::xmlNodePos const & targetNodePos );
 
   /**
    * @brief Recursively call postInputInitialization() to apply post processing after
@@ -862,6 +866,16 @@ public:
 
   ///@}
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
+
+  /**
+   * @brief Append a levelCondition and a log description to the description of the wrapped object given a log info struct.
+   * Must be called in constructor.
+   * @tparam LOG_LEVEL_INFO The log documentation to add.
+   * @return void if the trait is verified.
+   */
+  template< typename LOG_LEVEL_INFO >
+  std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, void >
+  addLogLevel();
 
   /**
    * @name Schema generation methods
@@ -1478,7 +1492,9 @@ public:
    */
   void loadFromConduit();
 
-  /// Enable verbosity input for object
+  /**
+   * @deprecated will be remove and replace by addLogLevel
+   */
   void enableLogLevelInput();
 
   /**
@@ -1583,7 +1599,7 @@ private:
    */
   template< bool DO_PACKING >
   localIndex packImpl( buffer_unit_type * & buffer,
-                       array1d< string > const & wrapperNames,
+                       string_array const & wrapperNames,
                        arrayView1d< localIndex const > const & packList,
                        integer const recursive,
                        bool onDevice,
@@ -1615,6 +1631,8 @@ private:
 
   /// Verbosity flag for group logs
   integer m_logLevel;
+
+
   //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.
@@ -1625,6 +1643,9 @@ private:
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
+
+  // Keep track of log levels & descriptions
+  std::unique_ptr< LogLevelsRegistry > m_logLevelsRegistry;
 
   /// A DataContext object used to provide contextual information on this Group,
   /// if it is created from an input XML file, the line or offset in that file.
@@ -1710,6 +1731,24 @@ Wrapper< T > & Group::registerWrapper( string const & name,
     rval.resize( size());
   }
   return rval;
+}
+
+template< typename LOG_LEVEL_INFO >
+std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, void >
+Group::addLogLevel()
+{
+  GEOS_ERROR_IF( m_logLevelsRegistry == nullptr, "You cannot call addLogLevel after schema generation" );
+
+  Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
+  if( wrapper == nullptr )
+  {
+    wrapper = &registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel );
+    wrapper->setApplyDefaultValue( 0 );
+    wrapper->setInputFlag( InputFlags::OPTIONAL );
+  }
+  m_logLevelsRegistry->addEntry( LOG_LEVEL_INFO::getMinLogLevel(),
+                                 LOG_LEVEL_INFO::getDescription() );
+  wrapper->setDescription( m_logLevelsRegistry->buildLogLevelDescription());
 }
 
 } /* end namespace dataRepository */
