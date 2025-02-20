@@ -159,6 +159,33 @@ constexpr inline std::string_view getSymbol( Unit unit )
 }
 
 /**
+ * @param unit The unit we want the information.
+ * @return A typical variable symbol of the specified unit that is unique for a given physical scale.
+ */
+constexpr inline std::string_view getVariableSymbol( Unit unit )
+{
+  switch( unit )
+  {
+    default:
+    case Dimensionless:     return "?";
+    case Pressure:          return "P";
+    case Temperature:       return "T";
+    case TemperatureInC:    return "T";
+    case Distance:          return "L";
+    case Time:              return "t";
+    case Viscosity:         return "mu";
+    case Enthalpy:          return "H";
+    case Density:           return "rho";
+    case Solubility:        return "S";
+    case Mass:              return "m";
+    case Mole:              return "n";
+    case MassRate:          return "Qm";
+    case MoleRate:          return "Qn";
+    case Transmissibility:  return "Tr";
+  }
+}
+
+/**
  * @brief Format the specified value coherently with the specified unit.
  * @param value The value to format.
  * @param unit The unit of the specified value.
