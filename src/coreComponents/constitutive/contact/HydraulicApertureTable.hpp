@@ -67,6 +67,7 @@ public:
   GEOS_HOST_DEVICE
   real64 computeHydraulicAperture( real64 const aperture,
                                    real64 const normalTraction,
+                                   integer const fractureState,
                                    real64 & dHydraulicAperture_daperture,
                                    real64 & dHydraulicAperture_dNormalStress ) const;
 
@@ -156,10 +157,11 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 HydraulicApertureTableUpdates::computeHydraulicAperture( real64 const aperture,
                                                                 real64 const normalTraction,
+                                                                integer const fractureState,
                                                                 real64 & dHydraulicAperture_dAperture,
                                                                 real64 & dHydraulicAperture_dNormalStress ) const
 {
-  GEOS_UNUSED_VAR( normalTraction, dHydraulicAperture_dNormalStress );
+  GEOS_UNUSED_VAR( normalTraction, dHydraulicAperture_dNormalStress, fractureState );
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
 
