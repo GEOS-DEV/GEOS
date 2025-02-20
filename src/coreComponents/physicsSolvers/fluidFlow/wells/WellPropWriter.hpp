@@ -279,8 +279,8 @@ public:
     m_perfResElemGlobalIndex = perfData.getField< fields::perforation::reservoirElementGlobalIndex >();
   }
   void initialize_seg( int myrank, const string & outputDir, const string & wellName,
-                       const arrayView1d< string const > & phaseNames,
-                       const arrayView1d< string const > & componentNames,
+                       string_array phaseNames,
+                       string_array componentNames,
                        WellElementSubRegion & subRegion )
   {
     m_outputFile.open( outputDir + "/" + wellName + "_seg_" + std::to_string( myrank )+".csv" );
@@ -542,8 +542,8 @@ public:
 
 protected:
   integer m_initialized;
-  arrayView1d< string const > m_phaseNames;
-  arrayView1d< string const > m_componentNames;
+  string_array m_phaseNames;
+  string_array m_componentNames;
   integer m_numSegments;
   integer m_numComponent;
   integer m_numPhase;

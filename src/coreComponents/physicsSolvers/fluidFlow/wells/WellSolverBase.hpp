@@ -105,8 +105,6 @@ public:
    */
   integer isThermal() const { return m_isThermal; }
 
-
-
   /**
    * @brief get the name of DOF defined on well elements
    * @return name of the DOF field used by derived solver type
