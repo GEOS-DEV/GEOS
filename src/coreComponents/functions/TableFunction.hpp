@@ -348,7 +348,7 @@ private:
    * @param dimId TODO
    * @return string TODO
    */
-  string getCoordsDescription( integer dimId ) const;
+  string getCoordsDescription( integer dimId, bool shortUnitsToVariables ) const;
 
   /**
    * @brief TODO

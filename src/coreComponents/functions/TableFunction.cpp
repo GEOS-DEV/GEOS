@@ -224,7 +224,7 @@ string TableFunction::getTableDescription() const
 
   for( size_t dimId = 0; dimId < numDims; ++dimId )
   {
-    string coordTitle = "Coordinates " + getCoordsDescription( dimId );
+    string coordTitle = "Coordinates " + getCoordsDescription( dimId, true );
 
     units::Unit const dimCoordsUnit = getDimUnit( dimId );
     if( dimCoordsUnit != units::Unknown && dimCoordsUnit != units::Dimensionless )
@@ -243,13 +243,15 @@ string TableFunction::getTableDescription() const
   return stringutilities::join( labels, "\n" );
 }
 
-string TableFunction::getCoordsDescription( integer dimId ) const
+string TableFunction::getCoordsDescription( integer dimId, bool shortUnitsToVariables ) const
 {
   integer const numDims = numDimensions();
   units::Unit const dimCoordsUnit = getDimUnit( dimId );
   if( dimCoordsUnit != units::Unknown && dimCoordsUnit != units::Dimensionless )
   {
-    return string( units::getVariableSymbol( dimCoordsUnit ) );
+    return string( shortUnitsToVariables ?
+                   units::getVariableSymbol( dimCoordsUnit ) :
+                   units::getDescription( dimCoordsUnit ) );
   }
   else
   {
@@ -372,8 +374,8 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
     TableData2D tableData2D;
     TableData2D::TableDataHolder tableConverted;
     tableConverted = tableData2D.convertTable2D( coordinates,
-                                                 tableFunction.getCoordsDescription( 0 ),
-                                                 tableFunction.getCoordsDescription( 1 ),
+                                                 tableFunction.getCoordsDescription( 0, false ),
+                                                 tableFunction.getCoordsDescription( 1, false ),
                                                  values,
                                                  false,
                                                  tableFunction.getValuesDescription() );
@@ -405,7 +407,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
       tableData.addRow( coords[idx], values[idx] );
     }
     TableLayout const tableLayout( tableTitle, {
-        string( tableFunction.getCoordsDescription( 0 ) ),
+        string( tableFunction.getCoordsDescription( 0, true ) ),
         string( tableFunction.getValuesDescription() )
       } );
     TableTextFormatter const logTable( tableLayout );
@@ -416,8 +418,8 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     TableData2D tableData2D;
     TableData2D::TableDataHolder tableConverted;
     tableConverted = tableData2D.convertTable2D( coordinates,
-                                                 tableFunction.getCoordsDescription( 1 ),
-                                                 tableFunction.getCoordsDescription( 0 ),
+                                                 tableFunction.getCoordsDescription( 1, true ),
+                                                 tableFunction.getCoordsDescription( 0, true ),
                                                  values,
                                                  true,
                                                  tableFunction.getValuesDescription() );
