@@ -535,7 +535,7 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
     adjustColumnWidth( cellsDataLayout, nbHiddenColumns, paddingCharacters );
     columnsTotalWidth = tableTotalWidth;
   }
-  else if ( titleWidth < tableTotalWidth )
+  else if( titleWidth < tableTotalWidth )
   { // columns are wider than the title, so it needs to be stretched
     titleWidth = tableTotalWidth;
   }
