@@ -222,16 +222,18 @@ string TableFunction::getTableDescription() const
   std::vector< string > labels;
   labels.reserve( numDims + 1 );
 
-  if( !m_coordinateFiles.empty() )
+  for( size_t dimId = 0; dimId < numDims; ++dimId )
   {
-    for( size_t i = 0; i < numDims; ++i )
-      labels.push_back( GEOS_FMT( "Coordinates {} from file: {}",
-                                  getCoordsDescription( i ), m_coordinateFiles[i].relativeFilePath() ) );
-  }
-  else
-  {
-    for( size_t i = 0; i < numDims; ++i )
-      labels.push_back( GEOS_FMT( "{}, the {}", getCoordsDescription( i ), units::getDescription( getDimUnit( i ) ) ) );
+    string coordTitle = "Coordinates " + getCoordsDescription( dimId );
+
+    units::Unit const dimCoordsUnit = getDimUnit( dimId );
+    if( dimCoordsUnit != units::Unknown && dimCoordsUnit != units::Dimensionless )
+      coordTitle = GEOS_FMT( "{} of {}", coordTitle, units::getDescription( getDimUnit( dimId ) ) );
+
+    if( !m_coordinateFiles.empty() )
+      coordTitle = GEOS_FMT( "{} from file: {}", coordTitle, m_coordinateFiles[dimId].relativeFilePath() );
+
+    labels.push_back( coordTitle );
   }
 
   labels.push_back( !m_voxelFile.empty() ?
@@ -247,28 +249,20 @@ string TableFunction::getCoordsDescription( integer dimId ) const
   units::Unit const dimCoordsUnit = getDimUnit( dimId );
   if( dimCoordsUnit != units::Unknown && dimCoordsUnit != units::Dimensionless )
   {
-    return string( units::getSymbol( dimCoordsUnit ) );
-  }
-  else if( numDims==1 )
-  {
-    return "coordinates";
-  }
-  else if( numDims<=3 )
-  {
-    static const string labels[] = {"X", "Y", "Z"};
-    return labels[dimId];
+    return string( units::getVariableSymbol( dimCoordsUnit ) );
   }
   else
   {
-    return GEOS_FMT( "coord[{}]", dimId );
+    static constexpr string_view table2DGenericAxes[] = {"x", "y"};
+    return numDims<=2 ? string( table2DGenericAxes[dimId] ) : GEOS_FMT( "Coord_{}", dimId );
   }
 }
 
 string TableFunction::getValuesDescription() const
 {
-  units::Unit const valuesUnits = getValueUnit();
-  return valuesUnits != units::Unknown ? GEOS_FMT( "values in\n{}", units::getDescription( valuesUnits ) ) :
-         "values";
+  return string( getValueUnit() != units::Unknown ?
+                 units::getDescription( getValueUnit() ) :
+                 "Value" );
 }
 
 /**
@@ -285,7 +279,7 @@ void collectHeaders( std::ostringstream & formatterStream,
   {
     formatterStream << units::getDescription( tableFunction.getDimUnit( d )) << ",";
   }
-  formatterStream << units::getDescription( valueUnit ) << "\n";
+  formatterStream << units::getDescription( tableFunction.getValueUnit() ) << "\n";
 }
 
 /**
@@ -355,8 +349,8 @@ void TableFunction::initializePostSubGroups()
 {
   // Output user defined tables (not generated PVT tables)
   outputTableData( OutputOptions{
-      m_writeCSV != 0, // writeCSV
-      isLogLevelActive< logInfo::TableDataOutput >( getLogLevel() ) // writeInLog
+      m_writeCSV != 0,   // writeCSV
+      isLogLevelActive< logInfo::TableDataOutput >( getLogLevel() )   // writeInLog
     } );
 }
 
