@@ -521,12 +521,13 @@ public:
 
     for( integer j =0; j < m_numPerforations; j++ )
     {
-      if( m_elemGhostRank[j] < 0 )
+      localIndex const iwelem = m_perfWellElemIndex[j];
+      if( m_elemGhostRank[iwelem] < 0 )
       {
         localIndex const er  = m_resElementRegion[j];
         localIndex const esr = m_resElementSubRegion[j];
         localIndex const ei  = m_resElementIndex[j];
-        localIndex const iwelem = m_perfWellElemIndex[j];
+
         m_perfOutputFile << time << "," <<  dt << "," <<  cycle << "," <<  subevent << "," << timeStep << "," << newtonIter << "," << numTimeStepCuts<<","<<m_perfResElemGlobalIndex[j] << "," <<
           m_globalWellElementIndex[iwelem];
         for( auto i : m_perfPropWriterVec )
