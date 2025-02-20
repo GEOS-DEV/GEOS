@@ -118,6 +118,10 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 
+protected:
+
+  virtual void postInputInitialization() override;
+
 private:
 
   struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
@@ -137,8 +141,8 @@ real64 BartonBandisUpdates::computeHydraulicAperture( real64 const aperture,
                                                       real64 & dHydraulicAperture_aperture,
                                                       real64 & dHydraulicAperture_dNormalStress ) const
 {
-  real64 const hydraulicAperture = ( fractureState >= 3.0 ) ? (aperture + m_aperture0) : m_aperture0 / ( 1 + 9*normalTraction/m_referenceNormalStress );
-  dHydraulicAperture_dNormalStress = ( fractureState >= 3.0 ) ? 0.0 : -hydraulicAperture / ( 1 + 9*normalTraction/m_referenceNormalStress ) * 9/m_referenceNormalStress;
+  real64 const hydraulicAperture = ( fractureState >= 3.0 ) ? (aperture + m_aperture0) : m_aperture0 / ( 1 + 9*LvArray::math::abs(normalTraction)/m_referenceNormalStress );
+  dHydraulicAperture_dNormalStress = ( fractureState >= 3.0 ) ? 0.0 : -hydraulicAperture / ( 1 + 9*LvArray::math::abs(normalTraction)/m_referenceNormalStress ) * 9/m_referenceNormalStress;
   dHydraulicAperture_aperture = ( fractureState >= 3.0 ) ? 1.0 : 0.0;
 
   return hydraulicAperture; ///It would be nice to change this to return a tuple.
