@@ -198,12 +198,28 @@ TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerA
 {
   m_alignment.headerAlignment = headerAlignment;
   m_header.m_alignment = headerAlignment;
+  std::vector< Column > & currColumns = m_subColumn;
+  if( !currColumns.empty() )
+  {
+    for( auto & subColumn : currColumns )
+    {
+      subColumn.setHeaderAlignment( headerAlignment );
+    }
+  }
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::setValuesAlignment( Alignment valueAlignment )
 {
   m_alignment.valueAlignment = valueAlignment;
+  std::vector< Column > & currColumns = m_subColumn;
+  if( !currColumns.empty() )
+  {
+    for( auto & subColumn : m_subColumn )
+    {
+      subColumn.setValuesAlignment( valueAlignment );
+    }
+  }
   return *this;
 }
 

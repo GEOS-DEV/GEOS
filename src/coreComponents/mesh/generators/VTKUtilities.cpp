@@ -1898,11 +1898,10 @@ void importRegularField( vtkDataArray * vtkArray,
 }
 
 
-void printMeshStatistics( vtkDataSet & mesh,
+void printMeshStatistics( vtkDataSet & ,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
-  std::cout << "printMeshStatistics " << std::endl;
   auto accumulateElemsCount = []( std::map< ElementType, globalIndex > & elemsTarget ) -> globalIndex
   {
     return std::accumulate(
@@ -1913,18 +1912,6 @@ void printMeshStatistics( vtkDataSet & mesh,
 
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
-
-  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
-  RAJA::ReduceMax< parallelHostReduce, globalIndex > maxGlobalNode( -1 );
-  forAll< parallelHostPolicy >( mesh.GetNumberOfPoints(), [&globalPointId, maxGlobalNode]( vtkIdType const k )
-  {
-    maxGlobalNode.max( globalPointId.GetValue( k ) );
-  } );
-
-  globalIndex const sumGlobalNodes = MpiWrapper::sum( maxGlobalNode.get(), comm ) + 1;
-  globalIndex const maxGlobalNodes = MpiWrapper::max( maxGlobalNode.get(), comm ) + 1;
-  globalIndex const minGlobalNodes = MpiWrapper::min( maxGlobalNode.get(), comm ) + 1;
-  globalIndex const avgGlobalNodes = LvArray::integerConversion< globalIndex >( sumGlobalNodes / size );
 
   std::map< ElementType, globalIndex > elemCounts;
   std::map< ElementType, globalIndex > minLocalElemsCounts;
@@ -1948,7 +1935,7 @@ void printMeshStatistics( vtkDataSet & mesh,
     avgLocalElemsCounts[typeToCells.first] =  MpiWrapper::max( numLocalElems );
     maxLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( numLocalElems ) / size );
   }
-  std::cout << "numLocalElems :" << numLocalElems << std::endl;
+
   if( rank == 0 )
   {
 
@@ -1966,8 +1953,6 @@ void printMeshStatistics( vtkDataSet & mesh,
                                      "average",
                                      "maximum" } );
     TableData elemsData;
-    elemsData.addRow( "nodes", sumGlobalNodes, minGlobalNodes, avgGlobalNodes, maxGlobalNodes );
-    elemsData.addSeparator();
     for( auto const & typeCount: elemCounts )
     {
       elemsData.addRow( typeCount.first, typeCount.second,
