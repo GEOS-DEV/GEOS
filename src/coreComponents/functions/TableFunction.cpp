@@ -224,21 +224,19 @@ string TableFunction::getTableDescription() const
 
   for( size_t dimId = 0; dimId < numDims; ++dimId )
   {
-    string coordTitle = "Coordinates " + getCoordsDescription( dimId, true );
-
-    units::Unit const dimCoordsUnit = getDimUnit( dimId );
-    if( dimCoordsUnit != units::Unknown && dimCoordsUnit != units::Dimensionless )
-      coordTitle = GEOS_FMT( "{} of {}", coordTitle, units::getDescription( getDimUnit( dimId ) ) );
+    string coordTitle = GEOS_FMT( "Coordinates {} in {} units",
+                                  getCoordsDescription( dimId, true ),
+                                  units::getDescription( getDimUnit( dimId ) ) );
 
     if( !m_coordinateFiles.empty() )
-      coordTitle = GEOS_FMT( "{} from file: {}", coordTitle, m_coordinateFiles[dimId].relativeFilePath() );
+      coordTitle += " from file: " + m_coordinateFiles[dimId].relativeFilePath();
 
     labels.push_back( coordTitle );
   }
 
   labels.push_back( !m_voxelFile.empty() ?
                     GEOS_FMT( "Values from file: {}", m_voxelFile.relativeFilePath() ) :
-                    GEOS_FMT( "Values of {}", units::getDescription( getValueUnit() ) ) );
+                    GEOS_FMT( "Values in {} units", units::getDescription( getValueUnit() ) ) );
 
   return stringutilities::join( labels, "\n" );
 }
