@@ -215,6 +215,7 @@ jobs:
 
     uses: ./.github/workflows/build_and_test.yml
     with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
       BUILD_SHARED_LIBS: ${{ matrix.BUILD_SHARED_LIBS }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
