@@ -410,21 +410,27 @@ void DomainPartition::outputPartitionInformation() const
 
         if( MpiWrapper::commRank() == 0 )
         {
-          TableLayout const layout( "Mesh partitioning over ranks",
-                                    {TableLayout::Column()
-                                       .setName( "Ranks" ),
-                                     TableLayout::Column()
-                                       .setName( "Nodes" )
-                                       .addSubColumns( {  "Local", "Ghost", "Total" } ),
-                                     TableLayout::Column()
-                                       .setName( "Edges" )
-                                       .addSubColumns( {  "Local", "Ghost", "Total" } ),
-                                     TableLayout::Column()
-                                       .setName( "Faces" )
-                                       .addSubColumns( {  "Local", "Ghost", "Total" } ),
-                                     TableLayout::Column()
-                                       .setName( "Elems" )
-                                       .addSubColumns( {  "Local", "Ghost", "Total" } )} );
+          TableLayout layout( "Mesh partitioning over ranks",
+                              {TableLayout::Column()
+                                 .setName( "Ranks" )
+                                 .setValuesAlignment( TableLayout::Alignment::center ),
+                               TableLayout::Column()
+                                 .setName( "Nodes" )
+                                 .setValuesAlignment( TableLayout::Alignment::center )
+                                 .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                               TableLayout::Column()
+                                 .setName( "Edges" )
+                                 .setValuesAlignment( TableLayout::Alignment::center )
+                                 .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                               TableLayout::Column()
+                                 .setName( "Faces" )
+                                 .setValuesAlignment( TableLayout::Alignment::center )
+                                 .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                               TableLayout::Column()
+                                 .setName( "Elems" )
+                                 .setValuesAlignment( TableLayout::Alignment::center )
+                                 .addSubColumns( {  "Local", "Ghost", "Total" } )} );
+          layout.setMargin( TableLayout::MarginValue::tiny );
           TableData tableData;
 
           for( int rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
@@ -435,60 +441,63 @@ void DomainPartition::outputPartitionInformation() const
             addLocalGhostRow( tableData, allRankStats[rankId], std::to_string( rankId ) );
           }
 
-          RankMeshStats sumStats{};
-          RankMeshStats minStats{};
-          RankMeshStats maxStats{};
-
-          for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+          if( MpiWrapper::commSize() > 0 )
           {
-            minStats.localCount[statId] = std::numeric_limits< globalIndex >::max();
-            minStats.ghostCount[statId] = std::numeric_limits< globalIndex >::max();
-            minStats.ratio[statId] = std::numeric_limits< double >::max();
+            RankMeshStats sumStats{};
+            RankMeshStats minStats{};
+            RankMeshStats maxStats{};
 
-            maxStats.localCount[statId] = std::numeric_limits< globalIndex >::min();
-            maxStats.ghostCount[statId] = std::numeric_limits< globalIndex >::min();
-            maxStats.ratio[statId] = std::numeric_limits< double >::min();
-          }
-
-          for( int rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
-          {
             for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
             {
-              sumStats.localCount[statId] += allRankStats[rankId].localCount[statId];
-              sumStats.ghostCount[statId] += allRankStats[rankId].ghostCount[statId];
+              minStats.localCount[statId] = std::numeric_limits< globalIndex >::max();
+              minStats.ghostCount[statId] = std::numeric_limits< globalIndex >::max();
+              minStats.ratio[statId] = std::numeric_limits< double >::max();
 
-              minStats.localCount[statId] = std::min( minStats.localCount[statId], allRankStats[rankId].localCount[statId] );
-              minStats.ghostCount[statId] = std::min( minStats.ghostCount[statId], allRankStats[rankId].ghostCount[statId] );
-              minStats.ratio[statId] = std::min( minStats.ratio[statId], allRankStats[rankId].ratio[statId] );
-
-              maxStats.localCount[statId] = std::max( maxStats.localCount[statId], allRankStats[rankId].localCount[statId] );
-              maxStats.ghostCount[statId] = std::max( maxStats.ghostCount[statId], allRankStats[rankId].ghostCount[statId] );
-              maxStats.ratio[statId] = std::max( maxStats.ratio[statId], allRankStats[rankId].ratio[statId] );
+              maxStats.localCount[statId] = std::numeric_limits< globalIndex >::min();
+              maxStats.ghostCount[statId] = std::numeric_limits< globalIndex >::min();
+              maxStats.ratio[statId] = std::numeric_limits< double >::min();
             }
+
+            for( int rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
+            {
+              for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+              {
+                sumStats.localCount[statId] += allRankStats[rankId].localCount[statId];
+                sumStats.ghostCount[statId] += allRankStats[rankId].ghostCount[statId];
+
+                minStats.localCount[statId] = std::min( minStats.localCount[statId], allRankStats[rankId].localCount[statId] );
+                minStats.ghostCount[statId] = std::min( minStats.ghostCount[statId], allRankStats[rankId].ghostCount[statId] );
+                minStats.ratio[statId] = std::min( minStats.ratio[statId], allRankStats[rankId].ratio[statId] );
+
+                maxStats.localCount[statId] = std::max( maxStats.localCount[statId], allRankStats[rankId].localCount[statId] );
+                maxStats.ghostCount[statId] = std::max( maxStats.ghostCount[statId], allRankStats[rankId].ghostCount[statId] );
+                maxStats.ratio[statId] = std::max( maxStats.ratio[statId], allRankStats[rankId].ratio[statId] );
+              }
+            }
+
+            tableData.addSeparator();
+            addLocalGhostRow( tableData, sumStats, "sum" );
+            addLocalGhostRow( tableData, minStats, "min" );
+            addLocalGhostRow( tableData, maxStats, "max" );
+
+            std::array< double, 4 > localTotalMinRatio;
+            std::array< double, 4 > localTotalMaxRatio;
+
+            for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+            {
+              localTotalMinRatio[statId] = std::numeric_limits< double >::max();
+              localTotalMaxRatio[statId] = std::numeric_limits< double >::min();
+            }
+
+            for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+            {
+              localTotalMinRatio[statId] = std::min( localTotalMinRatio[statId], minStats.ratio[statId] );
+              localTotalMaxRatio[statId] = std::max( localTotalMinRatio[statId], maxStats.ratio[statId] );
+            }
+            tableData.addSeparator();
+            addSummaryRow( tableData, localTotalMinRatio, "min(local/total)" );
+            addSummaryRow( tableData, localTotalMaxRatio, "max(local/total)" );
           }
-
-          tableData.addSeparator();
-          addLocalGhostRow( tableData, sumStats, "sum" );
-          addLocalGhostRow( tableData, minStats, "min" );
-          addLocalGhostRow( tableData, maxStats, "max" );
-
-          std::array< double, 4 > localTotalMinRatio;
-          std::array< double, 4 > localTotalMaxRatio;
-
-          for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
-          {
-            localTotalMinRatio[statId] = std::numeric_limits< double >::max();
-            localTotalMaxRatio[statId] = std::numeric_limits< double >::min();
-          }
-
-          for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
-          {
-            localTotalMinRatio[statId] = std::min( localTotalMinRatio[statId], minStats.ratio[statId] );
-            localTotalMaxRatio[statId] = std::max( localTotalMinRatio[statId], maxStats.ratio[statId] );
-          }
-          tableData.addSeparator();
-          addSummaryRow( tableData, localTotalMinRatio, "min(local/total)" );
-          addSummaryRow( tableData, localTotalMaxRatio, "max(local/total)" );
 
           TableTextFormatter logPartition( layout );
           GEOS_LOG_RANK_0( logPartition.toString( tableData ));
