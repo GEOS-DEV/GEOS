@@ -770,7 +770,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
       arrayView1d< real64 > const deltaVolume              = subRegion.getField< flow::deltaVolume >();
-      arrayView1d< integer > const & fractureState         = subRegion.getField< contact::fractureState >();
+      arrayView1d< FractureState > const & fractureState   = subRegion.getField< contact::fractureState >();
 
       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );

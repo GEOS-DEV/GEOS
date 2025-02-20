@@ -62,7 +62,7 @@ struct StateUpdateKernel
           arrayView1d< real64 const > const & oldHydraulicAperture,
           arrayView1d< real64 > const & hydraulicAperture,
           arrayView2d< real64 const > const & fractureTraction,
-          arrayView1d< integer > const & fractureState )
+          arrayView1d< FractureState > const & fractureState )
   {
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
