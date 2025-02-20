@@ -50,7 +50,10 @@ inline constexpr double convertCToK( double celsius )
 
 
 /**
- * @brief Enumerator of available unit types. Units are in SI by default.
+ * @brief Enumerator of available unit types for given physical scales. Units are in SI by default.
+ * @todo Current `Unit` enum is short for `PhysicalScaleDefaultUnit`. We should separate `Unit` (`Meters`,
+ *       `celsius`) and `PhysicalScale` (`Distance`, `Temperature`), and add a function
+ *       `Unit getDefaultUnit( PhysicalScale )` to link the physical scales with GEOS default units.
  */
 enum Unit : integer
 {
