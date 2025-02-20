@@ -22,7 +22,7 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "rateAndStateFields.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/contact/RateAndStateFriction.hpp"
 #include "ExplicitQDRateAndState.hpp"
@@ -53,7 +53,7 @@ void SpringSlider< RSSOLVER_TYPE >::registerDataOnMesh( Group & meshBodies )
 
   this->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                           MeshLevel & mesh,
-                                                          arrayView1d< string const > const & regionNames )
+                                                          string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -87,7 +87,7 @@ void SpringSlider< RSSOLVER_TYPE >::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 );
 
       string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
-      frictionLawName =PhysicsSolverBase::getConstitutiveName< FrictionBase >( subRegion );
+      frictionLawName = PhysicsSolverBase::getConstitutiveName< FrictionBase >( subRegion );
       GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
                                                         this->getDataContext(), subRegion.getDataContext() ) );
     } );
@@ -105,7 +105,7 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
   // Spring-slider shear traction computation
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+                                                                     string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -113,11 +113,11 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
 
-      arrayView2d< real64 const > const deltaSlip = subRegion.getField< fields::contact::deltaSlip >();
-      arrayView2d< real64 > const shearTraction   = subRegion.getField< fields::rateAndState::shearTraction >();
-      arrayView2d< real64 > const shearTraction_n      = subRegion.getField< fields::rateAndState::shearTraction_n >();
+      arrayView2d< real64 const > const deltaSlip = subRegion.getField< contact::deltaSlip >();
+      arrayView2d< real64 > const shearTraction   = subRegion.getField< rateAndState::shearTraction >();
+      arrayView2d< real64 > const shearTraction_n = subRegion.getField< rateAndState::shearTraction_n >();
 
-      arrayView1d< real64 > const normalTraction   = subRegion.getField< fields::rateAndState::normalTraction >();
+      arrayView1d< real64 > const normalTraction  = subRegion.getField< rateAndState::normalTraction >();
 
 
       string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
