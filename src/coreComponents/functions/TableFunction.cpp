@@ -413,9 +413,9 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     {
       tableData.addRow( coords[idx], values[idx] );
     }
-    // for this 1D layout, we shorten the coordinate description to a symbol only if unit is unknown
+    bool const shortenDescription = tableFunction.getDimUnit( 0 ) == units::Unknown;
     TableLayout const tableLayout( tableTitle, {
-        string( tableFunction.getCoordsDescription( 0, unit == units::Unknown ) ),
+        string( tableFunction.getCoordsDescription( 0, shortenDescription ) ),
         string( tableFunction.getValuesDescription() )
       } );
     TableTextFormatter const logTable( tableLayout );
