@@ -58,7 +58,7 @@
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
-        logLevel="0"/>
+        logLevel="1"/>
     </SolidMechanicsLagrangeContactBubbleStab>
     
     <SurfaceGenerator
@@ -79,14 +79,14 @@
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
-        logLevel="0"/>
+        logLevel="1"/>
     </SinglePhaseFVM>
   </Solvers>
 
   <!-- <Events
     maxTime="6.312e7"> -->
   <Events
-    maxTime="3e7">
+    maxTime="1.0e7">
 
    <!-- fault generation  -->
    <SoloEvent 
