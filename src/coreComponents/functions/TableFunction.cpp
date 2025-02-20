@@ -218,25 +218,34 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
 
 string TableFunction::getTableDescription() const
 {
-  size_t const numDims = size_t( numDimensions() );
+  auto formatDescription = []( string_view name, string_view path, units::Unit const unit ) -> string
+  {
+    string description = string( name );
+
+    if( unit != units::Unknown )
+      description += GEOS_FMT( " in {} units", units::getDescription( unit ) );
+
+    if( !path.empty() )
+      description += GEOS_FMT( " from file: {}", path );
+
+    return description;
+  };
+
+  integer const numDims = numDimensions();
   std::vector< string > labels;
   labels.reserve( numDims + 1 );
 
-  for( size_t dimId = 0; dimId < numDims; ++dimId )
+  for( integer dimId = 0; dimId < numDims; ++dimId )
   {
-    string coordTitle = GEOS_FMT( "Coordinates {} in {} units",
-                                  getCoordsDescription( dimId, true ),
-                                  units::getDescription( getDimUnit( dimId ) ) );
-
-    if( !m_coordinateFiles.empty() )
-      coordTitle += " from file: " + m_coordinateFiles[dimId].relativeFilePath();
-
-    labels.push_back( coordTitle );
+    string const coordFilePath = dimId < m_coordinateFiles.size() ? m_coordinateFiles[dimId].relativeFilePath() : "";
+    labels.push_back( formatDescription( GEOS_FMT( "Coordinates {}", getCoordsDescription( dimId, true ) ),
+                                         coordFilePath,
+                                         getDimUnit( dimId ) ) );
   }
 
-  labels.push_back( !m_voxelFile.empty() ?
-                    GEOS_FMT( "Values from file: {}", m_voxelFile.relativeFilePath() ) :
-                    GEOS_FMT( "Values in {} units", units::getDescription( getValueUnit() ) ) );
+  labels.push_back( formatDescription( "Values",
+                                       m_voxelFile.relativeFilePath(),
+                                       getValueUnit() ) );
 
   return stringutilities::join( labels, "\n" );
 }
@@ -245,7 +254,7 @@ string TableFunction::getCoordsDescription( integer dimId, bool shortUnitsToVari
 {
   integer const numDims = numDimensions();
   units::Unit const dimCoordsUnit = getDimUnit( dimId );
-  if( dimCoordsUnit != units::Unknown && dimCoordsUnit != units::Dimensionless )
+  if( dimCoordsUnit != units::Unknown )
   {
     return string( shortUnitsToVariables ?
                    units::getVariableSymbol( dimCoordsUnit ) :
@@ -404,8 +413,9 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     {
       tableData.addRow( coords[idx], values[idx] );
     }
+    // for this 1D layout, we shorten the coordinate description to a symbol only if unit is unknown
     TableLayout const tableLayout( tableTitle, {
-        string( tableFunction.getCoordsDescription( 0, true ) ),
+        string( tableFunction.getCoordsDescription( 0, unit == units::Unknown ) ),
         string( tableFunction.getValuesDescription() )
       } );
     TableTextFormatter const logTable( tableLayout );
