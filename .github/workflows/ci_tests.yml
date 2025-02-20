@@ -28,6 +28,7 @@ jobs:
         with:
           period: 90
           charts: true
+          stats: 'totalReviews,totalComments,timeToReview,openedPullRequests,additions,deletions,revisionSuccessRate'
 
   # Checks if PR title follows conventional semantics
   semantic_pull_request:    
