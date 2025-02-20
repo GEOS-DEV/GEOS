@@ -91,7 +91,8 @@
 
     <BartonBandis
       name="hApertureModel"
-      referenceNormalStress="1.0e7"/>    
+      referenceNormalStress="1.0e6"
+      referenceAperture="1.0e-2"/>    
   </Constitutive>
 
   <FieldSpecifications>
