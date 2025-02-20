@@ -505,6 +505,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
       arrayView2d< real64 > const & fractureContactTraction = subRegion.template getField< contact::traction >();
 
+      arrayView1d< integer > const & fractureState = subRegion.template getField< contact::fractureState >();
+
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< flow::pressure >();
 
@@ -536,7 +538,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
                                               aperture,
                                               oldHydraulicAperture,
                                               hydraulicAperture,
-                                              fractureContactTraction );
+                                              fractureContactTraction,
+                                              fractureState );
 
         } );
       } );
