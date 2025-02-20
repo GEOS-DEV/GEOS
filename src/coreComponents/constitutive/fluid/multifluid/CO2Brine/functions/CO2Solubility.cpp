@@ -62,7 +62,6 @@ makeSolubilityTables( string const & functionName,
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   constitutive::PVTProps::PTTableCoordinates tableCoords;
-  std::cout << "functionName ? " << functionName << " solubility model " << solubilityModel<<std::endl;
   // Check solubility model for explicit table input
   if( solubilityModel == constitutive::PVTProps::CO2Solubility::SolubilityModel::Tables )
   {
@@ -166,7 +165,6 @@ makeSolubilityTables( string const & functionName,
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const T = tableCoords.getTemperature( j );
-      //co2Solubility[j*nPressures+i] = -0.01;
       if( co2Solubility[j*nPressures+i] < 0.0 || h2oSolubility[j*nPressures+i] < 0.0 )
       {
         badValues( badCount % maxBad, 0 ) = P;
@@ -188,7 +186,7 @@ makeSolubilityTables( string const & functionName,
 
   if( 0 < badCount )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered."\
+    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered." \
                                "These will be truncated to zero.\nCheck out report table with max {} values.",
                                badCount, maxBad ) );
 
