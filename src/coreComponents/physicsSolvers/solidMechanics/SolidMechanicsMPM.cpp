@@ -31,6 +31,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -330,7 +331,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ParticleManager & particleManager = meshLevel.getParticleManager();
 
@@ -351,7 +352,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     if( meshBody.hasParticles() ) // Particle field registration? TODO: What goes here?
@@ -475,7 +476,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
