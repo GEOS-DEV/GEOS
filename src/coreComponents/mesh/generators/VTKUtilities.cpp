@@ -1898,14 +1898,14 @@ void importRegularField( vtkDataArray * vtkArray,
 }
 
 
-void printMeshStatistics( vtkDataSet & ,
+void printMeshStatistics( vtkDataSet &,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
   auto accumulateElemsCount = []( std::map< ElementType, globalIndex > & elemsTarget ) -> globalIndex
   {
     return std::accumulate(
-      std::begin( elemsTarget ), std::end( elemsTarget ), globalIndex{0},   // initial value of the sum
+      std::begin( elemsTarget ), std::end( elemsTarget ), globalIndex{0},
       []( std::size_t const previous, auto const & elems )
     { return previous + elems.second; } );
   };
@@ -1913,33 +1913,27 @@ void printMeshStatistics( vtkDataSet & ,
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
 
-  std::map< ElementType, globalIndex > elemCounts;
+  std::map< ElementType, globalIndex > totalLocalElems;
   std::map< ElementType, globalIndex > minLocalElemsCounts;
   std::map< ElementType, globalIndex > avgLocalElemsCounts;
   std::map< ElementType, globalIndex > maxLocalElemsCounts;
-
-  localIndex numLocalElems = 0;
-  globalIndex numGlobalElems = 0;
 
   for( auto const & typeToCells : cellMap )
   {
     localIndex const localElemsOfType =
       std::accumulate( typeToCells.second.begin(), typeToCells.second.end(), localIndex{},
                        []( auto const s, auto const & region ) { return s + region.second.size(); } );
-    numLocalElems += localElemsOfType;
 
-    globalIndex const globalElemsOfType = MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
-    numGlobalElems += globalElemsOfType;
-    elemCounts[typeToCells.first] = globalElemsOfType;
-    minLocalElemsCounts[typeToCells.first] =  MpiWrapper::min( numLocalElems );
-    avgLocalElemsCounts[typeToCells.first] =  MpiWrapper::max( numLocalElems );
-    maxLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( numLocalElems ) / size );
+    totalLocalElems[typeToCells.first] =  MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
+    minLocalElemsCounts[typeToCells.first] =  MpiWrapper::min( localElemsOfType );
+    avgLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( localElemsOfType ) / size );
+    maxLocalElemsCounts[typeToCells.first] = MpiWrapper::max( localElemsOfType );
   }
 
   if( rank == 0 )
   {
 
-    auto sumOfElemsType = accumulateElemsCount( elemCounts );
+    auto sumOfElemsType = accumulateElemsCount( totalLocalElems );
     auto sumOfMinElemsType = accumulateElemsCount( minLocalElemsCounts );
     auto sumOfAvgElemsType = accumulateElemsCount( avgLocalElemsCounts );
     auto sumOfMaxElemsType = accumulateElemsCount( maxLocalElemsCounts );
@@ -1953,10 +1947,12 @@ void printMeshStatistics( vtkDataSet & ,
                                      "average",
                                      "maximum" } );
     TableData elemsData;
-    for( auto const & typeCount: elemCounts )
+    for( auto const & typeCount: totalLocalElems )
     {
       elemsData.addRow( typeCount.first, typeCount.second,
-                        minLocalElemsCounts[typeCount.first], avgLocalElemsCounts[typeCount.first], maxLocalElemsCounts[typeCount.first] );
+                        minLocalElemsCounts[typeCount.first],
+                        avgLocalElemsCounts[typeCount.first],
+                        maxLocalElemsCounts[typeCount.first] );
     }
     elemsData.addRow( "total elements", sumOfElemsType, sumOfMinElemsType, sumOfAvgElemsType, sumOfMaxElemsType );
     TableTextFormatter elemsText( elemsLayout );
