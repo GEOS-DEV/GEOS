@@ -839,6 +839,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
       arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
       arrayView1d< real64 const > const area = subRegion.getElementArea();
 
+      arrayView1d< fields::contact::FractureState::State const > const fractureState = subRegion.getField< fields::contact::fractureState >();
+
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
       ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -859,6 +861,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                             faceNormal,
                                             area,
                                             aperture,
+                                            fractureState,
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,

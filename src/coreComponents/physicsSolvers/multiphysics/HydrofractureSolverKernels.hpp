@@ -147,13 +147,13 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const & area,
                                  real64 const & aperture,
                                  real64 const & dens,
+                                 fields::contact::FractureState::State const & fractureState,
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
   {
     real64 dHydraulicAperture_dNormalJump = 0.0;
     real64 dHydraulicAperture_dTraction = 0.0;
     real64 fractureTraction = 0.0;
-    integer fractureState = 0;
     real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture,
                                                                                         fractureTraction,
                                                                                         fractureState,
@@ -226,6 +226,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const area,
           arrayView1d< real64 const > const aperture,
+          arrayView1d< fields::contact::FractureState::State const > const fractureState,
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const > const dens,
@@ -253,6 +254,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                      area[ei],
                                      aperture[ei],
                                      dens[ei][0],
+                                     fractureState[ei],
                                      nodeDOF,
                                      dRdU );
 
