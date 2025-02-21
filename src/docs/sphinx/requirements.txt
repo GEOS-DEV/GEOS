@@ -11,4 +11,3 @@ sphinxcontrib-plantuml
 sphinx-argparse
 sphinx-design
 sphinxcontrib-programoutput>=0.17
-furo==2021.11.16
