@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_CONTACT_FRICTIONBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 
 namespace geos
@@ -84,7 +85,7 @@ public:
   inline
   virtual void updateFractureState( arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
-                                    integer & fractureState ) const
+                                    fields::contact::FractureState::State & fractureState ) const
   { GEOS_UNUSED_VAR( dispJump, tractionVector, fractureState ); }
 
   /**
@@ -129,7 +130,7 @@ public:
                                real64 const tangentialTractionTolerance,
                                real64 ( & dTraction_dDispJump )[3][3],
                                real64 ( & tractionNew )[3],
-                               integer & fractureState ) const
+                               fields::contact::FractureState::State & fractureState ) const
   {
     GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, fixedLimitTau,
                      normalTractionTolerance, tangentialTractionTolerance,

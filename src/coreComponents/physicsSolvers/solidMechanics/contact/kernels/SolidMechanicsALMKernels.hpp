@@ -260,7 +260,7 @@ public:
 
     real64 tractionNew[3];
 
-    integer fractureState;
+    fields::contact::FractureState::State fractureState( fields::contact::FractureState::Stick );
     m_constitutiveUpdate.updateTraction( m_oldDispJump[k],
                                          m_dispJump[k],
                                          m_penalty[k],

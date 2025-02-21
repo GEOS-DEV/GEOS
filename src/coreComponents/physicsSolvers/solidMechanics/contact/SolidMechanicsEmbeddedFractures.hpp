@@ -69,7 +69,7 @@ public:
                                  arrayView2d< real64 const > const & dispJump,
                                  arrayView2d< real64 const > const & oldDispJump,
                                  arrayView2d< real64 const > const & traction,
-                                 arrayView1d< integer > const & fractureState );
+                                 arrayView1d< fields::contact::FractureState::State > const & fractureState );
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,

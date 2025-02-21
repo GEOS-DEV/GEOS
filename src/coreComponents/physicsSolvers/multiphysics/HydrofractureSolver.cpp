@@ -31,6 +31,7 @@
 #include "dataRepository/LogLevelsInfo.hpp"
 #include "mesh/MeshFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 namespace geos
 {
@@ -104,6 +105,19 @@ template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   Base::registerDataOnMesh( meshBodies );
+
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const,
+                                                   MeshLevel & mesh,
+                                                   string_array const & )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      subRegion.registerField< fields::contact::fractureState >( this->getName());
+      subRegion.registerField< fields::contact::oldFractureState >( this->getName());
+    } );
+  } );
 
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
@@ -302,6 +316,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
     arrayView1d< real64 > const deltaVolume = subRegion.getField< flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+    arrayView1d< fields::contact::FractureState::State > const fractureState = subRegion.getField< contact::fractureState >();
 
     string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
@@ -339,6 +354,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
                                                                       volume,
                                                                       deltaVolume,
                                                                       aperture,
+                                                                      fractureState,
                                                                       hydraulicAperture
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
                                                                       ,

@@ -68,7 +68,7 @@ struct ConstraintCheckKernel
           arrayView1d< real64 const > const & normalDisplacementTolerance,
           arrayView1d< real64 const > const & slidingTolerance,
           real64 const slidingCheckTolerance,
-          arrayView1d< integer const > const & fractureState,
+          arrayView1d< fields::contact::FractureState::State const > const fractureState,
           arrayView1d< integer > const & condConv )
   {
 
@@ -120,7 +120,7 @@ struct UpdateStateKernel
           bool const symmetric,
           arrayView1d< real64 const > const & normalTractionTolerance,
           arrayView2d< real64 > const & traction,
-          arrayView1d< integer > const & fractureState )
+          arrayView1d< fields::contact::FractureState::State > const & fractureState )
 
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )

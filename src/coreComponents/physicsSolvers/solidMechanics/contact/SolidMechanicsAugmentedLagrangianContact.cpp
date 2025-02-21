@@ -310,7 +310,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
     arrayView2d< real64 > const
     iterativePenalty = subRegion.getField< contact::iterativePenalty >().toView();
-    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< contact::FractureState::State const > const fractureState = subRegion.getField< contact::fractureState >();
 
     if( m_simultaneous )
     {
@@ -579,8 +579,8 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 
     arrayView2d< real64 > const traction  = subRegion.getField< contact::traction >();
 
-    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
-    arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+    arrayView1d< contact::FractureState::State const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< contact::FractureState::State > const oldFractureState = subRegion.getField< contact::oldFractureState >();
 
     arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
     arrayView1d< real64 > const tangentialTraction  = subRegion.getField< contact::tangentialTraction >();
@@ -838,7 +838,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
       arrayView2d< real64 const > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
       arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
-      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< contact::FractureState::State const > const fractureState = subRegion.getField< contact::fractureState >();
 
       arrayView1d< real64 const > const normalDisplacementTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
@@ -1016,7 +1016,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         arrayView2d< real64 > const dispJumpUpdPenalty =
           subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() );
 
-        arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
+        arrayView1d< contact::FractureState::State > const fractureState = subRegion.getField< contact::fractureState >();
 
         arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
@@ -1078,7 +1078,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< contact::FractureState::State const > const fractureState = subRegion.getField< contact::fractureState >();
 
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
                                                           finiteElement::FiniteElementBase const &,

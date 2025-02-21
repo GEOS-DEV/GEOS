@@ -308,7 +308,7 @@ struct StateUpdateKernel
           arrayView2d< real64 const > const & jump,
           arrayView2d< real64 > const & fractureTraction,
           arrayView3d< real64 > const & dFractureTraction_dJump,
-          arrayView1d< integer const > const & fractureState,
+          arrayView1d< fields::contact::FractureState::State const > const fractureState,
           arrayView1d< real64 > const & slip )
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )

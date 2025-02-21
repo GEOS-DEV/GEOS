@@ -21,8 +21,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVERKERNELS_HPP_
 
-#include "HydrofractureSolverKernels.hpp"
-
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 namespace geos
 {
 
@@ -45,6 +44,7 @@ struct DeformationUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
+          arrayView1d< fields::contact::FractureState::State > const & fractureState,
           arrayView1d< real64 > const & hydraulicAperture
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
           ,
@@ -84,13 +84,14 @@ struct DeformationUpdateKernel
       minAperture.min( aperture[kfe] );
       maxAperture.max( aperture[kfe] );
 
+      fractureState[kfe] = normalJump <= 0.0 ? fields::contact::FractureState::Stick : fields::contact::FractureState::Open;
+
       real64 normalTraction = 0.0; /// TODO: must be changed to use actual traction
-      integer fractureState = 0; 
       real64 dHydraulicAperture_dNormalTraction = 0.0;
       real64 dHydraulicAperture_dNormalJump = 0.0;
       real64 const newHydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture[kfe],
                                                                                              normalTraction,
-                                                                                             fractureState,
+                                                                                             fractureState[kfe],
                                                                                              dHydraulicAperture_dNormalJump,
                                                                                              dHydraulicAperture_dNormalTraction );
 

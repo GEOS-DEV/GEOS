@@ -603,7 +603,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
-    arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< fields::contact::FractureState::State const > const fractureState = subRegion.getField< contact::fractureState >();
 
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
     {
@@ -770,7 +770,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
       arrayView1d< real64 > const deltaVolume              = subRegion.getField< flow::deltaVolume >();
-      arrayView1d< fields::contact::FractureState > const & fractureState   = subRegion.getField< contact::fractureState >();
+      arrayView1d< fields::contact::FractureState::State > const & fractureState   = subRegion.getField< contact::fractureState >();
 
       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
