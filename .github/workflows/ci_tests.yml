@@ -177,6 +177,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GCP_BUCKET: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
@@ -271,10 +272,10 @@ jobs:
       CMAKE_BUILD_TYPE: Debug
       CODE_COVERAGE: true
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
-      GCP_BUCKET: geosx/ubuntu22.04-gcc12
+      GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON: Runner_4core_16GB
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
