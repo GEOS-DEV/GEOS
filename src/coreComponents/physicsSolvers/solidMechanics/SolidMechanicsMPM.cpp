@@ -182,7 +182,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_LBarScale( 0.0 ),
   m_exactJIntegration( 0 ),
   m_useAPIC( 0 ),
-  m_useInteralForceAsFaceReaction( 0 ),
+  m_useInternalForceAsFaceReaction( 0 ),
   m_maxParticleVelocity( 1e6 ), // Floating point exception if this is set to DBL_MAX when squared
   m_maxParticleVelocitySquared( DBL_MAX ),
   m_minParticleJacobian( 0.1 ),
@@ -685,9 +685,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Will use APIC in particle to grid mapping of momentum" );
 
-  registerWrapper( "useInteralForceAsFaceReaction", &m_useInteralForceAsFaceReaction ).
+  registerWrapper( "useInternalForceAsFaceReaction", &m_useInternalForceAsFaceReaction ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_useInteralForceAsFaceReaction ).
+    setApplyDefaultValue( m_useInternalForceAsFaceReaction ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Will use internal force component at boundary node as reaction" );
 
@@ -3834,7 +3834,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                             
               if( gridGhostRank[g] <= -1 && gridMass[g][fieldIndex] > m_smallMass ) // so we don't double count reactions at partition boundaries
               {
-                if(m_useInteralForceAsFaceReaction == 0 )
+                if(m_useInternalForceAsFaceReaction == 0 )
                 { // This computes the acceleration needed to bring the nodal velocity to the prescribed value, and the associated force.
                   // But in cases where there is a significant velocity change across the boundary grid cell, the mapped velocity
                   // can differ significantly from the prescribed value (unless APIC or similar accounting for p_velGrad is used)
@@ -5728,6 +5728,11 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[1]*scaleFactor*grad[1]);               // [2][1]
         damageFieldHessianTermL2NormSquared += (scaleFactor*grad[2] - 1.0)*(scaleFactor*grad[2] - 1.0); // [2][2]
 
+        // TODO: ( Jay ) write surface flag box painter wrapper to paint in 
+        //          damage instead of surface flag
+        // TODO: ( Jay ) add check that if non-local damage is zero do not add 
+        //          stress concentrator
+        
         // GEOS_LOG( damageFieldHessianTermL2NormSquared );
 /*        real64 l2Norm = 0.0;
         for (int i = 0; i < 3; ++i) {

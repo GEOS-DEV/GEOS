@@ -879,7 +879,7 @@ protected:
   int m_exactJIntegration;
 
   int m_useAPIC;
-  int m_useInteralForceAsFaceReaction;
+  int m_useInternalForceAsFaceReaction;
   
   real64 m_maxParticleVelocity;
   real64 m_maxParticleVelocitySquared;
