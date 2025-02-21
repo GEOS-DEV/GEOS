@@ -141,6 +141,8 @@ real64 BartonBandisUpdates::computeHydraulicAperture( real64 const aperture,
                                                       real64 & dHydraulicAperture_aperture,
                                                       real64 & dHydraulicAperture_dNormalStress ) const
 {
+  using namespace fields::contact;
+
   real64 const hydraulicAperture = ( fractureState == FractureState::Open ) ? (aperture + m_aperture0) : m_aperture0 / ( 1 + 9*LvArray::math::abs(normalTraction)/m_referenceNormalStress );
   dHydraulicAperture_dNormalStress = ( fractureState == FractureState::Open ) ? 0.0 : -hydraulicAperture / ( 1 + 9*LvArray::math::abs(normalTraction)/m_referenceNormalStress ) * 9/m_referenceNormalStress;
   dHydraulicAperture_aperture = ( fractureState == FractureState::Open ) ? 1.0 : 0.0;

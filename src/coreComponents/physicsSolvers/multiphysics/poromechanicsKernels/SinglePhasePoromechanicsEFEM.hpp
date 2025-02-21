@@ -22,6 +22,7 @@
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 namespace geos
 {

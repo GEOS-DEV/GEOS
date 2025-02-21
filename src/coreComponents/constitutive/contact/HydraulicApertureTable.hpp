@@ -22,6 +22,7 @@
 
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "functions/TableFunction.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 
 namespace geos
@@ -157,7 +158,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 HydraulicApertureTableUpdates::computeHydraulicAperture( real64 const aperture,
                                                                 real64 const normalTraction,
-                                                                FractureState const fractureState,
+                                                                integer const fractureState,
                                                                 real64 & dHydraulicAperture_dAperture,
                                                                 real64 & dHydraulicAperture_dNormalStress ) const
 {
