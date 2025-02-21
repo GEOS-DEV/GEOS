@@ -316,7 +316,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
     arrayView1d< real64 > const deltaVolume = subRegion.getField< flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
-    arrayView1d< fields::contact::FractureState::State > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
 
     string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
@@ -839,7 +839,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
       arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
       arrayView1d< real64 const > const area = subRegion.getElementArea();
 
-      arrayView1d< fields::contact::FractureState::State const > const fractureState = subRegion.getField< fields::contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< fields::contact::fractureState >();
 
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
       ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();

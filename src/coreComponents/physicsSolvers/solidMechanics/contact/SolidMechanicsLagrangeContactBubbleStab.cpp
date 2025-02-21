@@ -894,7 +894,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView1d< contact::FractureState::State const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
                                                           finiteElement::FiniteElementBase const &,

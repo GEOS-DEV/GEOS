@@ -89,7 +89,7 @@ public:
   inline
   virtual void updateFractureState( arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
-                                    fields::contact::FractureState::State & fractureState ) const override final;
+                                    integer & fractureState ) const override final;
 
   GEOS_HOST_DEVICE
   inline
@@ -111,7 +111,7 @@ public:
                                real64 const tangentialTractionTolerance,
                                real64 ( &dTraction_dDispJump )[3][3],
                                real64 ( &tractionNew )[3],
-                               fields::contact::FractureState::State & fractureState ) const override final;
+                               integer & fractureState ) const override final;
 
 
   GEOS_HOST_DEVICE
@@ -297,7 +297,7 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
 GEOS_HOST_DEVICE
 inline void CoulombFrictionUpdates::updateFractureState( arraySlice1d< real64 const > const & dispJump,
                                                          arraySlice1d< real64 const > const & tractionVector,
-                                                         fields::contact::FractureState::State & fractureState ) const
+                                                         integer & fractureState ) const
 {
   using namespace fields::contact;
 
@@ -371,7 +371,7 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                                                     real64 const tangentialTractionTolerance,
                                                     real64 ( & dTraction_dDispJump )[3][3],
                                                     real64 ( & tractionNew ) [3],
-                                                    fields::contact::FractureState::State & fractureState ) const
+                                                    integer & fractureState ) const
 {
 
   using namespace fields::contact;

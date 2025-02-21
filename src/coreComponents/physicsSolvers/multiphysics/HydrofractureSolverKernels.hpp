@@ -44,7 +44,7 @@ struct DeformationUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
-          arrayView1d< fields::contact::FractureState::State > const & fractureState,
+          arrayView1d< integer > const & fractureState,
           arrayView1d< real64 > const & hydraulicAperture
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
           ,
@@ -147,7 +147,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const & area,
                                  real64 const & aperture,
                                  real64 const & dens,
-                                 fields::contact::FractureState::State const & fractureState,
+                                 integer const & fractureState,
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
   {
@@ -226,7 +226,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const area,
           arrayView1d< real64 const > const aperture,
-          arrayView1d< fields::contact::FractureState::State const > const fractureState,
+          arrayView1d< integer const > const fractureState,
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const > const dens,

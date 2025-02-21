@@ -61,7 +61,7 @@ public:
   inline
   virtual void updateFractureState( arraySlice1d< real64 const > const & dispJump,
                                     arraySlice1d< real64 const > const & tractionVector,
-                                    fields::contact::FractureState::State & fractureState ) const override final;
+                                    integer & fractureState ) const override final;
 
 };
 
@@ -120,7 +120,7 @@ protected:
 GEOS_HOST_DEVICE
 inline void FrictionlessContactUpdates::updateFractureState( arraySlice1d< real64 const > const & dispJump,
                                                              arraySlice1d< real64 const > const & tractionVector,
-                                                             fields::contact::FractureState::State & fractureState ) const
+                                                             integer & fractureState ) const
 {
   GEOS_UNUSED_VAR( tractionVector );
   using namespace fields::contact;
