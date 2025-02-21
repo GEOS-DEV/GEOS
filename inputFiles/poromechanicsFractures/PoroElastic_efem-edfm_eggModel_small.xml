@@ -16,9 +16,7 @@
         newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="1"
-        solverType="direct"
-        preconditionerType="mgr"
-        logLevel="1"/>
+        solverType="direct"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures

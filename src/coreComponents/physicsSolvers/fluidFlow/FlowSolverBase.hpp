@@ -198,6 +198,8 @@ public:
                                            std::map< string, localIndex > const & bcNameToBcId,
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
+  integer numberOfDofsPerCell() const { return m_numDofPerCell; }
+
 protected:
 
   /**

@@ -167,6 +167,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
     pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
   }
 
+  dofManager.printFieldInfo();
+
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
@@ -188,7 +190,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
   // 1. Add the number of nonzeros induced by coupling jump-displacement
   solidMechanicsSolver()->addCouplingNumNonzeros( domain, dofManager, rowLengths );
 
-  // 2. Add the number of nonzeros induced by coupling jump - matrix pressure
+  // 2. Add the number of nonzeros induced by coupling jump - matrix flow dofs
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
@@ -231,14 +233,16 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
 
           for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
           {
-            rowLengths[localRow + i] += 1;
+            rowLengths[localRow + i] += flowSolver()->numberOfDofsPerCell();
           }
+          for( integer i = 0; i < flowSolver()->numberOfDofsPerCell(); i++ )
+          {
+            localIndex const localFlowDofRow = LvArray::integerConversion< localIndex >( flowDofNumber[cellElementIndex] + i - rankOffset );
+            GEOS_ASSERT_GE( localFlowDofRow, 0 );
+            GEOS_ASSERT_GE( rowLengths.size(), localFlowDofRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
 
-          localIndex const localPressureRow = LvArray::integerConversion< localIndex >( flowDofNumber[cellElementIndex] - rankOffset );
-          GEOS_ASSERT_GE( localPressureRow, 0 );
-          GEOS_ASSERT_GE( rowLengths.size(), localPressureRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
-
-          rowLengths[ localPressureRow ] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
+            rowLengths[ localFlowDofRow ] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
+          }
         }
       }
     } );
@@ -304,8 +308,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingSparsityPattern( Doma
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const jumpDofKey = dofManager.getKey( contact::dispJump::key() );
-    string const pressureDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+    string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
+    string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -328,21 +332,25 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingSparsityPattern( Doma
             getSubRegion< CellElementSubRegion >( embeddedSurfacesToCells.m_toElementSubRegion[k][0] );
 
         arrayView1d< globalIndex const > const &
-        pressureDofNumber = subRegion.getReference< globalIndex_array >( pressureDofKey );
+        flowDofNumber = subRegion.getReference< globalIndex_array >( flowDofKey );
 
         localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
         if( ghostRank[k] < 0 ) /// TODO is this really necessary?
         {
           localIndex const localJumpRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
-          localIndex const localPressureRow = LvArray::integerConversion< localIndex >( pressureDofNumber[cellElementIndex] - rankOffset );
-
-          for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
+          for( integer dof = 0; dof  < flowSolver()->numberOfDofsPerCell(); dof++ )
           {
-            if( localJumpRow + i >= 0 && localJumpRow + i < pattern.numRows() )
-              pattern.insertNonZero( localJumpRow + i, pressureDofNumber[cellElementIndex] );
-            if( localPressureRow >= 0 && localPressureRow < pattern.numRows() )
-              pattern.insertNonZero( localPressureRow, jumpDofNumber[k] + i );
+
+            localIndex const localFlowDofRow = LvArray::integerConversion< localIndex >( flowDofNumber[cellElementIndex] + dof - rankOffset );
+
+            for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
+            {
+              if( localJumpRow + i >= 0 && localJumpRow + i < pattern.numRows() )
+                pattern.insertNonZero( localJumpRow + i, flowDofNumber[cellElementIndex] + dof );
+              if( localFlowDofRow >= 0 && localFlowDofRow < pattern.numRows() )
+                pattern.insertNonZero( localFlowDofRow, jumpDofNumber[k] + i );
+            }
           }
         }
       }
@@ -366,27 +374,30 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingSparsityPattern( Doma
           elemManager.getRegion( seri[iconn][0] ).getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
 
         arrayView1d< globalIndex const > const &
-        pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
+        flowDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( flowDofKey );
         arrayView1d< globalIndex const > const &
         jumpDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( jumpDofKey );
 
         for( localIndex k0=0; k0<numFluxElems; ++k0 )
         {
-          globalIndex const activeFlowDOF = pressureDofNumber[sei[iconn][k0]];
-          globalIndex const rowIndex = activeFlowDOF - rankOffset;
-
-          if( rowIndex >= 0 && rowIndex < pattern.numRows() )
+          for( integer dof = 0; dof < flowSolver()->numberOfDofsPerCell(); dof++ )
           {
-            for( localIndex k1=0; k1<numFluxElems; ++k1 )
+            globalIndex const activeFlowDOF = flowDofNumber[sei[iconn][k0]] + dof;
+            localIndex const rowIndex = activeFlowDOF - rankOffset;
+
+            if( rowIndex >= 0 && rowIndex < pattern.numRows() )
             {
-              // The coupling with the jump of the cell itself has already been added by the dofManager
-              // so we only add the coupling with the jumps of the neighbours.
-              if( k1 != k0 )
+              for( localIndex k1=0; k1<numFluxElems; ++k1 )
               {
-                for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
+                // The coupling with the jump of the cell itself has already been added by the dofManager
+                // so we only add the coupling with the jumps of the neighbours.
+                if( k1 != k0 )
                 {
-                  globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]] + i;
-                  pattern.insertNonZero( rowIndex, colIndex );
+                  for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
+                  {
+                    globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]] + i;
+                    pattern.insertNonZero( rowIndex, colIndex );
+                  }
                 }
               }
             }
