@@ -465,6 +465,10 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     TableTextFormatter const table2DLog( tableLayout );
     logOutput =  table2DLog.toString( tableConverted.tableData );
   }
+  else
+  {
+    GEOS_ERROR( "NOT SUPPORTED YET BUT WAIT" );
+  }
   return logOutput;
 }
 
