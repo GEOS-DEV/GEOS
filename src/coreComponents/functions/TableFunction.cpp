@@ -331,26 +331,55 @@ void collectValues( std::ostringstream & formatterStream,
   }
 }
 
+bool isTableTooLargeForLog( TableFunction const & table )
+{
+  static constexpr integer maxWidth = 250;
+  static constexpr integer maxRows = 500;
+  // for now, we only estimate the table width from approximations
+  static constexpr integer meanColumnWidth = 16;
+  integer const numDims = table.numDimensions();
+  integer const columnCount = numDims != 2 ? numDims + 1 : table.getCoordinates()[0].size();
+  integer const columnSepWidth = numDims != 2 ? 5 : 3;
+  integer tableApproxWidth = columnCount * (columnSepWidth + meanColumnWidth);
+  integer tableRowsCount = numDims != 2 ? table.getValues().size() : table.getCoordinates()[1].size();
+
+  return tableApproxWidth > maxWidth || tableRowsCount > maxRows;
+}
+
 void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 {
   // we only output from rank 0
   if( MpiWrapper::commRank() != 0 )
     return;
 
-  if( outputOpts.writeInLog &&  this->numDimensions() <= 2 )
-  {
+  bool const logOutputFailed = outputOpts.writeInLog && isTableTooLargeForLog( *this );
+  if( outputOpts.writeInLog && !logOutputFailed )
+  { // log output
     TableTextFormatter textFormatter;
     GEOS_LOG( textFormatter.toString( *this ));
   }
-  if( outputOpts.writeCSV || ( outputOpts.writeInLog && this->numDimensions() >= 3 ) )
+
+  if( outputOpts.writeCSV || logOutputFailed )
   {
-    string const filename = this->getName();
-    std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), filename + ".csv" ) );
-    GEOS_LOG( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
-                        FunctionBase::getOutputDirectory(),
-                        filename ));
-    TableCSVFormatter csvFormatter;
-    logStream << csvFormatter.toString( *this );
+    { // csv output
+      std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ) );
+      TableCSVFormatter csvFormatter;
+      logStream << csvFormatter.toString( *this );
+    }
+
+    { // mini-table in log to notice user where csv has been output
+      string const generatedCsvMsg = GEOS_FMT( "CSV Generated to:\n{}/{}.csv",
+                                               FunctionBase::getOutputDirectory(), getName() );
+      string const tableTitle = GEOS_FMT( "{}\n{}", getName(), getTableDescription() );
+      TableLayout const tableLayoutInfos( tableTitle, { generatedCsvMsg } );
+      TableTextFormatter const tableLog( tableLayoutInfos );
+      TableData tableData;
+      if( logOutputFailed )
+      {
+        tableData.addRow( "The table was too heavy for log output.\nTo visualize the table, please refer to the generated csv." );
+      }
+      GEOS_LOG( tableLog.toString( tableData ) );
+    }
   }
 }
 
@@ -398,14 +427,13 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
 template<>
 string TableTextFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
-  static constexpr integer maxRows = 500;
   ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
   arrayView1d< real64 const > const values = tableFunction.getValues();
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
   string const tableTitle = GEOS_FMT( "{}\n{}", tableFunction.getName(), tableFunction.getTableDescription() );
   string logOutput;
 
-  if( numDimensions == 1 && coordinates[0].size() < maxRows )
+  if( numDimensions == 1 )
   {
     TableData tableData;
     arraySlice1d< real64 const > const coords = coordinates[0];
@@ -421,7 +449,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     TableTextFormatter const logTable( tableLayout );
     logOutput = logTable.toString( tableData );
   }
-  else if( numDimensions == 2 && ( coordinates[0].size() * coordinates[1].size() ) < maxRows )
+  else if( numDimensions == 2 )
   {
     TableData2D tableData2D;
     TableData2D::TableDataHolder tableConverted;
@@ -436,15 +464,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                       setMargin( TableLayout::MarginValue::small );
     TableTextFormatter const table2DLog( tableLayout );
     logOutput =  table2DLog.toString( tableConverted.tableData );
-  }
-  else
-  {
-    string const tooLongOutputMsg = GEOS_FMT( "The table is too heavy for log output.\n"
-                                              "To visualize the table, please refer to the generated csv.",
-                                              maxRows );
-    TableLayout const tableLayoutInfos( tableTitle, {tooLongOutputMsg} );
-    TableTextFormatter const tableLog( tableLayoutInfos );
-    logOutput = tableLog.toString();
   }
   return logOutput;
 }
