@@ -18,7 +18,6 @@ Contains:
 
 # Specify solver headers
 set( surfaceGeneration_headers
-     ${surfaceGeneration_headers}
      EmbeddedSurfaceGenerator.hpp
      EmbeddedSurfacesParallelSynchronization.hpp
      ParallelTopologyChange.hpp
@@ -30,7 +29,6 @@ set( surfaceGeneration_headers
 
 # Specify solver sources
 set( surfaceGeneration_sources
-     ${surfaceGeneration_sources}
      EmbeddedSurfaceGenerator.cpp
      EmbeddedSurfacesParallelSynchronization.cpp
      ParallelTopologyChange.cpp

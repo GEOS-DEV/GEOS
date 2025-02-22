@@ -18,7 +18,6 @@ Contains:
 
 # Specify solver headers
 set( wavePropagationSolvers_headers
-     ${wavePropagationSolvers_headers}
      shared/WaveSolverBase.hpp
      shared/WaveSolverUtils.hpp
      shared/PrecomputeSourcesAndReceiversKernel.hpp
@@ -49,7 +48,6 @@ set( wavePropagationSolvers_headers
 
 # Specify solver sources
 set( wavePropagationSolvers_sources
-     ${wavePropagationSolvers_sources}
      shared/WaveSolverBase.cpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.cpp
      sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.cpp
