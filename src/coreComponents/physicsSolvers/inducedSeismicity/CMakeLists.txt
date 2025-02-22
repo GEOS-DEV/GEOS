@@ -40,7 +40,7 @@ set( inducedSeismicitySolvers_sources
      SeismicityRate.cpp
      SpringSlider.cpp )
 
-set( dependencyList ${parallelDeps} discretizationMethods )
+set( dependencyList ${parallelDeps} physicsSolvers )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

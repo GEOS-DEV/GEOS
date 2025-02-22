@@ -30,7 +30,7 @@ set( simplePDESolvers_sources
      LaplaceFEM.cpp
      PhaseFieldDamageFEM.cpp )
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
+set( dependencyList ${parallelDeps} physicsSolvers )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

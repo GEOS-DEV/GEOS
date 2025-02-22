@@ -148,7 +148,7 @@ set( fluidFlowSolvers_sources
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
+set( dependencyList ${parallelDeps} physicsSolvers )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

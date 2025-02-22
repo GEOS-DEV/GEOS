@@ -32,7 +32,6 @@ set( physicsSolvers_headers
      SolverStatistics.hpp
      FieldStatisticsBase.hpp
      LogLevelsInfo.hpp )
-
 #
 # Specify solver sources
 #
@@ -44,40 +43,6 @@ set( physicsSolvers_sources
      SolverStatistics.cpp )
 
 set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
-
-if( GEOS_ENABLE_FLUIDFLOW )
-  add_subdirectory( fluidFlow )
-  list( APPEND dependencyList fluidFlowSolvers )
-endif()
-
-if( GEOS_ENABLE_INDUCEDSEISMICITY )
-  add_subdirectory( inducedSeismicity )
-  list( APPEND dependencyList inducedSeismicitySolvers )
-endif()
-
-if( GEOS_ENABLE_SIMPLEPDE )
-  add_subdirectory( simplePDE )
-endif()
-
-if( GEOS_ENABLE_SOLIDMECHANICS )
-  add_subdirectory( solidMechanics )
-  list( APPEND dependencyList solidMechanicsSolvers )
-endif()
-
-if( GEOS_ENABLE_SURFACEGENERATION )
-  add_subdirectory( surfaceGeneration )
-  list( APPEND dependencyList surfaceGeneration )
-endif()
-
-if( GEOS_ENABLE_WAVEPROPAGATION )
-  add_subdirectory( wavePropagation )
-  list( APPEND dependencyList wavePropagationSolvers )
-endif()
-
-if( GEOS_ENABLE_MULTIPHYSICS )
-  add_subdirectory( multiphysics )
-  list( APPEND dependencyList multiPhysicsSolvers )
-endif()
 
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
@@ -105,6 +70,34 @@ install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib 
 
 if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+endif()
+
+if( GEOS_ENABLE_FLUIDFLOW )
+  add_subdirectory( fluidFlow )
+endif()
+
+if( GEOS_ENABLE_INDUCEDSEISMICITY )
+  add_subdirectory( inducedSeismicity )
+endif()
+
+if( GEOS_ENABLE_SIMPLEPDE )
+  add_subdirectory( simplePDE )
+endif()
+
+if( GEOS_ENABLE_SOLIDMECHANICS )
+  add_subdirectory( solidMechanics )
+endif()
+
+if( GEOS_ENABLE_SURFACEGENERATION )
+  add_subdirectory( surfaceGeneration )
+endif()
+
+if( GEOS_ENABLE_WAVEPROPAGATION )
+  add_subdirectory( wavePropagation )
+endif()
+
+if( GEOS_ENABLE_MULTIPHYSICS )
+  add_subdirectory( multiphysics )
 endif()
 
 
