@@ -43,17 +43,16 @@ set( physicsSolvers_sources
      PhysicsSolverBase.cpp
      SolverStatistics.cpp )
 
+set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
+
 if( GEOS_ENABLE_FLUIDFLOW )
   add_subdirectory( fluidFlow )
+  list( APPEND dependencyList fluidFlowSolvers )
 endif()
 
 if( GEOS_ENABLE_INDUCEDSEISMICITY )
   add_subdirectory( inducedSeismicity )
-endif()
-
-if( GEOS_ENABLE_MULTIPHYSICS )
-  add_subdirectory( multiphysics )
-  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+  list( APPEND dependencyList inducedSeismicitySolvers )
 endif()
 
 if( GEOS_ENABLE_SIMPLEPDE )
@@ -62,18 +61,23 @@ endif()
 
 if( GEOS_ENABLE_SOLIDMECHANICS )
   add_subdirectory( solidMechanics )
-  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+  list( APPEND dependencyList solidMechanicsSolvers )
 endif()
 
 if( GEOS_ENABLE_SURFACEGENERATION )
   add_subdirectory( surfaceGeneration )
+  list( APPEND dependencyList surfaceGeneration )
 endif()
 
 if( GEOS_ENABLE_WAVEPROPAGATION )
   add_subdirectory( wavePropagation )
+  list( APPEND dependencyList wavePropagationSolvers )
 endif()
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
+if( GEOS_ENABLE_MULTIPHYSICS )
+  add_subdirectory( multiphysics )
+  list( APPEND dependencyList multiPhysicsSolvers )
+endif()
 
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolvers_headers
