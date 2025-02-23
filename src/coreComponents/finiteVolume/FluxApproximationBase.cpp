@@ -18,16 +18,11 @@
  *
  */
 
-#include "LvArray/src/tensorOps.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "finiteVolume/ProjectionEDFMHelper.hpp"
-#include "common/MpiWrapper.hpp"
 #include "FluxApproximationBase.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-
-
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geos
 {

@@ -120,10 +120,10 @@ public:
    */
 
   FluxComputeKernel( integer const numPhases,
-                           globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           GlobalCellDimAccessor const & globalCellDimAccessor,
+                     globalIndex const rankOffset,
+                     STENCILWRAPPER const & stencilWrapper,
+                     DofNumberAccessor const & dofNumberAccessor,
+                     GlobalCellDimAccessor const & globalCellDimAccessor,
                      CompFlowAccessors const & compFlowAccessors,
                      StabCompFlowAccessors const & stabCompFlowAccessors,
                      MultiFluidAccessors const & multiFluidAccessors,
@@ -132,9 +132,9 @@ public:
                      PermeabilityAccessors const & permeabilityAccessors,
                      RelPermAccessors const & relPermAccessors,
                      real64 const dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags )
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs,
+                     BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             stencilWrapper,
@@ -332,7 +332,6 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
-                   integer const hasVelocityCompute,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -355,15 +354,15 @@ public:
           CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
 
-      BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
+/*      BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
       if( hasVelocityCompute )
-        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::computeVelocity );
+        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::computeVelocity );*/
 
-      using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      using KERNEL_TYPE = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );

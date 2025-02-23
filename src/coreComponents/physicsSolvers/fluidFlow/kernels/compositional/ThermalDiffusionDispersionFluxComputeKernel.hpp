@@ -54,6 +54,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalCellDimAccessor = AbstractBase::GlobalCellDimAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using AbstractBase::m_dt;
@@ -94,6 +95,7 @@ public:
                                         globalIndex const rankOffset,
                                         STENCILWRAPPER const & stencilWrapper,
                                         DofNumberAccessor const & dofNumberAccessor,
+                                        GlobalCellDimAccessor const & cellDimAccessor,
                                         CompFlowAccessors const & compFlowAccessors,
                                         MultiFluidAccessors const & multiFluidAccessors,
                                         DiffusionAccessors const & diffusionAccessors,
@@ -107,6 +109,7 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
+            cellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
             diffusionAccessors,
@@ -320,6 +323,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
       using kernelType = DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
@@ -328,7 +335,7 @@ public:
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
+                         dofNumberAccessor, cellCartDimAccessor, compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),

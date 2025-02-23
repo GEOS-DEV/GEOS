@@ -56,9 +56,10 @@ enum class KernelFlags
   /// Flag indicating whether C1-PPU is used or not
   C1PPU = 1 << 5, // 32
   /// Flag indicating whether IHU is used or not
-  IHU = 1 << 6 // 64
-        /// Add more flags like that if needed:
-        // Flag8 = 1 << 7  //128
+  IHU = 1 << 6, // 64
+  /// Flag indicating that velocity should be computed as a field (most liektly to use in linear dispersion)
+  VelocityCompute = 1 << 7  //128
+                    /// Add more flags like that if needed:
 };
 
 /******************************** FluxComputeKernelBase ********************************/
@@ -81,6 +82,8 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
+
+  using GlobalCellDimAccessor = ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >;
 
   using CompFlowAccessors =
     StencilAccessors< fields::ghostRank,
@@ -125,6 +128,7 @@ public:
   FluxComputeKernelBase( integer const numPhases,
                          globalIndex const rankOffset,
                          DofNumberAccessor const & dofNumberAccessor,
+                         GlobalCellDimAccessor const & globalCellDimAccessor,
                          CompFlowAccessors const & compFlowAccessors,
                          MultiFluidAccessors const & multiFluidAccessors,
                          real64 const dt,
@@ -145,6 +149,9 @@ protected:
 
   /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
+
+  /// Views on cellDims for velocity recontstruction
+  ElementViewConst< arrayView2d< real64 const > > const m_globalCellDims;
 
   /// Views on ghost rank numbers and gravity coefficients
   ElementViewConst< arrayView1d< integer const > > const m_ghostRank;

@@ -59,6 +59,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalCellDimAccessor = AbstractBase::GlobalCellDimAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -127,6 +128,7 @@ public:
                               BoundaryStencilWrapper const & stencilWrapper,
                               FLUIDWRAPPER const & fluidWrapper,
                               DofNumberAccessor const & dofNumberAccessor,
+                              GlobalCellDimAccessor const & cellDimAccessor,
                               CompFlowAccessors const & compFlowAccessors,
                               ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                               MultiFluidAccessors const & multiFluidAccessors,
@@ -144,6 +146,7 @@ public:
             stencilWrapper,
             fluidWrapper,
             dofNumberAccessor,
+            cellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
             capPressureAccessors,
@@ -453,6 +456,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
       using KernelType = DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
       typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
@@ -463,7 +470,7 @@ public:
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
       KernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                         dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                         dofNumberAccessor, cellCartDimAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

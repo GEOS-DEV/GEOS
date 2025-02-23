@@ -113,6 +113,7 @@ public:
                                         globalIndex const rankOffset,
                                         STENCILWRAPPER const & stencilWrapper,
                                         DofNumberAccessor const & dofNumberAccessor,
+                                        GlobalCellDimAccessor const & cellCartDimAccessor,
                                         CompFlowAccessors const & compFlowAccessors,
                                         MultiFluidAccessors const & multiFluidAccessors,
                                         DiffusionAccessors const & diffusionAccessors,
@@ -125,6 +126,7 @@ public:
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
+                             cellCartDimAccessor,
                              compFlowAccessors,
                              multiFluidAccessors,
                              dt,
@@ -742,6 +744,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
       using kernelType = DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
@@ -750,7 +756,7 @@ public:
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
+                         dofNumberAccessor, cellCartDimAccessor, compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),

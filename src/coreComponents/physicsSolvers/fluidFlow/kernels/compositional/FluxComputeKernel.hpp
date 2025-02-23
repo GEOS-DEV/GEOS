@@ -94,6 +94,7 @@ public:
                      globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
+                     GlobalCellDimAccessor const & globalCellDimAccessor,
                      CompFlowAccessors const & compFlowAccessors,
                      MultiFluidAccessors const & multiFluidAccessors,
                      CapPressureAccessors const & capPressureAccessors,
@@ -105,6 +106,7 @@ public:
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
+                             globalCellDimAccessor,
                              compFlowAccessors,
                              multiFluidAccessors,
                              dt,
@@ -546,13 +548,17 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, cellCartDimAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

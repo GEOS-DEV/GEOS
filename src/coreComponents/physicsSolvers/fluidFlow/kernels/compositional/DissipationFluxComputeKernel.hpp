@@ -117,16 +117,16 @@ public:
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
                      GlobalCellDimAccessor const & globalCellDimAccessor,
-                           CompFlowAccessors const & compFlowAccessors,
-                           DissCompFlowAccessors const & dissCompFlowAccessors,
-                           MultiFluidAccessors const & multiFluidAccessors,
-                           CapPressureAccessors const & capPressureAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           PorosityAccessors const & porosityAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
+                     CompFlowAccessors const & compFlowAccessors,
+                     DissCompFlowAccessors const & dissCompFlowAccessors,
+                     MultiFluidAccessors const & multiFluidAccessors,
+                     CapPressureAccessors const & capPressureAccessors,
+                     PermeabilityAccessors const & permeabilityAccessors,
+                     PorosityAccessors const & porosityAccessors,
+                     real64 const & dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs,
+                     BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
                      real64 const omega,
                      integer const curNewton,
                      integer const continuation,
@@ -381,7 +381,6 @@ public:
         elemManager.constructArrayViewAccessor< real64, 2 >(
           CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
-      using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );

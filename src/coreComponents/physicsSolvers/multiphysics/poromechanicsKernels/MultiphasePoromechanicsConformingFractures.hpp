@@ -45,6 +45,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalCellDimAccessor = AbstractBase::GlobalCellDimAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -90,6 +91,7 @@ public:
                      globalIndex const rankOffset,
                      SurfaceElementStencilWrapper const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
+                     GlobalCellDimAccessor const & cellDimAccessor,
                      CompFlowAccessors const & compFlowAccessors,
                      MultiFluidAccessors const & multiFluidAccessors,
                      CapPressureAccessors const & capPressureAccessors,
@@ -104,6 +106,7 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
+            cellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
             capPressureAccessors,
@@ -387,6 +390,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
@@ -394,7 +401,7 @@ public:
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, cellCartDimAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors, fracPermAccessors,
                          dt, localMatrix, localRhs, kernelFlags, dR_dAper );
 

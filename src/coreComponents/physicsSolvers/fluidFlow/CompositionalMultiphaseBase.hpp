@@ -309,6 +309,7 @@ public:
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
+    static constexpr char const * hasVelocityComputedString() { return "hasVelocityComputed"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
     static constexpr char const * minCompFracString() { return "minCompFrac"; }
     static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
@@ -489,6 +490,9 @@ protected:
 
   /// flag to determine whether or not to apply dispersion
   integer m_hasDispersion;
+
+  /// flag to determine whether or not to compute and register reconstructed velocity field
+  integer m_hasVelocityComputed;
 
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
