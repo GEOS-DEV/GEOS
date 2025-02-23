@@ -40,7 +40,35 @@ set( mainInterface_sources
      version.cpp
    )
 
-set( dependencyList ${parallelDeps} physicsSolvers constitutiveDrivers optionparser )
+set( dependencyList ${parallelDeps} constitutiveDrivers optionparser )
+
+if( GEOS_ENABLE_FLUIDFLOW )
+  list( APPEND dependencyList fluidFlowSolvers )
+endif()
+
+if( GEOS_ENABLE_INDUCEDSEISMICITY )
+  list( APPEND dependencyList inducedSeismicitySolvers )
+endif()
+
+if( GEOS_ENABLE_SIMPLEPDE )
+  list( APPEND dependencyLists implePDESolvers )
+endif()
+
+if( GEOS_ENABLE_SOLIDMECHANICS )
+  list( APPEND dependencyList solidMechanicsSolvers )
+endif()
+
+if( GEOS_ENABLE_SURFACEGENERATION )
+  list( APPEND dependencyList surfaceGeneration )
+endif()
+
+if( GEOS_ENABLE_WAVEPROPAGATION )
+  list( APPEND dependencyList wavePropagationSolvers )
+endif()
+
+if( GEOS_ENABLE_MULTIPHYSICS )
+  list( APPEND dependencyList multiPhysicsSolvers )
+endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
