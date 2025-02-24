@@ -310,6 +310,64 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout & tableLayout,
   }
 }
 
+std::string_view ltrim( std::string_view s )
+{
+  std::size_t const first = s.find_first_not_of( " " );
+  if( first != std::string::npos )
+  {
+    return s.substr( first, ( s.size() - first ) );
+  }
+  return {};
+}
+
+void splitAndFormatStringByDelimiter( std::vector< std::string > & cellLines, size_t maxLength )
+{
+  std::vector< std::string > formattedDescription;
+  for( auto & line : cellLines )
+  {
+    size_t startIdx  = 0;
+    size_t endIdx = 0;
+    size_t captureLength  = 0;
+    size_t delimIdx = 0;
+    while( endIdx < line.size())
+    {
+      endIdx = line.find( ' ', delimIdx );
+      if( endIdx == std::string::npos )
+      {
+        std::string remaining = line.substr( startIdx );
+        // Check if the remaining substring exceeds maxLength
+        if( remaining.size() > maxLength )
+        {
+          formattedDescription.push_back( std::string( ltrim( line.substr( startIdx, captureLength ))));
+          if( captureLength < remaining.size())
+          {
+            formattedDescription.push_back( std::string( ltrim( line.substr( startIdx + captureLength ))) );
+          }
+        }
+        else
+        {
+          formattedDescription.push_back( std::string( ltrim( line.substr( startIdx, endIdx ))));
+        }
+      }
+      else
+      {
+        size_t wordsLength = endIdx - startIdx;
+        // Check if the capture exceeds maxLength
+        if( wordsLength > maxLength )
+        {
+          formattedDescription.push_back( std::string( ltrim( line.substr( startIdx, captureLength ))));
+          startIdx = delimIdx;
+          captureLength = 0;
+        }
+
+        delimIdx = endIdx + 1;
+        captureLength = wordsLength;
+      }
+    }
+  }
+  cellLines = formattedDescription;
+}
+
 void TableTextFormatter::populateDataCellsLayout( TableLayout & tableLayout,
                                                   CellLayoutRows & cellsDataLayout,
                                                   RowsCellInput & inputDataValues ) const
@@ -343,7 +401,9 @@ void TableTextFormatter::populateDataCellsLayout( TableLayout & tableLayout,
           cell.value = m_horizontalLine;
         }
 
-        cellsDataLayout[idxRow][idxColumn] = TableLayout::CellLayout( cell.type, cell.value, alignement );
+        TableLayout::CellLayout dataToCell( cell.type, cell.value, alignement );
+        splitAndFormatStringByDelimiter( dataToCell.m_lines, 80 );
+        cellsDataLayout[idxRow][idxColumn] = dataToCell;
         maxLinesPerRow  = std::max( maxLinesPerRow, cellsDataLayout[idxRow][idxColumn].m_lines.size() );
         idxColumn++;
       }

@@ -454,6 +454,12 @@ private:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
+   * @brief TODO
+   * TODO
+   */
+   TableLayout & setMaxWidth( size_t width );
+
+  /**
    * @return check if the line break at the end & beginning is activated
    */
   bool isLineBreakEnabled() const;
@@ -484,6 +490,12 @@ private:
    */
   integer const & getMarginTitle() const
   { return m_titleMargin; }
+
+  /**
+   * @return The margin title
+   */
+  size_t const & getMaxWidth() const
+  { return m_tableMaxWidth; }
 
 /**
  * @brief Get the Nb Rows object
@@ -555,6 +567,7 @@ private:
   bool m_wrapLine = true;
 
   string m_tableTitle;
+  size_t m_tableMaxWidth = std::numeric_limits<size_t>::max();
 
   integer m_borderMargin;
   integer m_columnMargin;

@@ -62,6 +62,12 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
   return *this;
 }
 
+TableLayout & TableLayout::setMaxWidth( size_t width )
+{
+  m_tableMaxWidth = width;
+  return *this;
+}
+
 bool TableLayout::isLineBreakEnabled() const
 { return m_wrapLine; }
 
