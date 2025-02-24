@@ -159,29 +159,33 @@ TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
  * @brief Creates a vector of sub-columns from a list of names.
  * @tparam CONTAINER Container type of sub-column names (e.g. std::vector<std::string>).
  * @param names Sub-column names list.
+ * @param alignment alignment of the sub-columns to create.
  * @return A vector of TableLayout::Column, ready to use for TableLayout::Column::m_subColumn.
  */
 template< typename CONTAINER >
-static std::vector< TableLayout::Column > makeSubColumnsFromString( CONTAINER const & names )
+static std::vector< TableLayout::Column > makeSubColumnsFromStrings( CONTAINER const & names,
+                                                                     TableLayout::ColumnAlignement const alignment )
 {
   std::vector< TableLayout::Column > subColumns;
   subColumns.reserve( names.size());
   for( auto const & name : names )
   {
-    subColumns.emplace_back( TableLayout::Column().setName( name ) );
+    TableLayout::Column col{ TableLayout::CellLayout( CellType::Header, name, alignment.headerAlignment ) };
+    col.m_alignment = alignment;
+    subColumns.emplace_back( col );
   }
   return subColumns;
 }
 
 TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< string > subColNames )
 {
-  m_subColumn = makeSubColumnsFromString( subColNames );
+  m_subColumn = makeSubColumnsFromStrings( subColNames, m_alignment );
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( std::vector< string > subColNames )
+TableLayout::Column & TableLayout::Column::addSubColumns( std::vector< string > const & subColNames )
 {
-  m_subColumn = makeSubColumnsFromString( subColNames );
+  m_subColumn = makeSubColumnsFromStrings( subColNames, m_alignment );
   return *this;
 }
 

@@ -172,17 +172,17 @@ public:
 
     /**
      * @brief Adds multiple sub-columns to the column.
-     * @param subColName A list of sub-column names to add.
+     * @param subColNames A list of sub-column names to add.
      * @return The current column object
      */
-    TableLayout::Column & addSubColumns( std::initializer_list< string > subColName );
+    TableLayout::Column & addSubColumns( std::initializer_list< string > subColNames );
 
     /**
      * @brief Adds multiple sub-columns to the column.
-     * @param subColName A list of sub-column names to add.
+     * @param subColNames A list of sub-column names to add.
      * @return The current column object
      */
-    TableLayout::Column & addSubColumns( std::vector< string > subColName );
+    TableLayout::Column & addSubColumns( std::vector< string > const & subColNames );
 
     /**
      * @brief Adds a single sub-column to the column.
