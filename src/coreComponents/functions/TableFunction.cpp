@@ -368,16 +368,24 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
     }
 
     { // mini-table in log to notice user where csv has been output
-      string const generatedCsvMsg = GEOS_FMT( "CSV Generated to:\n{}/{}.csv",
-                                               FunctionBase::getOutputDirectory(), getName() );
-      string const tableTitle = GEOS_FMT( "{}\n{}", getName(), getTableDescription() );
-      TableLayout const tableLayoutInfos( tableTitle, { generatedCsvMsg } );
+      // only one column which serve as "title" (centered), next content are designed to be left-aligned
+      TableLayout const tableLayoutInfos( { TableLayout::Column().
+                                              setName( getName() ).
+                                              setHeaderAlignment( TableLayout::Alignment::center ).
+                                              setValuesAlignment( TableLayout::Alignment::left ) } );
       TableTextFormatter const tableLog( tableLayoutInfos );
+
       TableData tableData;
+      tableData.addRow( getTableDescription());
       if( logOutputFailed )
       {
-        tableData.addRow( "The table was too heavy for log output.\nTo visualize the table, please refer to the generated csv." );
+        tableData.addSeparator();
+        tableData.addRow( " / \\ The table was too heavy for log output.\n"
+                          "/ ! \\ To visualize the table, please refer to the generated csv." );
       }
+      tableData.addSeparator();
+      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv",
+                                  FunctionBase::getOutputDirectory(), getName() ));
       GEOS_LOG( tableLog.toString( tableData ) );
     }
   }
@@ -430,23 +438,28 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
   arrayView1d< real64 const > const values = tableFunction.getValues();
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
-  string const tableTitle = GEOS_FMT( "{}\n{}", tableFunction.getName(), tableFunction.getTableDescription() );
+  auto const tableTitle = tableFunction.getName();
+  TableLayout::Column parentColumn = TableLayout::Column().
+                                       setName( tableFunction.getTableDescription()).
+                                       setHeaderAlignment( TableLayout::Alignment::left );
   string logOutput;
 
   if( numDimensions == 1 )
   {
+    bool const shortenDescription = tableFunction.getDimUnit( 0 ) == units::Unknown;
+    parentColumn.addSubColumns( {
+        string( tableFunction.getCoordsDescription( 0, shortenDescription ) ),
+        string( tableFunction.getValuesDescription() )
+      } );
+    TableLayout const tableLayout( tableTitle, { parentColumn } );
+    TableTextFormatter const logTable( tableLayout );
+
     TableData tableData;
     arraySlice1d< real64 const > const coords = coordinates[0];
     for( integer idx = 0; idx < values.size(); idx++ )
     {
       tableData.addRow( coords[idx], values[idx] );
     }
-    bool const shortenDescription = tableFunction.getDimUnit( 0 ) == units::Unknown;
-    TableLayout const tableLayout( tableTitle, {
-        string( tableFunction.getCoordsDescription( 0, shortenDescription ) ),
-        string( tableFunction.getValuesDescription() )
-      } );
-    TableTextFormatter const logTable( tableLayout );
     logOutput = logTable.toString( tableData );
   }
   else if( numDimensions == 2 )
@@ -460,7 +473,8 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                                  true,
                                                  tableFunction.getValuesDescription() );
 
-    TableLayout const tableLayout = TableLayout( tableTitle, tableConverted.headerNames ).
+    parentColumn.addSubColumns( tableConverted.headerNames );
+    TableLayout const tableLayout = TableLayout( tableTitle, { parentColumn } ).
                                       setMargin( TableLayout::MarginValue::small );
     TableTextFormatter const table2DLog( tableLayout );
     logOutput =  table2DLog.toString( tableConverted.tableData );
