@@ -99,6 +99,19 @@ void divideCell( std::vector< string > & lines, string_view value )
   }
 }
 
+size_t computeCellWidth( std::vector< string > const & lines )
+{
+  size_t cellWidth = 0;;
+  if( !lines.empty())
+  {
+    cellWidth = std::max_element( lines.begin(), lines.end(), []( const auto & a, const auto & b )
+    {
+      return a.length() < b.length();
+    } )->length();
+  }
+  return cellWidth;
+}
+
 TableLayout::CellLayout::CellLayout():
   m_lines( {""} ),
   m_cellType( CellType::Header ),
@@ -111,17 +124,7 @@ TableLayout::CellLayout::CellLayout( CellType type, string_view cellValue, Table
   m_alignment( alignment )
 {
   divideCell( m_lines, cellValue );
-  if( !m_lines.empty())
-  {
-    m_cellWidth = std::max_element( m_lines.begin(), m_lines.end(), []( const auto & a, const auto & b )
-    {
-      return a.length() < b.length();
-    } )->length();
-  }
-  else
-  {
-    m_cellWidth = 0;
-  }
+  m_cellWidth = computeCellWidth( m_lines );
 }
 
 TableLayout::Column::Column():
@@ -141,6 +144,7 @@ TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
   m_header.m_lines.push_back( std::string( name ) );
   divideCell( m_header.m_lines, m_header.m_lines[0] );
+  m_header.m_cellWidth = computeCellWidth( m_header.m_lines );
   m_header.m_cellType = CellType::Header;
   return *this;
 }
