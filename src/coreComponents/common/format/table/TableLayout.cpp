@@ -195,6 +195,7 @@ TableLayout::Column & TableLayout::Column::addSubColumns( string const & subColN
 {
   TableLayout::CellLayout cell{CellType::Header, subColName, TableLayout::Alignment::center};
   TableLayout::Column col{cell};
+  col.m_alignment = m_alignment;
   this->m_subColumn.push_back( col );
   return *this;
 }
@@ -203,12 +204,28 @@ TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerA
 {
   m_alignment.headerAlignment = headerAlignment;
   m_header.m_alignment = headerAlignment;
+  std::vector< Column > & currColumns = m_subColumn;
+  if( !currColumns.empty() )
+  {
+    for( auto & subColumn : currColumns )
+    {
+      subColumn.setHeaderAlignment( headerAlignment );
+    }
+  }
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::setValuesAlignment( Alignment valueAlignment )
 {
   m_alignment.valueAlignment = valueAlignment;
+  std::vector< Column > & currColumns = m_subColumn;
+  if( !currColumns.empty() )
+  {
+    for( auto & subColumn : m_subColumn )
+    {
+      subColumn.setValuesAlignment( valueAlignment );
+    }
+  }
   return *this;
 }
 
