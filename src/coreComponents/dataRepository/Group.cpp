@@ -17,6 +17,9 @@
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "GroupContext.hpp"
@@ -302,12 +305,28 @@ string Group::dumpInputOptions() const
 {
   string rval;
 
-  bool writeHeader = true;
+  TableLayout logLayout( "", {TableLayout::Column()
+                                .setName( "name" )
+                                .setValuesAlignment( TableLayout::Alignment::left ),
+                              "flag",
+                              TableLayout::Column()
+                                .setName( "Description" )
+                                .setValuesAlignment( TableLayout::Alignment::left ) } );
+  logLayout.setMaxWidth( 80 );
+  TableData logData;
   for( auto const & wrapper : m_wrappers )
   {
-    rval.append( wrapper.second->dumpInputOptions( writeHeader ) );
-    writeHeader = false;
+    if( wrapper.second->getInputFlag() == InputFlags::OPTIONAL ||
+        wrapper.second->getInputFlag() == InputFlags::REQUIRED )
+    {
+      logData.addRow( wrapper.second->getName(),
+                      InputFlagToString( wrapper.second->getInputFlag() ),
+                      wrapper.second->getDescription() );
+    }
   }
+
+  TableTextFormatter logFormatter( logLayout );
+  rval.append( logFormatter.toString( logData ));
 
   return rval;
 }

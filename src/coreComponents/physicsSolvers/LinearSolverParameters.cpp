@@ -276,7 +276,7 @@ void LinearSolverParametersInput::postInputInitialization()
   // TODO input validation for other AMG parameters ?
 
   if( getLogLevel() > 0 )
-    print();
+  print();
 }
 
 void LinearSolverParametersInput::print()
@@ -342,7 +342,10 @@ void LinearSolverParametersInput::print()
     }
   }
   TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: linear solver", getParent().getName() ),
-                                               { "Parameter", "Value" } );
+                                               { TableLayout::Column()
+                                                   .setName( "Parameter" )
+                                                   .setValuesAlignment( TableLayout::Alignment::left ),
+                                                 "Value" } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
 }
