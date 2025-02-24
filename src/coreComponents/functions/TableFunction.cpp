@@ -218,36 +218,41 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
 
 string TableFunction::getTableDescription() const
 {
-  auto formatDescription = []( string_view name, string_view path, units::Unit const unit ) -> string
+  std::ostringstream description;
+  auto streamArrayDescription = [&]( string_view name,
+                                     auto const & array,
+                                     units::Unit const unit,
+                                     string_view path )
   {
-    string description = string( name );
-
+    description << GEOS_FMT( "- {}", string( name ) );
     if( unit != units::Unknown )
-      description += GEOS_FMT( " in {} units", units::getDescription( unit ) );
-
+      description << GEOS_FMT( " in {} units", units::getDescription( unit ) );
     if( !path.empty() )
-      description += GEOS_FMT( " from file: {}", path );
+      description << GEOS_FMT( " from file: {}", path );
+    description << '\n';
 
-    return description;
+    auto const [minValue, maxValue] = std::minmax_element( array.begin(), array.end());
+    description << GEOS_FMT( "  * {} values, from {} [{}] to {} [{}].",
+                             array.size(),
+                             *minValue, units::getSymbol( unit ),
+                             *maxValue, units::getSymbol( unit ) );
   };
 
-  integer const numDims = numDimensions();
-  std::vector< string > labels;
-  labels.reserve( numDims + 1 );
-
-  for( integer dimId = 0; dimId < numDims; ++dimId )
+  for( integer dimId = 0; dimId < numDimensions(); ++dimId )
   {
     string const coordFilePath = dimId < m_coordinateFiles.size() ? m_coordinateFiles[dimId].relativeFilePath() : "";
-    labels.push_back( formatDescription( GEOS_FMT( "Coordinates {}", getCoordsDescription( dimId, true ) ),
-                                         coordFilePath,
-                                         getDimUnit( dimId ) ) );
+    streamArrayDescription( "Coordinates " + getCoordsDescription( dimId, true ),
+                            m_coordinates[dimId].toSliceConst(),
+                            getDimUnit( dimId ),
+                            coordFilePath );
+    description << '\n';
   }
+  streamArrayDescription( "Values",
+                          m_values.toViewConst(),
+                          getValueUnit(),
+                          m_voxelFile.relativeFilePath() );
 
-  labels.push_back( formatDescription( "Values",
-                                       m_voxelFile.relativeFilePath(),
-                                       getValueUnit() ) );
-
-  return stringutilities::join( labels, "\n" );
+  return description.str();
 }
 
 string TableFunction::getCoordsDescription( integer dimId, bool shortUnitsToVariables ) const
