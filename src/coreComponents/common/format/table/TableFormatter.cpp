@@ -528,14 +528,14 @@ void TableTextFormatter::adjustTableWidth( TableLayout & tableLayout,
   // then, we can compute the global width of the table (and stretch in case of need)
   size_t & titleWidth = tableLayout.getTitle().m_cellWidth;
   tableTotalWidth = std::max( titleWidth, columnsTotalWidth );
-  if( columnsTotalWidth < tableTotalWidth )
+  if( columnsTotalWidth < titleWidth )
   { // title is wider than the columns, so they need to be stretched
     size_t const paddingCharacters = tableTotalWidth - columnsTotalWidth;
     adjustColumnWidth( cellsHeaderLayout, nbHiddenColumns, paddingCharacters );
     adjustColumnWidth( cellsDataLayout, nbHiddenColumns, paddingCharacters );
     columnsTotalWidth = tableTotalWidth;
   }
-  else if( titleWidth < tableTotalWidth )
+  else if( columnsTotalWidth > titleWidth )
   { // columns are wider than the title, so it needs to be stretched
     titleWidth = tableTotalWidth;
   }
