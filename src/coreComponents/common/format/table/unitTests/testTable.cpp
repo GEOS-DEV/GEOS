@@ -323,11 +323,11 @@ TEST( testTable, subColumns )
       TableLayout::Column()
         .setName( "Column4" )
         .addSubColumns( { TableLayout::Column()
-                            .setName( "Locales" ).addSubColumns( {"SubLocales1", "SubLocales2"} ),
+                            .setName( "Local elements" ).addSubColumns( {"SubLocales1", "SubLocales2"} ),
                           TableLayout::Column()
-                            .setName( "Ghost" ).addSubColumns( {"SubGhost1", "SubGhost2"} ),
+                            .setName( "Ghost Elements" ).addSubColumns( {"SubGhost1", "SubGhost2"} ),
                           TableLayout::Column()
-                            .setName( "Active" ).addSubColumns( {"SubActive1", "SubActive2"} )
+                            .setName( "Active Elements" ).addSubColumns( {"SubActive1", "SubActive2"} )
                         } ),
       "Column5"
     } );
@@ -345,7 +345,7 @@ TEST( testTable, subColumns )
                "\n------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
                "|        |   Column1   |                     Nodes                     |  Column3  |                                         Column4                                         |  Column5  |\n"
                "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|        |             |  LocalesNodes  |  GhostNodes  |  ActiveNodes  |           |            Locales            |           Ghost           |           Active            |           |\n"
+               "|        |             |  LocalesNodes  |  GhostNodes  |  ActiveNodes  |           |         Local elements        |       Ghost Elements      |       Active Elements       |           |\n"
                "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
                "|        |             |                |              |               |           |  SubLocales1  |  SubLocales2  |  SubGhost1  |  SubGhost2  |  SubActive1  |  SubActive2  |           |\n"
                "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
