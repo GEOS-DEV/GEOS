@@ -357,6 +357,19 @@ public:
               dCompFlux_dTrans );
           }
 
+            if( m_kernelFlags.isSet(KernelFlags::VelocityCompute)) {
+                if constexpr (std::is_same<CellElementStencilTPFAWrapper, STENCILWRAPPER>::value) {
+                    StencilUtils::computeVelocity(m_stencilWrapper,
+                                                  iconn, ip,
+                                                  phaseFlux,
+                                                  {m_globalCellDims[seri[0]][sesri[0]][sei[0]],
+                                                   m_globalCellDims[seri[1]][sesri[1]][sei[1]]},
+                                                  {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                                   m_ghostRank[seri[1]][sesri[1]][sei[1]]},
+                                                   m_phaseVelocity);
+                }
+            }
+
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
           compFluxKernelOp( ip, m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
