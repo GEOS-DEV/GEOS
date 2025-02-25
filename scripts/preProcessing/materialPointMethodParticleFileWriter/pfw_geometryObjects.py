@@ -3977,7 +3977,8 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
 
     self.vpts = self.vpts[:,0:self.dim] # Remove spacing from points
     self.npts = self.vpts.shape[0]
-    self.kdt = KDTree(self.vpts, leaf_size=np.ceil(len(self.vpts) / 2), metric='euclidean')
+    #self.kdt = KDTree(self.vpts, leaf_size=np.ceil(len(self.vpts) / 2), metric='euclidean')
+    self.kdt = KDTree(self.vpts, leaf_size=int(np.ceil(len(self.vpts) / 2)), metric='euclidean') ##had to change leaf_size to int
     self.voronoi = Voronoi(self.vpts)
 
     #Average volume (area for 2D) to assign to edge cells

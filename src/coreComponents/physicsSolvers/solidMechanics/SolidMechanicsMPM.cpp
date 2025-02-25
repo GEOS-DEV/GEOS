@@ -51,6 +51,9 @@
 
 // CC: debug
 #include <sstream>
+#include <fstream>
+#include <iostream>
+
 
 namespace geos
 {
@@ -115,6 +118,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_iComm( CommunicationTools::getInstance().getCommID() ),
   m_prescribedBcTable( 0 ),
   m_boundaryConditionTypes(),
+  m_absorbingDampingFactor(),   //added this line
   m_boundaryFaceCoefficientsOfRestitution(),
   m_boundaryFaceFrictionCoefficients(),
   m_bcTable(),
@@ -362,6 +366,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:\n* " + EnumStrings< BoundaryConditionOption >::concat( "\n* " ) );
 
+ //Added this
+ 
+ registerWrapper( "absorbingDampingFactor", &m_absorbingDampingFactor ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Damping Factor on x-, x+, y-, y+, z- and z+ faces for BC type =4. " );
+ 
  registerWrapper( "boundaryFaceCoefficientsOfRestitution", &m_boundaryFaceCoefficientsOfRestitution ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -1075,8 +1086,9 @@ void SolidMechanicsMPM::postInputInitialization()
     
     // Check elements to ensure they correspond to defined boundary condition
     // Should probably use enum for boundary conditions instead of integers (or at least unsigned, negative values shouldn't mean anything)
-    GEOS_ERROR_IF( std::any_of( m_boundaryConditionTypes.begin(), m_boundaryConditionTypes.end(), []( int & bc ){ return bc < 0 || bc > 3; } ), 
-                  "Unknown boundary condition type specified, possible values are 0 (Outflow), 1 (Symmetry), 2 (Moving), and 3 (Contact)." );
+    GEOS_ERROR_IF( std::any_of( m_boundaryConditionTypes.begin(), m_boundaryConditionTypes.end(), []( int & bc ){ return bc < 0 || bc > 4; } ), //changed from bc >3 to bc >4
+                  //"Unknown boundary condition type specified, possible values are 0 (Outflow), 1 (Symmetry), 2 (Moving), and 3 (Contact)." );
+                  "Unknown  boundary condition type specified, possible values are 0 (Outflow), 1 (Symmetry), 2 (Moving), 3 (Contact), and 4 (Absorbing)." );
   }
 
   // Initialize boundary condition types if they're not specified by the user
@@ -2601,8 +2613,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Apply essential boundary conditions" );
   solverProfiling( "Apply essential boundary conditions" );
+  
+  
   //#######################################################################################
   applyEssentialBCs( dt, time_n, nodeManager );
+  
 
 
   //#######################################################################################
@@ -3623,6 +3638,7 @@ void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
         dVectorMultiField[g][fieldIndex][dir0] += vectorMultiField[g][fieldIndex][dir0] - previousVectorMultiField[dir0];
         dVectorMultiField[g][fieldIndex][dir1] += vectorMultiField[g][fieldIndex][dir1] - previousVectorMultiField[dir1];
         dVectorMultiField[g][fieldIndex][dir2] += vectorMultiField[g][fieldIndex][dir2] - previousVectorMultiField[dir2];
+
       } );
   }
 }
@@ -3641,10 +3657,13 @@ void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > 
   }
 }
 
+
+
 void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                                            const real64 time_n,
                                            NodeManager & nodeManager )
-{
+{ 
+  
   GEOS_MARK_FUNCTION;
 
   // Get grid fields
@@ -3666,8 +3685,10 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 
   // Impose BCs on each face while gathering reaction forces
   real64 localFaceReactions[6] = {0.0};
+
   for( int face = 0; face < 6; face++ )
   {
+    
     // TODO Eventually perform cast to BC enum type!
     switch(m_boundaryConditionTypes[face])
     {
@@ -3702,7 +3723,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                                                                                                                                                  // not a big
                                                                                                                                                  // enough loop
                                                                                                                                                  // to warrant
-                                                                                                                                                 // parallelization
+                                                                                                                                        // parallelization
             {
               int const g = boundaryNodes[gg];
 
@@ -3778,11 +3799,13 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
             // Perform field reflection on buffer nodes - accounts for moving boundary effects
             SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
             int const numBufferNodes = bufferNodes.size();
+            
             // Possibly not a big enough loop to warrant parallelization
             forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
               {
                 int const g = bufferNodes[gg];
 
+              
                 // Initialize grid ijk indices
                 int ijk[3];
                 ijk[dir1] = std::round((gridPosition[g][dir1] - m_xLocalMin[dir1]) / m_hEl[dir1] );
@@ -3817,13 +3840,212 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                 gridAcceleration[g][fieldIndex][dir1] = gridAcceleration[gFrom][fieldIndex][dir1];
                 gridAcceleration[g][fieldIndex][dir2] = gridAcceleration[gFrom][fieldIndex][dir2];
               } );
-          }
-        }
+              }
+            }
+            break;
+            //added this switch statement
+          case 4: // Absorbing Boundary Condition
+
+          {   
+              for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
+                {
+                // Face-associated quantities
+                int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+                int dir1 = (dir0 + 1) % 3;     // 1, 1, 2, 2, 0, 0
+                int dir2 = (dir0 + 2) % 3;     // 2, 2, 0, 0, 1, 1
+                int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+
+                // Define a damping coefficient based on the impedance.
+                // The following is a placeholder: in a real application, you may want a more sophisticated damping profile.
+                //real64 dampingCoefficient = m_absorbingDampingFactor[face];
+                //real64 dampingCoefficient = 1e2;
+                real64 dampingCoefficient_dir0;
+                real64 dampingCoefficient_dir1;
+                real64 dampingCoefficient_dir2;
+
+
+                //real64 alpha=1e2;
+
+                real64 alpha=m_absorbingDampingFactor[face];
+
+                SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
+                int const numBoundaryNodes = boundaryNodes.size();
+
+                std::ofstream file;
+
+                file.open( "grid_coordinates.txt", std::ios::out | std::ios::app );
+                if( file.fail() )
+                {
+                  throw std::ios_base::failure( std::strerror( errno ) );
+                }
+              
+                forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridMass] GEOS_HOST ( localIndex const gg ) 
+                {
+                  int const g = boundaryNodes[gg];
+            
+                                       
+                     //if (gridVelocity[g][fieldIndex][0]>0 || gridVelocity[g][fieldIndex][1]>0)
+                    //{if(face==2||face==3){std::cout<<gridVelocity[g][fieldIndex][0]<<" "<<gridVelocity[g][fieldIndex][1]<<" "<<std::endl;}}
+                
+
+                    /*if(gridMass[g][fieldIndex]>0 &&(face==0||face==2||face==3))
+                    {std::cout<<"Grid Mass is"<<gridMass[g][fieldIndex]<<" "<<"Face"<<" "<<face<<std::endl;}
+                    if(gridVelocity[g][fieldIndex][dir0]>0 || gridVelocity[g][fieldIndex][dir0]<0 || gridVelocity[g][fieldIndex][dir1]>0 || gridVelocity[g][fieldIndex][dir1]<0)
+                    {std::cout<<"Grid velocity dir0 "<<fabs(gridVelocity[g][fieldIndex][dir0])<<"Grid spacing dir1 "<<fabs(gridVelocity[g][fieldIndex][dir1])<<"Face "<<face<<std::endl;}*/
+
+                   // std::cout<<"Grid spacing dir0 "<<m_hEl[dir0]<<"Grid spacing dir1 "<<m_hEl[dir1]<<"Grid spacing dir2 "<<m_hEl[dir2]<<"Face "<<face<<std::endl;
+  
+                    file <<"Time "<<time_n<<" "<< "Face "<<face<<" "<<"Node "<<g<<" "<<gridPosition[g][0]<<" "<<gridPosition[g][1]<<" "<<gridPosition[g][2]<<std::endl;
+                      
+                   real64 velocityMagnitude = sqrt(gridVelocity[g][fieldIndex][dir0] * gridVelocity[g][fieldIndex][dir0] +
+                                gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] 
+                                +gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
+
+                               //if(face==0 || face==2)
+                                //{std::cout<<"Alpha "<<alpha<<"Face "<<face<<std::endl;}
+
+                    dampingCoefficient_dir0 = alpha * (velocityMagnitude / m_hEl[dir0]); // mus to s conversion
+                    dampingCoefficient_dir1 = alpha * (velocityMagnitude / m_hEl[dir1]);
+                    dampingCoefficient_dir2 = alpha * (velocityMagnitude / m_hEl[dir2]);
+
+                    //dampingCoefficient_dir0=alpha;
+                    //dampingCoefficient_dir1=alpha;
+                    //dampingCoefficient_dir2=alpha;
+
+
+                    
+                    //if(fabs(dampingCoefficient_dir0)>0 || fabs(dampingCoefficient_dir1)>0 || fabs(dampingCoefficient_dir2)>0)
+                    //{std::cout<<"DC dir 0 "<<dampingCoefficient_dir0<<" "<<"DC dir 1 "<<dampingCoefficient_dir1<<" "<<"DC dir 2 "<<dampingCoefficient_dir2<<"face "<<face<<std::endl;}
+
+                    //if(face==0)
+                    //{dampingCoefficient_dir0=200;dampingCoefficient_dir1=200;dampingCoefficient_dir2=200;}
+                    
+
+
+                    /*
+                    if(dampingCoefficient_dir0>0 ||dampingCoefficient_dir1>0)    
+                    {if(face==0 || face==2){std::cout<<"DC dir0 "<<dampingCoefficient_dir0<<" "<<"DC dir1 "<<dampingCoefficient_dir1<<"Face "<<face<<std::endl;}}*/
+
+                      // --- Absorb the outgoing wave by damping the normal velocity component ---
+                      real64 normalVelocity = gridVelocity[g][fieldIndex][dir0];
+
+                      // Calculate the change in velocity needed to damp the wave.
+                      // (A simple proportional damping is used here; adjust the formulation as needed.)
+                      real64 deltaNormalVel = - dampingCoefficient_dir0 * normalVelocity;
+
+                      // Update the change in velocity (dV) and velocity in the normal direction.
+                        gridDVelocity[g][fieldIndex][dir0] = deltaNormalVel * dt;
+                        gridVelocity[g][fieldIndex][dir0] += gridDVelocity[g][fieldIndex][dir0];
+                        real64 accelerationForAbsorption = gridDVelocity[g][fieldIndex][dir0] / dt;
+                        gridAcceleration[g][fieldIndex][dir0] += accelerationForAbsorption;
+
+                        // --- Optionally, apply a milder damping to the transverse velocity components ---
+                        // Here we damp transverse components at a fraction of the normal damping.
+                        //real64 transverseDamping = 0.5 * dampingCoefficient;  //also checked 0.5
+                        real64 transverseDamping1=dampingCoefficient_dir1;
+                        real64 transverseDamping2=dampingCoefficient_dir2;
+
+
+                        gridDVelocity[g][fieldIndex][dir1] = - transverseDamping1 * gridVelocity[g][fieldIndex][dir1] * dt;
+                        gridDVelocity[g][fieldIndex][dir2] = - transverseDamping2 * gridVelocity[g][fieldIndex][dir2] * dt;
+                        gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir1];
+                        gridVelocity[g][fieldIndex][dir2] += gridDVelocity[g][fieldIndex][dir2];
+                        gridAcceleration[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir1] / dt;
+                        gridAcceleration[g][fieldIndex][dir2] += gridDVelocity[g][fieldIndex][dir2] / dt;
+
+                          // Accumulate boundary reactions for nodes that are not at partition interfaces
+                          if( gridGhostRank[g] <= -1 )
+                          {
+                            localFaceReactions[face] += accelerationForAbsorption * gridMass[g][fieldIndex];
+                          }
+                    } );  file.close();
+
+                      // --- Buffer node update ---
+                      // These nodes provide a smooth transition between interior and boundary.
+                      SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
+                      int const numBufferNodes = bufferNodes.size();
+                      forAll< serialPolicy >( numBufferNodes,
+                        [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration, dt]
+                        GEOS_HOST ( localIndex const gg )
+                      {
+                        int const g = bufferNodes[gg];
+
+                        // Determine the ijk indices for the node in the transverse directions.
+                        int ijk[3];
+                        ijk[dir1] = std::round((gridPosition[g][dir1] - m_xLocalMin[dir1]) / m_hEl[dir1]);
+                        ijk[dir2] = std::round((gridPosition[g][dir2] - m_xLocalMin[dir2]) / m_hEl[dir2]);
+
+                        // Identify an interior node (one cell inside the boundary in the normal direction)
+                        ijk[dir0] = positiveNormal * (m_nEl[dir0] - 2) + (1 - positiveNormal) * (2);
+                        localIndex gInterior = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+                        // Identify the adjacent boundary node for moving-boundary corrections if needed
+                        ijk[dir0] = positiveNormal * (m_nEl[dir0] - 1) + (1 - positiveNormal) * (1);
+                        localIndex gBoundary = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+                        // --- Alternative Extrapolation for Buffer Nodes ---
+                        // Use a weighted average of the interior and boundary node values, with extra damping.
+                        real64 weightInterior = 0.6; // weight can be tuned
+                        real64 weightBoundary = 0.4;
+                        real64 extrapolatedValue_dir0 = weightInterior * gridVelocity[gInterior][fieldIndex][dir0] +
+                                                    weightBoundary * gridVelocity[gBoundary][fieldIndex][dir0];
+
+                        real64 extrapolatedValue_dir1 = weightInterior * gridVelocity[gInterior][fieldIndex][dir1] +
+                                                    weightBoundary * gridVelocity[gBoundary][fieldIndex][dir1];
+
+                        real64 extrapolatedValue_dir2 = weightInterior * gridVelocity[gInterior][fieldIndex][dir2] +
+                                                    weightBoundary * gridVelocity[gBoundary][fieldIndex][dir2];
+
+
+                        // Apply a damping that increases with distance into the buffer
+                        real64 dampingFactor_dir0 = 1.0 - dampingCoefficient_dir0 * dt; // Or a more complex function
+                        real64 dampingFactor_dir1 = 1.0 - dampingCoefficient_dir1 * dt; // Or a more complex function
+                        real64 dampingFactor_dir2 = 1.0 - dampingCoefficient_dir2 * dt; // Or a more complex function
+
+                        // Store previous velocity for XPIC correction
+                        real64 gridPreviousVelocity[3] = { 0.0 };
+                        gridPreviousVelocity[dir0] = gridVelocity[g][fieldIndex][dir0];
+                        gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
+                        gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
+
+                        // --- Extrapolate the velocity from an interior node ---
+                        // For the normal component, we use the interior node value and then apply a slight extra damping.
+                        //gridVelocity[g][fieldIndex][dir0] = gridVelocity[gInterior][fieldIndex][dir0];
+                        //gridVelocity[g][fieldIndex][dir0] *= (1.0 - dampingCoefficient * dt);
+                        // Apply a damping that increases with distance into the buffer
+                        //real64 dampingFactor = 1.0 - dampingCoefficient * dt; // Or a more complex function
+                        gridVelocity[g][fieldIndex][dir0] = extrapolatedValue_dir0 * dampingFactor_dir0;      
+
+                        // Copy the transverse components directly (or apply a mild damping as desired)
+                        //gridVelocity[g][fieldIndex][dir1] = gridVelocity[gInterior][fieldIndex][dir1];
+                        gridVelocity[g][fieldIndex][dir1] = extrapolatedValue_dir1 * dampingFactor_dir1;    
+
+                       // gridVelocity[g][fieldIndex][dir2] = gridVelocity[gInterior][fieldIndex][dir2];
+                       gridVelocity[g][fieldIndex][dir2] = extrapolatedValue_dir2 * dampingFactor_dir2;   
+
+                        // Update the change in velocity for XPIC corrections.
+                        gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
+                        gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
+                        gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
+
+                        // Update acceleration: for the normal direction, we can borrow from the boundary correction,
+                        // while transverse components come directly from the interior node.
+                        gridAcceleration[g][fieldIndex][dir0] = gridAcceleration[gBoundary][fieldIndex][dir0];
+                        gridAcceleration[g][fieldIndex][dir1] = gridAcceleration[gBoundary][fieldIndex][dir1]; //changed to gBoundary from gInterior
+                        gridAcceleration[g][fieldIndex][dir2] = gridAcceleration[gBoundary][fieldIndex][dir2];
+                      } );                    
+
+          }   
+      
         break;
+          }
       default:
         GEOS_ERROR("Unrecognized boundary condition type in MPM Solver!");
         break;
+        
     }
+   
+
   }
 
   // Compute change in grid velocities for XPIC calculations
@@ -7327,32 +7549,32 @@ void SolidMechanicsMPM::computeDistanceToParticleSurface( real64 (& normal)[3],
   real64 tolerance = 1e-16;
 
   distanceToSurface = DBL_MAX;
-  if( abs( dN1 ) > tolerance && dS1 / dN1 > 0 )
+  if( fabs( dN1 ) > tolerance && dS1 / dN1 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS1 / dN1 );
   }
 
-  if( abs( dN2 ) > tolerance && dS2 / dN2 > 0 )
+  if( fabs( dN2 ) > tolerance && dS2 / dN2 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS2 / dN2 );
   }
 
-  if( abs( dN3 ) > tolerance && dS3 / dN3 > 0 )
+  if( fabs( dN3 ) > tolerance && dS3 / dN3 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS3 / dN3 );
   }
 
-  if( abs( dN4 ) > tolerance && dS4 / dN4 > 0 )
+  if( fabs( dN4 ) > tolerance && dS4 / dN4 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS4 / dN4 );
   }
 
-  if( abs( dN5 ) > tolerance && dS5 / dN5 > 0 )
+  if( fabs( dN5 ) > tolerance && dS5 / dN5 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS5 / dN5 );
   }
 
-  if( abs( dN6 ) > tolerance && dS6 / dN6 > 0 )
+  if( fabs( dN6 ) > tolerance && dS6 / dN6 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS6 / dN6 );
   }

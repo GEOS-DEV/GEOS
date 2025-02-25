@@ -33,7 +33,7 @@ def lighten_color(color, amount=0.5):
 
 
 # parent directory of file pathL:
-runLocation='/p/lustre1/homel1/geosxRuns/'
+runLocation='/data1/sghosh29/Working_MPM_LLNL/testGEOS/'
 
 files=[
 'elasticBlockUni',

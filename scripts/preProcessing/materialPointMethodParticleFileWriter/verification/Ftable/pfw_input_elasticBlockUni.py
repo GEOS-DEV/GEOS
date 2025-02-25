@@ -37,7 +37,7 @@ pfw["ymax"] = 0.5*domainHeight # mm
 pfw["zmin"] =-0.5*domainLength # mm
 pfw["zmax"] = 0.5*domainLength # mm
 
-refine=2  # partitions in each direction
+refine=1  # partitions in each direction
 cpp=3     # cells per partition in each direction
 
 pfw["xpar"]=refine
