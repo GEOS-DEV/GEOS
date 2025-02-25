@@ -83,7 +83,8 @@ public:
     Outflow,    //!<Outflow
     Symmetry,   //!<Symmetry
     Moving,     //!<Moving
-    Contact     //!<Contact
+    Contact,     //!<Contact
+    Absorbing   //!<Absorbing BC for wave reflections
   };
 
   /**
@@ -364,6 +365,12 @@ public:
   void enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > const & vectorMultiField,
                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                          Group & nodeSets );
+
+    void singleFaceVectorFieldAbsorbingBC( const int face,
+                                        arrayView3d< real64 > const & vectorMultiField,
+                                        arrayView3d< real64 > const & dVectorMultiField,
+                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                        Group & nodeSets );
 
   void applyEssentialBCs( const real64 dt,
                           const real64 time_n,
@@ -757,6 +764,9 @@ protected:
 
   int m_prescribedBcTable;
   array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
+
+  array1d< real64 > m_absorbingDampingFactor; // Added this line
+
   array1d< real64 > m_boundaryFaceCoefficientsOfRestitution;
   array1d< real64 > m_boundaryFaceFrictionCoefficients; // Ignored unless face has boundary condition type 3
   array2d< real64 > m_bcTable;
@@ -984,7 +994,8 @@ ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
               "Outflow",
               "Symmetry",
               "Moving",
-              "Contact" );
+              "Contact",
+              "Absorbing" ); //Added this
 
 ENUM_STRINGS( SolidMechanicsMPM::InterpolationOption,
               "Linear",

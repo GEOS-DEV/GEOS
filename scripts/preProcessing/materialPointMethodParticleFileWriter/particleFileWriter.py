@@ -44,6 +44,7 @@ machineList = {
   'ruby':56,
   'rzhound':56,
   'tioga':64
+  
 }
 
 node = platform.node()
@@ -56,7 +57,8 @@ for key, value in machineList.items():
     exec(key+'=True')
   else:
     exec(key+'=False')
-
+coresPerNode=64
+machine='system76-pc'    
 # # MPI specific variables
 # there seems to be an issue with mpi4py and subprocess launching 
 # slurm scripts that include srun. We've included the '#SBATCH --export=NONE' command
@@ -500,7 +502,7 @@ if generateParticleFile:
             object = sliceObjects[ob]
             ob = ob+1
             pt = np.array([x,y,z])
-            voxelFlag = object.isInterior( pt, surfaceDepth ) # Voxel flags greater than or equal to 0 denote interior regions of object
+            voxelFlag = object.isInterior( pt, surfaceDepth ) # Voxel flags greater than or equal to 0 denote interior regions of object #Added np.any()
             if( voxelFlag >= 0 ):
               match = True
 

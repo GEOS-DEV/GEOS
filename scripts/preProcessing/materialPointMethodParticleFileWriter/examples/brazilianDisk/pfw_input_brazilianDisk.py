@@ -21,8 +21,8 @@ damagedMaterialFrictionSlope = 0.5773502691896258
 
 # Domain ---------------------------------------------------------------------------------
 
-refine=6
-cpp=14
+refine=1 #Changed from 6 to 1
+cpp=14 #14
 pfw["xpar"]=refine  # grid partitions
 pfw["ypar"]=refine
 pfw["zpar"]=1
@@ -50,7 +50,7 @@ pfw["mBatch"]=True
 pfw["mWallTime"]="12:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False  #Changed from True
 pfw["autoRestart"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
@@ -82,15 +82,45 @@ pfw["frictionCoefficient"]=0.25
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
 
-pfw["fTableInterpType"]=2
+#pfw["fTableInterpType"]=2    # This 2 is an error 
+pfw["fTableInterpType"]="Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,        1.00, 1.00, 1.00],
 		       [stopTime, 1.00, 0.80, 1.00]]
 
 # Define all the geometric objects -------------------------------------------------------
 
-disk1 = geom.cylinder('disk1',[0,domainHeight/2,pfw["zmin"]],[0,domainHeight/2,pfw["zmax"]],domainHeight/2,[0,0,0],0,0,0)
-pfw["objects"]=[disk1]
+#disk1 = geom.cylinder('disk1',[0,domainHeight/2,pfw["zmin"]],[0,domainHeight/2,pfw["zmax"]],domainHeight/2,[0,0,0],0,0,0)
+
+
+# disk1 = geom.cylinder('disk1',
+
+#         x1=[0,domainHeight/2,pfw["zmin"]],
+#         x2=[0,domainHeight/2,pfw["zmax"]],
+#         r=domainHeight/2,
+#         v=[0.,0.,0.],
+#         mat=0,
+#         group=0,
+#         particleType=0)
+
+def make_objects():
+   
+    disk1 = geom.cylinder('disk1',
+
+        x1=[0,domainHeight/2,pfw["zmin"]],
+        x2=[0,domainHeight/2,pfw["zmax"]],
+        r=domainHeight/2,
+        v=[0.,0.,0.],
+        mat=0,
+        group=0,
+        particleType=0)
+
+    objects=[disk1]
+
+    return objects
+
+
+#pfw["objects"]=[disk1]
 
 pfw["materials"] = [ "sand" ]
 pfw["materialPropertyString"]="""
