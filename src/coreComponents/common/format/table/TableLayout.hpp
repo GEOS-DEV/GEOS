@@ -454,10 +454,18 @@ private:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
-   * @brief TODO
-   * TODO
+   * @brief Set the maximal width for each column
+   * @param width The max column width
+   * @return The tableLayout reference
    */
-   TableLayout & setMaxWidth( size_t width );
+  TableLayout & setMaxColumnWidth( size_t width );
+
+  /**
+   * @brief check if a column max width has been set
+   * @return Truef a column max width has been set, otherwise false
+   */
+  bool isMaxColumnWidthSet()
+  { return m_hasMaxColumnWidthSet; }
 
   /**
    * @return check if the line break at the end & beginning is activated
@@ -495,7 +503,7 @@ private:
    * @return The margin title
    */
   size_t const & getMaxWidth() const
-  { return m_tableMaxWidth; }
+  { return m_tableColumnMaxWidth; }
 
 /**
  * @brief Get the Nb Rows object
@@ -564,10 +572,14 @@ private:
   std::vector< size_t > m_sublineHeaderCounts;
   /// Contains the subdivision (line) counts for each line in data.
   std::vector< size_t > m_sublineDataCounts;
-  bool m_wrapLine = true;
-
+  // Indicate if we have a line break a the beginning of the table
+  bool m_lineBreakAtBegin = true;
+  // Contain the table tible
   string m_tableTitle;
-  size_t m_tableMaxWidth = std::numeric_limits<size_t>::max();
+  // Contain the max width for each column
+  size_t m_tableColumnMaxWidth = std::numeric_limits< size_t >::max();
+  // Indicate if a max column width has been set
+  bool m_hasMaxColumnWidthSet = false;
 
   integer m_borderMargin;
   integer m_columnMargin;

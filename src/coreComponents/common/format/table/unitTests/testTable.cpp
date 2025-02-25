@@ -414,7 +414,7 @@ TEST( testTable, maxWidth )
         .setName( "Elems" )
         .addSubColumns( {"Locales", "egestas ipsum a nisl"} ),
     } );
-    layoutTest.setMaxWidth( 16 );
+    layoutTest.setMaxColumnWidth( 16 );
     TableData tableData;
     tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
     tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
