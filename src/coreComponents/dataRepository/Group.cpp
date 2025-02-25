@@ -312,7 +312,7 @@ string Group::dumpInputOptions() const
                               TableLayout::Column()
                                 .setName( "Description" )
                                 .setValuesAlignment( TableLayout::Alignment::left ) } );
-  logLayout.setMaxWidth( 80 );
+  logLayout.setMaxColumnWidth( 80 );
   TableData logData;
   for( auto const & wrapper : m_wrappers )
   {
