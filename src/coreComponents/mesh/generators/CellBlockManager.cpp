@@ -282,6 +282,8 @@ void populateFaceMaps( Group const & cellBlocks,
                        arrayView2d< localIndex > const & faceToCells,
                        arrayView2d< localIndex > const & faceToBlocks )
 {
+  GEOS_MARK_FUNCTION;
+
   ArrayOfArraysView< NodesAndElementOfFace const > const & lowestNodeToFaces =
     faceBuilder.lowestNodeToFaces.toViewConst();
 
@@ -353,6 +355,8 @@ void resizeFaceMaps( FaceBuilder const & faceBuilder,
                      array2d< localIndex > & faceToCellMap,
                      array2d< localIndex > & faceToBlockMap )
 {
+  GEOS_MARK_FUNCTION;
+
   localIndex const numNodes = faceBuilder.lowestNodeToFaces.size();
   localIndex const numUniqueFaces = uniqueFaceOffsets.back();
   array1d< localIndex > numNodesPerFace( numUniqueFaces );
@@ -406,6 +410,8 @@ void resizeFaceMaps( FaceBuilder const & faceBuilder,
  */
 FaceBuilder createLowestNodeToFaces( localIndex const numNodes, const Group & cellBlocks )
 {
+  GEOS_MARK_FUNCTION;
+
   array1d< localIndex > faceCounts( numNodes );
   localIndex totalDuplicateFaces = 0;
   localIndex totalDuplicateFaceNodes = 0;
@@ -439,7 +445,7 @@ FaceBuilder createLowestNodeToFaces( localIndex const numNodes, const Group & ce
   faceBuilder.duplicateFaces.reserveValues( totalDuplicateFaceNodes );
 
   {
-
+    GEOS_MARK_SCOPE( "createLowestNodeToFaces numSubGroups loop" );
     for( localIndex blockIndex = 0; blockIndex < cellBlocks.numSubGroups(); ++blockIndex )
     {
       CellBlock const & cb = cellBlocks.getGroup< CellBlock >( blockIndex );
@@ -483,42 +489,45 @@ FaceBuilder createLowestNodeToFaces( localIndex const numNodes, const Group & ce
     }
   }
 
-  // Loop over all the nodes and sort the associated faces.
-  forAll< parallelHostPolicy >( numNodes, [lowestNodeToFaces = faceBuilder.lowestNodeToFaces.toView(),
-                                           duplicateFaces = faceBuilder.duplicateFaces.toViewConst()]( localIndex const nodeIndex )
   {
-    arraySlice1d< NodesAndElementOfFace > const faces = lowestNodeToFaces[ nodeIndex ];
-    std::sort( faces.begin(), faces.end(), [&]( NodesAndElementOfFace const & lhs, NodesAndElementOfFace const & rhs )
+    GEOS_MARK_SCOPE( "createLowestNodeToFaces final loop" );
+    // Loop over all the nodes and sort the associated faces.
+    forAll< parallelHostPolicy >( numNodes, [lowestNodeToFaces = faceBuilder.lowestNodeToFaces.toView(),
+                                            duplicateFaces = faceBuilder.duplicateFaces.toViewConst()]( localIndex const nodeIndex )
     {
-      // With C++20 this can all be replaced with std::lexicographical_compare_three_way
-      auto const pairOfIters = std::mismatch( duplicateFaces[ lhs.duplicateFaceNodesIndex ].begin(),
-                                              duplicateFaces[ lhs.duplicateFaceNodesIndex ].end(),
-                                              duplicateFaces[ rhs.duplicateFaceNodesIndex ].begin(),
-                                              duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() );
-
-      // If the ranges are equal
-      if( pairOfIters.first == duplicateFaces[ lhs.duplicateFaceNodesIndex ].end() &&
-          pairOfIters.second == duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() )
+      arraySlice1d< NodesAndElementOfFace > const faces = lowestNodeToFaces[ nodeIndex ];
+      std::sort( faces.begin(), faces.end(), [&]( NodesAndElementOfFace const & lhs, NodesAndElementOfFace const & rhs )
       {
-        return std::tie( lhs.blockIndex, lhs.cellIndex ) < std::tie( rhs.blockIndex, rhs.cellIndex );
-      }
+        // With C++20 this can all be replaced with std::lexicographical_compare_three_way
+        auto const pairOfIters = std::mismatch( duplicateFaces[ lhs.duplicateFaceNodesIndex ].begin(),
+                                                duplicateFaces[ lhs.duplicateFaceNodesIndex ].end(),
+                                                duplicateFaces[ rhs.duplicateFaceNodesIndex ].begin(),
+                                                duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() );
 
-      // If the second range is a prefix of the first, the first is greater than the secondd.
-      if( pairOfIters.first == duplicateFaces[ lhs.duplicateFaceNodesIndex ].end() )
-      {
-        return false;
-      }
+        // If the ranges are equal
+        if( pairOfIters.first == duplicateFaces[ lhs.duplicateFaceNodesIndex ].end() &&
+            pairOfIters.second == duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() )
+        {
+          return std::tie( lhs.blockIndex, lhs.cellIndex ) < std::tie( rhs.blockIndex, rhs.cellIndex );
+        }
 
-      // If the first range is a prefix of the second, the first is less than the second.
-      if( pairOfIters.second == duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() )
-      {
-        return true;
-      }
+        // If the second range is a prefix of the first, the first is greater than the secondd.
+        if( pairOfIters.first == duplicateFaces[ lhs.duplicateFaceNodesIndex ].end() )
+        {
+          return false;
+        }
 
-      // Otherwise simply compare the first non-equal values.
-      return *pairOfIters.first < *pairOfIters.second;
+        // If the first range is a prefix of the second, the first is less than the second.
+        if( pairOfIters.second == duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() )
+        {
+          return true;
+        }
+
+        // Otherwise simply compare the first non-equal values.
+        return *pairOfIters.first < *pairOfIters.second;
+      } );
     } );
-  } );
+  }
 
   return faceBuilder;
 }
@@ -536,6 +545,8 @@ void fillElementToFacesOfCellBlocks( FaceBuilder const & faceBuilder,
                                      arrayView1d< localIndex const > const & uniqueFaceOffsets,
                                      Group & cellBlocks )
 {
+  GEOS_MARK_FUNCTION;
+
   ArrayOfArraysView< NodesAndElementOfFace const > const & lowestNodeToFaces
     = faceBuilder.lowestNodeToFaces.toViewConst();
 

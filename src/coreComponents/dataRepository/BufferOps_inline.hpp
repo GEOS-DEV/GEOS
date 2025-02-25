@@ -38,7 +38,7 @@ Pack( buffer_unit_type * & buffer, T const & var )
   localIndex const sizeOfPackedChars = sizeof(T);
   if( DO_PACKING )
   {
-    memcpy( buffer, &var, sizeOfPackedChars );
+    *reinterpret_cast< T * >( buffer ) = var;
     buffer += sizeOfPackedChars;
   }
   return sizeOfPackedChars;
@@ -53,7 +53,10 @@ Pack( buffer_unit_type * & buffer, T const * const GEOS_RESTRICT var, INDEX_TYPE
   sizeOfPackedChars += length * sizeof(T);
   if( DO_PACKING )
   {
-    memcpy( buffer, var, length * sizeof(T) );
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      reinterpret_cast< T * >(buffer)[ ii ] = var[ ii ];
+    }
     buffer += length * sizeof(T);
   }
 
@@ -71,7 +74,11 @@ Unpack( buffer_unit_type const * & buffer, T * const GEOS_RESTRICT var, INDEX_TY
                    expectedLength << " != " << length );
   GEOS_DEBUG_VAR( expectedLength );
 
-  memcpy( var, buffer, length * sizeof(T) );
+  const T * const src = reinterpret_cast< T const* >( buffer );
+  for( INDEX_TYPE ii = 0; ii < length; ++ii )
+  {
+    var[ ii ] = src[ ii ];
+  }
   sizeOfUnpackedChars += length * sizeof(T);
   buffer += length * sizeof(T);
 
@@ -86,7 +93,10 @@ localIndex Pack( buffer_unit_type * & buffer, const string & var )
 
   if( DO_PACKING )
   {
-    memcpy( buffer, var.data(), varSize );
+    for( string::size_type ii = 0; ii < varSize; ++ii )
+    {
+      buffer[ ii ] = var[ ii ];
+    }
     buffer += varSize;
   }
 
@@ -214,7 +224,10 @@ PackPointer( buffer_unit_type * & buffer, T const * const GEOS_RESTRICT var, IND
   sizeOfPackedChars += length * sizeof(T);
   if( DO_PACKING )
   {
-    memcpy( buffer, var, length * sizeof(T) );
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      reinterpret_cast< T* >( buffer )[ ii ] = var[ ii ];
+    }
     buffer += length * sizeof(T);
   }
   return sizeOfPackedChars;
@@ -349,7 +362,7 @@ Unpack( buffer_unit_type const * & buffer,
         T & var )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
-  memcpy( &var, buffer, sizeOfUnpackedChars );
+  var = *reinterpret_cast< const T * >( buffer );
   buffer += sizeOfUnpackedChars;
   return sizeOfUnpackedChars;
 }
@@ -362,7 +375,10 @@ Unpack( buffer_unit_type const * & buffer,
   string::size_type stringsize = 0;
   localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize );
   var.resize( stringsize );
-  memcpy( &var[0], buffer, stringsize );
+  for( string::size_type ii = 0; ii < stringsize; ++ii )
+  {
+    var[ ii ] = static_cast< string::value_type >( buffer[ ii ] );
+  }
   buffer += stringsize;
   sizeOfUnpackedChars += stringsize;
   return sizeOfUnpackedChars;
@@ -530,7 +546,10 @@ UnpackPointer( buffer_unit_type const * & buffer,
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                    expectedLength << " != " << length );
   GEOS_DEBUG_VAR( expectedLength );
-  memcpy( var, buffer, length * sizeof(T) );
+  for( INDEX_TYPE ii = 0; ii < length; ++ii )
+  {
+    var[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
+  }
   sizeOfUnpackedChars += length * sizeof(T);
   buffer += length * sizeof(T);
   return sizeOfUnpackedChars;
