@@ -491,6 +491,8 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
+
+      WellControls const & wellControls = getWellControls( subRegion );
       // get a reference to the degree-of-freedom numbers
       string const wellDofKey = dofManager.getKey( wellElementDofName() );
       arrayView1d< globalIndex const > const & wellElemDofNumber =
@@ -504,14 +506,32 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
 
       geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
       {
-        FluxKernel::launch< ISTHERMAL >( subRegion.size(),
-                                         dofManager.rankOffset(),
-                                         wellElemDofNumber,
-                                         nextWellElemIndex,
-                                         connRate,
-                                         dt,
-                                         localMatrix,
-                                         localRhs );
+        if( isThermal() )
+        {}
+        else
+        {
+#if 1
+          singlePhaseWellKernels::
+            FaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( dt,
+                                                       dofManager.rankOffset(),
+                                                       wellDofKey,
+                                                       wellControls,
+                                                       subRegion,
+                                                       localMatrix,
+                                                       localRhs );
+#else
+          FluxKernel::launch< ISTHERMAL >( subRegion.size(),
+                                           dofManager.rankOffset(),
+                                           wellElemDofNumber,
+                                           nextWellElemIndex,
+                                           connRate,
+                                           dt,
+                                           localMatrix,
+                                           localRhs );
+#endif
+        }
+
       } );
 
     } );

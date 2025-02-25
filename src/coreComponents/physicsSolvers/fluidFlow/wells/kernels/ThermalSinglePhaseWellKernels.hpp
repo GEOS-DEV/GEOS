@@ -220,6 +220,171 @@ public:
 
   }
 };
+
+/******************************** FaceBasedAssemblyKernel ********************************/
+
+/**
+ * @class FaceBasedAssemblyKernel
+ * @tparam IS_THERMAL flag to include temperature dependencies and energy balance
+ * @brief Define the interface for the assembly kernel in charge of flux terms
+ */
+template< integer IS_THERMAL >
+class FaceBasedAssemblyKernel : public singlePhaseWellKernels::FaceBasedAssemblyKernel< IS_THERMAL >
+{
+public:
+
+  using Base  = singlePhaseWellKernels::FaceBasedAssemblyKernel< IS_THERMAL >;
+
+  // Well jacobian column and row indicies
+  using COFFSET = singlePhaseWellKernels::ColOffset;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using TAG = singlePhaseWellKernels::ElemTag;
+
+  using FLUID_PROP_COFFSET = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
+  using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
+
+  using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
+
+
+  using Base::m_isProducer;
+  using Base::m_dt;
+  using Base::m_localRhs;
+  using Base::m_localMatrix;
+  using Base::m_rankOffset;
+  using Base::maxNumElems;
+  using Base::maxStencilSize;
+
+
+  /// Compute time value for the number of degrees of freedom
+  static constexpr integer numDof = WJ_COFFSET::nDer;
+
+/// Compile time value for the number of equations except volume and momentum
+  static constexpr integer numEqn = WJ_ROFFSET::nEqn - 2;
+
+  /**
+   * @brief Constructor for the kernel interface
+   *
+   * @param[in] dt time step size
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofNumberAccessor
+   * @param[in] wellControls well information
+   * @param[in] subRegion  region containing well
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  FaceBasedAssemblyKernel( real64 const dt,
+                           globalIndex const rankOffset,
+                           string const wellDofKey,
+                           WellControls const & wellControls,
+                           WellElementSubRegion const & subRegion,
+                           constitutive::SingleFluidBase const & fluid,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs )
+    : Base( dt
+            , rankOffset
+            , wellDofKey
+            , wellControls
+            , subRegion
+            , localMatrix
+            , localRhs ),
+
+    m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
+    m_enthalpy( fluid.enthalpy()),
+    m_dEnthalpy( fluid.dEnthalpy())
+  { }
+
+  /**
+   * @brief Compute the local flux contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+   * @param[in] ie the element index
+   * @param[inout] stack the stack variables
+   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
+   */
+
+  GEOS_HOST_DEVICE
+  inline
+  void computeFlux( localIndex const iwelem ) const
+  {
+    Base::computeFlux ( iwelem, [&] ( localIndex const & iwelemNext
+                                      , localIndex const & iwelemUp
+                                      , real64 const & currentConnRate )
+    {} );
+
+  }
+
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElements the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack
+   * variables
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElements,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+    forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
+    {
+      kernelComponent.computeFlux( ie );
+
+    } );
+  }
+
+protected:
+
+  /// Global index of local element
+  arrayView1d< globalIndex const > m_globalWellElementIndex;
+
+  /// Views on enthalpy
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > m_enthalpy;
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > m_dEnthalpy;
+
+
+};
+
+/**
+ * @class FaceBasedAssemblyKernelFactory
+ */
+class FaceBasedAssemblyKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] dt time step size
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey string to get the element degrees of freedom numbers
+   * @param[in] wellControls object holding well control/constraint information
+   * @param[in] subregion well subregion
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch(
+    real64 const dt,
+    globalIndex const rankOffset,
+    string const dofKey,
+    WellControls const & wellControls,
+    WellElementSubRegion const & subRegion,
+    constitutive::SingleFluidBase const & fluid,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs )
+  {
+    integer constexpr isThermal=1;
+    using kernelType = FaceBasedAssemblyKernel< isThermal >;
+    kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, fluid, localMatrix, localRhs );
+    kernelType::template launch< POLICY >( subRegion.size(), kernel );
+  }
+};
+
+
 } // end namespace singlePhaseWellKernels
 
 } // end namespace geos
