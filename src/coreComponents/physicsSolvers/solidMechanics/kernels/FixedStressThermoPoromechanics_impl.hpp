@@ -143,6 +143,7 @@ quadraturePointKernel( localIndex const k,
                                                                   m_pressure_n[k],
                                                                   m_temperature[k],
                                                                   m_temperature_n[k],
+                                                                  m_initialTemperature[k],
                                                                   strainInc,
                                                                   totalStress,
                                                                   stiffness );

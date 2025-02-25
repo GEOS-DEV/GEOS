@@ -326,6 +326,9 @@ protected:
   arrayView2d< real64 const > const m_rockInternalEnergy;
   arrayView2d< real64 const > const m_dRockInternalEnergy_dTemperature;
 
+  /// The rank-global initial temperature array
+  arrayView1d< real64 const > const m_initialTemperature;
+
   /// Views on temperature
   arrayView1d< real64 const > const m_temperature_n;
   arrayView1d< real64 const > const m_temperature;

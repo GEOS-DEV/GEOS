@@ -131,6 +131,69 @@ public:
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
   }
 
+    GEOS_HOST_DEVICE
+  void smallStrainUpdateThermoPoromechanics( localIndex const k,
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const & pressure,
+                                             real64 const & pressure_n,
+                                             real64 const & temperature,
+                                             real64 const & deltaTemperatureFromLastStep,
+                                             real64 const & initialTemperature,
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( & totalStress )[6],
+                                             real64 ( & dTotalStress_dPressure )[6],
+                                             real64 ( & dTotalStress_dTemperature )[6],
+                                             DiscretizationOps & stiffness,
+                                             integer const performStressInitialization,
+                                             real64 & porosity,
+                                             real64 & porosity_n,
+                                             real64 & dPorosity_dVolStrain,
+                                             real64 & dPorosity_dPressure,
+                                             real64 & dPorosity_dTemperature,
+                                             real64 & dSolidDensity_dPressure ) const
+  {
+    // Compute total stress increment and its derivative
+    computeTotalStressWithInitialTemperature( k,
+                                              q,
+                                              timeIncrement,
+                                              pressure,
+                                              temperature,
+                                              initialTemperature,
+                                              strainIncrement,
+                                              totalStress,
+                                              dTotalStress_dPressure,
+                                              dTotalStress_dTemperature,
+                                              stiffness );
+
+    // Compute porosity and its derivatives
+    real64 const deltaPressure = pressure - pressure_n;
+    real64 porosityInit;
+    computePorosity( k,
+                     q,
+                     deltaPressure,
+                     deltaTemperatureFromLastStep,
+                     strainIncrement,
+                     porosity,
+                     porosity_n,
+                     porosityInit,
+                     dPorosity_dVolStrain,
+                     dPorosity_dPressure,
+                     dPorosity_dTemperature );
+
+    // skip porosity update when doing poromechanics initialization
+    if( performStressInitialization )
+    {
+      porosity = porosityInit;
+      dPorosity_dVolStrain = 0.0;
+      dPorosity_dPressure = 0.0;
+      dPorosity_dTemperature = 0.0;
+    }
+
+    // Save the derivative of solid density wrt pressure for the computation of the body force
+    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
+  }
+
   GEOS_HOST_DEVICE
   void smallStrainUpdatePoromechanicsFixedStress( localIndex const k,
                                                   localIndex const q,
@@ -139,6 +202,7 @@ public:
                                                   real64 const & pressure_n,
                                                   real64 const & temperature,
                                                   real64 const & temperature_n,
+                                                  real64 const & initialTemperature,
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
                                                   DiscretizationOps & stiffness ) const
@@ -147,16 +211,17 @@ public:
     real64 dTotalStress_dTemperature[6]{};
 
     // Compute total stress increment and its derivative
-    computeTotalStress( k,
-                        q,
-                        timeIncrement,
-                        pressure,
-                        temperature,
-                        strainIncrement,
-                        totalStress,
-                        dTotalStress_dPressure, // To pass something here
-                        dTotalStress_dTemperature, // To pass something here
-                        stiffness );
+    computeTotalStressWithInitialTemperature( k,
+                                              q,
+                                              timeIncrement,
+                                              pressure,
+                                              temperature,
+                                              initialTemperature,
+                                              strainIncrement,
+                                              totalStress,
+                                              dTotalStress_dPressure, // To pass something here
+                                              dTotalStress_dTemperature, // To pass something here
+                                              stiffness );
 
     // Compute total stress increment for the porosity update
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
@@ -312,6 +377,57 @@ private:
     dTotalStress_dTemperature[5] = 0;
 
   }
+
+  GEOS_HOST_DEVICE
+  inline
+  void computeTotalStressWithInitialTemperature( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const & timeIncrement,
+                                                 real64 const & pressure,
+                                                 real64 const & temperature,
+                                                 real64 const & initialTemperature,
+                                                 real64 const ( &strainIncrement )[6],
+                                                 real64 ( & totalStress )[6],
+                                                 real64 ( & dTotalStress_dPressure )[6],
+                                                 real64 ( & dTotalStress_dTemperature )[6],
+                                                 DiscretizationOps & stiffness ) const
+  {
+    updateBiotCoefficientAndAssignModuli( k );
+
+    // Compute total stress increment and its derivative w.r.t. pressure
+    m_solidUpdate.smallStrainUpdate( k,
+                                     q,
+                                     timeIncrement,
+                                     strainIncrement,
+                                     totalStress, // first effective stress increment accumulated
+                                     stiffness );
+
+    // Add the contributions of pressure and temperature to the total stress
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+    real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
+    real64 const deltaTemperature = temperature - initialTemperature;
+
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
+
+    // Compute derivatives of total stress
+    dTotalStress_dPressure[0] = -biotCoefficient;
+    dTotalStress_dPressure[1] = -biotCoefficient;
+    dTotalStress_dPressure[2] = -biotCoefficient;
+    dTotalStress_dPressure[3] = 0;
+    dTotalStress_dPressure[4] = 0;
+    dTotalStress_dPressure[5] = 0;
+
+    dTotalStress_dTemperature[0] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[1] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[2] = -3 * thermalExpansionCoefficientTimesBulkModulus;
+    dTotalStress_dTemperature[3] = 0;
+    dTotalStress_dTemperature[4] = 0;
+    dTotalStress_dTemperature[5] = 0;
+
+  }
+
 };
 
 /**
