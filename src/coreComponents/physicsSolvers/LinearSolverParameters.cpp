@@ -276,7 +276,7 @@ void LinearSolverParametersInput::postInputInitialization()
   // TODO input validation for other AMG parameters ?
 
   if( getLogLevel() > 0 )
-  print();
+    print();
 }
 
 void LinearSolverParametersInput::print()
