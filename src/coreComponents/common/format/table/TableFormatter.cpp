@@ -264,7 +264,6 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout & tableLayout,
         cellsHeaderLayout[idxRow + 1].push_back( emptyCell );
       }
     }
-    currentCell.m_cellWidth = it->m_header.m_cellWidth;
 
     if( it->hasParent() )
     {
@@ -395,6 +394,27 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
       cell.m_cellWidth = maxColumnSize;
     }
   };
+
+  // compute the columns & subcolumns width, taking into account all the hierarchy.
+  for( TableLayout::DeepFirstIterator columnIt = tableLayout.beginDeepFirst();
+       columnIt != tableLayout.endDeepFirst();
+       ++columnIt )
+  {
+    if( columnIt->hasChild())
+    {
+      // loop over direct children of current column
+      // (as columnIt starts from bottom, their width is in sync with all sub-children width)
+      size_t widthSum = 0;
+      for( TableLayout::Column & child : columnIt->m_subColumn ) // TODO renamre m_subColumn to m_subColumns
+      {
+        widthSum += child.m_header.m_cellWidth;
+      }
+      // take into account margin between direct children, then keep the children widths sum if it is higher
+      widthSum += tableLayout.getColumnMargin() * std::max( 0, integer( columnIt->m_subColumn.size() ) - 1 );
+      if( columnIt->m_header.m_cellWidth < size_t( widthSum ) )
+        columnIt->m_header.m_cellWidth = widthSum;
+    }
+  }
 
   size_t const numColumns = cellsHeaderLayout[0].size();
 
