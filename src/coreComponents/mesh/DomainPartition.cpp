@@ -384,7 +384,7 @@ void DomainPartition::outputPartitionInformation() const
   {
     meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
     {
-      if( level!=0 )
+      if( level ==0  )
       {
         // formatting is done on rank 0
         std::vector< RankMeshStats > allRankStats;
