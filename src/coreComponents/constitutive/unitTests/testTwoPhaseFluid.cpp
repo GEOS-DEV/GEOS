@@ -207,16 +207,16 @@ TwoPhaseFluid * TwoPhaseFluidTest< true >::makeTwoPhaseFluid( string const & nam
   TwoPhaseFluid & fluid = parent.registerGroup< TwoPhaseFluid >( name );
 
   string_array & phaseNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::phaseNamesString() );
-  phaseNames[0] = "oil";
-  phaseNames[1] = "water";
+  phaseNames.emplace_back( "oil" );
+  phaseNames.emplace_back( "water" );
 
   string_array & densityTableNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::densityTableNamesString() );
-  densityTableNames[0] = "densityTablePhase0";
-  densityTableNames[1] = "densityTablePhase1";
+  densityTableNames.emplace_back( "densityTablePhase0" );
+  densityTableNames.emplace_back( "densityTablePhase1" );
 
   string_array & viscosityTableNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::viscosityTableNamesString() );
-  viscosityTableNames[0] = "viscosityTablePhase0";
-  viscosityTableNames[1] = "viscosityTablePhase1";
+  viscosityTableNames.emplace_back( "viscosityTablePhase0" );
+  viscosityTableNames.emplace_back( "viscosityTablePhase1" );
 
   fluid.postInputInitializationRecursive();
   return &fluid;

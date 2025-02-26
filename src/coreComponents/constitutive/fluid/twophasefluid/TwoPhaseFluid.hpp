@@ -203,10 +203,10 @@ protected:
   path_array m_tableFiles;
 
   /// Names of the density tables (one per phase)
-  array1d< string > m_densityTableNames;
+  string_array m_densityTableNames;
 
   /// Names of the viscosity tables (one per phase)
-  array1d< string > m_viscosityTableNames;
+  string_array m_viscosityTableNames;
 
   PhaseProp m_phaseDensity;
   PhaseProp m_phaseViscosity;
