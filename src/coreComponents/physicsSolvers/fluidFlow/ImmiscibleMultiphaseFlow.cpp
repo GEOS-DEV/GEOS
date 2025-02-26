@@ -687,7 +687,7 @@ char const bcLogMessage[] =
 }
 
 bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
-                                                       real64 const time ) const
+                                                    real64 const time ) const
 {
   constexpr integer MAX_NP = 2;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -723,9 +723,9 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
                                                    fields::flow::pressure::key() ) );
       }
       subRegionSetMap[setName].setNumComp( m_numPhases );
-     } );
+    } );
     // 2. Check saturation Dirichlet BCs
-       fsManager.apply< ElementSubRegionBase >( time,
+    fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
                                              [&] ( FieldSpecificationBase const & fs,
@@ -795,7 +795,7 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
         }
       }
     }
-  } ); 
+  } );
 
   return bcConsistent;
 }
