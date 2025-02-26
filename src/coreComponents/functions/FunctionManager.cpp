@@ -56,7 +56,7 @@ Group * FunctionManager::createChild( string const & functionCatalogKey,
 {
   GEOS_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
 
-  if( functionCatalogKey == "PythonFunction" )
+  if( functionCatalogKey == PythonFunction< __uint128_t >::catalogName() )
   {
     // Create PythonFunction instance
     std::unique_ptr< PythonFunction< __uint128_t > > function = std::make_unique< PythonFunction< __uint128_t > >( functionName, this );

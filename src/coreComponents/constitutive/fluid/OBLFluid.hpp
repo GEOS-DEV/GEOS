@@ -34,6 +34,10 @@ enum OBLInterpolatorMode : integer
   Adaptive = 1        ///< adaptive interpolation from a given interface to function
 };
 
+ENUM_STRINGS( OBLInterpolatorMode,
+              "static",
+              "adaptive" );
+
 enum OBLInterpolatorType : integer
 {
   Multilinear = 0,    ///< multilinear interpolation
@@ -43,7 +47,7 @@ enum OBLInterpolatorType : integer
 class OBLFluid : public ConstitutiveBase
 {
 public:
-  typedef __uint128_t longIndex;
+  using longIndex = __uint128_t;
 
   OBLFluid( string const & name, Group * const parent );
   /**

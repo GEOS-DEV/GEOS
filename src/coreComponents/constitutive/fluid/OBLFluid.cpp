@@ -86,18 +86,11 @@ void OBLFluid::postInputInitialization()
   ConstitutiveBase::postInputInitialization();
 
   // set interpolator mode
-  GEOS_THROW_IF( m_interpolatorModeString.empty() ||
-                 (m_interpolatorModeString != "static" &&
-                  m_interpolatorModeString != "adaptive"),
-                 GEOS_FMT( "{}: Invalid interpolator mode: {}",
-                           getFullName(),
-                           m_interpolatorModeString ),
+  GEOS_THROW_IF( m_interpolatorModeString.empty(), 
+                 GEOS_FMT( "{}: Interpolator mode string is empty", 
+                            getFullName() ), 
                  InputError );
-
-  if( m_interpolatorModeString == "static" )
-    m_interpolatorMode = OBLInterpolatorMode::Static;
-  else if( m_interpolatorModeString == "adaptive" )
-    m_interpolatorMode = OBLInterpolatorMode::Adaptive;
+  m_interpolatorMode = EnumStrings<OBLInterpolatorMode>::fromString( m_interpolatorModeString );
 
   // set interpolator type
   /*GEOS_WARNING_IF( m_interpolatorTypeString.empty() ||

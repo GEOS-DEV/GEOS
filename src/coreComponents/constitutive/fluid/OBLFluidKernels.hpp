@@ -139,7 +139,7 @@ public:
   static constexpr integer numOps = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
 
   static constexpr real64 barToPascalMult = 1e5;
-  static constexpr real64 pascalToBarMult = 1.0 / 1e5;
+  static constexpr real64 pascalToBarMult = 1e-5;
 
   /**
    * @brief Performs the kernel launch
