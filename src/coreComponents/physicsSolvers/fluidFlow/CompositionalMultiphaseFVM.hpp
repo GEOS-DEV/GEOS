@@ -26,6 +26,26 @@ namespace geos
 {
 
 /**
+ * @brief Options for density treatment in gravity
+ */
+enum class GravityDensityScheme : integer
+{
+  ArithmeticAverage, ///< average phase density is computed using simple arithmetic average:
+                     ///  rho_ave = 0.5 * (rho_i + rho_j)
+  PhasePresence      ///< average phase density is computed using checking for phase presence:
+                     ///  rho_ave = 0.5 * (rho_i + rho_j) if phase is present in both cells i and j
+                     ///          = rho_i if phase is present in only cell i
+                     ///          = rho_j if phase is present in only cell j
+};
+
+/**
+ * @brief Strings for options for density treatment in gravity
+ */
+ENUM_STRINGS( GravityDensityScheme,
+              "ArithmeticAverage",
+              "PhasePresence" );
+
+/**
  * @class CompositionalMultiphaseFVM
  *
  * A compositional multiphase solver
@@ -86,6 +106,11 @@ public:
   /**@{*/
 
   virtual void
+  registerDataOnMesh( Group & MeshBodies ) override;
+
+  virtual void registerDataForCFL( Group & meshBodies ) override;
+
+  virtual void
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
@@ -108,6 +133,11 @@ public:
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
+
+  real64
+  scalingForSystemSolutionZFormulation( DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localSolution );
 
   virtual bool
   checkSystemSolution( DomainPartition & domain,
@@ -138,6 +168,14 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const override;
 
+  virtual void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
@@ -149,6 +187,20 @@ public:
                   DomainPartition & domain,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
+
+  virtual void computeCFLNumbers( DomainPartition & domain,
+                                  real64 const & dt,
+                                  real64 & maxPhaseCFL,
+                                  real64 & maxCompCFL ) override;
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  real64 setNextDt( real64 const & currentDt,
+                    DomainPartition & domain ) override;
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
@@ -162,37 +214,18 @@ public:
     static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
 
     // nonlinear solver parameters
-    static constexpr char const * scalingTypeString()               { return "scalingType"; }
+    static constexpr char const * scalingTypeString()             { return "scalingType"; }
+    static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
   };
-
-  /**
-   * @brief Solution scaling type
-   */
-  enum class ScalingType : integer
-  {
-    Global,         ///< Scale the Newton update with a unique scaling factor
-    Local            ///< Scale the Newton update locally (modifies the Newton direction)
-  };
-
-  /**
-   * @brief Storage for value and element location, used to determine global max + location
-   */
-  template< typename VALUE_TYPE, typename INDEX_TYPE >
-  struct valueAndLocation
-  {
-    valueAndLocation(){}
-    valueAndLocation( VALUE_TYPE val, INDEX_TYPE loc ): value( val ), location( loc ){}
-    VALUE_TYPE value;
-    INDEX_TYPE location;
-  };
-  typedef valueAndLocation< real64, globalIndex > valueAndLocationType;
 
 protected:
 
   virtual void postInputInitialization() override;
 
-  virtual void
-  initializePreSubGroups() override;
+  virtual void initializePreSubGroups() override;
+
+  real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                              DomainPartition & domain );
 
   struct DBCParameters
   {
@@ -213,7 +246,13 @@ protected:
   } m_dbcParams;
 
   /// Solution scaling type
-  ScalingType m_scalingType;
+  compositionalMultiphaseUtilities::ScalingType m_scalingType;
+
+  /// scheme for density treatment in gravity
+  GravityDensityScheme m_gravityDensityScheme;
+
+  /// the targeted CFL for timestep
+  real64 m_targetFlowCFL;
 
 private:
 
@@ -244,10 +283,6 @@ private:
   // no data needed here, see CompositionalMultiphaseBase
 
 };
-
-ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
-              "Global",
-              "Local" );
 
 } // namespace geos
 

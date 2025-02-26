@@ -247,7 +247,7 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
+  string_array const & relPermModelNames() const { return m_relPermModelNames; }
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
@@ -295,6 +295,8 @@ public:
 
     static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
     static constexpr char const * dCurrentTotalVolRateString() { return "dCurrentTotalVolumetricRate"; }
+
+    static constexpr char const * currentMassRateString() { return "currentMassRate"; }
 
     static constexpr char const * dCurrentTotalVolRate_dPresString() { return "dCurrentTotalVolumetricRate_dPres"; }
 
@@ -368,7 +370,7 @@ private:
   integer m_useTotalMassEquation;
 
   /// list of relative permeability model names per target region
-  array1d< string > m_relPermModelNames;
+  string_array m_relPermModelNames;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;

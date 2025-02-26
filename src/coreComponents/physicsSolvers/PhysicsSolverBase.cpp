@@ -172,7 +172,7 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -191,6 +191,7 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
 
 Group * PhysicsSolverBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 {
+  // Unused as all children are created within the constructor
   return nullptr;
 }
 
@@ -457,15 +458,6 @@ real64 PhysicsSolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
   }
   return nextDt;
 }
-
-
-real64 PhysicsSolverBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::DomainPartition & domain )
-{
-  GEOS_UNUSED_VAR( currentDt, domain );
-  return LvArray::NumericLimits< real64 >::max;       // i.e., not implemented
-}
-
-
 
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
                                               real64 const & dt,
@@ -1401,7 +1393,7 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
   Timestamp meshModificationTimestamp = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     if( meshModificationTimestamp < mesh.getModificationTimestamp() )
     {

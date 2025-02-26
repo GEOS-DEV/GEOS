@@ -81,7 +81,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 {
   m_solidSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
@@ -98,6 +98,16 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       }
       nodeManager.getField< solidMechanics::totalDisplacement >().zero();
       nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
+
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< solidMechanics::strain >().zero();
+        subRegion.getField< solidMechanics::plasticStrain >().zero();
+      } );
+
     }
 
     // Option 2: enable / disable inelastic behavior
