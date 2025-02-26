@@ -74,7 +74,7 @@ public:
    * @brief Getter for the fluid phase names
    * @return an array storing the phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -197,7 +197,7 @@ protected:
   };  //class KernelWrapper
 
 
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
 
   path_array m_tableFiles;
