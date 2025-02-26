@@ -171,10 +171,10 @@ protected:
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
 
 
-    /// Views on phase velocity
-    ElementRegionManager::ElementView< arrayView3d< real64, compflow::USD_PHASE_VELOCITY > > const m_phaseVelocity;
+  /// Views on phase velocity
+  ElementRegionManager::ElementView< arrayView3d< real64, compflow::USD_PHASE_VELOCITY > > const m_phaseVelocity;
 
-    /// Views on phase component fractions
+  /// Views on phase component fractions
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
   ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
   // Residual and jacobian

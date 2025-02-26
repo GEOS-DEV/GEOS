@@ -387,7 +387,6 @@ public:
 
 
 
-
     localIndex k[numFluxSupportPoints]{};
     localIndex connectionIndex = 0;
     for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
@@ -409,19 +408,19 @@ public:
         // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
-            // first, compute the transmissibilities at this face
-            // note that the dispersion tensor is lagged in iteration
-            m_stencilWrapper.computeWeights( iconn,
-                                             ip,
-                                             m_dispersivity,
-                                             m_dispersivity, // this is just to pass something, but the resulting derivative won't be used
-                                             stack.transmissibility,
-                                             stack.dTrans_dTemp ); // will not be used
+          // first, compute the transmissibilities at this face
+          // note that the dispersion tensor is lagged in iteration
+          m_stencilWrapper.computeWeights( iconn,
+                                           ip,
+                                           m_dispersivity,
+                                           m_dispersivity,   // this is just to pass something, but the resulting derivative won't be used
+                                           stack.transmissibility,
+                                           stack.dTrans_dTemp );   // will not be used
 
-            real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
-                                                         stack.transmissibility[connectionIndex][1] };
+          real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                       stack.transmissibility[connectionIndex][1] };
 
-            // loop over components
+          // loop over components
           for( integer ic = 0; ic < numComp; ++ic )
           {
 
