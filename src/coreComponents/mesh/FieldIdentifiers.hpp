@@ -101,7 +101,7 @@ public:
 
   {
 //    return m_fields;
-    std::map< string, array1d< string > > rval;
+    std::map< string, string_array > rval;
     for( auto const & [key, fields] : m_fields )
     {
       for( auto const & field : fields )

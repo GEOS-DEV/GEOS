@@ -220,7 +220,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
     MeshLevel * meshLevel;
     propagator->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                               MeshLevel & mesh,
-                                                                              arrayView1d< string const > const & )
+                                                                              string_array const & )
     {
       meshLevel = &mesh;
     } );
