@@ -17,8 +17,10 @@
  * @file ImmiscibleMultiphaseKernels.hpp
  */
 
+
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_MULTIPHASEKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_MULTIPHASEKERNELS_HPP
+#define Pe_max 5000000.0
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
@@ -26,6 +28,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
@@ -50,6 +53,19 @@ namespace geos
 {
 namespace immiscibleMultiphaseKernels
 {
+
+  template< typename VIEWTYPE >
+real64 computePCalpha ( real64 S ) {
+  real64 Pe = Pe_max;
+  return (Pe * (1.0 - S));
+}
+
+template< typename VIEWTYPE >
+real64 computePCalphaInv ( real64 Pc ) {
+  real64 Pe = Pe_max;
+  return  (1.0 - Pc / Pe);
+}
+
 using namespace constitutive;
 
 
@@ -406,6 +422,7 @@ public:
         real64 dGravHead_dP[numEqn][2]{};
 
         real64 capGrad[numEqn]{};
+        real64 capPresIC[numEqn][2]{};
         real64 dCapGrad_dP[numEqn][2]{};
         real64 dCapGrad_dS[numEqn][2]{};
 
@@ -416,6 +433,13 @@ public:
         real64 mobility[numEqn]{};
         real64 dMob_dP[numEqn][2]{};
         real64 dMob_dS[numEqn][2]{};
+
+        real64 density2[numEqn]{};
+        real64 dDens_dP2[numEqn][2]{};
+
+        real64 uT = 0;
+        real64 duT_dP[numEqn]{};
+        real64 duT_dS[numEqn]{};
 
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
         real64 const dTrans_dP[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
@@ -492,6 +516,7 @@ public:
             if( m_hasCapPressure )  // check sign convention
             {
               real64 const capPres = m_phaseCapPressure[er][esr][ei][0][ip];  // Pc = Pc1 || Pc2
+              capPresIC[ip][ke] = capPres;
               dCapGrad_dTrans -= signPotDiff[ke] * capPres;                   // dDPc/dT = (-Pc1 + Pc2)
               pot -= trans[ke] * capPres;                                     // Phi = T P1 - rho T g z1 - T Pc1 || -T P2 + rho T g z2 + T
                                                                               // Pc2
@@ -543,6 +568,8 @@ public:
             localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) ); // 1 upwind -> k_up = 0 || 2 upwind -> k_up = 1
 
             mobility[ip] = m_mob[seri[k_up]][sesri[k_up]][sei[k_up]][ip];                     // M = Mupstream
+            density2[ip] = m_dens[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip];                    // r = rho1 || rho2
+            dDens_dP2[ip][k_up] = m_dDens_dPres[seri[k_up]][sesri[k_up]][sei[k_up]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 || dr2/dP
             dMob_dP[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][ip][Deriv::dP];    // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
             dMob_dS[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][ip][Deriv::dS];    // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
           }
@@ -552,6 +579,8 @@ public:
             for( integer ke = 0; ke < 2; ++ke )
             {
               mobility[ip] += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]][ip];               // M = alpha * M1 + (1 - alpha) * M2
+              density2[ip] += mobWeights[ke] * m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];                    // r = rho1 || rho2
+              dDens_dP2[ip][ke] = mobWeights[ke] * m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 || dr2/dP
               dMob_dP[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP]; // dM/dP = {alpha * dM1/dP1 , (1 -
                                                                                                       // alpha) * dM2/dP2}
               dMob_dS[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dS]; // dM/dP = {alpha * dM1/dS1 , (1 -
@@ -609,8 +638,20 @@ public:
                                                             // rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2)] + dM/dP1 * DPhi ,
                                                             //           M [-T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 *
                                                             // rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] + dM/dP2 * DPhi }
-
             dFlux_dS[ip][ke] += dMob_dS[ip][ke] * potGrad;  // dF/dS = { M [T * -dPc/dS1] + dM/dS1 * DPhi , M [T * dPc/dS2] + dM/dS2 * DPhi
+                                                            // }
+          }
+
+          uT += fluxVal[ip] / density2[ip]; 
+
+          // add contribution from upstream cell mobility derivatives
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            duT_dP[ke] += dFlux_dP[ip][ke] - fluxVal[ip] * dDens_dP2[ip][ke] / density2[ip];  // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho1/dP * T g (z1 - z2) - dT/dP1 *
+            duT_dP[ke]  /= density2[ip];                                   // rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2)] + dM/dP1 * DPhi ,
+                                                            //           M [-T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 *
+                                                            // rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] + dM/dP2 * DPhi }
+            duT_dS[ke] += dFlux_dS[ip][ke] / density2[ip];  // dF/dS = { M [T * -dPc/dS1] + dM/dS1 * DPhi , M [T * dPc/dS2] + dM/dS2 * DPhi
                                                             // }
           }
 
@@ -633,9 +674,43 @@ public:
 
           // Customize the kernel with this lambda
           kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP, dFlux_dS );  // Not sure what this
-                                                                                                                    // does
+          
+                                                                                                                   // does
 
         } // loop over phases
+        
+        if( m_hasCapPressure )
+  {
+        // std::cout << GEOS_FMT( "        uT = ( {:4.2e} )", uT );
+        // std::cout << GEOS_FMT( "        duTdP = ( {:4.2e} )", duT_dP[0] );
+        // std::cout << GEOS_FMT( "        duTdS = ( {:4.2e} )", duT_dS[0] );
+        std::cout << GEOS_FMT( "        Pc1 = ( {:4.2e} )", capPresIC[0][0] );
+        std::cout << GEOS_FMT( "        Pc2 = ( {:4.2e} )", capPresIC[0][1] );
+
+
+
+      // --------------------  Here I implement the interface conditions local solver --------------------- //
+      // initial guess:
+      real64 S_int[numEqn]{};
+      real64 const Pc1 = capPresIC[0][0];
+      real64 const Pc2 = capPresIC[0][1];
+
+      real64 const Pc_int = ( Pc1 + Pc2 ) / 2;
+
+      // Local newton loop:
+
+            // compute S_alpha and S_beta:
+      S_int[0] = computePCalphaInv <arrayView1d< real64 const >> ( Pc_int );
+      S_int[1] = computePCalphaInv <arrayView1d< real64 const >> ( Pc_int );
+
+      real64 S_avg = S_int[0] + S_int[1];
+
+      // real64 PC_int1 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[0] );
+      // real64 PC_int2 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[1] );
+    GEOS_UNUSED_PARAM( S_avg );
+
+  } 
+
 
         connectionIndex++;
       }
@@ -762,6 +837,7 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure,
+                   CapillaryPressureBase const & capPressure,
                    integer const useTotalMassEquation,
                    integer const checkPhasePresenceInGravity,
                    string const & solverName,
@@ -771,6 +847,14 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
+    // constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
+    // {
+    // typename TYPEOFREF( castedCapPres ) ::KernelWrapper const & capPresWrapper = castedCapPres.createKernelWrapper();
+        //       isothermalCompositionalMultiphaseBaseKernels::
+        // CapillaryPressureUpdateKernel::
+        // launch< parallelDevicePolicy<> >( dataGroup.size(),
+        //                                   capPresWrapper,
+        //                                   phaseVolFrac );
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;
 
@@ -789,6 +873,7 @@ public:
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
                        checkPhasePresenceInGravity );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+    // } );
   }
 };
 

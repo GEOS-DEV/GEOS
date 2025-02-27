@@ -613,18 +613,37 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                arrayView1d< string const > const & regionNames )
   {
+
+
+
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
+              mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      // if( m_hasCapPressure )
+  // {
+    string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+    CapillaryPressureBase const & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, cappresName );
+    // constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
+    // {
+    //   typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
+    // } );
+  // }     
+
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
       immiscibleMultiphaseKernels::
         FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                                                    dofManager.rankOffset(),
                                                                                    dofKey,
                                                                                    m_hasCapPressure,
+                                                                                   capPressure,
                                                                                    m_useTotalMassEquation,
                                                                                    m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
                                                                                    getName(),
@@ -633,6 +652,7 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                                                    dt,
                                                                                    localMatrix.toViewConstSizes(),
                                                                                    localRhs.toView() );
+        } );
     } );
   } );
 }
