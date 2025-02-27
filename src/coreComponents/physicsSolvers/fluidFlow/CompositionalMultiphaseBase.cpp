@@ -296,7 +296,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       m_hasCapPressure |= !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty();
 
       // If at least one region has a diffusion model, consider it enabled for all
-      m_hasDiffusion |=  !getConstitutiveName< DiffusionBase >( subRegion ).empty();
+      m_hasDiffusion |= !getConstitutiveName< DiffusionBase >( subRegion ).empty();
 
       // If at least one region has a dispersion model, consider it enabled for all
       m_hasDispersion |= !getConstitutiveName< DispersionBase >( subRegion ).empty();
