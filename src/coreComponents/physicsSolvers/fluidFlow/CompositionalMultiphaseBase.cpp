@@ -293,23 +293,14 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       }
 
       // If at least one region has a capillary pressure model, consider it enabled for all
-      if( !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty() )
-      {
-        m_hasCapPressure = true;
-      }
+      m_hasCapPressure |= !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty();
 
       // If at least one region has a diffusion model, consider it enabled for all
-      if( !getConstitutiveName< DiffusionBase >( subRegion ).empty() )
-      {
-        m_hasDiffusion = true;
-      }
+      m_hasDiffusion |=  !getConstitutiveName< DiffusionBase >( subRegion ).empty();
 
       // If at least one region has a dispersion model, consider it enabled for all
-      if( !getConstitutiveName< DispersionBase >( subRegion ).empty() )
-      {
-        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
-        m_hasDispersion = true;
-      }
+      m_hasDispersion |= !getConstitutiveName< DispersionBase >( subRegion ).empty();
+      GEOS_ERROR_IF( m_hasDispersion, "Dispersion is not supported yet, please remove it from this XML file" );
 
     } );
   } );
