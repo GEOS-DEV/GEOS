@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -62,9 +63,6 @@ public:
 
   /**@}*/
 
-private:
-
-  using Base = FieldStatisticsBase< SinglePhaseBase >;
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
@@ -105,6 +103,10 @@ private:
     real64 totalUncompactedPoreVolume;
   };
 
+private:
+
+  using Base = FieldStatisticsBase< SinglePhaseBase >;
+
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, etc)
    * @param[in] mesh the mesh level object
@@ -112,7 +114,7 @@ private:
    */
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                string_array const & regionNames ) const;
 
 
   void registerDataOnMesh( Group & meshBodies ) override;

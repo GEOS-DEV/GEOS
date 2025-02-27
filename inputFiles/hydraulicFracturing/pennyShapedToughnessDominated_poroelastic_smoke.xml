@@ -15,7 +15,7 @@
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact"
+      isMatrixPoroelastic="1"
       maxNumResolves="5"
       initialDt="0.1">
       <NonlinearSolverParameters
@@ -25,13 +25,14 @@
         directParallel="0"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">
-    </SolidMechanicsLagrangianSSLE>
+      contactRelationName="fractureContact"
+      contactPenaltyStiffness="1.0e0">
+    </SolidMechanicsLagrangianFEM>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
@@ -43,7 +44,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
-      rockToughness="3.0e6"
+      initialRockToughness="3.0e6"
       mpiCommOrder="1"
       isPoroelastic="1"/>
   </Solvers> 

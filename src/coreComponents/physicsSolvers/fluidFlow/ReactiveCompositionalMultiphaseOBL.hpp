@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -90,7 +91,7 @@ public:
    */
   static string catalogName() { return "ReactiveCompositionalMultiphaseOBL"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -98,7 +99,7 @@ public:
    * @brief Getter for the fluid component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > componentNames() const { return m_componentNames; }
+  string_array const & componentNames() const { return m_componentNames; }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 //END_SPHINX_INCLUDE_01
@@ -310,7 +311,7 @@ public:
 
 private:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// the max number of fluid phases
   integer m_numPhases;
@@ -319,10 +320,10 @@ private:
   integer m_numComponents;
 
   /// list of component names
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
 
   /// list of phase names names
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
   /// the number of OBL operators
   integer m_numOBLOperators;

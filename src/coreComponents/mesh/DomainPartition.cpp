@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,6 +18,9 @@
  */
 
 #include "DomainPartition.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -24,7 +28,6 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-
 
 
 namespace geos
@@ -53,7 +56,7 @@ DomainPartition::~DomainPartition()
 
 void DomainPartition::initializationOrder( string_array & order )
 {
-  SortedArray< string > usedNames;
+  set< string > usedNames;
   {
     order.emplace_back( string( groupKeysStruct::constitutiveManagerString() ) );
     usedNames.insert( groupKeysStruct::constitutiveManagerString() );
@@ -78,7 +81,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOS_MARK_FUNCTION;
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
   PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
@@ -90,10 +93,10 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.getPartitions().data(), partition.m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOS, 3, partition.getPartitions().data(), partition.m_Periodic.data(), reorder, &cartcomm );
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
-    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
     int nsdof = 3;
 
     MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.m_coords.data() );
@@ -125,7 +128,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
-    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
+    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, &requests[ i ] );
   }
 
   // This set will contain the second (neighbor of) neighbors ranks.
@@ -134,7 +137,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   array1d< int > neighborOfNeighborRanks;
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
-    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
+    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, MPI_STATUS_IGNORE );
 
     // Insert the neighbors of the current neighbor into the set of second neighbors.
     secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
@@ -318,6 +321,183 @@ void DomainPartition::addNeighbors( const unsigned int idim,
       }
     }
   }
+}
+
+void DomainPartition::outputPartitionInformation() const
+{
+  using stringutilities::addCommaSeparators;
+
+  struct RankMeshStats
+  {
+    // Table rows will follow this enum ordering
+    enum StatIndex
+    {
+      Node = 0, Edge, Face, Elem, Count
+    };
+    std::array< globalIndex, 4 > localCount = {};
+    std::array< globalIndex, 4 > ghostCount = {};
+    std::array< double, 4 > ratio = {};
+  };
+
+  auto fillStats = []( RankMeshStats & stat,
+                       RankMeshStats::StatIndex statIndex,
+                       ObjectManagerBase const & objectManager )
+  {
+    stat.localCount[ statIndex ] += objectManager.getNumberOfLocalIndices();
+    stat.ghostCount[ statIndex ] += objectManager.getNumberOfGhosts();
+  };
+
+  auto computeRatios = []( RankMeshStats & stat )
+  {
+    for( size_t i = 0; i < RankMeshStats::StatIndex::Count; ++i )
+    {
+      stat.ratio[i] = stat.localCount[i] + stat.ghostCount[i] == 0 ? 0 :
+                      (double)stat.localCount[i] / (double)(stat.localCount[i] + stat.ghostCount[i]);
+    }
+  };
+
+  auto addLocalGhostRow = []( TableData & tableData, RankMeshStats const & stat, string_view heading )
+  {
+    tableData.addRow( heading,
+                      addCommaSeparators( stat.localCount[0] ), addCommaSeparators( stat.ghostCount[0] ),
+                      addCommaSeparators( stat.localCount[0] + stat.ghostCount[0] ),
+                      addCommaSeparators( stat.localCount[1] ), addCommaSeparators( stat.ghostCount[1] ),
+                      addCommaSeparators( stat.localCount[1] + stat.ghostCount[1] ),
+                      addCommaSeparators( stat.localCount[2] ), addCommaSeparators( stat.ghostCount[2] ),
+                      addCommaSeparators( stat.localCount[2] + stat.ghostCount[2] ),
+                      addCommaSeparators( stat.localCount[3] ), addCommaSeparators( stat.ghostCount[3] ),
+                      addCommaSeparators( stat.localCount[3] + stat.ghostCount[3] ) );
+  };
+
+  auto addSummaryRow = []( TableData & tableData, std::array< double, 4 > stats, string_view heading )
+  {
+    tableData.addRow( heading,
+                      CellType::MergeNext, CellType::MergeNext, stats[0],
+                      CellType::MergeNext, CellType::MergeNext, stats[1],
+                      CellType::MergeNext, CellType::MergeNext, stats[2],
+                      CellType::MergeNext, CellType::MergeNext, stats[3] );
+  };
+
+  GEOS_LOG_RANK_0( "MPI Partitioning information:" );
+
+  forMeshBodies( [&]( MeshBody const & meshBody )
+  {
+    meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
+    {
+      if( level!=0 )
+      {
+        // formatting is done on rank 0
+        std::vector< RankMeshStats > allRankStats;
+        allRankStats.resize( MpiWrapper::commSize() );
+
+        { // Compute stats of the current rank, then gather it on rank 0
+          RankMeshStats rankStats{};
+          fillStats( rankStats, RankMeshStats::Node, meshLevel.getNodeManager() );
+          fillStats( rankStats, RankMeshStats::Edge, meshLevel.getEdgeManager() );
+          fillStats( rankStats, RankMeshStats::Face, meshLevel.getFaceManager() );
+
+          meshLevel.getElemManager().forElementSubRegions< CellElementSubRegion >(
+            [&]( CellElementSubRegion const & subRegion )
+          {
+            fillStats( rankStats, RankMeshStats::Elem, subRegion );
+          } );
+
+          computeRatios( rankStats );
+
+          MpiWrapper::gather( rankStats, allRankStats, 0 );
+        }
+
+
+        if( MpiWrapper::commRank() == 0 )
+        {
+          TableLayout const layout( "Mesh partitioning over ranks",
+                                    {TableLayout::Column()
+                                       .setName( "Ranks" ),
+                                     TableLayout::Column()
+                                       .setName( "Nodes" )
+                                       .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                                     TableLayout::Column()
+                                       .setName( "Edges" )
+                                       .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                                     TableLayout::Column()
+                                       .setName( "Faces" )
+                                       .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                                     TableLayout::Column()
+                                       .setName( "Elems" )
+                                       .addSubColumns( {  "Local", "Ghost", "Total" } )} );
+          TableData tableData;
+
+          for( int rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
+          {
+            if( rankId == 1 )
+              tableData.addSeparator();
+
+            addLocalGhostRow( tableData, allRankStats[rankId], std::to_string( rankId ) );
+          }
+
+          RankMeshStats sumStats{};
+          RankMeshStats minStats{};
+          RankMeshStats maxStats{};
+
+          for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+          {
+            minStats.localCount[statId] = std::numeric_limits< globalIndex >::max();
+            minStats.ghostCount[statId] = std::numeric_limits< globalIndex >::max();
+            minStats.ratio[statId] = std::numeric_limits< double >::max();
+
+            maxStats.localCount[statId] = std::numeric_limits< globalIndex >::min();
+            maxStats.ghostCount[statId] = std::numeric_limits< globalIndex >::min();
+            maxStats.ratio[statId] = std::numeric_limits< double >::min();
+          }
+
+          for( int rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
+          {
+            for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+            {
+              sumStats.localCount[statId] += allRankStats[rankId].localCount[statId];
+              sumStats.ghostCount[statId] += allRankStats[rankId].ghostCount[statId];
+
+              minStats.localCount[statId] = std::min( minStats.localCount[statId], allRankStats[rankId].localCount[statId] );
+              minStats.ghostCount[statId] = std::min( minStats.ghostCount[statId], allRankStats[rankId].ghostCount[statId] );
+              minStats.ratio[statId] = std::min( minStats.ratio[statId], allRankStats[rankId].ratio[statId] );
+
+              maxStats.localCount[statId] = std::max( maxStats.localCount[statId], allRankStats[rankId].localCount[statId] );
+              maxStats.ghostCount[statId] = std::max( maxStats.ghostCount[statId], allRankStats[rankId].ghostCount[statId] );
+              maxStats.ratio[statId] = std::max( maxStats.ratio[statId], allRankStats[rankId].ratio[statId] );
+            }
+          }
+
+          tableData.addSeparator();
+          addLocalGhostRow( tableData, sumStats, "sum" );
+          addLocalGhostRow( tableData, minStats, "min" );
+          addLocalGhostRow( tableData, maxStats, "max" );
+
+          std::array< double, 4 > localTotalMinRatio;
+          std::array< double, 4 > localTotalMaxRatio;
+
+          for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+          {
+            localTotalMinRatio[statId] = std::numeric_limits< double >::max();
+            localTotalMaxRatio[statId] = std::numeric_limits< double >::min();
+          }
+
+          for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
+          {
+            localTotalMinRatio[statId] = std::min( localTotalMinRatio[statId], minStats.ratio[statId] );
+            localTotalMaxRatio[statId] = std::max( localTotalMinRatio[statId], maxStats.ratio[statId] );
+          }
+          tableData.addSeparator();
+          addSummaryRow( tableData, localTotalMinRatio, "min(local/total)" );
+          addSummaryRow( tableData, localTotalMaxRatio, "max(local/total)" );
+
+          TableTextFormatter logPartition( layout );
+          GEOS_LOG_RANK_0( logPartition.toString( tableData ));
+        }
+
+      }
+    } );
+  } );
+
 }
 
 } /* namespace geos */

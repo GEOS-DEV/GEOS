@@ -1,7 +1,25 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 #include "PackCollection.hpp"
 
 namespace geos
 {
+
+using namespace dataRepository;
+
 PackCollection::PackCollection ( string const & name, Group * parent )
   : HistoryCollectionBase( name, parent )
   , m_setsIndices( )
@@ -57,6 +75,7 @@ void PackCollection::initializePostSubGroups( )
     {
       // coord meta collectors should have m_disableCoordCollection == true to avoid
       //  infinite recursive init calls here
+      //          (side note: should we create a m_isMetaCollector field to prevent any confusion?)
       metaCollector->initializePostSubGroups();
     }
     m_initialized = true;
@@ -77,7 +96,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   }
   else
   {
-    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= m_setNames.size(), "Invalid collection index specified." );
+    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= LvArray::integerConversion< localIndex >( m_setNames.size()), "Invalid collection index specified." );
     localIndex collectionSize = m_setsIndices[collectionIdx].size();
     if( ( m_onlyOnSetChange != 0 ) && ( !m_setChanged ) ) // if we're only collecting when the set changes but the set hasn't changed
     {
@@ -96,7 +115,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
  * @return The set names, guarantied to be unique.
  * @note This function simply discards requested sets which are not available. No warning or error is provided...
  */
-std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNames, ObjectManagerBase const * omb )
+std::vector< string > getExistingWrapperNames( string_array const & setNames, ObjectManagerBase const * omb )
 {
   // Extract available wrapper names from `omb`.
   std::set< string > available;
@@ -146,7 +165,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // This is questionable but lets me define `setNames` as `const` variable.
   // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15).
   // So the `asOMB` function will not be called inappropriately and kill the simulation.
-  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), asOMB( targetGrp ) );
+  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames, asOMB( targetGrp ) );
 
   std::size_t const numSets = collectAll ? 1 : setNames.size();
   m_setsIndices.resize( numSets );
@@ -240,7 +259,7 @@ localIndex PackCollection::numMetaDataCollectors() const
 
 void PackCollection::buildMetaDataCollectors()
 {
-  if( !m_disableCoordCollection )
+  if( !m_disableCoordCollection && m_targetIsMeshObject )
   {
     char const * coordField = nullptr;
     if( m_objectPath.find( "nodeManager" ) != string::npos )

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,11 +17,12 @@
  * @file ParticleMeshGenerator.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
-#define GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
+#ifndef GEOS_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
+#define GEOS_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
 
-#include "codingUtilities/EnumStrings.hpp"
-#include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+#include "mesh/generators/MeshGeneratorBase.hpp"
+
+#include "common/format/EnumStrings.hpp"
 
 namespace geos
 {
@@ -79,7 +81,7 @@ protected:
   };
   /// @endcond
 
-  void postProcessInput() override;
+  void postInputInitialization() override;
 
   /// Mesh number of dimension
   int m_dim;
@@ -99,10 +101,10 @@ private:
   Path m_headerFilePath;
 
   /// String array of particle block names associated with the particle mesh
-  array1d< string > m_blockNames;
+  string_array m_blockNames;
 
   /// String array listing the particle types present
-  array1d< string > m_particleType;
+  string_array m_particleType;
 
 public:
 
@@ -110,4 +112,4 @@ public:
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP */
+#endif /* GEOS_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP */

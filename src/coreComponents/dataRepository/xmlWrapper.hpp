@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -25,7 +26,8 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
+#include "codingUtilities/RTTypes.hpp"
 
 // TPL includes
 #include <pugixml.hpp>
@@ -391,6 +393,14 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
   LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
 }
 
+/**
+ * @brief Parse a string and fill a vector of strings with the value(s) in the string.
+ * @param[out] array the array to read values into
+ * @param[in]  value the string that contains the data to be parsed into target
+ * @param[in]  regex the regular expression used for validating the string value.
+ */
+void stringToInputVariable( std::vector< std::string > & array, string const & value, Regex const & regex );
+
 ///@}
 
 namespace internal
@@ -421,6 +431,15 @@ static void equate( T & lhs, T const & rhs )
 template< typename T, int NDIM, typename PERM >
 static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
 { lhs.template setValues< serialPolicy >( rhs ); }
+
+template< typename T >
+static void equate( std::vector< T > & lhs, T const & rhs )
+{
+  for( auto & val : lhs )
+  {
+    val = rhs;
+  }
+}
 
 }   // namespace internal
 

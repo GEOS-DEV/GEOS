@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -60,6 +61,10 @@ public:
 
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 6;
+
+  /// The number of faces/support points per element.
+  constexpr static localIndex numFaces = 5;
+
   /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
 
@@ -69,6 +74,7 @@ public:
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
+  GEOS_HOST_DEVICE
   virtual ~H1_Wedge_Lagrange1_Gauss6() override
   {}
 
@@ -186,6 +192,51 @@ public:
                      real64 ( &N )[numNodes] );
 
   /**
+   * @brief Calculate shape functions values for each support face at a
+   *   given point in the parent space.
+   * @param pointCoord coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   face.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void calcFaceBubbleN( real64 const (&pointCoord)[3],
+                               real64 (& N)[numFaces] )
+  {
+
+    real64 const r  = pointCoord[0];
+    real64 const s  = pointCoord[1];
+    real64 const xi = pointCoord[2];
+
+    N[0] = 4.0 * (1.0 - r - s) * s * LagrangeBasis1::valueBubble( xi );
+    N[1] = 4.0 * (1.0 - r - s) * r * LagrangeBasis1::valueBubble( xi );
+    N[2] = (1.0 - r - s) * r * s * LagrangeBasis1::value( 0, xi );
+    N[3] = (1.0 - r - s) * r * s * LagrangeBasis1::value( 1, xi );
+    N[4] = 4.0 * r * s * LagrangeBasis1::valueBubble( xi );
+
+  }
+
+  /**
+   * @brief Calculate face bubble functions values for each face at a
+   *   quadrature point.
+   * @param q Index of the quadrature point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  static void calcFaceBubbleN( localIndex const q,
+                               real64 (& N)[numFaces] )
+  {
+
+    real64 const pointCoord[3] = {quadratureParentCoords0( q ),
+                                  quadratureParentCoords1( q ),
+                                  quadratureParentCoords2( q )};
+
+    calcFaceBubbleN( pointCoord, N );
+  }
+
+  /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
@@ -215,6 +266,20 @@ public:
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
                            real64 ( &gradN )[numNodes][3] );
+
+  /**
+   * @brief Calculate the shape bubble function derivatives wrt the physical
+   *   coordinates.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param gradN Array to contain the shape bubble function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOS_HOST_DEVICE
+  static real64 calcGradFaceBubbleN( localIndex const q,
+                                     real64 const (&X)[numNodes][3],
+                                     real64 ( &gradN )[numFaces][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -549,6 +614,56 @@ real64 H1_Wedge_Lagrange1_Gauss6::
              real64 ( & gradN )[numNodes][3] )
 {
   return calcGradN( q, X, gradN );
+}
+
+GEOS_HOST_DEVICE
+inline
+real64
+H1_Wedge_Lagrange1_Gauss6::calcGradFaceBubbleN( localIndex const q,
+                                                real64 const (&X)[numNodes][3],
+                                                real64 (& gradN)[numFaces][3] )
+{
+
+  real64 J[3][3] = {{0}};
+
+  jacobianTransformation( q, X, J );
+
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+
+  real64 dNdXi[numFaces][3] = {{0}};
+
+  real64 const r  = quadratureParentCoords0( q );
+  real64 const s  = quadratureParentCoords1( q );
+  real64 const xi = quadratureParentCoords2( q );
+
+  dNdXi[0][0] = -4.0 * s * LagrangeBasis1::valueBubble( xi );                  // dN0/dr
+  dNdXi[0][1] = 4.0 * (1.0 - r - 2.0 * s) * LagrangeBasis1::valueBubble( xi ); // dN0/ds
+  dNdXi[0][2] = 4.0 *(1 - r - s) * s * LagrangeBasis1::gradientBubble( xi );   // dN0/dxi
+
+  dNdXi[1][0] =  4.0 * (1.0 - 2.0 * r - s) * LagrangeBasis1::valueBubble( xi ); // dN1/dr
+  dNdXi[1][1] =  -4.0 * r * LagrangeBasis1::valueBubble( xi );                  // dN1/ds
+  dNdXi[1][2] =  4.0 * (1 - r - s) * r * LagrangeBasis1::gradientBubble( xi );  // dN1/dxi
+
+  dNdXi[2][0] = (1.0 - 2.0 * r - s) * s * LagrangeBasis1::value( 0, xi );  // dN2/dr
+  dNdXi[2][1] = (1.0 - r - 2.0 * s) * r * LagrangeBasis1::value( 0, xi );  // dN2/ds
+  dNdXi[2][2] = (1 - r - s) * r * s * LagrangeBasis1::gradient( 0, xi );   // dN2/dxi
+
+  dNdXi[3][0] = (1.0 - 2.0 * r - s) * s * LagrangeBasis1::value( 1, xi );  // dN3/dr
+  dNdXi[3][1] = (1.0 - r - 2.0 * s) * r * LagrangeBasis1::value( 1, xi );  // dN3/ds
+  dNdXi[3][2] = (1 - r - s) * r * s * LagrangeBasis1::gradient( 1, xi );   // dN3/dxi
+
+  dNdXi[4][0] = 4.0 * s * LagrangeBasis1::valueBubble( xi );                    // dN4/dr
+  dNdXi[4][1] = 4.0 * r * LagrangeBasis1::valueBubble( xi );                    // dN4/ds
+  dNdXi[4][2] = 4.0 * r * s * LagrangeBasis1::gradientBubble( xi );             // dN4/dxi
+
+  for( int fi=0; fi<numFaces; ++fi )
+  {
+    gradN[fi][0] = dNdXi[fi][0] * J[0][0] + dNdXi[fi][1] * J[1][0] + dNdXi[fi][2] * J[2][0];
+    gradN[fi][1] = dNdXi[fi][0] * J[0][1] + dNdXi[fi][1] * J[1][1] + dNdXi[fi][2] * J[2][1];
+    gradN[fi][2] = dNdXi[fi][0] * J[0][2] + dNdXi[fi][1] * J[1][2] + dNdXi[fi][2] * J[2][2];
+  }
+
+  return detJ * weight;
 }
 
 //*************************************************************************************************
