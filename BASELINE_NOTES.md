@@ -6,6 +6,13 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3551 (2024-02-19)
+Add Passing Crack to the integrated tests.
+
+PR #3541 (2024-02-18)
+=====================
+Well control parallel synchronization fix.
+
 PR #3443 (2024-02-17)
 =====================
 Added tests for overall composition (Z) formulation.
