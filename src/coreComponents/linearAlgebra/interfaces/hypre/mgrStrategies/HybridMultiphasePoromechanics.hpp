@@ -100,7 +100,7 @@ public:
     m_levelFRelaxIters[2]         = 1;
     m_levelInterpType[2]          = MGRInterpolationType::injection;
     m_levelRestrictType[2]        = MGRRestrictionType::blockColLumped; // True-IMPES
-    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::galerkinRAI;//galerkin;//RAI;
+    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::galerkin;//galerkin;//RAI;
     m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::blockJacobi;//ilu0;//blockJacobi;
     m_levelGlobalSmootherIters[2] = 1;
 
@@ -117,19 +117,20 @@ public:
 
   /**
    * @brief Setup the MGR strategy.
+   * @param mgrParams MGR configuration parameters
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
-  void setup( LinearSolverParameters::MGR const &,
+  void setup( LinearSolverParameters::MGR const & mgrParams,
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    setReduction( precond, mgrData );
+    setReduction( precond, mgrData);
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
 
     // Configure the BoomerAMG solver used as F-relaxation for the first level
-    setMechanicsFSolver( precond, mgrData );
+    setMechanicsFSolver( precond, mgrData, mgrParams.separateComponents );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
