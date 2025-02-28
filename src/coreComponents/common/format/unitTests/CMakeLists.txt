@@ -1,5 +1,6 @@
 # Specify list of tests
 set( testSources
+     testLogPart.cpp 
      testStringUtilities.cpp )
 
 set( dependencyList gtest common ${parallelDeps} )

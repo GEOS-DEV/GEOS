@@ -32,7 +32,7 @@
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "fileIO/logPart/LogPart.hpp"
+#include "common/format/LogPart.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -172,28 +172,25 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  LogPart meshLogPart( "Mesh generation" );
-  meshLogPart.begin();
+  LogPart meshGenerationLog( "Mesh generation" );
+  meshGenerationLog.begin();
   generateMesh();
-  meshLogPart.end();
+  meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-  LogPart nmLogPart( "NumericalMethods" );
-  nmLogPart.begin();
+  LogPart numericalMethodLog( "Numerical Methods" );
+  numericalMethodLog.begin();
   applyNumericalMethods();
-  nmLogPart.end();
+  numericalMethodLog.end();
 
-  LogPart meshDataLogPart( "Mesh data registration :" );
-  meshDataLogPart.begin();
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
-  meshDataLogPart.end();
 
-  LogPart grpLogPart( "Group & subgroups initialization" );
-  grpLogPart.begin();
   initialize();
-  grpLogPart.end();
 
+  LogPart importFieldsLog( "Import fields" );
+  importFieldsLog.begin();
   importFields();
+  importFieldsLog.end();
 }
 
 
