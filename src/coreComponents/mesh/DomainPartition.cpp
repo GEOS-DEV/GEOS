@@ -407,31 +407,31 @@ void DomainPartition::outputPartitionInformation() const
 
           MpiWrapper::gather( rankStats, allRankStats, 0 );
         }
-        
+
 
         if( MpiWrapper::commRank() == 0 )
         {
           TableLayout const layout = TableLayout( "Mesh partitioning over ranks",
                                                   {TableLayout::Column()
                                                      .setName( "Ranks" )
-                                 .setValuesAlignment( TableLayout::Alignment::center ),
+                                                     .setValuesAlignment( TableLayout::Alignment::center ),
                                                    TableLayout::Column()
                                                      .setName( "Nodes" )
-.setValuesAlignment( TableLayout::Alignment::center )
+                                                     .setValuesAlignment( TableLayout::Alignment::center )
                                                      .addSubColumns( {  "Local", "Ghost", "Total" } ),
                                                    TableLayout::Column()
                                                      .setName( "Edges" )
-.setValuesAlignment( TableLayout::Alignment::center )
+                                                     .setValuesAlignment( TableLayout::Alignment::center )
                                                      .addSubColumns( {  "Local", "Ghost", "Total" } ),
                                                    TableLayout::Column()
                                                      .setName( "Faces" )
-.setValuesAlignment( TableLayout::Alignment::center )
+                                                     .setValuesAlignment( TableLayout::Alignment::center )
                                                      .addSubColumns( {  "Local", "Ghost", "Total" } ),
                                                    TableLayout::Column()
                                                      .setName( "Elems" )
                                                      .setValuesAlignment( TableLayout::Alignment::center )
-                                 .addSubColumns( {  "Local", "Ghost", "Total" } )} );
-          layout.setMargin( TableLayout::MarginValue::tiny );
+                                                  } )
+                                       .setMargin( TableLayout::MarginValue::tiny );
           TableData tableData;
 
           for( int rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
