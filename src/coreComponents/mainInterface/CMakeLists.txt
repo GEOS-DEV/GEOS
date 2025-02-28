@@ -51,7 +51,7 @@ if( GEOS_ENABLE_INDUCEDSEISMICITY )
 endif()
 
 if( GEOS_ENABLE_SIMPLEPDE )
-  list( APPEND dependencyLists implePDESolvers )
+  list( APPEND dependencyLists simplePDESolvers )
 endif()
 
 if( GEOS_ENABLE_SOLIDMECHANICS )
