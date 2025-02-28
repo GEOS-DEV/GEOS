@@ -290,7 +290,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
   // 3. Compute phase densities and phase viscosities
 
-  if(phase1Exists > 0.0)
+  if( phase1Exists > 0.0 )
   {
     m_phase1.density.compute( pressure,
                               temperatureInCelsius,
@@ -311,7 +311,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
     LvArray::forValuesInSlice( phaseViscosity.derivs[ip1], setZero );
   }
 
-  if(phase2Exists > 0.0)
+  if( phase2Exists > 0.0 )
   {
     m_phase2.density.compute( pressure,
                               temperatureInCelsius,
@@ -349,7 +349,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
     stackArray1d< real64, numComp+2 > dPhaseMolarDens( numComp+2 );
     //LvArray::forValuesInSlice( dPhaseMolarDens, setZero );
 
-    if(phase1Exists)
+    if( phase1Exists )
     {
       m_phase1.density.compute( pressure,
                                 temperatureInCelsius,
@@ -363,7 +363,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
       }
     }
 
-    if(phase2Exists)
+    if( phase2Exists )
     {
       m_phase2.density.compute( pressure,
                                 temperatureInCelsius,
@@ -403,7 +403,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   else
   {
     // for now, we have to compute the phase mass density here
-    if(phase1Exists)
+    if( phase1Exists )
     {
       m_phase1.density.compute( pressure,
                                 temperatureInCelsius,
@@ -417,7 +417,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
       LvArray::forValuesInSlice( phaseMassDensity.derivs[ip1], setZero );
     }
 
-    if(phase2Exists)
+    if( phase2Exists )
     {
       m_phase2.density.compute( pressure,
                                 temperatureInCelsius,
