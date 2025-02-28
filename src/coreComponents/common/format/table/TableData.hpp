@@ -46,6 +46,8 @@ public:
     string value = "";
   };
 
+  using RowsData = std::vector< std::vector< CellData > >;
+
   /**
    * @brief Add a row to the table.
    * The values passed to addRow (can be any type).
@@ -82,10 +84,14 @@ public:
    */
   std::vector< string > const & getErrorMsgs() const;
 
-private:
+  RowsData const & getCellsData() const
+  { return m_rows; }
 
+  bool compareTableDataTo( TableData tableTarget ) const;
+
+private:
   /// vector containing all rows with cell values
-  std::vector< std::vector< CellData > > m_rows;
+  RowsData m_rows;
 
 };
 

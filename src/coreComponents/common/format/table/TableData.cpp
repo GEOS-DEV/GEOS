@@ -50,6 +50,36 @@ std::vector< std::vector< TableData::CellData > > const & TableData::getTableDat
   return m_rows;
 }
 
+bool TableData::compareTableDataTo( TableData tableTarget ) const
+{
+  RowsData const & currentTableData = getCellsData();
+  RowsData const & targetTableData = tableTarget.getCellsData();
+
+  if( currentTableData.size() != targetTableData.size())
+  {
+    return false;
+  }
+
+  for( size_t idxRow = 0; idxRow < currentTableData.size(); idxRow++ )
+  {
+    std::vector< TableData::CellData > const & currentTableRow = currentTableData[idxRow];
+    std::vector< TableData::CellData > const & targetTableRow = targetTableData[idxRow];
+    if( currentTableRow.size() != targetTableRow.size() )
+    {
+      return false;
+    }
+    for( size_t idxCol = 0; idxCol < currentTableRow.size(); idxCol++ )
+    {
+      if( currentTableRow[idxCol].value != targetTableRow[idxCol].value )
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 void TableData2D::collectTableValues( arraySlice1d< real64 const > rowAxisValues,
                                       arraySlice1d< real64 const > columnAxisValues,
                                       arrayView1d< real64 const > values )
