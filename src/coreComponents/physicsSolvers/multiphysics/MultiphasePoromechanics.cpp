@@ -32,8 +32,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
-//#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-//#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
+//#include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 
 namespace geos
 {
@@ -169,7 +169,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
@@ -218,11 +218,11 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
 
   this->solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                               MeshLevel & mesh,
-                                                                                              arrayView1d< string const > const & regionNames )
+                                                                                              string_array const & regionNames )
   {
 
     // collect the target region of the mechanics solver not included in the poromechanics target regions
-    array1d< string > filteredRegionNames;
+    string_array filteredRegionNames;
     filteredRegionNames.reserve( regionNames.size() );
     for( string const & regionName : regionNames )
     {
@@ -243,7 +243,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
       this->template assemblyLaunch< constitutive::SolidBase,
                                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                dofManager,
-                                                                                               filteredRegionNames.toViewConst(),
+                                                                                               filteredRegionNames,
                                                                                                SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                                localMatrix,
                                                                                                localRhs,
@@ -260,13 +260,13 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIni
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
-  arrayView1d< string const > const & poromechanicsTargetRegionNames =
-    this->template getReference< array1d< string > >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
-    this->solidMechanicsSolver()->template getReference< array1d< string > >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  arrayView1d< string const > const & flowTargetRegionNames =
-    this->flowSolver()->template getReference< array1d< string > >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+  string_array const & poromechanicsTargetRegionNames =
+    this->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & solidMechanicsTargetRegionNames =
+    this->solidMechanicsSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & flowTargetRegionNames =
+    this->flowSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+  for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
                               poromechanicsTargetRegionNames[i] )
@@ -361,7 +361,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity
 }
 
 template class MultiphasePoromechanics<>;
-//template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
+template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
 //template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsEmbeddedFractures >;
 template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> >;
 

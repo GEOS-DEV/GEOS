@@ -172,7 +172,7 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -191,6 +191,7 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
 
 Group * PhysicsSolverBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 {
+  // Unused as all children are created within the constructor
   return nullptr;
 }
 
@@ -1392,7 +1393,7 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
   Timestamp meshModificationTimestamp = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     if( meshModificationTimestamp < mesh.getModificationTimestamp() )
     {

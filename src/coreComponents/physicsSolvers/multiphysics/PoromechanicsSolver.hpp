@@ -21,10 +21,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/contact/HydraulicApertureBase.hpp"
@@ -150,7 +150,7 @@ public:
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
-                                                                                 arrayView1d< string const > const & regionNames )
+                                                                                 string_array const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
       elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -200,7 +200,7 @@ public:
 
     PhysicsSolverBase::forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                                          MeshLevel & mesh,
-                                                                         arrayView1d< string const > const & regionNames )
+                                                                         string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -343,10 +343,10 @@ public:
     // Step 2: loop over target regions of solver, and tag the elements belonging to the stabilization regions
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
-                                                                                 arrayView1d< string const > const & targetRegionNames )
+                                                                                 string_array const & targetRegionNames )
     {
       //keep only target regions in filter
-      array1d< string > filteredTargetRegionNames;
+      string_array filteredTargetRegionNames;
       filteredTargetRegionNames.reserve( targetRegionNames.size() );
 
       for( string const & targetRegionName : targetRegionNames )
@@ -358,8 +358,8 @@ public:
       }
 
       // Loop over elements and update stabilization constant
-      mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
-                                                                                                ElementSubRegionBase & subRegion )
+      mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames, [&]( localIndex const,
+                                                                                  ElementSubRegionBase & subRegion )
       {
         arrayView1d< integer > const macroElementIndex = subRegion.getField< fields::flow::macroElementIndex >();
         arrayView1d< real64 > const elementStabConstant = subRegion.getField< fields::flow::elementStabConstant >();
@@ -400,7 +400,7 @@ protected:
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -442,7 +442,7 @@ protected:
     averageMeanTotalStressIncrement.resize( 0 );
     PhysicsSolverBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                     MeshLevel & mesh,
-                                                                                    arrayView1d< string const > const & regionNames ) {
+                                                                                    string_array const & regionNames ) {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)
@@ -465,7 +465,7 @@ protected:
     integer i = 0;
     PhysicsSolverBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                     MeshLevel & mesh,
-                                                                                    arrayView1d< string const > const & regionNames ) {
+                                                                                    string_array const & regionNames ) {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)
@@ -562,7 +562,7 @@ protected:
     {
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
-                                                                                  arrayView1d< string const > const & regionNames )
+                                                                                  string_array const & regionNames )
       {
 
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -585,7 +585,7 @@ protected:
 
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
-                                                                                  arrayView1d< string const > const & regionNames )
+                                                                                  string_array const & regionNames )
       {
 
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -616,7 +616,7 @@ protected:
   {
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
-                                                                                arrayView1d< string const > const & regionNames )
+                                                                                string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
@@ -673,7 +673,7 @@ protected:
   stabilization::StabilizationType m_stabilizationType;
 
   /// Names of regions where stabilization applied
-  array1d< string > m_stabilizationRegionNames;
+  string_array m_stabilizationRegionNames;
 
   /// Stabilization Multiplier
   real64 m_stabilizationMultiplier;

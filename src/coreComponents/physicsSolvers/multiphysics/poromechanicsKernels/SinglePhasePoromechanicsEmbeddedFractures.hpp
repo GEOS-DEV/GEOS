@@ -228,7 +228,7 @@ public:
   }
 
 
-private:
+protected:
 
   ElementViewConst< arrayView1d< globalIndex const > > const m_dispJumpDofNumber;
 
