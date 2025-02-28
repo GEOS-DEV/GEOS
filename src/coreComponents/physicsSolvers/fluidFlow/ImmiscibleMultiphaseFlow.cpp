@@ -600,7 +600,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 }
 
 void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
-                                                  DomainPartition const & domain,
+                                                  DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const
@@ -615,32 +615,52 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+    if( m_hasCapPressure )
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
                                                   [&]( localIndex const,
-                                                       ElementSubRegionBase const & subRegion )
+                                                       ElementSubRegionBase & subRegion )
       {
-        // if( m_hasCapPressure )
-        // {
         string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-        CapillaryPressureBase const & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, cappresName );
-        // constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
-        // {
-        //   typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
-        // } );
-        // }
+        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, cappresName );
+        constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
+        {
+          typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
+          fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+          {
+            typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+            immiscibleMultiphaseKernels::
+              FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                                         dofManager.rankOffset(),
+                                                                                         dofKey,
+                                                                                         m_hasCapPressure,
+                                                                                         m_useTotalMassEquation,
+                                                                                         m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                                         getName(),
+                                                                                         mesh.getElemManager(),
+                                                                                         stencilWrapper,
+                                                                                         capPresWrapper,
+                                                                                         dt,
+                                                                                         localMatrix.toViewConstSizes(),
+                                                                                         localRhs.toView() );
+          } );
+        } );
+      } );
+    }
+    else
+    {
+      fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+      {
         typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
         immiscibleMultiphaseKernels::
           FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                                                      dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      m_hasCapPressure,
-                                                                                     capPressure,
                                                                                      m_useTotalMassEquation,
                                                                                      m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
                                                                                      getName(),
@@ -650,7 +670,8 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                                                      localMatrix.toViewConstSizes(),
                                                                                      localRhs.toView() );
       } );
-    } );
+    }
+
   } );
 }
 
