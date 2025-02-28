@@ -57,6 +57,17 @@ string_view trimSpaces( string_view str )
 }
 
 
+std::string_view ltrimSpaces( std::string_view s )
+{
+  std::size_t const first = s.find_first_not_of( " \f\n\r\t\v" );
+  if( first != std::string::npos )
+  {
+    return s.substr( first, ( s.size() - first ) );
+  }
+  return {};
+}
+
+
 string removeStringAndFollowingContent( string_view const str,
                                         string_view const strToRemove )
 {
@@ -91,6 +102,44 @@ string addCommaSeparators( T const & num )
     }
   }
   return result;
+}
+
+std::vector< std::string > wrapTextToMaxLength( std::vector< std::string > const & lines, size_t maxLength )
+{
+  std::vector< std::string > formattedLines;
+
+  for( const auto & line : lines )
+  {
+    size_t startPos = 0;
+
+    while( startPos < line.size())
+    {
+      // if the remaining part is shorter than maxLength
+      if( startPos + maxLength >= line.size())
+      {
+        formattedLines.push_back( std::string( ltrimSpaces( line.substr( startPos ))));
+        break;
+      }
+
+      // find last space occurence before maxLength
+      size_t endPos = startPos + maxLength;
+      size_t spacePos = line.rfind( ' ', endPos );
+      if( spacePos != std::string::npos && spacePos > startPos )
+      {
+        // cut and push at the last space found
+        formattedLines.push_back( std::string( ltrimSpaces( line.substr( startPos, spacePos - startPos ))));
+        startPos = spacePos + 1;
+      }
+      else
+      {
+        // no space found, cut in the middle of the word with maxLength
+        formattedLines.push_back( std::string( ltrimSpaces( line.substr( startPos, maxLength ))));
+        startPos += maxLength;
+      }
+    }
+  }
+ 
+  return formattedLines;
 }
 
 template string addCommaSeparators( int const & num );
