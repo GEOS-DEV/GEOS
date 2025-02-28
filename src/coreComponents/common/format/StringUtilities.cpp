@@ -138,7 +138,7 @@ std::vector< std::string > wrapTextToMaxLength( std::vector< std::string > const
       }
     }
   }
- 
+
   return formattedLines;
 }
 

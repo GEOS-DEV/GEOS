@@ -152,7 +152,7 @@ TEST( testTable, tableColumnParamClassic )
 TEST( testTable, tableHiddenColumn )
 {
   string const title = "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis";
-  TableLayout tableLayout( title,
+  TableLayout const tableLayout( title,
   {
     TableLayout::Column()
       .setName( "Cras egestas" )
@@ -400,7 +400,7 @@ TEST( testTable, variadicTest )
 TEST( testTable, maxWidth )
 {
   {
-    TableLayout layoutTest( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte,  egestas ipsum a nisl",
+    TableLayout const layoutTest = TableLayout( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte,  egestas ipsum a nisl",
     {
       "Rank",
       TableLayout::Column()
@@ -413,8 +413,8 @@ TEST( testTable, maxWidth )
       TableLayout::Column()
         .setName( "Elems" )
         .addSubColumns( {"Locales", "egestas ipsum a nisl"} ),
-    } );
-    layoutTest.setMaxColumnWidth( 16 );
+    } )
+                                     .setMaxColumnWidth( 16 );
     TableData tableData;
     tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
     tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
@@ -440,8 +440,10 @@ TEST( testTable, maxWidth )
 
 TEST( testTable, testLineBreak )
 {
-  TableLayout tableLayout( {"Cras egestas", "CoordX", "C", "CoordZ", "Prev\nelement", "Next\nelement"} );
-  tableLayout.setTitle( "title" ).setMargin( TableLayout::MarginValue::tiny ).enableLineBreak( false );
+  TableLayout const tableLayout = TableLayout( {"Cras egestas", "CoordX", "C", "CoordZ", "Prev\nelement", "Next\nelement"} )
+                                    .setTitle( "title" )
+                                    .setMargin( TableLayout::MarginValue::tiny )
+                                    .enableLineBreak( false );
 
   TableData tableData;
   tableData.addRow( "1", "2", "3.0", 3.0129877, 2.0f, 1 );

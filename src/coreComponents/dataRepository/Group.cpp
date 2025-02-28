@@ -305,14 +305,14 @@ string Group::dumpInputOptions() const
 {
   string rval;
 
-  TableLayout logLayout( "", {TableLayout::Column()
-                                .setName( "name" )
-                                .setValuesAlignment( TableLayout::Alignment::left ),
-                              "flag",
-                              TableLayout::Column()
-                                .setName( "Description" )
-                                .setValuesAlignment( TableLayout::Alignment::left ) } );
-  logLayout.setMaxColumnWidth( 80 );
+  TableLayout const logLayout = TableLayout( "", {TableLayout::Column()
+                                                    .setName( "name" )
+                                                    .setValuesAlignment( TableLayout::Alignment::left ),
+                                                  "flag",
+                                                  TableLayout::Column()
+                                                    .setName( "Description" )
+                                                    .setValuesAlignment( TableLayout::Alignment::left ) } )
+                                  .setMaxColumnWidth( 80 );
   TableData logData;
   for( auto const & wrapper : m_wrappers )
   {
