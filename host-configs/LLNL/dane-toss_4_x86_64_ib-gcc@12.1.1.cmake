@@ -58,15 +58,15 @@ set(ENABLE_CUDA OFF CACHE BOOL "")
 
 set(ENABLE_CHAI ON CACHE BOOL "")
 
-set(CHAI_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/chai-git.df7741f1dbbdc5fff5f7d626151fdf1904e62b19_develop-iev43uxnll3jsod7jloak5iwmox6owlv" CACHE PATH "")
+set(CHAI_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/chai-git.df7741f1dbbdc5fff5f7d626151fdf1904e62b19_develop-iev43uxnll3jsod7jloak5iwmox6owlv" CACHE PATH "")
 
-set(RAJA_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/raja-git.4d7fcba55ebc7cb972b7cc9f6778b48e43792ea1_develop-ikig7gipi7bsuxopxfac7uvrup3kd4rx" CACHE PATH "")
+set(RAJA_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/raja-git.4d7fcba55ebc7cb972b7cc9f6778b48e43792ea1_develop-ikig7gipi7bsuxopxfac7uvrup3kd4rx" CACHE PATH "")
 
 set(ENABLE_UMPIRE ON CACHE BOOL "")
 
-set(UMPIRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/umpire-git.abd729f40064175e999a83d11d6b073dac4c01d2_develop-4t7pxjbfakzclltrwpajtryfkntshmwu" CACHE PATH "")
+set(UMPIRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/umpire-git.abd729f40064175e999a83d11d6b073dac4c01d2_develop-4t7pxjbfakzclltrwpajtryfkntshmwu" CACHE PATH "")
 
-set(CAMP_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/camp-git.0f07de4240c42e0b38a8d872a20440cb4b33d9f5_main-fv2sc4dnl7tma5k3wpu5r2tgcinfpz7u" CACHE PATH "")
+set(CAMP_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/camp-git.0f07de4240c42e0b38a8d872a20440cb4b33d9f5_main-fv2sc4dnl7tma5k3wpu5r2tgcinfpz7u" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # IO TPLs
@@ -74,21 +74,21 @@ set(CAMP_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
 
-set(CALIPER_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-bno6d6qyyvivznkozzdh27ljrj3yqbv2" CACHE PATH "")
+set(CALIPER_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-bno6d6qyyvivznkozzdh27ljrj3yqbv2" CACHE PATH "")
 
-set(adiak_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/adiak-0.4.0-dimwte7ij4naho6hhcqowidlxnespn7e/lib/cmake/adiak" CACHE PATH "")
+set(adiak_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/adiak-0.4.0-dimwte7ij4naho6hhcqowidlxnespn7e/lib/cmake/adiak" CACHE PATH "")
 
-set(HDF5_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/hdf5-1.12.1-ijx73yvfrhxnjls4acfy2sdqtiekvyec" CACHE PATH "")
+set(HDF5_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/hdf5-1.12.1-ijx73yvfrhxnjls4acfy2sdqtiekvyec" CACHE PATH "")
 
-set(CONDUIT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-jwijeuulb6xfflmsmh4snh6qvmmvenve" CACHE PATH "")
+set(CONDUIT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-jwijeuulb6xfflmsmh4snh6qvmmvenve" CACHE PATH "")
 
-set(SILO_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/silo-4.11.1-bsd-nrzzqos7534qy74dk5anmp3pvsgdovrq" CACHE PATH "")
+set(SILO_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/silo-4.11.1-bsd-nrzzqos7534qy74dk5anmp3pvsgdovrq" CACHE PATH "")
 
-set(PUGIXML_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/pugixml-1.13-7v6zhre6pi7ibnief5tqhmqxowllqo2w" CACHE PATH "")
+set(PUGIXML_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/pugixml-1.13-7v6zhre6pi7ibnief5tqhmqxowllqo2w" CACHE PATH "")
 
-set(VTK_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/vtk-9.3.1-6rs7wpfvmzw7pdsdl6mifdrg7nhuidqd" CACHE PATH "")
+set(VTK_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/vtk-9.3.1-6rs7wpfvmzw7pdsdl6mifdrg7nhuidqd" CACHE PATH "")
 
-set(FMT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/fmt-10.0.0-4wcnmovbi74zd66vdk6xhjo6hefdbxbp" CACHE PATH "")
+set(FMT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/fmt-10.0.0-4wcnmovbi74zd66vdk6xhjo6hefdbxbp" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # System Math Libraries
@@ -110,19 +110,19 @@ set(MKL_LIBRARIES /usr/tce/packages/mkl/mkl-2022.1.0/mkl/2022.1.0/lib/intel64/li
 # Math TPLs
 #--------------------------------------------------------------------------------
 
-set(METIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/metis-5.1.0-jrpyyvbvi5zzxt3mraydgurmfk7pjj77" CACHE PATH "")
+set(METIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/metis-5.1.0-jrpyyvbvi5zzxt3mraydgurmfk7pjj77" CACHE PATH "")
 
-set(PARMETIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/parmetis-4.0.3-i2lkaqn2onxsvx3rcssafh7zkgv4xgcb" CACHE PATH "")
+set(PARMETIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/parmetis-4.0.3-i2lkaqn2onxsvx3rcssafh7zkgv4xgcb" CACHE PATH "")
 
-set(SCOTCH_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/scotch-7.0.3-fl625kpmhevzvzmuotssykvvhaqovqk3" CACHE PATH "")
+set(SCOTCH_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/scotch-7.0.3-ts6ppq45qy3me5wdlnb4dzhtnnyleop5" CACHE PATH "")
 
-set(SUPERLU_DIST_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/superlu-dist-git.0f6efc377df2440c235452d13d28d2c717f832a1_6.3.0-git.8-kul235x6jkdwxbdntczlhho7h6x65pwh" CACHE PATH "")
+set(SUPERLU_DIST_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/superlu-dist-git.0f6efc377df2440c235452d13d28d2c717f832a1_6.3.0-git.8-kul235x6jkdwxbdntczlhho7h6x65pwh" CACHE PATH "")
 
-set(SUITESPARSE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/suite-sparse-5.10.1-fbm7gbwba72t4ggduvynvnbcr43uxxs4" CACHE PATH "")
+set(SUITESPARSE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/suite-sparse-5.10.1-fbm7gbwba72t4ggduvynvnbcr43uxxs4" CACHE PATH "")
 
-set(TRILINOS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/trilinos-16.0.0-tlpnzz4auhkqtnirn3sduww6xpxgbtyn" CACHE PATH "")
+set(TRILINOS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/trilinos-16.0.0-pouamvqn7cggh62ew6ahy5qfomipu6g3" CACHE PATH "")
 
-set(HYPRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/hypre-git.c893886d15eb57e87dd36efec23693ece3ddc88e_2.32.0-git.4-n2ggx632hcpy4nznfy5lehdnb4azkrft" CACHE PATH "")
+set(HYPRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/hypre-git.c893886d15eb57e87dd36efec23693ece3ddc88e_2.32.0-git.4-n2ggx632hcpy4nznfy5lehdnb4azkrft" CACHE PATH "")
 
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
@@ -146,7 +146,7 @@ set(ENABLE_PYGEOSX ON CACHE BOOL "")
 
 set(SPHINX_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build" CACHE PATH "")
 
-set(DOXYGEN_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/doxygen-1.8.20-hbxmvlkrwmpt5mvibhths6cdo5rlor3s/bin/doxygen" CACHE PATH "")
+set(DOXYGEN_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/doxygen-1.8.20-hbxmvlkrwmpt5mvibhths6cdo5rlor3s/bin/doxygen" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # Development tools
@@ -154,7 +154,7 @@ set(DOXYGEN_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_t
 
 set(ENABLE_UNCRUSTIFY ON CACHE BOOL "")
 
-set(UNCRUSTIFY_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-12/dane-gcc-12_tpls/gcc-12.1.1/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-bsad7cne3ccgu3munuxms52yxxhxeob5/bin/uncrustify" CACHE PATH "")
+set(UNCRUSTIFY_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-bsad7cne3ccgu3munuxms52yxxhxeob5/bin/uncrustify" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # addr2line
@@ -168,9 +168,11 @@ set(ADDR2LINE_EXEC  "/usr/bin/addr2line" CACHE PATH "")
 # Other
 #--------------------------------------------------------------------------------
 
-set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
+set(ENABLE_MATHPRESSO ON CACHE BOOL "")
 
-set(ENABLE_XML_UPDATES OFF CACHE BOOL "")
+set(MATHPRESSO_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-02-28/dane-gcc-12_tpls/gcc-12.1.1/mathpresso-geos-duhbqwijvovnk2drgvvh2fs647mqitjj" CACHE PATH "")
+
+set(ENABLE_XML_UPDATES ON CACHE BOOL "")
 
 set(ATS_ARGUMENTS "--machine slurm56" CACHE STRING "")
 
