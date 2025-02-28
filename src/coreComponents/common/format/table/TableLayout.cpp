@@ -64,7 +64,6 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
 
 TableLayout & TableLayout::setMaxColumnWidth( size_t width )
 {
-  m_hasMaxColumnWidthSet = true;
   m_tableColumnMaxWidth = width;
   return *this;
 }

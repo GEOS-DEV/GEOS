@@ -294,10 +294,7 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout & tableLayout,
     {
       currentCell.m_lines = stringutilities::wrapTextToMaxLength( currentCell.m_lines,
                                                                   tableLayout.getMaxWidth() );
-      for( auto & tt : currentCell.m_lines )
-      {
-        std::cout << tt << std::endl;
-      }
+
       sublineHeaderCounts[currentLayer] = std::max( sublineHeaderCounts[currentLayer],
                                                     currentCell.m_lines.size() );
 
@@ -356,7 +353,7 @@ void TableTextFormatter::populateDataCellsLayout( TableLayout & tableLayout,
         }
 
         TableLayout::CellLayout dataToCell( cell.type, cell.value, alignement );
-        if( tableLayout.isMaxColumnWidthSet())
+        if( tableLayout.isMaxColumnWidthSet() )
         {
           dataToCell.m_lines = stringutilities::wrapTextToMaxLength( dataToCell.m_lines,
                                                                      tableLayout.getMaxWidth() );

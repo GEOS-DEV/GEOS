@@ -465,7 +465,7 @@ private:
    * @return Truef a column max width has been set, otherwise false
    */
   bool isMaxColumnWidthSet()
-  { return m_hasMaxColumnWidthSet; }
+  { return m_tableColumnMaxWidth != noColumnMaxWidth; }
 
   /**
    * @return check if the line break at the end & beginning is activated
@@ -566,6 +566,8 @@ private:
  */
   void addToColumns( TableLayout::Column const & column );
 
+  static constexpr size_t noColumnMaxWidth = std::numeric_limits< size_t >::max();
+
   /// Contains the columns layout
   std::vector< Column > m_tableColumnsData;
   /// Contains the subdivision (line) counts for each line in header.
@@ -578,8 +580,6 @@ private:
   string m_tableTitle;
   // Contain the max width for each column
   size_t m_tableColumnMaxWidth = std::numeric_limits< size_t >::max();
-  // Indicate if a max column width has been set
-  bool m_hasMaxColumnWidthSet = false;
 
   integer m_borderMargin;
   integer m_columnMargin;
