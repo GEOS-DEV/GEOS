@@ -3,7 +3,7 @@
 
   <Included>
     <File
-      name="./SCEC_BP7_QD_base.xml"/>
+      name="./SCEC_BP7_QD_S_base.xml"/>
   </Included>
   
   <Solvers
