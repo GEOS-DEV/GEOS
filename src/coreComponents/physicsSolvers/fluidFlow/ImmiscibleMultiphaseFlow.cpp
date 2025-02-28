@@ -618,41 +618,38 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & regionNames )
   {
-
-
-
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
-              mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase const & subRegion )
-    {
-      // if( m_hasCapPressure )
-  // {
-    string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-    CapillaryPressureBase const & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, cappresName );
-    // constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
-    // {
-    //   typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
-    // } );
-  // }     
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase const & subRegion )
+      {
+        // if( m_hasCapPressure )
+        // {
+        string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase const & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, cappresName );
+        // constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
+        // {
+        //   typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
+        // } );
+        // }
 
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-      immiscibleMultiphaseKernels::
-        FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                   dofManager.rankOffset(),
-                                                                                   dofKey,
-                                                                                   m_hasCapPressure,
-                                                                                   capPressure,
-                                                                                   m_useTotalMassEquation,
-                                                                                   m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                   getName(),
-                                                                                   mesh.getElemManager(),
-                                                                                   stencilWrapper,
-                                                                                   dt,
-                                                                                   localMatrix.toViewConstSizes(),
-                                                                                   localRhs.toView() );
-        } );
+        typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+        immiscibleMultiphaseKernels::
+          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                                     dofManager.rankOffset(),
+                                                                                     dofKey,
+                                                                                     m_hasCapPressure,
+                                                                                     capPressure,
+                                                                                     m_useTotalMassEquation,
+                                                                                     m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                                     getName(),
+                                                                                     mesh.getElemManager(),
+                                                                                     stencilWrapper,
+                                                                                     dt,
+                                                                                     localMatrix.toViewConstSizes(),
+                                                                                     localRhs.toView() );
+      } );
     } );
   } );
 }

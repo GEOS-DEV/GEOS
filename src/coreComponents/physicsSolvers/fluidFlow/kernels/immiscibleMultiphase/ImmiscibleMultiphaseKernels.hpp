@@ -54,14 +54,16 @@ namespace geos
 namespace immiscibleMultiphaseKernels
 {
 
-  template< typename VIEWTYPE >
-real64 computePCalpha ( real64 S ) {
+template< typename VIEWTYPE >
+real64 computePCalpha ( real64 S )
+{
   real64 Pe = Pe_max;
   return (Pe * (1.0 - S));
 }
 
 template< typename VIEWTYPE >
-real64 computePCalphaInv ( real64 Pc ) {
+real64 computePCalphaInv ( real64 Pc )
+{
   real64 Pe = Pe_max;
   return  (1.0 - Pc / Pe);
 }
@@ -580,7 +582,8 @@ public:
             {
               mobility[ip] += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]][ip];               // M = alpha * M1 + (1 - alpha) * M2
               density2[ip] += mobWeights[ke] * m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];                    // r = rho1 || rho2
-              dDens_dP2[ip][ke] = mobWeights[ke] * m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 || dr2/dP
+              dDens_dP2[ip][ke] = mobWeights[ke] * m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 ||
+                                                                                                                   // dr2/dP
               dMob_dP[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP]; // dM/dP = {alpha * dM1/dP1 , (1 -
                                                                                                       // alpha) * dM2/dP2}
               dMob_dS[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dS]; // dM/dP = {alpha * dM1/dS1 , (1 -
@@ -642,15 +645,16 @@ public:
                                                             // }
           }
 
-          uT += fluxVal[ip] / density2[ip]; 
+          uT += fluxVal[ip] / density2[ip];
 
           // add contribution from upstream cell mobility derivatives
           for( integer ke = 0; ke < 2; ++ke )
           {
-            duT_dP[ke] += dFlux_dP[ip][ke] - fluxVal[ip] * dDens_dP2[ip][ke] / density2[ip];  // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho1/dP * T g (z1 - z2) - dT/dP1 *
+            duT_dP[ke] += dFlux_dP[ip][ke] - fluxVal[ip] * dDens_dP2[ip][ke] / density2[ip];  // dF/dP = { M [ T + dT/dP1 * (P1 - P2) -
+                                                                                              // drho1/dP * T g (z1 - z2) - dT/dP1 *
             duT_dP[ke]  /= density2[ip];                                   // rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2)] + dM/dP1 * DPhi ,
-                                                            //           M [-T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 *
-                                                            // rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] + dM/dP2 * DPhi }
+            //           M [-T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 *
+            // rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] + dM/dP2 * DPhi }
             duT_dS[ke] += dFlux_dS[ip][ke] / density2[ip];  // dF/dS = { M [T * -dPc/dS1] + dM/dS1 * DPhi , M [T * dPc/dS2] + dM/dS2 * DPhi
                                                             // }
           }
@@ -674,42 +678,42 @@ public:
 
           // Customize the kernel with this lambda
           kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP, dFlux_dS );  // Not sure what this
-          
-                                                                                                                   // does
+
+          // does
 
         } // loop over phases
-        
+
         if( m_hasCapPressure )
-  {
-        // std::cout << GEOS_FMT( "        uT = ( {:4.2e} )", uT );
-        // std::cout << GEOS_FMT( "        duTdP = ( {:4.2e} )", duT_dP[0] );
-        // std::cout << GEOS_FMT( "        duTdS = ( {:4.2e} )", duT_dS[0] );
-        std::cout << GEOS_FMT( "        Pc1 = ( {:4.2e} )", capPresIC[0][0] );
-        std::cout << GEOS_FMT( "        Pc2 = ( {:4.2e} )", capPresIC[0][1] );
+        {
+          // std::cout << GEOS_FMT( "        uT = ( {:4.2e} )", uT );
+          // std::cout << GEOS_FMT( "        duTdP = ( {:4.2e} )", duT_dP[0] );
+          // std::cout << GEOS_FMT( "        duTdS = ( {:4.2e} )", duT_dS[0] );
+          std::cout << GEOS_FMT( "        Pc1 = ( {:4.2e} )", capPresIC[0][0] );
+          std::cout << GEOS_FMT( "        Pc2 = ( {:4.2e} )", capPresIC[0][1] );
 
 
 
-      // --------------------  Here I implement the interface conditions local solver --------------------- //
-      // initial guess:
-      real64 S_int[numEqn]{};
-      real64 const Pc1 = capPresIC[0][0];
-      real64 const Pc2 = capPresIC[0][1];
+          // --------------------  Here I implement the interface conditions local solver --------------------- //
+          // initial guess:
+          real64 S_int[numEqn]{};
+          real64 const Pc1 = capPresIC[0][0];
+          real64 const Pc2 = capPresIC[0][1];
 
-      real64 const Pc_int = ( Pc1 + Pc2 ) / 2;
+          real64 const Pc_int = ( Pc1 + Pc2 ) / 2;
 
-      // Local newton loop:
+          // Local newton loop:
 
-            // compute S_alpha and S_beta:
-      S_int[0] = computePCalphaInv <arrayView1d< real64 const >> ( Pc_int );
-      S_int[1] = computePCalphaInv <arrayView1d< real64 const >> ( Pc_int );
+          // compute S_alpha and S_beta:
+          S_int[0] = computePCalphaInv< arrayView1d< real64 const > >( Pc_int );
+          S_int[1] = computePCalphaInv< arrayView1d< real64 const > >( Pc_int );
 
-      real64 S_avg = S_int[0] + S_int[1];
+          real64 S_avg = S_int[0] + S_int[1];
 
-      // real64 PC_int1 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[0] );
-      // real64 PC_int2 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[1] );
-    GEOS_UNUSED_PARAM( S_avg );
+          // real64 PC_int1 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[0] );
+          // real64 PC_int2 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[1] );
+          GEOS_UNUSED_PARAM( S_avg );
 
-  } 
+        }
 
 
         connectionIndex++;
@@ -850,11 +854,11 @@ public:
     // constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
     // {
     // typename TYPEOFREF( castedCapPres ) ::KernelWrapper const & capPresWrapper = castedCapPres.createKernelWrapper();
-        //       isothermalCompositionalMultiphaseBaseKernels::
-        // CapillaryPressureUpdateKernel::
-        // launch< parallelDevicePolicy<> >( dataGroup.size(),
-        //                                   capPresWrapper,
-        //                                   phaseVolFrac );
+    //       isothermalCompositionalMultiphaseBaseKernels::
+    // CapillaryPressureUpdateKernel::
+    // launch< parallelDevicePolicy<> >( dataGroup.size(),
+    //                                   capPresWrapper,
+    //                                   phaseVolFrac );
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;
 
