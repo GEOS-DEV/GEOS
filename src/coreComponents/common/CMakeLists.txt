@@ -48,6 +48,7 @@ set( common_headers
      Tensor.hpp
      TimingMacros.hpp
      TypeDispatch.hpp
+     TypesHelpers.hpp
      initializeEnvironment.hpp
      LifoStorage.hpp
      LifoStorageCommon.hpp
@@ -80,7 +81,7 @@ set( common_sources
      Units.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray RAJA chai )
+set( dependencyList ${parallelDeps} lvarray RAJA chai umpire)
 
 if (TARGET conduit::conduit)
   set( dependencyList ${dependencyList} conduit::conduit )

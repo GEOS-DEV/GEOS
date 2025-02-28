@@ -74,7 +74,7 @@ public:
    * @brief Getter for the fluid phase names
    * @return an array storing the phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -197,16 +197,16 @@ protected:
   };  //class KernelWrapper
 
 
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
 
   path_array m_tableFiles;
 
   /// Names of the density tables (one per phase)
-  array1d< string > m_densityTableNames;
+  string_array m_densityTableNames;
 
   /// Names of the viscosity tables (one per phase)
-  array1d< string > m_viscosityTableNames;
+  string_array m_viscosityTableNames;
 
   PhaseProp m_phaseDensity;
   PhaseProp m_phaseViscosity;
