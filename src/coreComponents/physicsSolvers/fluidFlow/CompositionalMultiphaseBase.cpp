@@ -415,13 +415,18 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                        GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
                        InputError );
 
+
+      }
+
+      if( m_hasVelocityComputed )
+      {
+
         array1d< std::string > directions( 3 );
         directions[0] = "x"; directions[1] = "y"; directions[2] = "z";
         subRegion.registerField< phaseVelocity >( getName()).
           setDimLabels( 1, fluid.phaseNames() ).
           setDimLabels( 2, directions ).
           reference().resizeDimension< 1, 2 >( m_numPhases, directions.size() );
-
       }
 
 

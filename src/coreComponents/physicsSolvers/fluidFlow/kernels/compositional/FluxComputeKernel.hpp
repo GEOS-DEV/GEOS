@@ -216,6 +216,18 @@ public:
     }
   }
 
+/**
+ * @brief Initialize velocity container
+ * @param[in] iconn the connection index
+ */
+  GEOS_HOST_DEVICE
+  inline
+  void initVelocity( localIndex const iconn ) const
+  {
+    if constexpr ( std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value)
+      StencilUtils::initVelocity( m_stencilWrapper, iconn, m_phaseVelocity );
+  }
+
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
@@ -475,6 +487,11 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
+    //velocity has to be reset on all faces prior computing flux. (to be specific on all stencil extends)
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
+      kernelComponent.initVelocity( iconn );
+    } );
+
     forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
