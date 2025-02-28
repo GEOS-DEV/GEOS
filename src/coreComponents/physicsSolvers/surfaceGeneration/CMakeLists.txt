@@ -35,7 +35,7 @@ set( surfaceGeneration_sources
      ParallelTopologyChangeNoFixup.cpp
      SurfaceGenerator.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolvers )
+set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

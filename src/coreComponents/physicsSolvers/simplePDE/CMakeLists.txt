@@ -30,7 +30,7 @@ set( simplePDESolvers_sources
      LaplaceFEM.cpp
      PhaseFieldDamageFEM.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolvers )
+set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

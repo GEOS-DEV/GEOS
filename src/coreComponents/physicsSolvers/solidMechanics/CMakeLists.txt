@@ -73,7 +73,7 @@ set( solidMechanicsSolvers_sources
 
 include( kernels/SolidMechanicsKernels.cmake)
 
-set( dependencyList ${parallelDeps} physicsSolvers )
+set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

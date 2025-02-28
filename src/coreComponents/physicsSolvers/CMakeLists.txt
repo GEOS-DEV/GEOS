@@ -23,7 +23,7 @@ Contains:
 #
 # Specify solver headers
 #
-set( physicsSolvers_headers
+set( physicsSolversBase_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
@@ -35,7 +35,7 @@ set( physicsSolvers_headers
 #
 # Specify solver sources
 #
-set( physicsSolvers_sources
+set( physicsSolversBase_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
@@ -45,10 +45,10 @@ set( physicsSolvers_sources
 set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
 
 if( ENABLE_PYGEOSX )
-  list( APPEND physicsSolvers_headers
+  list( APPEND physicsSolversBase_headers
   python/PySolver.hpp
   python/PySolverType.hpp )
-  list( APPEND physicsSolvers_sources
+  list( APPEND physicsSolversBase_sources
         python/PySolver.cpp )
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
@@ -56,48 +56,66 @@ endif()
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
-blt_add_library( NAME       physicsSolvers
-                 SOURCES    ${physicsSolvers_sources}
-                 HEADERS    ${physicsSolvers_headers}
+blt_add_library( NAME       physicsSolversBase
+                 SOURCES    ${physicsSolversBase_sources}
+                 HEADERS    ${physicsSolversBase_headers}
                  DEPENDS_ON ${decoratedDependencies} ${externalComponentDeps}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
-target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories( physicsSolversBase PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+install( TARGETS physicsSolversBase LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( externalComponentDeps )
-  target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+  target_include_directories( physicsSolversBase PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
 
+# PhysicsSolvers interface
+set( dependencyList )
 if( GEOS_ENABLE_FLUIDFLOW )
   add_subdirectory( fluidFlow )
+  list( APPEND dependencyList fluidFlowSolvers )
 endif()
 
 if( GEOS_ENABLE_INDUCEDSEISMICITY )
   add_subdirectory( inducedSeismicity )
+  list( APPEND dependencyList inducedSeismicitySolvers )
 endif()
 
 if( GEOS_ENABLE_SIMPLEPDE )
   add_subdirectory( simplePDE )
+  list( APPEND dependencyLists simplePDESolvers )
 endif()
 
 if( GEOS_ENABLE_SOLIDMECHANICS )
   add_subdirectory( solidMechanics )
+  list( APPEND dependencyList solidMechanicsSolvers )
 endif()
 
 if( GEOS_ENABLE_SURFACEGENERATION )
   add_subdirectory( surfaceGeneration )
+  list( APPEND dependencyList surfaceGeneration )
 endif()
 
 if( GEOS_ENABLE_WAVEPROPAGATION )
   add_subdirectory( wavePropagation )
+  list( APPEND dependencyList wavePropagationSolvers )
 endif()
 
 if( GEOS_ENABLE_MULTIPHYSICS )
   add_subdirectory( multiphysics )
+  list( APPEND dependencyList multiPhysicsSolvers )
 endif()
 
-
+add_library(physicsSolvers INTERFACE)
+if( GEOS_BUILD_SHARED_LIBS)
+  target_link_libraries(physicsSolvers INTERFACE ${dependencyList} )
+else()
+  set(wholeArchiveDependencies "")
+  foreach(dep ${dependencyList})
+    list(APPEND wholeArchiveDependencies $<LINK_LIBRARY:WHOLE_ARCHIVE,${dep}>)
+  endforeach()
+  target_link_libraries(physicsSolvers INTERFACE ${wholeArchiveDependencies}) 
+endif()                        

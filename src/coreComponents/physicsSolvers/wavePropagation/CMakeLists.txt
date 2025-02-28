@@ -56,7 +56,7 @@ set( wavePropagationSolvers_sources
      sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.cpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolvers )
+set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
