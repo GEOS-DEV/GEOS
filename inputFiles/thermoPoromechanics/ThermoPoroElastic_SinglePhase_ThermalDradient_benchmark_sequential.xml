@@ -1,0 +1,206 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ThermoPoroElastic_SinglePhase_ThermalGradient_base.xml" />
+  </Included>
+
+    <Solvers>
+        <SinglePhasePoromechanics
+            name="singlePhasePoroelasticity"
+            solidSolverName="linearElasticity"
+            flowSolverName="singlePhaseFlow"
+            logLevel="1"
+            isThermal="1"
+            targetRegions="{ Overburden, Salt, Caprock, Reservoir, Underburden }">
+            <NonlinearSolverParameters
+                couplingType="Sequential"
+                subcycling="0"
+                newtonTol="1.0e-5"
+                newtonMaxIter="15"
+                maxTimeStepCuts="10"
+                lineSearchAction="None" />
+            <LinearSolverParameters
+                solverType="fgmres"
+                preconditionerType="mgr"
+                krylovTol="1.0e-6"
+                krylovMaxIter="500"
+                krylovAdaptiveTol="1"
+                krylovWeakestTol="0.01"
+                logLevel="1" />
+        </SinglePhasePoromechanics>
+
+        <SolidMechanicsLagrangianFEM
+            name="linearElasticity"
+            timeIntegrationOption="QuasiStatic"
+            logLevel="1"
+            discretization="FE1"
+            targetRegions="{ Overburden, Salt, Caprock, Reservoir, Underburden }">
+            <NonlinearSolverParameters
+                newtonTol="1.0e-5"
+                newtonMaxIter="15"
+                maxTimeStepCuts="10"
+                lineSearchAction="None" />
+            <LinearSolverParameters
+                solverType="fgmres"
+                preconditionerType="amg"
+                krylovTol="1.0e-6"
+                krylovMaxIter="500"
+                krylovAdaptiveTol="1"
+                krylovWeakestTol="0.01"
+                logLevel="1" />
+        </SolidMechanicsLagrangianFEM>
+
+        <SinglePhaseFVM
+            name="singlePhaseFlow"
+            targetRegions="{ Overburden, Salt, Caprock, Reservoir, Underburden }"
+            discretization="fluidTPFA"
+            temperature="323.15"
+            isThermal="1"
+            logLevel="1">
+            <NonlinearSolverParameters
+                newtonTol="1.0e-5"
+                newtonMaxIter="15"
+                maxTimeStepCuts="10"
+                lineSearchAction="None" />
+            <LinearSolverParameters
+                solverType="fgmres"
+                preconditionerType="amg"
+                krylovTol="1.0e-6"
+                krylovMaxIter="500"
+                krylovAdaptiveTol="1"
+                krylovWeakestTol="0.01"
+                logLevel="1" /> 
+        </SinglePhaseFVM>
+    </Solvers>
+
+
+    <Mesh>	
+        <InternalMesh
+          name="mesh1"
+          elementTypes="{ C3D8 }"
+          xCoords="{ 0, 5000 }"
+          yCoords="{ 0, 3000 }"
+          zCoords="{ -5000, -3300, -3200, -3000, -2500, 0 }"
+          nx="{ 25 }"
+          ny="{ 25 }"
+          nz="{ 10,20,10,10,10 }"
+          cellBlockNames="{ block5, block4, block3, block2, block1 }"/>
+    </Mesh>
+
+
+   <Events 
+      minTime="-1e11" 
+      maxTime="6.30721e8">
+         
+      <SoloEvent
+        name="singlePhasePoroelasticityEquilibrationStep"
+        targetTime="-1e11"
+        beginTime="-1e11"
+        target="/Tasks/singlePhasePoroelasticityEquilibrationStep"/>
+
+      <PeriodicEvent
+        name="vtkOutput0"
+        forceDt="2.628e+06"
+        beginTime="0" 
+        endTime="5.256e+06"
+        target="/Outputs/Synthetic"/>
+
+      <PeriodicEvent
+        name="SolverPoro0"
+        forceDt="2.628e+06"
+        beginTime="0"
+        endTime="5.256e+06"
+        target="/Solvers/singlePhasePoroelasticity" />
+
+      <PeriodicEvent
+        name="vtkOutput1"
+        forceDt="5.256e6"
+        beginTime="5.256e+06" 
+        endTime="1.5768e7"
+        target="/Outputs/Synthetic"/>
+
+      <PeriodicEvent
+        name="SolverPoro1"
+        forceDt="5.256e6"
+        beginTime="5.256e+06" 
+        endTime="1.5768e7"
+        target="/Solvers/singlePhasePoroelasticity" />
+
+      <PeriodicEvent
+        name="vtkOutput2"
+        forceDt="1.5768e7"
+        beginTime="1.5768e7"
+        endTime="3.1536e7"  
+        target="/Outputs/Synthetic"/>
+
+      <PeriodicEvent
+        name="SolverPoro2"
+        forceDt="1.5768e7"
+        beginTime="1.5768e7"
+        endTime="3.1536e7" 
+        target="/Solvers/singlePhasePoroelasticity" />
+
+      <PeriodicEvent
+        name="vtkOutput3"
+        forceDt="3.1536e7"
+        beginTime="3.1536e7"
+        endTime="9.4608e7" 
+        target="/Outputs/Synthetic"/>
+
+      <PeriodicEvent
+        name="SolverPoro3"
+        forceDt="3.1536e7"
+        beginTime="3.1536e7"
+        endTime="9.4608e7" 
+        target="/Solvers/singlePhasePoroelasticity" />
+
+      <PeriodicEvent
+        name="vtkOutput4"
+        forceDt="6.3072e7"
+        beginTime="9.4608e7"
+        endTime="2.20752e8" 
+        target="/Outputs/Synthetic"/>
+
+      <PeriodicEvent
+        name="SolverPoro4"
+        forceDt="6.3072e7"
+        beginTime="9.4608e7"
+        endTime="2.20752e8" 
+        target="/Solvers/singlePhasePoroelasticity" />
+
+      <PeriodicEvent
+        name="vtkOutput5"
+        forceDt="9.4608e8"
+        beginTime="2.20752e8"
+        endTime="3.1536e8" 
+        target="/Outputs/Synthetic"/>
+
+      <PeriodicEvent
+        name="SolverPoro5"
+        forceDt="9.4608e8"
+        beginTime="2.20752e8"
+        endTime="3.1536e8"
+        target="/Solvers/singlePhasePoroelasticity" />
+
+      <PeriodicEvent
+        name="vtkOutput6"
+        forceDt="1.5768e8"
+        beginTime="3.1536e8"
+        endTime="6.3072e8"
+        target="/Outputs/Synthetic"/>
+
+      <PeriodicEvent
+        name="SolverPoro6"
+        forceDt="1.5768e8"
+        beginTime="3.1536e8"
+        endTime="6.3072e8"
+        target="/Solvers/singlePhasePoroelasticity" />
+
+      <SoloEvent
+	name="vtkOutput14"
+        targetTime="6.3072e8"
+        targetExactTimestep="1"
+	target="/Outputs/Synthetic"/>
+    </Events>
+</Problem>

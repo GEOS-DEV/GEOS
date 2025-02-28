@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ThermoPoroElastic_SinglePhase_ThermalGradient_base.xml" />
+  </Included>
+
+    <Solvers>
+        <SinglePhasePoromechanics
+            name="singlePhasePoroelasticity"
+            solidSolverName="linearElasticity"
+            flowSolverName="singlePhaseFlow"
+            logLevel="1"
+            isThermal="1"
+            targetRegions="{ Overburden, Salt, Caprock, Reservoir, Underburden }">
+            <NonlinearSolverParameters
+                newtonTol="1.0e-5"
+                newtonMaxIter="15"
+                maxTimeStepCuts="10"
+                lineSearchAction="None" />
+            <LinearSolverParameters
+                solverType="fgmres"
+                preconditionerType="mgr"
+                krylovTol="1.0e-6"
+                krylovMaxIter="500"
+                krylovAdaptiveTol="1"
+                krylovWeakestTol="0.01"
+                logLevel="1" />
+        </SinglePhasePoromechanics>
+
+        <SolidMechanicsLagrangianFEM
+            name="linearElasticity"
+            timeIntegrationOption="QuasiStatic"
+            logLevel="1"
+            discretization="FE1"
+            targetRegions="{ Overburden, Salt, Caprock, Reservoir, Underburden }"/>
+
+        <SinglePhaseFVM
+            name="singlePhaseFlow"
+            targetRegions="{ Overburden, Salt, Caprock, Reservoir, Underburden }"
+            discretization="fluidTPFA"
+            temperature="323.15"
+            isThermal="1"
+            logLevel="1" />
+    </Solvers>
+
+
+    <Mesh>	
+        <InternalMesh
+          name="mesh1"
+          elementTypes="{ C3D8 }"
+          xCoords="{ 0, 5000 }"
+          yCoords="{ 0, 3000 }"
+          zCoords="{ -5000, -3300, -3200, -3000, -2500, 0 }"
+          nx="{ 5 }"
+          ny="{ 5 }"
+          nz="{ 2,4,2,2,2 }"
+          cellBlockNames="{ block5, block4, block3, block2, block1 }"/>
+    </Mesh>
+
+
+   <Events 
+      minTime="-1e11" 
+      maxTime="5.256e+06">
+         
+      <SoloEvent
+        name="singlePhasePoroelasticityEquilibrationStep"
+        targetTime="-1e11"
+        beginTime="-1e11"
+        target="/Tasks/singlePhasePoroelasticityEquilibrationStep"/>
+
+      <PeriodicEvent
+        name="SolverPoro0"
+        forceDt="2.628e+06"
+        beginTime="0"
+        endTime="5.256e+06"
+        target="/Solvers/singlePhasePoroelasticity" />
+
+    <PeriodicEvent
+        name="restarts"
+        beginTime="0"
+        timeFrequency="2.628e+06"
+        target="/Outputs/restartOutput"/>
+    </Events>
+</Problem>
