@@ -115,6 +115,7 @@ private:
                    arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
                    bool const isThermal,
+                   bool const checkPhasePresence,
                    PhaseProp::ViewType phaseFraction,
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
@@ -132,6 +133,9 @@ private:
 
     /// Flag to specify whether the model is thermal or not
     bool m_isThermal;
+
+    ///
+    bool m_checkPhasePresence;
 
     /// Brine constitutive kernel wrappers
     typename PHASE1::KernelWrapper m_phase1;
@@ -172,6 +176,7 @@ private:
     static constexpr char const * solubilityTablesString() { return "solubilityTableNames"; }
     static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+    static constexpr char const * checkPhasePresenceString() { return "checkPhasePresence"; }
   };
 
 protected:
@@ -204,6 +209,9 @@ private:
 
   /// Output csv file containing informations about PVT
   integer m_writeCSV;
+
+  ///
+  integer m_checkPhasePresence;
 
   /// Brine constitutive models
   std::unique_ptr< PHASE1 > m_phase1;
@@ -284,8 +292,8 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                    phaseFraction,
                    phaseCompFraction );
 
-  bool const phase1Exists = (phaseFraction.value[ip1] > 0);
-  bool const phase2Exists = (phaseFraction.value[ip2] > 0);
+  bool const phase1Exists = !m_checkPhasePresence || (phaseFraction.value[ip1] > 0);
+  bool const phase2Exists = !m_checkPhasePresence || (phaseFraction.value[ip2] > 0);
   auto setZero = []( real64 & val ){ val = 0.0; };
 
   // 3. Compute phase densities and phase viscosities
