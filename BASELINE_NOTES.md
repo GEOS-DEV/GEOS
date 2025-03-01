@@ -6,7 +6,12 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3571 (2024-02-28)
+=====================
+Do not allow negative pressure by default, except for hydrofrac.
+
 PR #3551 (2024-02-19)
+=====================
 Add Passing Crack to the integrated tests.
 
 PR #3541 (2024-02-18)
