@@ -37,13 +37,11 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
-#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/KernelLaunchSelectors.hpp"
 
 namespace geos
@@ -53,13 +51,13 @@ namespace immiscibleMultiphaseKernels
 using namespace constitutive;
 
 
-/******************************** FaceBasedAssemblyKernelBase ********************************/
+/******************************** FluxComputeKernelBase ********************************/
 
 /**
- * @brief Base class for FaceBasedAssemblyKernel that holds all data not dependent
+ * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of dofs).
  */
-class FaceBasedAssemblyKernelBase
+class FluxComputeKernelBase
 {
 public:
 
@@ -114,19 +112,19 @@ public:
    * @param[inout] hasCapPressure flag to indicate whether problem includes capillarity
    * @param[inout] useTotalMassEquation flag to indicate whether to use the total mass formulation
    */
-  FaceBasedAssemblyKernelBase( integer const numPhases,
-                               globalIndex const rankOffset,
-                               DofNumberAccessor const & dofNumberAccessor,
-                               ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                               MultiphaseFluidAccessors const & fluidAccessors,
-                               CapPressureAccessors const & capPressureAccessors,
-                               PermeabilityAccessors const & permeabilityAccessors,
-                               real64 const & dt,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs,
-                               integer const hasCapPressure,
-                               integer const useTotalMassEquation,
-                               integer const checkPhasePresenceInGravity )
+  FluxComputeKernelBase( integer const numPhases,
+                         globalIndex const rankOffset,
+                         DofNumberAccessor const & dofNumberAccessor,
+                         ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
+                         MultiphaseFluidAccessors const & fluidAccessors,
+                         CapPressureAccessors const & capPressureAccessors,
+                         PermeabilityAccessors const & permeabilityAccessors,
+                         real64 const & dt,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         integer const hasCapPressure,
+                         integer const useTotalMassEquation,
+                         integer const checkPhasePresenceInGravity )
     : m_numPhases ( numPhases ),
     m_rankOffset( rankOffset ),
     m_dt( dt ),
@@ -205,13 +203,13 @@ protected:
 /***************************************** */
 
 /**
- * @class FaceBasedAssemblyKernel
+ * @class FluxComputeKernel
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
+class FluxComputeKernel : public FluxComputeKernelBase
 {
 public:
 
@@ -246,33 +244,33 @@ public:
    * @param[in] hasCapPressure flags for capillary pressure
    * @param[in] useTotalMassEquation flags for using total velocity formulation
    */
-  FaceBasedAssemblyKernel( integer const numPhases,
-                           globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                           MultiphaseFluidAccessors const & fluidAccessors,
-                           CapPressureAccessors const & capPressureAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           integer const hasCapPressure,
-                           integer const useTotalMassEquation,
-                           integer const checkPhasePresenceInGravity )
-    : FaceBasedAssemblyKernelBase( numPhases,
-                                   rankOffset,
-                                   dofNumberAccessor,
-                                   multiPhaseFlowAccessors,
-                                   fluidAccessors,
-                                   capPressureAccessors,
-                                   permeabilityAccessors,
-                                   dt,
-                                   localMatrix,
-                                   localRhs,
-                                   hasCapPressure,
-                                   useTotalMassEquation,
-                                   checkPhasePresenceInGravity ),
+  FluxComputeKernel( integer const numPhases,
+                     globalIndex const rankOffset,
+                     STENCILWRAPPER const & stencilWrapper,
+                     DofNumberAccessor const & dofNumberAccessor,
+                     ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
+                     MultiphaseFluidAccessors const & fluidAccessors,
+                     CapPressureAccessors const & capPressureAccessors,
+                     PermeabilityAccessors const & permeabilityAccessors,
+                     real64 const & dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs,
+                     integer const hasCapPressure,
+                     integer const useTotalMassEquation,
+                     integer const checkPhasePresenceInGravity )
+    : FluxComputeKernelBase( numPhases,
+                             rankOffset,
+                             dofNumberAccessor,
+                             multiPhaseFlowAccessors,
+                             fluidAccessors,
+                             capPressureAccessors,
+                             permeabilityAccessors,
+                             dt,
+                             localMatrix,
+                             localRhs,
+                             hasCapPressure,
+                             useTotalMassEquation,
+                             checkPhasePresenceInGravity ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -737,9 +735,9 @@ protected:
 /****************************************** */
 
 /**
- * @class FaceBasedAssemblyKernelFactory
+ * @class FluxComputeKernelFactory
  */
-class FaceBasedAssemblyKernelFactory
+class FluxComputeKernelFactory
 {
 public:
 
@@ -778,7 +776,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+    using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );

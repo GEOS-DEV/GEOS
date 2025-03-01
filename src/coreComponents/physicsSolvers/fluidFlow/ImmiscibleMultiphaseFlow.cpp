@@ -24,7 +24,8 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
@@ -621,18 +622,18 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
       immiscibleMultiphaseKernels::
-        FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                   dofManager.rankOffset(),
-                                                                                   dofKey,
-                                                                                   m_hasCapPressure,
-                                                                                   m_useTotalMassEquation,
-                                                                                   m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                   getName(),
-                                                                                   mesh.getElemManager(),
-                                                                                   stencilWrapper,
-                                                                                   dt,
-                                                                                   localMatrix.toViewConstSizes(),
-                                                                                   localRhs.toView() );
+        FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                             dofManager.rankOffset(),
+                                                                             dofKey,
+                                                                             m_hasCapPressure,
+                                                                             m_useTotalMassEquation,
+                                                                             m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                             getName(),
+                                                                             mesh.getElemManager(),
+                                                                             stencilWrapper,
+                                                                             dt,
+                                                                             localMatrix.toViewConstSizes(),
+                                                                             localRhs.toView() );
     } );
   } );
 }
