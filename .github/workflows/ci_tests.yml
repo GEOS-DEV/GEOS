@@ -188,7 +188,6 @@ jobs:
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            GCP_BUCKET: geosx/Sherlock-CPU
             HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
             BUILD_SHARED_LIBS: ON
 
