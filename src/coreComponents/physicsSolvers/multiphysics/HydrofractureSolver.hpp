@@ -226,6 +226,7 @@ private:
                                          int const cycleNumber,
                                          DomainPartition & domain ) override final;
 
+  void checkRockOnlyMatrix(dataRepository::Group & meshBodies);
 
   void assembleFluidLeakSource( double time,
                                 double dt,

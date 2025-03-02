@@ -83,8 +83,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   registerWrapper( viewKeyStruct::leakoffConstString(), &m_leakoffCoefficient ).
     setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Analytical leakoff coefficient." );
-
+    setDescription( "Carter's leakoff coefficient (2*delta_p*(k*phi*Ct/mu/pi)^0.5)." );
 
   m_numResolves[0] = 0;
 }
@@ -138,6 +137,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
   {
     flowSolver()->enableLaggingFractureStencilWeightsUpdate();
   }
+
+  checkRockOnlyMatrix(meshBodies);
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -167,6 +168,27 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
   } );
 #endif
 
+}
+
+template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::checkRockOnlyMatrix(dataRepository::Group & meshBodies)
+{
+  bool rockOnlyMatrix = true;
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase &)
+    {
+      rockOnlyMatrix = false;
+    });
+  });
+  GEOS_THROW_IF( (!rockOnlyMatrix && m_leakoffCoefficient > 0),
+                 "Carter's leak-off model is only compatible with rock-only matrix",
+                 InputError );
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -684,8 +706,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
 
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
 
-  if (m_leakoffCoefficient > -1.0 && !m_isMatrixPoroelastic)
-    assembleFluidLeakSource(time, dt, domain, dofManager, localMatrix, localRhs);
+  assembleFluidLeakSource(time, dt, domain, dofManager, localMatrix, localRhs);
 
   this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
@@ -699,8 +720,9 @@ assembleFluidLeakSource( double time,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs ) const
 {
-
   GEOS_MARK_FUNCTION;
+
+  if (m_leakoffCoefficient <= 0) return;
 
   string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
