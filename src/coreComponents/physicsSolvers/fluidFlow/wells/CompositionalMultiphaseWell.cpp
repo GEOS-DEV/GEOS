@@ -27,8 +27,6 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/PerforationFields.hpp"
@@ -287,9 +285,8 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
   setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
-
-  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString() );
 }
+
 namespace
 {
 
@@ -372,10 +369,6 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       compareMultiphaseModels( fluid, referenceFluid );
       compareMulticomponentModels( fluid, referenceFluid );
-
-      string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
-      RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
-      compareMultiphaseModels( relPerm, referenceFluid );
 
       WellControls const & wellControls = getWellControls( subRegion );
       validateWellControlsForFluid( wellControls, fluid );
