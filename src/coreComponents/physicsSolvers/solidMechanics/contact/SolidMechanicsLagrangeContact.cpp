@@ -2392,7 +2392,7 @@ void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( integer const con
   else
   {
     // only apply acceleration if within a fraction of the limitTau
-    real64 acceleration_buffer = (limitTau - currentTau) / limitTau;
+    real64 const acceleration_buffer = (limitTau - currentTau) / limitTau;
 
     if( acceleration_buffer > 0.1 / (configurationLoopIter - 1) )
     {
