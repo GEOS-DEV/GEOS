@@ -134,7 +134,7 @@ public:
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain,
-                            integer configurationLoopIter ) override final;
+                            integer const configurationLoopIter ) override final;
 
   bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
 
@@ -223,12 +223,12 @@ private:
 
   void initializeAccelerationVariables( DomainPartition & domain );
 
-  void tryLocalYieldAcceleration( integer configurationLoopIter,
+  void tryLocalYieldAcceleration( integer const configurationLoopIter,
                                   localIndex kfe,
                                   real64 currentTau_unscaled,
                                   real64 limitTau,
                                   real64 currentTau,
-                                  integer & fractureState );
+                                  integer const & fractureState );
 
 };
 
