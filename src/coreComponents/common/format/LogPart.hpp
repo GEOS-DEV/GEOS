@@ -20,6 +20,7 @@
 #define GEOS_COMMON_FORMAT_LOGPART_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/format/Format.hpp"
 
 namespace geos
@@ -35,8 +36,9 @@ public:
   /**
    * @brief Construct a new LogPart
    * @param m_logPartTitle The logPart title
+   * @param rank MPI rank of the owner process, by default set to -1
    */
-  LogPart( string_view m_logPartTitle );
+  LogPart( string_view m_logPartTitle, int rank = -1 );
 
   /**
    * @brief Add a description to the opening logPart by concatening a description name and descriptions values.
@@ -165,6 +167,8 @@ private:
 
   /// String containing horizontal border
   string m_horizontalBorder;
+  /// MPI rank of the owner process, output to all process by default
+  integer m_rank;
 };
 
 template< typename ... Args >

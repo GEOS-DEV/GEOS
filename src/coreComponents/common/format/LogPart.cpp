@@ -24,10 +24,11 @@ using namespace geos::stringutilities;
 namespace geos
 {
 
-LogPart::LogPart( string_view logPartTitle )
+LogPart::LogPart( string_view logPartTitle, integer commRank )
 {
   m_startDesc.m_title = logPartTitle;
   m_endDesc.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
+  m_rank = commRank;
 }
 
 void LogPart::addDescription( string const & description )
@@ -228,6 +229,9 @@ void LogPart::computeInitialLogWidth( LogPart::Description & description,
 
 void LogPart::begin( std::ostream & os )
 {
+  if( m_rank != -1 && MpiWrapper::commRank() != m_rank )
+    return;
+
   string bottomPart = "";
   auto & descriptionNames = m_startDesc.m_descriptionNames;
 
@@ -250,6 +254,9 @@ void LogPart::begin( std::ostream & os )
 
 void LogPart::end( std::ostream & os )
 {
+  if( m_rank != -1 && MpiWrapper::commRank() != m_rank )
+    return;
+
   string topPart = "";
   auto & descriptionNames = m_endDesc.m_descriptionNames;
 

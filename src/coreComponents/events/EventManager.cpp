@@ -171,7 +171,7 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-    LogPart logPart( "TIMESTEP" );
+    LogPart logPart( "TIMESTEP", 0 );
     outputTime( logPart );
     logPart.begin();
     std::vector< real64 > subStepDts;
@@ -217,7 +217,6 @@ bool EventManager::run( DomainPartition & domain )
         return true;
       }
     }
-
 
     logEndOfCycleInformation( logPart, m_cycle, numTimeSteps, subStepDts );
 
