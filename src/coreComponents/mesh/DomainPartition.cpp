@@ -250,6 +250,12 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
           faceManager.sortAllFaceNodes( nodeManager, elemManager );
           faceManager.computeGeometry( nodeManager );
+
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+          elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
+          {
+            subRegion.calculateElementCenters( X );
+          } );
         }
         else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
