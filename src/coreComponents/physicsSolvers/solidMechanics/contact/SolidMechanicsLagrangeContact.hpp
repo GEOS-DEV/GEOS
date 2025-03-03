@@ -223,12 +223,12 @@ private:
 
   void initializeAccelerationVariables( DomainPartition & domain );
 
-  void tryLocalYieldAcceleration( integer const configurationLoopIter,
+  void tryLocalYieldAcceleration( integer configurationLoopIter,
                                   localIndex kfe,
                                   real64 currentTau_unscaled,
                                   real64 limitTau,
                                   real64 currentTau,
-                                  integer const & fractureState );
+                                  integer & fractureState );
 
 };
 
