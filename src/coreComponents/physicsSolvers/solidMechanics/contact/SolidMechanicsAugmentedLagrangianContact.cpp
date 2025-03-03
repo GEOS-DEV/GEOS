@@ -112,7 +112,7 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     FaceManager & faceManager = meshLevel.getFaceManager();
 
@@ -173,12 +173,12 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
   GEOS_MARK_FUNCTION;
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
-  map< std::pair< string, string >, array1d< string > > meshTargets;
+  map< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
-    array1d< string > regions;
+    string_array regions;
     regions.emplace_back( getUniqueFractureRegionName() );
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
@@ -269,7 +269,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -349,7 +349,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
   // Sync iterativePenalty
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -390,7 +390,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   // Loop for assembling contributes from interface elements (Aut*eps^-1*Atu and Aub*eps^-1*Abu)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
 
   {
 
@@ -520,7 +520,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   // Loop for assembling contributes of bubble elements (Abb, Abu, Aub)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -567,7 +567,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
@@ -635,7 +635,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   // Bubble residual
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const )
+                                                                string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -736,7 +736,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
   // Loop for updating the displacement jump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
 
   {
 
@@ -784,7 +784,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
 
   {
     FieldIdentifiers fieldsToBeSync;
@@ -822,7 +822,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -974,7 +974,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -996,7 +996,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1071,7 +1071,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
 
   {
 
@@ -1162,7 +1162,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
   // Generate lists containing elements of various face types
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const )
+                                                                string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1242,7 +1242,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1434,7 +1434,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPar
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1542,7 +1542,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1695,7 +1695,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
