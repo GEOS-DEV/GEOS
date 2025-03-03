@@ -234,12 +234,6 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager,
                                                                          X,
                                                                          m_faceCenter[ faceIndex ],
                                                                          m_faceNormal[ faceIndex ] );
-
-  } );
-
-  elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
-  {
-    subRegion.calculateElementCenters( X );
   } );
 }
 

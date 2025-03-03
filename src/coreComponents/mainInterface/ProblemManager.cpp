@@ -828,6 +828,14 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   nodeManager.setGeometricalRelations( cellBlockManager, elemRegionManager, isBaseMeshLevel );
   edgeManager.setGeometricalRelations( cellBlockManager, isBaseMeshLevel );
   faceManager.setGeometricalRelations( cellBlockManager, elemRegionManager, nodeManager, isBaseMeshLevel );
+  if( isBaseMeshLevel )
+  {
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+    elemRegionManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
+    {
+      subRegion.calculateElementCenters( X );
+    } );
+  }
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
