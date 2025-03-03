@@ -228,7 +228,7 @@ private:
                                   real64 currentTau_unscaled,
                                   real64 limitTau,
                                   real64 currentTau,
-                                  integer & fractureState );
+                                  integer const & fractureState );
 
 };
 
