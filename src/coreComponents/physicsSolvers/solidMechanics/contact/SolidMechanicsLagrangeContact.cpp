@@ -2410,7 +2410,7 @@ void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( integer const con
 
       m_x2[kfe] = (1.0 - m_omega1[kfe]) * m_x1[kfe] + m_omega1[kfe] * m_x2_tilde[kfe];
 
-      real64 acc_currentTau_unscaled = m_x2[kfe] + limitTau;
+      real64 const acc_currentTau_unscaled = m_x2[kfe] + limitTau;
       real64 acc_currentTau_scaled = acc_currentTau_unscaled * (1.0 - m_slidingCheckTolerance);
 
       if( acc_currentTau_scaled > limitTau )
