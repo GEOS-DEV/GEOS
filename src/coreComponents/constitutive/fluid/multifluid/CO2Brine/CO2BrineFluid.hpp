@@ -115,6 +115,7 @@ private:
                    arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
                    bool const isThermal,
+                   bool const checkPhasePresence,
                    PhaseProp::ViewType phaseFraction,
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
@@ -132,6 +133,9 @@ private:
 
     /// Flag to specify whether the model is thermal or not
     bool m_isThermal;
+
+    ///
+    bool m_checkPhasePresence;
 
     /// Brine constitutive kernel wrappers
     typename PHASE1::KernelWrapper m_phase1;
@@ -172,6 +176,7 @@ private:
     static constexpr char const * solubilityTablesString() { return "solubilityTableNames"; }
     static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+    static constexpr char const * checkPhasePresenceString() { return "checkPhasePresence"; }
   };
 
 protected:
@@ -204,6 +209,9 @@ private:
 
   /// Output csv file containing informations about PVT
   integer m_writeCSV;
+
+  ///
+  integer m_checkPhasePresence;
 
   /// Brine constitutive models
   std::unique_ptr< PHASE1 > m_phase1;
@@ -284,28 +292,53 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                    phaseFraction,
                    phaseCompFraction );
 
+  bool const phase1Exists = !m_checkPhasePresence || (phaseFraction.value[ip1] > 0);
+  bool const phase2Exists = !m_checkPhasePresence || (phaseFraction.value[ip2] > 0);
+  auto setZero = []( real64 & val ){ val = 0.0; };
+
   // 3. Compute phase densities and phase viscosities
 
-  m_phase1.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                            phaseDensity.value[ip1], phaseDensity.derivs[ip1],
-                            m_useMass );
-  m_phase1.viscosity.compute( pressure,
+  if( phase1Exists > 0.0 )
+  {
+    m_phase1.density.compute( pressure,
                               temperatureInCelsius,
                               phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                              phaseViscosity.value[ip1], phaseViscosity.derivs[ip1],
+                              phaseDensity.value[ip1], phaseDensity.derivs[ip1],
                               m_useMass );
-  m_phase2.density.compute( pressure,
-                            temperatureInCelsius,
-                            phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                            phaseDensity.value[ip2], phaseDensity.derivs[ip2],
-                            m_useMass );
-  m_phase2.viscosity.compute( pressure,
+    m_phase1.viscosity.compute( pressure,
+                                temperatureInCelsius,
+                                phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                                phaseViscosity.value[ip1], phaseViscosity.derivs[ip1],
+                                m_useMass );
+  }
+  else
+  {
+    LvArray::forValuesInSlice( phaseDensity.value[ip1], setZero );
+    LvArray::forValuesInSlice( phaseDensity.derivs[ip1], setZero );
+    LvArray::forValuesInSlice( phaseViscosity.value[ip1], setZero );
+    LvArray::forValuesInSlice( phaseViscosity.derivs[ip1], setZero );
+  }
+
+  if( phase2Exists > 0.0 )
+  {
+    m_phase2.density.compute( pressure,
                               temperatureInCelsius,
                               phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                              phaseViscosity.value[ip2], phaseViscosity.derivs[ip2],
+                              phaseDensity.value[ip2], phaseDensity.derivs[ip2],
                               m_useMass );
+    m_phase2.viscosity.compute( pressure,
+                                temperatureInCelsius,
+                                phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                                phaseViscosity.value[ip2], phaseViscosity.derivs[ip2],
+                                m_useMass );
+  }
+  else
+  {
+    LvArray::forValuesInSlice( phaseDensity.value[ip2], setZero );
+    LvArray::forValuesInSlice( phaseDensity.derivs[ip2], setZero );
+    LvArray::forValuesInSlice( phaseViscosity.value[ip2], setZero );
+    LvArray::forValuesInSlice( phaseViscosity.derivs[ip2], setZero );
+  }
 
   // 4. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
 
@@ -322,27 +355,34 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
     real64 phaseMolarDens{};
     stackArray1d< real64, numComp+2 > dPhaseMolarDens( numComp+2 );
+    //LvArray::forValuesInSlice( dPhaseMolarDens, setZero );
 
-    m_phase1.density.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                              phaseMolarDens, dPhaseMolarDens.toSlice(),
-                              false );
-    phaseMolecularWeight[ip1] = phaseDensity.value[ip1] / phaseMolarDens;
-    for( integer idof = 0; idof < numComp+2; ++idof )
+    if( phase1Exists )
     {
-      dPhaseMolecularWeight[ip1][idof] = phaseDensity.derivs[ip1][idof] / phaseMolarDens - phaseMolecularWeight[ip1] * dPhaseMolarDens[idof] / phaseMolarDens;
+      m_phase1.density.compute( pressure,
+                                temperatureInCelsius,
+                                phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                                phaseMolarDens, dPhaseMolarDens.toSlice(),
+                                false );
+      phaseMolecularWeight[ip1] = phaseDensity.value[ip1] / phaseMolarDens;
+      for( integer idof = 0; idof < numComp+2; ++idof )
+      {
+        dPhaseMolecularWeight[ip1][idof] = phaseDensity.derivs[ip1][idof] / phaseMolarDens - phaseMolecularWeight[ip1] * dPhaseMolarDens[idof] / phaseMolarDens;
+      }
     }
 
-    m_phase2.density.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                              phaseMolarDens, dPhaseMolarDens.toSlice(),
-                              false );
-    phaseMolecularWeight[ip2] = phaseDensity.value[ip2] / phaseMolarDens;
-    for( integer idof = 0; idof < numComp+2; ++idof )
+    if( phase2Exists )
     {
-      dPhaseMolecularWeight[ip2][idof] = phaseDensity.derivs[ip2][idof] / phaseMolarDens - phaseMolecularWeight[ip2] * dPhaseMolarDens[idof] / phaseMolarDens;
+      m_phase2.density.compute( pressure,
+                                temperatureInCelsius,
+                                phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                                phaseMolarDens, dPhaseMolarDens.toSlice(),
+                                false );
+      phaseMolecularWeight[ip2] = phaseDensity.value[ip2] / phaseMolarDens;
+      for( integer idof = 0; idof < numComp+2; ++idof )
+      {
+        dPhaseMolecularWeight[ip2][idof] = phaseDensity.derivs[ip2][idof] / phaseMolarDens - phaseMolecularWeight[ip2] * dPhaseMolarDens[idof] / phaseMolarDens;
+      }
     }
 
     // 4.2 Convert the mole fractions to mass fractions
@@ -366,20 +406,38 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
         phaseMassDensity.derivs[ip][idof] = phaseDensity.derivs[ip][idof];
       }
     }
+
   }
   else
   {
     // for now, we have to compute the phase mass density here
-    m_phase1.density.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
-                              phaseMassDensity.value[ip1], phaseMassDensity.derivs[ip1],
-                              true );
-    m_phase2.density.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                              phaseMassDensity.value[ip2], phaseMassDensity.derivs[ip2],
-                              true );
+    if( phase1Exists )
+    {
+      m_phase1.density.compute( pressure,
+                                temperatureInCelsius,
+                                phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                                phaseMassDensity.value[ip1], phaseMassDensity.derivs[ip1],
+                                true );
+    }
+    else
+    {
+      LvArray::forValuesInSlice( phaseMassDensity.value[ip1], setZero );
+      LvArray::forValuesInSlice( phaseMassDensity.derivs[ip1], setZero );
+    }
+
+    if( phase2Exists )
+    {
+      m_phase2.density.compute( pressure,
+                                temperatureInCelsius,
+                                phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                                phaseMassDensity.value[ip2], phaseMassDensity.derivs[ip2],
+                                true );
+    }
+    else
+    {
+      LvArray::forValuesInSlice( phaseMassDensity.value[ip2], setZero );
+      LvArray::forValuesInSlice( phaseMassDensity.derivs[ip2], setZero );
+    }
   }
 
   // 5. Compute enthalpy and internal energy
