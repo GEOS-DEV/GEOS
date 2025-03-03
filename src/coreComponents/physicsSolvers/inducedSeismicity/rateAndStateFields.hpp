@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -35,15 +35,23 @@ namespace rateAndState
 DECLARE_FIELD( slipRate,
                "slipRate",
                array1d< real64 >,
-               1.0e-6,
-               NOPLOT,
+               0.0,
+               LEVEL_0,
                WRITE_AND_READ,
                "Slip rate" );
+
+DECLARE_FIELD( slipRate_n,
+               "slipRate_n",
+               array1d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Slip rate at timestep n." );
 
 DECLARE_FIELD( slipVelocity,
                "slipVelocity",
                array2d< real64 >,
-               0.70710678118e-6,
+               0.0,
                LEVEL_0,
                WRITE_AND_READ,
                "Slip velocity" );
@@ -51,7 +59,7 @@ DECLARE_FIELD( slipVelocity,
 DECLARE_FIELD( slipVelocity_n,
                "slipVelocity_n",
                array2d< real64 >,
-               0.70710678118e-6,
+               0.0,
                NOPLOT,
                WRITE_AND_READ,
                "Slip velocity at previous time step" );
@@ -72,23 +80,53 @@ DECLARE_FIELD( stateVariable_n,
                WRITE_AND_READ,
                "Initial rate- and state-dependent friction state variable at this time step" );
 
+DECLARE_FIELD( normalTraction,
+               "normalTraction",
+               array1d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Normal traction" );
 
-DECLARE_FIELD( deltaSlip,
-               "deltaSlip",
+DECLARE_FIELD( shearTraction,
+               "shearTraction",
                array2d< real64 >,
                0.0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Slip increment" );
+               "Shear traction" );
 
-DECLARE_FIELD( deltaSlip_n,
-               "deltaSlip_n",
+DECLARE_FIELD( normalTraction_n,
+               "normalTraction_n",
+               array1d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Normal traction at previous timestep n." );
+
+DECLARE_FIELD( shearTraction_n,
+               "shearTraction_n",
                array2d< real64 >,
                0.0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
-               "Initial slip increment at this time step" );
+               "Shear traction at previous timestep n." );
 
+DECLARE_FIELD( backgroundNormalStress,
+               "backgroundNormalStress",
+               array1d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Background Normal Stress" );
+
+DECLARE_FIELD( backgroundShearStress,
+               "backgroundShearStress",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Background Shear Stress" );
 
 DECLARE_FIELD( rungeKuttaStageRates,
                "rungeKuttaStageRates",

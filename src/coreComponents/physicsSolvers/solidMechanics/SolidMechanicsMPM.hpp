@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -24,7 +24,6 @@
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/ExplicitMPM.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -151,7 +150,7 @@ public:
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );

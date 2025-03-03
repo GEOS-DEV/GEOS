@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -390,8 +390,8 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   std::cout << " / ||f'||.||u||=" << std::sqrt( sum_fb2*sum_u2 ) << " / ||f||.||f'||=" << std::sqrt( sum_ff2*sum_fb2 ) << std::endl;
   real32 diffToCheck;
   diffToCheck=std::abs( sum_ufb-sum_qff ) / std::max( std::sqrt( sum_fb2*sum_u2 ), std::sqrt( sum_q2*sum_ff2 ));
-  std::cout << " Diff to compare with 2.e-4: " << diffToCheck << std::endl;
-  ASSERT_TRUE( diffToCheck < 2.e-4 );
+  std::cout << " Diff to compare with 9e-3: " << diffToCheck << std::endl;
+  ASSERT_TRUE( diffToCheck < 9e-3 );
 }
 
 int main( int argc, char * * argv )

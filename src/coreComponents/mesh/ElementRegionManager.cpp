@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -69,31 +69,32 @@ void ElementRegionManager::setMaxGlobalIndex()
   m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOS );
 }
 
-
+auto const & getUserAvailableKeys()
+{
+  static std::set< string > keys = {
+    CellElementRegion::catalogName(),
+    WellElementRegion::catalogName(),
+    SurfaceElementRegion::catalogName(),
+  };
+  return keys;
+}
 
 Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
 {
-  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
-
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  GEOS_ERROR_IF( getUserAvailableKeys().count( childKey ) == 0,
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ) );
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( childName,
-                                        CatalogInterface::factory( childKey, childName, &elementRegions ) );
+                                        CatalogInterface::factory( childKey, getDataContext(),
+                                                                   childName, &elementRegions ) );
 }
 
 void ElementRegionManager::expandObjectCatalogs()
 {
-  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::getCatalog();
-  for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin();
-       iter!=catalog.end();
-       ++iter )
+  for( string const & key : getUserAvailableKeys() )
   {
-    string const key = iter->first;
-    if( key.find( "ElementRegion" ) != string::npos )
-    {
-      this->createChild( key, key );
-    }
+    this->createChild( key, key );
   }
 }
 

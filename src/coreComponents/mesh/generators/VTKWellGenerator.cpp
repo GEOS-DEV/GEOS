@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -50,7 +50,7 @@ void VTKWellGenerator::fillPolylineDataStructure( )
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading well from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", array1d< string >());
+    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", string_array());
     vtkSmartPointer< vtkDataSet > loadedMesh = allMeshes.getMainMesh();
     controller->Broadcast( loadedMesh, 0 );
 

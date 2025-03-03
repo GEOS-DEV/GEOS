@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -53,6 +53,13 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
+
+  registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Array which contains the value of the Ricker wavelets at each time-steps" );
+
 
   registerWrapper( viewKeyStruct::timeSourceDelayString(), &m_timeSourceDelay ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -249,7 +256,7 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -288,7 +295,7 @@ void WaveSolverBase::initializePreSubGroups()
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
     m_sourceWaveletTableWrappers.clear();
-    for( integer i = 0; i < m_sourceWaveletTableNames.size(); i++ )
+    for( size_t i = 0; i < m_sourceWaveletTableNames.size(); i++ )
     {
       TableFunction const & sourceWaveletTable = functionManager.getGroup< TableFunction >( m_sourceWaveletTableNames[ i ] );
       m_sourceWaveletTableWrappers.emplace_back( sourceWaveletTable.createKernelWrapper() );
@@ -391,7 +398,7 @@ void WaveSolverBase::postInputInitialization()
     m_nsamplesSeismoTrace = 0;
   }
 
-  GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && m_sourceWaveletTableNames.size() != m_sourceCoordinates.size( 0 ),
+  GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && static_cast< localIndex >(m_sourceWaveletTableNames.size()) != m_sourceCoordinates.size( 0 ),
                  "Invalid number of source wavelet table names. The number of table functions must be equal to the number of sources",
                  InputError );
   m_useSourceWaveletTables = m_sourceWaveletTableNames.size() > 0;
@@ -440,7 +447,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&]( string const &,
                                        MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
+                                       string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     elemManager.forElementRegions( regionNames,

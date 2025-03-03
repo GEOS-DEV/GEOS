@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -247,8 +247,6 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
-
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "compositionalWellVars"; }
@@ -258,8 +256,6 @@ public:
     static constexpr char const * useMassFlagString() { return CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(); }
 
     static constexpr char const * useTotalMassEquationString() { return CompositionalMultiphaseBase::viewKeyStruct::useTotalMassEquationString(); }
-
-    static constexpr char const * relPermNamesString() { return CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString(); }
 
     static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
 
@@ -296,6 +292,8 @@ public:
     static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
     static constexpr char const * dCurrentTotalVolRateString() { return "dCurrentTotalVolumetricRate"; }
 
+    static constexpr char const * currentMassRateString() { return "currentMassRate"; }
+
     static constexpr char const * dCurrentTotalVolRate_dPresString() { return "dCurrentTotalVolumetricRate_dPres"; }
 
     static constexpr char const * dCurrentTotalVolRate_dCompDensString() { return "dCurrentTotalVolumetricRate_dCompDens"; }
@@ -317,7 +315,7 @@ protected:
    * @param[in] domain the domain partition
    * @detail
    * This function will produce an error if one of the well constitutive models
-   * (fluid, relperm) is incompatible with the corresponding models in reservoir
+   * is incompatible with the corresponding models in reservoir
    * regions connected to that particular well.
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
@@ -366,9 +364,6 @@ private:
 
   /// flag indicating whether total mass equation should be used
   integer m_useTotalMassEquation;
-
-  /// list of relative permeability model names per target region
-  array1d< string > m_relPermModelNames;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -155,7 +155,7 @@ public:
    * @brief Set the names of the fields to output
    * @param[in] fieldNames the fields to output
    */
-  void setFieldNames( arrayView1d< string const > const & fieldNames )
+  void setFieldNames( string_array const & fieldNames )
   {
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
@@ -164,7 +164,7 @@ public:
    * @brief Set the names of the mesh levels to output
    * @param[in] levelNames the mesh levels to output (an empty array means all levels are saved)
    */
-  void setLevelNames( arrayView1d< string const > const & levelNames )
+  void setLevelNames( string_array const & levelNames )
   {
     m_levelNames.insert( levelNames.begin(), levelNames.end() );
   }

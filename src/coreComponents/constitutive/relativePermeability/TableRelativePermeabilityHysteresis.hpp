@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -490,13 +490,13 @@ private:
   // Table names
 
   /// Drainage relative permeability table names (one for each phase in the wetting-non-wetting pair)
-  array1d< string > m_drainageWettingNonWettingRelPermTableNames;
+  string_array m_drainageWettingNonWettingRelPermTableNames;
 
   /// Drainage relative permeability table names (one for each phase in the wetting-intermediate pair)
-  array1d< string > m_drainageWettingIntermediateRelPermTableNames;
+  string_array m_drainageWettingIntermediateRelPermTableNames;
 
   /// Drainage relative permeability table names (one for each phase in the non-wetting-intermediate pair)
-  array1d< string > m_drainageNonWettingIntermediateRelPermTableNames;
+  string_array m_drainageNonWettingIntermediateRelPermTableNames;
 
   /// Imbibition relative permeability table name for the wetting phase
   string m_imbibitionWettingRelPermTableName;
