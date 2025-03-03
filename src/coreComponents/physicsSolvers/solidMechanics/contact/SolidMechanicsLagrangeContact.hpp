@@ -223,7 +223,7 @@ private:
 
   void initializeAccelerationVariables( DomainPartition & domain );
 
-  void tryLocalYieldAcceleration( integer configurationLoopIter,
+  void tryLocalYieldAcceleration( integer const configurationLoopIter,
                                   localIndex kfe,
                                   real64 currentTau_unscaled,
                                   real64 limitTau,
