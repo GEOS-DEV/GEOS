@@ -134,7 +134,7 @@ public:
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain,
-                            integer configurationLoopIter ) override final;
+                            integer const configurationLoopIter ) override final;
 
   bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
 
