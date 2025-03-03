@@ -9,7 +9,6 @@
     <SinglePhasePoromechanicsConformingFractures
       name="poroFractureSolver"
       targetRegions="{ Region, Fault }" 
-      initialDt="1e-3"
       flowSolverName="singlePhaseFlowSolver"
       solidSolverName="fractureMechSolver"
       logLevel="1">
@@ -19,9 +18,7 @@
         newtonMaxIter="10"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
-        solverType="direct"
-        krylovTol="1e-10"
-        preconditionerType="mgr"/> 
+        solverType="direct"/> 
     </SinglePhasePoromechanicsConformingFractures>
 
     <SolidMechanicsLagrangeContact
@@ -98,17 +95,17 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
+      name="solverApplication"
+      endTime="3.0e7"
+      forceDt="3.0e7"
+      target="/Solvers/poroFractureSolver"/>
+
+    <PeriodicEvent
       name="outputs"
       beginTime="0.0"
       endTime="3.0e7"
       forceDt="3.0e7"
       target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="solverApplication"
-      endTime="3.0e7"
-      forceDt="3.0e7"
-      target="/Solvers/poroFractureSolver"/>
 
     <PeriodicEvent
       name="restarts"
