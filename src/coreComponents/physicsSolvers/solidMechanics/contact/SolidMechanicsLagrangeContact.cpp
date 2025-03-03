@@ -142,6 +142,17 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
 
+      if( m_useLocalYieldAcceleration )
+      {
+        subRegion.registerField< contact::yield0 >( getName() );
+        subRegion.registerField< contact::yield1 >( getName() );
+        subRegion.registerField< contact::yield1_tilde >( getName() );
+        subRegion.registerField< contact::yield2 >( getName() );
+        subRegion.registerField< contact::yield2_tilde >( getName() );
+        subRegion.registerField< contact::relaxationFactor0 >( getName() );
+        subRegion.registerField< contact::relaxationFactor1 >( getName() );
+      }
+
     } );
 
     forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -219,10 +230,6 @@ void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
     createPreconditioner( domain );
   }
 
-  if( m_useLocalYieldAcceleration )
-  {
-    initializeAccelerationVariables( domain );
-  }
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
@@ -2274,7 +2281,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
         using FrictionType = TYPEOFREF( castedFrictionLaw );
         typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -2336,7 +2343,9 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
                 if( m_useLocalYieldAcceleration )
                 {
-                  tryLocalYieldAcceleration( configurationLoopIter, kfe, currentTau_unscaled, limitTau, currentTau, fractureState[kfe] );
+                  tryLocalYieldAcceleration( subRegion, configurationLoopIter, kfe,
+                                             currentTau_unscaled, limitTau, currentTau,
+                                             fractureState[kfe] );
                 }
               }
               if( getLogLevel() >= 10 && fractureState[kfe] != originalFractureState )
@@ -2370,7 +2379,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;
 }
 
-void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( integer const configurationLoopIter,
+void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( FaceElementSubRegion & subRegion,
+                                                               integer const configurationLoopIter,
                                                                localIndex const kfe,
                                                                real64 const currentTau_unscaled,
                                                                real64 const limitTau,
@@ -2379,15 +2389,23 @@ void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( integer const con
 {
   using namespace fields::contact;
 
+  arrayView1d< real64 > const & x0 = subRegion.getField< yield0 >();
+  arrayView1d< real64 > const & x1 = subRegion.getField< yield1 >();
+  arrayView1d< real64 > const & x2 = subRegion.getField< yield2 >();
+  arrayView1d< real64 > const & x1_tilde = subRegion.getField< yield1_tilde >();
+  arrayView1d< real64 > const & x2_tilde = subRegion.getField< yield2_tilde >();
+  arrayView1d< real64 > const & omega0 = subRegion.getField< relaxationFactor0 >();
+  arrayView1d< real64 > const & omega1 = subRegion.getField< relaxationFactor1 >();
+
   if( configurationLoopIter == 0 )
   {
-    m_x0[kfe] = currentTau_unscaled - limitTau;
+    x0[kfe] = currentTau_unscaled - limitTau;
   }
   else if( configurationLoopIter == 1 )
   {
-    m_x1_tilde[kfe] = currentTau_unscaled - limitTau;
-    m_x1[kfe] = m_x1_tilde[kfe];
-    m_omega0[kfe] = 1.0;
+    x1_tilde[kfe] = currentTau_unscaled - limitTau;
+    x1[kfe] = x1_tilde[kfe];
+    omega0[kfe] = 1.0;
   }
   else
   {
@@ -2397,20 +2415,20 @@ void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( integer const con
     if( acceleration_buffer > 0.1 / (configurationLoopIter - 1) )
     {
       // do not apply acceleration, just update previous values
-      m_x0[kfe] = m_x1_tilde[kfe];
-      m_x1_tilde[kfe] = currentTau_unscaled - limitTau;
-      m_x1[kfe] = m_x1_tilde[kfe];
+      x0[kfe] = x1_tilde[kfe];
+      x1_tilde[kfe] = currentTau_unscaled - limitTau;
+      x1[kfe] = x1_tilde[kfe];
     }
     else
     {
       // apply acceleration
-      m_x2_tilde[kfe] = currentTau_unscaled - limitTau;
+      x2_tilde[kfe] = currentTau_unscaled - limitTau;
 
-      m_omega1[kfe] = -1.0 * m_omega0[kfe] * (m_x1_tilde[kfe] - m_x0[kfe]) / ((m_x1_tilde[kfe] - m_x0[kfe]) - (m_x2_tilde[kfe] - m_x1[kfe]));
+      omega1[kfe] = -omega0[kfe] * (x1_tilde[kfe] - x0[kfe]) / ((x1_tilde[kfe] - x0[kfe]) - (x2_tilde[kfe] - x1[kfe]));
 
-      m_x2[kfe] = (1.0 - m_omega1[kfe]) * m_x1[kfe] + m_omega1[kfe] * m_x2_tilde[kfe];
+      x2[kfe] = (1.0 - omega1[kfe]) * x1[kfe] + omega1[kfe] * x2_tilde[kfe];
 
-      real64 const acc_currentTau_unscaled = m_x2[kfe] + limitTau;
+      real64 const acc_currentTau_unscaled = x2[kfe] + limitTau;
       real64 const acc_currentTau_scaled = acc_currentTau_unscaled * (1.0 - m_slidingCheckTolerance);
 
       if( acc_currentTau_scaled > limitTau )
@@ -2419,40 +2437,42 @@ void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( integer const con
       }
       else
       {
-        m_x0[kfe] = m_x1[kfe];
-        m_x1[kfe] = m_x2[kfe];
-        m_x1_tilde[kfe] = m_x2_tilde[kfe];
-        m_omega0[kfe] = m_omega1[kfe];
+        x0[kfe] = x1[kfe];
+        x1[kfe] = x2[kfe];
+        x1_tilde[kfe] = x2_tilde[kfe];
+        omega0[kfe] = omega1[kfe];
       }
     }
   }
 }
 
-void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainPartition & domain )
-{
-  // calculate total number of face elements
-  localIndex total_size = 0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+/*
+   void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainPartition & domain )
+   {
+   // calculate total number of face elements
+   localIndex total_size = 0;
+   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
-  {
+   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
       total_size += subRegion.size();
     } );
-  } );
+   } );
 
-  // allocate arrays
-  m_x0.resize( total_size );
-  m_x1.resize( total_size );
-  m_x1_tilde.resize( total_size );
-  m_x2.resize( total_size );
-  m_x2_tilde.resize( total_size );
-  m_omega0.resize( total_size );
-  m_omega1.resize( total_size );
-}
+   // allocate arrays
+   m_x0.resize( total_size );
+   m_x1.resize( total_size );
+   m_x1_tilde.resize( total_size );
+   m_x2.resize( total_size );
+   m_x2_tilde.resize( total_size );
+   m_omega0.resize( total_size );
+   m_omega1.resize( total_size );
+   }
+ */
 
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {

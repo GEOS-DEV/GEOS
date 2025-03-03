@@ -212,18 +212,11 @@ private:
   };
 
   /// Member variables and functions needed for yield acceleration. Naming convention follows ( Jiang & Tchelepi, 2019 )
-  array1d< real64 > m_x0; // Accelerated variable @ outer iteration v ( two iterations ago )
-  array1d< real64 > m_x1; // Accelerated variable @ outer iteration v + 1 ( previous iteration )
-  array1d< real64 > m_x1_tilde; // Unaccelerated variable @ outer iteration v + 1 ( previous iteration )
-  array1d< real64 > m_x2; // Accelerated variable @ outer iteration v + 2 ( current iteration )
-  array1d< real64 > m_x2_tilde; // Unaccelerated variable @ outer iteration v + 1 ( current iteration )
-  array1d< real64 > m_omega0; // Old relaxation factor
-  array1d< real64 > m_omega1; // New relaxation factor
+
   integer m_useLocalYieldAcceleration; // flag for applying acceleration to yield
 
-  void initializeAccelerationVariables( DomainPartition & domain );
-
-  void tryLocalYieldAcceleration( integer configurationLoopIter,
+  void tryLocalYieldAcceleration( FaceElementSubRegion & subRegion,
+                                  integer configurationLoopIter,
                                   localIndex kfe,
                                   real64 currentTau_unscaled,
                                   real64 limitTau,

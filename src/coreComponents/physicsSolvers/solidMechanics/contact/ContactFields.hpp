@@ -194,6 +194,64 @@ DECLARE_FIELD( targetIncrementalJump,
                WRITE_AND_READ,
                "It's the target incremental jump in a timestep (e.g., slip coming from RS)." );
 
+/// Configuration loop acceeleration
+
+DECLARE_FIELD( yield0,
+               "yield0",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Accelerated variable (yield) at outer iteration v (two iterations ago)" );
+
+DECLARE_FIELD( yield1,
+               "yield1",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Accelerated variable (yield) at outer iteration v + 1 (previous iteration)" );
+
+DECLARE_FIELD( yield1_tilde,
+               "yield1_tilde",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Unaccelerated variable (yield) at outer iteration v + 1 (previous iteration)" );
+
+DECLARE_FIELD( yield2,
+               "yield2",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Accelerated variable (yield) at outer iteration v + 2 (current iteration)" );
+
+DECLARE_FIELD( yield2_tilde,
+               "yield2_tilde",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Unaccelerated variable (yield) at outer iteration v + 2 (current iteration)" );
+
+DECLARE_FIELD( relaxationFactor0,
+               "relaxationFactor0",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Old relaxation factor" );
+
+DECLARE_FIELD( relaxationFactor1,
+               "relaxationFactor1",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "New relaxation factor" );
+
 }
 
 }
