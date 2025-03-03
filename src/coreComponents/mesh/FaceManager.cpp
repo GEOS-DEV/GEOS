@@ -208,7 +208,7 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
   if( isBaseMeshLevel )
   {
-    computeGeometry( nodeManager, elemRegionManager );
+    computeGeometry( nodeManager );
   }
 }
 
@@ -222,8 +222,7 @@ void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManage
   m_toElements.setElementRegionManager( elemRegionManager );
 }
 
-void FaceManager::computeGeometry( NodeManager const & nodeManager,
-                                   ElementRegionManager const & elemManager )
+void FaceManager::computeGeometry( NodeManager const & nodeManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
