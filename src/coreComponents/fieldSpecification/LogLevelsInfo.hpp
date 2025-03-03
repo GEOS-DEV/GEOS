@@ -15,7 +15,7 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for physics solvers
+ * This file contains common log level informations for the field specification
  */
 
 #ifndef GEOS_FIELDSPECIFICATION_LOGLEVELSNFO_HPP_

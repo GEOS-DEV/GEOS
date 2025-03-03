@@ -15,7 +15,7 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for physics solvers
+ * This file contains common log level informations for events
  */
 
 #ifndef GEOS_EVENTS_LOGLEVELSINFO_HPP

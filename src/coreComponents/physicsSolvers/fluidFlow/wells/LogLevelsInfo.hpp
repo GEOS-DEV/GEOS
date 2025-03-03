@@ -15,7 +15,7 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for physics solvers
+ * This file contains common log level informations for physics solvers well
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_LOGLEVELSINFO_HPP_

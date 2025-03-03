@@ -15,7 +15,7 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for physics solvers
+ * This file contains common log level informations for CO2Brine
  */
 
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_HPP

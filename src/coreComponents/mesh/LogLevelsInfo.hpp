@@ -15,7 +15,7 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for physics solvers
+ * This file contains common log level informations for mesh
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
