@@ -202,9 +202,10 @@ addCouplingSparsityPattern( DomainPartition const & domain,
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
         perforationData->getField< fields::perforation::wellElementIndex >();
-
-      // get the element region, subregion, index
-      arrayView1d< localIndex const > const & resElementRegion =
+      // get the perforation state
+      arrayView1d< integer const > const & perfOpen = perforationData->getField< fields::perforation::perforationState >();
+                                                      // get the element region, subregion, index
+                                                      arrayView1d< localIndex const > const & resElementRegion =
         perforationData->getField< fields::perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
         perforationData->getField< fields::perforation::reservoirElementSubRegion >();
@@ -215,47 +216,51 @@ addCouplingSparsityPattern( DomainPartition const & domain,
       // This will fill J_WR, and J_RW
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
-        stackArray1d< globalIndex, maxNumDof > eqnRowIndicesRes( resNDOF );
-        stackArray1d< globalIndex, maxNumDof > eqnRowIndicesWell( wellNDOF );
-        stackArray1d< globalIndex, maxNumDof > dofColIndicesRes( resNDOF );
-        stackArray1d< globalIndex, maxNumDof > dofColIndicesWell( wellNDOF );
 
-        // get the reservoir (sub)region and element indices
-        localIndex const er = resElementRegion[iperf];
-        localIndex const esr = resElementSubRegion[iperf];
-        localIndex const ei = resElementIndex[iperf];
-        localIndex const iwelem = perfWellElemIndex[iperf];
-
-        for( integer idof = 0; idof < resNDOF; ++idof )
+        if( perfOpen[iperf] )
         {
-          eqnRowIndicesRes[idof] = resDofNumber[er][esr][ei] + idof - rankOffset;
-          dofColIndicesRes[idof] = resDofNumber[er][esr][ei] + idof;
-        }
+          stackArray1d< globalIndex, maxNumDof > eqnRowIndicesRes( resNDOF );
+          stackArray1d< globalIndex, maxNumDof > eqnRowIndicesWell( wellNDOF );
+          stackArray1d< globalIndex, maxNumDof > dofColIndicesRes( resNDOF );
+          stackArray1d< globalIndex, maxNumDof > dofColIndicesWell( wellNDOF );
 
-        for( integer idof = 0; idof < wellNDOF; ++idof )
-        {
-          eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
-          dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
-        }
+          // get the reservoir (sub)region and element indices
+          localIndex const er = resElementRegion[iperf];
+          localIndex const esr = resElementSubRegion[iperf];
+          localIndex const ei = resElementIndex[iperf];
+          localIndex const iwelem = perfWellElemIndex[iperf];
 
-        for( localIndex i = 0; i < eqnRowIndicesRes.size(); ++i )
-        {
-          if( eqnRowIndicesRes[i] >= 0 && eqnRowIndicesRes[i] < pattern.numRows() )
+          for( integer idof = 0; idof < resNDOF; ++idof )
           {
-            for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
+            eqnRowIndicesRes[idof] = resDofNumber[er][esr][ei] + idof - rankOffset;
+            dofColIndicesRes[idof] = resDofNumber[er][esr][ei] + idof;
+          }
+
+          for( integer idof = 0; idof < wellNDOF; ++idof )
+          {
+            eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
+            dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
+          }
+
+          for( localIndex i = 0; i < eqnRowIndicesRes.size(); ++i )
+          {
+            if( eqnRowIndicesRes[i] >= 0 && eqnRowIndicesRes[i] < pattern.numRows() )
             {
-              pattern.insertNonZero( eqnRowIndicesRes[i], dofColIndicesWell[j] );
+              for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
+              {
+                pattern.insertNonZero( eqnRowIndicesRes[i], dofColIndicesWell[j] );
+              }
             }
           }
-        }
 
-        for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
-        {
-          if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
+          for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
           {
-            for( localIndex j = 0; j < dofColIndicesRes.size(); ++j )
+            if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
             {
-              pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndicesRes[j] );
+              for( localIndex j = 0; j < dofColIndicesRes.size(); ++j )
+              {
+                pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndicesRes[j] );
+              }
             }
           }
         }

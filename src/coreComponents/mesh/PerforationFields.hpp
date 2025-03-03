@@ -90,6 +90,14 @@ DECLARE_FIELD( wellSkinFactor,
                WRITE_AND_READ,
                "For each perforation, well skin factor" );
 
+DECLARE_FIELD( perforationState,
+               "perforationState",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "For each perforation, well skin factor" );
+
 DECLARE_FIELD( location,
                "location",
                array2d< real64 >,

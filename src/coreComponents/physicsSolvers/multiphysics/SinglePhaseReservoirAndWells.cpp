@@ -169,6 +169,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
         arrayView1d< localIndex const > const & perfWellElemIndex =
           perforationData->getField< fields::perforation::wellElementIndex >();
 
+        // get the perforation state
+        arrayView1d< integer const > const & perfOpen = perforationData->getField< fields::perforation::perforationState >();
+
         // get the element region, subregion, index
         arrayView1d< localIndex const > const & resElementRegion =
           perforationData->getField< fields::perforation::reservoirElementRegion >();
@@ -181,38 +184,41 @@ addCouplingSparsityPattern( DomainPartition const & domain,
         // This will fill J_WR, and J_RW
         forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
         {
-          // Get the reservoir (sub)region and element indices
-          localIndex const er = resElementRegion[iperf];
-          localIndex const esr = resElementSubRegion[iperf];
-          localIndex const ei = resElementIndex[iperf];
-          localIndex const iwelem = perfWellElemIndex[iperf];
-
-          globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
-          globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
-
-          // working arrays - tjb previously dim was 2
-          stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
-          stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
-
-          for( integer idof = 0; idof < wellNDOF; ++idof )
+          if( perfOpen[iperf] )
           {
-            eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
-            dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
-          }
+            // Get the reservoir (sub)region and element indices
+            localIndex const er = resElementRegion[iperf];
+            localIndex const esr = resElementSubRegion[iperf];
+            localIndex const ei = resElementIndex[iperf];
+            localIndex const iwelem = perfWellElemIndex[iperf];
 
-          if( eqnRowIndexRes >= 0 && eqnRowIndexRes < pattern.numRows() )
-          {
-            for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
+            globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
+            globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
+
+            // working arrays - tjb previously dim was 2
+            stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
+            stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
+
+            for( integer idof = 0; idof < wellNDOF; ++idof )
             {
-              pattern.insertNonZero( eqnRowIndexRes, dofColIndicesWell[j] );
+              eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
+              dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
             }
-          }
 
-          for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
-          {
-            if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
+            if( eqnRowIndexRes >= 0 && eqnRowIndexRes < pattern.numRows() )
             {
-              pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndexRes );
+              for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
+              {
+                pattern.insertNonZero( eqnRowIndexRes, dofColIndicesWell[j] );
+              }
+            }
+
+            for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
+            {
+              if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
+              {
+                pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndexRes );
+              }
             }
           }
         } );
@@ -282,7 +288,8 @@ assembleCouplingTerms( real64 const time_n,
 
       arrayView1d< localIndex const > const perfWellElemIndex =
         perforationData->getField< fields::perforation::wellElementIndex >();
-
+      // get the perforation state
+      arrayView1d< integer const > const & perfOpen = perforationData->getField< fields::perforation::perforationState >();
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
         perforationData->getField< fields::perforation::reservoirElementRegion >();
@@ -294,52 +301,55 @@ assembleCouplingTerms( real64 const time_n,
       // loop over the perforations and add the rates to the residual and jacobian
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
       {
-        // local working variables and arrays
-        localIndex eqnRowIndices[ 2 ] = { -1 };
-        globalIndex dofColIndices[ 2 ] = { -1 };
-
-
-        real64 localPerf[ 2 ]{};
-        real64 localPerfJacobian[ 2 ][ 2 ]{};
-
-        // get the reservoir (sub)region and element indices
-        localIndex const er = resElementRegion[iperf];
-        localIndex const esr = resElementSubRegion[iperf];
-        localIndex const ei = resElementIndex[iperf];
-
-        // get the well element index for this perforation
-        localIndex const iwelem = perfWellElemIndex[iperf];
-        globalIndex const elemOffset = wellElemDofNumber[iwelem];
-
-        // row index on reservoir side
-        eqnRowIndices[TAG::RES] = resDofNumber[er][esr][ei] - rankOffset;
-        // column index on reservoir side
-        dofColIndices[TAG::RES] = resDofNumber[er][esr][ei];
-
-        // row index on well side
-        eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( elemOffset - rankOffset ) + ROFFSET::MASSBAL;
-        // column index on well side
-        dofColIndices[TAG::WELL] = elemOffset + COFFSET::DPRES;
-
-        // populate local flux vector and derivatives
-        localPerf[TAG::RES] = dt * perfRate[iperf];
-        localPerf[TAG::WELL] = -localPerf[TAG::RES];
-
-        for( integer ke = 0; ke < 2; ++ke )
+        if( perfOpen[iperf] )
         {
-          localPerfJacobian[TAG::RES][ke] = dt * dPerfRate_dPres[iperf][ke];
-          localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
-        }
+          // local working variables and arrays
+          localIndex eqnRowIndices[ 2 ] = { -1 };
+          globalIndex dofColIndices[ 2 ] = { -1 };
 
-        for( integer i = 0; i < 2; ++i )
-        {
-          if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
+
+          real64 localPerf[ 2 ]{};
+          real64 localPerfJacobian[ 2 ][ 2 ]{};
+
+          // get the reservoir (sub)region and element indices
+          localIndex const er = resElementRegion[iperf];
+          localIndex const esr = resElementSubRegion[iperf];
+          localIndex const ei = resElementIndex[iperf];
+
+          // get the well element index for this perforation
+          localIndex const iwelem = perfWellElemIndex[iperf];
+          globalIndex const elemOffset = wellElemDofNumber[iwelem];
+
+          // row index on reservoir side
+          eqnRowIndices[TAG::RES] = resDofNumber[er][esr][ei] - rankOffset;
+          // column index on reservoir side
+          dofColIndices[TAG::RES] = resDofNumber[er][esr][ei];
+
+          // row index on well side
+          eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( elemOffset - rankOffset ) + ROFFSET::MASSBAL;
+          // column index on well side
+          dofColIndices[TAG::WELL] = elemOffset + COFFSET::DPRES;
+
+          // populate local flux vector and derivatives
+          localPerf[TAG::RES] = dt * perfRate[iperf];
+          localPerf[TAG::WELL] = -localPerf[TAG::RES];
+
+          for( integer ke = 0; ke < 2; ++ke )
           {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              &dofColIndices[0],
-                                                                              &localPerfJacobian[0][0] + 2 * i,
-                                                                              2 );
-            RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+            localPerfJacobian[TAG::RES][ke] = dt * dPerfRate_dPres[iperf][ke];
+            localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
+          }
+
+          for( integer i = 0; i < 2; ++i )
+          {
+            if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
+            {
+              localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                                &dofColIndices[0],
+                                                                                &localPerfJacobian[0][0] + 2 * i,
+                                                                                2 );
+              RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+            }
           }
         }
       } );

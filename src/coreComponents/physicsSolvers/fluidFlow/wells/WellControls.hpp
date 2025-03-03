@@ -328,6 +328,8 @@ public:
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
     /// string key for status table name
     static constexpr char const * statusTableNameString() { return "statusTableName"; }
+    /// string key for perforation status table name
+    static constexpr char const * perfStatusTableNameString() { return "perfStatusTableName"; }
     /// string key for the crossflow flag
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
     /// string key for the initial pressure coefficient
@@ -400,8 +402,11 @@ private:
   /// BHP table name
   string m_targetBHPTableName;
 
-  /// Status table name
+  /// Well status table name
   string m_statusTableName;
+
+  /// Perforation status table name
+  string m_perfStatusTableName;
 
   /// Flag to enable crossflow
   integer m_isCrossflowEnabled;
@@ -426,6 +431,7 @@ private:
 
   /// Status table
   TableFunction const * m_statusTable;
+
 };
 
 ENUM_STRINGS( WellControls::Type,

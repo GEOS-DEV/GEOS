@@ -103,6 +103,7 @@ public:
     m_compPerfRate( perforationData->getField< fields::well::compPerforationRate >() ),
     m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >() ),
     m_perfWellElemIndex( perforationData->getField< fields::perforation::wellElementIndex >() ),
+    m_perfOpen( perforationData->getField< fields::perforation::perforationState >() ),
     m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_resElemDofNumber( resDofNumber ),
     m_resElementRegion( perforationData->getField< fields::perforation::reservoirElementRegion >() ),
@@ -132,96 +133,98 @@ public:
   {
 
     using namespace compositionalMultiphaseUtilities;
-    // local working variables and arrays
-    stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 * numComp );
-    stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
-
-    stackArray1d< real64, 2 * numComp > localPerf( 2 * numComp );
-    stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2 * numComp, 2 * resNumDOF );
-
-    // get the reservoir (sub)region and element indices
-    localIndex const er  = m_resElementRegion[iperf];
-    localIndex const esr = m_resElementSubRegion[iperf];
-    localIndex const ei  = m_resElementIndex[iperf];
-
-    // get the well element index for this perforation
-    localIndex const iwelem = m_perfWellElemIndex[iperf];
-    globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
-    globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
-
-    for( integer ic = 0; ic < numComp; ++ic )
+    if( m_perfOpen[iperf ] )
     {
-      eqnRowIndices[TAG::RES * numComp + ic] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset ) + ic;
-      eqnRowIndices[TAG::WELL * numComp + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
-    }
-    // Note res and well have same col lineup for P and compdens
-    for( integer jdof = 0; jdof < NC+1; ++jdof )
-    {
-      dofColIndices[TAG::RES * resNumDOF + jdof] = resOffset + jdof;
-      dofColIndices[TAG::WELL * resNumDOF + jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
-    }
-    // For temp its different
-    if constexpr ( IS_THERMAL )
-    {
-      dofColIndices[TAG::RES * resNumDOF + NC+1 ] = resOffset + NC+1;
-      dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + WJ_COFFSET::dT;
-    }
-    // populate local flux vector and derivatives
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      localPerf[TAG::RES * numComp + ic] = m_dt * m_compPerfRate[iperf][ic];
-      localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
+      // local working variables and arrays
+      stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 * numComp );
+      stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
 
-      if( m_detectCrossflow )
+      stackArray1d< real64, 2 * numComp > localPerf( 2 * numComp );
+      stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2 * numComp, 2 * resNumDOF );
+
+      // get the reservoir (sub)region and element indices
+      localIndex const er  = m_resElementRegion[iperf];
+      localIndex const esr = m_resElementSubRegion[iperf];
+      localIndex const ei  = m_resElementIndex[iperf];
+
+      // get the well element index for this perforation
+      localIndex const iwelem = m_perfWellElemIndex[iperf];
+      globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
+      globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
+
+      for( integer ic = 0; ic < numComp; ++ic )
       {
-        if( m_compPerfRate[iperf][ic] > LvArray::NumericLimits< real64 >::epsilon )
+        eqnRowIndices[TAG::RES * numComp + ic] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset ) + ic;
+        eqnRowIndices[TAG::WELL * numComp + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
+      }
+      // Note res and well have same col lineup for P and compdens
+      for( integer jdof = 0; jdof < NC+1; ++jdof )
+      {
+        dofColIndices[TAG::RES * resNumDOF + jdof] = resOffset + jdof;
+        dofColIndices[TAG::WELL * resNumDOF + jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
+      }
+      // For temp its different
+      if constexpr ( IS_THERMAL )
+      {
+        dofColIndices[TAG::RES * resNumDOF + NC+1 ] = resOffset + NC+1;
+        dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + WJ_COFFSET::dT;
+      }
+      // populate local flux vector and derivatives
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        localPerf[TAG::RES * numComp + ic] = m_dt * m_compPerfRate[iperf][ic];
+        localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
+
+        if( m_detectCrossflow )
         {
-          m_numCrossFlowPerforations += 1;
+          if( m_compPerfRate[iperf][ic] > LvArray::NumericLimits< real64 >::epsilon )
+          {
+            m_numCrossFlowPerforations += 1;
+          }
+        }
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          localIndex localDofIndexPres = ke * resNumDOF;
+
+          localPerfJacobian[TAG::RES * numComp + ic][localDofIndexPres] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
+          localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexPres] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+
+            localPerfJacobian[TAG::RES * numComp + ic][localDofIndexComp] = m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
+            localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexComp] = -m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
+          }
+          if constexpr ( IS_THERMAL )
+          {
+            localIndex localDofIndexTemp  = localDofIndexPres + NC + 1;
+            localPerfJacobian[TAG::RES * numComp + ic][localDofIndexTemp] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
+            localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexTemp] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
+          }
         }
       }
-      for( integer ke = 0; ke < 2; ++ke )
+
+      if( m_useTotalMassEquation )
       {
-        localIndex localDofIndexPres = ke * resNumDOF;
+        // Apply equation/variable change transformation(s)
+        stackArray1d< real64, 2 * resNumDOF > work( 2 * resNumDOF );
+        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF * 2, 2, localPerfJacobian, work );
+        shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
+      }
 
-        localPerfJacobian[TAG::RES * numComp + ic][localDofIndexPres] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
-        localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexPres] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
-        for( integer jc = 0; jc < numComp; ++jc )
+      for( localIndex i = 0; i < localPerf.size(); ++i )
+      {
+        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
-          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-
-          localPerfJacobian[TAG::RES * numComp + ic][localDofIndexComp] = m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
-          localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexComp] = -m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
-        }
-        if constexpr ( IS_THERMAL )
-        {
-          localIndex localDofIndexTemp  = localDofIndexPres + NC + 1;
-          localPerfJacobian[TAG::RES * numComp + ic][localDofIndexTemp] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
-          localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexTemp] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                              dofColIndices.data(),
+                                                                              localPerfJacobian[i].dataIfContiguous(),
+                                                                              2 * resNumDOF );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
         }
       }
+      compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
     }
-
-    if( m_useTotalMassEquation )
-    {
-      // Apply equation/variable change transformation(s)
-      stackArray1d< real64, 2 * resNumDOF > work( 2 * resNumDOF );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF * 2, 2, localPerfJacobian, work );
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
-    }
-
-    for( localIndex i = 0; i < localPerf.size(); ++i )
-    {
-      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
-      {
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                            dofColIndices.data(),
-                                                                            localPerfJacobian[i].dataIfContiguous(),
-                                                                            2 * resNumDOF );
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
-      }
-    }
-    compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
-
   }
 
 
@@ -259,7 +262,7 @@ protected:
   arrayView2d< real64 const > const m_compPerfRate;
   arrayView4d< real64 const > const m_dCompPerfRate;
   arrayView1d< localIndex const > const m_perfWellElemIndex;
-
+  arrayView1d< integer const > const m_perfOpen;
   // Element region, subregion, index
   arrayView1d< globalIndex const > const m_wellElemDofNumber;
   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const m_resElemDofNumber;

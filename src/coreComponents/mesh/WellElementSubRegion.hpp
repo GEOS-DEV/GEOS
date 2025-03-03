@@ -51,6 +51,15 @@ public:
   };
 
   /**
+   * @brief enumeration for values element state
+   */
+  enum WellElemState : unsigned
+  {
+    CLOSED = 0,            //  no flow in element
+    OPEN = 1
+  };
+
+  /**
    * @name Constructor / Destructor
    */
   ///@{
@@ -171,6 +180,23 @@ public:
   }
 
   /**
+   * @brief Get state for all well elements
+   * @return reference to state array
+   */
+  array1d< integer > & getWellElementState()
+  {
+    return m_wellElementState;
+  }
+
+  /**
+   * @copydoc getWellElementState()
+   */
+  array1d< integer > const & getWellElementState() const
+  {
+    return m_wellElementState;
+  }
+
+  /**
    * @brief Set for the MPI rank that owns this well (i.e. the top segment).
    * @param[in] rank MPI rank of the owner process
    */
@@ -270,6 +296,8 @@ public:
     static constexpr char const * topRankString() { return "topRank"; }
     /// @return String key for the well radius
     static constexpr char const * radiusString() { return "radius"; }
+    /// @return String key for the well element state
+    static constexpr char const * wellElementStateString() { return "wellElementState"; }
 
     /// ViewKey for the well control name
     dataRepository::ViewKey wellControlsName     = { wellControlsString() };
@@ -285,6 +313,9 @@ public:
     dataRepository::ViewKey topRank            = { topRankString() };
     /// ViewKey for the well radius
     dataRepository::ViewKey radius             = { radiusString() };
+
+    /// ViewKey for the well element state
+    dataRepository::ViewKey wellElementState   = { wellElementStateString() };
   }
   /// ViewKey struct for the WellElementSubRegion class
   viewKeysWellElementSubRegion;
@@ -426,6 +457,8 @@ private:
   /// Depth of the local search to match perforation to reservoir elements
   localIndex m_searchDepth;
 
+  /// Well element state
+  array1d< integer > m_wellElementState;
 };
 
 } /* namespace geos */

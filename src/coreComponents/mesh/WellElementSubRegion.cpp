@@ -48,6 +48,9 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
+  registerWrapper( viewKeyStruct::wellElementStateString(), &m_wellElementState );
+
+
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString() } );
 
   m_numNodesPerElement = 2;
@@ -408,11 +411,14 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
 {
 
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
+  m_wellElementState.resize( elemStatusGlobal.size());
 
-  // convert elemStatus list into sets of indices
   for( localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal )
   {
+    // convert elemStatus list into sets of indices
     elemSetsByStatus[elemStatusGlobal[iwelemGlobal]].insert( iwelemGlobal );
+    // initialize element state
+    m_wellElementState[iwelemGlobal]= WellElemState::OPEN;
   }
 
   // initialize the sets using the classification of well elems

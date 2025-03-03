@@ -36,9 +36,9 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
                         string const & resElemDofName,
                         string const & wellElemDofName )
 {
-  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                        MeshLevel const & meshLevel,
-                                                                        string_array const & regionNames )
+  solver->forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+                                                                         MeshLevel const & meshLevel,
+                                                                         string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
@@ -66,6 +66,9 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
       arrayView1d< localIndex const > const & perfWellElemIndex =
         perforationData->getField< fields::perforation::wellElementIndex >();
 
+      // get the perforation state
+      arrayView1d< integer const > const & perfOpen = perforationData->getField< fields::perforation::perforationState >();
+
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
         perforationData->getField< fields::perforation::reservoirElementRegion >();
@@ -77,33 +80,36 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
-        // get the reservoir (sub)region and element indices
-        localIndex const er = resElementRegion[iperf];
-        localIndex const esr = resElementSubRegion[iperf];
-        localIndex const ei = resElementIndex[iperf];
-        localIndex const iwelem = perfWellElemIndex[iperf];
-
-        if( resElemGhostRank[er][esr][ei] < 0 )
+        if( perfOpen[iperf] )
         {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
-          GEOS_ASSERT_GE( localRow, 0 );
-          GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
+          // get the reservoir (sub)region and element indices
+          localIndex const er = resElementRegion[iperf];
+          localIndex const esr = resElementSubRegion[iperf];
+          localIndex const ei = resElementIndex[iperf];
+          localIndex const iwelem = perfWellElemIndex[iperf];
 
-          for( integer idof = 0; idof < resNumDof; ++idof )
+          if( resElemGhostRank[er][esr][ei] < 0 )
           {
-            rowLengths[localRow + idof] += wellNumDof;
+            localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
+            GEOS_ASSERT_GE( localRow, 0 );
+            GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
+
+            for( integer idof = 0; idof < resNumDof; ++idof )
+            {
+              rowLengths[localRow + idof] += wellNumDof;
+            }
           }
-        }
 
-        if( wellElemGhostRank[iwelem] < 0 )
-        {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
-          GEOS_ASSERT_GE( localRow, 0 );
-          GEOS_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
-
-          for( integer idof = 0; idof < wellNumDof; ++idof )
+          if( wellElemGhostRank[iwelem] < 0 )
           {
-            rowLengths[localRow + idof] += resNumDof;
+            localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
+            GEOS_ASSERT_GE( localRow, 0 );
+            GEOS_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
+
+            for( integer idof = 0; idof < wellNumDof; ++idof )
+            {
+              rowLengths[localRow + idof] += resNumDof;
+            }
           }
         }
       } );

@@ -133,6 +133,7 @@ public:
     m_resElementIndex( perforationData->getField< fields::perforation::reservoirElementIndex >()),
     m_compPerfRate( perforationData->getField< fields::well::compPerforationRate >()),
     m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >()),
+    m_perfState( perforationData->getField< fields::perforation::perforationState >()),
     m_disableReservoirToWellFlow( disableReservoirToWellFlow )
   {}
 
@@ -154,6 +155,10 @@ public:
   void
   computeFlux( localIndex const iperf, FUNC && fluxKernelOp= NoOpFunc {} ) const
   {
+    if( !m_perfState[iperf] )
+    {
+      return;
+    }
     // get the index of the reservoir elem
     localIndex const er  = m_resElementRegion[iperf];
     localIndex const esr = m_resElementSubRegion[iperf];
@@ -494,9 +499,7 @@ public:
     GEOS_MARK_FUNCTION;
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-
       kernelComponent.computeFlux( iperf );
-
     } );
   }
 
@@ -533,7 +536,7 @@ protected:
   arrayView4d< real64 > const m_dCompPerfRate;
   arrayView3d< real64 > const m_dCompPerfRate_dPres;
   arrayView4d< real64 > const m_dCompPerfRate_dComp;
-
+  arrayView1d< integer > const m_perfState;
   bool const m_disableReservoirToWellFlow;
 
 
@@ -605,6 +608,7 @@ public:
   using Base::m_resPhaseCompFrac;
   using Base::m_dResCompFrac_dCompDens;
   using Base::m_dWellElemCompFrac_dCompDens;
+
   //using AbstractBase::m_dPhaseCompFrac;
   //using AbstractBase::m_dCompFrac_dCompDens;
   /// Compile time value for the number of components
@@ -793,7 +797,6 @@ public:
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
       kernelComponent.computeFlux( iperf );
-
     } );
   }
 

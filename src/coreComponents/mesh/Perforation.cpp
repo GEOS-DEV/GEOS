@@ -29,7 +29,8 @@ Perforation::Perforation( string const & name, Group * const parent )
   : Group( name, parent ),
   m_distanceFromHead( 0 ),
   m_wellTransmissibility( 0 ),
-  m_wellSkinFactor( 0 )
+  m_wellSkinFactor( 0 ),
+  m_perfStatusTable( "PerfStatusTable", parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -51,6 +52,18 @@ Perforation::Perforation( string const & name, Group * const parent )
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target region to connect the perforation" );
+#if 0
+  registerWrapper( "PerfStatusTable", &m_perfStatusTable ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The perforation table defining perforation state as a function of time. \n"
+                    "If the status function evaluates to a positive value at the current time, the perforation will be open otherwise the perforation will be shut." );
+#else
+  registerWrapper( viewKeyStruct::perfStatusTableString(), &m_perfStatus ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "The perforation table defining perforation state as a function of time." );
+#endif
 }
 
 
@@ -59,8 +72,21 @@ void Perforation::postInputInitialization()
   GEOS_ERROR_IF( m_distanceFromHead <= 0,
                  getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) <<
                  ": distance from well head to perforation cannot be negative." );
-}
 
+  // 12) Create the time-dependent perforation status table
+  if( m_perfStatusTable.numDimensions() == 0 )
+  {
+    real64 constantValue = 1.0;
+    array1d< array1d< real64 > > timeCoord;
+    timeCoord.resize( 1 );
+    timeCoord[0].emplace_back( 0 );
+    array1d< real64 > constantValueArray;
+    constantValueArray.emplace_back( constantValue );
+    m_perfStatusTable.setTableCoordinates( timeCoord, { units::Time } );
+    m_perfStatusTable.setTableValues( constantValueArray );
+    m_perfStatusTable.setInterpolationMethod( TableFunction::InterpolationType::Lower );
+  }
+}
 
 Perforation::~Perforation()
 {}

@@ -24,7 +24,7 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
-
+#include "functions/TableFunction.hpp"
 namespace geos
 {
 
@@ -39,6 +39,15 @@ class WellElementSubRegion;
 class PerforationData : public ObjectManagerBase
 {
 public:
+
+  /**
+   * @brief enumeration for values element state
+   */
+  enum PerforationState : unsigned
+  {
+    CLOSED = 0,            //  no flow in element
+    OPEN = 1
+  };
 
   /**
    * @name Constructor / Destructor
@@ -206,6 +215,18 @@ public:
    */
   arrayView1d< real64 > getWellSkinFactor() { return m_wellSkinFactor; }
 
+  /**
+   * @brief Get perforation's state
+   * @return array of states
+   */
+  arrayView1d< integer const > getLocalPerfState() const { return m_localPerfState; }
+
+
+  /**
+   * @brief Get perforation's state
+   * @return array of states
+   */
+  arrayView1d< integer > getLocalPerfState() { return m_localPerfState; }
 
   ///@}
 
@@ -300,6 +321,12 @@ private:
 
   /// Well skin factor at the perforations
   array1d< real64 > m_wellSkinFactor;
+
+  /// Time versus perforation status table
+  array1d< TableFunction * > m_perfStatusTable;
+
+  /// Locally owned perforation's state
+  array1d< integer > m_localPerfState;
 
 };
 

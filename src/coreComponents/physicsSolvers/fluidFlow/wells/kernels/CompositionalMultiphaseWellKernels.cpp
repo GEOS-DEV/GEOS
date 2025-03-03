@@ -491,6 +491,7 @@ PresTempCompFracInitializationKernel::
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & perfGravCoef,
+          arrayView1d< integer const > const & perfState,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPres,
           arrayView1d< real64 > const & wellElemTemp,
@@ -513,6 +514,7 @@ PresTempCompFracInitializationKernel::
   // In passing, we save the min gravCoef difference between the reference depth and the perforation depth
   // Note that we use gravCoef instead of depth for the (unlikely) case in which the gravityVector is not aligned with z
 
+  RAJA::ReduceSum< parallelDeviceReduce, integer > numOpenPerfs( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTotalMassDens( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTemp( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumCompFrac[MAX_NUM_COMP]{};
@@ -520,43 +522,47 @@ PresTempCompFracInitializationKernel::
 
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
-    // get the reservoir (sub)region and element indices
-    localIndex const er = resElementRegion[iperf];
-    localIndex const esr = resElementSubRegion[iperf];
-    localIndex const ei = resElementIndex[iperf];
-
-    // save the min gravCoef difference between the reference depth and the perforation depth (times g)
-    localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
-
-    // increment the temperature
-    sumTemp += resTemp[er][esr][ei];
-
-    // increment the total mass density
-    for( integer ip = 0; ip < numPhases; ++ip )
+    if( perfState[iperf] )
     {
-      sumTotalMassDens += resPhaseVolFrac[er][esr][ei][ip] * resPhaseMassDens[er][esr][ei][0][ip];
-    }
+      numOpenPerfs+=1;
+      // get the reservoir (sub)region and element indices
+      localIndex const er = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei = resElementIndex[iperf];
 
-    // increment the component fractions
-    real64 perfTotalDens = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      perfTotalDens += resCompDens[er][esr][ei][ic];
-    }
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      sumCompFrac[ic] += resCompDens[er][esr][ei][ic] / perfTotalDens;
+      // save the min gravCoef difference between the reference depth and the perforation depth (times g)
+      localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
+
+      // increment the temperature
+      sumTemp += resTemp[er][esr][ei];
+
+      // increment the total mass density
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        sumTotalMassDens += resPhaseVolFrac[er][esr][ei][ip] * resPhaseMassDens[er][esr][ei][0][ip];
+      }
+
+      // increment the component fractions
+      real64 perfTotalDens = 0.0;
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        perfTotalDens += resCompDens[er][esr][ei][ic];
+      }
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        sumCompFrac[ic] += resCompDens[er][esr][ei][ic] / perfTotalDens;
+      }
     }
   } );
   real64 const minGravCoefDiff = MpiWrapper::min( localMinGravCoefDiff.get() );
 
-
+  integer totalOpenPerfs = MpiWrapper::sum( numOpenPerfs.get() );
 
   // Step 2: we assign average quantities over the well (i.e., over all the ranks)
   // For composition and temperature, we make a distinction between injection and production
 
   // for total mass density, we always use the values of the perforated reservoir elements, even for injectors
-  real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
+  real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / totalOpenPerfs;
 
   stackArray1d< real64, MAX_NUM_COMP > avgCompFrac( numComps );
   real64 avgTemp = 0;
@@ -565,12 +571,12 @@ PresTempCompFracInitializationKernel::
   if( isProducer )
   {
     // use average temperature from reservoir
-    avgTemp = MpiWrapper::sum( sumTemp.get() ) / numPerforations;
+    avgTemp = MpiWrapper::sum( sumTemp.get() ) / totalOpenPerfs;
 
     // use average comp frac from reservoir
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic].get() ) / numPerforations;
+      avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic].get() ) / totalOpenPerfs;
     }
   }
   // for an injector, we use the injection stream values
@@ -606,16 +612,19 @@ PresTempCompFracInitializationKernel::
 
     forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-      // get the reservoir (sub)region and element indices
-      localIndex const er = resElementRegion[iperf];
-      localIndex const esr = resElementSubRegion[iperf];
-      localIndex const ei = resElementIndex[iperf];
-
-      // get the perforation pressure and save the estimated reference pressure
-      real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
-      if( isZero( gravCoefDiff - minGravCoefDiff ) )
+      if( perfState[iperf] )
       {
-        localRefPres.min( alpha * resPres[er][esr][ei] + avgTotalMassDens * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
+        // get the reservoir (sub)region and element indices
+        localIndex const er = resElementRegion[iperf];
+        localIndex const esr = resElementSubRegion[iperf];
+        localIndex const ei = resElementIndex[iperf];
+
+        // get the perforation pressure and save the estimated reference pressure
+        real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
+        if( isZero( gravCoefDiff - minGravCoefDiff ) )
+        {
+          localRefPres.min( alpha * resPres[er][esr][ei] + avgTotalMassDens * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
+        }
       }
     } );
     refPres = MpiWrapper::min( localRefPres.get() );

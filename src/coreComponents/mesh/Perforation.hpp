@@ -21,7 +21,7 @@
 #define GEOS_MESH_PERFORATION_HPP
 
 #include "dataRepository/Group.hpp"
-
+#include "functions/TableFunction.hpp"
 namespace geos
 {
 
@@ -108,6 +108,13 @@ public:
    */
   string const & getTargetRegion() const { return m_targetRegionName; }
 
+
+  /**
+   * @brief Get table representing change of perforation status over time e
+   * @return time vs status table
+   */
+  array2d< real64 > const & getPerfStatusTable() const { return m_perfStatus; }
+
   ///@}
 
   /**
@@ -124,6 +131,8 @@ public:
     static constexpr char const *wellSkinFactorString() { return "skinFactor"; }
     /// @return Target region for this perforation
     static constexpr char const *targetRegionString() { return "targetRegion"; }
+    /// @return Open/closed state this perforation
+    static constexpr char const *perfStatusTableString() { return "perfStatusTable"; }
   }
   /// ViewKey struct for the Perforation class
   viewKeysPerforation;
@@ -143,6 +152,11 @@ private:
 
   /// Name of region the perforation will be connected to
   string m_targetRegionName;
+
+  /// Time versus perforation status table
+  TableFunction m_perfStatusTable;
+
+  array2d< real64 > m_perfStatus;
 };
 
 } // namespace geos

@@ -1028,7 +1028,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         arrayView1d< localIndex const > const resElementIndex = perforationData.getField< fields::perforation::reservoirElementIndex >();
 
         arrayView1d< real64 const > const & perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
-
+        arrayView1d< integer const > const & perfState = perforationData.getField< fields::perforation::perforationState >();
         // 1) Loop over all perforations to compute an average mixture density and component fraction
         // 2) Initialize the reference pressure
         // 3) Estimate the pressures in the well elements using the average density
@@ -1050,6 +1050,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                   resElementSubRegion,
                   resElementIndex,
                   perfGravCoef,
+                  perfState,
                   wellElemGravCoef,
                   wellElemPressure,
                   wellElemTemp,

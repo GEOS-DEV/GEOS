@@ -170,6 +170,8 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
+
+
 }
 
 
@@ -466,6 +468,7 @@ void WellControls::postInputInitialization()
                                    << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
+
 }
 
 bool WellControls::isWellOpen( real64 const & currentTime ) const

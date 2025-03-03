@@ -45,6 +45,7 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   registerField( fields::perforation::location{}, &m_location );
   registerField( fields::perforation::wellTransmissibility{}, &m_wellTransmissibility );
   registerField( fields::perforation::wellSkinFactor{}, &m_wellSkinFactor );
+  registerField( fields::perforation::perforationState{}, &m_localPerfState );
 }
 
 PerforationData::~PerforationData()
@@ -124,6 +125,8 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
   {
+    // All perforations default to open
+    m_localPerfState[iperf] = PerforationState::OPEN;
 
     // if the well transmissibility has been read from the XML
     // then skip the computation of the well transmissibility carried out below
@@ -131,7 +134,13 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
       GEOS_UNUSED_VAR( wellRegion ); // unused if geos_error_if is nulld
-      GEOS_LOG_RANK_IF( isZero( m_wellTransmissibility[iperf] ),
+      bool close_perf = isZero( m_wellTransmissibility[iperf] );
+      if( close_perf )
+      {
+        m_localPerfState[iperf] = PerforationState::CLOSED;
+      }
+
+      GEOS_LOG_RANK_IF( close_perf,
                         "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
                         " is defined with a zero transmissibility.\n" <<
                         "The simulation is going to proceed with this zero transmissibility,\n" <<
