@@ -2434,7 +2434,7 @@ void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainParti
   localIndex total_size = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
