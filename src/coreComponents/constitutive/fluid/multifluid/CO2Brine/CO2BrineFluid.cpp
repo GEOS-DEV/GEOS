@@ -108,6 +108,12 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setDescription( "Write PVT tables into a CSV file" ).
     setDefaultValue( 0 );
 
+  this->registerWrapper( viewKeyStruct::checkPhasePresenceString(), &m_checkPhasePresence ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Check phase presence when computing density and viscosity" ).
+    setDefaultValue( 0 );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -447,6 +453,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::createKernelWrapper()
                         m_componentMolarWeight.toViewConst(),
                         m_useMass,
                         isThermal(),
+                        m_checkPhasePresence,
                         m_phaseFraction.toView(),
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
@@ -467,6 +474,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                  arrayView1d< geos::real64 const > componentMolarWeight,
                  bool const useMass,
                  bool const isThermal,
+                 bool const checkPhasePresence,
                  PhaseProp::ViewType phaseFraction,
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
@@ -488,6 +496,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   m_p1Index( p1Index ),
   m_p2Index( p2Index ),
   m_isThermal( isThermal ),
+  m_checkPhasePresence( checkPhasePresence ),
   m_phase1( phase1.createKernelWrapper() ),
   m_phase2( phase2.createKernelWrapper() ),
   m_flash( flash.createKernelWrapper() )

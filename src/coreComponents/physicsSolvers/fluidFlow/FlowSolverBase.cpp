@@ -104,7 +104,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
-    setApplyDefaultValue( 1 ). // negative pressure is allowed by default
+    setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
 

@@ -402,6 +402,8 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
+  allowNegativePressure();
+
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
