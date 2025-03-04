@@ -759,7 +759,7 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
 }
 
 /**
- * @brief Computes the winding number of a point with respec to to a mesh element.
+ * @brief Computes the winding number of a point with respect to a mesh element.
  * @tparam POINT_TYPE type of @p point
  * @param[in] element the element to be checked
  * @param[in] nodeCoordinates a global array of nodal coordinates
