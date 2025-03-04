@@ -828,14 +828,6 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   nodeManager.setGeometricalRelations( cellBlockManager, elemRegionManager, isBaseMeshLevel );
   edgeManager.setGeometricalRelations( cellBlockManager, isBaseMeshLevel );
   faceManager.setGeometricalRelations( cellBlockManager, elemRegionManager, nodeManager, isBaseMeshLevel );
-  if( isBaseMeshLevel )
-  {
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-    elemRegionManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
-    {
-      subRegion.calculateElementCenters( X );
-    } );
-  }
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
@@ -863,7 +855,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     // in order to compute the geometric quantities.
     // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
     // can have no neighbor. Making impossible the computation, which is therfore postponed to after the ghosting.
-    if( isBaseMeshLevel && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
+    if( isBaseMeshLevel) // && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }

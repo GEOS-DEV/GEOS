@@ -262,6 +262,11 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
   ArrayOfArraysView< localIndex > const facesToNodes = nodeList().toView();
 
+  elemManager.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&] ( auto const & subRegion )
+  {
+    subRegion.calculateElementCenters( X );
+  } );
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 

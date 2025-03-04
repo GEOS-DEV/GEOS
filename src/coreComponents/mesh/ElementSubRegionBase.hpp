@@ -281,6 +281,7 @@ protected:
     {
       LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
       localIndex const numNodes = this->numNodesPerElement( k );
+      //localIndex const numNodes = e2n[ k ].size();
       for( localIndex a = 1; a < numNodes; ++a )
       {
         LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
