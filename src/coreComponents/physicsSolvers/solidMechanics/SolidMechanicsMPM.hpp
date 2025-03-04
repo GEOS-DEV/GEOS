@@ -454,12 +454,24 @@ public:
                              arrayView2d< real64 const > const xp,    // List of neighbor particle locations.
                              arrayView1d< real64 const > const Vp,    // List of neighbor particle volumes.
                              arrayView1d< real64 const > const fp );  // scalar field values (e.g. damage) at neighbor particles
+  
+  real64 computeKernelField( arraySlice1d< real64 const > const x,  // query point
+                             std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
+                             std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
+                             std::vector< real64 > & fp                 // scalar field values (e.g. damage) at
+                             );
 
   void computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
                                    std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
                                    std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
                                    std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
                                    arraySlice1d< real64 > const result );
+  
+  void computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
+                                   std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
+                                   std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
+                                   std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
+                                   real64 (& result)[3] );
 
   void computeKernelVectorGradient( arraySlice1d< real64 const > const x,       // query point
                                     std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
@@ -467,7 +479,11 @@ public:
                                     std::vector< std::vector< real64 > > & fp,  // vector field values (e.g. velocity) at neighbor particles
                                     arraySlice2d< real64 > const result );
 
+  real64 inverseKernel( const real64 & d ); // value of kernel function                                    
+
   void computeDamageFieldGradient( ParticleManager & particleManager );
+
+  void computeDistanceToCrackTip( ParticleManager & particleManager );
 
   void updateSurfaceFlagOverload( ParticleManager & particleManager );
 
@@ -584,6 +600,7 @@ void interpolateTable( real64 x,
                        real64 dx,
                        array2d< real64 > table,
                        arrayView1d< real64 > output,
+                       arrayView1d< real64 > outputRate,
                        SolidMechanicsMPM::InterpolationOption interpolationType );
 
 void interpolateValueInRange( real64 const & x, 
@@ -871,6 +888,9 @@ protected:
   int m_LBar;
   real64 m_LBarScale;
   int m_exactJIntegration;
+  int m_useAPIC;
+  int m_useInteralForceAsFaceReaction;
+  
   real64 m_maxParticleVelocity;
   real64 m_maxParticleVelocitySquared;
   real64 m_minParticleJacobian;
@@ -880,6 +900,10 @@ protected:
   real64 m_overlapThreshold1;
   real64 m_overlapThreshold2;
   int m_computeSPHJacobian;
+
+  // parameters for crack-tip detection used for stress concentration factor
+  int m_useCrackTipDetection;
+  real64 m_crackTipDetectionThreshold;
 
   // Currently initializes all particles to this temperature
   // TODO: read in from particle file
@@ -901,6 +925,8 @@ protected:
   int m_treatFullyDamagedAsSingleField;
   int m_surfaceDetection;
   int m_damageFieldPartitioning;
+
+
 
   int m_useSurfacePositionForContact;
   ContactNormalTypeOption m_contactNormalType;
