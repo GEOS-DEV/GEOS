@@ -59,7 +59,6 @@
   <Events
     maxTime="4.5e4"
     maxCycle="1">
-
     <SoloEvent 
       name="generateFault"
       target="/Solvers/SurfaceGen"/>
