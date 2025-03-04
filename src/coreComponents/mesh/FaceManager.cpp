@@ -233,8 +233,8 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
                                                                          X,
                                                                          m_faceCenter[ faceIndex ],
                                                                          m_faceNormal[ faceIndex ] );
-  } );
 
+  } );
 }
 
 void FaceManager::setIsExternal()
