@@ -11,7 +11,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
+      baseline="../baselines/testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrinePhillipsMixtureB"
@@ -22,7 +22,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
+      baseline="../baselines/testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrineEzrokhiMixtureA"
@@ -33,7 +33,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureA.txt"
+      baseline="../baselines/testPVT_CO2Brine_testCo2BrineEzrokhiMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrineEzrokhiMixtureB"
@@ -44,7 +44,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureB.txt"
+      baseline="../baselines/testPVT_CO2Brine_testCo2BrineEzrokhiMixtureB.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2SpycherPruessBrinePhillipsMixtureA"
@@ -55,7 +55,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureA.txt"
+      baseline="../baselines/testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2SpycherPruessBrinePhillipsMixtureB"
@@ -66,7 +66,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureB.txt"
+      baseline="../baselines/testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureB.txt"
       logLevel="1" />
   </Tasks>
 

@@ -10,7 +10,7 @@
       feedComposition="{1e-1, 1e-1, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      baseline="testDistilledWater.txt"
+      baseline="../baselines/testDistilledWater.txt"
       steps="1"
       logLevel="1"/>
     <ReactiveFluidDriver
@@ -19,7 +19,7 @@
       feedComposition="{3.76e-1, 3.76e-1, 3.87e-2, 3.21e-2, 1.89, 1.65e-2, 1.09 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      baseline="testReactiveBrine.txt"
+      baseline="../baselines/testReactiveBrine.txt"
       steps="1"
       logLevel="1"/>
   </Tasks>

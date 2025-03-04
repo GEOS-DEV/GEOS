@@ -4,13 +4,14 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="DE"
+      material="MCC"
       mode="mixedControl"
       axialControl="strainFunction"
       radialControl="stressFunction"
-      initialStress="-4.6e6"
+      initialStress="-1.0"
       steps="50"
-      baseline="testTriaxial_delftEggCase2.txt"
+      logLevel="0"
+      baseline="../baselines/testTriaxial_modifiedCamClay.txt"
       output="none"/>
   </Tasks>
 
@@ -22,16 +23,16 @@
   </Events>
 
   <Constitutive>
-    <DelftEgg
-      name="DE"
+    <ModifiedCamClay
+      name="MCC"
       defaultDensity="2700"
-      defaultBulkModulus="10.15e9"
-      defaultShearModulus="5.54e9"
-      defaultPreConsolidationPressure="-34.0e6"
-      defaultShapeParameter="9.5"
+      defaultRefPressure="-1.0"
+      defaultRefStrainVol="0"
+      defaultShearModulus="200.0"
+      defaultPreConsolidationPressure="-1.1"
       defaultCslSlope="1.2"
-      defaultVirginCompressionIndex="0.008"
-      defaultRecompressionIndex="0.001"/>
+      defaultVirginCompressionIndex="0.003"
+      defaultRecompressionIndex="0.002"/>
   </Constitutive>
 
   <Functions>
@@ -39,13 +40,13 @@
       name="strainFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0, -0.004 }"/>
+      values="{ 0, -0.005 }"/>
 
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ -4.6e6, -4.6e6 }"/>
+      values="{ -1.0, -1.0 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

@@ -12,27 +12,28 @@ set( gtest_geosx_tests
      testRelPermHysteresis.cpp )
 
 set( gtest_triaxial_xmls
-     testTriaxial_druckerPragerExtended.xml
-     testTriaxial_elasticIsotropic.xml
-     testTriaxial_elasticIsotropicPressureDependent.xml
-     testTriaxial_modifiedCamClay.xml
-     testTriaxial_delftEggUseLinear.xml
-     testTriaxial_modifiedCamClayVolumetric.xml
-     testTriaxial_delftEggLoadPathDryUseLinear.xml
-     testTriaxial_delftEggLoadPathWetUseLinear.xml
-     testTriaxial_delftEggCase1.xml
-     testTriaxial_delftEggCase2.xml )
+     driverTests/testTriaxial_druckerPragerExtended.xml
+     driverTests/testTriaxial_elasticIsotropic.xml
+     driverTests/testTriaxial_elasticIsotropicPressureDependent.xml
+     driverTests/testTriaxial_modifiedCamClay.xml
+     driverTests/testTriaxial_delftEggUseLinear.xml
+     driverTests/testTriaxial_modifiedCamClayVolumetric.xml
+     driverTests/testTriaxial_delftEggLoadPathDryUseLinear.xml
+     driverTests/testTriaxial_delftEggLoadPathWetUseLinear.xml
+     driverTests/testTriaxial_delftEggCase1.xml
+     driverTests/testTriaxial_delftEggCase2.xml )
 
 set( gtest_pvt_xmls
-     testPVT.xml
-     testPVT_CO2Brine.xml
-     testPVT_CO2BrineTables.xml
-     testPVT_PhaseComposition.xml
-     testPVT_ThreePhaseCompositional.xml
+     driverTests/testPVT_docExample.xml
+     driverTests/testPVT.xml
+     driverTests/testPVT_CO2Brine.xml
+     driverTests/testPVT_CO2BrineTables.xml
+     driverTests/testPVT_PhaseComposition.xml
+     driverTests/testPVT_ThreePhaseCompositional.xml
    )
 
 set( gtest_reactivefluid_xmls
-     testReactiveFluid.xml )
+     driverTests/testReactiveFluid.xml )
 
 set( tplDependencyList ${parallelDeps} gtest )
 

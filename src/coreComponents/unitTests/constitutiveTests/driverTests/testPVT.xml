@@ -9,7 +9,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="testPVT_hydrogenMixtureA.txt"
+      baseline="../baselines/testPVT_hydrogenMixtureA.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -19,7 +19,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="testPVT_hydrogenMixtureB.txt"
+      baseline="../baselines/testPVT_hydrogenMixtureB.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -29,7 +29,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="testPVT_CO2.txt"
+      baseline="../baselines/testPVT_CO2.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -39,7 +39,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="testPVT_brine.txt"
+      baseline="../baselines/testPVT_brine.txt"
       logLevel="1"/>
   </Tasks>
 

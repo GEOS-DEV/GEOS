@@ -24,7 +24,7 @@ Here, we will walk through an example file included in the source tree at
 
 .. code-block:: sh
 
-   src/coreComponents/unitTests/constitutiveTests/testPVT_docExample.xml
+   src/coreComponents/unitTests/constitutiveTests/driverTests/testPVT_docExample.xml
 
 The first thing to note is that the XML file structure is identical to a standard GEOS input deck.  
 In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  
@@ -33,14 +33,14 @@ This makes it easy to go back and forth between calibration and simulation.
 The first step is to define a parameterized fluid model to test.
 Here, we create a particular type of CO2-Brine mixture:
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/driverTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_END -->
 
 We also define two time-history functions for the pressure (Pascal units) and temperature (Kelvin units) conditions we want to explore.
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/driverTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_FUNCTIONS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_FUNCTIONS_END -->
@@ -51,7 +51,7 @@ Here, we fix the temperature at 350K and simply ramp up pressure from 1 MPa to 5
 
 A ``PVTDriver`` is then added as a ``Task``, a particular type of executable event often used for simple actions. 
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/driverTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_TASKS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_TASKS_END -->
@@ -65,7 +65,7 @@ The ``logLevel`` parameter controls the verbosity of log output during execution
 The driver task is added as a ``SoloEvent`` to the event queue.  
 This leads to a trivial event queue, since all we do is launch the driver and then quit.
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/driverTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_EVENTS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_EVENTS_END -->
@@ -120,10 +120,10 @@ The optional argument ``baseline`` can be used to point to a previous output fil
 If such a file is specified, the driver will perform a testing run and then compare the new results against the baseline.  
 In this way, any regressions in the fluid models can be quickly identified.
 
-Developers of new models are encouraged to add their own baselines to ``src/coreComponents/constitutive/unitTests``. 
+Developers of new models are encouraged to add their own baselines to ``src/coreComponents/constitutive/unitTests/driverTests``. 
 Adding additional tests is straightforward:
 
-1. Create a new xml file for your test in ``src/coreComponents/constitutive/unitTests`` or (easier) add extra blocks to the existing XML at ``src/coreComponents/constitutive/unitTests/testPVT.xml``.  
+1. Create a new xml file for your test in ``src/coreComponents/constitutive/unitTests/driverTests`` or (easier) add extra blocks to the existing XML at ``src/coreComponents/constitutive/unitTests/testPVT.xml``.  
 For new XMLs, we suggest using the naming convention ``testPVT_myTest.xml``, so that all tests will be grouped together alphabetically.  
 Set the ``output`` file to ``testPVT_myTest.txt``, and run your test.  
 Validate the results however is appropriate.
@@ -144,8 +144,8 @@ Note that if you simply added your test to the existing ``testPVT.xml`` file, no
 .. code:: sh
 
   set( gtest_pvt_xmls
-       testPVT.xml
-       testPVT_myTest.xml
+       driverTests/testPVT.xml
+       driverTests/testPVT_myTest.xml
      )
 
 4. Run ``make`` in your build directory to make sure the CMake syntax is correct

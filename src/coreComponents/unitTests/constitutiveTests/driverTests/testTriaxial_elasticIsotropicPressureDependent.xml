@@ -4,15 +4,15 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="DE"
-      mode="mixedControl"
+      material="elasticIPD"
+      mode="strainControl"
       axialControl="strainFunction"
-      radialControl="stressFunction"
+      radialControl="strainFunction"
       initialStress="-1.0"
-      steps="50"
+      steps="20"
       logLevel="0"
-      baseline="testTriaxial_delftEggUseLinear.txt"
-      output="none"/>
+      output="none"
+      baseline="../baselines/testTriaxial_elasticIsotropicPressureDependent.txt"/>
   </Tasks>
 
   <Events
@@ -23,16 +23,13 @@
   </Events>
 
   <Constitutive>
-    <DelftEgg
-      name="DE"
+    <ElasticIsotropicPressureDependent
+      name="elasticIPD"
       defaultDensity="2700"
-      defaultBulkModulus="500.0"
-      defaultShearModulus="200.0"
-      defaultPreConsolidationPressure="-2.1"
-      defaultShapeParameter="1.8"
-      defaultCslSlope="1.2"
-      defaultVirginCompressionIndex="0.003"
-      defaultRecompressionIndex="0.002"/>
+      defaultRefPressure="-1.0"
+      defaultRefStrainVol="0"
+      defaultRecompressionIndex="0.003"
+      defaultShearModulus="200"/>
   </Constitutive>
 
   <Functions>
@@ -40,13 +37,7 @@
       name="strainFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0, -0.005 }"/>
-
-    <TableFunction
-      name="stressFunction"
-      inputVarNames="{ time }"
-      coordinates="{ 0.0, 1.0 }"
-      values="{ -1.0, -1.0 }"/>
+      values="{ 0, -0.02 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

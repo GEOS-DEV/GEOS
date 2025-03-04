@@ -11,7 +11,7 @@
       steps="49"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_hydrocarbonMixture.txt"
+      baseline="../baselines/testPVT_hydrocarbonMixture.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -22,7 +22,7 @@
       temperatureControl="temperatureFunction"
       steps="49"
       outputPhaseComposition="1"
-      baseline="testPVT_deadOilA.txt"
+      baseline="../baselines/testPVT_deadOilA.txt"
       logLevel="1"/>      
 
     <PVTDriver
@@ -34,7 +34,7 @@
       steps="49"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_deadOilB.txt"
+      baseline="../baselines/testPVT_deadOilB.txt"
       logLevel="1"/>      
 
     <PVTDriver
@@ -46,7 +46,7 @@
       steps="49"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_liveBlackOil.txt"
+      baseline="../baselines/testPVT_liveBlackOil.txt"
       logLevel="1"/>      
   </Tasks>
 

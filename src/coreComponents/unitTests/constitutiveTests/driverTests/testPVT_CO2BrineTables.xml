@@ -11,7 +11,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2BrineTables_testCo2BrinePhillipsMixtureA.txt"
+      baseline="../baselines/testPVT_CO2BrineTables_testCo2BrinePhillipsMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrinePhillipsMixtureB"
@@ -22,7 +22,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2BrineTables_testCo2BrinePhillipsMixtureB.txt"
+      baseline="../baselines/testPVT_CO2BrineTables_testCo2BrinePhillipsMixtureB.txt"
       logLevel="1" />
   </Tasks>
 

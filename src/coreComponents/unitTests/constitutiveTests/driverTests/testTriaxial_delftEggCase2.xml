@@ -8,10 +8,9 @@
       mode="mixedControl"
       axialControl="strainFunction"
       radialControl="stressFunction"
-      initialStress="-1.0"
+      initialStress="-4.6e6"
       steps="50"
-      logLevel="0"
-      baseline="testTriaxial_delftEggLoadPathDryUseLinear.txt"
+      baseline="../baselines/testTriaxial_delftEggCase2.txt"
       output="none"/>
   </Tasks>
 
@@ -26,13 +25,13 @@
     <DelftEgg
       name="DE"
       defaultDensity="2700"
-      defaultBulkModulus="500.0"
-      defaultShearModulus="200.0"
-      defaultPreConsolidationPressure="-3.1"
-      defaultShapeParameter="1.8"
+      defaultBulkModulus="10.15e9"
+      defaultShearModulus="5.54e9"
+      defaultPreConsolidationPressure="-34.0e6"
+      defaultShapeParameter="9.5"
       defaultCslSlope="1.2"
-      defaultVirginCompressionIndex="0.003"
-      defaultRecompressionIndex="0.002"/>
+      defaultVirginCompressionIndex="0.008"
+      defaultRecompressionIndex="0.001"/>
   </Constitutive>
 
   <Functions>
@@ -40,13 +39,13 @@
       name="strainFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0, -0.008 }"/>
+      values="{ 0, -0.004 }"/>
 
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ -1.0, -1.0 }"/>
+      values="{ -4.6e6, -4.6e6 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

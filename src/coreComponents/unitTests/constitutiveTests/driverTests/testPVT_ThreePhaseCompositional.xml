@@ -12,7 +12,7 @@
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_ThreePhaseCompositional_blackOil.txt"
+      baseline="../baselines/testPVT_ThreePhaseCompositional_blackOil.txt"
       logLevel="1"/>
   </Tasks>
 
