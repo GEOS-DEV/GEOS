@@ -89,7 +89,7 @@ protected:
   std::unique_ptr< FlashModelType > m_flash{};
 
 private:
-  void generateTables( arraySlice1d< string > const & names, string const fluidName );
+  void generateTables( string_array & names, string const fluidName );
 
   static void writeToFile( string const & fileName, string const & content );
 
@@ -113,7 +113,7 @@ KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture():
   m_parameters = FlashModelType::createParameters( std::move( m_parameters ));
   FlashModelParamType * parameters = const_cast< FlashModelParamType * >(m_parameters->get< FlashModelParamType >());
   parameters->m_kValueTables.resize( (numPhases-1)*numComps );
-  generateTables( parameters->m_kValueTables.toSlice(), fluidName );
+  generateTables( parameters->m_kValueTables, fluidName );
 
   ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
 
@@ -221,7 +221,7 @@ real64 getKValue( integer const phaseIndex, integer const compIndex, real64 cons
 }
 
 template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::generateTables( arraySlice1d< string > const & names, string const fluidName )
+void KValueFlashTestFixture< numPhases, numComps >::generateTables( string_array & names, string const fluidName )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   std::ostringstream content;

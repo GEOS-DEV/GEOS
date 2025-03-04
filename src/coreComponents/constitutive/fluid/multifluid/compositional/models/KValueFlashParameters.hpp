@@ -26,6 +26,7 @@
 namespace geos
 {
 
+class FunctionBase;
 class TableFunction;
 
 namespace constitutive
@@ -69,6 +70,8 @@ protected:
 
 private:
   static bool isIncreasing( arraySlice1d< real64 const > const & array );
+
+  static std::pair< integer, integer > getVariableIndices( FunctionBase const * fluid );
 
   void generateHyperCube( integer const numComps );
   bool validateKValues( MultiFluidBase const * fluid ) const;

@@ -92,8 +92,8 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
                           InputError );
 
     // Values must be increasing
-    GEOS_THROW_IF( isIncreasing( m_pressureCoordinates.toSliceConst()),
-                   GEOS_FMT( "{}: invalid number of pressure coordinates provided in {}. "
+    GEOS_THROW_IF( !isIncreasing( m_pressureCoordinates.toSliceConst()),
+                   GEOS_FMT( "{}: invalid values of pressure coordinates provided in {}. "
                              "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
                    InputError );
   }
@@ -107,8 +107,8 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
                           InputError );
 
     // Values must be increasing
-    GEOS_THROW_IF( isIncreasing( m_temperatureCoordinates.toSliceConst()),
-                   GEOS_FMT( "{}: invalid number of temperature coordinates provided in {}. "
+    GEOS_THROW_IF( !isIncreasing( m_temperatureCoordinates.toSliceConst()),
+                   GEOS_FMT( "{}: invalid values of temperature coordinates provided in {}. "
                              "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
                    InputError );
   }
@@ -139,16 +139,17 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
 #ifdef GEOS_USE_MATHPRESSO
     else if( SymbolicFunction const * symbolicFunction = dynamicCast< SymbolicFunction const * >( function ))
     {
-      numDims = symbolicFunction->getWrapper< string_array >( "variableNames" ).reference().size();
+      numDims = symbolicFunction->getWrapper< string_array >( dataRepository::keys::inputVarNames ).reference().size();
     }
     else if( CompositeFunction const * compositeFunction = dynamicCast< CompositeFunction const * >( function ))
     {
-      numDims = compositeFunction->getWrapper< string_array >( "variableNames" ).reference().size();
+      numDims = compositeFunction->getWrapper< string_array >( dataRepository::keys::inputVarNames ).reference().size();
     }
 #endif
     GEOS_THROW_IF_NE_MSG( numDims, 2,
                           GEOS_FMT( "Function with name {} must have a dimension of 2. ", functionName ),
                           InputError );
+
   }
 
   generateHyperCube( numFluidComponent );
@@ -227,17 +228,19 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
           continue;
         }
 
+        auto const [pIndex, tIndex] = getVariableIndices( tableFunction );
+
         ArrayOfArraysView< real64 const > coordinates = tableFunction->getCoordinates();
 
-        integer const np = coordinates[0].size();
+        integer const np = coordinates[pIndex].size();
         numPressurePoints = LvArray::math::max( numPressurePoints, np );
-        minPressure = LvArray::math::min( minPressure, coordinates[0][0] );
-        maxPressure = LvArray::math::max( maxPressure, coordinates[0][np-1] );
+        minPressure = LvArray::math::min( minPressure, coordinates[pIndex][0] );
+        maxPressure = LvArray::math::max( maxPressure, coordinates[pIndex][np-1] );
 
-        integer const nt = coordinates[1].size();
+        integer const nt = coordinates[tIndex].size();
         numTemperaturePoints = LvArray::math::max( numTemperaturePoints, nt );
-        minTemperature = LvArray::math::min( minTemperature, coordinates[1][0] );
-        maxTemperature = LvArray::math::max( maxTemperature, coordinates[1][nt-1] );
+        minTemperature = LvArray::math::min( minTemperature, coordinates[tIndex][0] );
+        maxTemperature = LvArray::math::max( maxTemperature, coordinates[tIndex][nt-1] );
       }
     }
 
@@ -321,13 +324,17 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
       integer const tableIndex = numComps*phaseIndex + compIndex;
       string const tableName = m_kValueTables[tableIndex];
       FunctionBase const * function = functionManager.getGroupPointer< FunctionBase >( tableName );
+
+      auto const [pIndex, tIndex] = getVariableIndices( function );
+
       for( integer pressureIndex = 0; pressureIndex < numPressurePoints; ++pressureIndex )
       {
-        lookupValue[0] = m_pressureValues[0][pressureIndex];
+        lookupValue[pIndex] = m_pressureValues[0][pressureIndex];
         for( integer temperatureIndex = 0; temperatureIndex < numTemperaturePoints; ++temperatureIndex )
         {
-          lookupValue[1] = m_temperatureValues[0][temperatureIndex];
-          m_kValueHyperCube( phaseIndex, compIndex, pressureIndex, temperatureIndex ) = function->evaluate( lookupValue );
+          lookupValue[tIndex] = m_temperatureValues[0][temperatureIndex];
+          real64 const kv = function->evaluate( lookupValue );
+          m_kValueHyperCube( phaseIndex, compIndex, pressureIndex, temperatureIndex ) = kv;
         }
       }
     }
@@ -339,13 +346,15 @@ bool KValueFlashParameters< NUM_PHASE >::isIncreasing( arraySlice1d< real64 cons
 {
   localIndex const size = array.size();
   GEOS_ASSERT( 2 <= size );
-  bool increasing = true;
   real64 constexpr epsilon = MultiFluidConstants::epsilon;
   for( localIndex i = 1; i < size; ++i )
   {
-    increasing = increasing && (epsilon < array[i] - array[i-1]);
+    if( array[i] - array[i-1] < -epsilon )
+    {
+      return false;
+    }
   }
-  return increasing;
+  return true;
 }
 
 template< integer NUM_PHASE >
@@ -355,8 +364,8 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
   integer const numPressures = m_kValueHyperCube.size( 2 );
   integer const numTemperatures = m_kValueHyperCube.size( 3 );
 
-  arrayView1d< string const > const phaseNames = fluid->phaseNames();
-  arrayView1d< string const > const componentNames = fluid->componentNames();
+  auto const phaseNames = fluid->phaseNames();
+  auto const componentNames = fluid->componentNames();
 
   bool hasAtLeastOneNegative = false;
   bool hasAtLeastOneOneSided = false;
@@ -400,15 +409,16 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
 
   if( !tableData.getTableDataRows().empty())
   {
-    std::vector< TableLayout::ColumnParam > columnParameters;
-    columnParameters.emplace_back( "Phase", TableLayout::Alignment::left );
-    columnParameters.emplace_back( "Pressure", TableLayout::Alignment::right );
-    columnParameters.emplace_back( "Temperature", TableLayout::Alignment::right );
+    std::vector< TableLayout::Column > columns;
+    columns.emplace_back( TableLayout::Column().setName( "Phase" ).setValuesAlignment( TableLayout::Alignment::left ) );
+    columns.emplace_back( TableLayout::Column().setName( "Pressure" ).setValuesAlignment( TableLayout::Alignment::right ) );
+    columns.emplace_back( TableLayout::Column().setName( "Temperature" ).setValuesAlignment( TableLayout::Alignment::right ) );
     for( integer compIndex = 0; compIndex < numComps; ++compIndex )
     {
-      columnParameters.emplace_back( componentNames[compIndex], TableLayout::Alignment::right );
+      columns.emplace_back( TableLayout::Column().setName( componentNames[compIndex] )
+                              .setValuesAlignment( TableLayout::Alignment::right ) );
     }
-    TableLayout const tableLayout( columnParameters );
+    TableLayout const tableLayout( "", columns );
     TableTextFormatter const tableText( tableLayout );
 
     string message;
@@ -430,6 +440,17 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
   }
 
   return true;
+}
+
+template< integer NUM_PHASE >
+std::pair< integer, integer > KValueFlashParameters< NUM_PHASE >::getVariableIndices( FunctionBase const * function )
+{
+  auto const & inputVarNames = function->getWrapper< string_array >( dataRepository::keys::inputVarNames ).reference();
+  if( inputVarNames.size() == 2 && inputVarNames[0] == "temperature" )
+  {
+    return {1, 0};
+  }
+  return {0, 1};
 }
 
 // Instantiate
