@@ -138,7 +138,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
     flowSolver()->enableLaggingFractureStencilWeightsUpdate();
   }
 
-  checkRockOnlyMatrix(meshBodies);
+  checkRockOnlyMatrix( meshBodies );
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -171,7 +171,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
 }
 
 template< typename POROMECHANICS_SOLVER >
-void HydrofractureSolver< POROMECHANICS_SOLVER >::checkRockOnlyMatrix(dataRepository::Group & meshBodies)
+void HydrofractureSolver< POROMECHANICS_SOLVER >::checkRockOnlyMatrix( dataRepository::Group & meshBodies )
 {
   bool rockOnlyMatrix = true;
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -181,11 +181,11 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::checkRockOnlyMatrix(dataReposi
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
-                                                                   ElementSubRegionBase &)
+                                                                   ElementSubRegionBase & )
     {
       rockOnlyMatrix = false;
-    });
-  });
+    } );
+  } );
   GEOS_THROW_IF( (!rockOnlyMatrix && m_leakoffCoefficient > 0),
                  "Carter's leak-off model is only compatible with rock-only matrix",
                  InputError );
@@ -702,7 +702,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
 
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
 
-  assembleFluidLeakSource(time, dt, domain, dofManager, localMatrix, localRhs);
+  assembleFluidLeakSource( time, dt, domain, dofManager, localMatrix, localRhs );
 
   this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
@@ -718,7 +718,8 @@ assembleFluidLeakSource( double time,
 {
   GEOS_MARK_FUNCTION;
 
-  if (m_leakoffCoefficient <= 0) return;
+  if( m_leakoffCoefficient <= 0 )
+    return;
 
   string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
