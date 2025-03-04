@@ -11,9 +11,10 @@ fileNames=(
 	#ceramicDamage
 	#brazilianDisk
 	#planestrain
-	fullthreeD
+	#fullthreeD
 	#fullthreeDm2
 	#2Dboundary
+	blockthreeD_small
 )
 # ==========================================================================================================================================
 # This should be the location of the input file and anything else you need to copy over:
@@ -21,7 +22,7 @@ fileNames=(
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/ceramicDamage/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/planestrain/'
-fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/full_threeD/'
+fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/blockthreeD_small/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/full_threeD_double/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/2Dboundary/'
 
