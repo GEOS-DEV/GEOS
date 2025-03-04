@@ -635,56 +635,60 @@ void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const &
   GEOS_UNUSED_VAR( time, dt, domain );
 }
 
-void CompositionalMultiphaseHybridFVM::keepFlowVariablesConstantDuringInitStep( real64 const time,
-                                                                                real64 const dt,
-                                                                                DofManager const & dofManager,
-                                                                                DomainPartition & domain,
-                                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                arrayView1d< real64 > const & localRhs ) const
-{
-  GEOS_MARK_FUNCTION;
+// void CompositionalMultiphaseHybridFVM::keepFlowVariablesConstantDuringInitStep( real64 const time,
+//                                                                                 real64 const dt,
+//                                                                                 DofManager const & dofManager,
+//                                                                                 DomainPartition & domain,
+//                                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                                                                 arrayView1d< real64 > const & localRhs ) const
+// {
+//   GEOS_MARK_FUNCTION;
 
-  // keepFlowVariablesConstantDuringInitStep( time, dt, dofManager, domain, localMatrix, localRhs );
+//   // keepFlowVariablesConstantDuringInitStep( time, dt, dofManager, domain, localMatrix, localRhs );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel const & mesh,
-                                                               string_array const & regionNames)
-  {
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+//                                                                MeshLevel const & mesh,
+//                                                                string_array const & regionNames)
+//   {
 
-    FaceManager const & faceManager = mesh.getFaceManager();
+//     // avoid the flags [-Werror,-Wunused-parameter]
+//     real64 dt_loc = dt;
+//     real64 time_loc = time;
 
-    string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
+//     FaceManager const & faceManager = mesh.getFaceManager();
 
-    arrayView1d< globalIndex const > const & faceDofNumber =
-      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-    arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
-    arrayView1d< real64 const > const & facePressure =
-      faceManager.getField< fields::flow::facePressure >();
-    globalIndex const rankOffset = dofManager.rankOffset();
+//     string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
 
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
-    {
-      if( faceGhostRank[iface] >= 0 || faceDofNumber[iface] < 0 )
-      {
-        return;
-      }
+//     arrayView1d< globalIndex const > const & faceDofNumber =
+//       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+//     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
+//     arrayView1d< real64 const > const & facePressure =
+//       faceManager.getField< fields::flow::facePressure >();
+//     globalIndex const rankOffset = dofManager.rankOffset();
 
-      globalIndex const faceDofIndex = faceDofNumber[iface];
-      localIndex const localRow = faceDofIndex - rankOffset;
-      real64 rhsValue = 0.0;
+//     forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
+//     {
+//       if( faceGhostRank[iface] >= 0 || faceDofNumber[iface] < 0 )
+//       {
+//         return;
+//       }
 
-      // 4.1. Apply pressure value to the matrix/rhs
-      FieldSpecificationEqual::SpecifyFieldValue( faceDofIndex,
-                                                  rankOffset,
-                                                  localMatrix,
-                                                  rhsValue,
-                                                  facePressure[iface],   // freeze the current pressure value
-                                                  facePressure[iface] );
+//       globalIndex const faceDofIndex = faceDofNumber[iface];
+//       localIndex const localRow = faceDofIndex - rankOffset;
+//       real64 rhsValue = 0.0;
 
-      localRhs[localRow] = rhsValue;
-    } );
-  } );
-}
+//       // 4.1. Apply pressure value to the matrix/rhs
+//       FieldSpecificationEqual::SpecifyFieldValue( faceDofIndex,
+//                                                   rankOffset,
+//                                                   localMatrix,
+//                                                   rhsValue,
+//                                                   facePressure[iface],   // freeze the current pressure value
+//                                                   facePressure[iface] );
+
+//       localRhs[localRow] = rhsValue;
+//     } );
+//   } );
+// }
 
 real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                                 real64 const & dt,
