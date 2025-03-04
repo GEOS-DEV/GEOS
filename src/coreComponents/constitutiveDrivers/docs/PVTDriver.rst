@@ -123,7 +123,7 @@ In this way, any regressions in the fluid models can be quickly identified.
 Developers of new models are encouraged to add their own baselines to ``src/coreComponents/constitutive/unitTests/driverTests``. 
 Adding additional tests is straightforward:
 
-1. Create a new xml file for your test in ``src/coreComponents/constitutive/unitTests/driverTests`` or (easier) add extra blocks to the existing XML at ``src/coreComponents/constitutive/unitTests/testPVT.xml``.  
+1. Create a new xml file for your test in ``src/coreComponents/constitutive/unitTests/driverTests`` or (easier) add extra blocks to the existing XML at ``src/coreComponents/constitutive/unitTests/driverTests/testPVT.xml``.  
 For new XMLs, we suggest using the naming convention ``testPVT_myTest.xml``, so that all tests will be grouped together alphabetically.  
 Set the ``output`` file to ``testPVT_myTest.txt``, and run your test.  
 Validate the results however is appropriate.
