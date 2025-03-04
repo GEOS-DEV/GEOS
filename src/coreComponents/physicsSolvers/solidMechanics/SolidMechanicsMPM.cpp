@@ -7549,32 +7549,32 @@ void SolidMechanicsMPM::computeDistanceToParticleSurface( real64 (& normal)[3],
   real64 tolerance = 1e-16;
 
   distanceToSurface = DBL_MAX;
-  if( fabs( dN1 ) > tolerance && dS1 / dN1 > 0 )
+  if( std::abs( dN1 ) > tolerance && dS1 / dN1 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS1 / dN1 );
   }
 
-  if( fabs( dN2 ) > tolerance && dS2 / dN2 > 0 )
+  if( std::abs( dN2 ) > tolerance && dS2 / dN2 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS2 / dN2 );
   }
 
-  if( fabs( dN3 ) > tolerance && dS3 / dN3 > 0 )
+  if( std::abs( dN3 ) > tolerance && dS3 / dN3 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS3 / dN3 );
   }
 
-  if( fabs( dN4 ) > tolerance && dS4 / dN4 > 0 )
+  if( std::abs( dN4 ) > tolerance && dS4 / dN4 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS4 / dN4 );
   }
 
-  if( fabs( dN5 ) > tolerance && dS5 / dN5 > 0 )
+  if( std::abs( dN5 ) > tolerance && dS5 / dN5 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS5 / dN5 );
   }
 
-  if( fabs( dN6 ) > tolerance && dS6 / dN6 > 0 )
+  if( std::abs( dN6 ) > tolerance && dS6 / dN6 > 0 )
   {
     distanceToSurface = fmin( distanceToSurface, dS6 / dN6 );
   }
