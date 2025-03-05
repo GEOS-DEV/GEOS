@@ -88,11 +88,11 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
 
     //
     // Initial Runge-Kutta stage
-    // 
+    //
 
     // Evolve ODE:s for slip and state evolution
     stepRateStateODEInitialSubstage( dtAdaptive, domain );
-    
+
     // Compute stresses (linear mechanic + fluid solve) at next substage
     real64 dtStage = m_butcherTable.c[1]*dtAdaptive;  // Stage time step size
     dtStress = updateStresses( time_n, dtStage, cycleNumber, domain );
@@ -109,7 +109,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
       // Compute stresses (linear mechanic + fluid solve) at next substage
       // Need to reset stress solver to beginning of time step to not
       // accumulate field in the stages.
-      resetStateToBeginningOfStep( domain ); 
+      resetStateToBeginningOfStep( domain );
       dtStage = m_butcherTable.c[stageIndex+1]*dtAdaptive; // Stage time step size
       dtStress = updateStresses( time_n, dtStage, cycleNumber, domain );
 
