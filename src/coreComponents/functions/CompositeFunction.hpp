@@ -22,8 +22,6 @@
 
 #include "FunctionBase.hpp"
 
-#include <mathpresso/mathpresso.h>
-
 #include "MathOperators.hpp"
 
 namespace geos
@@ -80,6 +78,7 @@ public:
   {
     /// @return Key for coordinate arrays
     static constexpr char const * operationTypeString() { return "operationType"; }
+    static constexpr char const *  functionNamesString() { return "functionNames"; }
   };
 
   // Generic template for an operator
@@ -128,16 +127,12 @@ public:
 
 private:
 
+  void setOperation();
+
   string_array m_functionNames;
   string_array m_variableNames;
-  string m_expression;
   OperationType m_operationType;
   Operation m_operation;
-
-  mathpresso::Context parserContext;
-  mathpresso::Expression parserExpression;
-
-  Operation m_Operator; 
 
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;

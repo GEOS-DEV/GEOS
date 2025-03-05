@@ -21,6 +21,7 @@ Contains classes for storing and computing arbitrary N-dimensional functions.
 # Specify all headers
 #
 set( functions_headers
+     CompositeFunction.hpp
      FunctionBase.hpp
      FunctionManager.hpp
      MathOperators.hpp
@@ -31,6 +32,7 @@ set( functions_headers
 # Specify all sources
 #
 set( functions_sources
+     CompositeFunction.cpp
      FunctionBase.cpp
      FunctionManager.cpp
      TableFunction.cpp
@@ -39,11 +41,9 @@ set( functions_sources
 
 if( ENABLE_MATHPRESSO )
   list( APPEND functions_headers
-        SymbolicFunction.hpp
-        CompositeFunction.hpp )
+        SymbolicFunction.hpp)
   list( APPEND functions_sources
-        SymbolicFunction.cpp
-        CompositeFunction.cpp )
+        SymbolicFunction.cpp )
 endif()
 
 

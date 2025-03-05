@@ -71,19 +71,19 @@ namespace internal
 {
 
 template< typename T, typename Operation >
-T applyOperation_impl( Operation const & op, T const & first, T const & second )
+T apply_impl( Operation const & op, T const & first, T const & second )
 {
   return op( first, second );
 }
 
 template< typename T, typename Operation, typename ... Args >
-T applyOperation_impl( Operation const & op, T const & first, Args const & ... args )
+T apply_impl( Operation const & op, T const & first, Args const & ... args )
 {
-  return op( first, applyOperation( op, args ... ));
+  return op( first, apply( op, args ... ));
 }
 
 template< typename T, typename Operation, typename CONTAINER_TYPE >
-T applyOperation_impl( const Operation & op, const CONTAINER_TYPE & container, std::size_t index = 0 )
+T apply_impl( const Operation & op, const CONTAINER_TYPE & container, std::size_t index = 0 )
 {
   if( index >= container.size())
   {
@@ -93,28 +93,28 @@ T applyOperation_impl( const Operation & op, const CONTAINER_TYPE & container, s
   {
     return container[index];
   }
-  return op( container[index], applyOperation_impl( op, container, index + 1 ));
+  return op( container[index], apply_impl( op, container, index + 1 ));
 }
 
 } /* namespace internal */
 
 template< typename T, typename ... Args >
 std::enable_if_t< std::conjunction_v< std::is_arithmetic< T >, std::is_arithmetic< Args >... >, bool >
-T applyOperation( Operations const & op, T const & first, Args const & ... args )
+T apply( Operations const & op, T const & first, Args const & ... args )
 {
   return std::visit( [&]( const auto & operation ) {
-    return internal::applyOperation_impl( operation, first, args ... );
+    return internal::apply_impl( operation, first, args ... );
   }, op );
 }
 
 template< typename T, typename CONTAINER_TYPE >
 std::enable_if_t< std::is_arithmetic_v< T >, bool >
-T applyOperation( Operations const & op, CONTAINER_TYPE const & vector )
+T apply( Operations const & op, CONTAINER_TYPE const & vector )
 {
   static_assert( std::is_arithmetic_v< typename get_value_type< CONTAINER_TYPE::type >::value, "The type in the container must be an arithmetic type" );
   return std::visit( [&]( const auto & operation )
   {
-    return internal::applyOperation_impl( operation, container );
+    return internal::apply_impl( operation, container );
   }, op );
 }
 

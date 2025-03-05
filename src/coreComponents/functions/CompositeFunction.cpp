@@ -25,7 +25,6 @@ namespace keys
 {
 string const functionNames = "functionNames";
 string const variableNames = "variableNames";
-string const expression = "expression";
 }
 }
 
@@ -40,18 +39,13 @@ CompositeFunction::CompositeFunction( const string & name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  registerWrapper( keys::functionNames, &m_functionNames ).
-    setInputFlag( InputFlags::OPTIONAL ).
+  registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of source functions. The order must match the variableNames argument." );
 
-  registerWrapper( keys::variableNames, &m_variableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "List of variables in expression" );
-
-  registerWrapper( keys::expression, &m_expression ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Composite math expression" );
+  registerWrapper( viewKeyStruct::operationTypeString(), &m_operationType ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Operation to apply to the functions. Valid options:\n* " + EnumStrings< OperationType >::concat( "\n* " ) );
 }
 
 CompositeFunction::~CompositeFunction()
@@ -59,27 +53,34 @@ CompositeFunction::~CompositeFunction()
 
 void CompositeFunction::initializeFunction()
 {
-  // Register variables
-  if( !m_expression.empty())
-  {
-    for( auto ii=0u; ii<m_variableNames.size(); ++ii )
-    {
-      parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
-    }
-
-    // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
-    // compile
-    parserContext.addBuiltIns();
-    mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
-    GEOS_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
-  }
-
   // Grab pointers to sub functions
   FunctionManager & functionManager = FunctionManager::getInstance();
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
     m_subFunctions.emplace_back( &functionManager.getGroup< FunctionBase >( m_functionNames[ii] ) );
+  }
+}
+
+ // Function to dynamically set the operation based on a string
+void setOperation() 
+{
+  switch( m_operationType )
+  {
+    case OperationType::sum:
+      m_operation = math::Sum{};
+      break;
+    case OperationType::product:
+      m_operation = math::Product{};
+      break;
+    case OperationType::difference:
+      m_operation = math::Difference{};
+      break;
+    case OperationType::division:
+      m_operation = math::Division{};
+      break;
+    default:
+      GEOS_THROW( GEOS_FMT('Unsupported operation {}', std::invalid_argument ) );
   }
 }
 
@@ -108,7 +109,7 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
       functionResults[jj] = subFunctionResults[jj][ii];
     }
 
-    result[ii] = parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
+    result[ii] = math::apply( m_operation, functionResults );
   } );
 }
 
@@ -121,7 +122,7 @@ real64 CompositeFunction::evaluate( real64 const * const input ) const
     functionResults[ii] = m_subFunctions[ii]->evaluate( input );
   }
 
-  return parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
+  return math::apply( m_operation, functionResults );
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, string const &, Group * const )
