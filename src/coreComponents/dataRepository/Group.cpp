@@ -308,7 +308,7 @@ string Group::dumpInputOptions() const
                                                     .setName( "name" )
                                                     .setValuesAlignment( TableLayout::Alignment::left ),
                                                   TableLayout::Column()
-                                                    .setName( "Requirment" )
+                                                    .setName( "Requirement" )
                                                     .setValuesAlignment( TableLayout::Alignment::center ),
                                                   TableLayout::Column()
                                                     .setName( "Description" )
