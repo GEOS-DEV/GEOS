@@ -755,9 +755,9 @@ assembleFluidLeakSource( double time,
       globalIndex dofIndices[numDof]{};
       real64 localJacobian[numEqn][numDof]{};
       forAll< serialPolicy >( regionSize,
-                              [&] GEOS_HOST_DEVICE ( localIndex const kfe )
+                              [&] ( localIndex const kfe )
       {
-        if( elemGhostRank[kfe] >= 0 || fabs( time - fractureCreationTime[kfe] ) < 1e-12 )
+        if( elemGhostRank[kfe] >= 0 || LvArray::math::abs( time - fractureCreationTime[kfe] ) < 1e-12 )
           return;
         const globalIndex localRow = presDofNumber[kfe] - rankOffset;
         for( integer idof = 0; idof < numDof; ++idof )
