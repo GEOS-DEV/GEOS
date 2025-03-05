@@ -855,7 +855,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     // in order to compute the geometric quantities.
     // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
     // can have no neighbor. Making impossible the computation, which is therfore postponed to after the ghosting.
-    if( isBaseMeshLevel) // && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
+    if( isBaseMeshLevel ) // && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }
