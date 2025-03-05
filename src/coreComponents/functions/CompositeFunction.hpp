@@ -24,6 +24,8 @@
 
 #include <mathpresso/mathpresso.h>
 
+#include "MathOperators.hpp"
+
 namespace geos
 {
 
@@ -74,11 +76,63 @@ public:
    */
   virtual real64 evaluate( real64 const * const input ) const override final;
 
+  viewKeyStruct
+  {
+    /// @return Key for coordinate arrays
+    static constexpr char const * operationTypeString() { return "operationType"; }
+  };
+
+  // Generic template for an operator
+  template< typename T, typename Operation >
+  T applyOperation( const T & a, const T & b, Operation op )
+  {
+    return op( a, b );
+  }
+
+  struct Sum
+  {
+    template< typename T >
+    T operator()( const T & a, const T & b ) const
+    {
+      return a + b;
+    }
+  };
+
+// Specialization for product
+  struct Product
+  {
+    template< typename T >
+    T operator()( const T & a, const T & b ) const
+    {
+      return a * b;
+    }
+  };
+
+// Specialization for difference
+  struct Difference
+  {
+    template< typename T >
+    T operator()( const T & a, const T & b ) const
+    {
+      return a - b;
+    }
+  };
+
+  enum class OperationType : integer
+  {
+    product,
+    sum,
+    difference,
+    division
+  };
+
 private:
 
   string_array m_functionNames;
   string_array m_variableNames;
   string m_expression;
+  OperationType m_operationType;
+  Operation m_operation;
 
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
@@ -86,8 +140,13 @@ private:
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;
   std::vector< FunctionBase * > m_subFunctions;
-
 };
+
+ENUM_STRINGS( CompositeFunction::OperationType,
+              "product",
+              "sum",
+              "difference",
+              "division" );
 
 } /* namespace geos */
 

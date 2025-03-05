@@ -60,16 +60,19 @@ CompositeFunction::~CompositeFunction()
 void CompositeFunction::initializeFunction()
 {
   // Register variables
-  for( auto ii=0u; ii<m_variableNames.size(); ++ii )
+  if( !m_expression.empty())
   {
-    parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
-  }
+    for( auto ii=0u; ii<m_variableNames.size(); ++ii )
+    {
+      parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
+    }
 
-  // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
-  // compile
-  parserContext.addBuiltIns();
-  mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
-  GEOS_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
+    // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
+    // compile
+    parserContext.addBuiltIns();
+    mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
+    GEOS_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
+  }
 
   // Grab pointers to sub functions
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -104,6 +107,7 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
     {
       functionResults[jj] = subFunctionResults[jj][ii];
     }
+
     result[ii] = parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
   } );
 }
