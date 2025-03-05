@@ -138,9 +138,13 @@ void
 mimeticInnerProductReducedDispatch( MimeticInnerProductBase const & input,
                                     LAMBDA && lambda )
 {
-  if( auto const * const ptr1 = dynamic_cast< BdVLMInnerProduct const * >(&input) )
+  if( auto const * const ptr1 = dynamic_cast< TPFAInnerProduct const * >(&input) )
   {
     lambda( *ptr1 );
+  }
+  else if( auto const * const ptr2 = dynamic_cast< BdVLMInnerProduct const * >(&input) )
+  {
+    lambda( *ptr2 );
   }
   else
   {
@@ -161,9 +165,13 @@ void
 mimeticInnerProductReducedDispatch( MimeticInnerProductBase & input,
                                     LAMBDA && lambda )
 {
-  if( auto * const ptr1 = dynamic_cast< BdVLMInnerProduct * >(&input) )
+  if( auto * const ptr1 = dynamic_cast< TPFAInnerProduct * >(&input) )
   {
     lambda( *ptr1 );
+  }
+  else if( auto * const ptr2 = dynamic_cast< BdVLMInnerProduct * >(&input) )
+  {
+    lambda( *ptr2 );
   }
   else
   {
