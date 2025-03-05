@@ -308,7 +308,7 @@ string Group::dumpInputOptions() const
   TableLayout const logLayout = TableLayout( "", {TableLayout::Column()
                                                     .setName( "name" )
                                                     .setValuesAlignment( TableLayout::Alignment::left ),
-                                                  "flag",
+                                                  "Requirement",
                                                   TableLayout::Column()
                                                     .setName( "Description" )
                                                     .setValuesAlignment( TableLayout::Alignment::left ) } )

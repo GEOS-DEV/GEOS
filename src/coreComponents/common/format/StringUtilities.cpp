@@ -106,8 +106,26 @@ string addCommaSeparators( T const & num )
 
 std::vector< std::string > wrapTextToMaxLength( std::vector< std::string > const & lines, size_t maxLength )
 {
-  std::vector< std::string > formattedLines;
 
+  if( lines.empty())
+    return lines;
+
+  size_t i = 0;
+
+  bool overflow = false;
+  while( !overflow && i < lines.size() )
+  {
+    if( lines[i++].size() > maxLength )
+    {
+      overflow =true;
+    }
+  }
+
+  if( !overflow )
+    return lines;
+
+  std::vector< std::string > formattedLines;
+  formattedLines.reserve( lines.size() );
   for( const auto & line : lines )
   {
     size_t startPos = 0;
@@ -122,8 +140,8 @@ std::vector< std::string > wrapTextToMaxLength( std::vector< std::string > const
       }
 
       // find last space occurence before maxLength
-      size_t endPos = startPos + maxLength;
-      size_t spacePos = line.rfind( ' ', endPos );
+      size_t const endPos = startPos + maxLength;
+      size_t const spacePos = line.rfind( ' ', endPos );
       if( spacePos != std::string::npos && spacePos > startPos )
       {
         // cut and push at the last space found
