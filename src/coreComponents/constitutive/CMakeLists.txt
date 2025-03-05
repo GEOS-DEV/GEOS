@@ -91,6 +91,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
+     fluid/multifluid/compositional/models/BrineSalinity.hpp
      fluid/multifluid/compositional/models/ComponentProperties.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
@@ -107,6 +108,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/ModelParameters.hpp
      fluid/multifluid/compositional/models/NullModel.hpp
      fluid/multifluid/compositional/models/PhaseModel.hpp
+     fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp
      fluid/multifluid/compositional/models/PressureTemperatureCoordinates.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
@@ -242,6 +244,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.cpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
+     fluid/multifluid/compositional/models/BrineSalinity.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/CriticalVolume.cpp
@@ -253,6 +256,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/models/KValueFlashParameters.cpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
+     fluid/multifluid/compositional/models/PhillipsBrineDensity.cpp
      fluid/multifluid/compositional/models/PressureTemperatureCoordinates.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
