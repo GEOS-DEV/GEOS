@@ -20,13 +20,11 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_KVALUEFLASHPARAMETERS_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_KVALUEFLASHPARAMETERS_HPP_
 
-#include "ModelParameters.hpp"
-#include "common/DataTypes.hpp"
+#include "PressureTemperatureCoordinates.hpp"
 
 namespace geos
 {
 
-class FunctionBase;
 class TableFunction;
 
 namespace constitutive
@@ -36,7 +34,7 @@ namespace compositional
 {
 
 template< integer NUM_PHASE >
-class KValueFlashParameters : public ModelParameters
+class KValueFlashParameters : public PressureTemperatureCoordinates
 {
   static constexpr integer numPhases = NUM_PHASE;
 public:
@@ -49,18 +47,14 @@ public:
                      string & pressureTableName,
                      string & temperatureTableName ) const;
 
-  array1d< real64 > m_pressureCoordinates;
-  array1d< real64 > m_temperatureCoordinates;
   string_array m_kValueTables;
 
   array1d< array1d< real64 > > m_pressureValues;
   array1d< array1d< real64 > > m_temperatureValues;
   array4d< real64 > m_kValueHyperCube;
 
-  struct viewKeyStruct
+  struct viewKeyStruct : public PressureTemperatureCoordinates::viewKeyStruct
   {
-    static constexpr char const * pressureCoordinatesString() { return "pressureCoordinates"; }
-    static constexpr char const * temperatureCoordinatesString() { return "temperatureCoordinates"; }
     static constexpr char const * kValueTablesString() { return "kValueTables"; }
   };
 
@@ -69,10 +63,6 @@ protected:
   void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
 private:
-  static bool isIncreasing( arraySlice1d< real64 const > const & array );
-
-  static std::pair< integer, integer > getVariableIndices( FunctionBase const * fluid );
-
   void generateHyperCube( integer const numComps );
   bool validateKValues( MultiFluidBase const * fluid ) const;
 };

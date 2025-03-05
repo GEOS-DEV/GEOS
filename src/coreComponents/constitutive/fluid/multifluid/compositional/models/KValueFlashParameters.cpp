@@ -41,7 +41,7 @@ namespace compositional
 
 template< integer NUM_PHASE >
 KValueFlashParameters< NUM_PHASE >::KValueFlashParameters( std::unique_ptr< ModelParameters > parameters ):
-  ModelParameters( std::move( parameters ) )
+  PressureTemperatureCoordinates( std::move( parameters ) )
 {}
 
 template< integer NUM_PHASE >
@@ -57,13 +57,7 @@ std::unique_ptr< ModelParameters > KValueFlashParameters< NUM_PHASE >::create( s
 template< integer NUM_PHASE >
 void KValueFlashParameters< NUM_PHASE >::registerParametersImpl( MultiFluidBase * fluid )
 {
-  fluid->registerWrapper( viewKeyStruct::pressureCoordinatesString(), &m_pressureCoordinates ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "List of pressure values for interpolation of k-values." );
-
-  fluid->registerWrapper( viewKeyStruct::temperatureCoordinatesString(), &m_temperatureCoordinates ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "List of temperature values for interpolation of k-values." );
+  PressureTemperatureCoordinates::registerParametersImpl( fluid );
 
   fluid->registerWrapper( viewKeyStruct::kValueTablesString(), &m_kValueTables ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
@@ -74,7 +68,7 @@ template< integer NUM_PHASE >
 void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                                       ComponentProperties const & componentProperties )
 {
-  GEOS_UNUSED_VAR( componentProperties );
+  PressureTemperatureCoordinates::postInputInitializationImpl( fluid, componentProperties );
 
   integer const numFluidPhase = fluid->numFluidPhases();
   integer const numFluidComponent = fluid->numFluidComponents();
@@ -82,36 +76,6 @@ void KValueFlashParameters< NUM_PHASE >::postInputInitializationImpl( MultiFluid
   GEOS_THROW_IF_NE_MSG( numPhases, numFluidPhase,
                         GEOS_FMT( "{}: invalid number of phases for the fluid.", fluid->getFullName() ),
                         InputError );
-
-  if( !m_pressureCoordinates.empty())
-  {
-    // If coordinates are provided then there must be at least 2
-    GEOS_THROW_IF_LT_MSG( m_pressureCoordinates.size(), 2,
-                          GEOS_FMT( "{}: invalid number of pressure coordinates provided in {}. "
-                                    "At least 2 values must be provided", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
-                          InputError );
-
-    // Values must be increasing
-    GEOS_THROW_IF( !isIncreasing( m_pressureCoordinates.toSliceConst()),
-                   GEOS_FMT( "{}: invalid values of pressure coordinates provided in {}. "
-                             "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
-                   InputError );
-  }
-
-  if( !m_temperatureCoordinates.empty())
-  {
-    // If coordinates are provided then there must be at least 2
-    GEOS_THROW_IF_LT_MSG( m_temperatureCoordinates.size(), 2,
-                          GEOS_FMT( "{}: invalid number of temperature coordinates provided in {}. "
-                                    "At least 2 values must be provided", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
-                          InputError );
-
-    // Values must be increasing
-    GEOS_THROW_IF( !isIncreasing( m_temperatureCoordinates.toSliceConst()),
-                   GEOS_FMT( "{}: invalid values of temperature coordinates provided in {}. "
-                             "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
-                   InputError );
-  }
 
   integer const numTables = m_kValueTables.size();
 
@@ -342,22 +306,6 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
 }
 
 template< integer NUM_PHASE >
-bool KValueFlashParameters< NUM_PHASE >::isIncreasing( arraySlice1d< real64 const > const & array )
-{
-  localIndex const size = array.size();
-  GEOS_ASSERT( 2 <= size );
-  real64 constexpr epsilon = MultiFluidConstants::epsilon;
-  for( localIndex i = 1; i < size; ++i )
-  {
-    if( array[i] - array[i-1] < -epsilon )
-    {
-      return false;
-    }
-  }
-  return true;
-}
-
-template< integer NUM_PHASE >
 bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const * fluid ) const
 {
   integer const numComps = m_kValueHyperCube.size( 1 );
@@ -440,17 +388,6 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
   }
 
   return true;
-}
-
-template< integer NUM_PHASE >
-std::pair< integer, integer > KValueFlashParameters< NUM_PHASE >::getVariableIndices( FunctionBase const * function )
-{
-  auto const & inputVarNames = function->getWrapper< string_array >( dataRepository::keys::inputVarNames ).reference();
-  if( inputVarNames.size() == 2 && inputVarNames[0] == "temperature" )
-  {
-    return {1, 0};
-  }
-  return {0, 1};
 }
 
 // Instantiate
