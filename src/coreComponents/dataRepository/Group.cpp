@@ -304,11 +304,12 @@ void Group::printDataHierarchy( integer const indent ) const
 string Group::dumpInputOptions() const
 {
   string rval;
-
   TableLayout const logLayout = TableLayout( "", {TableLayout::Column()
                                                     .setName( "name" )
                                                     .setValuesAlignment( TableLayout::Alignment::left ),
-                                                  "Requirement",
+                                                  TableLayout::Column()
+                                                    .setName( "Requirment" )
+                                                    .setValuesAlignment( TableLayout::Alignment::center ),
                                                   TableLayout::Column()
                                                     .setName( "Description" )
                                                     .setValuesAlignment( TableLayout::Alignment::left ) } )
