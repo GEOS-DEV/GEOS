@@ -74,7 +74,7 @@ public:
    */
   virtual real64 evaluate( real64 const * const input ) const override final;
 
-  viewKeyStruct
+  struct viewKeyStruct
   {
     /// @return Key for coordinate arrays
     static constexpr char const * operationTypeString() { return "operationType"; }
@@ -132,7 +132,7 @@ private:
   string_array m_functionNames;
   string_array m_variableNames;
   OperationType m_operationType;
-  Operation m_operation;
+  math::Operations m_operation;
 
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;

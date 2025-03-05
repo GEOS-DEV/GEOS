@@ -119,6 +119,9 @@ struct get_value_type< T, std::enable_if_t< !internal::has_value_type< T >::valu
   using type = typename T::ValueType;
 };
 
+template< typename T >
+using get_value_type_t = typename get_value_type< T >::type;
+
 } // namespace geos
 
 #endif /* TYPES_HELPERS_HPP */
