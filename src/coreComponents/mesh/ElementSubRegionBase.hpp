@@ -280,13 +280,23 @@ protected:
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
       LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
+      std::set< std::array< real64, 3 > > uniqueNodes;
+      {
+        std::array< real64, 3 > const node = {X( e2n( k, 0 ), 0 ), X( e2n( k, 0 ), 1 ), X( e2n( k, 0 ), 2 )};
+        uniqueNodes.insert( node );
+      }
       localIndex const numNodes = this->numNodesPerElement( k );
       for( localIndex a = 1; a < numNodes; ++a )
       {
-        LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
+        std::array< real64, 3 > const node = {X[e2n( k, a )][0], X[e2n( k, a )][1], X[e2n( k, a )][2]};
+        if( uniqueNodes.find( node ) == uniqueNodes.end())
+        {
+          uniqueNodes.insert( node );
+          LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
+        }
       }
 
-      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / numNodes );
+      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / uniqueNodes.size() );
     } );
   }
 };
