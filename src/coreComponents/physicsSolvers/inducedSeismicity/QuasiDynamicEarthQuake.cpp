@@ -71,7 +71,7 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
                                                                 DomainPartition & domain ) const
 {
   // 1. Setup variables for stress solver
-  setTargetDispJump( domain );
+  setTargetDispJump( domain, dt );
 
   // 2. Solve the momentum balance
   real64 const dtAccepted = m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
@@ -114,7 +114,8 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::resetStateToBeginningOfStep( Domai
 }
 
 template< typename RSSOLVER_TYPE >
-void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain ) const
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain, 
+                                                                 real64 const dt ) const
 {
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
@@ -130,8 +131,8 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         targetDispJump( k, 0 ) = 0.0;
-        targetDispJump( k, 1 ) = deltaSlip( k, 0 );
-        targetDispJump( k, 2 ) = deltaSlip( k, 1 );
+        targetDispJump( k, 1 ) = deltaSlip( k, 0 ) + backSlipRate( k, 0 ) * dt;
+        targetDispJump( k, 2 ) = deltaSlip( k, 1 ) + backSlipRate( k, 1 ) * dt;
       } );
     } );
   } );
