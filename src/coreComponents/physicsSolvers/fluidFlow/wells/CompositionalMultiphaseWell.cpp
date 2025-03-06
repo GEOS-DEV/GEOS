@@ -1006,6 +1006,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
     {
       WellControls const & wellControls = getWellControls( subRegion );
 
+      // Initialize well segment state
       if( time_n <= 0.0 ||
           ( !wellControls.isWellOpen( time_n ) && wellControls.isWellOpen( time_n + dt ) )  )
       {

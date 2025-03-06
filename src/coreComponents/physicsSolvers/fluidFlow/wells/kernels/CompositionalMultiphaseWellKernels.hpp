@@ -1234,7 +1234,6 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
-
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.elemGhostRank( ei ) >= 0 )
@@ -1422,7 +1421,10 @@ public:
     m_useTotalMassEquation ( kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) ),
     m_isProducer ( wellControls.isProducer() ),
     m_injection ( wellControls.getInjectionStream() )
-  {}
+  {
+
+    GEOS_LOG_RANK( "tjb face setup " <<  m_nextWellElemIndex.size());
+  }
 
   struct StackVariables
   {
@@ -1900,6 +1902,7 @@ public:
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, 0 >;
       kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, localMatrix, localRhs, kernelFlags );
+      GEOS_LOG_RANK( "tjb sr "<<subRegion.getName() << " " << subRegion.size());
       kernelType::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }

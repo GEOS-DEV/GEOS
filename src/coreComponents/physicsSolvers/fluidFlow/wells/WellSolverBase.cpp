@@ -198,6 +198,61 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain )
 {
+  // Set well element/perf status
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+    {
+      WellControls const & wellControls = getWellControls( subRegion );
+
+      // Set perforation status
+      if( wellControls.isWellOpen( time_n ) )
+      {
+
+        PerforationData & perforationData = *subRegion.getPerforationData();
+        arrayView1d< integer > perfState = perforationData.getLocalPerfState();
+        // for now set to open
+        for( integer i=0; i<perforationData.size(); i++ )
+        {
+          perfState[i]=PerforationData::PerforationState::OPEN;
+        }
+
+#if 0
+        //
+        array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
+        arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
+
+        arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
+        array1d< integer > & currentState = subRegion.getWellElementState();
+
+        integer numLocalElements = subRegion.getNumLocalElements();
+        array1d< integer > segState( numLocalElements );
+
+        // Local perforations
+        for( integer j =0; j < perforationData.size(); j++ )
+        {
+          localIndex const iwelem = perfWellElemIndex[j];
+          if( elemGhostRank[iwelem] < 0 )
+          {
+            GEOS_LOG_RANK( "tjb perf state "<< j << " " <<   perfState[j] << " " << globalWellElementIndex[j] );
+            if( perfState[j] )
+            {
+              segState[iwelem] +=1;
+            }
+          }
+        }
+        subRegion.setElementStatus( segState );
+#endif
+      }
+    } );
+
+  } );
   // Initialize the primary and secondary variables for the first time step
 
   initializeWells( domain, time_n, dt );

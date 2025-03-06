@@ -413,6 +413,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
   m_wellElementState.resize( elemStatusGlobal.size());
 
+
   for( localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal )
   {
     // convert elemStatus list into sets of indices
@@ -497,6 +498,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // Store local to global index mapping
   integer n_localElems = localElems.size();
   m_globalWellElementIndex.resize( n_localElems );
+
   for( integer i=0; i<n_localElems; i++ )
   {
     m_globalWellElementIndex[i] = localElems[i];
@@ -715,6 +717,7 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   resize( localElems.size() );
+  GEOS_LOG_RANK( "tjb resize "<< size());
 
   // create local elem numbering
 
@@ -773,6 +776,7 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
 
     m_toNodesRelation[iwelemLocal][LineBlockABC::NodeLocation::TOP]    = inodeTopLocal;
     m_toNodesRelation[iwelemLocal][LineBlockABC::NodeLocation::BOTTOM] = inodeBottomLocal;
+    GEOS_LOG_RANK( "tjb yyy "<< iwelemLocal << " " << m_nextWellElementIndexGlobal[iwelemLocal] );
   }
 
 }
@@ -893,7 +897,6 @@ void WellElementSubRegion::reconstructLocalConnectivity()
 {
   // here we reconstruct the array m_nextWellElementIndexGlobal
   // this is needed after the addition of ghost well elements
-
   for( localIndex iwelemLocal = 0; iwelemLocal < size(); ++iwelemLocal )
   {
     globalIndex const nextGlobal = m_nextWellElementIndexGlobal[iwelemLocal];
@@ -967,4 +970,60 @@ void WellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
                                     clearIfUnmapped );
 }
 
+
+void WellElementSubRegion::setupCommArrays( )
+{
+
+  // Used in MPI comms for broadcasting distributed segement quantitites
+  m_numLocalElements = size();
+  m_elementPerRank.resize( m_numLocalElements );
+
+  MpiWrapper::allGather( size(), m_elementPerRank );
+  // Updated every timestep and used to determine segment status
+  integer totalElements = std::accumulate( m_elementPerRank.begin(), m_elementPerRank.end(), 0 );
+
+  m_activePerfsPerElement.resize( totalElements );
+  m_mpiElementOffset.resize( MpiWrapper::commSize());
+  std::partial_sum( m_elementPerRank.begin(), m_elementPerRank.end() - 1, m_mpiElementOffset.begin() + 1 );
+
+  //GEOS_LOG_RANK("tjb sizes " << getName() << " " << size() << " " << m_globalWellElementIndex.size() << " " << elemStatusGlobal.size() <<
+  // " " << m_nextWellElementIndex.size() << " " << m_nextWellElementIndexGlobal.size());
+
+
 }
+void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & localElemPerfStatus )
+{
+  // Gather and broadcast element perf status to all cores
+  MpiWrapper::allgatherv( localElemPerfStatus.data(), localElemPerfStatus.size(), m_activePerfsPerElement.data(), m_elementPerRank.data(), m_mpiElementOffset.data(), MPI_COMM_GEOS );
+
+  // Set segment state
+  integer numElements = m_activePerfsPerElement.size();
+
+  std::fill( m_wellElementState.begin(), m_wellElementState.end(), 0 );
+  m_wellElementState[0] =   ( m_activePerfsPerElement[0] > 0 ) ? WellElemState::OPEN : WellElemState::CLOSED;
+
+  for( integer i=1; i<numElements; i++ )
+  {
+    if( m_activePerfsPerElement[i] == 0 )
+    {
+      if( m_wellElementState[i-1] == WellElemState::OPEN )
+      {
+        // Open - upstream segment is open
+        m_wellElementState[i] =  WellElemState::OPEN;
+      }
+      else
+      {
+        // Closed - no open perforation and no upstream segment is open
+        m_wellElementState[i] =  WellElemState::CLOSED;
+      }
+    }
+    else //  m_activePerfsPerElement[i] == 1
+    {
+      // Open - contains open perforation
+      m_wellElementState[i] =  WellElemState::OPEN;
+    }
+  }
+
+}
+
+}  // namespace geos

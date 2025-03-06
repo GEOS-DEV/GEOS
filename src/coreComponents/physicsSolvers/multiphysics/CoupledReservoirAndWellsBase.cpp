@@ -66,9 +66,6 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
       arrayView1d< localIndex const > const & perfWellElemIndex =
         perforationData->getField< fields::perforation::wellElementIndex >();
 
-      // get the perforation state
-      arrayView1d< integer const > const & perfOpen = perforationData->getField< fields::perforation::perforationState >();
-
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
         perforationData->getField< fields::perforation::reservoirElementRegion >();
@@ -80,38 +77,37 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
-        if( perfOpen[iperf] )
+
+        // get the reservoir (sub)region and element indices
+        localIndex const er = resElementRegion[iperf];
+        localIndex const esr = resElementSubRegion[iperf];
+        localIndex const ei = resElementIndex[iperf];
+        localIndex const iwelem = perfWellElemIndex[iperf];
+
+        if( resElemGhostRank[er][esr][ei] < 0 )
         {
-          // get the reservoir (sub)region and element indices
-          localIndex const er = resElementRegion[iperf];
-          localIndex const esr = resElementSubRegion[iperf];
-          localIndex const ei = resElementIndex[iperf];
-          localIndex const iwelem = perfWellElemIndex[iperf];
+          localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
 
-          if( resElemGhostRank[er][esr][ei] < 0 )
+          for( integer idof = 0; idof < resNumDof; ++idof )
           {
-            localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
-            GEOS_ASSERT_GE( localRow, 0 );
-            GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
-
-            for( integer idof = 0; idof < resNumDof; ++idof )
-            {
-              rowLengths[localRow + idof] += wellNumDof;
-            }
-          }
-
-          if( wellElemGhostRank[iwelem] < 0 )
-          {
-            localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
-            GEOS_ASSERT_GE( localRow, 0 );
-            GEOS_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
-
-            for( integer idof = 0; idof < wellNumDof; ++idof )
-            {
-              rowLengths[localRow + idof] += resNumDof;
-            }
+            rowLengths[localRow + idof] += wellNumDof;
           }
         }
+
+        if( wellElemGhostRank[iwelem] < 0 )
+        {
+          localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
+
+          for( integer idof = 0; idof < wellNumDof; ++idof )
+          {
+            rowLengths[localRow + idof] += resNumDof;
+          }
+        }
+
       } );
     } );
   } );

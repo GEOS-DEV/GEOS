@@ -336,7 +336,9 @@ public:
   /// groupKey struct for the WellElementSubRegion class
   groupKeysWellElementSubRegion;
 
-
+  integer const & getNumLocalElements() const { return m_numLocalElements;}
+  void setupCommArrays();
+  void setElementStatus( arrayView1d< integer >  const & localElemPerfStatus );
 private:
 
   /**
@@ -424,6 +426,8 @@ private:
   localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
                                  arrayView1d< localIndex const > const & packList ) const;
 
+
+
   /// Map of unmapped global indices in the element-to-node map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
 
@@ -457,8 +461,20 @@ private:
   /// Depth of the local search to match perforation to reservoir elements
   localIndex m_searchDepth;
 
+  /// Number of local elements, excludes ghosting
+  integer m_numLocalElements;
+
   /// Well element state
-  array1d< integer > m_wellElementState;
+  array1d< integer > m_wellElementState; // (sized total number of segments)
+
+  /// Segment offsets required for mpiallgatherv (sized total number of segments)
+  array1d< integer > m_mpiElementOffset;
+
+  /// Number of active perfs per segment (sized total number of segments)
+  array1d< integer > m_activePerfsPerElement;
+
+  /// Number of  segment per rank
+  array1d< localIndex > m_elementPerRank;
 };
 
 } /* namespace geos */

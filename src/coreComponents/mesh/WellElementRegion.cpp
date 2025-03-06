@@ -131,6 +131,9 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                                           subRegion.globalToLocalMap(),
                                           elemOffsetGlobal );
 
+  // Setup MPI gatherv support arrays for use to establish if segment is active
+  // A segment is active if it has an open perforation or an upstream segment is open
+  subRegion.setupCommArrays();
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )
