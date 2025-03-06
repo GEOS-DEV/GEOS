@@ -430,7 +430,7 @@ private:
   T m_y0{};
 
   /// exponential coefficient
-  T m_alpha{};
+  T m_alpha{0};
 
   /// exponential coefficient
   T m_beta{0};
