@@ -427,7 +427,7 @@ private:
   T m_w0{};
 
   /// scaling coefficient
-  T m_y0{};
+  T m_y0{0};
 
   /// exponential coefficient
   T m_alpha{0};
