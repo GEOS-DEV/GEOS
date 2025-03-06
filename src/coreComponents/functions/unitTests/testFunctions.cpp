@@ -664,7 +664,7 @@ TEST( FunctionTests, CompositeFunction )
   std::uniform_real_distribution< double > distribution( -0.99, 1.99 );
   for( localIndex tt=0; tt<Ntimes; ++tt )
   {
-    real64 const t = 1.0; //distribution( generator );
+    real64 const t = distribution( generator );
     // Test the function
     for( localIndex ii=0; ii<Ntest; ++ii )
     {

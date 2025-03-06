@@ -89,7 +89,6 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
     subFunctionResults.emplace_back( std::move( tmp ));
   }
 
-  // Evaluate the symbolic math
   forAll< serialPolicy >( set.size(), [&, result, set]( localIndex const i )
   {
     localIndex const ii = set[ i ];
