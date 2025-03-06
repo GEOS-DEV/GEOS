@@ -125,8 +125,9 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 > const deltaSlip      = subRegion.getField< contact::deltaSlip >();
-      arrayView2d< real64 > const targetDispJump = subRegion.getField< contact::targetIncrementalJump >();
+      arrayView2d< real64 const > const deltaSlip     = subRegion.getField< contact::deltaSlip >();
+      arrayView2d< real64 > const targetDispJump      = subRegion.getField< contact::targetIncrementalJump >();
+      arrayView2d< real64 const > const backSlipRate  = subRegion.getField< rateAndState::backSlipRate >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
