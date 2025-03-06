@@ -424,7 +424,7 @@ private:
   T m_x0{};
 
   /// variable shift
-  T m_w0{};
+  T m_w0{0};
 
   /// scaling coefficient
   T m_y0{0};
