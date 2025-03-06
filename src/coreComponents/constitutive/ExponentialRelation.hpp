@@ -433,7 +433,7 @@ private:
   T m_alpha{};
 
   /// exponential coefficient
-  T m_beta{};
+  T m_beta{0};
 
 };
 
