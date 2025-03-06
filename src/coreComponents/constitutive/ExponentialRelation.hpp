@@ -421,7 +421,7 @@ public:
 private:
 
   /// variable shift
-  T m_x0{};
+  T m_x0{0};
 
   /// variable shift
   T m_w0{0};
