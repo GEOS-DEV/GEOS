@@ -1007,6 +1007,8 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                ParallelVector & solution,
                                                bool const setSparsity )
 {
+  GEOS_LOG( "SolidMechanicsLagrangianFEM::setupSystem" );
+
   GEOS_MARK_FUNCTION;
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
@@ -1022,25 +1024,6 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
     arrayView1d< globalIndex const > const
     dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
 
-    if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
-    {
-      ElementRegionManager const & elemManager = mesh.getElemManager();
-      string_array allFaceElementRegions;
-      elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
-      {
-        allFaceElementRegions.emplace_back( elemRegion.getName() );
-      } );
-
-      finiteElement::
-        fillSparsity< FaceElementSubRegion,
-                      solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
-                                                                                            allFaceElementRegions,
-                                                                                            this->getDiscretizationName(),
-                                                                                            dofNumber,
-                                                                                            dofManager.rankOffset(),
-                                                                                            sparsityPattern );
-
-    }
     finiteElement::
       fillSparsity< CellElementSubRegion,
                     solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
