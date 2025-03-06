@@ -230,8 +230,8 @@ private:
 
   void checkRockOnlyMatrix( dataRepository::Group & meshBodies );
 
-  void assembleFluidLeakSource( double time,
-                                double dt,
+  void assembleFluidLeakSource( real64 time,
+                                real64 dt,
                                 DomainPartition & domain,
                                 DofManager const & dofManager,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -240,7 +240,7 @@ private:
    * @brief Initialize fields on the newly created elements of the fracture.
    * @param domain the physical domain object
    */
-  void initializeNewFractureFields( double time, DomainPartition & domain );
+  void initializeNewFractureFields( real64 time, DomainPartition & domain );
 
   // name of the contact relation
   string m_contactRelationName;
