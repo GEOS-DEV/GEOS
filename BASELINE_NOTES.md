@@ -7,6 +7,7 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 PR #3525 (2025-03-06)
+=====================
 Add analytical leakoff feature for hydrofrac solver.
 
 PR #3401 (2025-03-05)
