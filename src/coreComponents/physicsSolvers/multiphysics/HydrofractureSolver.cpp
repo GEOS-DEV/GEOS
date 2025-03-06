@@ -723,8 +723,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
 
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::
-assembleFluidLeakSource( double time,
-                         double dt,
+assembleFluidLeakSource( real64 time,
+                         real64 dt,
                          DomainPartition & domain,
                          DofManager const & dofManager,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1110,7 +1110,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 }
 
 template< typename POROMECHANICS_SOLVER >
-void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( double time,
+void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( real64 time,
                                                                                DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
