@@ -142,10 +142,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-        subRegion.registerField< fields::flow::fractureCreationTime >( viewKeyStruct::fractureCreationTimeString() ).
-          setApplyDefaultValue( 0.0 );
-    });
-  });
+      subRegion.registerField< fields::flow::fractureCreationTime >( viewKeyStruct::fractureCreationTimeString() ).
+        setApplyDefaultValue( 0.0 );
+    } );
+  } );
 
   if( m_isLaggingFractureStencilWeightsUpdate )
   {
