@@ -133,6 +133,20 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
   } );
 #endif
 
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+        subRegion.registerField< fields::flow::fractureCreationTime >( viewKeyStruct::fractureCreationTimeString() ).
+          setApplyDefaultValue( 0.0 );
+    });
+  });
+
   if( m_isLaggingFractureStencilWeightsUpdate )
   {
     flowSolver()->enableLaggingFractureStencilWeightsUpdate();

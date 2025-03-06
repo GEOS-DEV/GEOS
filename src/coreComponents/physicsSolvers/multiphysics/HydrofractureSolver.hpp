@@ -181,6 +181,8 @@ public:
 
     constexpr static char const * leakoffConstString() {return "leakoffCoefficient"; }
 
+    constexpr static char const * fractureCreationTimeString() {return "fractureCreationTime"; }
+
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
     constexpr static char const * apertureAtFailureString() { return "apertureAtFailure"; }
