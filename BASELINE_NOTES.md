@@ -6,6 +6,14 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3401 (2025-03-05)
+=====================
+Bugfix for IHU.
+
+PR #3483 (2025-03-02)
+=====================
+Remove relative permeability from wells.
+
 PR #3576 (2025-03-01)
 =====================
 Add an option to skip density and viscosity computes when phase is not present for CO2 fluid update.

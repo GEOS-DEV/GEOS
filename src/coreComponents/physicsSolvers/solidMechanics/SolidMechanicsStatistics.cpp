@@ -164,8 +164,8 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
     mechanicsData.addRow( "max", GEOS_FMT( "[{},{},{}]", nodeStatistics.maxDisplacement[0],
                                            nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ));
 
-    string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
-    TableLayout mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
+  string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
+  TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
 
     TableTextFormatter mechanicsFormatter( mechanicsLayout );
     mechanicsFormatter.toString( mechanicsData );
