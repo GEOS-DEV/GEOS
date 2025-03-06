@@ -723,8 +723,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
 
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::
-assembleFluidLeakSource( real64 time,
-                         real64 dt,
+assembleFluidLeakSource( real64 const time,
+                         real64 const dt,
                          DomainPartition & domain,
                          DofManager const & dofManager,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
