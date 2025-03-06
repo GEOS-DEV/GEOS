@@ -49,10 +49,11 @@ void CompositeFunction::initializeFunction()
   {
     m_subFunctions.emplace_back( &functionManager.getGroup< FunctionBase >( m_functionNames[ii] ) );
   }
+  setOperation();
 }
 
- // Function to dynamically set the operation based on a string
-void CompositeFunction::setOperation() 
+// Function to dynamically set the operation based on a string
+void CompositeFunction::setOperation()
 {
   switch( m_operationType )
   {
@@ -69,7 +70,7 @@ void CompositeFunction::setOperation()
       m_operation = math::Division{};
       break;
     default:
-      GEOS_THROW( GEOS_FMT("Unsupported operation {}", m_operationType ), std::invalid_argument );
+      GEOS_THROW( GEOS_FMT( "Unsupported operation {}", m_operationType ), std::invalid_argument );
   }
 }
 
@@ -92,7 +93,7 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
   forAll< serialPolicy >( set.size(), [&, result, set]( localIndex const i )
   {
     localIndex const ii = set[ i ];
-    std::vector<real64> functionResults(m_numSubFunctions);
+    std::vector< real64 > functionResults( m_numSubFunctions );
     for( localIndex jj=0; jj<m_numSubFunctions; ++jj )
     {
       functionResults[jj] = subFunctionResults[jj][ii];
@@ -104,7 +105,7 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
 
 real64 CompositeFunction::evaluate( real64 const * const input ) const
 {
-  std::vector<real64> functionResults(m_numSubFunctions);
+  std::vector< real64 > functionResults( m_numSubFunctions );
 
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {

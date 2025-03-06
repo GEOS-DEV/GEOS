@@ -125,6 +125,15 @@ public:
     division
   };
 
+  void setOperationType( OperationType operationType )
+  {
+    m_operationType = std::move( operationType );
+  }
+
+  void setSubFunctionNames( string_array functionNames )
+  {
+    m_functionNames = std::move( functionNames );
+  }
 private:
 
   void setOperation();

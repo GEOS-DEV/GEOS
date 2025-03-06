@@ -21,6 +21,7 @@
 #include "functions/TableFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 #include "functions/MultivariableTableFunctionKernels.hpp"
+#include "functions/CompositeFunction.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOS_USE_MATHPRESSO
@@ -536,6 +537,155 @@ TEST( FunctionTests, 4DTable_derivatives )
           }
         }
       }
+    }
+  }
+}
+
+TEST( FunctionTests, CompositeFunction )
+{
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+
+  // Create subtable_a
+  // 2D table with linear interpolation
+  // f(x, y) = 2*x - 3*y + 5
+  localIndex const Ndim = 2;
+  localIndex const Nx = 3;
+  localIndex const Ny = 4;
+  localIndex const Ntest = 20;
+  localIndex const Ntimes = 5;
+  string const inputName = "coordinates";
+
+  // Setup table
+  array1d< array1d< real64 > > coordinates;
+  coordinates.resize( Ndim );
+  coordinates[0].resize( Nx );
+  coordinates[0][0] = -1.0;
+  coordinates[0][1] = 0.0;
+  coordinates[0][2] = 2.0;
+  coordinates[1].resize( Ny );
+  coordinates[1][0] = -1.0;
+  coordinates[1][1] = 0.0;
+  coordinates[1][2] = 1.0;
+  coordinates[1][3] = 2.0;
+
+  array1d< real64 > values( Nx * Ny );
+  localIndex tablePosition = 0;
+  for( localIndex jj=0; jj<Ny; ++jj )
+  {
+    for( localIndex ii=0; ii<Nx; ++ii )
+    {
+      real64 const x = coordinates[0][ii];
+      real64 const y = coordinates[1][jj];
+      values[tablePosition] = (2.0*x) - (3.0*y) + 5.0;
+      ++tablePosition;
+    }
+  }
+
+  // Set input names
+  string_array inputVarNames( 1 );
+  inputVarNames[0] = inputName;
+
+  // Initialize the subtable
+  TableFunction & subTable_a = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "subTable_a" ) );
+  subTable_a.setTableCoordinates( coordinates, { units::Dimensionless } );
+  subTable_a.setTableValues( values, units::Dimensionless );
+  subTable_a.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  subTable_a.setInputVarNames( inputVarNames );
+  subTable_a.reInitializeFunction();
+
+  // Create subtable_a
+  // 2D table with linear interpolation
+  // f(t) =  1 - t
+  localIndex const Nt = 4;
+
+  // Setup table
+  array1d< array1d< real64 > > timeCoordinates;
+  timeCoordinates.resize( 1 );
+  timeCoordinates[0].resize( Nt );
+  timeCoordinates[0][0] = 0.0;
+  timeCoordinates[0][1] = 0.2;
+  timeCoordinates[0][2] = 0.8;
+  timeCoordinates[0][3] = 1.0;
+
+  array1d< real64 > timeTableValues( Nt );
+  localIndex timeTablePosition = 0;
+  for( localIndex ii=0; ii<Nt; ++ii )
+  {
+
+    real64 const t = timeCoordinates[0][ii];
+    timeTableValues[timeTablePosition] = 1. - t;
+    ++timeTablePosition;
+  }
+
+  // Set input names
+  string_array varName( 1 );
+  varName[0] = "time";
+
+  // Create subtable_b
+  TableFunction & subTable_b = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "subTable_b" ) );
+  subTable_b.setTableCoordinates( timeCoordinates, { units::Dimensionless } );
+  subTable_b.setTableValues( timeTableValues, units::Dimensionless );
+  subTable_b.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  subTable_b.setInputVarNames( varName );
+  subTable_b.reInitializeFunction();
+
+  // Create composite function
+  CompositeFunction & compositeFunction = dynamicCast< CompositeFunction & >( *functionManager->createChild( "CompositeFunction", "compositeTable" ) );
+  compositeFunction.setOperationType( CompositeFunction::OperationType::product );
+  string_array subFunctionNames( 2 );
+  subFunctionNames[0] = "subTable_a";
+  subFunctionNames[1] = "subTable_b";
+  compositeFunction.setSubFunctionNames( subFunctionNames );
+  compositeFunction.initializeFunction();
+
+  // Setup a group for testing the batch mode function evaluation
+  conduit::Node node;
+  dataRepository::Group testGroup( "testGroup", node );
+
+  array2d< real64 > testCoordinates;
+  testGroup.registerWrapper( inputName, &testCoordinates ).
+    setSizedFromParent( 1 ).
+    reference().resizeDimension< 1 >( Ndim );
+  testGroup.resize( Ntest );
+
+  // Build testing inputs/outputs
+  array1d< real64 > expected( Ntest );
+  array1d< real64 > output( Ntest );
+  SortedArray< localIndex > set;
+
+  // Build the set
+  for( localIndex ii=0; ii<Ntest; ++ii )
+  {
+    set.insert( ii );
+  }
+
+  // Setup the random number generator
+  std::default_random_engine generator;
+  std::uniform_real_distribution< double > distribution( -0.99, 1.99 );
+  for( localIndex tt=0; tt<Ntimes; ++tt )
+  {
+    real64 const t = 1.0; //distribution( generator );
+    // Test the function
+    for( localIndex ii=0; ii<Ntest; ++ii )
+    {
+      for( localIndex jj=0; jj<Ndim; ++jj )
+      {
+        testCoordinates[ii][jj] = distribution( generator );
+      }
+
+      real64 const x = testCoordinates[ii][0];
+      real64 const y = testCoordinates[ii][1];
+      expected[ii] = ( (2.0*x) - (3.0*y) + 5.0 ) * ( 1.0 - t );
+      set.insert( ii );
+    }
+
+    // Evaluate the function in batch mode
+    compositeFunction.evaluate( testGroup, t, set.toView(), output );
+
+    // Compare results
+    for( localIndex ii=0; ii<Ntest; ++ii )
+    {
+      ASSERT_NEAR( expected[ii], output[ii], 1e-10 );
     }
   }
 }

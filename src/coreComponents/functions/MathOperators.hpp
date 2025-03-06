@@ -13,7 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
- /**
+/**
  * @file MathOperators.hpp
  */
 
@@ -81,22 +81,19 @@ template< typename T, typename Operation, typename ... Args >
 std::enable_if_t< std::conjunction_v< std::is_arithmetic< T >, std::is_arithmetic< Args >... >, T >
 apply_impl( Operation const & op, T const & first, Args const & ... args )
 {
-  return op( first, apply( op, args ... ));
+  return op( first, apply_impl( op, args ... ));
 }
 
 template< typename Operation, typename CONTAINER_TYPE >
 get_value_type_t< CONTAINER_TYPE >
-apply_impl( const Operation & op, const CONTAINER_TYPE & container, std::size_t index = 0 )
+apply_impl( Operation const & op, CONTAINER_TYPE const & container )
 {
-  if( index >= container.size())
+  auto result = container[0];
+  for( std::size_t i = 1; i < container.size(); ++i )
   {
-    GEOS_THROW( "Container must not be empty", std::runtime_error );
+    result = op( result, container[i] );
   }
-  if( index == container.size() - 1 )
-  {
-    return container[index];
-  }
-  return op( container[index], apply_impl( op, container, index + 1 ));
+  return result;
 }
 
 } /* namespace internal */
