@@ -79,6 +79,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/GlobalComponentFractionKernel.hpp
      kernels/compositional/HydrostaticPressureKernel.hpp
      kernels/compositional/IHUPhaseFlux.hpp
+     kernels/compositional/HU2PhaseFlux.hpp
      kernels/compositional/KernelLaunchSelectors.hpp
      kernels/compositional/PhaseComponentFlux.hpp
      kernels/compositional/PhaseMobilityKernel.hpp
