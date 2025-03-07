@@ -86,6 +86,12 @@ public:
     CellLayout();
 
     /**
+     * @brief Constructor to initialize an empty Cell of a given type.
+     * @param cellType The type of the cell.
+     */
+    CellLayout( CellType cellType );
+
+    /**
      * @brief Constructor to initialize a cell given celltype, value and alignment.
      * @param cellType The type of the cell.
      * @param value The value to be assigned to the cell.
@@ -104,7 +110,7 @@ public:
     /// The header cell layout.
     CellLayout m_header;
     /// A vector containing all sub-columns in the column.
-    std::vector< Column > m_subColumn;
+    std::vector< Column > m_subColumns; // TODO le s
     /// struct containing m_alignment for the column (header and values)
     ColumnAlignement m_alignment;
 
@@ -136,17 +142,15 @@ public:
     { m_parent = parent; }
 
     /**
-     * @brief GGet the next column in the layout.
-     * @return  Pointer to the next column or `nullptr` if no next column exists.
+     * @return Pointer to the next column that has the same parent or `nullptr` if no next column exists.
      */
-    Column * getNextCell()
+    Column * getNext()
     { return m_next; }
 
     /**
-     * @brief Set the next column in the layout.
-     * @param nextCell  The next column in the table layout.
+     * @param nextCell The next column in the table layout that has the same parent.
      */
-    void setNextCell( Column * nextCell )
+    void setNext( Column * nextCell )
     {  m_next = nextCell; }
 
     /**
@@ -208,28 +212,28 @@ public:
     /**
      * @return number of times we will divide the current cell
      */
-    size_t getNumberCellMerge()
-    { return m_headerMergeCount; }
+    size_t getSubdivisionCount() const
+    { return m_subdivisionCount; }
 
     /**
      * @brief Increment number of times we will divide the current cell
      * @param value number of division to add
      */
-    void incrementMergeHeaderCount( size_t value )
-    { m_headerMergeCount+= value;}
+    void incrementSubdivisionCount( size_t value )
+    { m_subdivisionCount+= value;}
 
     /**
      * @brief Decremente number of times we will divide the current cell
      */
-    void decrementMergeHeaderCount()
-    { m_headerMergeCount--; }
+    void decrementSubdivisionCount()
+    { m_subdivisionCount--; }
 
     /**
      * @brief Checks if the column has any child columns.
      * @return bool True if the column has child columns, otherwise false.
      */
     bool hasChild() const
-    { return !this->m_subColumn.empty(); }
+    { return !this->m_subColumns.empty(); }
 
     /**
      * @brief Checks if the column has a parent column.
@@ -238,13 +242,19 @@ public:
     bool hasParent() const
     { return this->m_parent != nullptr; }
 
+    /**
+     * @return bool True if the column has a neightboor to its right that has the same parent.
+     */
+    bool hasNext() const
+    { return this->m_next != nullptr; }
+
 private:
     /// Pointer to the parent cell (if any).
     Column * m_parent;
     /// Pointer to the next cell (if any).
     Column * m_next;
     /// The width of the cell (e.g., for cell containing subColumns).
-    size_t m_headerMergeCount  = 0;
+    size_t m_subdivisionCount = 0;
   };
 
   /**
@@ -327,13 +337,6 @@ public:
     size_t getCurrentLayer() const
     { return m_currentLayer; }
 
-    /**
-     * @brief Check if the current cell belong the last column
-     * @return true
-     * @return false
-     */
-    bool isLastColumn();
-
 private:
     /// Pointer to the current column
     ColumnType * m_currentColumn;
@@ -354,9 +357,7 @@ private:
    * representing a position after the last valid element
    */
   DeepFirstIterator endDeepFirst()
-  {
-    return DeepFirstIterator( nullptr, 0 );
-  }
+  { return DeepFirstIterator( nullptr, 0 ); }
 
   /// Alias for an initializer list of variants that can contain either a string or a layout column.
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
@@ -474,7 +475,7 @@ private:
 
   /**
    * @return The border margin,
-   * number of spaces at both left and right table sides plus vertical character
+   * number of spaces at each table sides
    */
   integer const & getBorderMargin() const
   { return m_borderMargin; }
@@ -498,18 +499,30 @@ private:
   integer const & getMarginTitle() const
   { return m_titleMargin; }
 
-/**
- * @brief Get the Nb Rows object
- * @return std::vector< integer >&
- */
+  /**
+   * @brief Get the Nb Rows object
+   * @return std::vector< integer >&
+   */
   std::vector< size_t > & getSublineInHeaderCounts()
   { return m_sublineHeaderCounts; }
+  /**
+   * @brief Get the Nb Rows object
+   * @return std::vector< integer >&
+   */
+  std::vector< size_t > const & getSublineInHeaderCounts() const
+  { return m_sublineHeaderCounts; }
 
-/**
- * @brief Get the Nb Rows object
- * @return std::vector< integer >&
- */
-  std::vector< size_t > & getNbSubDataLines()
+  /**
+   * @brief Get the Nb Rows object
+   * @return std::vector< integer >&
+   */
+  std::vector< size_t > & getSublineInDataCounts()
+  { return m_sublineDataCounts; }
+  /**
+   * @brief Get the Nb Rows object
+   * @return std::vector< integer >&
+   */
+  std::vector< size_t > const & getSublineInDataCounts() const
   { return m_sublineDataCounts; }
 
   /**

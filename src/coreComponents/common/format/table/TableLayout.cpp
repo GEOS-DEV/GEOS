@@ -73,9 +73,9 @@ size_t TableLayout::getMaxDepth() const
   {
     currDepth = 1;
     TableLayout::Column const * currColumn = &column;
-    while( !currColumn->m_subColumn.empty())
+    while( !currColumn->m_subColumns.empty())
     {
-      currColumn = &currColumn->m_subColumn[0];
+      currColumn = &currColumn->m_subColumns[0];
       currDepth++;
     }
     depthMax = std::max( currDepth, depthMax );
@@ -115,6 +115,13 @@ size_t computeCellWidth( std::vector< string > const & lines )
 TableLayout::CellLayout::CellLayout():
   m_lines( {""} ),
   m_cellType( CellType::Header ),
+  m_alignment( TableLayout::Alignment::center ),
+  m_cellWidth( 0 )
+{}
+
+TableLayout::CellLayout::CellLayout( CellType const cellType ):
+  m_lines( {""} ),
+  m_cellType( cellType ),
   m_alignment( TableLayout::Alignment::center ),
   m_cellWidth( 0 )
 {}
@@ -160,7 +167,7 @@ TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
  * @tparam CONTAINER Container type of sub-column names (e.g. std::vector<std::string>).
  * @param names Sub-column names list.
  * @param alignment alignment of the sub-columns to create.
- * @return A vector of TableLayout::Column, ready to use for TableLayout::Column::m_subColumn.
+ * @return A vector of TableLayout::Column, ready to use for TableLayout::Column::m_subColumns.
  */
 template< typename CONTAINER >
 static std::vector< TableLayout::Column > makeSubColumnsFromStrings( CONTAINER const & names,
@@ -179,19 +186,19 @@ static std::vector< TableLayout::Column > makeSubColumnsFromStrings( CONTAINER c
 
 TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< string > subColNames )
 {
-  m_subColumn = makeSubColumnsFromStrings( subColNames, m_alignment );
+  m_subColumns = makeSubColumnsFromStrings( subColNames, m_alignment );
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::addSubColumns( std::vector< string > const & subColNames )
 {
-  m_subColumn = makeSubColumnsFromStrings( subColNames, m_alignment );
+  m_subColumns = makeSubColumnsFromStrings( subColNames, m_alignment );
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< TableLayout::Column > subCol )
 {
-  m_subColumn = subCol;
+  m_subColumns = subCol;
   return *this;
 }
 
@@ -200,7 +207,7 @@ TableLayout::Column & TableLayout::Column::addSubColumns( string const & subColN
   TableLayout::CellLayout cell{CellType::Header, subColName, TableLayout::Alignment::center};
   TableLayout::Column col{cell};
   col.m_alignment = m_alignment;
-  this->m_subColumn.push_back( col );
+  this->m_subColumns.push_back( col );
   return *this;
 }
 
@@ -208,7 +215,7 @@ TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerA
 {
   m_alignment.headerAlignment = headerAlignment;
   m_header.m_alignment = headerAlignment;
-  std::vector< Column > & currColumns = m_subColumn;
+  std::vector< Column > & currColumns = m_subColumns;
   if( !currColumns.empty() )
   {
     for( auto & subColumn : currColumns )
@@ -222,10 +229,10 @@ TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerA
 TableLayout::Column & TableLayout::Column::setValuesAlignment( Alignment valueAlignment )
 {
   m_alignment.valueAlignment = valueAlignment;
-  std::vector< Column > & currColumns = m_subColumn;
+  std::vector< Column > & currColumns = m_subColumns;
   if( !currColumns.empty() )
   {
-    for( auto & subColumn : m_subColumn )
+    for( auto & subColumn : m_subColumns )
     {
       subColumn.setValuesAlignment( valueAlignment );
     }
@@ -235,13 +242,13 @@ TableLayout::Column & TableLayout::Column::setValuesAlignment( Alignment valueAl
 
 TableLayout::DeepFirstIterator & TableLayout::DeepFirstIterator::operator++()
 {
-  if( m_currentColumn->getNextCell() != nullptr )
+  if( m_currentColumn->getNext() != nullptr )
   {
-    m_currentColumn = m_currentColumn->getNextCell();
+    m_currentColumn = m_currentColumn->getNext();
     while( m_currentColumn->hasChild() )
     {
       m_currentLayer++;
-      m_currentColumn = &m_currentColumn->m_subColumn[0];
+      m_currentColumn = &m_currentColumn->m_subColumns[0];
     }
   }
   else
@@ -269,23 +276,10 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst()
     while( startColumn->hasChild() )
     {
       idxLayer++;
-      startColumn = &startColumn->m_subColumn[0];
+      startColumn = &startColumn->m_subColumns[0];
     }
   }
   return DeepFirstIterator( startColumn, idxLayer );
 }
-
-bool TableLayout::DeepFirstIterator::isLastColumn()
-{
-  if( m_currentColumn == nullptr )
-    return true;
-  TableLayout::Column * tempColumn = m_currentColumn;
-  while( tempColumn->getParent() )
-  {
-    tempColumn = tempColumn->getParent();
-  }
-  return tempColumn->getNextCell() == nullptr;
-}
-
 
 }
