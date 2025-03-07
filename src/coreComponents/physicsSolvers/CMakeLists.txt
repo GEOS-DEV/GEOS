@@ -132,6 +132,9 @@ blt_add_library( NAME       physicsSolvers
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
-target_link_options(physicsSolvers PUBLIC -Wl,--no-as-needed)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_options(physicsSolvers PUBLIC -Wl,--no-as-needed)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+endif()
               
 install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
