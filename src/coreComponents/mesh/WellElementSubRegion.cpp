@@ -145,7 +145,7 @@ bool isPointInsideElement( SUBREGION_TYPE const & GEOS_UNUSED_PARAM( subRegion )
                            localIndex const & GEOS_UNUSED_PARAM( eiLocal ),
                            ArrayOfArraysView< localIndex const > const & GEOS_UNUSED_PARAM( facesToNodes ),
                            real64 const (&GEOS_UNUSED_PARAM( location ))[3],
-                           real64 const geomTol )
+                           real64 const GEOS_UNUSED_PARAM( geomTol ) )
 {
   // only CellElementSubRegion is currently supported
   return false;
@@ -474,7 +474,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
                                      arrayView1d< integer > & elemStatusGlobal,
                                      globalIndex nodeOffsetGlobal,
                                      globalIndex elemOffsetGlobal,
-                                     real64 const globalLength )
+                                     real64 const geomTol )
 {
 
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
@@ -514,7 +514,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
                                     unownedElems,
                                     localElems,
                                     elemStatusGlobal,
-                                    globalLength );
+                                    geomTol );
   // 1.b) Then we check that all the well elements have been assigned (and assigned once)
   //      This is needed because if the center of the well element falls on the boundary of
   //      a reservoir element, the assignment algorithm of 1.a) can assign the same well element
@@ -575,14 +575,11 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
                                                              SortedArray< globalIndex > const & unownedElems,
                                                              SortedArray< globalIndex > & localElems,
                                                              arrayView1d< integer > & elemStatusGlobal,
-                                                             real64 const globalLength ) const
+                                                             real64 const geomTol ) const
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
   // get the well and reservoir element coordinates
   arrayView2d< real64 const > const & wellElemCoordsGlobal = lineBlock.getElemCoords();
-
-  // tolerance for geometrical calculations
-  real64 const geomTol = globalLength * 1e-10;
 
   // assign the well elements based on location wrt the reservoir elements
   // if the center of the well element falls in the domain owned by rank k
@@ -885,7 +882,7 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
 
 void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
                                                               LineBlockABC const & lineBlock,
-                                                              real64 const globalLength )
+                                                              real64 const geomTol )
 {
   arrayView2d< real64 const > const perfCoordsGlobal = lineBlock.getPerfCoords();
   arrayView1d< real64 const > const perfWellTransmissibilityGlobal = lineBlock.getPerfTransmissibility();
@@ -898,9 +895,6 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   arrayView2d< real64 > const perfLocation = m_perforationData.getLocation();
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
-
-  // tolerance for geometrical calculations
-  real64 const geomTol = globalLength * 1e-10;
 
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )

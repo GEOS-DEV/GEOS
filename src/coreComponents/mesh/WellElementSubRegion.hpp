@@ -201,22 +201,24 @@ public:
    *                       enum SegmentStatus. They are used to partition well elements.
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
+   * @param[in] geomTol the tolerance for geometric calculations
    */
   void generate( MeshLevel & mesh,
                  LineBlockABC const & lineBlock,
                  arrayView1d< integer > & elemStatus,
                  globalIndex nodeOffsetGlobal,
                  globalIndex elemOffsetGlobal,
-                 real64 globalLength );
+                 real64 geomTol );
 
   /**
    * @brief For each perforation, find the reservoir element that contains the perforation.
    * @param[in] mesh the mesh object (single level only)
    * @param[in] lineBlock the LineBlockABC containing the global well topology
+   * @param[in] geomTol the tolerance for geometric calculations
    */
   void connectPerforationsToMeshElements( MeshLevel & mesh,
                                           LineBlockABC const & lineBlock,
-                                          real64 globalLength );
+                                          real64 geomTol );
 
   /**
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange.
@@ -321,13 +323,14 @@ private:
                             with the newly assigned well elements in this function.
    * @param[out] wellElemStatus list of current well element status. Status values are defined in
    *                            enum SegmentStatus. They are used to partition well elements.
+   * @param[in] geomTol the tolerance for geometric calculations
    */
   void assignUnownedElementsInReservoir( MeshLevel & mesh,
                                          LineBlockABC const & lineBlock,
                                          SortedArray< globalIndex >           const & unownedElems,
                                          SortedArray< globalIndex > & localElems,
                                          arrayView1d< integer > & elemStatusGlobal,
-                                         real64 globalLength ) const;
+                                         real64 geomTol ) const;
 
   /**
    * @brief Check that all the well elements have been assigned to a single rank.

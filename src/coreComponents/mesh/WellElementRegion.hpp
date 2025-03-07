@@ -130,6 +130,7 @@ public:
    * @param[in] lineBlock the LineBlockABC containing the global well topology
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
+   * @param[in] globalLength the global length of the mesh
    */
   void generateWell( MeshLevel & mesh,
                      LineBlockABC const & lineBlock,
