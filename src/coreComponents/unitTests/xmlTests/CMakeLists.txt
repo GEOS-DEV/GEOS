@@ -17,7 +17,7 @@ set( multi_files
 
 set( tplDependencyList ${parallelDeps} gtest )
 
-set( dependencyList mainInterface )
+set( dependencyList mainInterface physicsSolvers )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
