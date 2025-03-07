@@ -17,6 +17,7 @@
  * @file PhillipsBrineDensity.cpp
  */
 
+#include "EquationOfState.hpp"
 #include "PhillipsBrineDensity.hpp"
 #include "PressureTemperatureCoordinates.hpp"
 #include "BrineSalinity.hpp"
@@ -54,6 +55,7 @@ std::unique_ptr< ModelParameters >
 PhillipsBrineDensity::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
   std::unique_ptr< ModelParameters > params = std::move( parameters );
+  params = EquationOfState::create( std::move( params ) );
   params = PressureTemperatureCoordinates::create( std::move( params ) );
   params = BrineSalinity::create( std::move( params ) );
   if( params && params->get< Parameters >() != nullptr )
@@ -409,7 +411,6 @@ void PhillipsBrineDensityUpdate::compute(
   bool useMass ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
-  GEOS_UNUSED_VAR( dMassDensity );
   GEOS_UNUSED_VAR( useMass );
 
   integer const numComps = componentProperties.m_componentMolarWeight.size();

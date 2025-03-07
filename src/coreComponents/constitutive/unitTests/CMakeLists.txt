@@ -1,6 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
      testCompositionalDensity.cpp
+     testCompositionalPhillipsBrineDensity.cpp
      testCompositionalProperties.cpp
      testCubicEOS.cpp
      testDamageUtilities.cpp
