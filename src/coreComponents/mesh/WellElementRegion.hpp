@@ -134,7 +134,8 @@ public:
   void generateWell( MeshLevel & mesh,
                      LineBlockABC const & lineBlock,
                      globalIndex nodeOffsetGlobal,
-                     globalIndex elemOffsetGlobal );
+                     globalIndex elemOffsetGlobal,
+                     real64 globalLength );
 
   ///@}
 

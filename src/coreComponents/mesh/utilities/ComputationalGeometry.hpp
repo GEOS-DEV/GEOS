@@ -443,7 +443,7 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
  * @return whether the point is inside
  */
 template< typename POLYGON_TYPE, typename POINT_TYPE >
-bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE const & point )
+bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE const & point, real64 const tol = 1e-10 )
 {
   integer count = 0;
 
@@ -457,7 +457,7 @@ bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE con
        (point[0] <= std::max( p1[0], p2[0] )))
     {
       real64 const xIntersect = (point[1] - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]) + p1[0];
-      if( std::abs( p1[0] - p2[0] ) < 1e-10 || point[0] <= xIntersect )
+      if( std::abs( p1[0] - p2[0] ) < tol || point[0] <= xIntersect )
       {
         count++;
       }
@@ -477,7 +477,7 @@ bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE con
  * @return whether the point is inside
  */
 template< typename POLYGON_TYPE, typename POINT_TYPE >
-bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TYPE const & point )
+bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TYPE const & point, real64 const tol = 1e-10 )
 {
   // Check if the point lies in the plane of the polygon
   auto const & p0 = polygon[0];
@@ -494,7 +494,7 @@ bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TY
   real64 d = -(normal[0] * p0[0] + normal[1] * p0[1] + normal[2] * p0[2]);
   real64 dist = normal[0] * point[0] + normal[1] * point[1] + normal[2] * point[2] + d;
 
-  if( std::abs( dist ) > 1e-6 )
+  if( std::abs( dist ) > tol )
   {
     return false;
   }

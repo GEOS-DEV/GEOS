@@ -49,7 +49,8 @@ WellElementRegion::~WellElementRegion()
 void WellElementRegion::generateWell( MeshLevel & mesh,
                                       LineBlockABC const & lineBlock,
                                       globalIndex nodeOffsetGlobal,
-                                      globalIndex elemOffsetGlobal )
+                                      globalIndex elemOffsetGlobal,
+                                      real64 const globalLength )
 {
   // get the (unique) subregion
   WellElementSubRegion &
@@ -65,7 +66,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   globalIndex const numPerforationsGlobal = lineBlock.numPerforations();
 
   // 1) select the local perforations based on connectivity to the local reservoir elements
-  subRegion.connectPerforationsToMeshElements( mesh, lineBlock );
+  subRegion.connectPerforationsToMeshElements( mesh, lineBlock, globalLength );
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
   GEOS_THROW_IF( matchedPerforations != numPerforationsGlobal,
@@ -105,7 +106,8 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                       lineBlock,
                       elemStatusGlobal,
                       nodeOffsetGlobal,
-                      elemOffsetGlobal );
+                      elemOffsetGlobal,
+                      globalLength );
 
 
   // 4) find out which rank is the owner of the top segment

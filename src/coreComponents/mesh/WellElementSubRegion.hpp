@@ -206,7 +206,8 @@ public:
                  LineBlockABC const & lineBlock,
                  arrayView1d< integer > & elemStatus,
                  globalIndex nodeOffsetGlobal,
-                 globalIndex elemOffsetGlobal );
+                 globalIndex elemOffsetGlobal,
+                 real64 globalLength );
 
   /**
    * @brief For each perforation, find the reservoir element that contains the perforation.
@@ -214,7 +215,8 @@ public:
    * @param[in] lineBlock the LineBlockABC containing the global well topology
    */
   void connectPerforationsToMeshElements( MeshLevel & mesh,
-                                          LineBlockABC const & lineBlock );
+                                          LineBlockABC const & lineBlock,
+                                          real64 globalLength );
 
   /**
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange.
@@ -324,7 +326,8 @@ private:
                                          LineBlockABC const & lineBlock,
                                          SortedArray< globalIndex >           const & unownedElems,
                                          SortedArray< globalIndex > & localElems,
-                                         arrayView1d< integer > & elemStatusGlobal ) const;
+                                         arrayView1d< integer > & elemStatusGlobal,
+                                         real64 globalLength ) const;
 
   /**
    * @brief Check that all the well elements have been assigned to a single rank.

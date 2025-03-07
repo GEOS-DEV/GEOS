@@ -205,7 +205,11 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
-    wellRegion.generateWell( meshLevel, lineBlock, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+    wellRegion.generateWell( meshLevel,
+                             lineBlock,
+                             nodeOffsetGlobal + wellNodeCount,
+                             elemOffsetGlobal + wellElemCount,
+                             cellBlockManager.getGlobalLength() );
 
     // increment counters with global number of nodes and elements
     wellElemCount += lineBlock.numElements();

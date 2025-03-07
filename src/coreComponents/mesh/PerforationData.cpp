@@ -250,12 +250,12 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
     dy = boxDims[ 1 ];
     dz = boxDims[ 2 ];
 
-    if( dx < 1e-10 )
+    if( isZero( dx ) )
     {
       dx  = subRegion.getElementVolume()[ei];
       dx /= dy * dz;
     }
-    else if( dy < 1e-10 )
+    else if( isZero( dy ) )
     {
       dy  = subRegion.getElementVolume()[ei];
       dy /= dx * dz;

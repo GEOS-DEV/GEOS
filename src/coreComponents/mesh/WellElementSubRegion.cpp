@@ -144,7 +144,8 @@ bool isPointInsideElement( SUBREGION_TYPE const & GEOS_UNUSED_PARAM( subRegion )
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOS_UNUSED_PARAM( referencePosition ),
                            localIndex const & GEOS_UNUSED_PARAM( eiLocal ),
                            ArrayOfArraysView< localIndex const > const & GEOS_UNUSED_PARAM( facesToNodes ),
-                           real64 const (&GEOS_UNUSED_PARAM( location ))[3] )
+                           real64 const (&GEOS_UNUSED_PARAM( location ))[3],
+                           real64 const geomTol )
 {
   // only CellElementSubRegion is currently supported
   return false;
@@ -154,7 +155,8 @@ bool isPointInsideElement( CellElementSubRegion const & subRegion,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition,
                            localIndex const & eiLocal,
                            ArrayOfArraysView< localIndex const > const & facesToNodes,
-                           real64 const (&location)[3] )
+                           real64 const (&location)[3],
+                           real64 const geomTol )
 {
   arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
   arrayView2d< real64 const > const elemCenters = subRegion.getElementCenter();
@@ -165,7 +167,8 @@ bool isPointInsideElement( CellElementSubRegion const & subRegion,
                                                          elemsToFaces[eiLocal],
                                                          facesToNodes,
                                                          elemCenter,
-                                                         location );
+                                                         location,
+                                                         geomTol );
 }
 
 // Define a hash function
@@ -185,17 +188,23 @@ struct PointHash
 template< typename POINT_TYPE >
 struct PointsEqual
 {
+  PointsEqual( double tolerance ): m_tol( tolerance ) {}
+
   bool operator()( POINT_TYPE const & p1, POINT_TYPE const & p2 ) const
   {
-    return (std::abs( p1[0] - p2[0] ) < 1e-10) && (std::abs( p1[1] - p2[1] ) < 1e-10) && (std::abs( p1[2] - p2[2] ) < 1e-10);
+    return (std::abs( p1[0] - p2[0] ) < m_tol) && (std::abs( p1[1] - p2[1] ) < m_tol) && (std::abs( p1[2] - p2[2] ) < m_tol);
   }
+
+private:
+  real64 const m_tol;
 };
 
 bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition,
                            localIndex const & eiLocal,
                            ArrayOfArraysView< localIndex const > const & GEOS_UNUSED_PARAM( facesToNodes ),
-                           real64 const (&location)[3] )
+                           real64 const (&location)[3],
+                           real64 const geomTol )
 {
   typedef std::array< real64, 3 > Point3d;
 
@@ -213,11 +222,12 @@ bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
 
   // remove duplicates
   std::unordered_set< Point3d, PointHash< Point3d >, PointsEqual< Point3d > >
-  unique_points( polygon.begin(), polygon.end());
+  unique_points( 0, PointHash< Point3d >(), PointsEqual< Point3d >( geomTol ));
+  unique_points.insert( polygon.begin(), polygon.end());
   polygon.clear();
   std::copy( unique_points.begin(), unique_points.end(), std::back_inserter( polygon ));
 
-  return computationalGeometry::isPointInPolygon3d( polygon, polygon.size(), location );
+  return computationalGeometry::isPointInPolygon3d( polygon, polygon.size(), location, geomTol );
 }
 
 /**
@@ -241,7 +251,8 @@ bool visitNeighborElements( MeshLevel const & mesh,
                             localIndex const & targetRegionIndex,
                             localIndex const & targetSubRegionIndex,
                             localIndex & eiMatched,
-                            globalIndex & giMatched )
+                            globalIndex & giMatched,
+                            real64 const geomTol )
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -294,7 +305,7 @@ bool visitNeighborElements( MeshLevel const & mesh,
 
         // perform the test to see if the point is in this reservoir element
         // if the point is in the resevoir element, save the indices and stop the search
-        if( isPointInsideElement( subRegion, referencePosition, eiLocal, facesToNodes, location ) )
+        if( isPointInsideElement( subRegion, referencePosition, eiLocal, facesToNodes, location, geomTol ) )
         {
           eiMatched = eiLocal;
           giMatched = eiGlobal;
@@ -371,7 +382,8 @@ bool searchLocalElements( MeshLevel const & mesh,
                           localIndex const & targetRegionIndex,
                           localIndex & esrMatched,
                           localIndex & eiMatched,
-                          globalIndex & giMatched )
+                          globalIndex & giMatched,
+                          real64 const geomTol )
 {
   ElementRegionBase const & region = mesh.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
 
@@ -423,7 +435,15 @@ bool searchLocalElements( MeshLevel const & mesh,
         // if not, enlarge the set "nodes"
 
         resElemFound =
-          visitNeighborElements< TYPEOFREF( subRegion ) >( mesh, location, nodes, elements, targetRegionIndex, esr, eiMatched, giMatched );
+          visitNeighborElements< TYPEOFREF( subRegion ) >( mesh,
+                                                           location,
+                                                           nodes,
+                                                           elements,
+                                                           targetRegionIndex,
+                                                           esr,
+                                                           eiMatched,
+                                                           giMatched,
+                                                           geomTol );
 
         if( resElemFound || nNodes == nodes.size())
         {
@@ -453,7 +473,8 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
                                      LineBlockABC const & lineBlock,
                                      arrayView1d< integer > & elemStatusGlobal,
                                      globalIndex nodeOffsetGlobal,
-                                     globalIndex elemOffsetGlobal )
+                                     globalIndex elemOffsetGlobal,
+                                     real64 const globalLength )
 {
 
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
@@ -492,7 +513,8 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
                                     lineBlock,
                                     unownedElems,
                                     localElems,
-                                    elemStatusGlobal );
+                                    elemStatusGlobal,
+                                    globalLength );
   // 1.b) Then we check that all the well elements have been assigned (and assigned once)
   //      This is needed because if the center of the well element falls on the boundary of
   //      a reservoir element, the assignment algorithm of 1.a) can assign the same well element
@@ -552,11 +574,15 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
                                                              LineBlockABC const & lineBlock,
                                                              SortedArray< globalIndex > const & unownedElems,
                                                              SortedArray< globalIndex > & localElems,
-                                                             arrayView1d< integer > & elemStatusGlobal ) const
+                                                             arrayView1d< integer > & elemStatusGlobal,
+                                                             real64 const globalLength ) const
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
   // get the well and reservoir element coordinates
   arrayView2d< real64 const > const & wellElemCoordsGlobal = lineBlock.getElemCoords();
+
+  // tolerance for geometrical calculations
+  real64 const geomTol = globalLength * 1e-10;
 
   // assign the well elements based on location wrt the reservoir elements
   // if the center of the well element falls in the domain owned by rank k
@@ -575,7 +601,7 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
       localIndex esrMatched = -1;
       localIndex eiMatched  = -1;
       globalIndex giMatched = -1;
-      resElemFound = searchLocalElements( mesh, location, m_searchDepth, er, esrMatched, eiMatched, giMatched );
+      resElemFound = searchLocalElements( mesh, location, m_searchDepth, er, esrMatched, eiMatched, giMatched, geomTol );
 
       if( resElemFound )
       {
@@ -858,7 +884,8 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
 }
 
 void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
-                                                              LineBlockABC const & lineBlock )
+                                                              LineBlockABC const & lineBlock,
+                                                              real64 const globalLength )
 {
   arrayView2d< real64 const > const perfCoordsGlobal = lineBlock.getPerfCoords();
   arrayView1d< real64 const > const perfWellTransmissibilityGlobal = lineBlock.getPerfTransmissibility();
@@ -871,6 +898,9 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   arrayView2d< real64 > const perfLocation = m_perforationData.getLocation();
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  // tolerance for geometrical calculations
+  real64 const geomTol = globalLength * 1e-10;
 
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
@@ -903,7 +933,14 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
       localIndex esrMatched = -1;
       localIndex eiMatched  = -1;
       globalIndex giMatched  = -1;
-      bool const resElemFound = searchLocalElements( mesh, location, m_searchDepth, er, esrMatched, eiMatched, giMatched );
+      bool const resElemFound = searchLocalElements( mesh,
+                                                     location,
+                                                     m_searchDepth,
+                                                     er,
+                                                     esrMatched,
+                                                     eiMatched,
+                                                     giMatched,
+                                                     geomTol );
 
       // if the element was found
       if( resElemFound )
