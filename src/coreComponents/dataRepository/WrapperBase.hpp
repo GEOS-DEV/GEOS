@@ -530,14 +530,6 @@ public:
   }
 
   /**
-   * @brief @return a table formatted string containing the input options.
-   * @param outputHeader If true outputs the table header, otherwise just
-   *                     outputs a row.
-   */
-  string dumpInputOptions( bool const outputHeader ) const;
-
-
-  /**
    * @brief Get the list of names of groups that registered this wrapper.
    * @return vector of object names
    */
