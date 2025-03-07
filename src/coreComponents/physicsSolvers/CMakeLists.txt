@@ -132,8 +132,8 @@ blt_add_library( NAME       physicsSolvers
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
-foreach()
-  target_link_libraries( physicsSolvers PUBLIC $<LINK_LIBRARY:WHOLE_ARCHIVE,{dep}> )
+foreach( dep ${dependencyList} )
+  target_link_libraries( physicsSolvers PUBLIC $<LINK_LIBRARY:WHOLE_ARCHIVE,${dep}> )
 endforeach()
 
               
