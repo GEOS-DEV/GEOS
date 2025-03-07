@@ -84,7 +84,7 @@ set( physicsSolvers_headers
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp )
 
-set( dependencyList )
+set( dependencyList ${parallelDeps})
 if( GEOS_ENABLE_FLUIDFLOW )
   add_subdirectory( fluidFlow )
   list( APPEND dependencyList fluidFlowSolvers )
@@ -132,5 +132,9 @@ blt_add_library( NAME       physicsSolvers
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+foreach()
+  target_link_libraries( physicsSolvers PUBLIC $<LINK_LIBRARY:WHOLE_ARCHIVE,{dep}> )
+endforeach()
+
               
 install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
