@@ -161,22 +161,31 @@ void KValueFlashParameters< NUM_PHASE >::createTables( string const & name,
   }
 }
 
+namespace
+{
+struct UniqueFloats : public std::less< real64 >
+{
+  bool operator()( const real64 & lhs, const real64 & rhs ) const
+  {
+    return lhs < rhs - MultiFluidConstants::epsilon;
+  };
+};
+}
+
 template< integer NUM_PHASE >
 void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numComps )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction const * tableFunction = nullptr;
 
-  real64 minPressure = LvArray::NumericLimits< real64 >::max;
-  real64 maxPressure = LvArray::NumericLimits< real64 >::min;
-  real64 minTemperature = LvArray::NumericLimits< real64 >::max;
-  real64 maxTemperature = LvArray::NumericLimits< real64 >::min;
   integer numPressurePoints = 0;
   integer numTemperaturePoints = 0;
 
-  // If the pressure coordinates or temperature coordinates are not provided, read the maximum
-  // pressure and temperature intervals from the provided tables. These will be uniformly
-  // discretised.
+  // If the pressure coordinates or temperature coordinates are not provided, collect all the values
+  // from the tables.
+  std::set< real64, UniqueFloats > pressurePoints;
+  std::set< real64, UniqueFloats > temperaturePoints;
+
   if( m_pressureCoordinates.empty() || m_temperatureCoordinates.empty() )
   {
     for( integer phaseIndex = 0; phaseIndex < numPhases-1; ++phaseIndex )
@@ -196,27 +205,22 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
 
         ArrayOfArraysView< real64 const > coordinates = tableFunction->getCoordinates();
 
-        integer const np = coordinates[pIndex].size();
-        numPressurePoints = LvArray::math::max( numPressurePoints, np );
-        minPressure = LvArray::math::min( minPressure, coordinates[pIndex][0] );
-        maxPressure = LvArray::math::max( maxPressure, coordinates[pIndex][np-1] );
-
-        integer const nt = coordinates[tIndex].size();
-        numTemperaturePoints = LvArray::math::max( numTemperaturePoints, nt );
-        minTemperature = LvArray::math::min( minTemperature, coordinates[tIndex][0] );
-        maxTemperature = LvArray::math::max( maxTemperature, coordinates[tIndex][nt-1] );
+        pressurePoints.insert( coordinates[pIndex].begin(), coordinates[pIndex].end());
+        temperaturePoints.insert( coordinates[tIndex].begin(), coordinates[tIndex].end());
       }
     }
 
+    numPressurePoints = LvArray::integerConversion< integer >( pressurePoints.size());
+    numTemperaturePoints = LvArray::integerConversion< integer >( temperaturePoints.size());
     if( numPressurePoints == 1 )
     {
       numPressurePoints = 2;
-      maxPressure = minPressure + 1.0e7;
+      pressurePoints.insert( *pressurePoints.begin() + 1.0e7 );
     }
     if( numTemperaturePoints == 1 )
     {
       numTemperaturePoints = 2;
-      maxTemperature = minTemperature + 10.0;
+      pressurePoints.insert( *temperaturePoints.begin() + 1.0 );
     }
   }
 
@@ -242,12 +246,12 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
   m_pressureValues.resize( 1 );
   if( m_pressureCoordinates.empty() )
   {
-    real64 const dp = (maxPressure - minPressure) / (numPressurePoints-1);
+    auto p = pressurePoints.begin();
     m_pressureValues[0].resize( numPressurePoints );
     m_pressureCoordinates.resize( numPressurePoints );
-    for( localIndex i = 0; i < numPressurePoints; ++i )
+    for( localIndex i = 0; i < numPressurePoints; ++i, ++p )
     {
-      m_pressureValues[0][i] = minPressure + i * dp;
+      m_pressureValues[0][i] = *p;
       m_pressureCoordinates[i] = m_pressureValues[0][i];
     }
   }
@@ -264,12 +268,12 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
   m_temperatureValues.resize( 1 );
   if( m_temperatureCoordinates.empty() )
   {
-    real64 const dt = (maxTemperature - minTemperature) / (numTemperaturePoints-1);
+    auto t = temperaturePoints.begin();
     m_temperatureValues[0].resize( numTemperaturePoints );
     m_temperatureCoordinates.resize( numTemperaturePoints );
-    for( localIndex i = 0; i < numTemperaturePoints; ++i )
+    for( localIndex i = 0; i < numTemperaturePoints; ++i, ++t )
     {
-      m_temperatureValues[0][i] = minTemperature + i * dt;
+      m_temperatureValues[0][i] = *t;
       m_temperatureCoordinates[i] = m_temperatureValues[0][i];
     }
   }
