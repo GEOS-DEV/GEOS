@@ -20,11 +20,14 @@
 #include "PhillipsBrineDensity.hpp"
 #include "PressureTemperatureCoordinates.hpp"
 #include "BrineSalinity.hpp"
+#include "ImmiscibleWaterParameters.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 
 #include "constitutive/ExponentialRelation.hpp"
+
+#include "functions/FunctionManager.hpp"
 
 #include "common/Units.hpp"
 
@@ -37,10 +40,14 @@ namespace constitutive
 namespace compositional
 {
 
-PhillipsBrineDensityUpdate::PhillipsBrineDensityUpdate( TableFunction const & brineDensityTable,
-                                                        integer const waterIndex ):
-  m_brineDensityTable( brineDensityTable.createKernelWrapper() ),
-  m_waterIndex( waterIndex )
+PhillipsBrineDensityUpdate::PhillipsBrineDensityUpdate( TableFunction const & brineVolumeShiftTable,
+                                                        integer const waterIndex,
+                                                        real64 const brineMolarWeight,
+                                                        EquationOfStateType const equationOfState ):
+  m_volumeShiftTable( brineVolumeShiftTable.createKernelWrapper() ),
+  m_waterIndex( waterIndex ),
+  m_brineMolarWeight( brineMolarWeight ),
+  m_equationOfState( equationOfState )
 {}
 
 std::unique_ptr< ModelParameters >
@@ -64,16 +71,39 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   FunctionBase( name, componentProperties )
 {
   GEOS_UNUSED_VAR( phaseIndex );
-  
-  
 
+  m_waterIndex = ImmiscibleWaterParameters::getWaterComponentIndex( componentProperties );
+  GEOS_THROW_IF_LT_MSG( m_waterIndex, 0, "Water component not found", InputError );
+
+  EquationOfState const * equationOfState = modelParameters.get< EquationOfState >();
+  string const eosName = equationOfState->m_equationsOfStateNames[phaseIndex];
+  m_equationOfState = EnumStrings< EquationOfStateType >::fromString( eosName );
+
+  Parameters const * parameters = modelParameters.get< Parameters >();
+  real64 const waterMolarWeight = componentProperties.getComponentMolarWeight()[m_waterIndex];
+  real64 const saltMolarWeight = parameters->m_saltMolarWeight;
+  BrineSalinity const * brineSalinity = modelParameters.get< BrineSalinity >();
+  real64 const salinity = brineSalinity->m_salinity;
+
+  m_brineMolarWeight = calculateBrineMolarWeight( waterMolarWeight,
+                                                  saltMolarWeight,
+                                                  salinity );
+
+  m_volumeShiftTable = makeVolumeShiftTable( name,
+                                             componentProperties,
+                                             modelParameters,
+                                             m_equationOfState,
+                                             m_brineMolarWeight,
+                                             m_waterIndex );
 }
 
 PhillipsBrineDensity::KernelWrapper
 PhillipsBrineDensity::createKernelWrapper() const
 {
-  return KernelWrapper( *m_brineDensityTable,
-                        m_waterIndex );
+  return KernelWrapper( *m_volumeShiftTable,
+                        m_waterIndex,
+                        m_brineMolarWeight,
+                        m_equationOfState );
 }
 
 PhillipsBrineDensity::Parameters::Parameters( std::unique_ptr< ModelParameters > parameters ):
@@ -86,6 +116,11 @@ void PhillipsBrineDensity::Parameters::registerParametersImpl( MultiFluidBase * 
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_waterCompressibility ).
     setDescription( "The water compressibility for the Phillips correlation" );
+
+  fluid->registerWrapper( viewKeyStruct::saltMolarWeightString(), &m_saltMolarWeight ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_saltMolarWeight ).
+    setDescription( "The molar weight for the salt component" );
 }
 
 void PhillipsBrineDensity::Parameters::postInputInitializationImpl( MultiFluidBase const * fluid,
@@ -101,6 +136,12 @@ void PhillipsBrineDensity::Parameters::postInputInitializationImpl( MultiFluidBa
                                   fluid->getFullName(),
                                   viewKeyStruct::waterCompressibilityString() ),
                         InputError );
+
+  GEOS_THROW_IF_LT_MSG( m_saltMolarWeight, epsilon,
+                        GEOS_FMT( "{}: invalid salt molar weight value provided in '{}'. Molar weight should be positive.",
+                                  fluid->getFullName(),
+                                  viewKeyStruct::saltMolarWeightString() ),
+                        InputError );
 }
 
 void PhillipsBrineDensity::calculateBrineDensity( arraySlice1d< real64 const > const & pressureCoords,
@@ -108,7 +149,7 @@ void PhillipsBrineDensity::calculateBrineDensity( arraySlice1d< real64 const > c
                                                   real64 const & salinity,
                                                   arraySlice1d< real64 > const & densities )
 {
-  // these coefficients come from Phillips et al. (1981), equations (4) and (5), pages 14 and 15
+  // These coefficients come from Phillips et al. (1981), equations (4) and (5), pages 14 and 15
   constexpr real64 c1 = -9.9595;
   constexpr real64 c2 = 7.0845;
   constexpr real64 c3 = 3.9093;
@@ -143,6 +184,27 @@ void PhillipsBrineDensity::calculateBrineDensity( arraySlice1d< real64 const > c
   }
 }
 
+/**
+   Here's what each part does:
+   1. **`salinity * saltMolarWeight`**: This calculates the mass of salt in the brine.
+   2. **`1.0 - salinity * saltMolarWeight`**: This calculates the mass of water in the brine
+   by subtracting the mass of salt from the total mass of the brine (which is 1.0 kg).
+   3. **`(1.0 - salinity * saltMolarWeight) / waterMolarWeight`**: This calculates the moles of
+   water by dividing the mass of water by the molar weight of water.
+   4. **`salinity + (1.0 - salinity * saltMolarWeight) / waterMolarWeight`**: This adds the
+   moles of salt (which is `salinity`) to the moles of water.
+   5. **`1.0 / (salinity + (1.0 - salinity * saltMolarWeight) / waterMolarWeight)`**: Finally,
+   this calculates the molar weight of the brine by dividing the total mass of the brine
+   (1.0 kg) by the total moles of salt and water.
+ */
+real64 PhillipsBrineDensity::calculateBrineMolarWeight( real64 const & waterMolarWeight,
+                                                        real64 const & saltMolarWeight,
+                                                        real64 const & salinity )
+{
+  // Salinity is in mol of salt per kg of brine
+  return 1.0 / (salinity + (1.0 - salinity * saltMolarWeight) / waterMolarWeight);
+}
+
 void PhillipsBrineDensity::calculatePureWaterDensity( arraySlice1d< real64 const > const & pressureCoords,
                                                       arraySlice1d< real64 const > const & temperatureCoords,
                                                       real64 const & compressibility,
@@ -158,7 +220,7 @@ void PhillipsBrineDensity::calculatePureWaterDensity( arraySlice1d< real64 const
   string const functionName = "compositional_phillips_density";
 
   // Pure water saturation property tables are provided with temperature in C
-  TableFunction const * waterSatDensityTable =
+  TableFunction const * waterSatVolumeShiftTable =
     PVTProps::PureWaterProperties::makeSaturationDensityTable( functionName, FunctionManager::getInstance() );
   TableFunction const * waterSatPressureTable =
     PVTProps::PureWaterProperties::makeSaturationPressureTable( functionName, FunctionManager::getInstance() );
@@ -171,7 +233,7 @@ void PhillipsBrineDensity::calculatePureWaterDensity( arraySlice1d< real64 const
     real64 const temperature = units::convertKToC( temperatureCoords[j] );
 
     // Step 1: get the saturation density
-    real64 const waterSatDensity = waterSatDensityTable->evaluate( &temperature );
+    real64 const waterSatDensity = waterSatVolumeShiftTable->evaluate( &temperature );
     // Step 2: get the saturation pressure
     real64 const waterSatPressure = waterSatPressureTable->evaluate( &temperature );
 
@@ -183,6 +245,249 @@ void PhillipsBrineDensity::calculatePureWaterDensity( arraySlice1d< real64 const
       ExponentialCompute::compute( waterSatPressure, waterSatDensity, compressibility, pressure, density );
       densities[j*nPressures+i] = density;
     }
+  }
+}
+
+void PhillipsBrineDensity::calculateEosWaterMolarVolume( arraySlice1d< real64 const > const & pressureCoords,
+                                                         arraySlice1d< real64 const > const & temperatureCoords,
+                                                         ComponentProperties const & componentProperties,
+                                                         EquationOfStateType const equationOfState,
+                                                         integer const waterIndex,
+                                                         arraySlice1d< real64 > const & molarVolume )
+{
+  integer const numComps = componentProperties.getNumberOfComponents();
+  integer const numDofs = 2 + numComps;
+
+  // Create pure water composition
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > waterComposition( numComps );
+  stackArray1d< real64, 2 + MultiFluidConstants::MAX_NUM_COMPONENTS > tempDerivs( numDofs );
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    waterComposition[ic] = 0.0;
+  }
+  waterComposition[waterIndex] = 1.0;
+
+  localIndex const nPressures = pressureCoords.size();
+  localIndex const nTemperatures = temperatureCoords.size();
+
+  auto const & componentPropertiesWrapper = componentProperties.createKernelWrapper();
+  for( localIndex i = 0; i < nPressures; ++i )
+  {
+    real64 const pressure = pressureCoords[i];
+    for( localIndex j = 0; j < nTemperatures; ++j )
+    {
+      real64 const temperature = temperatureCoords[j];
+
+      // Step 3: get the pure water density
+      real64 compressibilityFactor = 0.0;
+      CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
+                                                                pressure,
+                                                                temperature,
+                                                                waterComposition.toSliceConst(),
+                                                                componentPropertiesWrapper,
+                                                                equationOfState,
+                                                                compressibilityFactor,
+                                                                tempDerivs );
+
+      molarVolume[j*nPressures+i] = constants::gasConstant * temperature * compressibilityFactor / pressure;
+    }
+  }
+}
+
+TableFunction const *
+PhillipsBrineDensity::makeVolumeShiftTable( string const & name,
+                                            ComponentProperties const & componentProperties,
+                                            ModelParameters const & modelParameters,
+                                            EquationOfStateType const equationOfState,
+                                            real64 const brineMolarWeight,
+                                            integer const waterIndex )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  string const tableName = name + "_brine_volume_shift_table";
+
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    TableFunction * const volumeShiftTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    volumeShiftTable->initializeFunction();
+    volumeShiftTable->setDimUnits( { units::Pressure, units::Temperature } );
+    volumeShiftTable->setValueUnits( units::MolarVolume );
+    return volumeShiftTable;
+  }
+
+  PressureTemperatureCoordinates const * coordinates = modelParameters.get< PressureTemperatureCoordinates >();
+  auto const pressureCoordinates = coordinates->m_pressureCoordinates.toSliceConst();
+  localIndex const nPressures = pressureCoordinates.size();
+  GEOS_THROW_IF_LE_MSG( nPressures, 0,
+                        GEOS_FMT( "{}: Failed to determine pressure points for Phillips brine density interpolation. "
+                                  "Provide values for {}.",
+                                  name,
+                                  PressureTemperatureCoordinates::viewKeyStruct::pressureCoordinatesString() ),
+                        InputError );
+
+  auto const temperatureCoordinates = coordinates->m_temperatureCoordinates.toSliceConst();
+  localIndex const nTemperatures = temperatureCoordinates.size();
+  GEOS_THROW_IF_LE_MSG( nTemperatures, 0,
+                        GEOS_FMT( "{}: Failed to determine temperature points for Phillips brine density interpolation. "
+                                  "Provide values for {}.",
+                                  name,
+                                  PressureTemperatureCoordinates::viewKeyStruct::temperatureCoordinatesString() ),
+                        InputError );
+
+  // Calculate the mass density of brine from the Phillips correlation
+  array1d< real64 > brineDensity( nPressures*nTemperatures );
+  BrineSalinity const * brineSalinity = modelParameters.get< BrineSalinity >();
+  real64 const salinity = brineSalinity->m_salinity;
+  calculateBrineDensity( pressureCoordinates, temperatureCoordinates, salinity, brineDensity );
+
+  // The Phillips correlation is not accurate for zero or very low salinity
+  // If salinity is less than 0.25 (magic value), we will linearly interpolate between
+  // the pure water density and the Phillips density
+  real64 constexpr salinityCuttoff = 0.25;
+  if( salinity < salinityCuttoff )
+  {
+    array1d< real64 > pureWaterDensities( nPressures*nTemperatures );
+    Parameters const * parameters = modelParameters.get< Parameters >();
+    real64 const compressibility = parameters->m_waterCompressibility;
+    calculateBrineDensity( pressureCoordinates, temperatureCoordinates, compressibility, pureWaterDensities );
+
+    real64 const weight = salinity / salinityCuttoff;
+    for( localIndex k = 0; k < nPressures*nTemperatures; ++k )
+    {
+      brineDensity[k] = weight * brineDensity[k] + (1.0 - weight)*pureWaterDensities[k];
+    }
+  }
+
+  // Calculate the molar volume of pure water from the equation of state
+  array1d< real64 > eosMolarVolume( nPressures*nTemperatures );
+  calculateEosWaterMolarVolume( pressureCoordinates,
+                                temperatureCoordinates,
+                                componentProperties,
+                                equationOfState,
+                                waterIndex,
+                                eosMolarVolume );
+
+  // Calculate the volume shift by combining the brine density from the Phillips correlation and the molar
+  // volume from the equation of state
+  array1d< real64 > volumeShift( nPressures*nTemperatures );
+  for( localIndex k = 0; k < nPressures*nTemperatures; ++k )
+  {
+    volumeShift[k] = brineMolarWeight / brineDensity[k] - eosMolarVolume[k];
+  }
+
+  // Construct the actual table object
+  array1d< real64_array > tableCoords( 2 );
+  tableCoords[0].resize( nPressures );
+  tableCoords[1].resize( nTemperatures );
+  for( localIndex k = 0; k < nPressures; ++k )
+  {
+    tableCoords[0][k] = pressureCoordinates[k];
+  }
+  for( localIndex k = 0; k < nTemperatures; ++k )
+  {
+    tableCoords[1][k] = temperatureCoordinates[k];
+  }
+  TableFunction * const volumeShiftTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
+  volumeShiftTable->setTableCoordinates( tableCoords, { units::Pressure, units::Temperature } );
+  volumeShiftTable->setTableValues( volumeShift, units::MolarVolume );
+  volumeShiftTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  return volumeShiftTable;
+}
+
+//template< int USD1, int USD2 >
+GEOS_HOST_DEVICE
+//GEOS_FORCE_INLINE
+void PhillipsBrineDensityUpdate::compute(
+  ComponentProperties::KernelWrapper const & componentProperties,
+  real64 const & pressure,
+  real64 const & temperature,
+  arraySlice1d< real64 const, USD1 > const & phaseComposition,
+  real64 & molarDensity,
+  arraySlice1d< real64, USD2 > const & dMolarDensity,
+  real64 & massDensity,
+  arraySlice1d< real64, USD2 > const & dMassDensity,
+  bool useMass ) const
+{
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+  GEOS_UNUSED_VAR( dMassDensity );
+  GEOS_UNUSED_VAR( useMass );
+
+  integer const numComps = componentProperties.m_componentMolarWeight.size();
+  integer const numDofs = 2 + numComps;
+
+  // Calculate the volume shift as a function of (P,T)
+  real64 const input[2] = { pressure, temperature };
+  real64 brineVolumeShiftDeriv[2]{};
+  real64 const brineVolumeShift = m_volumeShiftTable.compute( input, brineVolumeShiftDeriv );
+
+  // Calculate the compressibility factor of the mixture from the equation of state
+  // Use molar density space for temporary derivatives
+  real64 compressibilityFactor = 0.0;
+  arraySlice1d< real64, USD2 > const & dCompressibilityFactor = dMolarDensity;
+  CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
+                                                            pressure,
+                                                            temperature,
+                                                            phaseComposition,
+                                                            componentProperties,
+                                                            m_equationOfState,
+                                                            compressibilityFactor,
+                                                            dCompressibilityFactor );
+
+  // Convert to molar volume by scaling by (RT/P)
+  // Scaling factor to convert compressibility factor (Z) to volume.
+  real64 const idealGasVolume = constants::gasConstant * temperature  / pressure;
+
+  real64 molarVolume = idealGasVolume * compressibilityFactor;
+  arraySlice1d< real64, USD2 > const & dMolarVolume = dMolarDensity;
+  dMolarVolume[Deriv::dP] = idealGasVolume * dCompressibilityFactor[Deriv::dP] - molarVolume / pressure;
+  dMolarVolume[Deriv::dT] = idealGasVolume * dCompressibilityFactor[Deriv::dT] + molarVolume / temperature;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    dMolarVolume[Deriv::dC + ic] = idealGasVolume * dCompressibilityFactor[Deriv::dC + ic];
+  }
+
+  // Extract the water mole fraction
+  real64 const x_h2o = phaseComposition[m_waterIndex];
+
+  // Apply the volume shift
+  molarVolume += x_h2o * brineVolumeShift;
+  dMolarVolume[Deriv::dP] += x_h2o * brineVolumeShiftDeriv[0];
+  dMolarVolume[Deriv::dT] += x_h2o * brineVolumeShiftDeriv[1];
+  dMolarVolume[Deriv::dC + m_waterIndex] += brineVolumeShift;
+
+  // Invert molar volume to get the molar density
+  molarDensity = 1.0 / molarVolume;
+  real64 const sqrMolarDen = molarDensity * molarDensity;
+  for( integer idof = 0; idof < numDofs; ++idof )
+  {
+    dMolarDensity[idof] = -sqrMolarDen * dMolarVolume[idof];
+  }
+
+  // Calculate the mass density
+  auto const & componentMolarWeight = componentProperties.m_componentMolarWeight;
+  real64 phaseMolarWeight = 0.0;
+  arraySlice1d< real64, USD2 > const & dPhaseMolarWeight = dMassDensity;
+  phaseMolarWeight = m_brineMolarWeight * x_h2o;
+  dPhaseMolarWeight[Deriv::dP] = 0.0;
+  dPhaseMolarWeight[Deriv::dT] = 0.0;
+  dPhaseMolarWeight[Deriv::dC + m_waterIndex] = m_brineMolarWeight;
+
+  for( integer ic = 0; ic < m_waterIndex; ++ic )
+  {
+    phaseMolarWeight += componentMolarWeight[ic] * phaseComposition[ic];
+    dPhaseMolarWeight[Deriv::dC + ic] = componentMolarWeight[ic];
+  }
+  for( integer ic = m_waterIndex+1; ic < numComps; ++ic )
+  {
+    phaseMolarWeight += componentMolarWeight[ic] * phaseComposition[ic];
+    dPhaseMolarWeight[Deriv::dC + ic] = componentMolarWeight[ic];
+  }
+
+  // Multiply by the molar density
+  massDensity = phaseMolarWeight * molarDensity;
+  for( integer idof = 0; idof < numDofs; ++idof )
+  {
+    dMassDensity[idof] = phaseMolarWeight * dMolarDensity[idof] + dPhaseMolarWeight[idof] * molarDensity;
   }
 }
 

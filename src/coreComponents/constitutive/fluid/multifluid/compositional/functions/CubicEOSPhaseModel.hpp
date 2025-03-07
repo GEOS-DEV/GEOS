@@ -852,41 +852,28 @@ computeCompressibilityFactor( integer const numComps,
   }
   else
   {
-    real64 zMin =  LvArray::NumericLimits< real64 >::max;
-    real64 zMax = -LvArray::NumericLimits< real64 >::max;
-
-    for( integer i = 0; i < 3; ++i )
+    real64 minGibbsEnergy = LvArray::NumericLimits< real64 >::max;
+    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficients( numComps );
+    for( integer r = 0; r < 3; ++r )
     {
-      // skip unphysical roots
-      if( roots[i] > bMixtureCoefficient )
+      if( roots[r] <= bMixtureCoefficient )
       {
-        // choose the root according to Gibbs' free energy minimization
-        if( zMin > roots[i] )
-        {
-          zMin = roots[i];
-        }
-        if( zMax < roots[i] )
-        {
-          zMax = roots[i];
-        }
+        continue;
+      }
+      computeLogFugacityCoefficients( numComps, composition, binaryInteractionCoefficients, roots[r],
+                                      aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient,
+                                      logFugacityCoefficients.toSlice() );
+      real64 gibbsEnergy = 0.0;
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        gibbsEnergy += composition[ic] * logFugacityCoefficients[ic];
+      }
+      if( gibbsEnergy < minGibbsEnergy )
+      {
+        minGibbsEnergy = gibbsEnergy;
+        compressibilityFactor = roots[r];
       }
     }
-
-    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMax( numComps );
-    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMin( numComps );
-    computeLogFugacityCoefficients( numComps, composition, binaryInteractionCoefficients, zMin,
-                                    aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient,
-                                    logFugacityCoefficientsMin.toSlice() );
-    computeLogFugacityCoefficients( numComps, composition, binaryInteractionCoefficients, zMax,
-                                    aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient,
-                                    logFugacityCoefficientsMax.toSlice() );
-
-    real64 dG = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      dG += composition[ic] * ( logFugacityCoefficientsMin[ic] - logFugacityCoefficientsMax[ic] );
-    }
-    compressibilityFactor = ( dG < 0 ) ? zMin : zMax;
   }
 }
 

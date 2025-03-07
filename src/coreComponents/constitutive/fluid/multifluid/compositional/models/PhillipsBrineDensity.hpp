@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_PHILLIPSBRINEDENSITY_HPP_
 
 #include "FunctionBase.hpp"
+#include "CompositionalDensity.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
@@ -37,13 +38,18 @@ namespace constitutive
 namespace compositional
 {
 
+int constexpr USD1 = 0;
+int constexpr USD2 = 0;
+
 class PhillipsBrineDensityUpdate final : public FunctionBaseUpdate
 {
 public:
-  PhillipsBrineDensityUpdate( TableFunction const & brineDensityTable,
-                              integer const waterIndex );
+  PhillipsBrineDensityUpdate( TableFunction const & brineVolumeShiftTable,
+                              integer const waterIndex,
+                              real64 const brineMolarWeight,
+                              EquationOfStateType const equationOfState );
 
-  template< int USD1, int USD2 >
+  //template< int USD1, int USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
@@ -58,15 +64,21 @@ public:
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
     FunctionBaseUpdate::move( space, touch );
-    m_brineDensityTable.move( space, touch );
+    m_volumeShiftTable.move( space, touch );
   }
 
 protected:
   /// Table with brine density tabulated as a function (P,T,sal)
-  TableFunction::KernelWrapper m_brineDensityTable;
+  TableFunction::KernelWrapper m_volumeShiftTable;
 
   /// Index of the water component
-  integer m_waterIndex;
+  integer const m_waterIndex;
+
+  /// The brine molecular weight
+  real64 const m_brineMolarWeight;
+
+  /// Equation of state for the density correction
+  EquationOfStateType const m_equationOfState;
 };
 
 class PhillipsBrineDensity : public FunctionBase
@@ -104,6 +116,7 @@ public:
     ~Parameters() override = default;
 
     real64 m_waterCompressibility{4.5e-10};
+    real64 m_saltMolarWeight{58.44e-3};
 
 private:
     void registerParametersImpl( MultiFluidBase * fluid ) override;
@@ -112,10 +125,15 @@ private:
     struct viewKeyStruct
     {
       static constexpr char const * waterCompressibilityString() { return "waterCompressibility"; }
+      static constexpr char const * saltMolarWeightString() { return "saltMolarWeight"; }
     };
   };
 
 private:
+  static real64 calculateBrineMolarWeight( real64 const & waterMolarWeight,
+                                           real64 const & saltMolarWeight,
+                                           real64 const & salinity );
+
   static void calculateBrineDensity( arraySlice1d< real64 const > const & pressureCoords,
                                      arraySlice1d< real64 const > const & temperatureCoords,
                                      real64 const & salinity,
@@ -126,39 +144,102 @@ private:
                                          real64 const & compressibility,
                                          arraySlice1d< real64 > const & densities );
 
+  static void calculateEosWaterMolarVolume( arraySlice1d< real64 const > const & pressureCoords,
+                                            arraySlice1d< real64 const > const & temperatureCoords,
+                                            ComponentProperties const & componentProperties,
+                                            EquationOfStateType const equationOfState,
+                                            integer const waterIndex,
+                                            arraySlice1d< real64 > const & molarVolume );
+
+  static TableFunction const * makeVolumeShiftTable( string const & name,
+                                                     ComponentProperties const & componentProperties,
+                                                     ModelParameters const & modelParameters,
+                                                     EquationOfStateType const equationOfState,
+                                                     real64 const brineMolarWeight,
+                                                     integer const waterIndex );
+
 private:
   /// Table with brine density tabulated as a function of (P,T,sal)
-  TableFunction const * m_brineDensityTable;
+  TableFunction const * m_volumeShiftTable;
 
   /// Index of the water phase
   integer m_waterIndex;
+
+  /// Equation of state for the density correction
+  EquationOfStateType m_equationOfState;
+
+  /// The brine molecular weight
+  real64 m_brineMolarWeight;
 };
 
-template< int USD1, int USD2 >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void PhillipsBrineDensityUpdate::compute(
-  ComponentProperties::KernelWrapper const & componentProperties,
-  real64 const & pressure,
-  real64 const & temperature,
-  arraySlice1d< real64 const, USD1 > const & phaseComposition,
-  real64 & molarDensity,
-  arraySlice1d< real64, USD2 > const & dMolarDensity,
-  real64 & massDensity,
-  arraySlice1d< real64, USD2 > const & dMassDensity,
-  bool useMass ) const
-{
-  //using Deriv = constitutive::multifluid::DerivativeOffset;
-  GEOS_UNUSED_VAR( componentProperties );
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( phaseComposition );
-  GEOS_UNUSED_VAR( molarDensity );
-  GEOS_UNUSED_VAR( dMolarDensity );
-  GEOS_UNUSED_VAR( massDensity );
-  GEOS_UNUSED_VAR( dMassDensity );
-  GEOS_UNUSED_VAR( useMass );
-}
+/**
+   template< int USD1, int USD2 >
+   GEOS_HOST_DEVICE
+   GEOS_FORCE_INLINE
+   void PhillipsBrineDensityUpdate::compute(
+   ComponentProperties::KernelWrapper const & componentProperties,
+   real64 const & pressure,
+   real64 const & temperature,
+   arraySlice1d< real64 const, USD1 > const & phaseComposition,
+   real64 & molarDensity,
+   arraySlice1d< real64, USD2 > const & dMolarDensity,
+   real64 & massDensity,
+   arraySlice1d< real64, USD2 > const & dMassDensity,
+   bool useMass ) const
+   {
+   //using Deriv = constitutive::multifluid::DerivativeOffset;
+   GEOS_UNUSED_VAR( molarDensity );
+   GEOS_UNUSED_VAR( dMolarDensity );
+   GEOS_UNUSED_VAR( massDensity );
+   GEOS_UNUSED_VAR( dMassDensity );
+   GEOS_UNUSED_VAR( useMass );
+
+   integer const numComps = componentProperties.m_componentMolarWeight.size();
+   integer const numDofs = 2 + numComps;
+
+   real64 const input[2] = { pressure, temperature };
+   real64 brineDensityDeriv[2]{};
+   real64 const brineMassDensity = m_volumeShiftTable.compute( input, brineDensityDeriv );
+   real64 const brineMolarVolume = m_brineMolarWeight / brineMassDensity;
+
+   real64 compressibilityFactor = 0.0;
+   stackArray1d< real64, 2+MultiFluidConstants::MAX_NUM_COMPONENTS > tempDerivs( numDofs );
+   stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > waterComposition( numComps );
+   real64 const x_h2o = phaseComposition[m_waterIndex];
+   for (integer ic = 0; ic < numComps; ++ic)
+   {
+    waterComposition[ic] = 0.0;
+   }
+   waterComposition[m_waterIndex] = 1.0;
+
+   std::cout << "COMP " << phaseComposition << std::endl;
+
+   CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
+                                                            pressure,
+                                                            temperature,
+                                                            phaseComposition,
+                                                            componentProperties,
+                                                            m_equationOfState,
+                                                            compressibilityFactor,
+                                                            tempDerivs.toSlice() );
+
+   real64 mixtureMolarVolume = constants::gasConstant * temperature * compressibilityFactor / pressure;
+
+   CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
+                                                            pressure,
+                                                            temperature,
+                                                            waterComposition.toSliceConst(),
+                                                            componentProperties,
+                                                            m_equationOfState,
+                                                            compressibilityFactor,
+                                                            tempDerivs.toSlice() );
+
+   real64 waterMolarVolume = constants::gasConstant * temperature * compressibilityFactor / pressure;
+
+   std::cout << "VOLUME " << brineMolarVolume << " " << waterMolarVolume  << " " << x_h2o*waterMolarVolume  << " " << mixtureMolarVolume <<
+      "\n";
+   }
+ */
 
 } // end namespace compositional
 

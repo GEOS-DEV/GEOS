@@ -244,9 +244,11 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
   {
     real64 const dp = (maxPressure - minPressure) / (numPressurePoints-1);
     m_pressureValues[0].resize( numPressurePoints );
+    m_pressureCoordinates.resize( numPressurePoints );
     for( localIndex i = 0; i < numPressurePoints; ++i )
     {
       m_pressureValues[0][i] = minPressure + i * dp;
+      m_pressureCoordinates[i] = m_pressureValues[0][i];
     }
   }
   else
@@ -264,9 +266,11 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
   {
     real64 const dt = (maxTemperature - minTemperature) / (numTemperaturePoints-1);
     m_temperatureValues[0].resize( numTemperaturePoints );
+    m_temperatureCoordinates.resize( numTemperaturePoints );
     for( localIndex i = 0; i < numTemperaturePoints; ++i )
     {
       m_temperatureValues[0][i] = minTemperature + i * dt;
+      m_temperatureCoordinates[i] = m_temperatureValues[0][i];
     }
   }
   else

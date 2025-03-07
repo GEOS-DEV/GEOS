@@ -33,6 +33,7 @@
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
 
 namespace geos
 {
@@ -170,7 +171,7 @@ using CompositionalKValueLohrenzBrayClarkViscosity = CompositionalMultiphaseFlui
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 using CompositionalKValuePhillipsBrine = CompositionalMultiphaseFluid<
   compositional::KValueFlashModel< 2 >,
-  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
