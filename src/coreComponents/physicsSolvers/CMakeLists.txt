@@ -110,12 +110,22 @@ if( GEOS_ENABLE_MULTIPHYSICS )
 endif()
 
 add_library(physicsSolvers INTERFACE)
-if( GEOS_BUILD_SHARED_LIBS)
-  target_link_libraries(physicsSolvers INTERFACE ${dependencyList} )
-else()
-  set(wholeArchiveDependencies "")
+
+blt_register_library( NAME physicsSolvers
+                      INTERFACE
+                      DEPENDS_ON ${dependencyList}
+                    ) 
+
+if( NOT GEOS_BUILD_SHARED_LIBS)
   foreach(dep ${dependencyList})
-    list(APPEND wholeArchiveDependencies $<LINK_LIBRARY:WHOLE_ARCHIVE,${dep}>)
+    target_link_libraries(physicsSolvers INTERFACE $<LINK_LIBRARY:WHOLE_ARCHIVE,${dep}>)
   endforeach()
-  target_link_libraries(physicsSolvers INTERFACE ${wholeArchiveDependencies}) 
 endif()                        
+
+# if( GEOS_BUILD_SHARED_LIBS)
+#   target_link_libraries(physicsSolvers INTERFACE ${dependencyList} )
+# else()
+# foreach(dep ${dependencyList})
+#   target_link_libraries(physicsSolvers INTERFACE $<LINK_LIBRARY:WHOLE_ARCHIVE,${dep}>)
+# endforeach()
+# endif()                        
