@@ -33,14 +33,14 @@ LogPart::LogPart( string_view logPartTitle, integer commRank )
 
 void LogPart::addDescription( string const & description )
 {
-  m_startDesc.m_descriptionNames.push_back( description );
-  m_startDesc.m_descriptionsValues.push_back( std::vector< string >() );
+  m_startDesc.m_names.push_back( splitStringByNewLine( description ) );
+  m_startDesc.m_values.push_back( std::vector< string >() );
 }
 
 void LogPart::addEndDescription( string const & description )
 {
-  m_endDesc.m_descriptionNames.push_back( description );
-  m_endDesc.m_descriptionsValues.push_back( std::vector< string >() );
+  m_endDesc.m_names.push_back( splitStringByNewLine( description ) );
+  m_endDesc.m_values.push_back( std::vector< string >() );
 }
 
 
@@ -56,128 +56,89 @@ void LogPart::setMaxWidth( size_t const & maxWidth )
   m_endDesc.m_logPartMaxWidth = maxWidth;
 }
 
-string_view ltrim( string_view s )
+std::vector< std::string > LogPart::splitStringByNewLine( std::string const & str )
 {
-  std::size_t const first = s.find_first_not_of( " " );
-  if( first != string::npos )
-  {
-    return s.substr( first, ( s.size() - first ) );
-  }
-  return {};
-}
+  auto result = std::vector< std::string >{};
+  auto ss = std::stringstream{str};
 
-std::vector< string > splitAndFormatStringByDelimiter( string const & description, size_t maxLength )
-{
-  std::vector< string > formattedDescription;
-  size_t startIdx  = 0;
-  size_t endIdx = 0;
-  size_t captureIdx  = 0;
-  size_t spaceIdx = 0;
-  while( endIdx < description.size())
-  {
-    endIdx = description.find( ' ', spaceIdx );
-    if( endIdx == std::string::npos )
-    {
-      if( description.substr( startIdx ).size() > maxLength )
-      {
-        formattedDescription.push_back( string( ltrim( description.substr( startIdx, captureIdx ))));
-        formattedDescription.push_back( string( ltrim( description.substr( startIdx + captureIdx ))) );
-      }
-      else
-      {
-        formattedDescription.push_back( string( ltrim( description.substr( startIdx, endIdx ))));
-      }
-    }
-    else
-    {
-      size_t partLength = endIdx - startIdx;
-      if( partLength > maxLength )
-      {
-        formattedDescription.push_back( string( ltrim( description.substr( startIdx, captureIdx ))));
-        startIdx = spaceIdx;
-        captureIdx = 0;
-      }
+  for( std::string line; std::getline( ss, line, '\n' ); )
+    result.push_back( line );
 
-      spaceIdx = endIdx + 1;
-      captureIdx = partLength;
-    }
-  }
-  return formattedDescription;
+  return result;
 }
 
 void LogPart::formatDescriptions( LogPart::Description & description )
 {
-  auto & names = description.m_descriptionNames;
-  auto & valuesList = description.m_descriptionsValues;
-  size_t & logPartWidth = description.m_logPartWidth;
-  size_t & logPartMaxWidth = description.m_logPartMaxWidth;
-  size_t & logPartMinWidth = description.m_logPartMinWidth;
-  size_t & logPartMaxNameWidth =  description.m_logPartMaxNameWidth;
+  size_t const logPartMaxWidth = description.m_logPartMaxWidth;
+  size_t const & logPartMinWidth = description.m_logPartMinWidth;
+  size_t const & logPartMaxNameWidth =  description.m_logPartMaxNameWidth;
   std::vector< string > & formattedLines = description.m_formattedDescriptionLines;
-
-  size_t extraChars = m_nbBorderChar * 2 + m_borderMargin * 2;
-  for( size_t idxName = 0; idxName < names.size(); idxName++ )
+  size_t const borderSpaceWidth = m_nbBorderChar * 2 + m_borderMargin * 2;
+  for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
-    string const & name = names[idxName];
-    auto const & values = valuesList[idxName];
+    std::vector< string > & names =  description.m_names[idxName];
+    std::vector< string > & values =  description.m_values[idxName];
 
+    // if no values process only the names
     if( values.empty())
     {
-      if( name.size() > logPartMaxWidth )
-      {
-        auto formattedName = splitAndFormatStringByDelimiter( name, logPartMaxWidth - extraChars );
-        formattedLines.insert( formattedLines.end(), formattedName.begin(), formattedName.end());
-      }
-      else
-      {
-        formattedLines.push_back( name );
-      }
+      names = wrapTextToMaxLength( names, logPartMaxWidth - borderSpaceWidth );
+      formattedLines.insert( formattedLines.end(), names.begin(), names.end());
+      continue;
     }
-    else
+
+    //format name
+    for( auto & name: names )
     {
-      string const spaces = std::string( logPartMaxNameWidth - name.size(), ' ' );
-      string const formattedName = GEOS_FMT( "{}{}", name, spaces );
-      string const firstValue = values[0];
-      size_t const formattedLineWidth = formattedName.size() + firstValue.size() + extraChars;
-      if( formattedLineWidth > logPartMaxWidth )
+      string const spaces = std::string( logPartMaxNameWidth- name.size(), ' ' );
+      name = GEOS_FMT( "{}{}", name, spaces );
+    }
+
+    //format values
+    size_t const valueMaxWidth = logPartMaxWidth - logPartMaxNameWidth - borderSpaceWidth - m_delimiter.size();
+    values = wrapTextToMaxLength( values, valueMaxWidth );
+
+    size_t const maxValueWidth = (*max_element( values.begin(), values.end(),
+                                                []( string const & a, string const & b ) {
+      return a.length() < b.length();
+    } )).size();
+    size_t const totalLineWidth = logPartMaxNameWidth + maxValueWidth + borderSpaceWidth + m_delimiter.size();
+    description.m_logPartWidth = std::max( description.m_logPartWidth, totalLineWidth );
+
+    //2.5 merge both names and values
+    size_t const lineCount = std::max( names.size(), values.size());
+    formattedLines.push_back( GEOS_FMT( "{}{}{}", names[0], m_delimiter, values[0] ));
+    if( formattedLines[0].size() < logPartMaxNameWidth )
+    {
+      string const spaces = std::string( logPartMaxNameWidth- formattedLines[0].size(), ' ' );
+      formattedLines[0] = GEOS_FMT( "{}{}", formattedLines[0], spaces );
+    }
+    for( size_t i = 1; i < lineCount; ++i )
+    {
+      if( i < names.size() && i < values.size())
       {
-        auto formattedDescription =
-          splitAndFormatStringByDelimiter( firstValue, logPartMaxWidth - formattedName.size() - extraChars );
-        for( auto const & format : formattedDescription )
-        {
-          if( &format == &formattedDescription.front())
-          {
-            formattedLines.push_back( GEOS_FMT( "{}{}", formattedName, format ));
-          }
-          else
-          {
-            formattedLines.push_back( GEOS_FMT( "{:>{}}", format, formattedName.size() + format.size() ) );
-          }
-        }
+        formattedLines.push_back( GEOS_FMT( "{}{}{}", names[i], m_delimiter, values[i] ));
       }
-      else
+      else if( i < names.size())
       {
-        formattedLines.push_back( GEOS_FMT( "{}{}", formattedName, firstValue ));
+        formattedLines.push_back( names[i] );
+      }
+      else if( i < values.size())
+      {
+        formattedLines.push_back( GEOS_FMT( "{:>{}}", values[i],
+                                            logPartMaxNameWidth + values[i].size() + m_delimiter.size() ));
       }
 
-      logPartWidth = std::max( logPartWidth, formattedLines[idxName].size() );
-
-      for( size_t idxValue = 1; idxValue < values.size(); idxValue++ )
+      if( formattedLines[i].size() < logPartMaxNameWidth )
       {
-        formattedLines.push_back(
-          GEOS_FMT( "{:>{}}", values[idxValue], formattedName.size() + values[idxValue].size() ));
-        logPartWidth = std::max( logPartWidth, formattedLines.back().size() );
+        string const spaces = std::string( logPartMaxNameWidth - formattedLines[i].size(), ' ' );
+        formattedLines[i] = GEOS_FMT( "{}{}", formattedLines[i], spaces );
       }
+      description.m_logPartWidth = std::max( description.m_logPartWidth, formattedLines[i].size() );
     }
 
   }
-  if( logPartWidth > logPartMaxWidth )
-    logPartWidth = logPartMaxWidth;
-
-  if( logPartWidth != logPartMinWidth )
-    logPartWidth += extraChars;
-
-  logPartWidth = std::max( logPartWidth, logPartMinWidth );
+  description.m_logPartWidth = std::max( description.m_logPartWidth, logPartMinWidth );
 }
 
 string LogPart::buildDescriptionPart( LogPart::Description const & description )
@@ -208,8 +169,8 @@ string LogPart::buildTitlePart( LogPart::Description const & description )
 }
 
 void LogPart::computeInitialLogWidth( LogPart::Description & description,
-                                      std::vector< string > const & descriptionNames,
-                                      std::vector< std::vector< string > > m_descriptionsValues )
+                                      std::vector< std::vector< string > > const & descriptionNames,
+                                      std::vector< std::vector< string > > m_values )
 {
 
   if( !descriptionNames.empty() )
@@ -217,13 +178,17 @@ void LogPart::computeInitialLogWidth( LogPart::Description & description,
     size_t maxStringSize = 0;
     for( size_t idxDescription = 0; idxDescription  < descriptionNames.size(); idxDescription++ )
     {
-      if( !m_descriptionsValues[idxDescription].empty())
+      if( !m_values[idxDescription].empty())
       {
-        maxStringSize = std::max( maxStringSize, descriptionNames[idxDescription].size() );
+        maxStringSize = std::max( maxStringSize,
+                                  (*max_element( descriptionNames[idxDescription].begin(), descriptionNames[idxDescription].end(),
+                                                 []( string const & a, string const & b ) {
+          return a.length() < b.length();
+        } )).size());
       }
     }
 
-    description.m_logPartMaxNameWidth = maxStringSize;
+    description.m_logPartMaxNameWidth= maxStringSize;
   }
 }
 
@@ -233,9 +198,9 @@ void LogPart::begin( std::ostream & os )
     return;
 
   string bottomPart = "";
-  auto & descriptionNames = m_startDesc.m_descriptionNames;
+  auto & descriptionNames = m_startDesc.m_names;
 
-  computeInitialLogWidth( m_startDesc, descriptionNames, m_startDesc.m_descriptionsValues );
+  computeInitialLogWidth( m_startDesc, descriptionNames, m_startDesc.m_values );
 
   if( !descriptionNames.empty())
   {
@@ -258,9 +223,9 @@ void LogPart::end( std::ostream & os )
     return;
 
   string topPart = "";
-  auto & descriptionNames = m_endDesc.m_descriptionNames;
+  auto & descriptionNames = m_endDesc.m_names;
 
-  computeInitialLogWidth( m_endDesc, descriptionNames, m_endDesc.m_descriptionsValues );
+  computeInitialLogWidth( m_endDesc, descriptionNames, m_endDesc.m_values );
 
   formatDescriptions( m_endDesc );
 

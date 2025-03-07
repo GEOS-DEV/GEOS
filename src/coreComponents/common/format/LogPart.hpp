@@ -77,6 +77,14 @@ public:
   void setMinWidth( size_t const & minWidth );
 
   /**
+   * @brief
+   *
+   * @param str
+   * @return std::vector< std::string >
+   */
+  std::vector< std::string > splitStringByNewLine( std::string const & str );
+
+  /**
    * @brief Set the maximal width of a row
    * @param maxWidth The maximal width of the table
    */
@@ -101,10 +109,10 @@ private:
     /// Title footer string
     string m_title;
 
-    /// Name of the description, formatted to be : [Name] : [Values1]\n[Values2]
-    std::vector< string > m_descriptionNames;
-    /// Values in the description
-    std::vector< std::vector< string > > m_descriptionsValues;
+    /// Name of the description, it can be splited by \\n
+    std::vector< std::vector< string > > m_names;
+    /// Values in the description, each value of a description is associated with one name
+    std::vector< std::vector< string > > m_values;
     /// Vector containing the descriptions formatted by formatDescriptions()
     std::vector< string > m_formattedDescriptionLines;
 
@@ -133,8 +141,8 @@ private:
    * @param descriptionNames A vector containing all name used in the log Part
    */
   void computeInitialLogWidth( LogPart::Description & description,
-                               std::vector< string > const & descriptionNames,
-                               std::vector< std::vector< string > > m_descriptionsValues );
+                               std::vector< std::vector< string > > const & descriptionNames,
+                               std::vector< std::vector< string > > m_values );
   /**
    * @brief Build a description from the name and description values
    * @param name The decription name
@@ -164,6 +172,8 @@ private:
   static constexpr size_t m_nbBorderChar = 2;
   /// character used for logPart construction
   static constexpr size_t m_borderCharacter = '#';
+  // string used to separate the name/description
+  string const m_delimiter = " : ";
 
   /// String containing horizontal border
   string m_horizontalBorder;
@@ -181,12 +191,13 @@ void LogPart::addDescriptionBySection( Description & description, string const &
     static_assert( has_formatter_v< decltype(args) >,
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
-    values.push_back( value );
+    auto splitValues = splitStringByNewLine( value );
+    values.insert( values.end(), splitValues.begin(), splitValues.end() );
     maxValueSize = std::max( maxValueSize, value.size());
   } (), ...);
 
-  description.m_descriptionNames.push_back( name );
-  description.m_descriptionsValues.push_back( values );
+  description.m_names.push_back( splitStringByNewLine( name ) );
+  description.m_values.push_back( values );
   description.m_logPartWidth = std::min( description.m_logPartWidth, maxValueSize + 6 );
 
 }
