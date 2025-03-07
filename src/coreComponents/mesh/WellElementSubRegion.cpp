@@ -48,7 +48,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
-  registerWrapper( viewKeyStruct::wellElementStateString(), &m_wellElementState );
+  //registerWrapper( viewKeyStruct::wellElementStateString(), &m_wellElementState );
 
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString() } );
@@ -412,7 +412,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
 
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
   m_wellElementState.resize( elemStatusGlobal.size());
-
+  GEOS_LOG_RANK( "tjb generate "<<m_wellElementState.size());
 
   for( localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal )
   {
@@ -979,32 +979,29 @@ void WellElementSubRegion::setupCommArrays( )
   m_elementPerRank.resize( m_numLocalElements );
 
   MpiWrapper::allGather( size(), m_elementPerRank );
-  // Updated every timestep and used to determine segment status
   integer totalElements = std::accumulate( m_elementPerRank.begin(), m_elementPerRank.end(), 0 );
-
-  m_activePerfsPerElement.resize( totalElements );
   m_mpiElementOffset.resize( MpiWrapper::commSize());
   std::partial_sum( m_elementPerRank.begin(), m_elementPerRank.end() - 1, m_mpiElementOffset.begin() + 1 );
 
-  //GEOS_LOG_RANK("tjb sizes " << getName() << " " << size() << " " << m_globalWellElementIndex.size() << " " << elemStatusGlobal.size() <<
-  // " " << m_nextWellElementIndex.size() << " " << m_nextWellElementIndexGlobal.size());
-
-
+  // All ranks have element global index ordering
+  m_globalElementIndex.resize( totalElements );
+  MpiWrapper::allgatherv( m_globalWellElementIndex.data(), m_globalWellElementIndex.size(), m_globalElementIndex.data(), m_elementPerRank.data(), m_mpiElementOffset.data(), MPI_COMM_GEOS );
 }
+
 void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & localElemPerfStatus )
 {
   // Gather and broadcast element perf status to all cores
-  MpiWrapper::allgatherv( localElemPerfStatus.data(), localElemPerfStatus.size(), m_activePerfsPerElement.data(), m_elementPerRank.data(), m_mpiElementOffset.data(), MPI_COMM_GEOS );
+  // Number of active perfs per segment (sized total number of segments)
+  array1d< integer > activePerfsPerElement( m_globalElementIndex.size());
+  activePerfsPerElement.resize( m_globalElementIndex.size() );  
+  MpiWrapper::allgatherv( localElemPerfStatus.data(), localElemPerfStatus.size(), activePerfsPerElement.data(), m_elementPerRank.data(), m_mpiElementOffset.data(), MPI_COMM_GEOS );
 
   // Set segment state
-  integer numElements = m_activePerfsPerElement.size();
-
+  integer numElements = activePerfsPerElement.size();
   std::fill( m_wellElementState.begin(), m_wellElementState.end(), 0 );
-  m_wellElementState[0] =   ( m_activePerfsPerElement[0] > 0 ) ? WellElemState::OPEN : WellElemState::CLOSED;
-
   for( integer i=1; i<numElements; i++ )
   {
-    if( m_activePerfsPerElement[i] == 0 )
+    if( activePerfsPerElement[i] == 0 )
     {
       if( m_wellElementState[i-1] == WellElemState::OPEN )
       {
@@ -1017,7 +1014,7 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
         m_wellElementState[i] =  WellElemState::CLOSED;
       }
     }
-    else //  m_activePerfsPerElement[i] == 1
+    else //  activePerfsPerElement[i] == 1
     {
       // Open - contains open perforation
       m_wellElementState[i] =  WellElemState::OPEN;

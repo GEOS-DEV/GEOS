@@ -282,6 +282,18 @@ public:
    */
   real64 getInitialPressureCoefficient() const { return m_initialPressureCoefficient; }
 
+
+  /**
+   * @brief Set well status from internal action, eg. all perfs closed
+   * @param[in] status
+   */
+  void setWellStatus ( bool status ) { m_wellStatus = status;};
+
+  /**
+   * @brief Is the well open (or shut) based on internal action
+   * @return a boolean
+   */
+  bool getWellStatus () const { return m_wellStatus; }
   ///@}
 
   /**
@@ -431,6 +443,9 @@ private:
 
   /// Status table
   TableFunction const * m_statusTable;
+
+  /// Well status set from action (for example, all perfs closed by environment)
+  bool m_wellStatus;
 
 };
 

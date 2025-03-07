@@ -49,7 +49,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr ),
-  m_statusTable( nullptr )
+  m_statusTable( nullptr ),
+  m_wellStatus( true )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -474,6 +475,7 @@ void WellControls::postInputInitialization()
 bool WellControls::isWellOpen( real64 const & currentTime ) const
 {
   bool isOpen = true;
+
   if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
       && isZero( getTargetMassRate( currentTime ) ))
   {
@@ -483,7 +485,7 @@ bool WellControls::isWellOpen( real64 const & currentTime ) const
   {
     isOpen = false;
   }
-  return isOpen;
+  return isOpen && getWellStatus();
 }
 
 } //namespace geos

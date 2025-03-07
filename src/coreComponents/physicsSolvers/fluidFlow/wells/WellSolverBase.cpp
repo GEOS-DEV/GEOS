@@ -209,9 +209,10 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      WellControls const & wellControls = getWellControls( subRegion );
+      WellControls & wellControls = getWellControls( subRegion );
 
       // Set perforation status
+      GEOS_LOG_RANK( "tjb open " << wellControls.isWellOpen( time_n ));
       if( wellControls.isWellOpen( time_n ) )
       {
 
@@ -220,13 +221,19 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
         // for now set to open
         for( integer i=0; i<perforationData.size(); i++ )
         {
-          perfState[i]=PerforationData::PerforationState::OPEN;
+          //if ( MpiWrapper::commRank( MPI_COMM_GEOS ) == 1 && i == 1 )
+          //   perfState[i]=PerforationData::PerforationState::CLOSED;
+          //else
+          if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 1 )
+            perfState[i]=PerforationData::PerforationState::CLOSED;
+          else
+            perfState[i]=PerforationData::PerforationState::OPEN;
         }
 
-#if 0
         //
         array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
         arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
+        arrayView1d< globalIndex const > globalElementIndex = subRegion.getGlobalElementIndex();
 
         arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
         array1d< integer > & currentState = subRegion.getWellElementState();
@@ -240,7 +247,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
           localIndex const iwelem = perfWellElemIndex[j];
           if( elemGhostRank[iwelem] < 0 )
           {
-            GEOS_LOG_RANK( "tjb perf state "<< j << " " <<   perfState[j] << " " << globalWellElementIndex[j] );
             if( perfState[j] )
             {
               segState[iwelem] +=1;
@@ -248,7 +254,14 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
           }
         }
         subRegion.setElementStatus( segState );
-#endif
+        integer numOpenElements = 0;
+        array1d< integer > const & updatedState = subRegion.getWellElementState();
+        for( integer i=0; i<currentState.size(); i++ )
+        {
+          numOpenElements += updatedState[i];
+        }
+        wellControls.setWellStatus( numOpenElements>0 );
+
       }
     } );
 

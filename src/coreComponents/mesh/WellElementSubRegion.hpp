@@ -339,6 +339,8 @@ public:
   integer const & getNumLocalElements() const { return m_numLocalElements;}
   void setupCommArrays();
   void setElementStatus( arrayView1d< integer >  const & localElemPerfStatus );
+
+  array1d< globalIndex > const & getGlobalElementIndex() const { return m_globalElementIndex; }
 private:
 
   /**
@@ -437,8 +439,11 @@ private:
   /// Element-to-node relation is one to one relation.
   NodeMapType m_toNodesRelation;
 
-  /// Local indices of the next well element (used in solvers)
+  /// Global indices (sized by local  indices  (used in solvers)
   array1d< globalIndex > m_globalWellElementIndex;
+
+  /// Global indices of elemens (all elements)
+  array1d< globalIndex > m_globalElementIndex;
 
   /// Local indices of the next well element (used in solvers)
   array1d< localIndex > m_nextWellElementIndex;
@@ -469,9 +474,6 @@ private:
 
   /// Segment offsets required for mpiallgatherv (sized total number of segments)
   array1d< integer > m_mpiElementOffset;
-
-  /// Number of active perfs per segment (sized total number of segments)
-  array1d< integer > m_activePerfsPerElement;
 
   /// Number of  segment per rank
   array1d< localIndex > m_elementPerRank;
