@@ -132,9 +132,6 @@ blt_add_library( NAME       physicsSolvers
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
-foreach( dep ${dependencyList} )
-  target_link_libraries( physicsSolvers PUBLIC $<LINK_LIBRARY:WHOLE_ARCHIVE,${dep}> )
-endforeach()
-
+target_link_options(physicsSolvers PUBLIC -Wl,--no-as-needed)
               
 install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
