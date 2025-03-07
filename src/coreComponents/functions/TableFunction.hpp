@@ -174,11 +174,11 @@ private:
     interpolateRound( IN_ARRAY const & input ) const;
 
     /**
-     * @brief ...
-     * @param[in] input vector of input value
-     * @param[in] dim table dimension
-     * @param[in] interpolationMethod interpolation method
-     * @return coordinate value
+     * @brief Method to get coordinates
+     * @param input a scalar input
+     * @param dim the table dimension
+     * @param interpolationMethod the interpolation method
+     * @return the coordinate
      */
     template< typename IN_ARRAY >
     GEOS_HOST_DEVICE

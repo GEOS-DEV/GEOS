@@ -198,6 +198,10 @@ real64 TableFunction::evaluate( real64 const * const input ) const
 
 real64 TableFunction::getCoord( real64 const * const input, localIndex const dim, InterpolationType interpolationMethod ) const
 {
+  GEOS_ASSERT_MSG( interpolationMethod != InterpolationType::Linear,
+                   GEOS_FMT( "{}: TableFunction::getCoord should not be called with {} interpolation method",
+                             getDataContext(), EnumStrings< InterpolationType >::toString( interpolationMethod )));
+  GEOS_ASSERT( dim >= 0 && dim < m_coordinates.size() );
   return m_kernelWrapper.getCoord( input, dim, interpolationMethod );
 }
 
