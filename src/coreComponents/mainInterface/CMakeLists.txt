@@ -40,7 +40,7 @@ set( mainInterface_sources
      version.cpp
    )
 
-set( dependencyList ${parallelDeps} constitutiveDrivers optionparser physicsSolvers )
+set( dependencyList ${parallelDeps} physicsSolvers constitutiveDrivers optionparser )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
