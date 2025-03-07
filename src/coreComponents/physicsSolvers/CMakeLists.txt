@@ -130,5 +130,7 @@ blt_add_library( NAME       physicsSolvers
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
-               
+
+target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+              
 install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
