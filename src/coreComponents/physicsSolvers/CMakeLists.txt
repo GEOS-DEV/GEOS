@@ -73,6 +73,17 @@ if( externalComponentDeps )
 endif()
 
 # PhysicsSolvers interface
+#
+# Specify solver headers
+#
+set( physicsSolvers_headers
+     PhysicsSolverManager.hpp)
+#
+# Specify solver sources
+#
+set( physicsSolvers_sources
+     PhysicsSolverManager.cpp )
+
 set( dependencyList )
 if( GEOS_ENABLE_FLUIDFLOW )
   add_subdirectory( fluidFlow )
@@ -109,13 +120,16 @@ if( GEOS_ENABLE_MULTIPHYSICS )
   list( APPEND dependencyList multiPhysicsSolvers )
 endif()
 
-add_library(physicsSolvers INTERFACE)
-if( GEOS_BUILD_SHARED_LIBS)
-  target_link_libraries(physicsSolvers INTERFACE ${dependencyList} )
-else()
-  set(wholeArchiveDependencies "")
-  foreach(dep ${dependencyList})
-    list(APPEND wholeArchiveDependencies $<LINK_LIBRARY:WHOLE_ARCHIVE,${dep}>)
-  endforeach()
-  target_link_libraries(physicsSolvers INTERFACE ${wholeArchiveDependencies}) 
-endif()                        
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
+
+blt_add_library( NAME       physicsSolvers
+                 SOURCES    ${physicsSolvers_sources}
+                 HEADERS    ${physicsSolvers_headers}
+                 DEPENDS_ON ${decoratedDependencies} ${externalComponentDeps}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
+               )
+               
+install( TARGETS physicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+               
