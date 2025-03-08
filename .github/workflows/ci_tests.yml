@@ -316,7 +316,6 @@ jobs:
             DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
             HOST_CONFIG: /spack-generated.cmake
-            USE_MCMODEL_LARGE: ON
       
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
@@ -421,7 +420,6 @@ jobs:
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
-      USE_MCMODEL_LARGE: ${{ matrix.USE_MCMODEL_LARGE }}
       REQUIRED_LABEL: "ci: run CUDA builds"
     secrets: inherit
 
