@@ -257,6 +257,13 @@ DECLARE_FIELD( energy_n,
                NO_WRITE,
                "Energy at the previous converged time step" );
 
+DECLARE_FIELD( fractureCreationTime,
+               "fractureCreationTime",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "The creation time for the fracture cell." );
 }
 
 }
