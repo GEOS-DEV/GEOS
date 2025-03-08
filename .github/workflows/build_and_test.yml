@@ -75,9 +75,9 @@ on:
         required: false
         type: string
         default: '--ninja'
-      USE_MCMODEL_LARGE:
+      ENABLE_LVARRAY_BOUNDS_CHECK:
         required: false
-        type: string         
+        type: string
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -203,6 +203,10 @@ jobs:
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
+
+        if [ ! -z "${{ inputs.ENABLE_LVARRAY_BOUNDS_CHECK }}" ]; then
+          script_args+=(--enable-lvarray-bounds-check "${{ inputs.ENABLE_LVARRAY_BOUNDS_CHECK }}")
+        fi
         
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
         # are passed as scripts parameters. Specific care must be taken to be sure
