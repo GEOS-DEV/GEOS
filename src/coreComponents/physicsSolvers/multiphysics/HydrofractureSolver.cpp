@@ -735,6 +735,8 @@ assembleFluidLeakSource( real64 const time,
   if( m_leakoffCoefficient <= 0 )
     return;
 
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >;
+
   string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
