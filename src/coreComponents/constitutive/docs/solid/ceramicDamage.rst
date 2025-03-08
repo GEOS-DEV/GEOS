@@ -4,5 +4,6 @@
 Ceramic Damage Models
 ############################################
 
-The damage models are in active development, and documentation will be added when they are ready for production release.
-
+For more generalized loading including compressive and tensile failure, 
+we can employ a constitutive formulation similar to that
+presented in

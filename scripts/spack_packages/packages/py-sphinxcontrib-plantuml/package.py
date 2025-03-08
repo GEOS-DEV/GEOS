@@ -5,11 +5,11 @@
 
 from spack.package import *
 
-class PySphinxcontribPlantuml(PythonPackage):
-    """PlantUML for Sphinx"""
+class PySphinxcontrib(PythonPackage):
+    """ for Sphinx"""
 
-    homepage = "https://github.com/sphinx-contrib/plantuml"
-    pypi = "sphinxcontrib-plantuml/sphinxcontrib-plantuml-0.26.tar.gz"
+    homepage = "https://github.com/sphinx-contrib/"
+    pypi = "sphinxcontrib-/sphinxcontrib--0.26.tar.gz"
 
     version("0.26", sha256="adb3397d5cb0613632cd3dad7894381422bac24464c393cb050404dd6712b1a7")
 

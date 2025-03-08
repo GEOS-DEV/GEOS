@@ -104,6 +104,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
+    'sphinx.ext.mathjax',
     'sphinx.ext.imgmath',
     'sphinxarg.ext',
     'matplotlib.sphinxext.plot_directive',
@@ -111,7 +112,7 @@ extensions = [
     'sphinxcontrib.plantuml',
     'sphinxcontrib.programoutput'
 ]
-
+#    'sphinx.ext.imgmath',
 plantuml = "/usr/bin/java -Djava.awt.headless=true -jar /tmp/plantuml.jar"
 plantuml_output_format = "svg_img"
 
@@ -258,10 +259,12 @@ latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\us
 
 #####################################################
 # add LaTeX macros
-
 f = open('/g/g11/malenda1/GEOS/src/docs/sphinx/latex_macros.sty')
+#f = open('docs/sphinx/latex_macros.sty')
 imgmath_latex_preamble = ""
-imgmath_image_format = 'svg'
+#do not merge the following change
+#imgmath_image_format = 'svg'
+imgmath_image_format = 'png'
 imgmath_font_size = 14
 
 for macro in f:
