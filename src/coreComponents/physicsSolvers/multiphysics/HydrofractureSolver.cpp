@@ -757,7 +757,7 @@ assembleFluidLeakSource( real64 const time,
       arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
 
       arrayView2d< real64 const > const dens = fluid.density();
-      arrayView2d< real64 const > const dDens_dPressure = fluid.dDensity_dPressure();
+      arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDens = fluid.dDensity();
 
       arrayView1d< real64 const > const area = subRegion.getElementArea();
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
@@ -776,13 +776,17 @@ assembleFluidLeakSource( real64 const time,
         const globalIndex localRow = presDofNumber[kfe] - rankOffset;
         for( integer idof = 0; idof < numDof; ++idof )
           dofIndices[idof] = presDofNumber[kfe] + idof;
-        localJacobian[0][0] = m_leakoffCoefficient * area[kfe] * dDens_dPressure[kfe][0] / LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
+        localJacobian[0][0] =
+          m_leakoffCoefficient * area[kfe] * dDens[kfe][0][DerivOffset::dP] /
+          LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
         localMatrix.template addToRow< serialAtomic >( localRow,
                                                        dofIndices,
                                                        localJacobian[0],
                                                        numDof );
         // mid-point rule in time
-        localRhs[localRow] += m_leakoffCoefficient * area[kfe] * dens[kfe][0] / LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
+        localRhs[localRow] +=
+          m_leakoffCoefficient * area[kfe] * dens[kfe][0] /
+          LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
       } );
     } );
   } );
