@@ -71,7 +71,7 @@ endif( )
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsKernels.cpp.template
                         ${filename} )
 
-          list( APPEND physicsSolvers_sources ${filename} )
+          list( APPEND solidMechanicsSolvers_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()
@@ -95,7 +95,7 @@ endif( )
         message( " -- Generating file: ${filename}")
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
                         ${filename} )
-          list( APPEND physicsSolvers_sources ${filename} )
+          list( APPEND solidMechanicsSolvers_sources ${filename} )
 
         endforeach()
       endforeach()

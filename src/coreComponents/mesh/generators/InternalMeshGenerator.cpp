@@ -197,7 +197,7 @@ void InternalMeshGenerator::postInputInitialization()
     {
       if( m_regionNames.size() == 1 )
       {
-        m_regionNames.resize(numBlocks, m_regionNames[0]);
+        m_regionNames.resize( numBlocks, m_regionNames[0] );
       }
       else
       {
