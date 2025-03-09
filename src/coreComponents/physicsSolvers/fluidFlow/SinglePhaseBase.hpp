@@ -290,6 +290,10 @@ public:
   void
   updateMass( ElementSubRegionBase & subRegion ) const;
 
+  /**
+   * @brief Template function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
   template< integer IS_THERMAL >
   void updateMass( ElementSubRegionBase & subRegion ) const;
 
