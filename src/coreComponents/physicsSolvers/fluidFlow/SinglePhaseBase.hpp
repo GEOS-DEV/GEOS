@@ -290,6 +290,9 @@ public:
   void
   updateMass( ElementSubRegionBase & subRegion ) const;
 
+  template< integer IS_THERMAL >
+  void updateMass( ElementSubRegionBase & subRegion ) const;
+
   /**
    * @brief Function to update energy
    * @param subRegion subregion that contains the fields
