@@ -63,7 +63,7 @@ endif( )
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/${KERNELNAME}.cpp.template
                         ${filename} )
 
-          list( APPEND physicsSolvers_sources ${filename} )
+          list( APPEND multiPhysicsSolvers_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()
@@ -107,7 +107,7 @@ endif( )
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/PoromechanicsEFEMKernels.cpp.template
                           ${filename} )
   
-        list( APPEND physicsSolvers_sources ${filename} )
+        list( APPEND multiPhysicsSolvers_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()
