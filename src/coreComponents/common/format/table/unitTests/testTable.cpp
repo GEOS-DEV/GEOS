@@ -152,7 +152,7 @@ TEST( testTable, tableColumnParamClassic )
 TEST( testTable, tableHiddenColumn )
 {
   string const title = "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis";
-  TableLayout tableLayout( title,
+  TableLayout const tableLayout( title,
   {
     TableLayout::Column()
       .setName( "Cras egestas" )
@@ -363,7 +363,7 @@ TEST( testTable, subColumns )
 TEST( testTable, variadicTest )
 {
   {
-    TableLayout const layoutTest( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis nascetur ridiculus mus",
+    TableLayout const layoutTest( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte",
     {
       "Rank",
       TableLayout::Column()
@@ -382,24 +382,68 @@ TEST( testTable, variadicTest )
     tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
     TableTextFormatter log( layoutTest );
     EXPECT_EQ( log.toString( tableData ),
-               "\n--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|  Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis nascetur ridiculus mus  |\n"
-               "--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|          Rank          |            Nodes            |    Edge    |            Faces            |              Elems               |\n"
-               "--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|                        |    Locales    |    Ghost    |            |    Locales    |    Ghost    |    Locales    |      Ghost       |\n"
-               "--------------------------------------------------------------------------------------------------------------------------------------\n"
-               "|      min(local/total)  |            1  |          2  |         3  |            4  |          5  |            6  |               7  |\n"
-               "|      min(local/total)  |            1  |          2  |         3  |            4  |          5  |            6  |               7  |\n"
-               "--------------------------------------------------------------------------------------------------------------------------------------\n"
+               "\n-------------------------------------------------------------------------------------------------\n"
+               "|          Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte           |\n"
+               "-------------------------------------------------------------------------------------------------\n"
+               "|        Rank        |        Nodes        |  Edge  |        Faces        |        Elems        |\n"
+               "-------------------------------------------------------------------------------------------------\n"
+               "|                    |  Locales  |  Ghost  |        |  Locales  |  Ghost  |  Locales  |  Ghost  |\n"
+               "-------------------------------------------------------------------------------------------------\n"
+               "|  min(local/total)  |        1  |      2  |     3  |        4  |      5  |        6  |      7  |\n"
+               "|  min(local/total)  |        1  |      2  |     3  |        4  |      5  |        6  |      7  |\n"
+               "-------------------------------------------------------------------------------------------------\n"
+               );
+  }
+}
+
+
+TEST( testTable, maxWidth )
+{
+  {
+    TableLayout const layoutTest = TableLayout( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte,  egestas ipsum a nisl",
+    {
+      "Rank",
+      TableLayout::Column()
+        .setName( "Nodes" )
+        .addSubColumns( {"Count local active\nelemnt n", "Count ghost elemnt n" } ),
+      "Vivamus variu dolor utsisicdis",
+      TableLayout::Column()
+        .setName( "Faces" )
+        .addSubColumns( {"Locales", "Ghost" } ),
+      TableLayout::Column()
+        .setName( "Elems" )
+        .addSubColumns( {"Locales", "egestas ipsum a nisl"} ),
+    } )
+                                     .setMaxColumnWidth( 16 );
+    TableData tableData;
+    tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
+    tableData.addRow( "min(local/total)", 1, 2, 3, 4, 5, 6, 7 );
+    TableTextFormatter log( layoutTest );
+
+    EXPECT_EQ( log.toString( tableData ),
+               "\n---------------------------------------------------------------------------------------------------------------------------------\n"
+               "|               Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte,  egestas ipsum a nisl               |\n"
+               "---------------------------------------------------------------------------------------------------------------------------------\n"
+               "|        Rank        |             Nodes             |   Vivamus variu    |        Faces        |             Elems             |\n"
+               "|                    |                               |  dolor utsisicdis  |                     |                               |\n"
+               "---------------------------------------------------------------------------------------------------------------------------------\n"
+               "|                    |  Count local  |  Count ghost  |                    |  Locales  |  Ghost  |  Locales  |  egestas ipsum a  |\n"
+               "|                    |    active     |   elemnt n    |                    |           |         |           |       nisl        |\n"
+               "|                    |   elemnt n    |               |                    |           |         |           |                   |\n"
+               "---------------------------------------------------------------------------------------------------------------------------------\n"
+               "|  min(local/total)  |            1  |            2  |                 3  |        4  |      5  |        6  |                7  |\n"
+               "|  min(local/total)  |            1  |            2  |                 3  |        4  |      5  |        6  |                7  |\n"
+               "---------------------------------------------------------------------------------------------------------------------------------\n"
                );
   }
 }
 
 TEST( testTable, testLineBreak )
 {
-  TableLayout tableLayout( {"Cras egestas", "CoordX", "C", "CoordZ", "Prev\nelement", "Next\nelement"} );
-  tableLayout.setTitle( "title" ).setMargin( TableLayout::MarginValue::tiny ).enableLineBreak( false );
+  TableLayout const tableLayout = TableLayout( {"Cras egestas", "CoordX", "C", "CoordZ", "Prev\nelement", "Next\nelement"} )
+                                    .setTitle( "title" )
+                                    .setMargin( TableLayout::MarginValue::tiny )
+                                    .enableLineBreak( false );
 
   TableData tableData;
   tableData.addRow( "1", "2", "3.0", 3.0129877, 2.0f, 1 );
@@ -459,7 +503,6 @@ TEST( testTable, testCellMerging )
   tableData.addRow( "Alpha", 1001, 8, "Beta\nwater", "2002\n1.0", CellType::MergeNext );
 
   TableTextFormatter const tableText( tableLayout );
-  std::cout << tableText.toString( tableData ) << std::endl;
   EXPECT_EQ( tableText.toString( tableData ),
              "\n-----------------------------------------------------------------------------------------------\n"
              "|     Cras egestas      |  CoordX  |     C     |      CoordZ       |     Prev     |   Next    |\n"
