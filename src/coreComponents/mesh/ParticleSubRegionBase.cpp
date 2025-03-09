@@ -18,7 +18,6 @@
  */
 
 #include "ParticleSubRegionBase.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geos
 {
