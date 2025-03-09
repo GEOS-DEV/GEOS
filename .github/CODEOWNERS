@@ -62,12 +62,12 @@
 /src/coreComponents/dataRepository                    @rrsettgast @wrtobin @corbett5 @MelReyCG 
 /src/coreComponents/denseLinearAlgebra                @rrsettgast @CusiniM @castelletto1 
 /src/coreComponents/discretizationMethods             @rrsettgast @CusiniM @castelletto1
-/src/coreComponents/events                            @rrsettgast @corbett5 @cssherman 
-/src/coreComponents/fieldSpecification                @rrsettgast @CusiniM @corbett5 @cssherman 
+/src/coreComponents/events                            @rrsettgast @corbett5 @cssherman @MelReyCG
+/src/coreComponents/fieldSpecification                @rrsettgast @CusiniM @corbett5 @cssherman @MelReyCG
 /src/coreComponents/fileIO                            @rrsettgast @wrtobin @MelReyCG @untereiner
 /src/coreComponents/finiteElement                     @rrsettgast @castelletto1 @andrea-borio @CusiniM
 /src/coreComponents/finiteVolume                      @rrsettgast @castelletto1 @CusiniM @paveltomin
-/src/coreComponents/functions                         @rrsettgast @cssherman @wrtobin 
+/src/coreComponents/functions                         @rrsettgast @cssherman @wrtobin @MelReyCG
 /src/coreComponents/linearAlgebra                     @rrsettgast @CusiniM @castelletto1 @victorapm   
 /src/coreComponents/mainInterface                     @rrsettgast @corbett5 @wrtobin 
 /src/coreComponents/math                              @rrsettgast @corbett5 @wrtobin 
@@ -83,7 +83,7 @@
 /src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
 /src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain
 /src/coreComponents/schema
-/src/coreComponents/unitTests                         @rrsettgast @CusiniM @corbett5 @wrtobin 
+/src/coreComponents/unitTests                         @rrsettgast @CusiniM @corbett5 @wrtobin @MelReyCG
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
 # username           name
@@ -140,7 +140,7 @@
 # labesse40   
 # matteofrigo5       Matteo Frigo
 # MatthiasCremon     Matthias Cremon
-# MelReyCG   
+# MelReyCG           Melvin Rey
 # MichaelSekachev    Michael Sekachev
 # mndiaye24          Mamadou N'diaye
 # npillardou         Nicolas Pillardou

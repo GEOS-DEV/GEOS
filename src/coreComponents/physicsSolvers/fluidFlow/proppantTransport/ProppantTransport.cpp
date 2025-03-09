@@ -234,7 +234,7 @@ void ProppantTransport::updateProppantModel( ObjectManagerBase & dataGroup )
 
   SlurryFluidBase const & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
-  arrayView2d< real64 const > const fluidDens            = fluid.fluidDensity();
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const fluidDens            = fluid.fluidDensity();
   arrayView2d< real64 const > const dFluidDens_dPres     = fluid.dFluidDensity_dPressure();
   arrayView3d< real64 const > const dFluidDens_dCompConc = fluid.dFluidDensity_dComponentConcentration();
   arrayView2d< real64 const > const fluidVisc            = fluid.fluidViscosity();
@@ -613,12 +613,12 @@ void ProppantTransport::assembleFluxTerms( real64 const dt,
                           slurryFluidAccessors.get< slurryfluid::dComponentDensity_dPressure >(),
                           slurryFluidAccessors.get< slurryfluid::dComponentDensity_dComponentConcentration >(),
                           flowAccessors.get< flow::gravityCoefficient >(),
-                          slurryFluidAccessors.get< singlefluid::density >(),
-                          slurryFluidAccessors.get< singlefluid::dDensity_dPressure >(),
+                          slurryFluidAccessors.get< fields::singlefluid::density >(),
+                          slurryFluidAccessors.get< fields::singlefluid::dDensity >(),
                           slurryFluidAccessors.get< slurryfluid::dDensity_dProppantConcentration >(),
                           slurryFluidAccessors.get< slurryfluid::dDensity_dComponentConcentration >(),
-                          slurryFluidAccessors.get< singlefluid::viscosity >(),
-                          slurryFluidAccessors.get< singlefluid::dViscosity_dPressure >(),
+                          slurryFluidAccessors.get< fields::singlefluid::viscosity >(),
+                          slurryFluidAccessors.get< fields::singlefluid::dViscosity >(),
                           slurryFluidAccessors.get< slurryfluid::dViscosity_dProppantConcentration >(),
                           slurryFluidAccessors.get< slurryfluid::dViscosity_dComponentConcentration >(),
                           slurryFluidAccessors.get< slurryfluid::fluidDensity >(),
@@ -983,8 +983,8 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( tim
                                                   downVector,
                                                   flowAccessors.get< flow::pressure >(),
                                                   flowAccessors.get< flow::gravityCoefficient >(),
-                                                  slurryFluidAccessors.get< singlefluid::density >(),
-                                                  slurryFluidAccessors.get< singlefluid::viscosity >(),
+                                                  slurryFluidAccessors.get< fields::singlefluid::density >(),
+                                                  slurryFluidAccessors.get< fields::singlefluid::viscosity >(),
                                                   permAccessors.get< permeability::permeability >(),
                                                   permAccessors.get< permeability::permeabilityMultiplier >(),
                                                   flowAccessors.get< elementAperture >(),
@@ -1047,9 +1047,8 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
                                                                      m_criticalShieldsNumber,
                                                                      m_frictionCoefficient,
                                                                      particleFluidAccessors.get< particlefluid::settlingFactor >(),
-                                                                     slurryFluidAccessors.get< singlefluid::density >(),
-                                                                     slurryFluidAccessors.get< slurryfluid::fluidDensity >(),
-                                                                     slurryFluidAccessors.get< slurryfluid::fluidViscosity >(),
+                                                                     slurryFluidAccessors.get< fields::singlefluid::density >(),
+                                                                     slurryFluidAccessors.get< fields::slurryfluid::fluidDensity >(),
                                                                      flowAccessors.get< proppant::isProppantMobile >(),
                                                                      flowAccessors.get< proppant::isProppantBoundary >(),
                                                                      flowAccessors.get< fields::elementAperture >(),

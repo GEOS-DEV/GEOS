@@ -21,6 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
 
 namespace geos
 {
@@ -32,6 +34,8 @@ namespace fields
 
 namespace flow
 {
+
+using array2dLayoutFluid = array2d< real64, constitutive::singlefluid::LAYOUT_FLUID >;
 
 DECLARE_FIELD( mass,
                "mass",
@@ -57,21 +61,13 @@ DECLARE_FIELD( mobility,
                WRITE_AND_READ,
                "Mobility" );
 
-DECLARE_FIELD( dMobility_dPressure,
-               "dMobility_dPressure",
-               array1d< real64 >,
+DECLARE_FIELD( dMobility,
+               "dMobility",
+               array2dLayoutFluid,
                0,
                NOPLOT,
                NO_WRITE,
-               "Derivative of mobility with respect to pressure" );
-
-DECLARE_FIELD( dMobility_dTemperature,
-               "dMobility_dTemperature",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of mobility with respect to temperature" );
+               "dMobility" );
 
 }
 
