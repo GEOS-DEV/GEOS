@@ -142,7 +142,7 @@ void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, D
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
 
-      rateAndStateKernels::createAndlaunchODEInitialSubStage( subRegion, frictionLaw, m_butcherTable, dt, m_successfulStep );        
+      rateAndStateKernels::createAndlaunchODEInitialSubStage( subRegion, frictionLaw, m_butcherTable, dt, m_successfulStep );
 
     } );
   } );
@@ -162,7 +162,7 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
- 
+
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
       rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, frictionLaw, m_butcherTable, stageIndex, dt );
@@ -184,11 +184,11 @@ void ExplicitQDRateAndState::stepRateStateODEAndComputeError( real64 const dt, D
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = getConstitutiveModel< constitutive::ConstitutiveBase >( subRegion, frictionLawName );
-      rateAndStateKernels::createAndlaunchStepRateStateODEAndComputeError( subRegion, 
-                                                                           frictionLaw, 
-                                                                           m_butcherTable, 
-                                                                           m_controller.relTol, 
-                                                                           m_controller.absTol, 
+      rateAndStateKernels::createAndlaunchStepRateStateODEAndComputeError( subRegion,
+                                                                           frictionLaw,
+                                                                           m_butcherTable,
+                                                                           m_controller.relTol,
+                                                                           m_controller.absTol,
                                                                            dt );
     } );
   } );

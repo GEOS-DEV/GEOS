@@ -347,7 +347,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
   else
   {
-    return - m_V0[k] * m_V0[k] / m_Dc[k] * LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] );
+    return -m_V0[k] * m_V0[k] / m_Dc[k] * LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] );
   }
 }
 

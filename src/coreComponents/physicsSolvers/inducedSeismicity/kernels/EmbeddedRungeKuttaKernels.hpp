@@ -15,7 +15,7 @@
  */
 
  #ifndef GEOS_PHYSICSSOLVERS_INDUCEDSEISMICITY_KERNELS_EMBEDDEDRUNGEKUTTAKERNELS_HPP_
- #define GEOS_PHYSICSSOLVERS_INDUCEDSEISMICITY_KERNELS_EMBEDDEDRUNGEKUTTAKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_INDUCEDSEISMICITY_KERNELS_EMBEDDEDRUNGEKUTTAKERNELS_HPP_
 
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "common/DataTypes.hpp"
@@ -245,7 +245,7 @@ public:
     return (highOrderApprox - lowOrderApprox) /
            ( absTol + relTol * LvArray::math::max( LvArray::math::abs( highOrderApprox ), LvArray::math::abs( lowOrderApprox ) ));
   }
-  
+
 private:
 
   /// Current state variable
@@ -289,11 +289,11 @@ private:
 };
 
 template< typename BUTCHER_TABLE_TYPE >
-void createAndlaunchODEInitialSubStage(  SurfaceElementSubRegion & subRegion,
-                                         constitutive::ConstitutiveBase & frictionLaw,
-                                         BUTCHER_TABLE_TYPE const & butcherTable,
-                                         real64 const dt,
-                                         bool const successfulStep )
+void createAndlaunchODEInitialSubStage( SurfaceElementSubRegion & subRegion,
+                                        constitutive::ConstitutiveBase & frictionLaw,
+                                        BUTCHER_TABLE_TYPE const & butcherTable,
+                                        real64 const dt,
+                                        bool const successfulStep )
 {
   constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
@@ -324,7 +324,7 @@ void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegio
                                               constitutive::ConstitutiveBase & frictionLaw,
                                               BUTCHER_TABLE_TYPE const & butcherTable,
                                               integer const stageIndex,
-                                              real64 const dt  )
+                                              real64 const dt )
 {
   constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
@@ -342,9 +342,9 @@ template< typename BUTCHER_TABLE_TYPE >
 void createAndlaunchStepRateStateODEAndComputeError( SurfaceElementSubRegion & subRegion,
                                                      constitutive::ConstitutiveBase & frictionLaw,
                                                      BUTCHER_TABLE_TYPE const & butcherTable,
-                                                     real64 const relTolerance, 
+                                                     real64 const relTolerance,
                                                      real64 const absTolerance,
-                                                     real64 const dt  )
+                                                     real64 const dt )
 {
   constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
@@ -369,7 +369,7 @@ void createAndlaunchStepRateStateODEAndComputeError( SurfaceElementSubRegion & s
         // Update solution to final time and compute errors
         rkKernel.updateSolutionAndLocalError( k, dt, absTolerance, relTolerance );
       } );
-  }
+    }
   } );
 }
 
