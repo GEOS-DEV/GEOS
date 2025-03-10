@@ -110,33 +110,29 @@ size_t TableLayout::getMaxDepth() const
   return depthMax;
 }
 
-void divideCell( std::vector< string > & lines, string_view value )
+template< typename STRING_T >
+void divideLines( std::vector< STRING_T > & lines, size_t & linesWidth, string_view value )
 {
-  std::istringstream strStream{ string( value ) };
-  std::string line;
+  size_t current = 0;
+  size_t end = value.find( '\n' );
+
   lines.clear();
-  while( getline( strStream, line, '\n' ))
-  {
-    lines.push_back( line );
-  }
+  linesWidth = 0;
 
-  if( line.empty())
+  // Process each line until no more newlines are found
+  while( end != STRING_T::npos )
   {
-    lines.push_back( "" );
+    lines.push_back( STRING_T( value.substr( current, end - current ) ) );
+    current = end + 1;
+    end = value.find( '\n', current );
+    linesWidth = std::max( linesWidth, lines.back().size() );
   }
-}
-
-size_t computeCellWidth( std::vector< string > const & lines )
-{
-  size_t cellWidth = 0;;
-  if( !lines.empty())
+  // Add the last part
+  if( current <= value.size())
   {
-    cellWidth = std::max_element( lines.begin(), lines.end(), []( const auto & a, const auto & b )
-    {
-      return a.length() < b.length();
-    } )->length();
+    lines.push_back( STRING_T( value.substr( current )  ) );
+    linesWidth = std::max( linesWidth, lines.back().size() );
   }
-  return cellWidth;
 }
 
 TableLayout::CellLayout::CellLayout():
@@ -157,8 +153,7 @@ TableLayout::CellLayout::CellLayout( CellType type, string_view cellValue, Table
   m_cellType( type ),
   m_alignment( alignment )
 {
-  divideCell( m_lines, cellValue );
-  m_cellWidth = computeCellWidth( m_lines );
+  divideLines( m_lines, m_cellWidth, cellValue );
 }
 
 TableLayout::Column::Column():
@@ -176,9 +171,7 @@ TableLayout::Column::Column( TableLayout::CellLayout cell ):
 
 TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
-  m_header.m_lines.push_back( std::string( name ) );
-  divideCell( m_header.m_lines, m_header.m_lines[0] );
-  m_header.m_cellWidth = computeCellWidth( m_header.m_lines );
+  divideLines( m_header.m_lines, m_header.m_cellWidth, name );
   m_header.m_cellType = CellType::Header;
   return *this;
 }
