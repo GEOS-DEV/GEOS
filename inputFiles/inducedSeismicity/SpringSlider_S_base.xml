@@ -1,5 +1,10 @@
 <?xml version="1.0" ?>
 <Problem>
+  <Included>
+    <File
+      name="./SpringSlider_base.xml"/>
+  </Included>
+
   <Constitutive>
     <RateAndStateFrictionSlipLaw
       name="frictionLaw"

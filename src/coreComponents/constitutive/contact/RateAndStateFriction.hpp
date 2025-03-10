@@ -331,7 +331,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::stateEvolutio
   }
   else
   {
-    return m_b[k] * m_V0[k] / m_Dc[k] * ( m_V0[k] *  LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] ) - slipRate );
+    return m_b[k] / m_Dc[k] * ( m_V0[k] *  LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] ) - slipRate );
   }
 }
 
@@ -347,7 +347,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
   else
   {
-    return -m_V0[k] * m_V0[k] / m_Dc[k] * LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] );
+    return -m_V0[k] / m_Dc[k] * LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] );
   }
 }
 
@@ -368,7 +368,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   else
   {
     GEOS_UNUSED_VAR( slipRate, stateVariable );
-    return -m_b[k] * m_V0[k] / m_Dc[k];
+    return -m_b[k] / m_Dc[k];
   }
 }
 

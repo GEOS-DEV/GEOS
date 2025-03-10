@@ -288,89 +288,79 @@ private:
   TABLE_TYPE m_butcherTable;
 };
 
-template< typename BUTCHER_TABLE_TYPE >
+template< typename FRICTION_TYPE, typename BUTCHER_TABLE_TYPE >
 void createAndlaunchODEInitialSubStage( SurfaceElementSubRegion & subRegion,
-                                        constitutive::ConstitutiveBase & frictionLaw,
+                                        FRICTION_TYPE & frictionLaw,
                                         BUTCHER_TABLE_TYPE const & butcherTable,
                                         real64 const dt,
                                         bool const successfulStep )
 {
-  constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+  rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
+  if( butcherTable.FSAL && successfulStep )
   {
-    using FRICTION_TYPE = TYPEOFREF( castedFrictionLaw );
-    rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
-    if( butcherTable.FSAL && successfulStep )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-      {
-        rkKernel.updateStageRatesFSAL( k );
-        rkKernel.updateStageValues( k, 1, dt );
-      } );
-    }
-    else
+      rkKernel.updateStageRatesFSAL( k );
+      rkKernel.updateStageValues( k, 1, dt );
+    } );
+  }
+  else
+  {
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-      {
-        rkKernel.initialize( k );
-        rkKernel.updateStageRates( k, 0 );
-        rkKernel.updateStageValues( k, 1, dt );
-      } );
-    }
-  } );
+      rkKernel.initialize( k );
+      rkKernel.updateStageRates( k, 0 );
+      rkKernel.updateStageValues( k, 1, dt );
+    } );
+  }
 }
 
-template< typename BUTCHER_TABLE_TYPE >
+template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >
 void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegion,
-                                              constitutive::ConstitutiveBase & frictionLaw,
+                                              FRICTION_TYPE & frictionLaw,
                                               BUTCHER_TABLE_TYPE const & butcherTable,
                                               integer const stageIndex,
                                               real64 const dt )
 {
-  constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+
+  rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    using FRICTION_TYPE = TYPEOFREF( castedFrictionLaw );
-    rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      rkKernel.updateStageRates( k, stageIndex );
-      rkKernel.updateStageValues( k, stageIndex+1, dt );
-    } );
+    rkKernel.updateStageRates( k, stageIndex );
+    rkKernel.updateStageValues( k, stageIndex+1, dt );
   } );
 }
 
-template< typename BUTCHER_TABLE_TYPE >
+template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >
 void createAndlaunchStepRateStateODEAndComputeError( SurfaceElementSubRegion & subRegion,
-                                                     constitutive::ConstitutiveBase & frictionLaw,
+                                                     FRICTION_TYPE & frictionLaw,
                                                      BUTCHER_TABLE_TYPE const & butcherTable,
                                                      real64 const relTolerance,
                                                      real64 const absTolerance,
                                                      real64 const dt )
 {
-  constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+
+  rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
+  if( butcherTable.FSAL )
   {
-    using FRICTION_TYPE = TYPEOFREF( castedFrictionLaw );
-    rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
-    if( butcherTable.FSAL )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-      {
-        // Perform last stage rate update
-        rkKernel.updateStageRates( k, butcherTable.numStages-1 );
-        // Update solution to final time and compute errors
-        rkKernel.updateSolutionAndLocalErrorFSAL( k, dt, absTolerance, relTolerance );
-      } );
-    }
-    else
+      // Perform last stage rate update
+      rkKernel.updateStageRates( k, butcherTable.numStages-1 );
+      // Update solution to final time and compute errors
+      rkKernel.updateSolutionAndLocalErrorFSAL( k, dt, absTolerance, relTolerance );
+    } );
+  }
+  else
+  {
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-      {
-        // Perform last stage rate update
-        rkKernel.updateStageRates( k, butcherTable.numStages-1 );
-        // Update solution to final time and compute errors
-        rkKernel.updateSolutionAndLocalError( k, dt, absTolerance, relTolerance );
-      } );
-    }
-  } );
+      // Perform last stage rate update
+      rkKernel.updateStageRates( k, butcherTable.numStages-1 );
+      // Update solution to final time and compute errors
+      rkKernel.updateSolutionAndLocalError( k, dt, absTolerance, relTolerance );
+    } );
+  }
 }
 
 } /* namespace rateAndStateKernels */
