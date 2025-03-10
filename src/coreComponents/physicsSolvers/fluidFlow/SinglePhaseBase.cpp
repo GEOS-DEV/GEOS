@@ -279,8 +279,10 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
   arrayView1d< real64 > const mass_n = subRegion.getField< fields::flow::mass_n >();
   arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dMass = subRegion.getField< fields::flow::dMass >();
 
+  //START_SPHINX_INCLUDE_COUPLEDSOLID
   CoupledSolidBase const & porousSolid =
     getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString()));
+  //END_SPHINX_INCLUDE_COUPLEDSOLID
   arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
   arrayView2d< real64 const > const dPorosity_dP = porousSolid.getDporosity_dPressure();
   arrayView2d< real64 const > const porosity_n = porousSolid.getPorosity_n();
@@ -685,7 +687,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       aper0.setValues< parallelDevicePolicy<> >( aper );
 
       // Needed coz faceElems don't exist when initializing.
-      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
       porousSolid.saveConvergedState();
 
       saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes

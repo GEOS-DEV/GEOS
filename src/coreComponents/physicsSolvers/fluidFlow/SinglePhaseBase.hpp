@@ -23,8 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
 
