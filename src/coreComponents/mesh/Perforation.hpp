@@ -113,7 +113,7 @@ public:
    * @brief Get table representing change of perforation status over time e
    * @return time vs status table
    */
-  array2d< real64 > const & getPerfStatusTable() const { return m_perfStatus; }
+  array2d< real64 > const & getPerfStatusTable() const { return m_perfStatusTable; }
 
   ///@}
 
@@ -154,9 +154,7 @@ private:
   string m_targetRegionName;
 
   /// Time versus perforation status table
-  TableFunction m_perfStatusTable;
-
-  array2d< real64 > m_perfStatus;
+  array2d< real64 > m_perfStatusTable;
 };
 
 } // namespace geos

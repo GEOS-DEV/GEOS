@@ -224,12 +224,12 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
           //if ( MpiWrapper::commRank( MPI_COMM_GEOS ) == 1 && i == 1 )
           //   perfState[i]=PerforationData::PerforationState::CLOSED;
           //else
-          if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 1 )
-            perfState[i]=PerforationData::PerforationState::CLOSED;
-          else
+          //if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 1 )
+          //  perfState[i]=PerforationData::PerforationState::CLOSED;
+          //else
             perfState[i]=PerforationData::PerforationState::OPEN;
         }
-
+#if 1
         //
         array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
         arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
@@ -260,6 +260,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
         {
           numOpenElements += updatedState[i];
         }
+        GEOS_LOG_RANK("tjb end segState Setup "<< numLocalElements << " " <<numOpenElements);
         wellControls.setWellStatus( numOpenElements>0 );
 
       }

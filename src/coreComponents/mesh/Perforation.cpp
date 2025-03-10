@@ -19,6 +19,7 @@
 
 #include "Perforation.hpp"
 #include "dataRepository/InputFlags.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geos
 {
@@ -29,8 +30,7 @@ Perforation::Perforation( string const & name, Group * const parent )
   : Group( name, parent ),
   m_distanceFromHead( 0 ),
   m_wellTransmissibility( 0 ),
-  m_wellSkinFactor( 0 ),
-  m_perfStatusTable( "PerfStatusTable", parent )
+  m_wellSkinFactor( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -52,18 +52,13 @@ Perforation::Perforation( string const & name, Group * const parent )
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target region to connect the perforation" );
-#if 0
-  registerWrapper( "PerfStatusTable", &m_perfStatusTable ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "The perforation table defining perforation state as a function of time. \n"
-                    "If the status function evaluates to a positive value at the current time, the perforation will be open otherwise the perforation will be shut." );
-#else
-  registerWrapper( viewKeyStruct::perfStatusTableString(), &m_perfStatus ).
+
+  registerWrapper( viewKeyStruct::perfStatusTableString(), &m_perfStatusTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "The perforation table defining perforation state as a function of time." );
-#endif
+    setDescription( "Table defining perforation state as a function of time. If enterned in Functions section, the name must be the same as the perforation name" );
+
+
 }
 
 
@@ -73,18 +68,39 @@ void Perforation::postInputInitialization()
                  getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) <<
                  ": distance from well head to perforation cannot be negative." );
 
-  // 12) Create the time-dependent perforation status table
-  if( m_perfStatusTable.numDimensions() == 0 )
+  // Setup perforation status function
+  FunctionManager & functionManager = FunctionManager::getInstance();
+ 
+  if( !functionManager.hasGroup< TableFunction >( getName() ) )
   {
-    real64 constantValue = 1.0;
+    TableFunction * tableFunction = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", getName() ) );
+
     array1d< array1d< real64 > > timeCoord;
     timeCoord.resize( 1 );
+    array1d< real64 > values;
+    //  Create the time-dependent perforation status table
+
+    if(  m_perfStatusTable[0].size() == 0 )
+    {
+      real64 alwaysOpen = 1.0;
     timeCoord[0].emplace_back( 0 );
-    array1d< real64 > constantValueArray;
-    constantValueArray.emplace_back( constantValue );
-    m_perfStatusTable.setTableCoordinates( timeCoord, { units::Time } );
-    m_perfStatusTable.setTableValues( constantValueArray );
-    m_perfStatusTable.setInterpolationMethod( TableFunction::InterpolationType::Lower );
+      values.emplace_back( alwaysOpen );
+    }
+    else
+    {
+      // If a name is explicitly given, then check that it exists
+      GEOS_THROW_IF( m_perfStatusTable[0].size() != m_perfStatusTable[1].size(),
+            GEOS_FMT( "Perforation status table missing time or status : {}", getName() ),
+              InputError );
+      for (std::ptrdiff_t i=0;i<m_perfStatusTable[0].size();i++)
+      {
+        timeCoord[0].emplace_back( m_perfStatusTable[0][i]);
+        values.emplace_back( m_perfStatusTable[1][i]);
+      }
+    }
+    tableFunction->setTableCoordinates( timeCoord, { units::Time } );
+    tableFunction->setTableValues( values );
+    tableFunction->setInterpolationMethod( TableFunction::InterpolationType::Lower );
   }
 }
 

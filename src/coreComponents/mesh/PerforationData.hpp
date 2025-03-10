@@ -219,14 +219,14 @@ public:
    * @brief Get perforation's state
    * @return array of states
    */
-  arrayView1d< integer const > getLocalPerfState() const { return m_localPerfState; }
+  arrayView1d< localIndex const > getLocalPerfState() const { return m_localPerfState; }
 
 
   /**
    * @brief Get perforation's state
    * @return array of states
    */
-  arrayView1d< integer > getLocalPerfState() { return m_localPerfState; }
+  arrayView1d< localIndex > getLocalPerfState() { return m_localPerfState; }
 
   ///@}
 
@@ -323,10 +323,10 @@ private:
   array1d< real64 > m_wellSkinFactor;
 
   /// Time versus perforation status table
-  array1d< TableFunction * > m_perfStatusTable;
+  array1d< TableFunction const *  > m_perfStatusTable;
 
   /// Locally owned perforation's state
-  array1d< integer > m_localPerfState;
+  array1d< localIndex > m_localPerfState;
 
 };
 
