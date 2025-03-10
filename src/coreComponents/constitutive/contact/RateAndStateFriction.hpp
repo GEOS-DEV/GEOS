@@ -367,6 +367,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
   else
   {
+    GEOS_UNUSED_VAR( slipRate, stateVariable );
     return -m_b[k] * m_V0[k] / m_Dc[k];
   }
 }
