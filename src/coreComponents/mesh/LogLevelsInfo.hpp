@@ -18,8 +18,8 @@
  * This file contains common log level informations for mesh
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
-#define GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
+#ifndef GEOS_MESH_LOGLEVELSINFO_HPP
+#define GEOS_MESH_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/LogLevelsInfo.hpp"
@@ -75,4 +75,4 @@ struct VTKSteps
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
+#endif // GEOS_MESH_LOGLEVELSINFO_HPP
