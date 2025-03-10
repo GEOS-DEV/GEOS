@@ -709,24 +709,24 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
     minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
     minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
 
-  string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                              GEOS_FMT( "        {}: Max pressure change = {:.3f} Pa (before scaling) at cell {}",
-                                        getName(), globalDeltaPresMax.first, globalDeltaPresMax.second ) );
+    string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max pressure change = {:.3f} Pa (before scaling) at cell {}",
+                                     getName(), globalDeltaPresMax.first, globalDeltaPresMax.second ) );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                              GEOS_FMT( "        {}: Max component density change = {:.3f} {} (before scaling) at cell {}",
-                                        getName(), globalDeltaCompDensMax.first, massUnit, globalDeltaCompDensMax.second ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max component density change = {:.3f} {} (before scaling) at cell {}",
+                                     getName(), globalDeltaCompDensMax.first, massUnit, globalDeltaCompDensMax.second ) );
 
     if( m_isThermal )
     {
       auto globalMaxDeltaTemp = MpiWrapper::max< real64, globalIndex >( regionDeltaTempMaxLoc );
 
-    minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell maxRegionDeltaTempLoc {}",
-                                          getName(), globalMaxDeltaTemp.first, globalMaxDeltaTemp.second ) );
-  }
+      minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell maxRegionDeltaTempLoc {}",
+                                       getName(), globalMaxDeltaTemp.first, globalMaxDeltaTemp.second ) );
+    }
 
     if( m_scalingType == ScalingType::Local )
     {
@@ -802,16 +802,16 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolutionZFormulation( DomainP
   minCompFracScalingFactor = MpiWrapper::min( minCompFracScalingFactor );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
+                                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max component fraction change = {} (before scaling)",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompFrac, 3 ) ) );
+                                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompFrac, 3 ) ) );
 
   if( m_isThermal )
   {
     maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
     GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
-                                                             getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+                                                        getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
   }
 
   if( m_scalingType == ScalingType::Local )
@@ -921,19 +921,19 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     numNegDens = MpiWrapper::sum( numNegDens );
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
-  if( numNegPres > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                     getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
-  string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-  if( numNegDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
-                                     getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
-  if( minTotalDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
-                                     getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+    if( numNegPres > 0 )
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                       getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
+    string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
+    if( numNegDens > 0 )
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
+                                       getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+    if( minTotalDens > 0 )
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
+                                       getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
 
     return MpiWrapper::min( localCheck );
   }

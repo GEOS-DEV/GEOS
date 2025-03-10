@@ -1,6 +1,6 @@
 # Specify solver headers
-set( physicsSolvers_headers
-     ${physicsSolvers_headers}
+set( solidMechanicsSolvers_headers
+     ${solidMechanicsSolvers_headers}
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
      contact/LogLevelsInfo.hpp
@@ -23,8 +23,8 @@ set( physicsSolvers_headers
 
 
 # Specify solver sources
-set( physicsSolvers_sources
-     ${physicsSolvers_sources}
+set( solidMechanicsSolvers_sources
+     ${solidMechanicsSolvers_sources}
      contact/ContactSolverBase.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp

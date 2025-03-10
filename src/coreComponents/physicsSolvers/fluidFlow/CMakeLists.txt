@@ -1,139 +1,171 @@
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+#
+#--------------------------------------------------------------------------------------------------
+
+#[[
+Package: fluidFlowSolvers
+Contains:
+#]]
+
 # Specify solver headers
-set( physicsSolvers_headers
-     ${physicsSolvers_headers}
-     fluidFlow/FlowSolverBase.hpp
-     fluidFlow/FlowSolverBaseFields.hpp
-     fluidFlow/CompositionalMultiphaseBase.hpp
-     fluidFlow/CompositionalMultiphaseBaseFields.hpp
-     fluidFlow/CompositionalMultiphaseStatistics.hpp
-     fluidFlow/CompositionalMultiphaseFVM.hpp
-     fluidFlow/CompositionalMultiphaseHybridFVM.hpp
-     fluidFlow/CompositionalMultiphaseUtilities.hpp
-     fluidFlow/LogLevelsInfo.hpp
-     fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp
-     fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp
-     fluidFlow/SourceFluxStatistics.hpp
-     fluidFlow/SinglePhaseBase.hpp
-     fluidFlow/SinglePhaseBaseFields.hpp
-     fluidFlow/SinglePhaseStatistics.hpp
-     fluidFlow/SinglePhaseFVM.hpp
-     fluidFlow/SinglePhaseHybridFVM.hpp
-     fluidFlow/SinglePhaseProppantBase.hpp
-     fluidFlow/StencilAccessors.hpp
-     fluidFlow/StencilDataCollection.hpp
-     fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp
-     fluidFlow/kernels/StencilWeightsUpdateKernel.hpp
-     fluidFlow/kernels/HybridFVMHelperKernels.hpp
-     fluidFlow/kernels/singlePhase/AccumulationKernels.hpp
-     fluidFlow/kernels/singlePhase/AquiferBCKernel.hpp
-     fluidFlow/kernels/singlePhase/DirichletFluxComputeKernel.hpp
-     fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp
-     fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp
-     fluidFlow/kernels/singlePhase/FluxComputeKernelBase.hpp
-     fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp
-     fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp
-     fluidFlow/kernels/singlePhase/MobilityKernel.hpp
-     fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp
-     fluidFlow/kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
-     fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp
-     fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp
-     fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp
-     fluidFlow/kernels/singlePhase/StabilizedFluxComputeKernel.hpp
-     fluidFlow/kernels/singlePhase/StatisticsKernel.hpp
-     fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp
-     fluidFlow/kernels/singlePhase/ThermalDirichletFluxComputeKernel.hpp
-     fluidFlow/kernels/singlePhase/ThermalFluxComputeKernel.hpp
-     fluidFlow/kernels/singlePhase/proppant/ProppantBaseKernels.hpp
-     fluidFlow/kernels/singlePhase/proppant/ProppantFluxKernels.hpp
-     fluidFlow/kernels/compositional/AccumulationKernel.hpp
-     fluidFlow/kernels/compositional/AquiferBCKernel.hpp
-     fluidFlow/kernels/compositional/PPUPhaseFlux.hpp
-     fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp
-     fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp
-     fluidFlow/kernels/compositional/CFLKernel.hpp
-     fluidFlow/kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
-     fluidFlow/kernels/compositional/DiffusionDispersionFluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/DirichletFluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/DissipationFluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/FluidUpdateKernel.hpp
-     fluidFlow/kernels/compositional/FluidUpdateKernel.hpp
-     fluidFlow/kernels/compositional/FluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/FluxComputeKernelBase.hpp
-     fluidFlow/kernels/compositional/GlobalComponentFractionKernel.hpp
-     fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp
-     fluidFlow/kernels/compositional/IHUPhaseFlux.hpp
-     fluidFlow/kernels/compositional/HU2PhaseFlux.hpp
-     fluidFlow/kernels/compositional/KernelLaunchSelectors.hpp
-     fluidFlow/kernels/compositional/PhaseComponentFlux.hpp
-     fluidFlow/kernels/compositional/PhaseMobilityKernel.hpp
-     fluidFlow/kernels/compositional/PhaseVolumeFractionKernel.hpp
-     fluidFlow/kernels/compositional/PotGrad.hpp
-     fluidFlow/kernels/compositional/PPUPhaseFlux.hpp
-     fluidFlow/kernels/compositional/PropertyKernelBase.hpp
-     fluidFlow/kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
-     fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp
-     fluidFlow/kernels/compositional/ResidualNormKernel.hpp
-     fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp
-     fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp
-     fluidFlow/kernels/compositional/SolutionCheckKernel.hpp
-     fluidFlow/kernels/compositional/SolutionScalingKernel.hpp
-     fluidFlow/kernels/compositional/StabilizedFluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/StatisticsKernel.hpp
-     fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp
-     fluidFlow/kernels/compositional/ThermalDiffusionDispersionFluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/ThermalDirichletFluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/ThermalFluxComputeKernel.hpp
-     fluidFlow/kernels/compositional/ThermalPhaseMobilityKernel.hpp
-     fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp
-     fluidFlow/kernels/compositional/ThermalResidualNormKernel.hpp
-     fluidFlow/kernels/compositional/ThermalSolutionCheckKernel.hpp
-     fluidFlow/kernels/compositional/ThermalSolutionScalingKernel.hpp
-     fluidFlow/wells/LogLevelsInfo.hpp
-     fluidFlow/wells/CompositionalMultiphaseWell.hpp
-     fluidFlow/wells/CompositionalMultiphaseWellFields.hpp
-     fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp
-     fluidFlow/wells/SinglePhaseWell.hpp
-     fluidFlow/wells/SinglePhaseWellFields.hpp
-     fluidFlow/wells/WellConstants.hpp
-     fluidFlow/wells/WellControls.hpp
-     fluidFlow/wells/WellSolverBase.hpp
-     fluidFlow/wells/WellSolverBaseFields.hpp
-     fluidFlow/wells/kernels/SinglePhaseWellKernels.hpp
-     fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp
-     fluidFlow/proppantTransport/ProppantTransport.hpp
-     fluidFlow/proppantTransport/ProppantTransportFields.hpp
-     fluidFlow/proppantTransport/ProppantTransportKernels.hpp
-     PARENT_SCOPE )
+set( fluidFlowSolvers_headers
+     FlowSolverBase.hpp
+     FlowSolverBaseFields.hpp
+     CompositionalMultiphaseBase.hpp
+     CompositionalMultiphaseBaseFields.hpp
+     CompositionalMultiphaseStatistics.hpp
+     CompositionalMultiphaseFVM.hpp
+     CompositionalMultiphaseHybridFVM.hpp
+     CompositionalMultiphaseUtilities.hpp
+     LogLevelsInfo.hpp
+     ReactiveCompositionalMultiphaseOBL.hpp
+     ReactiveCompositionalMultiphaseOBLFields.hpp
+     SourceFluxStatistics.hpp
+     SinglePhaseBase.hpp
+     SinglePhaseBaseFields.hpp
+     SinglePhaseStatistics.hpp
+     SinglePhaseFVM.hpp
+     SinglePhaseHybridFVM.hpp
+     SinglePhaseProppantBase.hpp
+     StencilAccessors.hpp
+     StencilDataCollection.hpp
+     LogLevelsInfo.hpp
+     kernels/MinPoreVolumeMaxPorosityKernel.hpp
+     kernels/StencilWeightsUpdateKernel.hpp
+     kernels/HybridFVMHelperKernels.hpp
+     kernels/singlePhase/AccumulationKernels.hpp
+     kernels/singlePhase/AquiferBCKernel.hpp
+     kernels/singlePhase/DirichletFluxComputeKernel.hpp
+     kernels/singlePhase/FluidUpdateKernel.hpp
+     kernels/singlePhase/FluxComputeKernel.hpp
+     kernels/singlePhase/FluxComputeKernelBase.hpp
+     kernels/singlePhase/FluxKernelsHelper.hpp
+     kernels/singlePhase/HydrostaticPressureKernel.hpp
+     kernels/singlePhase/MobilityKernel.hpp
+     kernels/singlePhase/ResidualNormKernel.hpp
+     kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
+     kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp
+     kernels/singlePhase/SolutionCheckKernel.hpp
+     kernels/singlePhase/SolutionScalingKernel.hpp
+     kernels/singlePhase/StabilizedFluxComputeKernel.hpp
+     kernels/singlePhase/StatisticsKernel.hpp
+     kernels/singlePhase/ThermalAccumulationKernels.hpp
+     kernels/singlePhase/ThermalDirichletFluxComputeKernel.hpp
+     kernels/singlePhase/ThermalFluxComputeKernel.hpp
+     kernels/singlePhase/proppant/ProppantBaseKernels.hpp
+     kernels/singlePhase/proppant/ProppantFluxKernels.hpp
+     kernels/compositional/AccumulationKernel.hpp
+     kernels/compositional/AquiferBCKernel.hpp
+     kernels/compositional/PPUPhaseFlux.hpp
+     kernels/compositional/C1PPUPhaseFlux.hpp
+     kernels/compositional/CapillaryPressureUpdateKernel.hpp
+     kernels/compositional/CFLKernel.hpp
+     kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
+     kernels/compositional/DiffusionDispersionFluxComputeKernel.hpp
+     kernels/compositional/DirichletFluxComputeKernel.hpp
+     kernels/compositional/DissipationFluxComputeKernel.hpp
+     kernels/compositional/FluidUpdateKernel.hpp
+     kernels/compositional/FluidUpdateKernel.hpp
+     kernels/compositional/FluxComputeKernel.hpp
+     kernels/compositional/FluxComputeKernelBase.hpp
+     kernels/compositional/GlobalComponentFractionKernel.hpp
+     kernels/compositional/HydrostaticPressureKernel.hpp
+     kernels/compositional/IHUPhaseFlux.hpp
+     kernels/compositional/HU2PhaseFlux.hpp
+     kernels/compositional/KernelLaunchSelectors.hpp
+     kernels/compositional/PhaseComponentFlux.hpp
+     kernels/compositional/PhaseMobilityKernel.hpp
+     kernels/compositional/PhaseVolumeFractionKernel.hpp
+     kernels/compositional/PotGrad.hpp
+     kernels/compositional/PPUPhaseFlux.hpp
+     kernels/compositional/PropertyKernelBase.hpp
+     kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
+     kernels/compositional/RelativePermeabilityUpdateKernel.hpp
+     kernels/compositional/ResidualNormKernel.hpp
+     kernels/compositional/SolidInternalEnergyUpdateKernel.hpp
+     kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp
+     kernels/compositional/SolutionCheckKernel.hpp
+     kernels/compositional/SolutionScalingKernel.hpp
+     kernels/compositional/StabilizedFluxComputeKernel.hpp
+     kernels/compositional/StatisticsKernel.hpp
+     kernels/compositional/ThermalAccumulationKernel.hpp
+     kernels/compositional/ThermalDiffusionDispersionFluxComputeKernel.hpp
+     kernels/compositional/ThermalDirichletFluxComputeKernel.hpp
+     kernels/compositional/ThermalFluxComputeKernel.hpp
+     kernels/compositional/ThermalPhaseMobilityKernel.hpp
+     kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp
+     kernels/compositional/ThermalResidualNormKernel.hpp
+     kernels/compositional/ThermalSolutionCheckKernel.hpp
+     kernels/compositional/ThermalSolutionScalingKernel.hpp
+     wells/CompositionalMultiphaseWell.hpp
+     wells/CompositionalMultiphaseWellFields.hpp
+     wells/SinglePhaseWell.hpp
+     wells/SinglePhaseWellFields.hpp
+     wells/WellConstants.hpp
+     wells/WellControls.hpp
+     wells/WellSolverBase.hpp
+     wells/WellSolverBaseFields.hpp
+     wells/LogLevelsInfo.hpp
+     wells/kernels/SinglePhaseWellKernels.hpp
+     wells/kernels/CompositionalMultiphaseWellKernels.hpp
+     proppantTransport/ProppantTransport.hpp
+     proppantTransport/ProppantTransportFields.hpp
+     proppantTransport/ProppantTransportKernels.hpp )
 
 # Specify solver sources
-set( physicsSolvers_sources
-     ${physicsSolvers_sources}
-     fluidFlow/CompositionalMultiphaseBase.cpp
-     fluidFlow/CompositionalMultiphaseFVM.cpp
-     fluidFlow/CompositionalMultiphaseStatistics.cpp
-     fluidFlow/CompositionalMultiphaseHybridFVM.cpp
-     fluidFlow/ReactiveCompositionalMultiphaseOBL.cpp
-     fluidFlow/FlowSolverBase.cpp
-     fluidFlow/SinglePhaseBase.cpp
-     fluidFlow/SinglePhaseStatistics.cpp
-     fluidFlow/SinglePhaseFVM.cpp
-     fluidFlow/SinglePhaseHybridFVM.cpp
-     fluidFlow/SinglePhaseProppantBase.cpp
-     fluidFlow/SourceFluxStatistics.cpp
-     fluidFlow/StencilDataCollection.cpp
-     fluidFlow/kernels/singlePhase/proppant/ProppantFluxKernels.cpp
-     fluidFlow/kernels/compositional/AquiferBCKernel.cpp
-     fluidFlow/kernels/compositional/CFLKernel.cpp
-     fluidFlow/kernels/compositional/FluxComputeKernelBase.cpp
-     fluidFlow/kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
-     fluidFlow/wells/CompositionalMultiphaseWell.cpp
-     fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.cpp
-     fluidFlow/wells/SinglePhaseWell.cpp
-     fluidFlow/wells/kernels/SinglePhaseWellKernels.cpp
-     fluidFlow/wells/WellControls.cpp
-     fluidFlow/wells/WellSolverBase.cpp 
-     fluidFlow/proppantTransport/ProppantTransport.cpp
-     fluidFlow/proppantTransport/ProppantTransportKernels.cpp
-     PARENT_SCOPE )
+set( fluidFlowSolvers_sources
+     CompositionalMultiphaseBase.cpp
+     CompositionalMultiphaseFVM.cpp
+     CompositionalMultiphaseStatistics.cpp
+     CompositionalMultiphaseHybridFVM.cpp
+     ReactiveCompositionalMultiphaseOBL.cpp
+     FlowSolverBase.cpp
+     SinglePhaseBase.cpp
+     SinglePhaseStatistics.cpp
+     SinglePhaseFVM.cpp
+     SinglePhaseHybridFVM.cpp
+     SinglePhaseProppantBase.cpp
+     SourceFluxStatistics.cpp
+     StencilDataCollection.cpp
+     kernels/singlePhase/proppant/ProppantFluxKernels.cpp
+     kernels/compositional/AquiferBCKernel.cpp
+     kernels/compositional/CFLKernel.cpp
+     kernels/compositional/FluxComputeKernelBase.cpp
+     kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
+     wells/CompositionalMultiphaseWell.cpp
+     wells/kernels/CompositionalMultiphaseWellKernels.cpp
+     wells/SinglePhaseWell.cpp
+     wells/kernels/SinglePhaseWellKernels.cpp
+     wells/WellControls.cpp
+     wells/WellSolverBase.cpp 
+     proppantTransport/ProppantTransport.cpp
+     proppantTransport/ProppantTransportKernels.cpp )
 
+set( dependencyList ${parallelDeps} physicsSolversBase )
 
+geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
+
+blt_add_library( NAME       fluidFlowSolvers
+                 SOURCES    ${fluidFlowSolvers_sources}
+                 HEADERS    ${fluidFlowSolvers_headers}
+                 DEPENDS_ON ${decoratedDependencies} ${externalComponentDeps}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
+               )
+
+target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+install( TARGETS fluidFlowSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+if( externalComponentDeps )
+  target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+endif()
