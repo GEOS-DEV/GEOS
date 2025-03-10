@@ -22,6 +22,7 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "kernels/ExplicitRateAndStateKernels.hpp"
+#include "kernels/EmbeddedRungeKuttaKernels.hpp"
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -140,29 +141,9 @@ void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, D
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
-      constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
-      {
-        rateAndStateKernels::EmbeddedRungeKuttaKernel rkKernel( subRegion, castedFrictionLaw, m_butcherTable );
-        arrayView3d< real64 > const rkStageRates      = subRegion.getField< rateAndState::rungeKuttaStageRates >();
 
-        if( m_butcherTable.FSAL && m_successfulStep )
-        {
-          forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-          {
-            rkKernel.updateStageRatesFSAL( k );
-            rkKernel.updateStageValues( k, 1, dt );
-          } );
-        }
-        else
-        {
-          forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-          {
-            rkKernel.initialize( k );
-            rkKernel.updateStageRates( k, 0 );
-            rkKernel.updateStageValues( k, 1, dt );
-          } );
-        }
-      } );
+      rateAndStateKernels::createAndlaunchODEInitialSubStage( subRegion, frictionLaw, m_butcherTable, dt, successfulStep );        
+
     } );
   } );
 }
@@ -181,20 +162,10 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
-
+ 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
-      constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
-      {
-        rateAndStateKernels::EmbeddedRungeKuttaKernel rkKernel( subRegion, castedFrictionLaw, m_butcherTable );
-        arrayView3d< real64 > const rkStageRates      = subRegion.getField< rateAndState::rungeKuttaStageRates >();
-
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-        {
-          rkKernel.updateStageRates( k, stageIndex );
-          rkKernel.updateStageValues( k, stageIndex+1, dt );
-        } );
-      } );
+      rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, frictionLaw, m_butcherTable, dt );
     } );
   } );
 }
@@ -213,31 +184,12 @@ void ExplicitQDRateAndState::stepRateStateODEAndComputeError( real64 const dt, D
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = getConstitutiveModel< constitutive::ConstitutiveBase >( subRegion, frictionLawName );
-      constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
-      {
-        rateAndStateKernels::EmbeddedRungeKuttaKernel rkKernel( subRegion, castedFrictionLaw, m_butcherTable );
-        arrayView3d< real64 > const rkStageRates      = subRegion.getField< rateAndState::rungeKuttaStageRates >();
-        if( m_butcherTable.FSAL )
-        {
-          forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-          {
-            // Perform last stage rate update
-            rkKernel.updateStageRates( k, m_butcherTable.numStages-1 );
-            // Update solution to final time and compute errors
-            rkKernel.updateSolutionAndLocalErrorFSAL( k, dt, m_controller.absTol, m_controller.relTol );
-          } );
-        }
-        else
-        {
-          forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-          {
-            // Perform last stage rate update
-            rkKernel.updateStageRates( k, m_butcherTable.numStages-1 );
-            // Update solution to final time and compute errors
-            rkKernel.updateSolutionAndLocalError( k, dt, m_controller.absTol, m_controller.relTol );
-          } );
-        }
-      } );
+      rateAndStateKernels::createAndlaunchStepRateStateODEAndComputeError( subRegion, 
+                                                                           frictionLaw, 
+                                                                           m_butcherTable, 
+                                                                           m_controller.relTol, 
+                                                                           m_controller.absTol, 
+                                                                           dt );
     } );
   } );
 }
