@@ -88,7 +88,7 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
   WaveSolverBase::registerDataOnMesh( meshBodies );
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const &  )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -152,7 +152,7 @@ void AcousticWaveEquationDG::postInputInitialization()
 }
 
 void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
-                                                              arrayView1d< string const > const & regionNames )
+                                                              string_array const & regionNames )
 {
   arrayView1d< globalIndex const > const nodeLocalToGlobalMap = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
   ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
@@ -252,7 +252,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
     precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
@@ -470,7 +470,7 @@ real64 AcousticWaveEquationDG::explicitStepForward( real64 const & time_n,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
-                                        arrayView1d< string const > const & GEOS_UNUSED_PARAM ( regionNames ) )
+                                        string_array const & GEOS_UNUSED_PARAM ( regionNames ) )
   {
       prepareNextTimestep( mesh );
   } );
@@ -529,7 +529,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
                                                real64 const & dt,
                                                DomainPartition & domain,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                               string_array const & regionNames )
 {
 
   arrayView2d< real64 const > const sourceConstants = m_sourceConstants.toView();
@@ -609,7 +609,7 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
                                                    real64 const & dt,
                                                    DomainPartition & domain,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames)
+                                                   string_array const & regionNames)
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -660,7 +660,7 @@ real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     computeUnknowns( time_n, dt, domain, mesh, regionNames );
     synchronizeUnknowns( time_n, dt, domain, mesh, regionNames );
@@ -676,7 +676,7 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
