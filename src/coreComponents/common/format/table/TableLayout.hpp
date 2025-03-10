@@ -112,7 +112,7 @@ public:
     // The text of the header.
     string m_headerStr;
     /// The header cell layout (view on m_headerStr).
-    CellLayout m_header;
+    CellLayout m_headerLayout;
     /// A vector containing all sub-columns in the column.
     std::vector< Column > m_subColumns; // TODO le s
     /// struct containing m_alignment for the column (header and values)
@@ -451,13 +451,13 @@ private:
    * @return The table name. Returned as a for multiline support.
    */
   CellLayout const & getTitle() const
-  { return m_tableTitle; }
+  { return m_tableTitleLayout; }
 
   /**
    * @return The table name. Returned as a for multiline support.
    */
   CellLayout & getTitle()
-  { return m_tableTitle; }
+  { return m_tableTitleLayout; }
 
   /**
    * @param title The table title
@@ -545,9 +545,9 @@ private:
 
   /**
    * @brief Create and add a column to the columns vector given a string
-   * @param m_header The column name
+   * @param m_headerLayout The column name
    */
-  void addToColumns( string_view m_header );
+  void addToColumns( string_view m_headerLayout );
 
 private:
 
@@ -603,7 +603,8 @@ private:
   std::vector< size_t > m_sublineDataCounts;
   bool m_wrapLine = true;
 
-  CellLayout m_tableTitle;
+  CellLayout m_tableTitleLayout;
+  string m_tableTitleStr;
 
   integer m_borderMargin;
   integer m_columnMargin;

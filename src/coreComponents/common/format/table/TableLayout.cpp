@@ -24,15 +24,15 @@ namespace geos
 
 void TableLayout::addToColumns( std::vector< string > const & columnNames )
 {
-  for( auto const & m_header : columnNames )
+  for( auto const & m_headerLayout : columnNames )
   {
-    addToColumns( m_header );
+    addToColumns( m_headerLayout );
   }
 }
 
-void TableLayout::addToColumns( string_view m_header )
+void TableLayout::addToColumns( string_view m_headerLayout )
 {
-  TableLayout::Column column = TableLayout::Column().setName( m_header );
+  TableLayout::Column column = TableLayout::Column().setName( m_headerLayout );
   m_tableColumns.emplace_back( column );
 }
 
@@ -43,7 +43,8 @@ void TableLayout::addToColumns( TableLayout::Column const & column )
 
 TableLayout & TableLayout::setTitle( string_view title )
 {
-  m_tableTitle = CellLayout( CellType::Header, title, Alignment::center );
+  m_tableTitleStr = title;
+  m_tableTitleLayout = CellLayout( CellType::Header, m_tableTitleStr, Alignment::center );
   return *this;
 }
 
@@ -158,30 +159,30 @@ TableLayout::CellLayout::CellLayout( CellType type, string_view cellValue, Table
 
 TableLayout::Column::Column():
   m_headerStr(),
-  m_header( CellType::Header )
+  m_headerLayout( CellType::Header )
 {}
 
 TableLayout::Column::Column( Column const & other ):
   m_headerStr( other.m_headerStr ),
-  m_header( CellLayout( other.m_header.m_cellType,
+  m_headerLayout( CellLayout( other.m_headerLayout.m_cellType,
                         m_headerStr,
-                        other.m_header.m_alignment ) ),
+                        other.m_headerLayout.m_alignment ) ),
   m_subColumns( other.m_subColumns ),
   m_alignment( other.m_alignment )
 {}
 
 TableLayout::Column::Column( Column && other ):
   m_headerStr( std::move( other.m_headerStr ) ),
-  m_header( CellLayout( other.m_header.m_cellType,
+  m_headerLayout( CellLayout( other.m_headerLayout.m_cellType,
                         m_headerStr,
-                        other.m_header.m_alignment ) ),
+                        other.m_headerLayout.m_alignment ) ),
   m_subColumns( std::move( other.m_subColumns ) ),
   m_alignment( other.m_alignment )
 {}
 
 TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):
   m_headerStr( name ),
-  m_header( CellLayout( CellType::Header,
+  m_headerLayout( CellLayout( CellType::Header,
                         m_headerStr,
                         alignment.headerAlignment ) ),
   m_alignment( alignment )
@@ -190,14 +191,14 @@ TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement ali
 TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
   m_headerStr = name;
-  divideLines( m_header.m_lines, m_header.m_cellWidth, m_headerStr );
-  m_header.m_cellType = CellType::Header;
+  divideLines( m_headerLayout.m_lines, m_headerLayout.m_cellWidth, m_headerStr );
+  m_headerLayout.m_cellType = CellType::Header;
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
 {
-  m_header.m_cellType = celltype;
+  m_headerLayout.m_cellType = celltype;
   return *this;
 }
 
@@ -248,7 +249,7 @@ TableLayout::Column & TableLayout::Column::addSubColumns( string_view subColName
 TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerAlignment )
 {
   m_alignment.headerAlignment = headerAlignment;
-  m_header.m_alignment = headerAlignment;
+  m_headerLayout.m_alignment = headerAlignment;
 
   if( !m_subColumns.empty() )
   {
