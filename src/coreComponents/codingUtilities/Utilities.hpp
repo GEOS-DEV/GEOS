@@ -63,9 +63,9 @@ template< typename ARRAY_TYPE >
 GEOS_FORCE_INLINE GEOS_HOST_DEVICE
 bool hasNonZero( ARRAY_TYPE const & array )
 {
-  for( localIndex i = 0; i < array.size(); ++i )
+  for( auto it = array.begin(); it != array.end() ; ++it )
   {
-    if( !isZero( array[i] ) )
+    if( !isZero( *it ) )
     {
       return true;
     }
