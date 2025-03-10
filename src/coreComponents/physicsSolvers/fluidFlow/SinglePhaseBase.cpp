@@ -94,14 +94,16 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< deltaVolume >( getName() );
-
       subRegion.registerField< mobility >( getName() );
       subRegion.registerField< dMobility >( getName()).reference().resizeDimension< 1 >( m_numDofPerCell );
 
       subRegion.registerField< fields::flow::mass >( getName() );
       subRegion.registerField< fields::flow::mass_n >( getName() );
 
+      if( m_isThermal )
+      {
+        subRegion.registerField< dMobility_dTemperature >( getName() );
+      }
     } );
 
     elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
