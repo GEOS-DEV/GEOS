@@ -328,7 +328,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
 
   integer const numTableColumns = numComps+3;
   TableData tableData;
-  std::vector< string > tableRow( numTableColumns );
+  std::vector< TableData::CellData > tableRow( numTableColumns );
   for( integer phaseIndex = 0; phaseIndex < numPhases-1; ++phaseIndex )
   {
     for( integer pressureIndex = 0; pressureIndex < numPressures; ++pressureIndex )
@@ -349,13 +349,13 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
         hasAtLeastOneOneSided = hasAtLeastOneOneSided || (allMoreThanUnity || allLessThanUnity);
         if( (allMoreThanUnity || allLessThanUnity || hasNegative) && tableData.getTableDataRows().size() < 5 )
         {
-          tableRow[0] = phaseNames[phaseIndex+1];
-          tableRow[1] = GEOS_FMT( "{0:.3e}", m_pressureValues[0][pressureIndex] );
-          tableRow[2] = GEOS_FMT( "{0:.2f}", m_temperatureValues[0][temperatureIndex] );
+          tableRow[0].value = phaseNames[phaseIndex+1];
+          tableRow[1].value = GEOS_FMT( "{0:.3e}", m_pressureValues[0][pressureIndex] );
+          tableRow[2].value = GEOS_FMT( "{0:.2f}", m_temperatureValues[0][temperatureIndex] );
           for( integer compIndex = 0; compIndex < numComps; ++compIndex )
           {
             real64 const kValue = m_kValueHyperCube( phaseIndex, compIndex, pressureIndex, temperatureIndex );
-            tableRow[3+compIndex] = GEOS_FMT( "{0:.3e}", kValue );
+            tableRow[3+compIndex].value = GEOS_FMT( "{0:.3e}", kValue );
           }
           tableData.addRow( tableRow );
         }
@@ -388,10 +388,11 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
                  "which all k-values are greater than unity or all k-values are less than unity. ";
     }
 
+    string const fluidName = fluid->getFullName();
     GEOS_WARNING( GEOS_FMT( "{}: {}\n{}",
-                            fluid->getFullName(), message, tableText.toString( tableData ) ));
+                            fluidName, message, tableText.toString( tableData ) ));
 
-    GEOS_THROW_IF( hasAtLeastOneNegative, GEOS_FMT( "{}: negative k-value found. ", fluid->getFullName() ),
+    GEOS_THROW_IF( hasAtLeastOneNegative, GEOS_FMT( "{}: negative k-value found. ", fluidName ),
                    InputError );
   }
 

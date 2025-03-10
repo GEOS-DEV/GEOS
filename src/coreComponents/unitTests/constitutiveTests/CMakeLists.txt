@@ -7,7 +7,6 @@ set( gtest_geosx_tests
      testMultiFluidCO2Brine.cpp
      testMultiFluidCompositionalMultiphase.cpp
      testMultiFluidDeadOil.cpp
-     testMultiFluidKValueFlashModel.cpp
      testMultiFluidLiveOil.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp )
@@ -29,6 +28,7 @@ set( gtest_pvt_xmls
      testPVT_CO2Brine.xml
      testPVT_CO2BrineTables.xml
      testPVT_KValue.xml
+     testPVT_KValuePhillips.xml
      testPVT_PhaseComposition.xml
      testPVT_ThreePhaseCompositional.xml
    )

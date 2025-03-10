@@ -7,6 +7,7 @@ set( gtest_geosx_tests
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testKValueFlashModel.cpp
      testKValueInitialization.cpp
      testImmiscibleWaterFlashModel.cpp
      testImmiscibleWaterProperties.cpp

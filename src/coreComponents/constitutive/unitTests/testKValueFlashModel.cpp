@@ -13,8 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutiveTestHelpers.hpp"
-
 #include "constitutive/fluid/multifluid/compositional/models/KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/KValueFlashParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
@@ -25,13 +23,11 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/initialization.hpp"
+#include <conduit.hpp>
 
-using namespace geos::dataRepository;
-using namespace geos::testing;
 using namespace geos::constitutive;
 using namespace geos::constitutive::compositional;
+using namespace geos::testing;
 
 namespace geos
 {
@@ -66,7 +62,7 @@ using FlashData = std::tuple<
   >;
 
 template< integer numPhases, integer numComps >
-class KValueFlashTestFixture : public ConstitutiveTestBase< MultiFluidBase >, public ::testing::WithParamInterface< FlashData< numPhases, numComps > >
+class KValueFlashTestFixture : public ::testing::TestWithParam< FlashData< numPhases, numComps > >
 {
   static constexpr real64 relTol = 1.0e-5;
   static constexpr real64 absTol = 1.0e-7;
@@ -83,7 +79,12 @@ public:
   void testFlash( typename KValueFlashTestFixture::ParamType const & data );
   void testNumericalDerivative( typename KValueFlashTestFixture::ParamType const & data );
 
+  class MockFluid;
+
 protected:
+  conduit::Node m_node;
+  dataRepository::Group m_parent;
+  std::unique_ptr< FunctionManager > m_functionManager{};
   std::unique_ptr< TestFluid< numComps > > m_fluid{};
   std::unique_ptr< ModelParameters > m_parameters{};
   std::unique_ptr< FlashModelType > m_flash{};
@@ -94,20 +95,37 @@ private:
   static void writeToFile( string const & fileName, string const & content );
 
   static void removeFile( string const & fileName );
-
-  static CompositionalKValueLohrenzBrayClarkViscosity * makeFluid( string const & name,
-                                                                   Group * parent,
-                                                                   TestFluid< numComps > const * testFluid,
-                                                                   FlashModelParamType const * parameters );
-
 private:
   string_array m_fileNames;
 };
 
 template< integer numPhases, integer numComps >
-KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture():
+class KValueFlashTestFixture< numPhases, numComps >::MockFluid : public MultiFluidBase
+{
+public:
+  MockFluid( Group * const parent ): MultiFluidBase( "fluid", parent ) {}
+  string getCatalogName() const override { return ""; }
+  void checkTablesParameters( real64, real64 ) const override {}
+  integer getWaterPhaseIndex() const override { return 0; };
+
+  void setProperties( ComponentProperties const & componentProperties )
+  {
+    string_array & phaseNames = getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+    TestFluid< numPhases >::createArray( phaseNames, std::array< string, 2 >{"oil", "gas"} );
+    string_array & componentNames = getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+    TestFluid< numPhases >::createArray( componentNames, componentProperties.getComponentName());
+  }
+};
+
+template< integer numPhases, integer numComps >
+KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture()
+  : m_parent( "parent", m_node ),
   m_fluid( TestData< numComps >::createFluid() )
 {
+  m_functionManager = std::make_unique< FunctionManager >( "FunctionManager", &m_parent );
+
+  ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
+
   string const fluidName = GEOS_FMT( "fluid_{}_{}", numPhases, numComps );
 
   m_parameters = FlashModelType::createParameters( std::move( m_parameters ));
@@ -115,19 +133,11 @@ KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture():
   parameters->m_kValueTables.resize( (numPhases-1)*numComps );
   generateTables( parameters->m_kValueTables, fluidName );
 
-  ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
+  MockFluid mockFluid( &m_parent );
+  mockFluid.setProperties( componentProperties );
+  m_parameters->postInputInitialization( &mockFluid, componentProperties );
 
-  auto & parent = this->m_parent;
-  parent.resize( 1 );
-
-  m_model = makeFluid( fluidName, &parent, m_fluid.get(), parameters );
-
-  parent.initialize();
-  parent.initializePostInitialConditions();
-
-  m_parameters->postInputInitialization( m_model, componentProperties );
-
-  string const flashName = GEOS_FMT( "{}_flash_copy", fluidName );
+  string const flashName = GEOS_FMT( "{}_flash", fluidName );
   m_flash = std::make_unique< FlashModelType >( flashName, componentProperties, *m_parameters );
 }
 
@@ -138,66 +148,6 @@ KValueFlashTestFixture< numPhases, numComps >::~KValueFlashTestFixture()
   {
     removeFile( fileName );
   }
-}
-
-template< integer numComps >
-struct MakeFluid;
-
-template<>
-struct MakeFluid< 9 >
-{
-  static void populate( CompositionalKValueLohrenzBrayClarkViscosity & fluid, TestFluid< 9 > const * testFluid )
-  {
-    using FluidModel = CompositionalKValueLohrenzBrayClarkViscosity;
-
-    string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-    TestFluid< 9 >::createArray( componentNames, testFluid->componentNames );
-
-    array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
-    TestFluid< 9 >::createArray( molarWeight, testFluid->molecularWeight );
-
-    array1d< real64 > & criticalPressure = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentCriticalPressureString() );
-    TestFluid< 9 >::createArray( criticalPressure, testFluid->criticalPressure );
-
-    array1d< real64 > & criticalTemperature = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentCriticalTemperatureString() );
-    TestFluid< 9 >::createArray( criticalTemperature, testFluid->criticalTemperature );
-
-    array1d< real64 > & acentricFactor = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentAcentricFactorString() );
-    TestFluid< 9 >::createArray( acentricFactor, testFluid->acentricFactor );
-  }
-};
-
-template< integer numPhases, integer numComps >
-CompositionalKValueLohrenzBrayClarkViscosity *
-KValueFlashTestFixture< numPhases, numComps >::makeFluid( string const & name,
-                                                          Group * parent,
-                                                          TestFluid< numComps > const * testFluid,
-                                                          FlashModelParamType const * parameters )
-{
-  CompositionalKValueLohrenzBrayClarkViscosity & compositionalFluid = parent->registerGroup< CompositionalKValueLohrenzBrayClarkViscosity >( name );
-
-  Group & fluid = compositionalFluid;
-
-  auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  phaseNames.emplace_back( "gas" );
-  phaseNames.emplace_back( "liquid" );
-
-  string const eosName = EnumStrings< EquationOfStateType >::toString( EquationOfStateType::PengRobinson );
-  string_array & equationsOfState = fluid.template getReference< string_array >( EquationOfState::viewKeyStruct::equationsOfStateString() );
-  equationsOfState.emplace_back( eosName );
-  equationsOfState.emplace_back( eosName );
-
-  MakeFluid< numComps >::populate( compositionalFluid, testFluid );
-
-  string_array & kValueTables = fluid.template getReference< string_array >( FlashModelParamType::viewKeyStruct::kValueTablesString() );
-  for( auto const & tableName : parameters->m_kValueTables )
-  {
-    kValueTables.emplace_back( tableName );
-  }
-
-  compositionalFluid.postInputInitializationRecursive();
-
-  return &compositionalFluid;
 }
 
 // Crookston correlations pressure (bar), temperature (K)
@@ -217,7 +167,8 @@ real64 getKValue( integer const phaseIndex, integer const compIndex, real64 cons
     {-2.3346e-01, 7.9356e-01, 6.8406e-03, 7.1217e+02, 1.3827e+02}
   };
   auto const [A, B, C, D, E] = std::apply( []( auto &&... args ) { return std::make_tuple( args ... ); }, crookstonCoefficients[compIndex] );
-  return (A + B/pressure + C*pressure)*LvArray::math::exp( -D/(temperature-E));
+  real64 const kValue = (A + B/pressure + C*pressure)*LvArray::math::exp( -D/(temperature-E));
+  return LvArray::math::max( kValue, 1.0e-8 );
 }
 
 template< integer numPhases, integer numComps >
@@ -239,12 +190,15 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( string_array
       real64 const minPressure = 1.0 + c*c;
       real64 const maxPressure = 600.0 + 50.0*c*c;
       integer const NP = static_cast< integer >(6.0 + 8.0*s*s);
-      real64 const dp = (maxPressure - minPressure)/NP;
+      real64 const dp = pow( maxPressure/minPressure, 1.0/NP );
       content.str( "" );
-      for( integer i = 0; i <= NP; ++i )
+      real64 constexpr BAR_2_PA = 1.0e5;
+      real64 pressure = minPressure;
+      content << BAR_2_PA * pressure << "\n";
+      for( integer i = 1; i <= NP; ++i )
       {
-        real64 const pressure = 1.0e5 * (minPressure + i*dp);
-        content << pressure << "\n";
+        pressure *= dp;
+        content << BAR_2_PA * pressure << "\n";
       }
       string const pressureFileName = GEOS_FMT( "{}_PRESSURE.txt", tableName );
       writeToFile( pressureFileName, content.str());
@@ -266,15 +220,16 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( string_array
       m_fileNames.emplace_back( temperatureFileName );
 
       content.str( "" );
+      pressure = minPressure;
       for( integer i = 0; i <= NP; ++i )
       {
-        real64 const pressure = minPressure + i*dp;
         for( integer j = 0; j <= NT; ++j )
         {
           real64 const temperature = minTemp + j*dt + 273.15;
           real64 const kValue = getKValue( ip, ic, pressure, temperature );
           content << kValue << "\n";
         }
+        pressure *= dp;
       }
       string const kValueFileName = GEOS_FMT( "{}_KVALUE.txt", tableName );
       writeToFile( kValueFileName, content.str());
@@ -490,6 +445,7 @@ TEST_P( KValueFlashTest_2_9, testFlash )
 {
   testFlash( GetParam() );
 }
+
 TEST_P( KValueFlashTest_2_9, testFlashNumericalDerivative )
 {
   testNumericalDerivative( GetParam() );
@@ -501,45 +457,32 @@ TEST_P( KValueFlashTest_2_9, testFlashNumericalDerivative )
 INSTANTIATE_TEST_SUITE_P(
   KValueFlash, KValueFlashTest_2_9,
   ::testing::Values(
-    FlashData<2, 9>(1.0e+05, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.965789, 0.034211}, {0.000225, 0.000585, 0.868285, 0.004260, 0.084941, 0.012569} ),
-    FlashData<2, 9>(1.0e+05, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.943992, 0.056008}, {0.000374, 0.000429, 0.887129, 0.000172, 0.054751, 0.027973} ),
-    FlashData<2, 9>(1.0e+05, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010} ),
-    FlashData<2, 9>(1.0e+06, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.963624, 0.036376}, {0.000214, 0.000582, 0.870196, 0.004323, 0.079999, 0.012876} ),
-    FlashData<2, 9>(1.0e+06, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.942610, 0.057390}, {0.000374, 0.000471, 0.888358, 0.000184, 0.052740, 0.028492} ),
-    FlashData<2, 9>(1.0e+06, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010} ),
-    FlashData<2, 9>(1.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.942932, 0.057068}, {0.000126, 0.000580, 0.888816, 0.004284, 0.051243, 0.016059} ),
-    FlashData<2, 9>(1.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.934108, 0.065892}, {0.000367, 0.002990, 0.895850, 0.000304, 0.010296, 0.033228} ),
-    FlashData<2, 9>(1.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010} ),
-    FlashData<2, 9>(5.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.987075, 0.012925}, {0.000360, 0.001349, 0.849813, 0.000622, 0.165508, 0.013982} ),
-    FlashData<2, 9>(5.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010} ),
-    FlashData<2, 9>(5.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010} ),
-    FlashData<2, 9>(1.0e+05, 298.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.999999} ),
-    FlashData<2, 9>(5.0e+07, 373.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.999999} ),
-    FlashData<2, 9>(1.0e+05, 298.15, {0.100000, 0.000000, 0.899999, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000001}, {0.000000, 1.000000}, {0.100000, 0.899999, 0.000001, 0.100000, 0.899999, 0.000001} ),
-    FlashData<2, 9>(5.0e+07, 373.15, {0.100000, 0.000000, 0.899999, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000001}, {0.000000, 1.000000}, {0.100000, 0.899999, 0.000001, 0.100000, 0.899999, 0.000001} ),
-    FlashData<2, 9>(1.0e+05, 298.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000} ),
-    FlashData<2, 9>(1.0e+05, 323.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000} ),
-    FlashData<2, 9>(5.0e+07, 373.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000} ),
-    FlashData<2, 9>(1.0e+05, 298.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000} ),
-    FlashData<2, 9>(1.0e+05, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000} ),
-    FlashData<2, 9>(5.0e+07, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000} ),
-    FlashData<2, 9>(5.0e+07, 373.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000} )
+    FlashData<2, 9>(1.0e+05, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.944005, 0.055995}, {0.000168, 0.000302, 0.887904, 0.003657, 0.056891, 0.014717}),
+    FlashData<2, 9>(1.0e+05, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.943992, 0.056008}, {0.000295, 0.000345, 0.887764, 0.001502, 0.056153, 0.017287}),
+    FlashData<2, 9>(1.0e+05, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010}),
+    FlashData<2, 9>(1.0e+06, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.915848, 0.084152}, {0.000060, 0.000300, 0.914123, 0.003662, 0.037987, 0.021530}),
+    FlashData<2, 9>(1.0e+06, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.925278, 0.074722}, {0.000182, 0.000685, 0.904929, 0.002600, 0.037969, 0.022737}),
+    FlashData<2, 9>(1.0e+06, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010}),
+    FlashData<2, 9>(1.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.980687, 0.019313}, {0.000248, 0.000876, 0.855270, 0.006185, 0.135236, 0.013360}),
+    FlashData<2, 9>(1.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.985183, 0.014817}, {0.000339, 0.001692, 0.851514, 0.001990, 0.121759, 0.007644}),
+    FlashData<2, 9>(1.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010}),
+    FlashData<2, 9>(5.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.945674, 0.054326}, {0.000109, 0.000348, 0.886566, 0.004782, 0.057827, 0.011188}),
+    FlashData<2, 9>(5.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010}),
+    FlashData<2, 9>(5.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000363, 0.003471, 0.839010}),
+    FlashData<2, 9>(1.0e+05, 298.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.999999}),
+    FlashData<2, 9>(5.0e+07, 373.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.999999}),
+    FlashData<2, 9>(1.0e+05, 298.15, {0.100000, 0.000000, 0.899999, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000001}, {0.000000, 1.000000}, {0.100000, 0.899999, 0.000001, 0.100000, 0.899999, 0.000001}),
+    FlashData<2, 9>(5.0e+07, 373.15, {0.100000, 0.000000, 0.899999, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000001}, {0.000001, 0.999999}, {0.069963, 0.052686, 0.877351, 0.100000, 0.900000, 0.000000}),
+    FlashData<2, 9>(1.0e+05, 298.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}),
+    FlashData<2, 9>(1.0e+05, 323.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}),
+    FlashData<2, 9>(5.0e+07, 373.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}),
+    FlashData<2, 9>(1.0e+05, 298.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}),
+    FlashData<2, 9>(1.0e+05, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}),
+    FlashData<2, 9>(5.0e+07, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}),
+    FlashData<2, 9>(5.0e+07, 373.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000})
   )
 );
 
 /* UNCRUSTIFY-ON */
 
 } // namespace geos
-
-int main( int argc, char * * argv )
-{
-  ::testing::InitGoogleTest( &argc, argv );
-
-  geos::GeosxState state( geos::basicSetup( argc, argv ) );
-
-  int const result = RUN_ALL_TESTS();
-
-  geos::basicCleanup();
-
-  return result;
-}
