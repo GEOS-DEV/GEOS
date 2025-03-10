@@ -262,7 +262,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
         }
         GEOS_LOG_RANK("tjb end segState Setup "<< numLocalElements << " " <<numOpenElements);
         wellControls.setWellStatus( numOpenElements>0 );
-
+#endif
       }
     } );
 
