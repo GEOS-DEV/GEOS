@@ -63,9 +63,14 @@ template< typename ARRAY_TYPE >
 GEOS_FORCE_INLINE GEOS_HOST_DEVICE
 bool hasNonZero( ARRAY_TYPE const & array )
 {
-  return std::any_of( array.begin(), array.end(), []( real64 value ) {
-    return !isZero( value );  // Check if the value is non-zero
-  } );
+  for( localIndex i = 0; i < array.size(); ++i )
+  {
+    if( !isZero( array[i] ) )
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 template< typename T >
