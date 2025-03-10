@@ -65,14 +65,15 @@ public:
     Alignment valueAlignment = Alignment::right;
   };
 
-/**
- * @struct CellLayout
- * @brief Structure grouping the cell information to display it in a table (content, type, alignment, ...).
- */
+  /**
+   * @struct CellLayout
+   * @brief View on cell data grouping the cell information to display it in a table (content, type, alignment, ...).
+   * @note the source text must not be freeed/moved as the CellLayout will *only be a view on the text data*.
+   */
   struct CellLayout
   {
     /// vector containing each cell content, separated by lines.
-    std::vector< string > m_lines;
+    std::vector< string_view > m_lines;
     /// The type of the cell (Header,Value, Merge, ...).
     CellType m_cellType;
     /// The alignment of the cell (left, center, right).
@@ -92,9 +93,10 @@ public:
     CellLayout( CellType cellType );
 
     /**
-     * @brief Constructor to initialize a cell given celltype, value and alignment.
+     * @brief Constructor to fully initialize a cell given with given celltype, text and alignment.
+     * m_cellWidth will be initialized aDter
      * @param cellType The type of the cell.
-     * @param value The value to be assigned to the cell.
+     * @param value The view on the text of the cell. `m_lines` will contain each separated lines.
      * @param alignment The alignment of the cell (left, right, or center).
      */
     CellLayout( CellType cellType, string_view value, TableLayout::Alignment alignment );
@@ -107,7 +109,9 @@ public:
   class Column
   {
 public:
-    /// The header cell layout.
+    // The text of the header.
+    string m_headerStr;
+    /// The header cell layout (view on m_headerStr).
     CellLayout m_header;
     /// A vector containing all sub-columns in the column.
     std::vector< Column > m_subColumns; // TODO le s
@@ -121,11 +125,23 @@ public:
     Column();
 
     /**
-     * @brief Constructor to initialize a column with a specific `CellLayout`.
-     * @param cellLayout The `CellLayout` object to initialize the column.
-     *
+     * @brief Copy constructor. Ignore any input pointer (m_next, m_parent).
      */
-    Column( TableLayout::CellLayout cellLayout );
+    Column( Column const & );
+
+    /**
+     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
+     */
+    Column( Column && );
+
+    Column & operator=(Column const &) = default;
+    
+    Column & operator=(Column &&) = default;
+
+    /**
+     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
+     */
+    Column( string_view name, ColumnAlignement alignment );
 
     /**
      * @brief Get the parent column.
@@ -206,7 +222,7 @@ public:
      * @param subColName The name of the sub-column to add.
      * @return The current column object.
      */
-    TableLayout::Column & addSubColumns( string const & subColName );
+    TableLayout::Column & addSubColumns( string_view subColName );
 
     /**
      * @brief Sets the header alignment for the column.
@@ -244,9 +260,9 @@ public:
 
 private:
     /// Pointer to the parent cell (if any).
-    Column * m_parent;
+    Column * m_parent = nullptr;
     /// Pointer to the next cell (if any).
-    Column * m_next;
+    Column * m_next = nullptr;
   };
 
   /**

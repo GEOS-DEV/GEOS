@@ -33,12 +33,12 @@ void TableLayout::addToColumns( std::vector< string > const & columnNames )
 void TableLayout::addToColumns( string_view m_header )
 {
   TableLayout::Column column = TableLayout::Column().setName( m_header );
-  m_tableColumns.push_back( column );
+  m_tableColumns.emplace_back( column );
 }
 
 void TableLayout::addToColumns( TableLayout::Column const & column )
 {
-  m_tableColumns.push_back( column );
+  m_tableColumns.emplace_back( column );
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
@@ -157,21 +157,40 @@ TableLayout::CellLayout::CellLayout( CellType type, string_view cellValue, Table
 }
 
 TableLayout::Column::Column():
-  m_parent( nullptr ), m_next( nullptr )
-{
-  m_header.m_lines = {};
-  m_header.m_cellType  = CellType::Header;
-  m_header.m_alignment = Alignment::center;
-}
+  m_headerStr(),
+  m_header( CellType::Header )
+{}
 
-TableLayout::Column::Column( TableLayout::CellLayout cell ):
-  m_parent( nullptr ), m_next( nullptr )
-{ m_header = cell; }
+TableLayout::Column::Column( Column const & other ):
+  m_headerStr( other.m_headerStr ),
+  m_header( CellLayout( other.m_header.m_cellType,
+                        m_headerStr,
+                        other.m_header.m_alignment ) ),
+  m_subColumns( other.m_subColumns ),
+  m_alignment( other.m_alignment )
+{}
 
+TableLayout::Column::Column( Column && other ):
+  m_headerStr( std::move( other.m_headerStr ) ),
+  m_header( CellLayout( other.m_header.m_cellType,
+                        m_headerStr,
+                        other.m_header.m_alignment ) ),
+  m_subColumns( std::move( other.m_subColumns ) ),
+  m_alignment( other.m_alignment )
+{}
+
+TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):
+  m_headerStr( name ),
+  m_header( CellLayout( CellType::Header,
+                        m_headerStr,
+                        alignment.headerAlignment ) ),
+  m_alignment( alignment )
+{}
 
 TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
-  divideLines( m_header.m_lines, m_header.m_cellWidth, name );
+  m_headerStr = name;
+  divideLines( m_header.m_lines, m_header.m_cellWidth, m_headerStr );
   m_header.m_cellType = CellType::Header;
   return *this;
 }
@@ -197,9 +216,7 @@ static std::vector< TableLayout::Column > makeSubColumnsFromStrings( CONTAINER c
   subColumns.reserve( names.size());
   for( auto const & name : names )
   {
-    TableLayout::Column col{ TableLayout::CellLayout( CellType::Header, name, alignment.headerAlignment ) };
-    col.m_alignment = alignment;
-    subColumns.emplace_back( col );
+    subColumns.emplace_back( TableLayout::Column( name, alignment ) );
   }
   return subColumns;
 }
@@ -222,12 +239,9 @@ TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list<
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( string const & subColName )
+TableLayout::Column & TableLayout::Column::addSubColumns( string_view subColName )
 {
-  TableLayout::CellLayout cell{CellType::Header, subColName, TableLayout::Alignment::center};
-  TableLayout::Column col{cell};
-  col.m_alignment = m_alignment;
-  this->m_subColumns.push_back( col );
+  m_subColumns.emplace_back( Column( subColName, TableLayout::ColumnAlignement() ) );
   return *this;
 }
 
@@ -235,10 +249,10 @@ TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerA
 {
   m_alignment.headerAlignment = headerAlignment;
   m_header.m_alignment = headerAlignment;
-  std::vector< Column > & currColumns = m_subColumns;
-  if( !currColumns.empty() )
+
+  if( !m_subColumns.empty() )
   {
-    for( auto & subColumn : currColumns )
+    for( auto & subColumn : m_subColumns )
     {
       subColumn.setHeaderAlignment( headerAlignment );
     }
@@ -249,8 +263,8 @@ TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerA
 TableLayout::Column & TableLayout::Column::setValuesAlignment( Alignment valueAlignment )
 {
   m_alignment.valueAlignment = valueAlignment;
-  std::vector< Column > & currColumns = m_subColumns;
-  if( !currColumns.empty() )
+
+  if( !m_subColumns.empty() )
   {
     for( auto & subColumn : m_subColumns )
     {
