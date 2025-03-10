@@ -138,11 +138,9 @@ private:
   /**
    * @brief Computes the initial log width based on the provided description and names.
    * @param description A description object that contains the current log part
-   * @param descriptionNames A vector containing all name used in the log Part
    */
-  void computeInitialLogWidth( LogPart::Description & description,
-                               std::vector< std::vector< string > > const & descriptionNames,
-                               std::vector< std::vector< string > > m_values );
+  void computeInitialLogWidth( LogPart::Description & description );
+
   /**
    * @brief Build a description from the name and description values
    * @param name The decription name
