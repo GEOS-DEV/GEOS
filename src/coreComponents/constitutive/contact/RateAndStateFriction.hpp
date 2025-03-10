@@ -331,7 +331,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::stateEvolutio
   }
   else
   {
-    return 1.0 - slipRate * stateVariable / m_Dc[k];
+    return m_b[k] * m_V0[k] / m_Dc[k] * ( m_V0[k] *  LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] ) - slipRate );
   }
 }
 
@@ -347,7 +347,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
   else
   {
-    return -slipRate / m_Dc[k];
+    return - m_V0[k] * m_V0[k] / m_Dc[k] * LvArray::math::exp( ( m_mu0[k] - stateVariable ) / m_b[k] );
   }
 }
 
@@ -367,7 +367,7 @@ inline real64 RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::dStateEvoluti
   }
   else
   {
-    return -stateVariable / m_Dc[k];
+    return -m_b[k] * m_V0[k] / m_Dc[k];
   }
 }
 
