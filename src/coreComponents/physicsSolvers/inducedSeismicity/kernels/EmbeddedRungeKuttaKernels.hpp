@@ -22,6 +22,9 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/contact/RateAndStateFriction.hpp"
 #include "physicsSolvers/inducedSeismicity/rateAndStateFields.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+#include "mesh/SurfaceElementSubRegion.hpp"
+
 
 /**
  *  @file EmbeddedRungeKuttaKernels.hpp
@@ -286,17 +289,16 @@ private:
 };
 
 template< typename BUTCHER_TABLE_TYPE >
-void createAndlaunchODEInitialSubStage(  SurfaceElementSubregion & subRegion,
-                                         FrictionBase & frictionLaw,
+void createAndlaunchODEInitialSubStage(  SurfaceElementSubRegion & subRegion,
+                                         constitutive::ConstitutiveBase & frictionLaw,
                                          BUTCHER_TABLE_TYPE const & butcherTable,
                                          real64 const dt,
-                                         FSAL,
                                          bool const successfulStep )
 {
-  constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+  constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
-    typename FRICTION_TYPE = decltype( castedFrictionLaw );
-    rateAndStateKernels::EmbeddedRungeKuttaKernel< FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
+    using FRICTION_TYPE = TYPEOFREF( castedFrictionLaw );
+    rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
     if( butcherTable.FSAL && successfulStep )
     {
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -318,15 +320,16 @@ void createAndlaunchODEInitialSubStage(  SurfaceElementSubregion & subRegion,
 }
 
 template< typename BUTCHER_TABLE_TYPE >
-void createAndlaunchStepRateStateODESubstage( SurfaceElementSubregion & subRegion,
-                                              FrictionBase & frictionLaw,
+void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegion,
+                                              constitutive::ConstitutiveBase & frictionLaw,
                                               BUTCHER_TABLE_TYPE const & butcherTable,
+                                              integer const stageIndex,
                                               real64 const dt  )
 {
-  constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+  constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
-    typename FRICTION_TYPE = decltype( castedFrictionLaw );
-    rateAndStateKernels::EmbeddedRungeKuttaKernel< FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
+    using FRICTION_TYPE = TYPEOFREF( castedFrictionLaw );
+    rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       rkKernel.updateStageRates( k, stageIndex );
@@ -336,17 +339,17 @@ void createAndlaunchStepRateStateODESubstage( SurfaceElementSubregion & subRegio
 }
 
 template< typename BUTCHER_TABLE_TYPE >
-void createAndlaunchStepRateStateODEAndComputeError( SurfaceElementSubregion & subRegion,
-                                                     FrictionBase & frictionLaw
+void createAndlaunchStepRateStateODEAndComputeError( SurfaceElementSubRegion & subRegion,
+                                                     constitutive::ConstitutiveBase & frictionLaw,
                                                      BUTCHER_TABLE_TYPE const & butcherTable,
-                                                     real64 const relTolerance 
+                                                     real64 const relTolerance, 
                                                      real64 const absTolerance,
                                                      real64 const dt  )
 {
-  constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+  constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
-    typename FRICTION_TYPE = decltype( castedFrictionLaw );
-    rateAndStateKernels::EmbeddedRungeKuttaKernel< FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
+    using FRICTION_TYPE = TYPEOFREF( castedFrictionLaw );
+    rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, castedFrictionLaw, butcherTable );
     if( butcherTable.FSAL )
     {
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )

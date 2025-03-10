@@ -142,7 +142,7 @@ void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, D
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
 
-      rateAndStateKernels::createAndlaunchODEInitialSubStage( subRegion, frictionLaw, m_butcherTable, dt, successfulStep );        
+      rateAndStateKernels::createAndlaunchODEInitialSubStage( subRegion, frictionLaw, m_butcherTable, dt, m_successfulStep );        
 
     } );
   } );
@@ -165,7 +165,7 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
  
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
-      rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, frictionLaw, m_butcherTable, dt );
+      rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, frictionLaw, m_butcherTable, stageIndex, dt );
     } );
   } );
 }

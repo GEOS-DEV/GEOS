@@ -51,7 +51,7 @@
     </ElementRegions>
 
   <Constitutive>
-    <RateAndStateFriction
+    <RateAndStateFrictionSlipLaw
       name="frictionLaw"
       defaultA="0.01"
       defaultB="0.015"
