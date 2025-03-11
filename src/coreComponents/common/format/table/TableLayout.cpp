@@ -33,12 +33,12 @@ void TableLayout::addToColumns( std::vector< string > const & columnNames )
 void TableLayout::addToColumns( string_view m_header )
 {
   TableLayout::Column column = TableLayout::Column().setName( m_header );
-  m_tableColumnsData.push_back( column );
+  m_tableColumns.push_back( column );
 }
 
 void TableLayout::addToColumns( TableLayout::Column const & column )
 {
-  m_tableColumnsData.push_back( column );
+  m_tableColumns.push_back( column );
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
@@ -62,6 +62,33 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
   return *this;
 }
 
+void TableLayout::setLinksRecusive( std::vector< TableLayout::Column > & columns )
+{
+  for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  {
+    if( idxColumn < columns.size() - 1 )
+    {
+      columns[idxColumn].setNext( &columns[idxColumn + 1] );
+    }
+
+    if( !columns[idxColumn].m_subColumns.empty())
+    {
+      for( auto & subCol : columns[idxColumn].m_subColumns )
+      {
+        subCol.setParent( &columns[idxColumn] );
+      }
+
+      setLinksRecusive( columns[idxColumn].m_subColumns );
+    }
+  }
+}
+
+TableLayout & TableLayout::setLinks()
+{
+  setLinksRecusive( m_tableColumns );
+  return *this;
+}
+
 bool TableLayout::isLineBreakEnabled() const
 { return m_wrapLine; }
 
@@ -69,7 +96,7 @@ size_t TableLayout::getMaxDepth() const
 {
   size_t depthMax = 1;
   size_t currDepth = 1;
-  for( auto const & column : m_tableColumnsData )
+  for( auto const & column : m_tableColumns )
   {
     currDepth = 1;
     TableLayout::Column const * currColumn = &column;
@@ -267,9 +294,9 @@ TableLayout::DeepFirstIterator TableLayout::DeepFirstIterator::operator++( int )
   return temp;
 }
 
-TableLayout::DeepFirstIterator TableLayout::beginDeepFirst()
+TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
 {
-  TableLayout::Column * startColumn = &(*m_tableColumnsData.begin());
+  TableLayout::Column const * startColumn = &(*m_tableColumns.begin());
   size_t idxLayer = 0;
   if( startColumn->hasChild() )
   {

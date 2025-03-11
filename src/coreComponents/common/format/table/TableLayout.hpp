@@ -135,6 +135,13 @@ public:
     { return m_parent; }
 
     /**
+     * @brief Get the parent column.
+     * @return Pointer to the parent column, or `nullptr` if no parent is set.
+     */
+    Column const * getParent() const
+    { return m_parent; }
+
+    /**
      * @brief Set the parent column.
      * @param parent Pointer to the parent column to set.
      */
@@ -145,6 +152,12 @@ public:
      * @return Pointer to the next column that has the same parent or `nullptr` if no next column exists.
      */
     Column * getNext()
+    { return m_next; }
+
+    /**
+     * @return Pointer to the next column that has the same parent or `nullptr` if no next column exists.
+     */
+    Column const * getNext() const
     { return m_next; }
 
     /**
@@ -210,25 +223,6 @@ public:
     TableLayout::Column & setValuesAlignment( Alignment valueAlignment );
 
     /**
-     * @return number of times we will divide the current cell
-     */
-    size_t getSubdivisionCount() const
-    { return m_subdivisionCount; }
-
-    /**
-     * @brief Increment number of times we will divide the current cell
-     * @param value number of division to add
-     */
-    void incrementSubdivisionCount( size_t value )
-    { m_subdivisionCount+= value;}
-
-    /**
-     * @brief Decremente number of times we will divide the current cell
-     */
-    void decrementSubdivisionCount()
-    { m_subdivisionCount--; }
-
-    /**
      * @brief Checks if the column has any child columns.
      * @return bool True if the column has child columns, otherwise false.
      */
@@ -253,8 +247,6 @@ private:
     Column * m_parent;
     /// Pointer to the next cell (if any).
     Column * m_next;
-    /// The width of the cell (e.g., for cell containing subColumns).
-    size_t m_subdivisionCount = 0;
   };
 
   /**
@@ -265,7 +257,7 @@ private:
   {
 public:
     ///alias for column
-    using ColumnType = Column;
+    using ColumnType = Column const;
 
     /**
      * @brief Construct a new Leaf Iterator object
@@ -281,9 +273,9 @@ public:
      * @param[in] columnPtr Coulmn  to copy
      * @return Leaf iterator
      */
-    DeepFirstIterator & operator=( Column * columnPtr )
+    DeepFirstIterator & operator=( ColumnType * columnPtr )
     {
-      this->m_currentColumn= columnPtr;
+      this->m_currentColumn = columnPtr;
       return *this;
     }
 
@@ -303,14 +295,20 @@ public:
      * @brief Dereference operator.
      * @return Reference to the current Column object pointed to by the iterator.
      */
-    ColumnType & operator*()
+    ColumnType & operator*() const
     { return *m_currentColumn; }
+
+    /**
+     * @return Pointer to the current Column object pointed to by the iterator.
+     */
+    ColumnType * getPtr() const
+    { return m_currentColumn; }
 
     /**
      * @brief Arrow operator.
      * @return Pointer to the current Column object.
      */
-    ColumnType * operator->()
+    ColumnType * operator->() const
     { return m_currentColumn; }
 
     /**
@@ -349,20 +347,24 @@ private:
    * Example on 2 column with Column A : 2 layer and Column B : 3 layers
    * A.A -> A-B -> A-C -> A -> B-A-A -> B-A-B -> B-A -> B-B-A -> B-B-B -> B-B -> B
    */
-  DeepFirstIterator beginDeepFirst();
+  DeepFirstIterator beginDeepFirst() const;
 
   /**
    * @return Return a end itarator
    * This iterator is initialized with a null pointer
    * representing a position after the last valid element
    */
-  DeepFirstIterator endDeepFirst()
+  DeepFirstIterator endDeepFirst() const
   { return DeepFirstIterator( nullptr, 0 ); }
 
   /// Alias for an initializer list of variants that can contain either a string or a layout column.
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
   TableLayout() = default;
+
+  TableLayout( TableLayout const & ) = default;
+
+  TableLayout( TableLayout && ) = default;
 
   /**
    * @brief Construct a new Table Layout object
@@ -426,14 +428,8 @@ private:
   /**
    * @return The columns vector
    */
-  std::vector< Column > & getColumns()
-  { return m_tableColumnsData; }
-
-  /**
-   * @return The columns vector
-   */
   std::vector< Column > const & getColumns() const
-  { return m_tableColumnsData; }
+  { return m_tableColumns; }
 
   /**
    * @return The table name. Returned as a for multiline support.
@@ -472,6 +468,12 @@ private:
    */
   bool isLineBreakEnabled() const;
 
+  /**
+   * @brief Sets parent-child relationships between columns and sub-columns.
+   * Need to be called one time before formating, after complete initialization.
+   * For now, called automatically at TableFormatter construction.
+   */
+  TableLayout & setLinks();
 
   /**
    * @return The border margin,
@@ -548,8 +550,6 @@ private:
   }
 
   /**
-   * @brief
-   *
    * @tparam Ts The remaining arguments
    * @param args The remaining arguments to be processed
    */
@@ -572,8 +572,15 @@ private:
  */
   void addToColumns( TableLayout::Column const & column );
 
+  /**
+   * @brief Sets parent-child relationships between columns and sub-columns.
+   * Need to be called one time before formating, after complete initialization.
+   * @param columns the columns to link
+   */
+  static void setLinksRecusive( std::vector< TableLayout::Column > & columns );
+
   /// Contains the columns layout
-  std::vector< Column > m_tableColumnsData;
+  std::vector< Column > m_tableColumns;
   /// Contains the subdivision (line) counts for each line in header.
   std::vector< size_t > m_sublineHeaderCounts;
   /// Contains the subdivision (line) counts for each line in data.

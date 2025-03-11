@@ -36,8 +36,13 @@ class TableFormatter
 public:
   /// Represent the TableData values
   using RowsCellInput = std::vector< std::vector< TableData::CellData > >;
+
   /// Represent a row of the Table (header or values) when structured for formatting
-  using CellLayoutRow = std::vector< TableLayout::CellLayout >;
+  struct CellLayoutRow {
+     std::vector< TableLayout::CellLayout > cells;
+     size_t sublinesCount;
+  };
+
   /// Represent the Table (header or values) when structured for formatting
   using CellLayoutRows = std::vector< CellLayoutRow >;
 
@@ -158,7 +163,7 @@ private:
    * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
    * @param separatorLine A string that will be used as the table separator line
    */
-  void initalizeTableGrids( TableLayout & tableLayout,
+  void initalizeTableGrids( TableLayout const & tableLayout,
                             TableData const & tableData,
                             CellLayoutRows & dataCellsLayout,
                             CellLayoutRows & headerCellsLayout,
@@ -179,17 +184,11 @@ private:
                     size_t tableTotalWidth ) const;
 
   /**
-   * @brief Sets parent-child relationships between columns and sub-columns.
-   * @param columns A reference to a vector of `TableLayout::Column` objects.
-   */
-  void setLinks( std::vector< TableLayout::Column > & columns ) const;
-
-  /**
    * @brief Adjusts the header layout by ensuring all header layers have consistent row sizes and formats.
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the gridified layout.
    */
-  void populateHeaderCellsLayout( TableLayout & tableLayout,
+  void populateHeaderCellsLayout( TableLayout const & tableLayout,
                                   CellLayoutRows & headerCellsLayout ) const;
 
 /**
@@ -199,7 +198,7 @@ private:
  * @param inputDataValues A 2D vector containing the actual input data values.
  * @param nbVisibleColumn The number of columns that are not hidden
  */
-  void populateDataCellsLayout( TableLayout & tableLayout,
+  void populateDataCellsLayout( TableLayout const & tableLayout,
                                 CellLayoutRows & dataCellsLayout,
                                 RowsCellInput const & inputDataValues,
                                 size_t nbVisibleColumn ) const;
@@ -258,7 +257,6 @@ private:
   void outputLines( TableLayout const & tableLayout,
                     CellLayoutRows const & cellsLayout,
                     std::ostringstream & tableOutput,
-                    std::vector< size_t > const & nbLinesRow,
                     CellType sectionType,
                     string_view separatorLine ) const;
 };
