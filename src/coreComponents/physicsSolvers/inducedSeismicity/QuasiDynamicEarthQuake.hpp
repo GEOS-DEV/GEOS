@@ -52,14 +52,15 @@ public:
 
   void postInputInitialization() override final;
 
-  void setTargetDispJump( DomainPartition & domain ) const;
+  void setTargetDispJump( DomainPartition & domain,
+                          real64 const dt ) const;
 
   virtual real64 updateStresses( real64 const & time_n,
                                  real64 const & dt,
                                  const int cycleNumber,
                                  DomainPartition & domain ) const override final;
 
-  void resetStateToBeginningOfStep( DomainPartition & domain ) override final;                               
+  void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
 private:
 

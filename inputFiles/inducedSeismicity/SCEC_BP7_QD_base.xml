@@ -57,16 +57,17 @@
       xMin="{ -400.01, -0.01, -400.01 }"
       xMax="{  400.01,  0.01, 400.01 }"/>
 
-    <!-- <Box
-      name="slipWeakeningRegion"
-      xMin="{ -200.01, -500.01, -200.01 }"
-      xMax="{  200.01,  500.01, 200.01 }"/>   -->
-
     <Cylinder
       name="slipWeakeningRegion"
       firstFaceCenter="{ 0.0, -500.01, 0.0 }"
       secondFaceCenter="{ 0.0, 500.01, 0.0 }"
-      outerRadius="200"/> 
+      outerRadius="200"/>
+
+    <Cylinder
+      name="nucleationRegion"
+      firstFaceCenter="{ 0.0, -500.01, 0.0 }"
+      secondFaceCenter="{ 0.0, 500.01, 0.0 }"
+      outerRadius="150"/>    
   </Geometry>
 
   <ElementRegions>
@@ -118,11 +119,31 @@
       name="slipWeakeningRSA"
       objectPath="ElementRegions/Fault"
       fieldName="frictionLaw_a"
-      scale="1.0"
+      scale="0.004"
       setNames="{ slipWeakeningRegion }"
       initialCondition="1"/>
 
-    <!-- <FieldSpecification
+  <!-- Shear stress -->
+    <FieldSpecification
+      name="backgroundShearStress_t1"
+      fieldName="backgroundShearStress"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="1.0"
+      setNames="{all}"
+      functionName="background_shearStress_t1"/>
+
+    <FieldSpecification
+      name="backgroundShearStress_t2"
+      fieldName="backgroundShearStress"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="1.0"
+      setNames="{all}"
+      functionName="background_shearStress_t2"/>        
+
+<!-- Initial conditions -->
+    <FieldSpecification
       name="initialStateVariable"
       objectPath="ElementRegions/Fault"
       fieldName="stateVariable"
@@ -136,7 +157,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="0"
-      scale="0."
+      scale="1.0e-9"
       setNames="{all}"/>
 
     <FieldSpecification
@@ -145,32 +166,27 @@
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="1"
-      scale="0."
-      setNames="{all}"/>                  -->
+      scale="1.0e-20"
+      setNames="{all}"/>                 
   </FieldSpecifications>
+
+  <Functions>
+   <TableFunction
+      name="background_shearStress_t1"
+      inputVarNames="{ elementCenter, time }"
+      coordinateFiles="{ x.geos, y.geos, z.geox, t.geos }"
+      voxelFile="./tables/backgroungShearTraction_y.geos"/>
+
+    <TableFunction
+      name="background_shearStress_t2"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ x.geos, y.geos, z.geox }"
+      voxelFile="./tables/backgroungShearTraction_z.geos"/>  
+  </Functions>
   
   <Outputs>
     <VTK
       name="vtkOutput"
       plotFileRoot="BP7_QD_S"/>
-
-    <!-- <TimeHistory
-      name="timeHistoryOutput"
-      sources="{/Tasks/slipRateCollection, /Tasks/pressureCollection}"
-      filename="BP7_DQ_S" />   -->
   </Outputs>
-
-  <!-- <Tasks>
-    <PackCollection
-      name="slipRateCollection"
-      objectPath="ElementRegions/Fault/FractureSubRegion"
-      fieldName="slipRate"
-      setNames="{source}"/>
-
-    <PackCollection
-      name="pressureCollection"
-      objectPath="ElementRegions/Fault/FractureSubRegion"
-      fieldName="pressure"
-      setNames="{source}"/>    
-   </Tasks> -->
 </Problem>

@@ -22,7 +22,7 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "rateAndStateFields.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
@@ -71,7 +71,7 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
                                                                 DomainPartition & domain ) const
 {
   // 1. Setup variables for stress solver
-  setTargetDispJump( domain );
+  setTargetDispJump( domain, dt );
 
   // 2. Solve the momentum balance
   real64 const dtAccepted = m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
@@ -79,7 +79,7 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
   // 3. Add background stress and possible forcing.
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+                                                                     string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                                            [&]( localIndex const,
@@ -114,24 +114,26 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::resetStateToBeginningOfStep( Domai
 }
 
 template< typename RSSOLVER_TYPE >
-void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain ) const
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain, 
+                                                                 real64 const dt ) const
 {
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+                                                                     string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 > const deltaSlip      = subRegion.getField< contact::deltaSlip >();
-      arrayView2d< real64 > const targetDispJump = subRegion.getField< contact::targetIncrementalJump >();
+      arrayView2d< real64 const > const deltaSlip     = subRegion.getField< contact::deltaSlip >();
+      arrayView2d< real64 > const targetDispJump      = subRegion.getField< contact::targetIncrementalJump >();
+      arrayView2d< real64 const > const backSlipRate  = subRegion.getField< rateAndState::backSlipRate >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         targetDispJump( k, 0 ) = 0.0;
-        targetDispJump( k, 1 ) = deltaSlip( k, 0 );
-        targetDispJump( k, 2 ) = deltaSlip( k, 1 );
+        targetDispJump( k, 1 ) = deltaSlip( k, 0 ) + backSlipRate( k, 0 ) * dt;
+        targetDispJump( k, 2 ) = deltaSlip( k, 1 ) + backSlipRate( k, 1 ) * dt;
       } );
     } );
   } );

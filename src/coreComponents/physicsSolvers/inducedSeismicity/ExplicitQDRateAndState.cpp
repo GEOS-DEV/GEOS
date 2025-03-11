@@ -23,7 +23,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "kernels/ExplicitRateAndStateKernels.hpp"
 #include "rateAndStateFields.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
@@ -55,7 +55,7 @@ void ExplicitQDRateAndState::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -88,11 +88,11 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
 
     //
     // Initial Runge-Kutta stage
-    // 
+    //
 
     // Evolve ODE:s for slip and state evolution
     stepRateStateODEInitialSubstage( dtAdaptive, domain );
-    
+
     // Compute stresses (linear mechanic + fluid solve) at next substage
     real64 dtStage = m_butcherTable.c[1]*dtAdaptive;  // Stage time step size
     dtStress = updateStresses( time_n, dtStage, cycleNumber, domain );
@@ -108,8 +108,8 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
 
       // Compute stresses (linear mechanic + fluid solve) at next substage
       // Need to reset stress solver to beginning of time step to not
-      // accumulate its fields in the stage solves.
-      resetStateToBeginningOfStep( domain ); 
+      // accumulate field in the stages.
+      resetStateToBeginningOfStep( domain );
       dtStage = m_butcherTable.c[stageIndex+1]*dtAdaptive; // Stage time step size
       dtStress = updateStresses( time_n, dtStage, cycleNumber, domain );
 
@@ -150,7 +150,7 @@ void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, D
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -191,7 +191,7 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -217,7 +217,7 @@ void ExplicitQDRateAndState::stepRateStateODEAndComputeError( real64 const dt, D
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -262,7 +262,7 @@ void ExplicitQDRateAndState::updateSlipVelocity( real64 const & time_n,
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -280,7 +280,7 @@ void ExplicitQDRateAndState::evalTimestep( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
