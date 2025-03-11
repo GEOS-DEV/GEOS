@@ -9,6 +9,10 @@ PR #3555 (2024-03-11)
 =====================
 Add aging law.
 
+PR #3427 (2024-03-10)
+=====================
+Well time step selector based on rates/bhp tables and clarify well rates logic.
+
 PR #3485 (2024-03-09)
 =====================
 Use mass and energy consistently for single phase solvers.

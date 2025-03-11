@@ -119,7 +119,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
     else
     {
       // Retry with updated time step
-      dtAdaptive = setNextDt( dtAdaptive, domain );
+      dtAdaptive = setNextDt( time_n, dtAdaptive, domain );
     }
   }
   // return last successful adaptive time step (passed along to setNextDt)
@@ -269,9 +269,11 @@ void ExplicitQDRateAndState::evalTimestep( DomainPartition & domain )
   }
 }
 
-real64 ExplicitQDRateAndState::setNextDt( real64 const & currentDt, DomainPartition & domain )
+real64 ExplicitQDRateAndState::setNextDt( real64 const & currentTime,
+                                          real64 const & currentDt,
+                                          DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( currentTime, domain );
   real64 const nextDt = m_stepUpdateFactor*currentDt;
   if( m_successfulStep )
   {
