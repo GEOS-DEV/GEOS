@@ -130,7 +130,7 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
         typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionKernelWrapper = castedFrictionLaw.createKernelUpdates();
 
 
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
         {
           SpringSliderParameters springSliderParameters = SpringSliderParameters( normalTraction[k],
                                                                                   frictionKernelWrapper.getACoefficient( k ),
