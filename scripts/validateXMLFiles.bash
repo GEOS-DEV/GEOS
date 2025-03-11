@@ -26,7 +26,6 @@ fi
 abs_path ()
 {
     if [ "$#" -gt 0 ]; then
-        #realpath -s "$@"
         realpath "$@"
     fi
 }
