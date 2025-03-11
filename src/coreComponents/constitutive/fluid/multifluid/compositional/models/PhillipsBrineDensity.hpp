@@ -68,7 +68,7 @@ public:
   }
 
 protected:
-  /// Table with brine density tabulated as a function (P,T,sal)
+  /// Volume shift of the water component tabulated as a function (P,T)
   TableFunction::KernelWrapper m_volumeShiftTable;
 
   /// Index of the water component
@@ -159,7 +159,7 @@ private:
                                                      integer const waterIndex );
 
 private:
-  /// Table with brine density tabulated as a function of (P,T,sal)
+  /// Volume shift of the water component tabulated as a function (P,T)
   TableFunction const * m_volumeShiftTable;
 
   /// Index of the water phase
