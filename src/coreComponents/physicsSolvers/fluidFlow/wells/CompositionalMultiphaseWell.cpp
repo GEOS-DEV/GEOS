@@ -1039,7 +1039,6 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                   subRegion.size(),
                   numComp,
                   numPhase,
-                  perforationData.getNumPerforationsGlobal(),
                   wellControls,
                   0.0, // initialization done at t = 0
                   resCompFlowAccessors.get( fields::flow::pressure{} ),

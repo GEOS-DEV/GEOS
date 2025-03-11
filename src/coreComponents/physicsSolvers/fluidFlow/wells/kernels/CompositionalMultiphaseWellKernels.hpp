@@ -281,7 +281,6 @@ struct PresTempCompFracInitializationKernel
           localIndex const subRegionSize,
           integer const numComponents,
           integer const numPhases,
-          localIndex const numPerforations,
           WellControls const & wellControls,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
