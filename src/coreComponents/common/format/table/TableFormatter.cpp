@@ -28,7 +28,7 @@ namespace geos
 {
 
 TableFormatter::TableFormatter( TableLayout const & tableLayout ):
-  m_tableLayout( std::move( TableLayout( tableLayout ).setLinks() ) )
+  m_tableLayout( tableLayout )
 {}
 
 ///////////////////////////////////////////////////////////////////////
@@ -208,7 +208,7 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout const & tableLay
       {
         for( size_t idxRow = currentLayer + 1; idxRow < headerLayersCount; idxRow++ )
         {
-          TableLayout::CellLayout emptyCell{CellType::Header, "", TableLayout::Alignment::center};
+          TableLayout::CellLayout emptyCell{CellType::Header, TableLayout::Alignment::center};
           emptyCell.m_cellWidth = currentCell.m_cellWidth;
           headerCellsLayout[idxRow].cells.push_back( emptyCell );
         }
@@ -229,7 +229,7 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout const & tableLay
       // we add the current cell and all its subdivision
       for( size_t idxColumn = 0; idxColumn < subdivsCount[std::ptrdiff_t( it.getPtr() )]; idxColumn++ )
       {
-        TableLayout::CellLayout mergingCell{ CellType::MergeNext, "", TableLayout::Alignment::center };
+        TableLayout::CellLayout mergingCell{ CellType::MergeNext, TableLayout::Alignment::center };
         headerCellsLayout[currentLayer].cells.push_back( mergingCell );
       }
       headerCellsLayout[currentLayer].cells.push_back( currentCell );
@@ -302,7 +302,9 @@ void TableTextFormatter::populateDataCellsLayout( TableLayout const & tableLayou
                               string_view( inputCell.value );
 
           TableLayout::CellLayout & outputCell = outputRow.cells[idxOutputColumn];
-          outputCell = TableLayout::CellLayout( type, value, columnIt->m_alignment.valueAlignment );
+          outputCell = TableLayout::CellLayout( type, columnIt->m_alignment.valueAlignment );
+          outputCell.prepareLayout( value );
+
           maxLinesInRow  = std::max( maxLinesInRow, outputCell.m_lines.size() );
           idxOutputColumn++;
         }

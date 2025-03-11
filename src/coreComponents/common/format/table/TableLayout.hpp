@@ -72,14 +72,14 @@ public:
    */
   struct CellLayout
   {
-    /// vector containing each cell content, separated by lines.
-    std::vector< string_view > m_lines;
+    /// Maximum length of the data in the cell.
+    size_t m_cellWidth;
     /// The type of the cell (Header,Value, Merge, ...).
     CellType m_cellType;
     /// The alignment of the cell (left, center, right).
     Alignment m_alignment;
-    /// Maximum length of the data in the cell.
-    size_t m_cellWidth;
+    /// vector containing each cell content, separated by lines.
+    std::vector< string_view > m_lines;
 
     /**
      * @brief Constructor to initialize a Cell with a default settings.
@@ -96,10 +96,15 @@ public:
      * @brief Constructor to fully initialize a cell given with given celltype, text and alignment.
      * m_cellWidth will be initialized aDter
      * @param cellType The type of the cell.
-     * @param value The view on the text of the cell. `m_lines` will contain each separated lines.
      * @param alignment The alignment of the cell (left, right, or center).
      */
-    CellLayout( CellType cellType, string_view value, TableLayout::Alignment alignment );
+    CellLayout( CellType cellType, TableLayout::Alignment alignment );
+
+    /**
+     * @param value The view on the text of the cell. `m_lines` will contain each separated lines, and
+     *              m_cellWidthn, the maximum line width.
+     */
+    void prepareLayout( string_view value );
   };
 
   /**
@@ -123,20 +128,6 @@ public:
      * Initializes a column with default values.
      */
     Column();
-
-    /**
-     * @brief Copy constructor. Ignore any input pointer (m_next, m_parent).
-     */
-    Column( Column const & );
-
-    /**
-     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
-     */
-    Column( Column && );
-
-    Column & operator=(Column const &) = default;
-    
-    Column & operator=(Column &&) = default;
 
     /**
      * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
@@ -376,11 +367,8 @@ private:
   /// Alias for an initializer list of variants that can contain either a string or a layout column.
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
+
   TableLayout() = default;
-
-  TableLayout( TableLayout const & ) = default;
-
-  TableLayout( TableLayout && ) = default;
 
   /**
    * @brief Construct a new Table Layout object
@@ -485,13 +473,6 @@ private:
   bool isLineBreakEnabled() const;
 
   /**
-   * @brief Sets parent-child relationships between columns and sub-columns.
-   * Need to be called one time before formating, after complete initialization.
-   * For now, called automatically at TableFormatter construction.
-   */
-  TableLayout & setLinks();
-
-  /**
    * @return The border margin,
    * number of spaces at each table sides
    */
@@ -523,7 +504,7 @@ private:
    */
   void addToColumns( string_view m_headerLayout );
 
-private:
+protected:
 
   /**
    * @brief Add a column to the table given an initializer_list of string & Column
@@ -562,19 +543,12 @@ private:
  */
   void addToColumns( TableLayout::Column const & column );
 
-  /**
-   * @brief Sets parent-child relationships between columns and sub-columns.
-   * Need to be called one time before formating, after complete initialization.
-   * @param columns the columns to link
-   */
-  static void setLinksRecusive( std::vector< TableLayout::Column > & columns );
-
   /// Contains the columns layout
   std::vector< Column > m_tableColumns;
 
   bool m_wrapLine = true;
 
-  CellLayout m_tableTitleLayout;
+  CellLayout m_tableTitleLayout = CellLayout( CellType::Header, Alignment::center );
   string m_tableTitleStr;
 
   integer m_borderMargin;
@@ -583,6 +557,37 @@ private:
   integer m_titleMargin = 2;
 
 };
+
+/**
+ * @brief Variation of the TableLayout to store precomputed layout information, ready to be formatted.
+ */
+class PreparedTableLayout : public TableLayout
+{
+public:
+
+  /**
+   * @brief Precompute various information for formatting:
+   * - parent-child relationships between columns and sub-columns,
+   * - layout elements size,
+   * - line wrapping.
+   * For now, called automatically at TableFormatter construction.
+   */
+  PreparedTableLayout( TableLayout const & other );
+
+  PreparedTableLayout( PreparedTableLayout const & ) = delete;
+
+  PreparedTableLayout( PreparedTableLayout && ) = delete;
+
+private:
+
+  /**
+   * @brief Recursive part of column layout preparation, see constructor documentation.
+   * @param columns The list of columns to prepare.
+   */
+  void prepareLayoutRecusive( std::vector< TableLayout::Column > & columns );
+
+};
+
 }
 
 #endif /* GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP */

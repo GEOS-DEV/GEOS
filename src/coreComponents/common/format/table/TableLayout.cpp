@@ -44,7 +44,6 @@ void TableLayout::addToColumns( TableLayout::Column const & column )
 TableLayout & TableLayout::setTitle( string_view title )
 {
   m_tableTitleStr = title;
-  m_tableTitleLayout = CellLayout( CellType::Header, m_tableTitleStr, Alignment::center );
   return *this;
 }
 
@@ -60,33 +59,6 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
   m_borderMargin = marginValue;
   m_columnMargin = integer( marginValue ) * 2 + 1;
 
-  return *this;
-}
-
-void TableLayout::setLinksRecusive( std::vector< TableLayout::Column > & columns )
-{
-  for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
-  {
-    if( idxColumn < columns.size() - 1 )
-    {
-      columns[idxColumn].setNext( &columns[idxColumn + 1] );
-    }
-
-    if( !columns[idxColumn].m_subColumns.empty())
-    {
-      for( auto & subCol : columns[idxColumn].m_subColumns )
-      {
-        subCol.setParent( &columns[idxColumn] );
-      }
-
-      setLinksRecusive( columns[idxColumn].m_subColumns );
-    }
-  }
-}
-
-TableLayout & TableLayout::setLinks()
-{
-  setLinksRecusive( m_tableColumns );
   return *this;
 }
 
@@ -111,93 +83,44 @@ size_t TableLayout::getMaxDepth() const
   return depthMax;
 }
 
-template< typename STRING_T >
-void divideLines( std::vector< STRING_T > & lines, size_t & linesWidth, string_view value )
-{
-  size_t current = 0;
-  size_t end = value.find( '\n' );
-
-  lines.clear();
-  linesWidth = 0;
-
-  // Process each line until no more newlines are found
-  while( end != STRING_T::npos )
-  {
-    lines.push_back( STRING_T( value.substr( current, end - current ) ) );
-    current = end + 1;
-    end = value.find( '\n', current );
-    linesWidth = std::max( linesWidth, lines.back().size() );
-  }
-  // Add the last part
-  if( current <= value.size())
-  {
-    lines.push_back( STRING_T( value.substr( current )  ) );
-    linesWidth = std::max( linesWidth, lines.back().size() );
-  }
-}
-
 TableLayout::CellLayout::CellLayout():
-  m_lines( {""} ),
+  m_cellWidth( 0 ),
   m_cellType( CellType::Header ),
-  m_alignment( TableLayout::Alignment::center ),
-  m_cellWidth( 0 )
+  m_alignment( TableLayout::Alignment::center )
 {}
 
 TableLayout::CellLayout::CellLayout( CellType const cellType ):
-  m_lines( {""} ),
+  m_cellWidth( 0 ),
   m_cellType( cellType ),
-  m_alignment( TableLayout::Alignment::center ),
-  m_cellWidth( 0 )
+  m_alignment( TableLayout::Alignment::center )
 {}
 
-TableLayout::CellLayout::CellLayout( CellType type, string_view cellValue, TableLayout::Alignment alignment ):
+TableLayout::CellLayout::CellLayout( CellType type, TableLayout::Alignment alignment ):
+  m_cellWidth( 0 ),
   m_cellType( type ),
   m_alignment( alignment )
-{
-  divideLines( m_lines, m_cellWidth, cellValue );
-}
+{}
 
 TableLayout::Column::Column():
   m_headerStr(),
   m_headerLayout( CellType::Header )
 {}
 
-TableLayout::Column::Column( Column const & other ):
-  m_headerStr( other.m_headerStr ),
-  m_headerLayout( CellLayout( other.m_headerLayout.m_cellType,
-                        m_headerStr,
-                        other.m_headerLayout.m_alignment ) ),
-  m_subColumns( other.m_subColumns ),
-  m_alignment( other.m_alignment )
-{}
-
-TableLayout::Column::Column( Column && other ):
-  m_headerStr( std::move( other.m_headerStr ) ),
-  m_headerLayout( CellLayout( other.m_headerLayout.m_cellType,
-                        m_headerStr,
-                        other.m_headerLayout.m_alignment ) ),
-  m_subColumns( std::move( other.m_subColumns ) ),
-  m_alignment( other.m_alignment )
-{}
-
 TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):
   m_headerStr( name ),
-  m_headerLayout( CellLayout( CellType::Header,
-                        m_headerStr,
-                        alignment.headerAlignment ) ),
+  m_headerLayout( CellType::Header, alignment.headerAlignment ),
   m_alignment( alignment )
 {}
 
 TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
   m_headerStr = name;
-  divideLines( m_headerLayout.m_lines, m_headerLayout.m_cellWidth, m_headerStr );
-  m_headerLayout.m_cellType = CellType::Header;
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
 {
+  // TODO error if celltype is not (header or hidden)
   m_headerLayout.m_cellType = celltype;
   return *this;
 }
@@ -315,6 +238,69 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
     }
   }
   return DeepFirstIterator( startColumn, idxLayer );
+}
+
+template< typename STRING_T >
+void divideLines( std::vector< STRING_T > & lines, size_t & linesWidth, string_view value )
+{
+  size_t current = 0;
+  size_t end = value.find( '\n' );
+
+  lines.clear();
+  linesWidth = 0;
+
+  // Process each line until no more newlines are found
+  while( end != STRING_T::npos )
+  {
+    lines.push_back( STRING_T( value.substr( current, end - current ) ) );
+    current = end + 1;
+    end = value.find( '\n', current );
+    linesWidth = std::max( linesWidth, lines.back().size() );
+  }
+  // Add the last part
+  if( current <= value.size())
+  {
+    lines.push_back( STRING_T( value.substr( current )  ) );
+    linesWidth = std::max( linesWidth, lines.back().size() );
+  }
+}
+
+PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
+  TableLayout( other )
+{
+  prepareLayoutRecusive( m_tableColumns );
+
+  m_tableTitleLayout.prepareLayout( m_tableTitleStr );
+}
+
+void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns )
+{
+  for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  {
+    Column & column = columns[idxColumn];
+
+    column.m_headerLayout.prepareLayout( column.m_headerStr );
+
+    if( idxColumn < columns.size() - 1 )
+    {
+      column.setNext( &columns[idxColumn + 1] );
+    }
+
+    if( !column.m_subColumns.empty())
+    {
+      for( auto & subCol : column.m_subColumns )
+      {
+        subCol.setParent( &column );
+      }
+
+      prepareLayoutRecusive( column.m_subColumns );
+    }
+  }
+}
+
+void TableLayout::CellLayout::prepareLayout( string_view value )
+{
+  divideLines( m_lines, m_cellWidth, value );
 }
 
 }

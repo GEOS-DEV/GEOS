@@ -50,7 +50,7 @@ public:
 protected:
 
   /// Layout for a table
-  TableLayout const m_tableLayout;
+  PreparedTableLayout const m_tableLayout;
 
   TableFormatter() = default;
 
