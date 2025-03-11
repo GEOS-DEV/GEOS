@@ -79,6 +79,51 @@ static bool newtonSolve( SurfaceElementSubRegion & subRegion,
   }
   return allConverged;
 }
+template< typename FRICTION_TYPE >
+void enforceRateAndVelocityConsistency( FRICTION_TYPE const & frictionLawKernelWrapper,
+                                        SurfaceElementSubRegion & subRegion,
+                                        real64 const & shearImpedance )
+{
+  arrayView2d< real64 > const slipVelocity = subRegion.getField< fields::rateAndState::slipVelocity >();
+  arrayView1d< real64 > const slipRate  = subRegion.getField< fields::rateAndState::slipRate >();
+  arrayView1d< real64 const > const stateVariable  = subRegion.getField< fields::rateAndState::stateVariable >();
+
+  arrayView2d< real64 > const backgroundShearStress = subRegion.getField< fields::rateAndState::backgroundShearStress >();
+  arrayView1d< real64 > const backgroundNormalStress = subRegion.getField< fields::rateAndState::backgroundNormalStress >();
+
+  RAJA::ReduceMax< parallelDeviceReduce, int > negativeSlipRate( 0 );
+  RAJA::ReduceMax< parallelDeviceReduce, int > bothNonZero( 0 );
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    if( slipRate[k] < 0.0 )
+    {
+      negativeSlipRate.max( 1 );
+    }
+    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 && slipRate[k] > 0.0 )
+    {
+      bothNonZero.max( 1 );
+    }
+    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 )
+    {
+      slipRate[k] = LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] );
+    }
+    else if( slipRate[k] > 0.0 )
+    {
+      real64 const frictionCoefficient = frictionLawKernelWrapper.frictionCoefficient( k, slipRate[k], stateVariable[k] );
+      projectSlipRateBase( k,
+                           frictionCoefficient,
+                           shearImpedance,
+                           backgroundNormalStress,
+                           backgroundShearStress,
+                           slipRate,
+                           slipVelocity );
+    }
+  } );
+
+  GEOS_ERROR_IF( negativeSlipRate.get() > 0, "SlipRate cannot be negative." );
+  GEOS_ERROR_IF( bothNonZero.get() > 0, "Only one between slipRate and slipVelocity can be specified as i.c." );
+}
 
 /**
  * @brief Performs the kernel launch
