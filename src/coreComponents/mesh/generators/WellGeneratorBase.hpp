@@ -198,6 +198,12 @@ public:
   arrayView1d< globalIndex const > getPerfElemIndex() const { return m_perfElemId; }
 
   /**
+   * @brief Get name of perforations
+   * @return perforation names
+   */
+  string_array const & getPerfName() const { return m_perfName; };
+
+  /**
    * @returns The number of physical dimensions
    */
   int getPhysicalDimensionsNumber() const { return m_nDims; }
@@ -401,6 +407,9 @@ protected:
 
   /// Target region for the perforation
   string_array m_perfTargetRegion;
+
+  /// Perforation name
+  string_array m_perfName;
 
 };
 }
