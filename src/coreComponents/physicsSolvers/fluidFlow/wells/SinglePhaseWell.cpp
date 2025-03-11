@@ -374,7 +374,9 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
       arrayView1d< real64 const > const & perfGravCoef =
         perforationData.getField< fields::well::gravityCoefficient >();
 
-      if( time_n <= 0.0  || (wellControls.isWellOpen( time_n ) && !hasNonZero( connRate ) ) )
+      bool const hasNonZeroRate = MpiWrapper::max< integer >( hasNonZero( connRate ));
+
+      if( time_n <= 0.0  || (wellControls.isWellOpen( time_n ) && !hasNonZeroRate ) )
       {
         // TODO: change the way we access the flowSolver here
         SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
