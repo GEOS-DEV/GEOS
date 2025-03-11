@@ -74,13 +74,12 @@ decks = [
         check_step=5,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(name="ExponentialDecayPermeability_conformingFracture_smoke",
-             description=
-             'Exponential Decay Permeability model with conforming fracture',
-             partitions=((1, 1, 1), (2, 2, 1)),
-             restart_step=0,
-             check_step=12,
-             restartcheck_params=RestartcheckParameters(atol=1e-05,
-                                                        rtol=4e-04)),
+        description=
+        'Exponential Decay Permeability model with conforming fracture',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=12,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=4e-04)),
    TestDeck(
         name="PoroElastic_dfm_PEBICrack_smoke",
         description='Plane strain poro-elastic problems with conforming vertical fracture (unstructured PEBI grid)',
@@ -90,12 +89,18 @@ decks = [
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="singlePhasePoromechanics_FaultModel_smoke",
-        description='PoroElastic conformingFracture intialization with external mesh',
+        description='PoroElastic conformingFracture with external mesh (singlephase)',
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
-        restartcheck_params=RestartcheckParameters(atol=1e-05,
-                                                   rtol=1e-04))
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
+        name="multiphasePoromechanics_FaultModel_smoke",
+        description='PoroElastic conformingFracture with external mesh (multiphase)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04))
 ]
 
 generate_geos_tests(decks)

@@ -175,13 +175,15 @@ jobs:
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
             BUILD_SHARED_LIBS: ON
+            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GCP_BUCKET: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+            GCP_BUCKET: geosx/ubuntu22.04-gcc12
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
@@ -213,6 +215,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      ENABLE_LVARRAY_BOUNDS_CHECK: ${{ matrix.ENABLE_LVARRAY_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ubuntu-22.04
@@ -231,7 +234,7 @@ jobs:
       BUILD_TYPE: integrated_tests
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
@@ -306,6 +309,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
             RUNS_ON: streak2
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
@@ -321,9 +325,10 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
             RUNS_ON: streak2
             NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
             DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
             HOST_CONFIG: /spack-generated.cmake
@@ -335,6 +340,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5
             RUNS_ON: streak
             NPROC: 8
@@ -350,6 +356,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-gcc8-cuda12.5
             RUNS_ON: streak2
             NPROC: 8
@@ -366,6 +373,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
             HOST_ARCH: ppc64le
             RUNS_ON: streak2
             NPROC: 8
@@ -382,6 +390,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
             GCP_BUCKET: geosx/Sherlock-GPU
             RUNS_ON: streak2
             NPROC: 8
@@ -405,6 +414,7 @@ jobs:
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      ENABLE_LVARRAY_BOUNDS_CHECK: ${{ matrix.ENABLE_LVARRAY_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_ARCH: ${{ matrix.HOST_ARCH }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
