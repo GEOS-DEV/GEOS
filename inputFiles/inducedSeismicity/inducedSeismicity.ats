@@ -41,14 +41,14 @@ decks = [
         description="Implicit solver of spring slider 0D system with aging law",
         partitions=((1, 1, 1), ),
         restart_step=0,
-        check_step=3262,
+        check_step=2080,
         restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3)),
     TestDeck(
         name="SpringSliderExplicit_A_smoke",
         description="Explicit solver of spring slider 0D system with aging law",
         partitions=((1, 1, 1), ),
         restart_step=0,
-        check_step=343,
+        check_step=240,
         restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3))              
     ]
 generate_geos_tests(decks)
