@@ -65,24 +65,6 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
 bool TableLayout::isLineBreakEnabled() const
 { return m_wrapLine; }
 
-size_t TableLayout::getMaxDepth() const
-{
-  size_t depthMax = 1;
-  size_t currDepth = 1;
-  for( auto const & column : m_tableColumns )
-  {
-    currDepth = 1;
-    TableLayout::Column const * currColumn = &column;
-    while( !currColumn->m_subColumns.empty())
-    {
-      currColumn = &currColumn->m_subColumns[0];
-      currDepth++;
-    }
-    depthMax = std::max( currDepth, depthMax );
-  }
-  return depthMax;
-}
-
 TableLayout::CellLayout::CellLayout():
   m_cellWidth( 0 ),
   m_cellType( CellType::Header ),
@@ -266,18 +248,26 @@ void divideLines( std::vector< STRING_T > & lines, size_t & linesWidth, string_v
 }
 
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
-  TableLayout( other )
+  TableLayout( other ),
+  m_columnLayersCount( 0 ),
+  m_lowermostColumnCount( 0 )
 {
-  prepareLayoutRecusive( m_tableColumns );
+  prepareLayoutRecusive( m_tableColumns, 0 );
 
   m_tableTitleLayout.prepareLayout( m_tableTitleStr );
 }
 
-void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns )
+void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
+                                                 size_t level )
 {
+  m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
+
   for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
     Column & column = columns[idxColumn];
+
+    if( column.m_headerLayout.m_cellType != CellType::Hidden && !column.hasChild() )
+      ++m_lowermostColumnCount;
 
     column.m_headerLayout.prepareLayout( column.m_headerStr );
 
@@ -293,7 +283,7 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
         subCol.setParent( &column );
       }
 
-      prepareLayoutRecusive( column.m_subColumns );
+      prepareLayoutRecusive( column.m_subColumns, level + 1 );
     }
   }
 }

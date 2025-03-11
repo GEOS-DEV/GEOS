@@ -150,7 +150,7 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
   return tableOutput.str();
 }
 
-void TableTextFormatter::initalizeTableGrids( TableLayout const & tableLayout,
+void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableLayout,
                                               TableData const & tableInputData,
                                               CellLayoutRows & headerCellsLayout,
                                               CellLayoutRows & dataCellsLayout,
@@ -183,15 +183,19 @@ void TableTextFormatter::initalizeTableGrids( TableLayout const & tableLayout,
   propagateRowWidth( referenceRow, dataCellsLayout, tableLayout );
 }
 
-void TableTextFormatter::populateHeaderCellsLayout( TableLayout const & tableLayout,
+void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                                     CellLayoutRows & headerCellsLayout ) const
 {
   TableLayout::CellLayout const & titleInput = tableLayout.getTitle();
   size_t const hasTitle = !titleInput.m_lines.empty() && !titleInput.m_lines[0].empty() ? 1 : 0;
 
   // Number of lines per header layer. We potencially reserve one more layer for the title (at index 0)
-  size_t const headerLayersCount = tableLayout.getMaxDepth() + hasTitle;
+  size_t const headerLayersCount = tableLayout.getColumnLayersCount() + hasTitle;
   headerCellsLayout.resize( headerLayersCount );
+  for( auto & headerRow : headerCellsLayout )
+  {
+    headerRow.cells.reserve( tableLayout.getLowermostColumnsCount() );
+  }
 
   // number of times we will divide the each headers in the headerCellsLayout (key is the Column ptr)
   std::map< std::ptrdiff_t, size_t > subdivsCount;
@@ -251,7 +255,7 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout const & tableLay
   }
 }
 
-void TableTextFormatter::populateDataCellsLayout( TableLayout const & tableLayout,
+void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & tableLayout,
                                                   CellLayoutRows & dataCellsLayout,
                                                   RowsCellInput const & inputDataValues,
                                                   size_t const nbVisibleColumn ) const
@@ -322,7 +326,7 @@ void TableTextFormatter::stretchRowToCellsWidth( TableFormatter::CellLayoutRow &
 
 void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
                                                        TableFormatter::CellLayoutRows & tableGrid,
-                                                       TableLayout const & tableLayout,
+                                                       PreparedTableLayout const & tableLayout,
                                                        bool const compress ) const
 {
   // To get consistent results, we must process column by column.
@@ -429,7 +433,7 @@ void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayou
 
 void TableTextFormatter::propagateRowWidth( TableFormatter::CellLayoutRow const & referenceRow,
                                             TableFormatter::CellLayoutRows & tableGrid,
-                                            TableLayout const & tableLayout ) const
+                                            PreparedTableLayout const & tableLayout ) const
 {
   size_t const numRows = tableGrid.size();
   size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].cells.size();
@@ -461,7 +465,7 @@ void TableTextFormatter::propagateRowWidth( TableFormatter::CellLayoutRow const 
   }
 }
 
-void TableTextFormatter::outputTable( TableLayout const & tableLayout,
+void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
                                       std::ostringstream & tableOutput,
                                       CellLayoutRows const & headerCellsLayout,
                                       CellLayoutRows const & dataCellsLayout,
@@ -516,7 +520,7 @@ void TableTextFormatter::formatCell( std::ostringstream & tableOutput,
   }
 }
 
-void TableTextFormatter::outputLines( TableLayout const & tableLayout,
+void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
                                       CellLayoutRows const & cellsLayout,
                                       std::ostringstream & tableOutput,
                                       CellType sectionType,

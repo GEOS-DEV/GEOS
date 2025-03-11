@@ -424,12 +424,6 @@ private:
   }
 
   /**
-   * @brief Get the max depth of a column
-   * @return The max column depth
-   */
-  size_t getMaxDepth() const;
-
-  /**
    * @return The columns vector
    */
   std::vector< Column > const & getColumns() const
@@ -567,10 +561,10 @@ public:
 
   /**
    * @brief Precompute various information for formatting from a configurated TableLayout:
-   * - parent-child relationships between columns and sub-columns,
-   * - layout elements size,
-   * - line wrapping.
-   * For now, called automatically at TableFormatter construction.
+   *        - parent-child relationships between columns and sub-columns,
+   *        - layout elements size,
+   *        - line wrapping.
+   *        For now, called automatically at TableFormatter construction.
    */
   PreparedTableLayout( TableLayout const & other );
 
@@ -585,13 +579,29 @@ public:
    */
   PreparedTableLayout( PreparedTableLayout && ) = delete;
 
+  /**
+   * @return The count of column layers
+   */
+  size_t getColumnLayersCount() const
+  { return m_columnLayersCount; }
+
+  /**
+   * @return The number of visible columns that does not contain child (useful to know the maximum number of 
+   *         column to show in a given row).
+   */
+  size_t getLowermostColumnsCount() const
+  { return m_lowermostColumnCount; }
+
 private:
+
+  size_t m_columnLayersCount;
+  size_t m_lowermostColumnCount;
 
   /**
    * @brief Recursive part of column layout preparation, see constructor documentation.
    * @param columns The list of columns to prepare.
    */
-  void prepareLayoutRecusive( std::vector< TableLayout::Column > & columns );
+  void prepareLayoutRecusive( std::vector< TableLayout::Column > & columns, size_t level );
 
 };
 

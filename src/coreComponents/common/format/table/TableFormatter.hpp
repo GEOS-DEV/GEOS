@@ -163,7 +163,7 @@ private:
    * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
    * @param separatorLine A string that will be used as the table separator line
    */
-  void initalizeTableGrids( TableLayout const & tableLayout,
+  void initalizeTableGrids( PreparedTableLayout const & tableLayout,
                             TableData const & tableData,
                             CellLayoutRows & dataCellsLayout,
                             CellLayoutRows & headerCellsLayout,
@@ -177,7 +177,7 @@ private:
    * @param dataCellsLayout The layout of the data rows
    * @param separatorLine The string to be used as the table separator line
    */
-  void outputTable( TableLayout const & tableLayout,
+  void outputTable( PreparedTableLayout const & tableLayout,
                     std::ostringstream & tableOutput,
                     CellLayoutRows const & headerCellsLayout,
                     CellLayoutRows const & dataCellsLayout,
@@ -188,7 +188,7 @@ private:
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the gridified layout.
    */
-  void populateHeaderCellsLayout( TableLayout const & tableLayout,
+  void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                   CellLayoutRows & headerCellsLayout ) const;
 
 /**
@@ -198,7 +198,7 @@ private:
  * @param inputDataValues A 2D vector containing the actual input data values.
  * @param nbVisibleColumn The number of columns that are not hidden
  */
-  void populateDataCellsLayout( TableLayout const & tableLayout,
+  void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
                                 CellLayoutRows & dataCellsLayout,
                                 RowsCellInput const & inputDataValues,
                                 size_t nbVisibleColumn ) const;
@@ -220,7 +220,7 @@ private:
    */
   void stretchRowToMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
                                      TableFormatter::CellLayoutRows & tableGrid,
-                                     TableLayout const & tableLayout,
+                                     PreparedTableLayout const & tableLayout,
                                      bool const compress ) const;
 
   /**
@@ -231,7 +231,7 @@ private:
    */
   void propagateRowWidth( TableFormatter::CellLayoutRow const & referenceRow,
                           TableFormatter::CellLayoutRows & tableGrid,
-                          TableLayout const & tableLayout ) const;
+                          PreparedTableLayout const & tableLayout ) const;
 
 
   /**
@@ -254,7 +254,7 @@ private:
    * @param sectionType The type of the section being processed (Header, Value, etc.).
    * @param separatorLine The table separator line string
    */
-  void outputLines( TableLayout const & tableLayout,
+  void outputLines( PreparedTableLayout const & tableLayout,
                     CellLayoutRows const & cellsLayout,
                     std::ostringstream & tableOutput,
                     CellType sectionType,
