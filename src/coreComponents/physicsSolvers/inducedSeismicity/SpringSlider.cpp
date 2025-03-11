@@ -115,11 +115,6 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
 
-      arrayView2d< real64 const > const deltaSlip = subRegion.getField< contact::deltaSlip >();
-      arrayView2d< real64 > const shearTraction   = subRegion.getField< rateAndState::shearTraction >();
-      arrayView2d< real64 > const shearTraction_n = subRegion.getField< rateAndState::shearTraction_n >();
-
-      arrayView1d< real64 > const normalTraction  = subRegion.getField< rateAndState::normalTraction >();
 
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
@@ -129,21 +124,7 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
       {
         typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionKernelWrapper = castedFrictionLaw.createKernelUpdates();
 
-
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
-        {
-          SpringSliderParameters springSliderParameters = SpringSliderParameters( normalTraction[k],
-                                                                                  frictionKernelWrapper.getACoefficient( k ),
-                                                                                  frictionKernelWrapper.getBCoefficient( k ),
-                                                                                  frictionKernelWrapper.getDcCoefficient( k ) );
-
-
-
-          shearTraction[k][0] = shearTraction_n[k][0] + springSliderParameters.tauRate * dt
-                                - springSliderParameters.springStiffness * deltaSlip[k][0];
-          shearTraction[k][1] = shearTraction_n[k][1] + springSliderParameters.tauRate * dt
-                                - springSliderParameters.springStiffness * deltaSlip[k][1];
-        } );
+        updateShearTraction( subRegion, frictionKernelWrapper, dt );
       } );
     } );
   } );
