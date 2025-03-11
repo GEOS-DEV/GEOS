@@ -215,6 +215,19 @@ public:
    */
   arrayView1d< real64 > getWellSkinFactor() { return m_wellSkinFactor; }
 
+
+  /**
+   * @brief Get perforation name
+   * @return array of names
+   */
+  string_array & getPerfName()  { return m_perfName; }
+
+  /**
+   * @brief Get perforation name
+   * @return array of names
+   */
+  string_array const & getPerfName() const { return m_perfName; }
+
   /**
    * @brief Get perforation's state
    * @return array of states
@@ -272,6 +285,8 @@ public:
   {
     /// @return String key for the global number of perforations
     static constexpr char const * numPerforationsGlobalString() { return "numPerforationsGlobal"; }
+    /// @return String key for perforation names
+    static constexpr char const * perforationName() { return "perforationName"; }
   }
   /// ViewKey struct for the PerforationData class
   viewKeysPerforationData;
@@ -322,8 +337,8 @@ private:
   /// Well skin factor at the perforations
   array1d< real64 > m_wellSkinFactor;
 
-  /// Time versus perforation status table
-  array1d< TableFunction const *  > m_perfStatusTable;
+  /// Name of perforations
+  string_array m_perfName;
 
   /// Locally owned perforation's state
   array1d< localIndex > m_localPerfState;

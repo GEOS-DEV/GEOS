@@ -70,7 +70,7 @@ void Perforation::postInputInitialization()
 
   // Setup perforation status function
   FunctionManager & functionManager = FunctionManager::getInstance();
- 
+
   if( !functionManager.hasGroup< TableFunction >( getName() ) )
   {
     TableFunction * tableFunction = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", getName() ) );
@@ -80,22 +80,22 @@ void Perforation::postInputInitialization()
     array1d< real64 > values;
     //  Create the time-dependent perforation status table
 
-    if(  m_perfStatusTable[0].size() == 0 )
+    if( m_perfStatusTable[0].size() == 0 )
     {
       real64 alwaysOpen = 1.0;
-    timeCoord[0].emplace_back( 0 );
+      timeCoord[0].emplace_back( 0 );
       values.emplace_back( alwaysOpen );
     }
     else
     {
       // If a name is explicitly given, then check that it exists
       GEOS_THROW_IF( m_perfStatusTable[0].size() != m_perfStatusTable[1].size(),
-            GEOS_FMT( "Perforation status table missing time or status : {}", getName() ),
-              InputError );
-      for (std::ptrdiff_t i=0;i<m_perfStatusTable[0].size();i++)
+                     GEOS_FMT( "Perforation status table missing time or status : {}", getName() ),
+                     InputError );
+      for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
       {
-        timeCoord[0].emplace_back( m_perfStatusTable[0][i]);
-        values.emplace_back( m_perfStatusTable[1][i]);
+        timeCoord[0].emplace_back( m_perfStatusTable[0][i] );
+        values.emplace_back( m_perfStatusTable[1][i] );
       }
     }
     tableFunction->setTableCoordinates( timeCoord, { units::Time } );

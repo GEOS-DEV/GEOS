@@ -151,6 +151,9 @@ public:
    */
   virtual string_array const & getPerfTargetRegion() const = 0;
 
+
+  virtual string_array const & getPerfName() const = 0;
+
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation

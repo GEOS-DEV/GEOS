@@ -825,7 +825,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   arrayView1d< real64 const > const perfWellTransmissibilityGlobal = lineBlock.getPerfTransmissibility();
   arrayView1d< real64 const > const perfWellSkinFactorGlobal = lineBlock.getPerfSkinFactor();
   string_array const & perfTargetRegionGlobal = lineBlock.getPerfTargetRegion();
-
+  string_array const & perfName = lineBlock.getPerfName();
   m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
@@ -879,6 +879,9 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
         m_perforationData.getWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
         m_perforationData.getWellSkinFactor()[iperfLocal] = perfWellSkinFactorGlobal[iperfGlobal];
         LvArray::tensorOps::copy< 3 >( perfLocation[iperfLocal], location );
+
+        // copy perf name
+        m_perforationData.getPerfName()[iperfLocal] = perfName[iperfGlobal];
 
         // increment the local to global map
         m_perforationData.localToGlobalMap()[iperfLocal++] = iperfGlobal;
@@ -993,7 +996,7 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
   // Gather and broadcast element perf status to all cores
   // Number of active perfs per segment (sized total number of segments)
   array1d< integer > activePerfsPerElement( m_globalElementIndex.size());
-  activePerfsPerElement.resize( m_globalElementIndex.size() );  
+  activePerfsPerElement.resize( m_globalElementIndex.size() );
   MpiWrapper::allgatherv( localElemPerfStatus.data(), localElemPerfStatus.size(), activePerfsPerElement.data(), m_elementPerRank.data(), m_mpiElementOffset.data(), MPI_COMM_GEOS );
 
   // Set segment state

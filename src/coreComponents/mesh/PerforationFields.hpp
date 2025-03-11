@@ -92,7 +92,7 @@ DECLARE_FIELD( wellSkinFactor,
 
 DECLARE_FIELD( perforationState,
                "perforationState",
-               array1d< integer > ,
+               array1d< integer >,
                0,
                NOPLOT,
                WRITE_AND_READ,

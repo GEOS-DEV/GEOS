@@ -198,6 +198,8 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain )
 {
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
   // Set well element/perf status
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -217,17 +219,17 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
       {
 
         PerforationData & perforationData = *subRegion.getPerforationData();
+        string_array const & perfName = perforationData.getPerfName();
         arrayView1d< integer > perfState = perforationData.getLocalPerfState();
         // for now set to open
         for( integer i=0; i<perforationData.size(); i++ )
         {
-          //if ( MpiWrapper::commRank( MPI_COMM_GEOS ) == 1 && i == 1 )
-          //   perfState[i]=PerforationData::PerforationState::CLOSED;
-          //else
-          //if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 1 )
-          //  perfState[i]=PerforationData::PerforationState::CLOSED;
-          //else
-            perfState[i]=PerforationData::PerforationState::OPEN;
+          TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfName[i] );
+          perfState[i]=PerforationData::PerforationState::OPEN;
+          if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
+          {
+            perfState[i]=PerforationData::PerforationState::CLOSED;
+          }
         }
 #if 1
         //
@@ -260,7 +262,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
         {
           numOpenElements += updatedState[i];
         }
-        GEOS_LOG_RANK("tjb end segState Setup "<< numLocalElements << " " <<numOpenElements);
+        GEOS_LOG_RANK( "tjb end segState Setup "<< numLocalElements << " " <<numOpenElements );
         wellControls.setWellStatus( numOpenElements>0 );
 #endif
       }
