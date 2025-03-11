@@ -518,32 +518,6 @@ private:
   { return m_titleMargin; }
 
   /**
-   * @brief Get the Nb Rows object
-   * @return std::vector< integer >&
-   */
-  std::vector< size_t > & getSublineInHeaderCounts()
-  { return m_sublineHeaderCounts; }
-  /**
-   * @brief Get the Nb Rows object
-   * @return std::vector< integer >&
-   */
-  std::vector< size_t > const & getSublineInHeaderCounts() const
-  { return m_sublineHeaderCounts; }
-
-  /**
-   * @brief Get the Nb Rows object
-   * @return std::vector< integer >&
-   */
-  std::vector< size_t > & getSublineInDataCounts()
-  { return m_sublineDataCounts; }
-  /**
-   * @brief Get the Nb Rows object
-   * @return std::vector< integer >&
-   */
-  std::vector< size_t > const & getSublineInDataCounts() const
-  { return m_sublineDataCounts; }
-
-  /**
    * @brief Create and add a column to the columns vector given a string
    * @param m_headerLayout The column name
    */
@@ -597,10 +571,7 @@ private:
 
   /// Contains the columns layout
   std::vector< Column > m_tableColumns;
-  /// Contains the subdivision (line) counts for each line in header.
-  std::vector< size_t > m_sublineHeaderCounts;
-  /// Contains the subdivision (line) counts for each line in data.
-  std::vector< size_t > m_sublineDataCounts;
+
   bool m_wrapLine = true;
 
   CellLayout m_tableTitleLayout;
