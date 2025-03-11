@@ -2,7 +2,7 @@
 
 # nothing to do if schema file not given
 if [ -z "$1" ]; then
-    echo "Usage: $0 [-a|--all|-g|--git] <schema> [<path>...]"
+    echo "Usage: $0 <schema> [<path>...]"
     exit
 fi
 
@@ -26,7 +26,8 @@ fi
 abs_path ()
 {
     if [ "$#" -gt 0 ]; then
-        realpath -s "$@"
+        #realpath -s "$@"
+        realpath "$@"
     fi
 }
 
@@ -57,10 +58,8 @@ for path in "$@"; do
     echo "List of xml files to validate:"
     echo "$collected_xml_files"
     
-    # echo "Run validation against schema:"    
-    # $collected_xml_files | $XARGS xmllint --schema $SCHEMA --noout >> $LOGFILE 2>&1
     for xml_file in $collected_xml_files; do
-        xmllint --schema $SCHEMA "$xml_file" >> $LOGFILE 2>&1
+        xmllint --schema $SCHEMA --noout "$xml_file" >> $LOGFILE 2>&1
         if [ $? -ne 0 ]; then
             echo "Validation failed for $xml_file" >> $LOGFILE
         fi
