@@ -60,17 +60,11 @@ for path in "$@"; do
     # echo "Run validation against schema:"    
     # $collected_xml_files | $XARGS xmllint --schema $SCHEMA --noout >> $LOGFILE 2>&1
     for xml_file in $collected_xml_files; do
-        xmllint --schema $SCHEMA --noout "$xml_file" >> $LOGFILE 2>&1
+        xmllint --schema $SCHEMA "$xml_file" >> $LOGFILE 2>&1
         if [ $? -ne 0 ]; then
             echo "Validation failed for $xml_file" >> $LOGFILE
-        else
-            echo "Validation succeeded for $xml_file" >> $LOGFILE
         fi
     done    
-
-    if [ $? -ne 0 ]; then
-        echo "Error during validation in $path" >> "$LOGFILE"
-    fi
 done
 
 
