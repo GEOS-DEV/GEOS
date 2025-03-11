@@ -281,7 +281,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         integer const numPhase = m_numPhases;
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "Time [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
+        outputFile << "Time [s],Time step [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
           outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         outputFile << std::endl;
@@ -432,7 +432,7 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 }
 
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
-                                                           real64 const & dt,
+                                                           real64 const & GEOS_UNUSED_PARAM( dt ),
                                                            WellElementSubRegion const & subRegion )
 {
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
@@ -441,9 +441,9 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   // now that we know we are single-phase, we can check a few things in the constraints
   WellControls const & wellControls = getWellControls( subRegion );
   WellControls::Control const currentControl = wellControls.getControl();
-  real64 const & targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
-  real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
-  real64 const & targetMassRate = wellControls.getTargetMassRate( time_n + dt );
+  real64 const & targetTotalRate = wellControls.getTargetTotalRate( time_n );
+  real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
+  real64 const & targetMassRate = wellControls.getTargetMassRate( time_n );
 
   GEOS_THROW_IF( wellControls.isInjector() && currentControl == WellControls::Control::PHASEVOLRATE,
                  "WellControls " << wellControls.getDataContext() <<
@@ -960,7 +960,7 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion &
   return maxPhaseVolChange;
 }
 
-void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt )
+void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, real64 const & time_n )
 {
   GEOS_MARK_FUNCTION;
 
@@ -987,13 +987,13 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                                                                    WellElementSubRegion & subRegion )
     {
       WellControls const & wellControls = getWellControls( subRegion );
+      PerforationData const & perforationData = *subRegion.getPerforationData();
+      arrayView2d< real64 const > const compPerfRate = perforationData.getField< fields::well::compPerforationRate >();
 
-      if( time_n <= 0.0 ||
-          ( !wellControls.isWellOpen( time_n ) && wellControls.isWellOpen( time_n + dt ) )  )
+      bool const hasNonZeroRate = MpiWrapper::max< integer >( hasNonZero( compPerfRate ));
+
+      if( time_n <= 0.0  || ( wellControls.isWellOpen( time_n ) && !hasNonZeroRate ) )
       {
-
-        PerforationData const & perforationData = *subRegion.getPerforationData();
-
         // get well primary variables on well elements
         arrayView1d< real64 > const & wellElemPressure = subRegion.getField< fields::well::pressure >();
         arrayView1d< real64 > const & wellElemTemp = subRegion.getField< fields::well::temperature >();
@@ -1074,7 +1074,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
           launch( subRegion.size(),
                   m_targetPhaseIndex,
                   wellControls,
-                  0.0, // initialization done at t = 0
+                  time_n, // initialization done at time_n
                   wellElemPhaseDens,
                   wellElemTotalDens,
                   connRate );
@@ -1107,7 +1107,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const & time,
                                                                              WellElementSubRegion & subRegion )
     {
       WellControls const & well_controls = getWellControls( subRegion );
-      if( well_controls.isWellOpen( time + dt ) && !m_keepVariablesConstantDuringInitStep )
+      if( well_controls.isWellOpen( time ) && !m_keepVariablesConstantDuringInitStep )
       {
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
@@ -1177,7 +1177,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
       int numPhases = fluid.numFluidPhases();
       int numComponents = fluid.numFluidComponents();
       WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( time+ dt ) && !m_keepVariablesConstantDuringInitStep )
+      if( wellControls.isWellOpen( time ) && !m_keepVariablesConstantDuringInitStep )
       {
         if( isThermal() )
         {
@@ -1305,7 +1305,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                      subRegion,
                                                      fluid,
                                                      wellControls,
-                                                     time_n + dt,
+                                                     time_n,
                                                      dt,
                                                      m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionResidualNorm );
@@ -1333,7 +1333,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                      subRegion,
                                                      fluid,
                                                      wellControls,
-                                                     time_n + dt,
+                                                     time_n,
                                                      dt,
                                                      m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionResidualNorm );
@@ -1649,7 +1649,9 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   return MpiWrapper::min( localCheck );
 }
 
-void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n, real64 const & dt, DomainPartition & domain )
+void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n,
+                                                           real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                           DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1667,7 +1669,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
     {
       PerforationData * const perforationData = subRegion.getPerforationData();
       WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( time_n + dt ) && !m_keepVariablesConstantDuringInitStep )
+      if( wellControls.isWellOpen( time_n ) && !m_keepVariablesConstantDuringInitStep )
       {
 
         bool const disableReservoirToWellFlow = wellControls.isInjector() and !wellControls.isCrossflowEnabled();
@@ -1889,7 +1891,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
 }
 
 void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time_n,
-                                                             real64 const & dt,
+                                                             real64 const & GEOS_UNUSED_PARAM( dt ),
                                                              DomainPartition const & domain,
                                                              DofManager const & dofManager,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1911,7 +1913,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
 
       WellControls & wellControls = getWellControls( subRegion );
 
-      if( wellControls.isWellOpen( time_n + dt ) && !m_keepVariablesConstantDuringInitStep )
+      if( wellControls.isWellOpen( time_n ) && !m_keepVariablesConstantDuringInitStep )
       {
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
@@ -1946,7 +1948,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           subRegion.getTopWellElementIndex(),
           m_targetPhaseIndex,
           wellControls,
-          time_n + dt,                                                          // controls evaluated with BHP/rate of the end of step
+          time_n, // controls evaluated with BHP/rate of the beginning of step
           wellElemDofNumber,
           wellElemGravCoef,
           nextWellElemIndex,
@@ -1962,32 +1964,30 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           // TODO: move the switch logic into wellControls
           // TODO: implement a more general switch when more then two constraints per well type are allowed
 
-          real64 const timeAtEndOfStep = time_n + dt;
-
           if( wellControls.getControl() == WellControls::Control::BHP )
           {
             if( wellControls.isProducer() )
             {
-              wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( timeAtEndOfStep ) );
+              wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( time_n ) );
               GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
                                      GEOS_FMT( "Control switch for well {} from BHP constraint to phase volumetric rate constraint", subRegion.getName() ) );
             }
             else if( wellControls.getInputControl() == WellControls::Control::MASSRATE )
             {
-              wellControls.switchToMassRateControl( wellControls.getTargetMassRate( timeAtEndOfStep ) );
+              wellControls.switchToMassRateControl( wellControls.getTargetMassRate( time_n ) );
               GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
                                      GEOS_FMT( "Control switch for well {} from BHP constraint to mass rate constraint", subRegion.getName()) );
             }
             else
             {
-              wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( timeAtEndOfStep ) );
+              wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( time_n ) );
               GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
                                      GEOS_FMT( "Control switch for well {} from BHP constraint to total volumetric rate constraint", subRegion.getName()) );
             }
           }
           else
           {
-            wellControls.switchToBHPControl( wellControls.getTargetBHP( timeAtEndOfStep ) );
+            wellControls.switchToBHPControl( wellControls.getTargetBHP( time_n ) );
             GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
                                    GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName() ) );
           }
@@ -2123,10 +2123,10 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       if( m_writeCSV > 0 )
       {
         outputFile.open( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
-        outputFile << time_n + dt;
+        outputFile << time_n << "," << dt;
       }
 
-      if( !wellControls.isWellOpen( time_n + dt ) )
+      if( !wellControls.isWellOpen( time_n ) )
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         if( outputFile.is_open())

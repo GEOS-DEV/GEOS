@@ -1567,10 +1567,12 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
   } );
 }
 
-real64 CompositionalMultiphaseFVM::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
+real64 CompositionalMultiphaseFVM::setNextDt( real64 const & currentTime,
+                                              real64 const & currentDt,
+                                              DomainPartition & domain )
 {
   if( m_targetFlowCFL < 0 )
-    return CompositionalMultiphaseBase::setNextDt( currentDt, domain );
+    return CompositionalMultiphaseBase::setNextDt( currentTime, currentDt, domain );
   else
     return setNextDtBasedOnCFL( currentDt, domain );
 }
