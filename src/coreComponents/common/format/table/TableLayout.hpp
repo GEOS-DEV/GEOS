@@ -102,7 +102,7 @@ public:
 
     /**
      * @param value The view on the text of the cell. `m_lines` will contain each separated lines, and
-     *              m_cellWidthn, the maximum line width.
+     *              `m_cellWidth`, the maximum line width. Called automatically by PreparedTableLayout.
      */
     void prepareLayout( string_view value );
   };
@@ -566,7 +566,7 @@ class PreparedTableLayout : public TableLayout
 public:
 
   /**
-   * @brief Precompute various information for formatting:
+   * @brief Precompute various information for formatting from a configurated TableLayout:
    * - parent-child relationships between columns and sub-columns,
    * - layout elements size,
    * - line wrapping.
@@ -574,8 +574,15 @@ public:
    */
   PreparedTableLayout( TableLayout const & other );
 
+  /**
+   * @brief As prepared CellLayout & Column types have internal pointers, we cannot copy this class.
+   */
   PreparedTableLayout( PreparedTableLayout const & ) = delete;
 
+  /**
+   * @brief as prepared CellLayout & Column types have internal pointers, we cannot move this class
+   *        (SSO breaks string<-string_view move).
+   */
   PreparedTableLayout( PreparedTableLayout && ) = delete;
 
 private:

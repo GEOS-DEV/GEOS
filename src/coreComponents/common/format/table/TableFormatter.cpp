@@ -236,23 +236,6 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout const & tableLay
     }
   }
 
-  // useless : done with sublineHeaderCounts
-  // // propagate the number of lines along all each layers
-  // size_t idxLayer = 0;
-  // for( auto & lines: headerCellsLayout )
-  // {
-  //   size_t const nbLinesInLayer = sublineHeaderCounts[idxLayer];
-
-  //   if( nbLinesInLayer != 1 )
-  //   {
-  //     for( auto & cell : lines )
-  //     {
-  //       cell.m_lines.resize( nbLinesInLayer, "" );
-  //     }
-  //   }
-  //   idxLayer++;
-  // }
-
   // we add the title, as a first row with all cells merged in one containing the title text
   if( hasTitle )
   {
@@ -444,49 +427,6 @@ void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayou
   }
 }
 
-// void stretchRowToMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
-//                                    TableFormatter::CellLayoutRows & tableGrid,
-//                                    TableLayout const & tableLayout )
-// {
-//   // To get consistent results, we must process column by column.
-//   size_t const numRows = tableGrid.size();
-//   size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].size();
-//   size_t const spaceBetweenColumns = size_t( tableLayout.getColumnMargin() );
-//   for( size_t columnId = 0; columnId < numColumns; columnId++ )
-//   {
-//     for( size_t rowId = 0; rowId < numRows; rowId++ )
-//     {
-//       TableLayout::CellLayout & currentCell = tableGrid[rowId][columnId];
-//       bool const isContentCell = currentCell.m_cellType == CellType::Header || currentCell.m_cellType == CellType::Value;
-//       bool const isToMerge = columnId > 0 && tableGrid[rowId][columnId-1].m_cellType == CellType::MergeNext;
-//       if( isContentCell && isToMerge )
-//       {
-//         // detected cells to merge, accumulating content width & available column space
-//         size_t mergedCellsWidth = currentCell.m_cellWidth;
-//         size_t mergedColumnsWidth = referenceRow[columnId].m_cellWidth;
-//         for( integer previousColumnId = columnId-1; previousColumnId >= 0; --previousColumnId )
-//         {
-//           TableLayout::CellLayout const & leftCell = tableGrid[rowId][previousColumnId];
-//           if( leftCell.m_cellType != CellType::MergeNext )
-//             break;
-
-//           mergedColumnsWidth += referenceRow[previousColumnId].m_cellWidth + spaceBetweenColumns;
-//         }
-
-//         integer const overflowingWidth = mergedCellsWidth - mergedColumnsWidth;
-//         if( overflowingWidth > 0 )
-//         { // if the merged content width exceeds the available columns width, we strech the last column to fit.
-//           referenceRow[columnId].m_cellWidth += integer( overflowingWidth );
-//         }
-//         else
-//         { //if not overflowing, it means the merged cell needs to be stretch to fit the available column space.
-//           currentCell.m_cellWidth += size_t( -overflowingWidth );
-//         }
-//       }
-//     }
-//   }
-// }
-
 void TableTextFormatter::propagateRowWidth( TableFormatter::CellLayoutRow const & referenceRow,
                                             TableFormatter::CellLayoutRows & tableGrid,
                                             TableLayout const & tableLayout ) const
@@ -627,39 +567,6 @@ void TableTextFormatter::outputLines( TableLayout const & tableLayout,
           }
         }
       }
-      // for( size_t idxColumn = 0; idxColumn < nbColumns; ++idxColumn )
-      // {
-      //   auto & cell = row[idxColumn];
-
-      //   if( &cell == &(row.front()) )
-      //   { // left table border
-      //     tableOutput << ( cell.m_cellType != CellType::Separator ?
-      //                      GEOS_FMT( "{: <{}}", m_verticalLine, tableLayout.getBorderMargin() ) :
-      //                      GEOS_FMT( "{:-<{}}", m_verticalLine, tableLayout.getBorderMargin() ) );
-      //   }
-
-      //   bool const isMergingNextCell = cell.m_cellType == CellType::MergeNext && ( &cell != &(row.back()) );
-      //   if( !isMergingNextCell )
-      //   {
-      //     // cell content / fill
-      //     formatCell( tableOutput, cell, idxSubLine );
-
-      //     if( &cell != &(row.back()) )
-      //     { // right border of a cell
-      //       bool const isCellSeparator = ( cell.m_cellType == CellType::Separator );
-      //       bool const isNextCellSeparator = ( row[idxColumn + 1].m_cellType == CellType::Separator );
-      //       tableOutput << GEOS_FMT( isCellSeparator ? "{:-^{}}" : "{: ^{}}",
-      //                                isCellSeparator && isNextCellSeparator ? m_horizontalLine : m_verticalLine,
-      //                                tableLayout.getColumnMargin() );
-      //     }
-      //     else
-      //     {   // right table border
-      //       tableOutput << ( cell.m_cellType != CellType::Separator ?
-      //                        GEOS_FMT( "{: >{}}\n", m_verticalLine, tableLayout.getBorderMargin() ) :
-      //                        GEOS_FMT( "{:->{}}\n", m_verticalLine, tableLayout.getBorderMargin() ) );
-      //     }
-      //   }
-      // }
     }
 
     if( sectionType == CellType::Header )
