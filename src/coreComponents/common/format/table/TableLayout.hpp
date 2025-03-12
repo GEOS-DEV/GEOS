@@ -462,6 +462,20 @@ private:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
+   * @brief Set the maximal width for each column
+   * @param width The max column width
+   * @return The tableLayout reference
+   */
+  TableLayout & setMaxColumnWidth( size_t width );
+
+  /**
+   * @brief check if a column max width has been set
+   * @return Truef a column max width has been set, otherwise false
+   */
+  bool isMaxColumnWidthSet()
+  { return m_maxColumnWidth != noColumnMaxWidth; }
+
+  /**
    * @return check if the line break at the end & beginning is activated
    */
   bool isLineBreakEnabled() const;
@@ -491,6 +505,12 @@ private:
    */
   integer const & getMarginTitle() const
   { return m_titleMargin; }
+
+  /**
+   * @return The margin title
+   */
+  size_t const & getMaxColumnWidth() const
+  { return m_maxColumnWidth; }
 
   /**
    * @brief Create and add a column to the columns vector given a string
@@ -537,13 +557,24 @@ protected:
  */
   void addToColumns( TableLayout::Column const & column );
 
-  /// Contains the columns layout
+  /// default value for m_maxColumnWidth when it is not set
+  static constexpr size_t noColumnMaxWidth = std::numeric_limits< size_t >::max();
+
+  /// Columns settings hierarchy
   std::vector< Column > m_tableColumns;
 
-  bool m_wrapLine = true;
+  // Indicate if we have a line break a the beginning of the table
+  bool m_lineBreakAtBegin = true;
 
-  CellLayout m_tableTitleLayout = CellLayout( CellType::Header, Alignment::center );
+  /// Table tatile text
   string m_tableTitleStr;
+
+  /// Table title cell layout settings
+  CellLayout m_tableTitleLayout = CellLayout( CellType::Header, Alignment::center );
+
+  /// Max width for each column
+  size_t m_maxColumnWidth = noColumnMaxWidth;
+
 
   integer m_borderMargin;
   integer m_columnMargin;

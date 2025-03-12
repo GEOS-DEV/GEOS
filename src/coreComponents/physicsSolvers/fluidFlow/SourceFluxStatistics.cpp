@@ -110,7 +110,7 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group,
                                       m_outputDir,
                                       stats.getAggregatorName(), stats.getFluxName(), elementSetName ) );
 
-    TableLayout statsCSVLayout( "", {"Time [s]", "Element Count", csvMassColumn, csvRateColumn} );
+    TableLayout const statsCSVLayout( "", {"Time [s]", "Element Count", csvMassColumn, csvRateColumn} );
     m_csvLayout = statsCSVLayout;
   }
 

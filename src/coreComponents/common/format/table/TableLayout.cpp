@@ -49,7 +49,7 @@ TableLayout & TableLayout::setTitle( string_view title )
 
 TableLayout & TableLayout::enableLineBreak( bool value )
 {
-  m_wrapLine = value;
+  m_lineBreakAtBegin = value;
   return *this;
 }
 
@@ -62,8 +62,14 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
   return *this;
 }
 
+TableLayout & TableLayout::setMaxColumnWidth( size_t width )
+{
+  m_maxColumnWidth = width;
+  return *this;
+}
+
 bool TableLayout::isLineBreakEnabled() const
-{ return m_wrapLine; }
+{ return m_lineBreakAtBegin; }
 
 TableLayout::CellLayout::CellLayout():
   m_cellWidth( 0 ),

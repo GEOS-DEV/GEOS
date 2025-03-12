@@ -365,6 +365,8 @@ TestSet getTestSet()
 
   <Solvers>
     <SinglePhaseFVM name="testSolver"
+                    logLevel="1"
+                    allowNegativePressure="1"
                     discretization="singlePhaseTPFA"
                     targetRegions="{ reservoir }" >
 
