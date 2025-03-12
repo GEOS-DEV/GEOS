@@ -64,15 +64,22 @@ void ImplicitQDRateAndState::solveRateAndStateEquations( real64 const time_n,
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
-      // solve rate and state equations.
-      rateAndStateKernels::createAndLaunch< rateAndStateKernels::ImplicitFixedStressRateAndStateKernel, parallelDevicePolicy<> >( subRegion,
-                                                                                                                                  viewKeyStruct::frictionLawNameString(),
-                                                                                                                                  m_shearImpedance,
-                                                                                                                                  maxNewtonIter, newtonTol,
-                                                                                                                                  time_n,
-                                                                                                                                  dt ); // save
-                                                                                                                                        // old
-                                                                                                                                        // state
+      string const & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+      constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
+      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [=, &subRegion] ( auto & castedFrictionLaw )
+      {
+
+        // solve rate and state equations.
+        rateAndStateKernels::createAndLaunch< rateAndStateKernels::ImplicitFixedStressRateAndStateKernel,
+                                              parallelDevicePolicy<> >( subRegion,
+                                                                        castedFrictionLaw,
+                                                                        m_shearImpedance,
+                                                                        maxNewtonIter, newtonTol,
+                                                                        time_n,
+                                                                        dt );
+
+      } );
+
       updateSlip( subRegion, dt );
     } );
   } );
