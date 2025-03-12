@@ -263,7 +263,6 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout & tableLayout,
         cellsHeaderLayout[idxRow + 1].push_back( emptyCell );
       }
     }
-    currentCell.m_cellWidth = it->m_header.m_cellWidth;
 
     if( it->hasParent() )
     {
@@ -289,6 +288,16 @@ void TableTextFormatter::populateHeaderCellsLayout( TableLayout & tableLayout,
     {
       TableLayout::CellLayout mergingCell{ CellType::MergeNext, "", TableLayout::Alignment::center };
       cellsHeaderLayout[currentLayer].push_back( mergingCell );
+    }
+
+    if( tableLayout.isMaxColumnWidthSet())
+    {
+      currentCell.m_lines = stringutilities::wrapTextToMaxLength( currentCell.m_lines,
+                                                                  tableLayout.getMaxWidth() );
+
+      sublineHeaderCounts[currentLayer] = std::max( sublineHeaderCounts[currentLayer],
+                                                    currentCell.m_lines.size() );
+
     }
 
     cellsHeaderLayout[currentLayer].push_back( currentCell );
@@ -343,7 +352,13 @@ void TableTextFormatter::populateDataCellsLayout( TableLayout & tableLayout,
           cell.value = m_horizontalLine;
         }
 
-        cellsDataLayout[idxRow][idxColumn] = TableLayout::CellLayout( cell.type, cell.value, alignement );
+        TableLayout::CellLayout dataToCell( cell.type, cell.value, alignement );
+        if( tableLayout.isMaxColumnWidthSet() )
+        {
+          dataToCell.m_lines = stringutilities::wrapTextToMaxLength( dataToCell.m_lines,
+                                                                     tableLayout.getMaxWidth() );
+        }
+        cellsDataLayout[idxRow][idxColumn] = dataToCell;
         maxLinesPerRow  = std::max( maxLinesPerRow, cellsDataLayout[idxRow][idxColumn].m_lines.size() );
         idxColumn++;
       }
@@ -403,7 +418,7 @@ void TableTextFormatter::updateColumnMaxLength( TableLayout & tableLayout,
   {
     size_t maxColumnSize = 1;
 
-    
+
     { // retrieves the maximum length of the current column
       // and set each header column to maxColumnSize
       for( size_t rowIdx = 0; rowIdx < cellsDataLayout.size(); ++rowIdx )
