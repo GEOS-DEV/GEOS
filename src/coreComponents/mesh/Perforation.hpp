@@ -124,7 +124,7 @@ public:
     static constexpr char const *wellSkinFactorString() { return "skinFactor"; }
     /// @return Target region for this perforation
     static constexpr char const *targetRegionString() { return "targetRegion"; }
-    /// @return Open/closed state this perforation
+    /// @return Open/closed status this perforation
     static constexpr char const *perfStatusTableString() { return "perfStatusTable"; }
   }
   /// ViewKey struct for the Perforation class

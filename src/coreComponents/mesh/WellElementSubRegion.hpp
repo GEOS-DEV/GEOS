@@ -42,7 +42,7 @@ public:
   /**
    * @brief enumeration for values in segmentStatusList parameter of Generate()
    */
-  enum WellElemStatus : unsigned
+  enum WellElemParallelStatus : unsigned
   {
     UNOWNED = 0,             // there are no perforations on this element
     REMOTE = 1,              // all perforations are remote
@@ -53,7 +53,7 @@ public:
   /**
    * @brief enumeration for values element state
    */
-  enum WellElemState : unsigned
+  enum WellElemStatus : unsigned
   {
     CLOSED = 0,            //  no flow in element
     OPEN = 1
@@ -180,20 +180,38 @@ public:
   }
 
   /**
-   * @brief Get state for all well elements
-   * @return reference to state array
+   * @brief Get status for local well elements
+   * @return reference to status array
    */
-  array1d< integer > & getWellElementState()
+  array1d< integer > & getWellLocalElementStatus()
   {
-    return m_wellElementState;
+    return m_wellLocalElementStatus;
   }
 
   /**
-   * @copydoc getWellElementState()
+   * @copydoc getWellLocalElementStatus()
    */
-  array1d< integer > const & getWellElementState() const
+  array1d< integer > const & getLocalWellElementStatus() const
   {
-    return m_wellElementState;
+    return m_wellLocalElementStatus;
+  }
+
+
+  /**
+   * @brief Get status for all well elements
+   * @return reference to status array
+   */
+  array1d< integer > & getWellElementStatus()
+  {
+    return m_wellElementStatus;
+  }
+
+  /**
+   * @copydoc getWellElementStatus()
+   */
+  array1d< integer > const & getWellElementStatus() const
+  {
+    return m_wellElementStatus;
   }
 
   /**
@@ -296,8 +314,8 @@ public:
     static constexpr char const * topRankString() { return "topRank"; }
     /// @return String key for the well radius
     static constexpr char const * radiusString() { return "radius"; }
-    /// @return String key for the well element state
-    static constexpr char const * wellElementStateString() { return "wellElementState"; }
+    /// @return String key for the well element status
+    static constexpr char const * wellLocalElementStatusString() { return "wellLocalElementStatus"; }
 
     /// ViewKey for the well control name
     dataRepository::ViewKey wellControlsName     = { wellControlsString() };
@@ -314,8 +332,8 @@ public:
     /// ViewKey for the well radius
     dataRepository::ViewKey radius             = { radiusString() };
 
-    /// ViewKey for the well element state
-    dataRepository::ViewKey wellElementState   = { wellElementStateString() };
+    /// ViewKey for the well element status
+    dataRepository::ViewKey wellLocalElementStatus   = { wellLocalElementStatusString() };
   }
   /// ViewKey struct for the WellElementSubRegion class
   viewKeysWellElementSubRegion;
@@ -469,8 +487,11 @@ private:
   /// Number of local elements, excludes ghosting
   integer m_numLocalElements;
 
-  /// Well element state
-  array1d< integer > m_wellElementState; // (sized total number of segments)
+  /// Well element status
+  array1d< integer > m_wellElementStatus; // (sized total number of segments)
+
+  /// Well element local status
+  array1d< integer > m_wellLocalElementStatus; // (sized number of local segments)
 
   /// Segment offsets required for mpiallgatherv (sized total number of segments)
   array1d< integer > m_mpiElementOffset;

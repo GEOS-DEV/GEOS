@@ -43,7 +43,7 @@ public:
   /**
    * @brief enumeration for values element state
    */
-  enum PerforationState : unsigned
+  enum PerforationStatus : unsigned
   {
     CLOSED = 0,            //  no flow in element
     OPEN = 1
@@ -229,17 +229,17 @@ public:
   string_array const & getPerfName() const { return m_perfName; }
 
   /**
-   * @brief Get perforation's state
-   * @return array of states
+   * @brief Get perforation's status
+   * @return status array
    */
-  arrayView1d< localIndex const > getLocalPerfState() const { return m_localPerfState; }
+  arrayView1d< localIndex const >   getLocalPerfStatus() const { return m_localPerfStatus; }
 
 
   /**
-   * @brief Get perforation's state
-   * @return array of states
+   * @brief Get perforation's status
+   * @return status array
    */
-  arrayView1d< localIndex > getLocalPerfState() { return m_localPerfState; }
+  arrayView1d< localIndex > getLocalPerfStatus() { return m_localPerfStatus; }
 
   ///@}
 
@@ -340,8 +340,8 @@ private:
   /// Name of perforations
   string_array m_perfName;
 
-  /// Locally owned perforation's state
-  array1d< localIndex > m_localPerfState;
+  /// Local perforation's status
+  array1d< localIndex > m_localPerfStatus;
 
 };
 

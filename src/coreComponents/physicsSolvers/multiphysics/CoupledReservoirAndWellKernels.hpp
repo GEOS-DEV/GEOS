@@ -103,7 +103,7 @@ public:
     m_compPerfRate( perforationData->getField< fields::well::compPerforationRate >() ),
     m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >() ),
     m_perfWellElemIndex( perforationData->getField< fields::perforation::wellElementIndex >() ),
-    m_perfOpen( perforationData->getField< fields::perforation::perforationState >() ),
+    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >() ),
     m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_resElemDofNumber( resDofNumber ),
     m_resElementRegion( perforationData->getField< fields::perforation::reservoirElementRegion >() ),
@@ -133,7 +133,7 @@ public:
   {
 
     using namespace compositionalMultiphaseUtilities;
-    if( m_perfOpen[iperf ] )
+    if( m_perfStatus[iperf ] )
     {
       // local working variables and arrays
       stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 * numComp );
@@ -262,7 +262,7 @@ protected:
   arrayView2d< real64 const > const m_compPerfRate;
   arrayView4d< real64 const > const m_dCompPerfRate;
   arrayView1d< localIndex const > const m_perfWellElemIndex;
-  arrayView1d< integer const > const m_perfOpen;
+  arrayView1d< integer const > const m_perfStatus;
   // Element region, subregion, index
   arrayView1d< globalIndex const > const m_wellElemDofNumber;
   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const m_resElemDofNumber;

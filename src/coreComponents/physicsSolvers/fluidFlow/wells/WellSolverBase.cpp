@@ -214,21 +214,21 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
       WellControls & wellControls = getWellControls( subRegion );
 
       // Set perforation status
-      GEOS_LOG_RANK( "tjb open " << wellControls.isWellOpen( time_n ));
+      GEOS_LOG_RANK( "tjb open " << wellControls.isWellOpen( time_n ) << " subregion size " << subRegion.size());
       if( wellControls.isWellOpen( time_n ) )
       {
 
         PerforationData & perforationData = *subRegion.getPerforationData();
         string_array const & perfName = perforationData.getPerfName();
-        arrayView1d< integer > perfState = perforationData.getLocalPerfState();
+        arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
         // for now set to open
         for( integer i=0; i<perforationData.size(); i++ )
         {
           TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfName[i] );
-          perfState[i]=PerforationData::PerforationState::OPEN;
+          perfStatus[i]=PerforationData::PerforationStatus::OPEN;
           if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
           {
-            perfState[i]=PerforationData::PerforationState::CLOSED;
+            perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
           }
         }
 #if 1
@@ -238,10 +238,10 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
         arrayView1d< globalIndex const > globalElementIndex = subRegion.getGlobalElementIndex();
 
         arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
-        array1d< integer > & currentState = subRegion.getWellElementState();
+        array1d< integer > & currentStatus = subRegion.getWellElementStatus();
 
         integer numLocalElements = subRegion.getNumLocalElements();
-        array1d< integer > segState( numLocalElements );
+        array1d< integer > segStatus( numLocalElements );
 
         // Local perforations
         for( integer j =0; j < perforationData.size(); j++ )
@@ -249,20 +249,20 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
           localIndex const iwelem = perfWellElemIndex[j];
           if( elemGhostRank[iwelem] < 0 )
           {
-            if( perfState[j] )
+            if( perfStatus[j] )
             {
-              segState[iwelem] +=1;
+              segStatus[iwelem] +=1;
             }
           }
         }
-        subRegion.setElementStatus( segState );
+        subRegion.setElementStatus( segStatus );
         integer numOpenElements = 0;
-        array1d< integer > const & updatedState = subRegion.getWellElementState();
-        for( integer i=0; i<currentState.size(); i++ )
+        array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
+        for( integer i=0; i<currentStatus.size(); i++ )
         {
-          numOpenElements += updatedState[i];
+          numOpenElements += updatedStatus[i];
         }
-        GEOS_LOG_RANK( "tjb end segState Setup "<< numLocalElements << " " <<numOpenElements );
+        GEOS_LOG_RANK( "tjb end segStatus Setup "<< numLocalElements << " " <<numOpenElements );
         wellControls.setWellStatus( numOpenElements>0 );
 #endif
       }

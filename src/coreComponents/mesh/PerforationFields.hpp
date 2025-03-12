@@ -90,13 +90,13 @@ DECLARE_FIELD( wellSkinFactor,
                WRITE_AND_READ,
                "For each perforation, well skin factor" );
 
-DECLARE_FIELD( perforationState,
-               "perforationState",
+DECLARE_FIELD( perforationStatus,
+               "perforationStatus",
                array1d< integer >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Table of time vs perforation open/close state " );
+               "Table of time vs perforation open/close status " );
 
 DECLARE_FIELD( location,
                "location",

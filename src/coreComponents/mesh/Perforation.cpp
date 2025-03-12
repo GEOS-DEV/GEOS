@@ -56,7 +56,7 @@ Perforation::Perforation( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::perfStatusTableString(), &m_perfStatusTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Table defining perforation state as a function of time. If enterned in Functions section, the name must be the same as the perforation name" );
+    setDescription( "Table defining perforation status as a function of time. If enterned in Functions section, the name must be the same as the perforation name" );
 
 
 }

@@ -48,7 +48,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
-  //registerWrapper( viewKeyStruct::wellElementStateString(), &m_wellElementState );
+  registerWrapper( viewKeyStruct::wellLocalElementStatusString(), &m_wellLocalElementStatus );
 
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString() } );
@@ -411,22 +411,21 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
 {
 
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
-  m_wellElementState.resize( elemStatusGlobal.size());
-  GEOS_LOG_RANK( "tjb generate "<<m_wellElementState.size());
+  m_wellElementStatus.resize( elemStatusGlobal.size());
 
   for( localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal )
   {
     // convert elemStatus list into sets of indices
     elemSetsByStatus[elemStatusGlobal[iwelemGlobal]].insert( iwelemGlobal );
-    // initialize element state
-    m_wellElementState[iwelemGlobal]= WellElemState::OPEN;
+    // initialize element status
+    m_wellElementStatus[iwelemGlobal]= WellElemStatus::OPEN;
   }
 
   // initialize the sets using the classification of well elems
   // localElems will be enlarged once boundary elements ownership is determined
-  SortedArray< globalIndex > & localElems   = elemSetsByStatus[WellElemStatus::LOCAL];
-  SortedArray< globalIndex > & sharedElems  = elemSetsByStatus[WellElemStatus::SHARED];
-  SortedArray< globalIndex > & unownedElems = elemSetsByStatus[WellElemStatus::UNOWNED];
+  SortedArray< globalIndex > & localElems   = elemSetsByStatus[WellElemParallelStatus::LOCAL];
+  SortedArray< globalIndex > & sharedElems  = elemSetsByStatus[WellElemParallelStatus::SHARED];
+  SortedArray< globalIndex > & unownedElems = elemSetsByStatus[WellElemParallelStatus::UNOWNED];
 
   // here we make sure that there are no shared elements
   // this is enforced in the LineBlockABC that currently merges two perforations
@@ -547,7 +546,7 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
     {
       // the well element is in the reservoir element (erMatched,esrMatched,eiMatched), so tag it as local
       localElems.insert( currGlobal );
-      elemStatusGlobal[currGlobal] = WellElemStatus::LOCAL;
+      elemStatusGlobal[currGlobal] = WellElemParallelStatus::LOCAL;
     }
   }
 }
@@ -574,7 +573,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
     {
       rankSetsByStatus[thisElemStatusGlobal[irank]].insert( irank );
     }
-    globalIndex const numLocalRanks = rankSetsByStatus[WellElemStatus::LOCAL].size();
+    globalIndex const numLocalRanks = rankSetsByStatus[WellElemParallelStatus::LOCAL].size();
 
     // in this case, this element has not been assigned
     //    => we assign it to the rank that owns
@@ -591,14 +590,14 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
                      " a well-posed problem.",
                      InputError );
 
-      if( elemStatusGlobal[prevGlobal] == WellElemStatus::LOCAL )
+      if( elemStatusGlobal[prevGlobal] == WellElemParallelStatus::LOCAL )
       {
         localElems.insert( iwelemGlobal );
-        elemStatusGlobal[iwelemGlobal] = WellElemStatus::LOCAL;
+        elemStatusGlobal[iwelemGlobal] = WellElemParallelStatus::LOCAL;
       }
       else
       {
-        elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
+        elemStatusGlobal[iwelemGlobal] = WellElemParallelStatus::REMOTE;
       }
     }
     // in this case, everything is fine,
@@ -606,11 +605,11 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
     else if( numLocalRanks == 1 )
     {
 
-      for( globalIndex iownerRank : rankSetsByStatus[WellElemStatus::LOCAL] )
+      for( globalIndex iownerRank : rankSetsByStatus[WellElemParallelStatus::LOCAL] )
       {
         if( MpiWrapper::commRank( MPI_COMM_GEOS ) != iownerRank )
         {
-          elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
+          elemStatusGlobal[iwelemGlobal] = WellElemParallelStatus::REMOTE;
         }
       }
 
@@ -621,14 +620,14 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
     {
 
       localIndex rankCount = 0;
-      for( globalIndex iownerRank : rankSetsByStatus[WellElemStatus::LOCAL] )
+      for( globalIndex iownerRank : rankSetsByStatus[WellElemParallelStatus::LOCAL] )
       {
         if( rankCount == 0 )
         {
           // update the elemStatusGlobal array for all ranks
           if( MpiWrapper::commRank( MPI_COMM_GEOS ) != iownerRank )
           {
-            elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
+            elemStatusGlobal[iwelemGlobal] = WellElemParallelStatus::REMOTE;
           }
         }
         else // (rankCount > 0)
@@ -717,7 +716,7 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   resize( localElems.size() );
-  GEOS_LOG_RANK( "tjb resize "<< size());
+  GEOS_LOG_RANK( "tjb WellElementSubRegion resize "<< size()<< " " << localElems.size());
 
   // create local elem numbering
 
@@ -999,28 +998,28 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
   activePerfsPerElement.resize( m_globalElementIndex.size() );
   MpiWrapper::allgatherv( localElemPerfStatus.data(), localElemPerfStatus.size(), activePerfsPerElement.data(), m_elementPerRank.data(), m_mpiElementOffset.data(), MPI_COMM_GEOS );
 
-  // Set segment state
+  // Set segment status
   integer numElements = activePerfsPerElement.size();
-  std::fill( m_wellElementState.begin(), m_wellElementState.end(), 0 );
+  std::fill( m_wellElementStatus.begin(), m_wellElementStatus.end(), 0 );
   for( integer i=1; i<numElements; i++ )
   {
     if( activePerfsPerElement[i] == 0 )
     {
-      if( m_wellElementState[i-1] == WellElemState::OPEN )
+      if( m_wellElementStatus[i-1] == WellElemStatus::OPEN )
       {
         // Open - upstream segment is open
-        m_wellElementState[i] =  WellElemState::OPEN;
+        m_wellElementStatus[i] =  WellElemStatus::OPEN;
       }
       else
       {
         // Closed - no open perforation and no upstream segment is open
-        m_wellElementState[i] =  WellElemState::CLOSED;
+        m_wellElementStatus[i] =  WellElemStatus::CLOSED;
       }
     }
     else //  activePerfsPerElement[i] == 1
     {
       // Open - contains open perforation
-      m_wellElementState[i] =  WellElemState::OPEN;
+      m_wellElementStatus[i] =  WellElemStatus::OPEN;
     }
   }
 

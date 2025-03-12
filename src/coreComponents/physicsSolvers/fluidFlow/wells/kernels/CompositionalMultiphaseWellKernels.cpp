@@ -490,7 +490,7 @@ PresTempCompFracInitializationKernel::
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & perfGravCoef,
-          arrayView1d< integer const > const & perfState,
+          arrayView1d< integer const > const & perfStatus,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPres,
           arrayView1d< real64 > const & wellElemTemp,
@@ -521,7 +521,7 @@ PresTempCompFracInitializationKernel::
 
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
-    if( perfState[iperf] )
+    if( perfStatus[iperf] )
     {
       numOpenPerfs+=1;
       // get the reservoir (sub)region and element indices
@@ -611,7 +611,7 @@ PresTempCompFracInitializationKernel::
 
     forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-      if( perfState[iperf] )
+      if( perfStatus[iperf] )
       {
         // get the reservoir (sub)region and element indices
         localIndex const er = resElementRegion[iperf];

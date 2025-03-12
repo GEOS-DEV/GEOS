@@ -169,8 +169,8 @@ addCouplingSparsityPattern( DomainPartition const & domain,
         arrayView1d< localIndex const > const & perfWellElemIndex =
           perforationData->getField< fields::perforation::wellElementIndex >();
 
-        // get the perforation state
-        arrayView1d< integer const > const & perfOpen = perforationData->getField< fields::perforation::perforationState >();
+        // get the perforation status
+        arrayView1d< integer const > const & perfStatus = perforationData->getField< fields::perforation::perforationStatus >();
 
         // get the element region, subregion, index
         arrayView1d< localIndex const > const & resElementRegion =
@@ -184,7 +184,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
         // This will fill J_WR, and J_RW
         forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
         {
-          if( perfOpen[iperf] )
+          if( perfStatus[iperf] )
           {
             // Get the reservoir (sub)region and element indices
             localIndex const er = resElementRegion[iperf];
@@ -289,7 +289,7 @@ assembleCouplingTerms( real64 const time_n,
       arrayView1d< localIndex const > const perfWellElemIndex =
         perforationData->getField< fields::perforation::wellElementIndex >();
       // get the perforation state
-      arrayView1d< integer const > const & perfOpen = perforationData->getField< fields::perforation::perforationState >();
+      arrayView1d< integer const > const & perfStatus = perforationData->getField< fields::perforation::perforationStatus >();
       // get the element region, subregion, index
       arrayView1d< localIndex const > const resElementRegion =
         perforationData->getField< fields::perforation::reservoirElementRegion >();
@@ -301,7 +301,7 @@ assembleCouplingTerms( real64 const time_n,
       // loop over the perforations and add the rates to the residual and jacobian
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
       {
-        if( perfOpen[iperf] )
+        if( perfStatus[iperf] )
         {
           // local working variables and arrays
           localIndex eqnRowIndices[ 2 ] = { -1 };

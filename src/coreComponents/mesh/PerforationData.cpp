@@ -45,7 +45,7 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   registerField( fields::perforation::location{}, &m_location );
   registerField( fields::perforation::wellTransmissibility{}, &m_wellTransmissibility );
   registerField( fields::perforation::wellSkinFactor{}, &m_wellSkinFactor );
-  registerField( fields::perforation::perforationState{}, &m_localPerfState );
+  registerField( fields::perforation::perforationStatus{}, &m_localPerfStatus );
 
   registerWrapper( viewKeyStruct::perforationName(), &m_perfName ).
     setInputFlag( InputFlags::INVALID ).
@@ -131,7 +131,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
   for( localIndex iperf = 0; iperf < size(); ++iperf )
   {
     // All perforations default to open
-    m_localPerfState[iperf] = PerforationState::OPEN;
+    m_localPerfStatus[iperf] = PerforationStatus::OPEN;
 
     // if the well transmissibility has been read from the XML
     // then skip the computation of the well transmissibility carried out below
@@ -142,7 +142,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
       bool close_perf = isZero( m_wellTransmissibility[iperf] );
       if( close_perf )
       {
-        m_localPerfState[iperf] = PerforationState::CLOSED;
+        m_localPerfStatus[iperf] = PerforationStatus::CLOSED;
       }
 
       GEOS_LOG_RANK_IF( close_perf,

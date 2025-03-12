@@ -3,6 +3,7 @@ set( physicsSolvers_headers
      ${physicsSolvers_headers}
      multiphysics/CompositionalMultiphaseReservoirAndWells.hpp
      multiphysics/CoupledReservoirAndWellsBase.hpp
+     multiphysics/CoupledReservoirAndWellKernels.hpp
      multiphysics/CoupledSolver.hpp
      multiphysics/PoromechanicsSolver.hpp
      multiphysics/FlowProppantTransportSolver.hpp

@@ -81,7 +81,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   // 2) classify well elements based on connectivity to local mesh partition
   array1d< integer > elemStatusGlobal;
-  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemStatus::UNOWNED );
+  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemParallelStatus::UNOWNED );
 
   arrayView1d< globalIndex const > const & perfElemIdGlobal = lineBlock.getPerfElemIndex();
 
@@ -91,11 +91,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
     if( perforationData->globalToLocalMap().count( iperfGlobal ) > 0 )
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::LOCAL;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::LOCAL;
     }
     else
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::REMOTE;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::REMOTE;
     }
   }
 
