@@ -498,6 +498,12 @@ public:
   GEOS_FORCE_INLINE
   real64 kernel( real64 const & r ); // distance from particle to query point
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 kernelDevice( real64 const & r,
+                       real64 const & neighborRadius,
+                       int const & planeStrain ); // distance from particle to query point
+
   void kernelGradient( arraySlice1d< real64 const > const & x,  // query point
                        arraySlice1d< real64 const > const & xp,            // particle location
                        real64 const & r,                      // distance from particle to query point
@@ -505,12 +511,12 @@ public:
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  void kernelGradient( arraySlice1d< real64 const > const & x,  // query point
-                       arraySlice1d< real64 const > const & xp,            // particle location
-                       real64 const & r,                      // distance from particle to query point
-                       real64 const & neighborRadius,
-                       int const & planeStrain,
-                       real64 * result );
+  void kernelGradientDevice( arraySlice1d< real64 const > const & x,  // query point
+                             arraySlice1d< real64 const > const & xp,            // particle location
+                             real64 const & r,                      // distance from particle to query point
+                             real64 const & neighborRadius,
+                             int const & planeStrain,
+                             real64 * result );
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -568,7 +574,7 @@ public:
                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particleDisplacementView, 
                                           arraySlice2d< real64 > const result );
 
-  void computeDamageFieldGradient( ParticleManager & particleManager );
+  void computeDamageFieldGradient( const int cycleNumber, ParticleManager & particleManager );
 
   void updateSurfaceFlagOverload( ParticleManager & particleManager );
 
