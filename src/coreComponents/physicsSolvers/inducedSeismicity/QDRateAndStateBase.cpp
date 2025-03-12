@@ -24,8 +24,9 @@
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "constitutive/contact/RateAndStateFriction.hpp"
 #include "kernels/RateAndStateKernelsBase.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+
 
 namespace geos
 {
@@ -97,53 +98,18 @@ void QDRateAndStateBase::registerDataOnMesh( Group & meshBodies )
 
 void QDRateAndStateBase::enforceRateAndVelocityConsistency( SurfaceElementSubRegion & subRegion ) const
 {
-  arrayView2d< real64 > const slipVelocity = subRegion.getField< rateAndState::slipVelocity >();
-  arrayView1d< real64 > const slipRate  = subRegion.getField< rateAndState::slipRate >();
-  arrayView1d< real64 const > const stateVariable  = subRegion.getField< rateAndState::stateVariable >();
 
-  arrayView2d< real64 > const backgroundShearStress = subRegion.getField< rateAndState::backgroundShearStress >();
-  arrayView1d< real64 > const backgroundNormalStress = subRegion.getField< rateAndState::backgroundNormalStress >();
 
   real64 const shearImpedance = m_shearImpedance;
 
-  string const & frictionaLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
-  constitutive::RateAndStateFriction const & frictionLaw = subRegion.getConstitutiveModel< constitutive::RateAndStateFriction >( frictionaLawName );
+  string const & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+  constitutive::FrictionBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionLawName );
 
-  constitutive::RateAndStateFriction::KernelWrapper frictionLawKernelWrapper = frictionLaw.createKernelUpdates();
-
-  RAJA::ReduceMax< parallelDeviceReduce, int > negativeSlipRate( 0 );
-  RAJA::ReduceMax< parallelDeviceReduce, int > bothNonZero( 0 );
-
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
-    if( slipRate[k] < 0.0 )
-    {
-      negativeSlipRate.max( 1 );
-    }
-    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 && slipRate[k] > 0.0 )
-    {
-      bothNonZero.max( 1 );
-    }
-    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 )
-    {
-      slipRate[k] = LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] );
-    }
-    else if( slipRate[k] > 0.0 )
-    {
-      real64 const frictionCoefficient = frictionLawKernelWrapper.frictionCoefficient( k, slipRate[k], stateVariable[k] );
-      rateAndStateKernels::projectSlipRateBase( k,
-                                                frictionCoefficient,
-                                                shearImpedance,
-                                                backgroundNormalStress,
-                                                backgroundShearStress,
-                                                slipRate,
-                                                slipVelocity );
-    }
+    typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionLawKernelWrapper = castedFrictionLaw.createKernelUpdates();
+    rateAndStateKernels::enforceRateAndVelocityConsistency( frictionLawKernelWrapper, subRegion, shearImpedance );
   } );
-
-
-  GEOS_ERROR_IF( negativeSlipRate.get() > 0, "SlipRate cannot be negative." );
-  GEOS_ERROR_IF( bothNonZero.get() > 0, "Only one between slipRate and slipVelocity can be specified as i.c." );
 
 }
 
