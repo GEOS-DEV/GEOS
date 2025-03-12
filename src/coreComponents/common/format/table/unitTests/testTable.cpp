@@ -417,7 +417,7 @@ TEST( testTable, subColumns )
 TEST( testTable, variadicTest )
 {
   {
-    TableLayout const layoutTest( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte",
+    TableLayout const layoutTest( "Cras egestas ipsum a nisl.\nVivamus variu dolor utsisicdis parturient monte",
     {
       "Rank",
       TableLayout::Column()
@@ -438,7 +438,8 @@ TEST( testTable, variadicTest )
     EXPECT_EQ( log.toString( tableData ),
                "\n"
                "-------------------------------------------------------------------------------------------------\n"
-               "|          Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte           |\n"
+               "|                                  Cras egestas ipsum a nisl.                                   |\n"
+               "|                        Vivamus variu dolor utsisicdis parturient monte                        |\n"
                "-------------------------------------------------------------------------------------------------\n"
                "|        Rank        |        Nodes        |  Edge  |        Faces        |        Elems        |\n"
                "-------------------------------------------------------------------------------------------------\n"
