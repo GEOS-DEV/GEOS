@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Included>
+    <File
+      name="./SpringSlider_base.xml"/>
+  </Included>
+  
+  <Constitutive>
+    <RateAndStateFrictionAgingLaw
+      name="frictionLaw"
+      defaultA="0.01"
+      defaultB="0.015"
+      defaultDc="1.0e-5"  
+      defaultReferenceVelocity="1.0e-6"
+      defaultReferenceFrictionCoefficient="0.6"/>  
+  </Constitutive>
+</Problem>
