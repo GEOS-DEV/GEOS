@@ -268,6 +268,8 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     }
   };
 
+  // TODO: error if inputDataValues size is not consistent with visible headers count
+
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
   {
     CellLayoutRow & outputRow = dataCellsLayout[idxRow];
@@ -290,7 +292,7 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
 
           TableLayout::CellLayout & outputCell = outputRow.cells[idxOutputColumn];
           outputCell = TableLayout::CellLayout( type, columnIt->m_alignment.valueAlignment );
-          outputCell.prepareLayout( value );
+          outputCell.prepareLayout( value, tableLayout.getMaxColumnWidth() );
 
           maxLinesInRow  = std::max( maxLinesInRow, outputCell.m_lines.size() );
           idxOutputColumn++;

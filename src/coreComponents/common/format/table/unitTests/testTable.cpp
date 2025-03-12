@@ -476,7 +476,8 @@ TEST( testTable, maxWidth )
     TableTextFormatter log( layoutTest );
 
     EXPECT_EQ( log.toString( tableData ),
-               "\n---------------------------------------------------------------------------------------------------------------------------------\n"
+               "\n"
+               "---------------------------------------------------------------------------------------------------------------------------------\n"
                "|               Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient monte,  egestas ipsum a nisl               |\n"
                "---------------------------------------------------------------------------------------------------------------------------------\n"
                "|        Rank        |             Nodes             |   Vivamus variu    |        Faces        |             Elems             |\n"

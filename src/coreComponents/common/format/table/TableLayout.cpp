@@ -17,6 +17,8 @@
  * @file TableData.hpp
  */
 #include "TableLayout.hpp"
+
+#include "common/format/StringUtilities.hpp"
 #include <numeric>
 
 namespace geos
@@ -228,31 +230,6 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
   return DeepFirstIterator( startColumn, idxLayer );
 }
 
-template< typename STRING_T >
-void divideLines( std::vector< STRING_T > & lines, size_t & linesWidth, string_view value )
-{
-  size_t current = 0;
-  size_t end = value.find( '\n' );
-
-  lines.clear();
-  linesWidth = 0;
-
-  // Process each line until no more newlines are found
-  while( end != STRING_T::npos )
-  {
-    lines.push_back( STRING_T( value.substr( current, end - current ) ) );
-    current = end + 1;
-    end = value.find( '\n', current );
-    linesWidth = std::max( linesWidth, lines.back().size() );
-  }
-  // Add the last part
-  if( current <= value.size())
-  {
-    lines.push_back( STRING_T( value.substr( current )  ) );
-    linesWidth = std::max( linesWidth, lines.back().size() );
-  }
-}
-
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),
@@ -260,7 +237,7 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 {
   prepareLayoutRecusive( m_tableColumns, 0 );
 
-  m_tableTitleLayout.prepareLayout( m_tableTitleStr );
+  m_tableTitleLayout.prepareLayout( m_tableTitleStr, noColumnMaxWidth );
 }
 
 void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
@@ -275,7 +252,7 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
     if( column.m_headerLayout.m_cellType != CellType::Hidden && !column.hasChild() )
       ++m_lowermostColumnCount;
 
-    column.m_headerLayout.prepareLayout( column.m_headerStr );
+    column.m_headerLayout.prepareLayout( column.m_headerStr, getMaxColumnWidth() );
 
     if( idxColumn < columns.size() - 1 )
     {
@@ -294,9 +271,16 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
   }
 }
 
-void TableLayout::CellLayout::prepareLayout( string_view value )
+void TableLayout::CellLayout::prepareLayout( string_view inputText, size_t maxLineWidth )
 {
-  divideLines( m_lines, m_cellWidth, value );
+  m_lines = stringutilities::divideLines< string_view >( m_cellWidth, inputText );
+
+  if( maxLineWidth != noColumnMaxWidth && m_cellWidth > maxLineWidth )
+  {
+    m_lines = stringutilities::wrapTextToMaxLength( m_lines, maxLineWidth );
+    // maxLineWidth has been updated
+    m_cellWidth = maxLineWidth;
+  }
 }
 
 }

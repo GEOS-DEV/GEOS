@@ -37,6 +37,9 @@ class TableLayout
 
 public:
 
+  /// default value for m_maxColumnWidth when it is not set
+  static constexpr size_t noColumnMaxWidth = std::numeric_limits< size_t >::max();
+
   /// Type of aligment for a column
   enum Alignment { right, left, center };
 
@@ -101,10 +104,11 @@ public:
     CellLayout( CellType cellType, TableLayout::Alignment alignment );
 
     /**
-     * @param value The view on the text of the cell. `m_lines` will contain each separated lines, and
-     *              `m_cellWidth`, the maximum line width. Called automatically by PreparedTableLayout.
+     * @param inputText The view on the text of the cell. `m_lines` will contain each separated lines, and
+     *                  `m_cellWidth`, the maximum line width. Called automatically by PreparedTableLayout.
+     * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
      */
-    void prepareLayout( string_view value );
+    void prepareLayout( string_view value, size_t maxLineWidth );
   };
 
   /**
@@ -557,9 +561,6 @@ protected:
  */
   void addToColumns( TableLayout::Column const & column );
 
-  /// default value for m_maxColumnWidth when it is not set
-  static constexpr size_t noColumnMaxWidth = std::numeric_limits< size_t >::max();
-
   /// Columns settings hierarchy
   std::vector< Column > m_tableColumns;
 
@@ -617,7 +618,7 @@ public:
   { return m_columnLayersCount; }
 
   /**
-   * @return The number of visible columns that does not contain child (useful to know the maximum number of 
+   * @return The number of visible columns that does not contain child (useful to know the maximum number of
    *         column to show in a given row).
    */
   size_t getLowermostColumnsCount() const
