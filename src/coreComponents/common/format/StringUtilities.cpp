@@ -184,7 +184,6 @@ std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lin
   if( lines.empty())
     return lines;
 
-  size_t i = 0;
   size_t effectiveMaxLineLength = 0;
 
   std::vector< STRING_T > formattedLines;
