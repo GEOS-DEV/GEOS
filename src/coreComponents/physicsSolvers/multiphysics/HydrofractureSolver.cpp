@@ -452,8 +452,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition
         regions.emplace_back( region.getName() );
       } );
 
-      dispMeshTargets[std::make_pair( meshBodyName, solidDiscretizationName )] = std::move( regions );
-      presMeshTargets[std::make_pair( meshBodyName, flowDiscretizationName )] = std::move( regions );
+      dispMeshTargets[std::make_pair( meshBodyName, solidDiscretizationName )] = regions;
+      presMeshTargets[std::make_pair( meshBodyName, flowDiscretizationName )] = regions;
     } );
 
     dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
@@ -1032,15 +1032,16 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::resetStateToBeginningOfStep( D
 }
 
 template< typename POROMECHANICS_SOLVER >
-real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & currentDt,
+real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & currentTime,
+                                                               real64 const & currentDt,
                                                                DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( currentTime, domain );
   real64 nextDt = 0.0;
 
   if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
   {
-    nextDt = this->setNextDtBasedOnNewtonIter( currentDt );
+    nextDt = this->setNextDtBasedOnIterNumber( currentDt );
   }
   else
   {
