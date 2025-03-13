@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -143,7 +143,7 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
   // compute the viscosity of pure water as a function of temperature
-  real64 dPureWaterVisc_dTemperature;
+  real64 dPureWaterVisc_dTemperature = 0.0;
   real64 const pureWaterVisc = m_waterViscosityTable.compute( &temperature, &dPureWaterVisc_dTemperature );
 
   // then compute the brine viscosity, accounting for the presence of salt

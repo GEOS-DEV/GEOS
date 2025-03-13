@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -24,7 +24,12 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "SeismicityRateKernels.hpp"
+#include "kernels/SeismicityRateKernels.hpp"
+#include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+
 
 namespace geos
 {
@@ -35,7 +40,7 @@ using namespace constitutive;
 
 SeismicityRate::SeismicityRate( const string & name,
                                 Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_stressSolver( nullptr )
 {
   this->registerWrapper( viewKeyStruct::directEffectString(), &m_directEffect ).
@@ -79,10 +84,10 @@ void SeismicityRate::postInputInitialization()
   // Initialize member stress solver as specified in XML input
   if( !m_stressSolverName.empty() )
   {
-    m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
+    m_stressSolver = &this->getParent().getGroup< PhysicsSolverBase >( m_stressSolverName );
   }
 
-  SolverBase::postInputInitialization();
+  PhysicsSolverBase::postInputInitialization();
 }
 
 SeismicityRate::~SeismicityRate()
@@ -92,11 +97,11 @@ SeismicityRate::~SeismicityRate()
 
 void SeismicityRate::registerDataOnMesh( Group & meshBodies )
 {
-  SolverBase::registerDataOnMesh( meshBodies );
+  PhysicsSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -222,7 +227,7 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -284,7 +289,7 @@ real64 SeismicityRate::solverStep( real64 const & time_n,
   // Loop over subRegions to solve for seismicity rate
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -318,7 +323,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
     // 2. Loop over subRegions to update stress on faults
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -341,7 +346,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
 
     forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                    MeshLevel & mesh,
-                                                                   arrayView1d< string const > const & )
+                                                                   string_array const & )
     {
 
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -412,5 +417,5 @@ void SeismicityRate::integralSolverStep( real64 const & time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SeismicityRate, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SeismicityRate, string const &, dataRepository::Group * const )
 } // namespace geos

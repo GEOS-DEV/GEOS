@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,7 +21,8 @@
 #define GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SLURRYFLUIDFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
-
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
 namespace geos
 {
 
@@ -30,6 +31,8 @@ namespace fields
 
 namespace slurryfluid
 {
+using array2dLayoutFluid = array2d< real64, constitutive::singlefluid::LAYOUT_FLUID >;
+using array3dLayoutFluid_der = array3d< real64, constitutive::singlefluid::LAYOUT_FLUID_DER >;
 
 DECLARE_FIELD( dDensity_dProppantConcentration,
                "dDens_dProppantConc",
@@ -73,7 +76,15 @@ DECLARE_FIELD( dComponentDensity_dComponentConcentration,
 
 DECLARE_FIELD( fluidDensity,
                "FluidDensity",
-               array2d< real64 >,
+               array2dLayoutFluid,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Fluid density" );
+
+DECLARE_FIELD( dFluidDensity,
+               "dFluidDensity",
+               array3dLayoutFluid_der,
                0,
                LEVEL_0,
                WRITE_AND_READ,

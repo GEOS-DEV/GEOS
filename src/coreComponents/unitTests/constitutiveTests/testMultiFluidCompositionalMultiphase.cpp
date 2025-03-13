@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -130,7 +131,7 @@ struct Fluid< FluidModel, 4 >
   static void fillProperties( Group & fluid )
   {
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-    fill< 4 >( componentNames, {"N2", "C10", "C20", "H20"} );
+    componentNames = {"N2", "C10", "C20", "H20"};
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
     fill< 4 >( molarWeight, {28e-3, 134e-3, 275e-3, 18e-3} );
@@ -160,7 +161,7 @@ struct Fluid< FluidModel, 5 >
   static void fillProperties( Group & fluid )
   {
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-    fill< 5 >( componentNames, {"CO2", "N2", "C1", "C2", "C4"} );
+    componentNames = {"CO2", "N2", "C1", "C2", "C4"};
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
     fill< 5 >( molarWeight, {44.0098e-3, 28.0135e-3, 16.0428e-3, 30.0700e-3, 82.4191e-3} );
@@ -191,11 +192,11 @@ makeFluid( string const & name, Group * parent )
   FluidModel & fluid = parent->registerGroup< FluidModel >( name );
 
   string_array & phaseNames = fluid.template getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  fill< 2 >( phaseNames, {"oil", "gas"} );
+  phaseNames = {"oil", "gas"};
 
   string const eosName = EnumStrings< EquationOfStateType >::toString( EOS );
   string_array & equationOfState = fluid.template getReference< string_array >( EquationOfState::viewKeyStruct::equationsOfStateString() );
-  fill< 2 >( equationOfState, {eosName, eosName} );
+  equationOfState = {eosName, eosName};
 
   Fluid< FluidModel, NUM_COMP >::fillProperties( fluid );
 

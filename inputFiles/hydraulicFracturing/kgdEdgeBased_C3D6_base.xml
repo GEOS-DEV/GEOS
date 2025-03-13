@@ -17,12 +17,12 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="50"
-        lineSearchMaxCuts="10"/>
+	lineSearchAction="None"/>
       <LinearSolverParameters
         directParallel="0"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
@@ -33,7 +33,7 @@
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
         krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
@@ -49,7 +49,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      rockToughness="0.707e7"
+      initialRockToughness="0.707e7"
       mpiCommOrder="1"/>
   </Solvers>
 </Problem>

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -241,22 +241,6 @@ DECLARE_FIELD( temperatureScalingFactor,
                NO_WRITE,
                "Scaling factors for temperature" );
 
-DECLARE_FIELD( mass,
-               "mass",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mass" );
-
-DECLARE_FIELD( mass_n,
-               "mass_n",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Mass at the previous converged time step" );
-
 DECLARE_FIELD( energy,
                "energy",
                array1d< real64 >,
@@ -270,17 +254,16 @@ DECLARE_FIELD( energy_n,
                array1d< real64 >,
                0,
                NOPLOT,
-               WRITE_AND_READ,
+               NO_WRITE,
                "Energy at the previous converged time step" );
 
-DECLARE_FIELD( massCreated,
-               "massCreated",
+DECLARE_FIELD( fractureCreationTime,
+               "fractureCreationTime",
                array1d< real64 >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "The amount of remaining mass that was introduced when the SurfaceElement was created." );
-
+               "The creation time for the fracture cell." );
 }
 
 }
