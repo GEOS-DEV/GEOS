@@ -54,9 +54,6 @@ for path in "$@"; do
         continue
     fi
     
-    echo "List of xml files to validate:"
-    echo "$collected_xml_files"
-    
     for xml_file in $collected_xml_files; do
         xmllint --schema $SCHEMA --noout "$xml_file" >> $LOGFILE 2>&1
         if [ $? -ne 0 ]; then

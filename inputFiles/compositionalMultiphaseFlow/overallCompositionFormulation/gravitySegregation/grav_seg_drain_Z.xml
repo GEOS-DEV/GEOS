@@ -4,6 +4,7 @@
   <Included>
     <File name="grav_seg_base.xml"/>
   </Included>
+  <!-- SPHINX_SOLVER   maxCompFractionChange="0.2" minScalingFactor="1.0"-->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <CompositionalMultiphaseFVM
