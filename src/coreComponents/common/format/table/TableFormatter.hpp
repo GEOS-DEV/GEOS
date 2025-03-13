@@ -184,9 +184,14 @@ private:
                     size_t tableTotalWidth ) const;
 
   /**
-   * @brief Adjusts the header layout by ensuring all header layers have consistent row sizes and formats.
+   * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
+   * @note To produce a grid with the given column tree, there are 2 corner cases:
+   *       - A column have less subcolumns layers than its neightboors -> empty "Header" cells  will be added bellow.
+   *       - A parent column has 2 or more sub-columns -> it will be subdivised with "MergeNext" cells.
+   *         This is why stretchRowToMergedCellsWidth() must be called on the grid,
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
-   * @param headerCellsLayout A reference to the collection of header cells that will be updated with the gridified layout.
+   * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
+   *                          gridified layout.
    */
   void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                   CellLayoutRows & headerCellsLayout ) const;

@@ -555,7 +555,7 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
           }
           else
           { // left side of a cell that have a neightboor
-            tableOutput << string( nbColumnSpaces, cellSpaceChar ); // à faire si on a pas été mergé avec la gauche toute
+            tableOutput << string( nbColumnSpaces, cellSpaceChar );
           }
 
           // cell content / fill
