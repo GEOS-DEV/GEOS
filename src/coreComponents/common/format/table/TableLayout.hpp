@@ -123,7 +123,7 @@ public:
     /// The header cell layout (view on m_headerStr).
     CellLayout m_headerLayout;
     /// A vector containing all sub-columns in the column.
-    std::vector< Column > m_subColumns; // TODO le s
+    std::vector< Column > m_subColumns;
     /// struct containing m_alignment for the column (header and values)
     ColumnAlignement m_alignment;
 
@@ -567,7 +567,7 @@ protected:
   // Indicate if we have a line break a the beginning of the table
   bool m_lineBreakAtBegin = true;
 
-  /// Table tatile text
+  /// Table title text
   string m_tableTitleStr;
 
   /// Table title cell layout settings
