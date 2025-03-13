@@ -515,15 +515,6 @@ computeLogFugacityCoefficients( integer const numComps,
                                 arraySlice1d< real64 const > const & logFugacityCoefficients,
                                 arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
 {
-  GEOS_UNUSED_VAR( numComps );
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( componentProperties );
-  GEOS_UNUSED_VAR( salinity );
-  GEOS_UNUSED_VAR( logFugacityCoefficients );
-  GEOS_UNUSED_VAR( logFugacityCoefficientDerivs );
-
   integer constexpr numMaxComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   integer constexpr numMaxDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
   integer const numDofs = 2 + numComps;
