@@ -77,6 +77,11 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to indicate that phase compositions should be output" );
 
+  registerWrapper( viewKeyStruct::precisionString(), &m_precision ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_precision ).
+    setDescription( "The precision to use to data out to files" );
+
   //todo refactor in mother class
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -107,6 +112,16 @@ void PVTDriver::postInputInitialization()
   GEOS_ERROR_IF( m_outputPhaseComposition != 0 && m_outputPhaseComposition != 1,
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
+
+  GEOS_WARNING_IF( m_precision < minPrecision,
+                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                             minPrecision, maxPrecision, minPrecision ));
+
+  GEOS_WARNING_IF( maxPrecision < m_precision,
+                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                             minPrecision, maxPrecision, maxPrecision ) );
 
   // get number of phases and components
 
@@ -284,11 +299,13 @@ void PVTDriver::outputResults()
     }
   }
 
+  integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
+  string format = GEOS_FMT( "%{}.{}e ", precision+7, precision );
   for( integer n=0; n<m_table.size( 0 ); ++n )
   {
     for( integer col=0; col<m_table.size( 1 ); ++col )
     {
-      fprintf( fp, "%.4e ", m_table( n, col ) );
+      fprintf( fp, format.c_str(), m_table( n, col ) );
     }
     fprintf( fp, "\n" );
   }
