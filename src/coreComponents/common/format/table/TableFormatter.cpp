@@ -45,9 +45,9 @@ string TableCSVFormatter::headerToString() const
   string result;
 
   size_t total_size = 0;
-  for( const auto & column : m_tableLayout.getColumns())
+  for( auto const & column : m_tableLayout.getColumns())
   {
-    for( const auto & str : column.m_headerLayout.m_lines )
+    for( auto const & str : column.m_headerLayout.m_lines )
     {
       total_size += str.size();
     }
@@ -78,9 +78,9 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
   RowsCellInput const rowsValues( tableData.getTableDataRows() );
   string result;
   size_t total_size = 0;
-  for( const auto & row : rowsValues )
+  for( auto const & row : rowsValues )
   {
-    for( const auto & item : row )
+    for( auto const & item : row )
     {
       total_size += item.value.size();
     }
@@ -89,10 +89,10 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
 
   result.reserve( total_size );
 
-  for( const auto & row : rowsValues )
+  for( auto const & row : rowsValues )
   {
     std::vector< string > rowConverted;
-    for( const auto & item : row )
+    for( auto const & item : row )
     {
       std::istringstream strStream( item.value );
       string line;
