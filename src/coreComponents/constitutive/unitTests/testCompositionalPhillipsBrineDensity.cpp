@@ -219,7 +219,7 @@ private:
     int constexpr n = 20;
     real64 constexpr minPressure = 0.995e5;
     real64 constexpr maxPressure = 1000.005e5;
-    real64 constexpr r = pow( maxPressure/minPressure, 1.0 / n );
+    real64 const r = pow( maxPressure/minPressure, 1.0 / n );
     pressureCoordinates.resize( n+1 );
     pressureCoordinates[0] = minPressure;
     for( integer i = 1; i <= n; i++ )
