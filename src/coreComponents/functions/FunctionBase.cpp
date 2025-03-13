@@ -87,7 +87,9 @@ void FunctionBase::setOutputDirectory( string const & dir )
   {
     makeDirsForPath( dir );
   }
-  MpiWrapper::barrier( MPI_COMM_GEOS );
+
+  // barrier commented as the child classes does not make any output on other ranks than rank 0
+  // MpiWrapper::barrier( MPI_COMM_GEOS );
 }
 
 
