@@ -90,6 +90,8 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
+     fluid/multifluid/compositional/functions/SoreideWhitsonEOSModel.hpp
+     fluid/multifluid/compositional/functions/SoreideWhitsonEOSModelImpl.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
      fluid/multifluid/compositional/models/ComponentProperties.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
