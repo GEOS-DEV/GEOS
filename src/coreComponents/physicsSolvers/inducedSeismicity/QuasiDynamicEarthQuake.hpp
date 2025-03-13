@@ -64,6 +64,10 @@ public:
 
 private:
 
+  void applyBackGroundStress( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition & domain ) const;
+
   string m_stressSolverName;
 
   PhysicsSolverBase * m_stressSolver;

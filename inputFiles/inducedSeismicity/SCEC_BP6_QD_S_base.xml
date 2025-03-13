@@ -132,7 +132,7 @@
      defaultBulkModulus="50.0e9"
      defaultShearModulus="24.03e9"/> <!-- Note: Adjusted to translate antiplane shear to plane strain  -->
 
-    <RateAndStateFriction
+    <RateAndStateFrictionSlipLaw
       name="frictionLaw"
       defaultA="0.007"
       defaultB="0.005"

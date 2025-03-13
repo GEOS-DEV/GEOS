@@ -76,7 +76,10 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
   // 2. Solve the momentum balance
   real64 const dtAccepted = m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
 
-  // 3. Add background stress and possible forcing.
+  // 3. Apply background stress value (if any was prescribed)
+  applyBackGroundStress( time_n, dt, domain );
+
+  // 4. Add background stress and possible forcing.
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
                                                                      string_array const & regionNames )
@@ -108,13 +111,45 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
 }
 
 template< typename RSSOLVER_TYPE >
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::applyBackGroundStress( real64 const time_n,
+                                                                     real64 const dt,
+                                                                     DomainPartition & domain ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                     MeshLevel & mesh,
+                                                                     string_array const & )
+  {
+    string_array keys = { rateAndState::backgroundNormalStress::key(), rateAndState::backgroundShearStress::key()};
+    for( auto key : keys )
+    {
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               key,
+                                               [&] ( FieldSpecificationBase const & fs,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     ElementSubRegionBase & subRegion,
+                                                     string const & )
+      {
+        fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                               time_n+dt,
+                                                                               subRegion,
+                                                                               key );
+      } );
+    }
+  } );
+}
+
+template< typename RSSOLVER_TYPE >
 void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   m_stressSolver->resetStateToBeginningOfStep( domain );
 }
 
 template< typename RSSOLVER_TYPE >
-void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain, 
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain,
                                                                  real64 const dt ) const
 {
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

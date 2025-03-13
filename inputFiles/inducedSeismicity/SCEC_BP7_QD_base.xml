@@ -16,9 +16,9 @@
       xCoords="{ -500, 500 }"
       yCoords="{ -500, 500 }"
       zCoords="{ -500, 500 }"
-      nx="{ 100 }"
-      ny="{ 2 }"
-      nz="{ 100 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -42,7 +42,7 @@
      defaultBulkModulus="50.0e9"
      defaultShearModulus="32.04e9"/>
 
-    <RateAndStateFriction
+    <RateAndStateFrictionSlipLaw
       name="frictionLaw"
       defaultA="0.007"
       defaultB="0.005"
@@ -54,20 +54,89 @@
   <Geometry>    
     <Box
       name="faultPlane"
-      xMin="{ -400.01, -0.01, -400.01 }"
-      xMax="{  400.01,  0.01, 400.01 }"/>
+      xMin="{ -400.01, -400.01, -0.01 }"
+      xMax="{  400.01,  400.01, 0.01 }"/>
 
     <Cylinder
       name="slipWeakeningRegion"
-      firstFaceCenter="{ 0.0, -500.01, 0.0 }"
-      secondFaceCenter="{ 0.0, 500.01, 0.0 }"
+      firstFaceCenter="{  0.0, 0.0, -500.01 }"
+      secondFaceCenter="{ 0.0, 0.0,  500.01 }"
       outerRadius="200"/>
 
     <Cylinder
       name="nucleationRegion"
-      firstFaceCenter="{ 0.0, -500.01, 0.0 }"
-      secondFaceCenter="{ 0.0, 500.01, 0.0 }"
-      outerRadius="150"/>    
+      firstFaceCenter="{ 0.0, 0.0, -500.01 }"
+      secondFaceCenter="{ 0.0, 0.0, 500.01 }"
+      outerRadius="150"/>
+    
+
+  <!-- Stations -->
+    <Cylinder
+      name="receiver_1"
+      firstFaceCenter="{ 0.0, 0.0, -500.01 }"
+      secondFaceCenter="{ 0.0, 0.0, 500.01 }"
+      outerRadius="1"/> 
+    <Cylinder
+      name="receiver_2"
+      firstFaceCenter="{ -100.0, 0.0, -500.01 }"
+      secondFaceCenter="{ -100.0, 0.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_3"
+      firstFaceCenter="{ 0.0, 100.0, -500.01 }"
+      secondFaceCenter="{ 0.0, 100.0, 500.01 }"
+      outerRadius="1"/> 
+    <Cylinder
+      name="receiver_4"
+     firstFaceCenter="{ 100.0, 0.0, -500.01 }"
+      secondFaceCenter="{ 100.0, 0.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_5"
+      firstFaceCenter="{ 0.0, -100.0, -500.01 }"
+      secondFaceCenter="{ 0.0, -100.0, 500.01 }"
+      outerRadius="1"/> 
+    <Cylinder
+      name="receiver_6"
+      firstFaceCenter="{ -100.0, -100.0, -500.01 }"
+      secondFaceCenter="{ -100.0, -100.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_7"
+      firstFaceCenter="{ -100.0, 100.0, -500.01 }"
+      secondFaceCenter="{ -100.0, 100.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_8"
+      firstFaceCenter="{ 100.0, -100.0, -500.01 }"
+      secondFaceCenter="{ 100.0, -100.0, 500.01 }"
+      outerRadius="1"/> 
+    <Cylinder
+      name="receiver_9"
+      firstFaceCenter="{ 100.0, 100.0, -500.01 }"
+      secondFaceCenter="{ 100.0, 100.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_10"
+      firstFaceCenter="{ -300.0, 0.0, -500.01 }"
+      secondFaceCenter="{ -300.0, 0.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_11"
+      firstFaceCenter="{ 0.0, 300.0, -500.01 }"
+      secondFaceCenter="{ 0.0, 300.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_12"
+      firstFaceCenter="{ 300.0, 0.0, -500.01 }"
+      secondFaceCenter="{ 300.0, 0.0, 500.01 }"
+      outerRadius="1"/>
+    <Cylinder
+      name="receiver_13"
+      firstFaceCenter="{ 0.0, -300.0, -500.01 }"
+      secondFaceCenter="{ 0.0, -300.0, 500.01 }"
+      outerRadius="1"/>      
+
   </Geometry>
 
   <ElementRegions>
@@ -125,6 +194,26 @@
 
   <!-- Shear stress -->
     <FieldSpecification
+      name="initial_backgroundShearStress_t1"
+      fieldName="backgroundShearStress"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="1.0"
+      setNames="{all}"
+      functionName="initial_background_shearStress_t1"
+      initialCondition="1"/>
+
+    <FieldSpecification
+      name="initial_backgroundShearStress_t2"
+      fieldName="backgroundShearStress"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="1.0"
+      setNames="{all}"
+      functionName="background_shearStress_t2"
+      initialCondition="1"/>        
+    
+    <FieldSpecification
       name="backgroundShearStress_t1"
       fieldName="backgroundShearStress"
       objectPath="ElementRegions/Fault/FractureSubRegion"
@@ -134,20 +223,18 @@
       functionName="background_shearStress_t1"/>
 
     <FieldSpecification
-      name="backgroundShearStress_t2"
-      fieldName="backgroundShearStress"
+      name="backGroundNormalStress"
+      fieldName="backgroundNormalStress"
       objectPath="ElementRegions/Fault/FractureSubRegion"
-      component="1"
-      scale="1.0"
-      setNames="{all}"
-      functionName="background_shearStress_t2"/>        
+      scale="25.0e6"
+      setNames="{all}"/>  
 
 <!-- Initial conditions -->
     <FieldSpecification
       name="initialStateVariable"
       objectPath="ElementRegions/Fault"
       fieldName="stateVariable"
-      scale="0.68070857"
+      scale="0.041446531673892825"
       setNames="{ all }"
       initialCondition="1"/>  
       
@@ -172,16 +259,25 @@
 
   <Functions>
    <TableFunction
+      name="initial_background_shearStress_t1"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
+      voxelFile="./tables/backgroungShearTraction_x.geos"
+      interpolation="linear"/>
+
+   <TableFunction
       name="background_shearStress_t1"
-      inputVarNames="{ elementCenter, time }"
-      coordinateFiles="{ x.geos, y.geos, z.geox, t.geos }"
-      voxelFile="./tables/backgroungShearTraction_y.geos"/>
+      inputVarNames="{ elementCenter  }"
+      coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos, tables/t.geos }"
+      voxelFile="./tables/backgroungShearTractionWithForcing_x.geos"
+      interpolation="linear"/>
 
     <TableFunction
       name="background_shearStress_t2"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ x.geos, y.geos, z.geox }"
-      voxelFile="./tables/backgroungShearTraction_z.geos"/>  
+      coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
+      voxelFile="./tables/backgroungShearTraction_y.geos"
+      interpolation="linear"/>  
   </Functions>
   
   <Outputs>

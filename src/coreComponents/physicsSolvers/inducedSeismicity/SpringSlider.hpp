@@ -19,6 +19,8 @@
 #define GEOS_PHYSICSSOLVERS_INDUCEDSEISMICITY_SPRINGSLIDER_HPP
 
 #include "physicsSolvers/inducedSeismicity/ImplicitQDRateAndState.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "physicsSolvers/inducedSeismicity/rateAndStateFields.hpp"
 
 namespace geos
 {
@@ -56,6 +58,11 @@ public:
     return;
   };
 
+  template< typename FRICTION_TYPE >
+  void updateShearTraction( SurfaceElementSubRegion & subRegion,
+                            FRICTION_TYPE & frictionLaw,
+                            real64 const & dt ) const;
+
 private:
 
   class SpringSliderParameters
@@ -91,6 +98,33 @@ public:
     real64 springStiffness;
   };
 };
+
+template< typename RSSOLVER_TYPE >
+template< typename FRICTION_TYPE >
+void SpringSlider< RSSOLVER_TYPE >::updateShearTraction( SurfaceElementSubRegion & subRegion,
+                                                         FRICTION_TYPE & frictionLaw,
+                                                         real64 const & dt ) const
+{
+  arrayView2d< real64 const > const deltaSlip = subRegion.getField< fields::contact::deltaSlip >();
+  arrayView2d< real64 > const shearTraction   = subRegion.getField< fields::rateAndState::shearTraction >();
+  arrayView2d< real64 > const shearTraction_n = subRegion.getField< fields::rateAndState::shearTraction_n >();
+
+  arrayView1d< real64 > const normalTraction  = subRegion.getField< fields::rateAndState::normalTraction >();
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    SpringSliderParameters springSliderParameters = SpringSliderParameters( normalTraction[k],
+                                                                            frictionLaw.getACoefficient( k ),
+                                                                            frictionLaw.getBCoefficient( k ),
+                                                                            frictionLaw.getDcCoefficient( k ) );
+
+
+
+    shearTraction[k][0] = shearTraction_n[k][0] + springSliderParameters.tauRate * dt
+                          - springSliderParameters.springStiffness * deltaSlip[k][0];
+    shearTraction[k][1] = shearTraction_n[k][1] + springSliderParameters.tauRate * dt
+                          - springSliderParameters.springStiffness * deltaSlip[k][1];
+  } );
+}
 
 } /* namespace geos */
 

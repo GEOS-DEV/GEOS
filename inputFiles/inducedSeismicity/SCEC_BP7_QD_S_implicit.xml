@@ -12,7 +12,7 @@
       name="QDSolver"
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
-      initialDt="1000"
+      initialDt="0.1"
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver"
@@ -57,7 +57,7 @@
   </Solvers>
 
   <Events
-    maxTime="4.5e4"
+    maxTime="3.156e+7"
     maxCycle="1">
     <SoloEvent 
       name="generateFault"

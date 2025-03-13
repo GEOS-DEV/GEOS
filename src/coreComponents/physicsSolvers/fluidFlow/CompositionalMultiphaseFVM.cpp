@@ -199,6 +199,14 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
                                                 : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
   checkDiscretizationName();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  GEOS_ERROR_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
+                 GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
+                           getName(), EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )));
 }
 
 void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
@@ -1546,10 +1554,12 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
   } );
 }
 
-real64 CompositionalMultiphaseFVM::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
+real64 CompositionalMultiphaseFVM::setNextDt( real64 const & currentTime,
+                                              real64 const & currentDt,
+                                              DomainPartition & domain )
 {
   if( m_targetFlowCFL < 0 )
-    return CompositionalMultiphaseBase::setNextDt( currentDt, domain );
+    return CompositionalMultiphaseBase::setNextDt( currentTime, currentDt, domain );
   else
     return setNextDtBasedOnCFL( currentDt, domain );
 }

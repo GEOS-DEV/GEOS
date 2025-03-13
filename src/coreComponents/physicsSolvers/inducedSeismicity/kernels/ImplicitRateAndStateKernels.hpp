@@ -32,12 +32,13 @@ namespace rateAndStateKernels
  *
  * @details
  */
+template< typename FRICTION_LAW_TYPE >
 class ImplicitFixedStressRateAndStateKernel
 {
 public:
 
   ImplicitFixedStressRateAndStateKernel( SurfaceElementSubRegion & subRegion,
-                                         constitutive::RateAndStateFriction const & frictionLaw,
+                                         FRICTION_LAW_TYPE const & frictionLaw,
                                          real64 const shearImpedance ):
     m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
     m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
@@ -79,6 +80,13 @@ public:
                    - normalTraction * m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] );
     real64 const dFriction[2] = { -normalTraction * m_frictionLaw.dFrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
                                   -m_shearImpedance - normalTraction * m_frictionLaw.dFrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) };
+
+    std::cout << "elem: " << k << " shearTractionMagnitude: " << shearTractionMagnitude << std::endl;
+    std::cout << "elem: " << k << " m_shearImpedance: " << m_shearImpedance << std::endl;                  
+    std::cout << "elem: " << k << " m_slipRate[k]: " << m_slipRate[k] << std::endl;                  
+    std::cout << "elem: " << k << " normalTraction: " << normalTraction  << std::endl;                 
+    std::cout << "elem: " << k << " frictionCoefficient: " << m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] ) << std::endl;
+
 
     // Eq 2: slip law
     stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.stateEvolution( k, m_slipRate[k], m_stateVariable[k] );
@@ -214,7 +222,7 @@ private:
 
   real64 const m_shearImpedance;
 
-  constitutive::RateAndStateFriction::KernelWrapper m_frictionLaw;
+  typename FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
 };
 

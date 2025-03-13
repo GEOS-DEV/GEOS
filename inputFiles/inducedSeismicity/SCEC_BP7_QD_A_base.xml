@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Included>
+    <File
+      name="./SCEC_BP7_QD_base.xml"/>
+  </Included>
+
+  
+  <Constitutive>
+    <ElasticIsotropic
+     name="rock"
+     defaultDensity="2670"
+     defaultBulkModulus="50.0e9"
+     defaultShearModulus="32.04e9"/>
+
+    <RateAndStateFrictionAgingLaw
+      name="frictionLaw"
+      defaultA="0.007"
+      defaultB="0.005"
+      defaultDc="4.0e-3"  
+      defaultReferenceVelocity="1.0e-6"
+      defaultReferenceFrictionCoefficient="0.6"/>  
+  </Constitutive>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="BP7_QD_S"/>
+
+    <!-- <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/slipRateCollection, /Tasks/pressureCollection}"
+      filename="BP7_DQ_S" />   -->
+  </Outputs>
+
+  <!-- <Tasks>
+    <PackCollection
+      name="slipRateCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="slipRate"
+      setNames="{source}"/>
+
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="pressure"
+      setNames="{source}"/>    
+   </Tasks> -->
+</Problem>

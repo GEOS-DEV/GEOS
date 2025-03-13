@@ -20,6 +20,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/contact/RateAndStateFriction.hpp"
 #include "physicsSolvers/inducedSeismicity/rateAndStateFields.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 
 namespace geos
 {
@@ -77,15 +78,62 @@ static bool newtonSolve( SurfaceElementSubRegion & subRegion,
   }
   return allConverged;
 }
+template< typename FRICTION_TYPE >
+void enforceRateAndVelocityConsistency( FRICTION_TYPE const & frictionLawKernelWrapper,
+                                        SurfaceElementSubRegion & subRegion,
+                                        real64 const & shearImpedance )
+{
+  arrayView2d< real64 > const slipVelocity = subRegion.getField< fields::rateAndState::slipVelocity >();
+  arrayView1d< real64 > const slipRate  = subRegion.getField< fields::rateAndState::slipRate >();
+  arrayView1d< real64 const > const stateVariable  = subRegion.getField< fields::rateAndState::stateVariable >();
+
+  arrayView2d< real64 > const backgroundShearStress = subRegion.getField< fields::rateAndState::backgroundShearStress >();
+  arrayView1d< real64 > const backgroundNormalStress = subRegion.getField< fields::rateAndState::backgroundNormalStress >();
+
+  RAJA::ReduceMax< parallelDeviceReduce, int > negativeSlipRate( 0 );
+  RAJA::ReduceMax< parallelDeviceReduce, int > bothNonZero( 0 );
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    if( slipRate[k] < 0.0 )
+    {
+      negativeSlipRate.max( 1 );
+    }
+    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 && slipRate[k] > 0.0 )
+    {
+      bothNonZero.max( 1 );
+    }
+    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 )
+    {
+      slipRate[k] = LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] );
+    }
+    else if( slipRate[k] > 0.0 )
+    {
+      real64 const frictionCoefficient = frictionLawKernelWrapper.frictionCoefficient( k, slipRate[k], stateVariable[k] );
+      projectSlipRateBase( k,
+                           frictionCoefficient,
+                           shearImpedance,
+                           backgroundNormalStress,
+                           backgroundShearStress,
+                           slipRate,
+                           slipVelocity );
+    }
+  } );
+
+  GEOS_ERROR_IF( negativeSlipRate.get() > 0, "SlipRate cannot be negative." );
+  GEOS_ERROR_IF( bothNonZero.get() > 0, "Only one between slipRate and slipVelocity can be specified as i.c." );
+}
 
 /**
  * @brief Performs the kernel launch
  * @tparam POLICY the policy used in the RAJA kernels
  */
-template< typename KERNEL_TYPE, typename POLICY >
+template< template< typename FRICTION_TYPE > class KERNEL_TYPE,
+          typename POLICY,
+          typename FRICTION_TYPE >
 static void
 createAndLaunch( SurfaceElementSubRegion & subRegion,
-                 string const & frictionLawNameKey,
+                 FRICTION_TYPE & frictionLaw,
                  real64 const shearImpedance,
                  integer const maxNewtonIter,
                  real64 const newtonTol,
@@ -96,15 +144,13 @@ createAndLaunch( SurfaceElementSubRegion & subRegion,
 
   GEOS_UNUSED_VAR( time_n );
 
-  string const & frictionaLawName = subRegion.getReference< string >( frictionLawNameKey );
-  constitutive::RateAndStateFriction const & frictionLaw = subRegion.getConstitutiveModel< constitutive::RateAndStateFriction >( frictionaLawName );
   KERNEL_TYPE kernel( subRegion, frictionLaw, shearImpedance );
 
   real64 dtRemaining = totalDt;
   real64 dt = totalDt;
   for( integer subStep = 0; subStep < 5 && dtRemaining > 0.0; ++subStep )
   {
-    real64 dtAccepted = KERNEL_TYPE::template solveRateAndStateEquation< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
+    real64 dtAccepted = KERNEL_TYPE< FRICTION_TYPE >::template solveRateAndStateEquation< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
     dtRemaining -= dtAccepted;
 
     if( dtRemaining > 0.0 )

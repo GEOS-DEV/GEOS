@@ -12,11 +12,10 @@
       name="QDSolver"
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
-      initialDt="1000"
+      initialDt="1e-3"
       logLevel="1"
       discretization="FE1"
-      stressSolverName="stressSolver"
-      targetSlipIncrement="1.0e-6">
+      stressSolverName="stressSolver">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
