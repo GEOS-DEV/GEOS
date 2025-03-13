@@ -29,6 +29,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -204,6 +205,7 @@ struct PressureRelationKernel
           integer const targetPhaseIndex,
           WellControls const & wellControls,
           real64 const & timeAtEndOfStep,
+          arrayView1d< integer const > const elemStatus, \
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -890,6 +892,7 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
+    m_elemStatus( subRegion.getLocalWellElementStatus() ),
     m_volume( subRegion.getElementVolume() ),
     m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseVolFrac_n( subRegion.getField< fields::flow::phaseVolumeFraction_n >() ),
@@ -938,14 +941,15 @@ public:
   };
 
   /**
-   * @brief Getter for the ghost rank of an element
+   * @brief Getter for the  element
    * @param[in] ei the element index
-   * @return the ghost rank of the element
+   * @return True if ghost element or element is closed
    */
   GEOS_HOST_DEVICE
-  integer elemGhostRank( localIndex const ei ) const
-  { return m_elemGhostRank( ei ); }
-
+  bool skipElement( localIndex const ei ) const
+  {
+    return ( m_elemGhostRank( ei ) >= 0 || m_elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED );
+  }
 
   /**
    * @brief Performs the setup phase for the kernel.
@@ -984,19 +988,15 @@ public:
     {
       stack.dofColIndices[numComp+1]  = m_dofNumber[ei] + WJ_COFFSET::dT;
     }
-    if( 1 )
-      for( integer jc = 0; jc < numEqn; ++jc )
+    for( integer jc = 0; jc < numEqn; ++jc )
+    {
+      stack.localResidual[jc] = 0.0;
+      for( integer ic = 0; ic < numDof; ++ic )
       {
-        stack.localResidual[jc] = 0.0;
-        for( integer ic = 0; ic < numDof; ++ic )
-        {
-          stack.localJacobian[jc][ic] = 0.0;
-        }
-
+        stack.localJacobian[jc][ic] = 0.0;
       }
-
+    }
   }
-
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the kernel
@@ -1159,7 +1159,6 @@ public:
     {
       stack.localJacobian[numComp][idof] *= stack.volume;
     }
-
   }
 
   /**
@@ -1235,7 +1234,7 @@ public:
     GEOS_MARK_FUNCTION;
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      if( kernelComponent.elemGhostRank( ei ) >= 0 )
+      if( kernelComponent.skipElement( ei ) )
       {
         return;
       }
@@ -1268,6 +1267,9 @@ protected:
 
   /// View on the ghost ranks
   arrayView1d< integer const > const m_elemGhostRank;
+
+  /// View on the well status
+  arrayView1d< integer const > const m_elemStatus;
 
   /// View on the element volumes
   arrayView1d< real64 const > const m_volume;
@@ -1412,6 +1414,7 @@ public:
     m_rankOffset( rankOffset ),
     m_wellElemDofNumber ( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_nextWellElemIndex ( subRegion.getReference< array1d< localIndex > >( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString()) ),
+    m_elemStatus( subRegion.getLocalWellElementStatus() ),
     m_connRate ( subRegion.getField< fields::well::mixtureConnectionRate >() ),
     m_wellElemCompFrac ( subRegion.getField< fields::well::globalCompFraction >() ),
     m_dWellElemCompFrac_dCompDens ( subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >() ),
@@ -1467,6 +1470,13 @@ public:
     stackArray2d< real64, maxNumElems * numEqn * maxStencilSize > localFluxJacobian_dQ;
   };
 
+
+  GEOS_HOST_DEVICE
+  bool skipElement( localIndex const ei ) const
+  {
+    return (  m_elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED );
+  }
+
   /**
    * @brief Performs the setup phase for the kernel.
    * @param[in] iconn the connection index
@@ -1482,6 +1492,11 @@ public:
     {
       stack.numConnectedElems = 1;
     }
+    else if( m_elemStatus[m_nextWellElemIndex[iconn]]==WellElementSubRegion::WellElemStatus::CLOSED )
+    {
+      stack.numConnectedElems = 1;
+    }
+
     stack.localFlux.resize( stack.numConnectedElems*numEqn );
     stack.localFluxJacobian.resize( stack.numConnectedElems * numEqn, stack.stencilSize * numDof );
     stack.localFluxJacobian_dQ.resize( stack.numConnectedElems * numEqn, 1 );
@@ -1707,12 +1722,12 @@ public:
      *  With this convention, currentConnRate < 0 at the last connection for a producer
      *                        currentConnRate > 0 at the last connection for a injector
      */
-
-    localIndex const iwelemNext = m_nextWellElemIndex[iwelem];
+    // If upwind element is shut avoid upstream calculations
+    localIndex const iwelemNext = m_elemStatus[m_nextWellElemIndex[iwelem]]==WellElementSubRegion::WellElemStatus::OPEN ?  m_nextWellElemIndex[iwelem] : -1;
     real64 const currentConnRate = m_connRate[iwelem];
     localIndex iwelemUp = -1;
 
-    if( iwelemNext < 0 && !m_isProducer )  // exit connection, injector
+    if( iwelemNext < 0 && !m_isProducer ) // exit connection, injector
     {
       // we still need to define iwelemUp for Jacobian assembly
       iwelemUp = iwelem;
@@ -1819,7 +1834,10 @@ public:
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
     {
       typename KERNEL_TYPE::StackVariables stack( 1 );
-
+      if( kernelComponent.skipElement( ie ))
+      {
+        return;
+      }
       kernelComponent.setup( ie, stack );
       kernelComponent.computeFlux( ie, stack );
       kernelComponent.complete( ie, stack );
@@ -1836,6 +1854,9 @@ protected:
   arrayView1d< globalIndex const > const m_wellElemDofNumber;
   /// Next element index, needed since iterating over element nodes, not edges
   arrayView1d< localIndex const > const m_nextWellElemIndex;
+
+  /// View on the well status
+  arrayView1d< integer const > const m_elemStatus;
 
   /// Connection rate
   arrayView1d< real64 const > const m_connRate;

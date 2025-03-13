@@ -1229,6 +1229,36 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
                                                        localMatrix,
                                                        localRhs );
         }
+        //wellControls.setWellOpen(false);
+        // get the degrees of freedom and ghosting info
+        arrayView1d< globalIndex const > const & wellElemDofNumber =
+          subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+        arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+        arrayView1d< integer const > const elemStatus =subRegion.getLocalWellElementStatus();
+        localIndex rank_offset = dofManager.rankOffset();
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+        {
+          if( wellElemGhostRank[ei] < 0 )
+          {
+            if( elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED )
+            {
+              globalIndex const dofIndex = wellElemDofNumber[ei];
+              localIndex const localRow = dofIndex - rank_offset;
+
+              real64 unity = 1.0;
+              for( integer i=0; i < m_numDofPerWellElement; i++ )
+              {
+                globalIndex const rindex =  localRow+i;
+                globalIndex const cindex =dofIndex + i;
+                localMatrix.template addToRow< serialAtomic >( rindex,
+                                                               &cindex,
+                                                               &unity,
+                                                               1 );
+                localRhs[rindex] = 0.0;
+              }
+            }
+          }
+        } );
       }
       else
       {
@@ -1260,7 +1290,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
         } );
       }
     } );
-  } );
+  }
+                                  );
 
 
 }
@@ -1944,6 +1975,9 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
         arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens =
           subRegion.getField< fields::well::dTotalMassDensity >();
 
+        // segment status
+        arrayView1d< integer const > const elemStatus =subRegion.getLocalWellElementStatus();
+
         bool controlHasSwitched = false;
         isothermalCompositionalMultiphaseBaseKernels::
           KernelLaunchSelectorCompTherm< compositionalMultiphaseWellKernels::PressureRelationKernel >
@@ -1955,7 +1989,8 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           subRegion.getTopWellElementIndex(),
           m_targetPhaseIndex,
           wellControls,
-          time_n + dt,                                                          // controls evaluated with BHP/rate of the end of step
+          time_n + dt,
+          elemStatus,                                                         // controls evaluated with BHP/rate of the end of step
           wellElemDofNumber,
           wellElemGravCoef,
           nextWellElemIndex,

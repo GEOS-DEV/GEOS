@@ -304,6 +304,7 @@ PressureRelationKernel::
           integer const targetPhaseIndex,
           WellControls const & wellControls,
           real64 const & timeAtEndOfStep,
+          arrayView1d< integer const > const elemStatus,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -355,6 +356,10 @@ PressureRelationKernel::
 
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
+      if( elemStatus[iwelem] ==  WellElementSubRegion::WellElemStatus::CLOSED )
+      {
+        return;
+      }
       WellControls::Control newControl = currentControl;
       ControlEquationHelper::switchControl( isProducer,
                                             inputControl,
@@ -452,6 +457,7 @@ PressureRelationKernel::
                               integer const targetPhaseIndex, \
                               WellControls const & wellControls, \
                               real64 const & timeAtEndOfStep, \
+                              arrayView1d< integer const > const elemStatus, \
                               arrayView1d< globalIndex const > const & wellElemDofNumber, \
                               arrayView1d< real64 const > const & wellElemGravCoef, \
                               arrayView1d< localIndex const > const & nextWellElemIndex, \

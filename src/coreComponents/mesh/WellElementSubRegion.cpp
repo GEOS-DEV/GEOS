@@ -412,6 +412,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
 
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
   m_wellElementStatus.resize( elemStatusGlobal.size());
+  GEOS_LOG_RANK( "tjb m_wellElementStatus "<<m_wellElementStatus.size());
 
   for( localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal )
   {
@@ -1001,25 +1002,29 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
   // Set segment status
   integer numElements = activePerfsPerElement.size();
   std::fill( m_wellElementStatus.begin(), m_wellElementStatus.end(), 0 );
-  for( integer i=1; i<numElements; i++ )
+  if( numElements > 0 )
   {
-    if( activePerfsPerElement[i] == 0 )
+    m_wellElementStatus[0] = activePerfsPerElement[0] > 0 ? WellElemStatus::OPEN : WellElemStatus::CLOSED;
+    for( integer i=1; i<numElements; i++ )
     {
-      if( m_wellElementStatus[i-1] == WellElemStatus::OPEN )
+      if( activePerfsPerElement[i] == 0 )
       {
-        // Open - upstream segment is open
+        if( m_wellElementStatus[i-1] == WellElemStatus::OPEN )
+        {
+          // Open - upstream segment is open
+          m_wellElementStatus[i] =  WellElemStatus::OPEN;
+        }
+        else
+        {
+          // Closed - not connected to open perforation and no upstream segment is open
+          m_wellElementStatus[i] =  WellElemStatus::CLOSED;
+        }
+      }
+      else //  activePerfsPerElement[i] == 1
+      {
+        // Open - connected to open perforation
         m_wellElementStatus[i] =  WellElemStatus::OPEN;
       }
-      else
-      {
-        // Closed - no open perforation and no upstream segment is open
-        m_wellElementStatus[i] =  WellElemStatus::CLOSED;
-      }
-    }
-    else //  activePerfsPerElement[i] == 1
-    {
-      // Open - contains open perforation
-      m_wellElementStatus[i] =  WellElemStatus::OPEN;
     }
   }
 

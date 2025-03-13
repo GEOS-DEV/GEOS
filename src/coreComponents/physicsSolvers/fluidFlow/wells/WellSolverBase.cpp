@@ -239,6 +239,8 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
         arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
         array1d< integer > & currentStatus = subRegion.getWellElementStatus();
+        // Local elements
+        array1d< integer > & localElemStatus = subRegion.getWellLocalElementStatus();
 
         integer numLocalElements = subRegion.getNumLocalElements();
         array1d< integer > segStatus( numLocalElements );
@@ -253,9 +255,13 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
             {
               segStatus[iwelem] +=1;
             }
+            GEOS_LOG_RANK( "tjb set segStatus "<< j << " " << iwelem <<" " << perfStatus[j] << " " << segStatus[iwelem] );
           }
         }
+        // Broadcast segment status so all cores have same well status
         subRegion.setElementStatus( segStatus );
+        for( integer g=0; g<currentStatus.size(); g++ )
+          GEOS_LOG_RANK( "tjb currentStatus "<< g << " " << currentStatus[g] );
         integer numOpenElements = 0;
         array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
         for( integer i=0; i<currentStatus.size(); i++ )
@@ -264,6 +270,17 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
         }
         GEOS_LOG_RANK( "tjb end segStatus Setup "<< numLocalElements << " " <<numOpenElements );
         wellControls.setWellStatus( numOpenElements>0 );
+
+        // Set local well element status array
+        for( integer i=0; i<subRegion.size(); i++ )
+        {
+          if( elemGhostRank[i] < 0 )
+          {
+            integer gi = globalElementIndex[i];
+            localElemStatus[i] = currentStatus[gi];
+            GEOS_LOG_RANK( "tjb set localElemStatus "<< gi << " " << i <<" " << localElemStatus[i] );
+          }
+        }
 #endif
       }
     } );
