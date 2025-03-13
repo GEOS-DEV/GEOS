@@ -300,7 +300,7 @@ void PVTDriver::outputResults()
   }
 
   integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
-  string format = GEOS_FMT( "%{}.{}e ", precision+7, precision );
+  string const format = GEOS_FMT( "%{}.{}e ", precision+7, precision );
   for( integer n=0; n<m_table.size( 0 ); ++n )
   {
     for( integer col=0; col<m_table.size( 1 ); ++col )
