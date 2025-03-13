@@ -142,9 +142,14 @@ getBinaryInteractionCiefficient( real64 const & pressure,
   }
 
   real64 const Tci = componentProperties.m_componentCriticalTemperature( i );
-  real64 const dTr_dt = 1.0 / Tci;
-  real64 const Tr = temperature * dTr_dt;
+  real64 const dTr_dT = 1.0 / Tci;
+  real64 const Tr = temperature * dTr_dT;
 
+  // References:
+  // - Soreide & Whitson (1992) https://doi.org/10.1016/0378-3812(92)85105-H
+  // - Yan et al. (2011) https://doi.org/10.1016/j.ijggc.2011.08.004
+  // - Chabab et al. (2019) https://doi.org/10.1016/j.ijggc.2019.102825
+  // - Chabab et al. (2024) https://doi.org/10.1016/j.ijhydene.2023.10.290
   if( isType( type_i, ComponentProperties::ComponentType::CarbonDioxide ))
   {
     // We have options here:
@@ -157,7 +162,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 const a1 = 1.0 + 0.17837 * power( salinity, 0.979 );
     real64 const a2 = LvArray::math::exp( -6.7222*Tr - salinity );
     kij = A0*a0 + A1*a1 + A2*a2;
-    dkij_dT = -6.7222*A2*a2 * dTr_dt;
+    dkij_dT = -6.7222*A2*a2 * dTr_dT;
   }
   else if( isType( type_i, ComponentProperties::ComponentType::HydrogenSulphide ))
   {
@@ -165,7 +170,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 constexpr A0 = -0.20441;
     real64 constexpr A1 = 0.23426;
     kij = A0 + A1*Tr;
-    dkij_dT = A1*dTr_dt;
+    dkij_dT = A1*dTr_dT;
   }
   else if( isType( type_i, ComponentProperties::ComponentType::Nitrogen ))
   {
@@ -176,7 +181,19 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 const a0 = 1.0 + 0.25587*csw;
     real64 const a1 = 1.0 + 0.08126*csw;
     kij = A0*a0 + A1*a1*Tr;
-    dkij_dT = A1*a1*dTr_dt;
+    dkij_dT = A1*a1*dTr_dT;
+  }
+  else if( isType( type_i, ComponentProperties::ComponentType::Hydrogen ))
+  {
+    // Equation (12) and Table 5. Chabab et al. (2024)
+    real64 constexpr D0 = -2.11917;
+    real64 constexpr D1 = 0.14888;
+    real64 constexpr D2 = -13.01835;
+    real64 constexpr D3 = -0.43946;
+    real64 constexpr a0 = -2.26322e-2;
+    real64 constexpr a1 = -4.4736e-3;
+    kij = D0*(1.0 + a0*salinity) + D1*Tr*(1.0 + a1*salinity) + D2*exp( D3*Tr );
+    dkij_dT = dTr_dT*( D1*(1.0 + a1*salinity) + D2*D3*exp( D3*Tr ) );
   }
   else
   {
@@ -193,7 +210,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 const a2 = 1.0 + 0.011478*salinity;
     kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
     real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
-    dkij_dT = dkij_dTr * dTr_dt;
+    dkij_dT = dkij_dTr * dTr_dT;
   }
 }
 
