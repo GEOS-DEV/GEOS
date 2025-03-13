@@ -12,7 +12,8 @@
       discretization="fluidTPFA"
       temperature="300"
       initialDt="10"
-      minScalingFactor="1e-10"
+      formulationType="OverallComposition"
+      minCompFrac="1e-10"
       useMass="1"
       targetRegions="{ region }">
       <NonlinearSolverParameters
