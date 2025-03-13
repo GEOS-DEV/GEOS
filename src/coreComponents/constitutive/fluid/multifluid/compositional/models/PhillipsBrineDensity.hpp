@@ -38,9 +38,6 @@ namespace constitutive
 namespace compositional
 {
 
-int constexpr USD1 = 0;
-int constexpr USD2 = 0;
-
 class PhillipsBrineDensityUpdate final : public FunctionBaseUpdate
 {
 public:
@@ -49,7 +46,7 @@ public:
                               real64 const brineMolarWeight,
                               EquationOfStateType const equationOfState );
 
-  //template< int USD1, int USD2 >
+  template< int USD1, int USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
@@ -151,74 +148,100 @@ private:
   real64 m_brineMolarWeight;
 };
 
-/**
-   template< int USD1, int USD2 >
-   GEOS_HOST_DEVICE
-   GEOS_FORCE_INLINE
-   void PhillipsBrineDensityUpdate::compute(
-   ComponentProperties::KernelWrapper const & componentProperties,
-   real64 const & pressure,
-   real64 const & temperature,
-   arraySlice1d< real64 const, USD1 > const & phaseComposition,
-   real64 & molarDensity,
-   arraySlice1d< real64, USD2 > const & dMolarDensity,
-   real64 & massDensity,
-   arraySlice1d< real64, USD2 > const & dMassDensity,
-   bool useMass ) const
-   {
-   //using Deriv = constitutive::multifluid::DerivativeOffset;
-   GEOS_UNUSED_VAR( molarDensity );
-   GEOS_UNUSED_VAR( dMolarDensity );
-   GEOS_UNUSED_VAR( massDensity );
-   GEOS_UNUSED_VAR( dMassDensity );
-   GEOS_UNUSED_VAR( useMass );
+template< int USD1, int USD2 >
+GEOS_HOST_DEVICE
+void PhillipsBrineDensityUpdate::compute(
+  ComponentProperties::KernelWrapper const & componentProperties,
+  real64 const & pressure,
+  real64 const & temperature,
+  arraySlice1d< real64 const, USD1 > const & phaseComposition,
+  real64 & molarDensity,
+  arraySlice1d< real64, USD2 > const & dMolarDensity,
+  real64 & massDensity,
+  arraySlice1d< real64, USD2 > const & dMassDensity,
+  bool useMass ) const
+{
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+  GEOS_UNUSED_VAR( useMass );
 
-   integer const numComps = componentProperties.m_componentMolarWeight.size();
-   integer const numDofs = 2 + numComps;
+  integer const numComps = componentProperties.m_componentMolarWeight.size();
+  integer const numDofs = 2 + numComps;
 
-   real64 const input[2] = { pressure, temperature };
-   real64 brineDensityDeriv[2]{};
-   real64 const brineMassDensity = m_volumeShiftTable.compute( input, brineDensityDeriv );
-   real64 const brineMolarVolume = m_brineMolarWeight / brineMassDensity;
+  // Calculate the volume shift as a function of (P,T)
+  real64 const input[2] = { pressure, temperature };
+  real64 brineVolumeShiftDeriv[2]{};
+  real64 const brineVolumeShift = m_volumeShiftTable.compute( input, brineVolumeShiftDeriv );
 
-   real64 compressibilityFactor = 0.0;
-   stackArray1d< real64, 2+MultiFluidConstants::MAX_NUM_COMPONENTS > tempDerivs( numDofs );
-   stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > waterComposition( numComps );
-   real64 const x_h2o = phaseComposition[m_waterIndex];
-   for (integer ic = 0; ic < numComps; ++ic)
-   {
-    waterComposition[ic] = 0.0;
-   }
-   waterComposition[m_waterIndex] = 1.0;
-
-   std::cout << "COMP " << phaseComposition << std::endl;
-
-   CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
+  // Calculate the compressibility factor of the mixture from the equation of state
+  // Use molar density space for temporary derivatives
+  real64 compressibilityFactor = 0.0;
+  arraySlice1d< real64, USD2 > const & dCompressibilityFactor = dMolarDensity;
+  CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
                                                             pressure,
                                                             temperature,
                                                             phaseComposition,
                                                             componentProperties,
                                                             m_equationOfState,
                                                             compressibilityFactor,
-                                                            tempDerivs.toSlice() );
+                                                            dCompressibilityFactor );
 
-   real64 mixtureMolarVolume = constants::gasConstant * temperature * compressibilityFactor / pressure;
+  // Convert to molar volume by scaling by (RT/P)
+  // Scaling factor to convert compressibility factor (Z) to volume.
+  real64 const idealGasVolume = constants::gasConstant * temperature  / pressure;
 
-   CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
-                                                            pressure,
-                                                            temperature,
-                                                            waterComposition.toSliceConst(),
-                                                            componentProperties,
-                                                            m_equationOfState,
-                                                            compressibilityFactor,
-                                                            tempDerivs.toSlice() );
+  real64 molarVolume = idealGasVolume * compressibilityFactor;
+  arraySlice1d< real64, USD2 > const & dMolarVolume = dMolarDensity;
+  dMolarVolume[Deriv::dP] = idealGasVolume * dCompressibilityFactor[Deriv::dP] - molarVolume / pressure;
+  dMolarVolume[Deriv::dT] = idealGasVolume * dCompressibilityFactor[Deriv::dT] + molarVolume / temperature;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    dMolarVolume[Deriv::dC + ic] = idealGasVolume * dCompressibilityFactor[Deriv::dC + ic];
+  }
 
-   real64 waterMolarVolume = constants::gasConstant * temperature * compressibilityFactor / pressure;
+  // Extract the water mole fraction
+  real64 const x_h2o = phaseComposition[m_waterIndex];
 
-   std::cout << "VOLUME " << brineMolarVolume << " " << waterMolarVolume  << " " << x_h2o*waterMolarVolume  << " " << mixtureMolarVolume <<
-      "\n";
-   }
- */
+  // Apply the volume shift
+  molarVolume += x_h2o * brineVolumeShift;
+  dMolarVolume[Deriv::dP] += x_h2o * brineVolumeShiftDeriv[0];
+  dMolarVolume[Deriv::dT] += x_h2o * brineVolumeShiftDeriv[1];
+  dMolarVolume[Deriv::dC + m_waterIndex] += brineVolumeShift;
+
+  // Invert molar volume to get the molar density
+  molarDensity = 1.0 / molarVolume;
+  real64 const sqrMolarDen = molarDensity * molarDensity;
+  for( integer idof = 0; idof < numDofs; ++idof )
+  {
+    dMolarDensity[idof] = -sqrMolarDen * dMolarVolume[idof];
+  }
+
+  // Calculate the mass density
+  auto const & componentMolarWeight = componentProperties.m_componentMolarWeight;
+  real64 phaseMolarWeight = 0.0;
+  arraySlice1d< real64, USD2 > const & dPhaseMolarWeight = dMassDensity;
+  phaseMolarWeight = m_brineMolarWeight * x_h2o;
+  dPhaseMolarWeight[Deriv::dP] = 0.0;
+  dPhaseMolarWeight[Deriv::dT] = 0.0;
+  dPhaseMolarWeight[Deriv::dC + m_waterIndex] = m_brineMolarWeight;
+
+  for( integer ic = 0; ic < m_waterIndex; ++ic )
+  {
+    phaseMolarWeight += componentMolarWeight[ic] * phaseComposition[ic];
+    dPhaseMolarWeight[Deriv::dC + ic] = componentMolarWeight[ic];
+  }
+  for( integer ic = m_waterIndex+1; ic < numComps; ++ic )
+  {
+    phaseMolarWeight += componentMolarWeight[ic] * phaseComposition[ic];
+    dPhaseMolarWeight[Deriv::dC + ic] = componentMolarWeight[ic];
+  }
+
+  // Multiply by the molar density
+  massDensity = phaseMolarWeight * molarDensity;
+  for( integer idof = 0; idof < numDofs; ++idof )
+  {
+    dMassDensity[idof] = phaseMolarWeight * dMolarDensity[idof] + dPhaseMolarWeight[idof] * molarDensity;
+  }
+}
 
 } // end namespace compositional
 
