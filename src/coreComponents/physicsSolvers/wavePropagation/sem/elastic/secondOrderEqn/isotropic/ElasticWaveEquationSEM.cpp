@@ -280,7 +280,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
 
       PreComputeSourcesAndReceivers::
         Compute3DSourceAndReceiverConstantsWithDAS
-      < EXEC_POLICY, FE_TYPE >
+      < EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         facesToNodes,
         nodeCoords,
@@ -467,8 +467,14 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     m_timeStep=dtOut;
   }
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
-  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  if( m_useDAS == WaveSolverUtils::DASType::none )
+  {
+    WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  }
+  else
+  {
+    WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  }
 }
 
 real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
