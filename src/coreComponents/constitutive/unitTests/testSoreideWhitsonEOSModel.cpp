@@ -515,7 +515,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( 
   }, absTol, relTol );
 
   // Composition derivatives
-  real64 constexpr dz = 1.0e-7;
+  real64 constexpr dz = 1.0e-6;
   for( integer jc = 0; jc < numComps; ++jc )
   {
     concatDerivatives( Deriv::dC + jc );
