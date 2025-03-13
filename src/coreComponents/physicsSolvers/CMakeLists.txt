@@ -26,7 +26,6 @@ Contains:
 set( physicsSolversBase_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
-     PhysicsSolverManager.hpp
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
      SolverStatistics.hpp
@@ -37,7 +36,6 @@ set( physicsSolversBase_headers
 set( physicsSolversBase_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
-     PhysicsSolverManager.cpp
      PhysicsSolverBase.cpp
      SolverStatistics.cpp )
 
