@@ -76,9 +76,9 @@ public:
   static constexpr integer numDof = NC + 2;
   static constexpr real64 absTol = 1.0e-4;
   static constexpr real64 relTol = 1.0e-5;
-  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
   using ParamType = TestData< NC >;
   using EOS = SoreideWhitsonEOSModel< EOS_TYPE >;
+  using Deriv = typename EOS::Deriv;
 public:
   SoreideWhitsonEOSModelTestFixture();
   ~SoreideWhitsonEOSModelTestFixture() = default;
@@ -101,8 +101,8 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::SoreideWhitsonEOSModelTestFix
 template< int NC >
 std::vector< TestData< NC > > generateTestData()
 {
-  auto const pressures = {1.83959e+05, 1.83959e+06, 1.83959e+08};
-  auto const temperatures = {2.97150e+02, 3.63000e+02};
+  auto const pressures = {1.0e+05, 1.83959e+06, 1.83959e+08};
+  auto const temperatures = {297.15, 363.0};
   auto const salinities = {0.0, 1.7};
   std::vector< TestData< NC > > testData;
   for( const auto & composition : FluidData< NC >::feeds )
