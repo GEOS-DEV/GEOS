@@ -110,6 +110,8 @@ private:
                                            real64 const & saltMolarWeight,
                                            real64 const & salinity );
 
+  static std::pair< TableFunction const *, TableFunction const * > createSaturationTables();
+
   static void calculateBrineDensity( arraySlice1d< real64 const > const & pressureCoords,
                                      arraySlice1d< real64 const > const & temperatureCoords,
                                      real64 const & salinity,

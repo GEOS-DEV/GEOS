@@ -163,6 +163,19 @@ real64 PhillipsBrineDensity::calculateBrineMolarWeight( real64 const & waterMola
   return 1.0 / (salinity + (1.0 - salinity * saltMolarWeight) / waterMolarWeight);
 }
 
+std::pair< TableFunction const *, TableFunction const * >
+PhillipsBrineDensity::createSaturationTables()
+{
+  string const functionName = "compositional_phillips_density";
+
+  // Pure water saturation property tables are provided with temperature in C
+  TableFunction const * waterSatDensityTable =
+    PVTProps::PureWaterProperties::makeSaturationDensityTable( functionName, FunctionManager::getInstance() );
+  TableFunction const * waterSatPressureTable =
+    PVTProps::PureWaterProperties::makeSaturationPressureTable( functionName, FunctionManager::getInstance() );
+  return {waterSatDensityTable, waterSatPressureTable};
+}
+
 void PhillipsBrineDensity::calculatePureWaterDensity( arraySlice1d< real64 const > const & pressureCoords,
                                                       arraySlice1d< real64 const > const & temperatureCoords,
                                                       real64 const & compressibility,
@@ -175,13 +188,7 @@ void PhillipsBrineDensity::calculatePureWaterDensity( arraySlice1d< real64 const
 
   using ExponentialCompute = detail::ExponentialCompute< real64, ExponentApproximationType::Full >;
 
-  string const functionName = "compositional_phillips_density";
-
-  // Pure water saturation property tables are provided with temperature in C
-  TableFunction const * waterSatVolumeShiftTable =
-    PVTProps::PureWaterProperties::makeSaturationDensityTable( functionName, FunctionManager::getInstance() );
-  TableFunction const * waterSatPressureTable =
-    PVTProps::PureWaterProperties::makeSaturationPressureTable( functionName, FunctionManager::getInstance() );
+  auto [waterSatDensityTable, waterSatPressureTable] = createSaturationTables();
 
   localIndex const nPressures = pressureCoords.size();
   localIndex const nTemperatures = temperatureCoords.size();
@@ -191,7 +198,7 @@ void PhillipsBrineDensity::calculatePureWaterDensity( arraySlice1d< real64 const
     real64 const temperature = units::convertKToC( temperatureCoords[j] );
 
     // Step 1: get the saturation density
-    real64 const waterSatDensity = waterSatVolumeShiftTable->evaluate( &temperature );
+    real64 const waterSatDensity = waterSatDensityTable->evaluate( &temperature );
     // Step 2: get the saturation pressure
     real64 const waterSatPressure = waterSatPressureTable->evaluate( &temperature );
 
@@ -229,25 +236,56 @@ void PhillipsBrineDensity::calculateEosWaterMolarVolume( arraySlice1d< real64 co
   localIndex const nTemperatures = temperatureCoords.size();
 
   auto const & componentPropertiesWrapper = componentProperties.createKernelWrapper();
-  for( localIndex i = 0; i < nPressures; ++i )
+
+  auto [waterSatDensityTable, waterSatPressureTable] = createSaturationTables();
+
+  for( localIndex j = 0; j < nTemperatures; ++j )
   {
-    real64 const pressure = pressureCoords[i];
-    for( localIndex j = 0; j < nTemperatures; ++j )
+    real64 const temperature = temperatureCoords[j];
+
+    // For each temperature, if the pressure is below the saturation pressure as calculated from the NIST
+    // table, we will not call the EOS because it might give us the gas density. Instead we will replace
+    // all values below the saturation pressure by the minimum value calculate at the specified temperature.
+    real64 const temp_in_c = units::convertKToC( temperature );
+
+    real64 const waterSatPressure = waterSatPressureTable->evaluate( &temp_in_c );
+
+    real64 minMolarVolume = LvArray::NumericLimits< real64 >::max;
+    for( localIndex i = 0; i < nPressures; ++i )
     {
-      real64 const temperature = temperatureCoords[j];
+      real64 const pressure = pressureCoords[i];
+      if( pressure < waterSatPressure )
+      {
+        molarVolume[j*nPressures+i] = -1.0;
+      }
+      else
+      {
+        // Step 3: get the pure water density
+        real64 compressibilityFactor = 0.0;
+        CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
+                                                                  pressure,
+                                                                  temperature,
+                                                                  waterComposition.toSliceConst(),
+                                                                  componentPropertiesWrapper,
+                                                                  equationOfState,
+                                                                  compressibilityFactor,
+                                                                  tempDerivs );
 
-      // Step 3: get the pure water density
-      real64 compressibilityFactor = 0.0;
-      CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
-                                                                pressure,
-                                                                temperature,
-                                                                waterComposition.toSliceConst(),
-                                                                componentPropertiesWrapper,
-                                                                equationOfState,
-                                                                compressibilityFactor,
-                                                                tempDerivs );
-
-      molarVolume[j*nPressures+i] = constants::gasConstant * temperature * compressibilityFactor / pressure;
+        molarVolume[j*nPressures+i] = constants::gasConstant * temperature * compressibilityFactor / pressure;
+        minMolarVolume = LvArray::math::min( minMolarVolume, molarVolume[j*nPressures+i] );
+      }
+    }
+    GEOS_THROW_IF_GT_MSG( minMolarVolume, 1.0/MultiFluidConstants::minForSpeciesPresence,
+                          GEOS_FMT( "Failed to calculate molar volume for undersaturated pressures below {} and {}.",
+                                    units::formatValue( waterSatPressure, units::Unit::Pressure ),
+                                    units::formatValue( temperature, units::Unit::Temperature )),
+                          InputError );
+    for( localIndex i = 0; i < nPressures; ++i )
+    {
+      if( molarVolume[j*nPressures+i] < 0.0 )
+      {
+        molarVolume[j*nPressures+i] = minMolarVolume;
+      }
     }
   }
 }
@@ -306,7 +344,7 @@ PhillipsBrineDensity::makeVolumeShiftTable( string const & name,
   {
     array1d< real64 > pureWaterDensities( nPressures*nTemperatures );
     real64 const compressibility = brineSalinity->m_waterCompressibility;
-    calculateBrineDensity( pressureCoordinates, temperatureCoordinates, compressibility, pureWaterDensities );
+    calculatePureWaterDensity( pressureCoordinates, temperatureCoordinates, compressibility, pureWaterDensities );
 
     real64 const weight = salinity / salinityCuttoff;
     for( localIndex k = 0; k < nPressures*nTemperatures; ++k )
