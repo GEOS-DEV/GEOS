@@ -57,7 +57,7 @@ public:
     GEOS_UNUSED_VAR( domain );
     return;
   };
-  
+
   template< typename FRICTION_TYPE >
   void updateShearTraction( SurfaceElementSubRegion & subRegion,
                             FRICTION_TYPE & frictionLaw,

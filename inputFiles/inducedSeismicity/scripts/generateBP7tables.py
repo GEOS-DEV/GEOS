@@ -52,7 +52,7 @@ class BP7:
 
     def G1(self, r):
         if ( r > self.Rn ):
-            return 0
+            return 0.
         else:
             return math.exp( r**2 / (r**2 - self.Rn**2) )
 
@@ -60,7 +60,12 @@ class BP7:
         if (t > self.T):
             return 1.0
         else:
-            return math.exp((t-self.T)**2 / (t*(t-2*self.T)))        
+            return math.exp((t-self.T)**2 / (t*(t-2*self.T)))
+
+    def initialState( self ):
+        theta = self.rsParameters.Drs / self.Vinit
+        Psi = self.rsParameters.f * self.rsParameters.b * math.log( self.rsParameters.Vstar * theta / self.rsParameters.Drs );
+        return Psi        
 
 # Function to save a numpy array to a .geos file
 def save_to_file(filename, data):
@@ -74,41 +79,42 @@ def writeBP7Tables( data_to_save, dir ):
     for filename, data in data_to_save.items():
         save_to_file(f'{dir}/{filename}.geos', data)
 
-def calcualteBP7Parameters( dir ):
+def calcualteBP7Parameters( dir, printTables ):
     bp7 = BP7()
-    ycoords = np.linspace(bp7.y[0], bp7.y[1], 100)
-    zcoords = np.linspace(bp7.z[0], bp7.z[1], 100)
+    if (printTables):
+        xcoords = np.linspace(bp7.x[0], bp7.x[1], 100).tolist()
+        ycoords = np.linspace(bp7.y[0], bp7.y[1], 100).tolist()
 
-    # Prepare lists to store data
-    data = { 'x': [-1000, 1000], 'y': [], 'z': [], 'backgroungShearTraction_y': [], 'backgroungShearTraction_z': [] }
-    for y, z in product(ycoords, zcoords):
-        data['y'].append(y)
-        data['z'].append(z)
-        r = np.sqrt(y**2 + z**2)
-        tau0 = bp7.reference_shearTraction( r )
-        data['backgroungShearTraction_y'].append( tau0[0] )
-        data['backgroungShearTraction_z'].append( tau0[1] )
+        # Prepare lists to store data
+        data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 'backgroungShearTraction_x': [], 'backgroungShearTraction_y': [] }
+        for x, y in product(xcoords, ycoords):
+            r = np.sqrt(x**2 + y**2)
+            tau0 = bp7.reference_shearTraction( r )
+            data['backgroungShearTraction_x'].append( tau0[0] )
+            data['backgroungShearTraction_y'].append( tau0[1] )
     
-    writeBP7Tables( data, dir )  
+        writeBP7Tables( data, dir )  
+        forcing_data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 't': np.linspace(0.1, 1.0, 10).tolist(), 'backgroungShearTractionWithForcing_x': [] }
+        
+        for t in np.linspace(0.1, 1.0, 10):
+            for x, y in product(xcoords, ycoords):
+                r = np.sqrt(x**2 + y**2)
+                tau0 = bp7.reference_shearTraction( r )
+                forcing_data['backgroungShearTractionWithForcing_x'].append( tau0[0] + bp7.nucleation_forcing( r, t ) )
 
-    forcing_data = { 'x': [-1000, 1000], 'forcing_y': [], 'forcing_z': [], 'forcing_t': [], 'forcing_value': [] }
-    for t in np.linspace(0.1, 1.0, 10):
-      for y, z in product(ycoords, zcoords):
-        forcing_data['forcing_y'].append(y)
-        forcing_data['forcing_z'].append(z)
-        forcing_data['forcing_t'].append(t)
-        r = np.sqrt(y**2 + z**2)
-        forcing_data['forcing_value'].append( bp7.nucleation_forcing( r, t ) )
+        writeBP7Tables( forcing_data, dir ) 
 
-    writeBP7Tables( forcing_data, dir )  
+    print( f'initial state variable = {bp7.initialState()}' )
+    print( f'shearImpedance = {bp7.rsParameters.shearImpedance() }' )
    
      
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('-pt', '--print-tables', type=bool, help='whether to print tables or not', default=False)
     parser.add_argument('-d', '--dir', type=str, help='output dir', default='.')
     args = parser.parse_args()
     normalized_dir = os.path.abspath( args.dir ) 
-    calcualteBP7Parameters( normalized_dir )
+    calcualteBP7Parameters( normalized_dir, args.print_tables )
 
 
     

@@ -3,7 +3,7 @@
 
   <Included>
     <File
-      name="./SCEC_BP7_QD_S_base.xml"/>
+      name="./SCEC_BP7_QD_A_base.xml"/>
   </Included>
   
   <Solvers
@@ -12,13 +12,13 @@
       name="QDSolver"
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
-      initialDt="0.1"
+      initialDt="1e-5"
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver"
       targetSlipIncrement="1.0e-6">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e200"
         logLevel="2"
         newtonMaxIter="20"
         maxNumConfigurationAttempts="1"
@@ -35,7 +35,7 @@
       discretization="FE1"
       targetRegions="{ Domain, Fault }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e200"
         logLevel="2"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
@@ -43,7 +43,8 @@
         lineSearchMaxCuts="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="direct"
+        solverType="gmres"
+        preconditionerType="mgr"
         directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangeContactBubbleStab>
@@ -57,7 +58,7 @@
   </Solvers>
 
   <Events
-    maxTime="3.156e+7"
+    maxTime="4.5e4"
     maxCycle="1">
     <SoloEvent 
       name="generateFault"
@@ -72,7 +73,7 @@
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="1e4"
-      target="/Solvers/stressSolver"/>
+      target="/Solvers/QDSolver"/>
 
     <!-- <PeriodicEvent
       name="resarts"
