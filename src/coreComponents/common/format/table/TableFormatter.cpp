@@ -523,17 +523,18 @@ void TableTextFormatter::formatCell( std::ostringstream & tableOutput,
 }
 
 void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
-                                      CellLayoutRows const & cellsLayout,
+                                      CellLayoutRows const & rows,
                                       std::ostringstream & tableOutput,
                                       CellType sectionType,
                                       string_view separatorLine ) const
 {
-  size_t const nbColumns = !cellsLayout.empty() ? cellsLayout[0].cells.size() : 0;
+  size_t const nbRows = rows.size();
+  size_t const nbColumns = !rows.empty() ? rows[0].cells.size() : 0;
   size_t const nbBorderSpaces = tableLayout.getBorderMargin();
   size_t const nbColumnSpaces = ( tableLayout.getColumnMargin() - 1 ) / 2;
 
-  size_t idxLine = 0;
-  for( CellLayoutRow const & row : cellsLayout )
+  size_t idxRow = 0;
+  for( CellLayoutRow const & row : rows )
   {
     for( size_t idxSubLine = 0; idxSubLine < row.sublinesCount; idxSubLine++ )
     {
@@ -545,8 +546,8 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
         bool const isRightBorderCell = idxColumn == nbColumns - 1;
         if( cell.m_cellType != CellType::MergeNext || isRightBorderCell )
         {
-          bool const isCellSeparator = cell.m_cellType == CellType::Separator;
-          char const cellSpaceChar = isCellSeparator ? m_horizontalLine : ' ';
+          bool const isSeparator = cell.m_cellType == CellType::Separator;
+          char const cellSpaceChar = isSeparator ? m_horizontalLine : ' ';
 
           if( isLeftBorderCell )
           { // left table border
@@ -563,9 +564,14 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
 
           if( !isRightBorderCell )
           { // right side of a cell that have a neightboor
-            bool const isNextCellSeparator = row.cells[idxColumn + 1].m_cellType == CellType::Separator;
+            bool const isNextSeparator = row.cells[idxColumn + 1].m_cellType == CellType::Separator;
+            bool const verticalMerge = idxRow > 0 && idxRow < nbRows - 1 &&
+                                       rows[idxRow - 1].cells[idxColumn].m_cellType != CellType::MergeNext &&
+                                       rows[idxRow + 1].cells[idxColumn].m_cellType != CellType::MergeNext;
+            bool const mergeSeparator = isSeparator && isNextSeparator && !verticalMerge;
+
             tableOutput << string( nbColumnSpaces, cellSpaceChar );
-            tableOutput << ( isCellSeparator && isNextCellSeparator ? m_horizontalLine : m_verticalLine );
+            tableOutput << ( mergeSeparator ? m_horizontalLine : m_verticalLine );
           }
           else
           { // right table border
@@ -579,9 +585,9 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
     {
       tableOutput << GEOS_FMT( "{}\n", separatorLine );
     }
-    idxLine++;
+    idxRow++;
   }
-  if( sectionType == CellType::Value && !cellsLayout.empty())
+  if( sectionType == CellType::Value && !rows.empty())
   {
     tableOutput << separatorLine;
   }
