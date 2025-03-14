@@ -503,7 +503,7 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
   if( !dataCellsLayout.empty())
   {
     outputLines( tableLayout, dataCellsLayout, tableOutput );
-    tableOutput << sepLine << '\n';
+    tableOutput << sepLine;
   }
   if( tableLayout.isLineBreakEnabled())
   {
