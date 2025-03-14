@@ -60,7 +60,7 @@ public:
     this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
       setApplyDefaultValue( 0 ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "Write statistics into a CSV file" );
+      setDescription( "When set to 1, write the statistics into a CSV file" );
   }
 
   /**

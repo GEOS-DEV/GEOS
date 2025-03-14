@@ -106,7 +106,7 @@ CO2BrineFluid( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Write PVT tables into a CSV file" ).
+    setDescription( "When set to 1, write PVT tables into a CSV file" ).
     setDefaultValue( 0 );
 
   this->registerWrapper( viewKeyStruct::checkPhasePresenceString(), &m_checkPhasePresence ).
@@ -339,7 +339,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
+    !isClone && getLogLevel() > 0, // writeInLog
   };
 
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",
@@ -375,7 +375,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           {
             TableFunction::OutputOptions const flashOutputOpts = {
               !isClone && m_writeCSV,// writeCSV
-              !isClone && (getLogLevel() > 0 && logger::internal::rank==0), // writeInLog
+              !isClone && getLogLevel() > 0, // writeInLog
             };
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                                  strs,
@@ -421,7 +421,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
     TableFunction::OutputOptions const flashOutputOpts = {
       !isClone && m_writeCSV,// writeCSV
-      !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+      !isClone && getLogLevel() > 0, // writeInLog
     };
 
     m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),

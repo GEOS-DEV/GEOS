@@ -51,9 +51,9 @@ public:
   /// Struct containing output options
   struct OutputOptions
   {
-    /// Output PVT in CSV file
+    /// Request table output in CSV file
     bool writeCSV;
-    /// Output PVT in log
+    /// Request table output in log
     bool writeInLog;
   };
 
@@ -230,6 +230,8 @@ private:
    */
   void reInitializeFunction();
 
+  void initializePostSubGroups() override;
+
   /**
    * @brief Method to evaluate a function on a target object
    * @param group a pointer to the object holding the function arguments
@@ -351,17 +353,35 @@ private:
     m_valueUnit = unit;
   }
 
-/**
- * @return The table unit
- */
+  /**
+   * @return The table unit
+   */
   units::Unit getValueUnit() const { return m_valueUnit; }
 
+  /**
+   * @brief TODO
+   * @return string TODO
+   */
+  string getTableDescription() const;
+
+  /**
+   * @brief TODO
+   * @param dimId TODO
+   * @return string TODO
+   */
+  string getCoordsDescription( integer dimId, bool shortUnitsToVariables ) const;
+
+  /**
+   * @brief TODO
+   * @return string TODO
+   */
+  string getValuesDescription() const;
 
   /**
    * @brief Print the table(s) in the log and/or CSV files when requested by the user.
-   * @param pvtOutputOpts Struct containing output options
+   * @param outputOpts Struct containing output options
    */
-  void outputPVTTableData( OutputOptions const pvtOutputOpts ) const;
+  void outputTableData( OutputOptions const outputOpts ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper
@@ -382,6 +402,8 @@ private:
     static constexpr char const * coordinateFilesString() { return "coordinateFiles"; }
     /// @return Key for name of file containing table values
     static constexpr char const * voxelFileString() { return "voxelFile"; }
+    /// @return Key for name of file containing table values
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
@@ -422,6 +444,8 @@ private:
   /// Kernel wrapper object used in evaluate() interface
   KernelWrapper m_kernelWrapper;
 
+  /// Output table in a CSV file
+  integer m_writeCSV;
 };
 /// @cond DO_NOT_DOCUMENT
 template< typename IN_ARRAY >

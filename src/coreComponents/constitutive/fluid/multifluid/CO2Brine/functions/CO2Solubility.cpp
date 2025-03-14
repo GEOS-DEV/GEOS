@@ -190,11 +190,9 @@ makeSolubilityTables( string const & functionName,
                                "These will be truncated to zero.\nCheck out report table with max {} values.",
                                badCount, maxBad ) );
 
-    string const pressureHeader = GEOS_FMT( "Pressure ({})", units::getSymbol( units::Unit::Pressure ));
-    string const temperatureHeader = GEOS_FMT( "Temperature ({})", units::getSymbol( units::Unit::TemperatureInC ));
-    TableLayout const badSolubilityLayout( "",
-                                           {pressureHeader, temperatureHeader,
-                                            "CO2 solubility (mol/kg)", "H2O solubility (mol/kg)"} );
+    string const pressure = GEOS_FMT( "Pressure ({})", units::getSymbol( units::Unit::Pressure ));
+    string const temperature = GEOS_FMT( "Temperature ({})", units::getSymbol( units::Unit::TemperatureInC ));
+    TableLayout const badSolubilityLayout( "", {pressure, temperature, "CO2 solubility (mol/kg)", "H2O solubility (mol/kg)"} );
     TableData badSolData;
 
     for( integer row = 0; row < LvArray::math::min( maxBad, badCount ); ++row )
@@ -265,8 +263,8 @@ CO2Solubility::CO2Solubility( string const & name,
 
   std::tie( m_CO2SolubilityTable, m_WaterVapourisationTable ) = makeSolubilityTables( m_modelName, inputParams, solubilityModel );
 
-  m_CO2SolubilityTable->outputPVTTableData( pvtOutputOpts );
-  m_WaterVapourisationTable->outputPVTTableData( pvtOutputOpts );
+  m_CO2SolubilityTable->outputTableData( pvtOutputOpts );
+  m_WaterVapourisationTable->outputTableData( pvtOutputOpts );
 
 }
 

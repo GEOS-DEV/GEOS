@@ -124,7 +124,7 @@ protected:
 //
 //  bool m_useStressFunctions;
 //
-//  TableFunction const * m_stressFunctions[6];
+//  TableFunction const * m_stressFunctions[6]; // if this line is re-enabled, ensure that those pointers are initialized
 
 };
 

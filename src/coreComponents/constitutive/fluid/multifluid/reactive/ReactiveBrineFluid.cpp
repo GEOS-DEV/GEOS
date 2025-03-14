@@ -74,7 +74,7 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Write PVT tables into a CSV file" );
+    setDescription( "When set to 1, write PVT tables into a CSV file" );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -203,7 +203,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+    !isClone && getLogLevel() >= 0, // writeInLog
   };
 
   // then, we are ready to instantiate the phase models
