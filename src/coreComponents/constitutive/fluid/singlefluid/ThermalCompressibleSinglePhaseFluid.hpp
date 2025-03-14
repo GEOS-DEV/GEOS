@@ -172,6 +172,21 @@ public:
              m_dEnthalpy_dTemp[k][q] );
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const GEOS_UNUSED_PARAM( temperature ),
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( composition ) ) const override
+  {
+    compute( pressure,
+             m_density[k][q],
+             m_dDens_dPres[k][q],
+             m_viscosity[k][q],
+             m_dVisc_dPres[k][q] );
+  }
+
 private:
 
   /// Derivative of density w.r.t. temperature

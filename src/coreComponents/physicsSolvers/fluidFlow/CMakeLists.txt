@@ -14,6 +14,8 @@ set( physicsSolvers_headers
      fluidFlow/SourceFluxStatistics.hpp
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseBaseFields.hpp
+     fluidFlow/SinglePhaseReactiveTransport.hpp
+     fluidFlow/SinglePhaseReactiveTransportFields.hpp
      fluidFlow/SinglePhaseStatistics.hpp
      fluidFlow/SinglePhaseFVM.hpp
      fluidFlow/SinglePhaseHybridFVM.hpp
@@ -45,6 +47,11 @@ set( physicsSolvers_headers
      fluidFlow/kernels/singlePhase/ThermalFluxComputeKernel.hpp
      fluidFlow/kernels/singlePhase/proppant/ProppantBaseKernels.hpp
      fluidFlow/kernels/singlePhase/proppant/ProppantFluxKernels.hpp
+     fluidFlow/kernels/singlePhase/reactive/AccumulationKernels.hpp
+     fluidFlow/kernels/singlePhase/reactive/FluidUpdateKernel.hpp
+     fluidFlow/kernels/singlePhase/reactive/FluxComputeKernel.hpp
+     fluidFlow/kernels/singlePhase/reactive/KernelLaunchSelectors.hpp
+     fluidFlow/kernels/singlePhase/reactive/ResidualNormKernel.hpp
      fluidFlow/kernels/compositional/AccumulationKernel.hpp
      fluidFlow/kernels/compositional/AquiferBCKernel.hpp
      fluidFlow/kernels/compositional/PPUPhaseFlux.hpp
@@ -113,6 +120,7 @@ set( physicsSolvers_sources
      fluidFlow/ReactiveCompositionalMultiphaseOBL.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseReactiveTransport.cpp
      fluidFlow/SinglePhaseStatistics.cpp
      fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp

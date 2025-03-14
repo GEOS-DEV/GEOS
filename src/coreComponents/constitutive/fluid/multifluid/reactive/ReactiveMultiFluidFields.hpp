@@ -33,6 +33,7 @@ namespace reactivefluid
 {
 
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
+using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 
 DECLARE_FIELD( primarySpeciesConcentration,
                "primarySpeciesConcentration",
@@ -42,13 +43,29 @@ DECLARE_FIELD( primarySpeciesConcentration,
                WRITE_AND_READ,
                "primarySpeciesConcentration" );
 
-DECLARE_FIELD( primarySpeciesTotalConcentration,
-               "primarySpeciesTotalConcentration",
+DECLARE_FIELD( primarySpeciesAggregateConcentration,
+               "primarySpeciesAggregateConcentration",
                array2dLayoutComp,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "primarySpeciesTotalConcentration" );
+               "primarySpeciesAggregateConcentration" );
+
+DECLARE_FIELD( primarySpeciesAggregateConcentration_n,
+               "primarySpeciesAggregateConcentration_n",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "primarySpeciesAggregateConcentration at the previous timestep" );
+
+DECLARE_FIELD( dPrimarySpeciesAggregateConcentration_dLogPrimaryConc,
+               "dPrimarySpeciesAggregateConcentration_dLogPrimaryConc",
+               array3dLayoutComp_dC,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Deivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration" );
 
 DECLARE_FIELD( secondarySpeciesConcentration,
                "secondarySpeciesConcentration",

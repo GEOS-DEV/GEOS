@@ -127,6 +127,8 @@ set( constitutive_headers
      fluid/singlefluid/SingleFluidSelector.hpp
      fluid/singlefluid/SlurryFluidSelector.hpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp
+     fluid/singlefluid/reactive/ReactiveCompressibleSinglePhaseFluid.hpp
+     fluid/singlefluid/reactive/ReactiveSingleFluid.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
      permeability/ExponentialDecayPermeability.hpp
@@ -264,6 +266,8 @@ set( constitutive_sources
      fluid/singlefluid/SingleFluidBase.cpp
      fluid/singlefluid/SlurryFluidBase.cpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.cpp
+     fluid/singlefluid/reactive/ReactiveCompressibleSinglePhaseFluid.cpp
+     fluid/singlefluid/reactive/ReactiveSingleFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/ExponentialDecayPermeability.cpp

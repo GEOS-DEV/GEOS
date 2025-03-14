@@ -20,6 +20,7 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEFLUIDBASE_HPP
 #define GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEFLUIDBASE_HPP
 
+#include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 
 namespace geos
@@ -204,6 +205,21 @@ private:
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature ) const = 0;
+
+  /**
+   * @brief Update fluid state at a single point.
+   * @param[in] k           element index
+   * @param[in] q           gauss point index
+   * @param[in] pressure    the target pressure value
+   * @param[in] temperature the target temperature value
+   * @param[in] composition the target composition value
+   */
+  GEOS_HOST_DEVICE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;
 
 };
 //END_SPHINX_INCLUDE_02

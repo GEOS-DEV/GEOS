@@ -14,15 +14,16 @@
  */
 
 /**
- * @file CompressibleSinglePhaseFluid.hpp
+ * @file ReactiveCompressibleSinglePhaseFluid.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_REACTIVECOMPRESSIBLESINGLEPHASEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_REACTIVECOMPRESSIBLESINGLEPHASEFLUID_HPP_
 
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-
+#include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
 #include "constitutive/ExponentialRelation.hpp"
+
+#include <cmath>
 
 namespace geos
 {
@@ -36,38 +37,46 @@ namespace constitutive
  * @tparam VISC_EAT type of viscosity exponent approximation
  */
 template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT >
-class CompressibleSinglePhaseUpdate : public SingleFluidBaseUpdate
+class ReactiveCompressibleSinglePhaseUpdate : public ReactiveSingleFluidUpdate
 {
 public:
 
   using DensRelationType  = ExponentialRelation< real64, DENS_EAT >;
   using ViscRelationType  = ExponentialRelation< real64, VISC_EAT >;
 
-  CompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
-                                 ViscRelationType const & viscRelation,
-                                 arrayView2d< real64 > const & density,
-                                 arrayView2d< real64 > const & dDens_dPres,
-                                 arrayView2d< real64 > const & viscosity,
-                                 arrayView2d< real64 > const & dVisc_dPres )
-    : SingleFluidBaseUpdate( density,
-                             dDens_dPres,
-                             viscosity,
-                             dVisc_dPres ),
+  ReactiveCompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
+                                         ViscRelationType const & viscRelation,
+                                         arrayView2d< real64 > const & density,
+                                         arrayView2d< real64 > const & dDens_dPres,
+                                         arrayView2d< real64 > const & viscosity,
+                                         arrayView2d< real64 > const & dVisc_dPres,
+                                         integer const numPrimarySpecies,
+                                        //  chemicalReactions::EquilibriumReactions const & equilibriumReactions,
+                                        //  chemicalReactions::KineticReactions const & kineticReactions,
+                                         arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesConcentration,
+                                         arrayView2d< real64, compflow::USD_COMP > const & secondarySpeciesConcentration,
+                                         arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesAggregateConcentration,
+                                         arrayView3d< real64, compflow::USD_COMP_DC > const & dPrimarySpeciesAggregateConcentration_dLogPrimaryConc,
+                                         arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates )
+    : ReactiveSingleFluidUpdate( density, dDens_dPres, viscosity, dVisc_dPres, numPrimarySpecies, 
+                                //  equilibriumReactions, kineticReactions, 
+                                 primarySpeciesConcentration, secondarySpeciesConcentration, primarySpeciesAggregateConcentration, 
+                                 dPrimarySpeciesAggregateConcentration_dLogPrimaryConc, kineticReactionRates ),
     m_densRelation( densRelation ),
     m_viscRelation( viscRelation )
   {}
 
   /// Default copy constructor
-  CompressibleSinglePhaseUpdate( CompressibleSinglePhaseUpdate const & ) = default;
+  ReactiveCompressibleSinglePhaseUpdate( ReactiveCompressibleSinglePhaseUpdate const & ) = default;
 
   /// Default move constructor
-  CompressibleSinglePhaseUpdate( CompressibleSinglePhaseUpdate && ) = default;
+  ReactiveCompressibleSinglePhaseUpdate( ReactiveCompressibleSinglePhaseUpdate && ) = default;
 
   /// Deleted copy assignment operator
-  CompressibleSinglePhaseUpdate & operator=( CompressibleSinglePhaseUpdate const & ) = delete;
+  ReactiveCompressibleSinglePhaseUpdate & operator=( ReactiveCompressibleSinglePhaseUpdate const & ) = delete;
 
   /// Deleted move assignment operator
-  CompressibleSinglePhaseUpdate & operator=( CompressibleSinglePhaseUpdate && ) = delete;
+  ReactiveCompressibleSinglePhaseUpdate & operator=( ReactiveCompressibleSinglePhaseUpdate && ) = delete;
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -145,6 +154,52 @@ public:
              m_dVisc_dPres[k][q] );
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void updateChemistry( localIndex const k,
+                                  localIndex const GEOS_UNUSED_PARAM( q ),
+                                  real64 const pressure,
+                                  real64 const temperature,
+                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override
+  {
+    for( int i=0; i < m_numPrimarySpecies; i++ )
+    {
+      m_primarySpeciesAggregateConcentration[k][i] = composition[i];
+    }
+    
+    computeChemistry( pressure,
+                      temperature,
+                      m_primarySpeciesAggregateConcentration[k],
+                      m_primarySpeciesConcentration[k],
+                      m_secondarySpeciesConcentration[k],
+                      m_kineticReactionRates[k] );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void updateChemistryLogConc( localIndex const k,
+                                       localIndex const GEOS_UNUSED_PARAM( q ),
+                                       real64 const GEOS_UNUSED_PARAM( pressure ),
+                                       real64 const GEOS_UNUSED_PARAM( temperature ),
+                                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimaryConc ) const override
+  {
+    for( int i=0; i < m_numPrimarySpecies; i++ )
+    {
+      m_primarySpeciesConcentration[k][i] = std::exp( logPrimaryConc[i]) ;
+
+      m_primarySpeciesAggregateConcentration[k][i] = m_primarySpeciesConcentration[k][i];
+
+      m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc[k][i][i] = m_primarySpeciesConcentration[k][i];
+    }
+    
+    // computeChemistry( pressure,
+    //                   temperature,
+    //                   m_primarySpeciesAggregateConcentration[k],
+    //                   m_primarySpeciesConcentration[k],
+    //                   m_secondarySpeciesConcentration[k],
+    //                   m_kineticReactionRates[k] );
+  }
+
 private:
 
   /// Relationship between the fluid density and pressure
@@ -155,15 +210,15 @@ private:
 
 };
 
-class CompressibleSinglePhaseFluid : public SingleFluidBase
+class ReactiveCompressibleSinglePhase : public ReactiveSingleFluid
 {
 public:
 
-  CompressibleSinglePhaseFluid( string const & name, Group * const parent );
+  ReactiveCompressibleSinglePhase( string const & name, Group * const parent );
 
-  virtual ~CompressibleSinglePhaseFluid() override;
+  virtual ~ReactiveCompressibleSinglePhase() override;
 
-  static string catalogName() { return "CompressibleSinglePhaseFluid"; }
+  static string catalogName() { return "ReactiveCompressibleSinglePhase"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -171,7 +226,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
-  using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
+  using KernelWrapper = ReactiveCompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -232,4 +287,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOS_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_FLUID_REACTIVECOMPRESSIBLESINGLEPHASEFLUID_HPP_ */

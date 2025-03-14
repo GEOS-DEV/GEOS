@@ -39,7 +39,7 @@ ReactiveMultiFluid::
 
   registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
   registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
-  registerField( fields::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
+  registerField( fields::reactivefluid::primarySpeciesAggregateConcentration{}, &m_primarySpeciesTotalConcentration );
   registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
 }
 
