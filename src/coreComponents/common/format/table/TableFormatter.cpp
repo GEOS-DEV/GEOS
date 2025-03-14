@@ -509,7 +509,6 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
   {
     tableOutput << '\n';
   }
-  std::cout << "debug = \n" <<tableOutput.str()<<std::endl;
 }
 
 /**
