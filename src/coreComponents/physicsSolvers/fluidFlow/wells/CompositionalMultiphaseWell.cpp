@@ -1234,7 +1234,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
         arrayView1d< globalIndex const > const & wellElemDofNumber =
           subRegion.getReference< array1d< globalIndex > >( wellDofKey );
         arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
-        arrayView1d< integer const > const elemStatus =subRegion.getLocalWellElementStatus();
+        arrayView1d< integer const > const elemStatus =subRegion.getLocalWellElementStatus() ;
+        array1d< real64 > mixConnRate =  subRegion.getField< fields::well::mixtureConnectionRate >();
         localIndex rank_offset = dofManager.rankOffset();
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
         {
@@ -1242,6 +1243,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
           {
             if( elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED )
             {
+              mixConnRate[ei] = 0.0;
               globalIndex const dofIndex = wellElemDofNumber[ei];
               localIndex const localRow = dofIndex - rank_offset;
 

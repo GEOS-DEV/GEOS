@@ -1004,12 +1004,12 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
   std::fill( m_wellElementStatus.begin(), m_wellElementStatus.end(), 0 );
   if( numElements > 0 )
   {
-    m_wellElementStatus[0] = activePerfsPerElement[0] > 0 ? WellElemStatus::OPEN : WellElemStatus::CLOSED;
-    for( integer i=1; i<numElements; i++ )
+    m_wellElementStatus[numElements-1] = activePerfsPerElement[numElements-1] > 0 ? WellElemStatus::OPEN : WellElemStatus::CLOSED;
+    for( integer i=numElements-2; i>=0; i-- )
     {
       if( activePerfsPerElement[i] == 0 )
       {
-        if( m_wellElementStatus[i-1] == WellElemStatus::OPEN )
+        if( m_wellElementStatus[i+1] == WellElemStatus::OPEN )
         {
           // Open - upstream segment is open
           m_wellElementStatus[i] =  WellElemStatus::OPEN;
