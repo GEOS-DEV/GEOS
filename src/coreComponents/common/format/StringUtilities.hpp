@@ -243,6 +243,27 @@ string removeStringAndFollowingContent( string_view str,
 template< typename T >
 string addCommaSeparators( T const & num );
 
+
+/**
+ * @brief Divides a string by newline characters and returns a vector of strings containing each line.
+ * Also calculates the width of the widest line.
+ * @param maxLength The max length a line can have.
+ * @param value The input string to divide into lines
+ * @tparam STRING_T The type of the string (string or string_view)
+ * @return A vector of STRING_T objects, each containing a single line from the input
+ */
+template< typename STRING_T >
+std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value );
+
+/**
+ * @brief Divides a string by newline characters and returns a vector of strings containing each line.
+ * @param value The input string to divide into lines
+ * @tparam STRING_T The type of the string (string or string_view)
+ * @return A vector of STRING_T objects, each containing a single line from the input
+ */
+template< typename STRING_T >
+std::vector< STRING_T > divideLines( string_view value );
+
 /**
  * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
  * If a word has a greater size than maxLength, it will be cut in one or many parts.

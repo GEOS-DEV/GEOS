@@ -24,7 +24,8 @@ TEST( testLogPart, sectionWithTitle )
   LogPart logPart( "section name" );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
-             "\n##################################################\n"
+             "\n"
+             "##################################################\n"
              "##                 section name                 ##\n"
              "##################################################\n\n"
              );
@@ -33,7 +34,8 @@ TEST( testLogPart, sectionWithTitle )
 
   logPart.end( oss );
   EXPECT_EQ( oss.str(),
-             "\n##             End of section name              ##\n"
+             "\n"
+             "##             End of section name              ##\n"
              "##################################################\n\n"
              );
   oss.clear();
@@ -46,7 +48,8 @@ TEST( testLogPart, sectionWithTitleAndOneDescription )
   logPart.addDescription( "description name" );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
-             "\n##################################################\n"
+             "\n"
+             "##################################################\n"
              "##                 section name                 ##\n"
              "##################################################\n"
              "##  description name                            ##\n\n"
@@ -63,7 +66,8 @@ TEST( testLogPart, sectionWithSetWidth )
   logPart.setMinWidth( 100 );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
-             "\n####################################################################################################\n"
+             "\n"
+             "####################################################################################################\n"
              "##                                          section name                                          ##\n"
              "####################################################################################################\n"
              "##  description name 1                                                                            ##\n"
@@ -73,8 +77,10 @@ TEST( testLogPart, sectionWithSetWidth )
   oss.str( "" );
 
   logPart.end( oss );
+  std::cout <<oss.str() << std::endl;
   EXPECT_EQ( oss.str(),
-             "\n##                                      End of section name                                       ##\n"
+             "\n"
+             "##                                      End of section name                                       ##\n"
              "####################################################################################################\n\n"
              );
   oss.clear();
@@ -90,7 +96,8 @@ TEST( testLogPart, sectionMultipleDescriptions )
   logPart.setMinWidth( 70 );
   logPart.begin( oss );
   EXPECT_EQ ( oss.str(),
-              "\n######################################################################\n"
+              "\n"
+              "######################################################################\n"
               "##                          TIMESTEP START                          ##\n"
               "######################################################################\n"
               "##  - Time       : 00h08m20s out of 2d, 21h26m40s (0% completed)    ##\n"
@@ -102,8 +109,11 @@ TEST( testLogPart, sectionMultipleDescriptions )
   oss.str( "" );
 
   logPart.end( oss );
+  std::cout <<oss.str() << std::endl;
+
   EXPECT_EQ( oss.str(),
-             "\n##                      End of TIMESTEP START                       ##\n"
+             "\n"
+             "##                      End of TIMESTEP START                       ##\n"
              "######################################################################\n\n"
              );
   oss.clear();
@@ -122,7 +132,8 @@ TEST( testLogPart, sectionEndDescription )
   logPart.end( oss );
 
   EXPECT_EQ( oss.str(),
-             "\n##  test end description                                            ##\n"
+             "\n"
+             "##  test end description                                            ##\n"
              "######################################################################\n"
              "##                      End of TIMESTEP START                       ##\n"
              "######################################################################\n\n"
@@ -147,7 +158,8 @@ TEST( testLogPart, valuesMultiLines )
   logPart.setMaxWidth( 60 );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
-             "\n###########################################################\n"
+             "\n"
+             "###########################################################\n"
              "##                    TIMESTEP START                     ##\n"
              "###########################################################\n"
              "##  dummy name      : long dummy values, long dummy      ##\n"
@@ -167,8 +179,10 @@ TEST( testLogPart, valuesMultiLines )
   oss.str( "" );
 
   logPart.end( oss );
+  std::cout <<oss.str() << std::endl;
   EXPECT_EQ( oss.str(),
-             "\n##  dummy name : long dummy end values, long dummy end  ##\n"
+             "\n"
+             "##  dummy name : long dummy end values, long dummy end  ##\n"
              "##               values, long dummy end values, long    ##\n"
              "##               dummy end values                       ##\n"
              "##  dummy name : long dummy end values                  ##\n"
@@ -196,7 +210,8 @@ TEST( testLogPart, multiLineWithExtraSpace )
   logPart.begin( oss );
 
   EXPECT_EQ( oss.str(),
-             "\n###########################################################\n"
+             "\n"
+             "###########################################################\n"
              "##                       TIMESTEP                        ##\n"
              "###########################################################\n"
              "##  - Time       : 00h00m00s out of 2y, 269d, 12h21m36s  ##\n"

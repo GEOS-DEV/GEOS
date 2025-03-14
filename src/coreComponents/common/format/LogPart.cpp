@@ -26,53 +26,40 @@ namespace geos
 
 LogPart::LogPart( string_view logPartTitle, integer commRank )
 {
-  m_startDesc.m_title = logPartTitle;
-  m_endDesc.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
+  m_startDescription.m_title = logPartTitle;
+  m_endDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
   m_rank = commRank;
 }
 
-void LogPart::addDescription( string const & description )
+void LogPart::addDescription( string_view description )
 {
-  m_startDesc.m_names.push_back( splitStringByNewLine( description ) );
-  m_startDesc.m_values.push_back( std::vector< string >() );
+  m_startDescription.m_names.push_back( stringutilities::divideLines< string >(  description ) );
+  m_startDescription.m_values.push_back( std::vector< string >() );
 }
 
-void LogPart::addEndDescription( string const & description )
+void LogPart::addEndDescription( string_view description )
 {
-  m_endDesc.m_names.push_back( splitStringByNewLine( description ) );
-  m_endDesc.m_values.push_back( std::vector< string >() );
+  m_endDescription.m_names.push_back( stringutilities::divideLines< string >( description ) );
+  m_endDescription.m_values.push_back( std::vector< string >() );
 }
 
 
 void LogPart::setMinWidth( size_t const & minWidth )
 {
-  m_startDesc.m_logPartMinWidth = minWidth;
-  m_endDesc.m_logPartMinWidth = minWidth;
+  m_startDescription.m_minWidth = minWidth;
+  m_endDescription.m_minWidth = minWidth;
 }
 
 void LogPart::setMaxWidth( size_t const & maxWidth )
 {
-  m_startDesc.m_logPartMaxWidth = maxWidth;
-  m_endDesc.m_logPartMaxWidth = maxWidth;
+  m_startDescription.m_maxWidth = maxWidth;
+  m_endDescription.m_maxWidth = maxWidth;
 }
 
-std::vector< std::string > LogPart::splitStringByNewLine( std::string const & str )
+void LogPart::formatDescriptions( LogPart::Description & description,
+                                  FormattedDescription & formattedDescription )
 {
-  auto result = std::vector< std::string >{};
-  auto ss = std::stringstream{str};
-
-  for( std::string line; std::getline( ss, line, '\n' ); )
-    result.push_back( line );
-
-  return result;
-}
-
-void LogPart::formatDescriptions( LogPart::Description & description )
-{
-  size_t const logPartMaxWidth = description.m_logPartMaxWidth;
-  size_t const & logPartMinWidth = description.m_logPartMinWidth;
-  size_t const & logPartMaxNameWidth =  description.m_logPartMaxNameWidth;
-  std::vector< string > & formattedLines = description.m_formattedDescriptionLines;
+  std::vector< string > & formattedLines = formattedDescription.m_lines;
   size_t const borderSpaceWidth = m_nbBorderChar * 2 + m_borderMargin * 2;
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
@@ -82,7 +69,7 @@ void LogPart::formatDescriptions( LogPart::Description & description )
     // if no values process only the names
     if( values.empty())
     {
-      auto wrappedNames = wrapTextToMaxLength( names, logPartMaxWidth - borderSpaceWidth );
+      auto wrappedNames = wrapTextToMaxLength( names, description.m_maxWidth - borderSpaceWidth );
       formattedLines.insert( formattedLines.end(), wrappedNames.begin(), wrappedNames.end());
       continue;
     }
@@ -90,27 +77,28 @@ void LogPart::formatDescriptions( LogPart::Description & description )
     //format name
     for( auto & name: names )
     {
-      string const spaces = std::string( logPartMaxNameWidth- name.size(), ' ' );
+      string const spaces = std::string( formattedDescription.m_maxNameWidth- name.size(), ' ' );
       name = GEOS_FMT( "{}{}", name, spaces );
     }
 
     //format values
-    size_t const valueSpaceAvailable = logPartMaxWidth - logPartMaxNameWidth - borderSpaceWidth - m_delimiter.size();
+    size_t const valueSpaceAvailable = description.m_maxWidth - formattedDescription.m_maxNameWidth - borderSpaceWidth - m_delimiter.size();
     auto wrappedValues = wrapTextToMaxLength( values, valueSpaceAvailable );
 
-    size_t const maxValueWidth = (*max_element( wrappedValues.begin(), wrappedValues.end(),
-                                                []( string const & a, string const & b ) {
+    size_t maxValueWidth = (*std::max_element( wrappedValues.begin(), wrappedValues.end(),
+                                                     []( string const & a, string const & b ) {
       return a.length() < b.length();
     } )).size();
-    size_t const totalLineWidth = logPartMaxNameWidth + maxValueWidth + borderSpaceWidth + m_delimiter.size();
-    description.m_logPartWidth = std::max( description.m_logPartWidth, totalLineWidth );
+   // maxValueWidth = 0;
+    size_t const totalLineWidth = formattedDescription.m_maxNameWidth + maxValueWidth + borderSpaceWidth + m_delimiter.size();
+    formattedDescription.m_width = std::max( formattedDescription.m_width, totalLineWidth );
 
     //2.5 merge both names and values
     size_t const lineCount = std::max( names.size(), wrappedValues.size());
     formattedLines.push_back( GEOS_FMT( "{}{}{}", names[0], m_delimiter, wrappedValues[0] ));
-    if( formattedLines[0].size() < logPartMaxNameWidth )
+    if( formattedLines[0].size() < formattedDescription.m_maxNameWidth )
     {
-      string const spaces = std::string( logPartMaxNameWidth- formattedLines[0].size(), ' ' );
+      string const spaces = std::string( formattedDescription.m_maxNameWidth- formattedLines[0].size(), ' ' );
       formattedLines[0] = GEOS_FMT( "{}{}", formattedLines[0], spaces );
     }
     for( size_t idxLine = 1; idxLine < lineCount; ++idxLine )
@@ -125,50 +113,52 @@ void LogPart::formatDescriptions( LogPart::Description & description )
       }
       else if( idxLine < wrappedValues.size())
       {
-        size_t const spaceAvailable = logPartMaxNameWidth + wrappedValues[idxLine].size() + m_delimiter.size();
+        size_t const spaceAvailable = formattedDescription.m_maxNameWidth + wrappedValues[idxLine].size() + m_delimiter.size();
         formattedLines.push_back( GEOS_FMT( "{:>{}}", wrappedValues[idxLine], spaceAvailable ));
       }
 
-      if( formattedLines[idxLine].size() < logPartMaxNameWidth )
+      if( formattedLines[idxLine].size() < formattedDescription.m_maxNameWidth )
       {
-        string const spaces = std::string( logPartMaxNameWidth - formattedLines[idxLine].size(), ' ' );
+        string const spaces = std::string( formattedDescription.m_maxNameWidth - formattedLines[idxLine].size(), ' ' );
         formattedLines[idxLine] = GEOS_FMT( "{}{}", formattedLines[idxLine], spaces );
       }
-      description.m_logPartWidth = std::max( description.m_logPartWidth, formattedLines[idxLine].size() );
+      formattedDescription.m_width = std::max( formattedDescription.m_width, formattedLines[idxLine].size() );
     }
 
   }
-  description.m_logPartWidth = std::max( description.m_logPartWidth, logPartMinWidth );
+  formattedDescription.m_width = std::max( formattedDescription.m_width, description.m_minWidth );
 }
 
-string LogPart::buildDescriptionPart( LogPart::Description const & description )
+string LogPart::outputDescription( FormattedDescription & formattedDescription )
 {
   std::ostringstream oss;
   string const borderCharacters = string( m_nbBorderChar, m_borderCharacter );
 
-  for( auto const & formattedDescription : description.m_formattedDescriptionLines )
+  for( auto const & line : formattedDescription.m_lines )
   {
     oss << borderCharacters;
     oss << GEOS_FMT( "{:<{}}{:<{}}", " ", m_borderMargin,
-                     formattedDescription, description.m_logPartWidth - m_nbBorderChar * 2 - m_borderMargin );
+                     line, formattedDescription.m_width - m_nbBorderChar * 2 - m_borderMargin );
     oss << borderCharacters << '\n';
   }
   return oss.str();
 }
 
-string LogPart::buildTitlePart( LogPart::Description const & description )
+string LogPart::outputTitle( LogPart::Description & description,
+                             FormattedDescription & formattedDescription )
 {
-  size_t const titleRowLength = description.m_logPartWidth;
+  size_t const titleRowLength = formattedDescription.m_width;
   string const borderCharacters =  string( m_nbBorderChar, m_borderCharacter );
 
-  return GEOS_FMT( "{}{:^{}}{}\n",
+  return GEOS_FMT( "\n{}{:^{}}{}\n",
                    borderCharacters,
                    description.m_title,
                    titleRowLength  - 4,
                    borderCharacters );
 }
 
-void LogPart::computeInitialLogWidth( LogPart::Description & description )
+void LogPart::computeInitialLogWidth( LogPart::Description & description,
+                                      FormattedDescription & formattedDescription )
 {
 
   if( !description.m_names.empty() )
@@ -177,15 +167,15 @@ void LogPart::computeInitialLogWidth( LogPart::Description & description )
     for( size_t idxDescription = 0; idxDescription  < description.m_names.size(); idxDescription++ )
     {
       if( !description.m_values[idxDescription].empty())
-      {
+    {
         for( auto const & name : description.m_names[idxDescription] )
-        {
+    {
           maxStringSize = std::max( maxStringSize, name.size());
-        }
+    }
       }
     }
 
-    description.m_logPartMaxNameWidth= maxStringSize;
+    formattedDescription.m_maxNameWidth= maxStringSize;
   }
 }
 
@@ -194,20 +184,18 @@ void LogPart::begin( std::ostream & os )
   if( m_rank != -1 && MpiWrapper::commRank() != m_rank )
     return;
 
-  computeInitialLogWidth( m_startDesc );
+  computeInitialLogWidth( m_startDescription, m_formattedStartDescription );
 
-  if( !m_startDesc.m_names.empty())
+  if( !m_startDescription.m_names.empty())
   {
-    formatDescriptions( m_startDesc );
+    formatDescriptions( m_startDescription, m_formattedStartDescription );
   }
 
-  string const bottomPart = buildDescriptionPart( m_startDesc );
-  string const line = string( m_startDesc.m_logPartWidth, m_borderCharacter );
-  string const topPart =  GEOS_FMT( "{}\n{}{}\n",
-                                    line,
-                                    buildTitlePart( m_startDesc ),
-                                    line );
-  os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
+  string const line = string( m_formattedStartDescription.m_width, m_borderCharacter );
+  os << '\n' << line;
+  os << outputTitle( m_startDescription, m_formattedStartDescription );
+  os << line << '\n';
+  os << outputDescription( m_formattedStartDescription ) << '\n';
 }
 
 void LogPart::end( std::ostream & os )
@@ -215,19 +203,19 @@ void LogPart::end( std::ostream & os )
   if( m_rank != -1 && MpiWrapper::commRank() != m_rank )
     return;
 
-  computeInitialLogWidth( m_endDesc );
+  computeInitialLogWidth( m_endDescription, m_formattedEndDescription );
 
-  formatDescriptions( m_endDesc );
+  formatDescriptions( m_endDescription, m_formattedEndDescription );
 
-  string topPart = "";
-  string const line =  string( m_endDesc.m_logPartWidth, m_borderCharacter );
-  if( !m_endDesc.m_names.empty() )
+  string const line =  string( m_formattedEndDescription.m_width, m_borderCharacter );
+  if( !m_endDescription.m_names.empty() )
   {
-    topPart = GEOS_FMT( "{}{}\n", buildDescriptionPart( m_endDesc ), line );
+    os << '\n';
+    os << outputDescription( m_formattedEndDescription );
+    os << line;
   }
-
-  string const bottomPart = GEOS_FMT( "{}{}\n", buildTitlePart( m_endDesc ), line );
-  os << GEOS_FMT( "\n{}{}\n", topPart, bottomPart );
+  os << outputTitle( m_endDescription, m_formattedEndDescription );
+  os << line << "\n\n";
 }
 
 }

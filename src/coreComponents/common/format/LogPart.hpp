@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/format/Format.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
@@ -41,52 +42,44 @@ public:
   LogPart( string_view m_logPartTitle, int rank = -1 );
 
   /**
-   * @brief Add a description to the opening logPart by concatening a description name and descriptions values.
-   * @param name The description name
-   * @param args Descriptions values to be concatened.
-   * @note Descriptions values can be be any formatted types. Values will be aligned altogether.
+   * @brief Add a description to the opening LogPart
+   * @param name The first part of the description
+   * @param args The remaining part of the description,all remaining values will be concatened and aligned
+   * @note Descriptions values can be be any formatted types.
    */
   template< typename ... Args >
-  void addDescription( string const & name, Args const & ... args );
+  void addDescription( string_view name, Args const & ... args );
 
   /**
-   * @brief Add a description to the opening logPart
-   * @param description The string value of the description
+   * @brief Add a description to the opening logPart. No specific format will be apply the this description
+   * @param description The string value of the description.
    */
-  void addDescription( string const & description );
+  void addDescription( string_view description );
 
   /**
    * @brief Add a description to the closing logPart by concatening a description name and descriptions values.
-   * @param name The description name
-   * @param args Descriptions values to be concatened.
-   * @note Descriptions values can be be any formatted types. Values will be aligned altogether.
+   * @param name The first part of the description
+   * @param args The remaining part of the description, all remaining values will be concatened and aligned
+   * @note Descriptions values can be be any formatted types.
    */
   template< typename ... Args >
-  void addEndDescription( string const & name, Args const & ... args );
+  void addEndDescription( string_view name, Args const & ... args );
 
   /**
-   * @brief Add a description to the closing logPart
+   * @brief Add a description to the opening logPart. No specific format will be apply the this description
    * @param description The string value of the description
    */
-  void addEndDescription( string const & description );
+  void addEndDescription( string_view description );
 
   /**
-   * @brief Set the minimal width of a row
-   * @param minWidth The minimal width of the table
+   * @brief Set the minimal width of the LogPart
+   * @param minWidth The minimal width to apply
    */
   void setMinWidth( size_t const & minWidth );
 
   /**
-   * @brief
-   *
-   * @param str
-   * @return std::vector< std::string >
-   */
-  std::vector< std::string > splitStringByNewLine( std::string const & str );
-
-  /**
-   * @brief Set the maximal width of a row
-   * @param maxWidth The maximal width of the table
+   * @briefSet the maximal width of the LogPart
+   * @param maxWidth The maximal width to apply
    */
   void setMaxWidth( size_t const & maxWidth );
 
@@ -104,65 +97,92 @@ public:
 
 private:
 
+  /**
+   * @brief Structure containing all information needed in order to construct a LogPart.
+   * All these variables can be adjusted.
+   */
   struct Description
   {
-    /// Title footer string
+    /// Log part title
     string m_title;
-
-    /// Name of the description, it can be splited by \\n
+    /// Name of the description (first part of a description), it can be splited by \\n
     std::vector< std::vector< string > > m_names;
-    /// Values in the description, each value of a description is associated with one name
+    /// Values in the description, each value is associated with one name
     std::vector< std::vector< string > > m_values;
-    /// Vector containing the descriptions formatted by formatDescriptions()
-    std::vector< string > m_formattedDescriptionLines;
 
-    /// logPart length
-    size_t m_logPartWidth;
     /// logPart max length
-    size_t m_logPartMaxWidth;
+    size_t m_maxWidth;
     /// logPart min length
-    size_t m_logPartMinWidth;
-    /// max length name of a logPart
-    size_t m_logPartMaxNameWidth;
+    size_t m_minWidth;
   };
 
   /**
-   * @brief Add a description to a specific section
-   * @param name The description name
-   * @param args Descriptions values to be concatened.
+   * @brief Structure containing all the information needed to display a logPart.
+   */
+  struct FormattedDescription
+  {
+    /// Vector containing the descriptions formatted by formatDescriptions()
+    std::vector< string > m_lines;
+    /// logPart length
+    size_t m_width;
+    /// max length name (first part of a description) of a logPart
+    size_t m_maxNameWidth;
+  };
+
+
+  /**
+   * @brief Add a description to a specific section (opening or closing)
+   * @param name The first part of the description
+   * @param args The remaining part of the description, all remaining values will be concatened and aligned
    * @note Descriptions values can be be any formatted types. Values will be aligned altogether.
    */
   template< typename ... Args >
-  void addDescriptionBySection( LogPart::Description & description, string const & name, Args const &... args );
+  void addDescriptionBySection( Description & description, FormattedDescription & formattedDescription,
+                                string_view name, Args const &... args );
 
   /**
    * @brief Computes the initial log width based on the provided description and names.
-   * @param description A description object that contains the current log part
+   * @param description Structure containing all the information (name, values, length) needed for building a logPart
+   *  @param formattedDescription Structure containing the formatted description
    */
-  void computeInitialLogWidth( LogPart::Description & description );
+  void computeInitialLogWidth( LogPart::Description & description,
+                               FormattedDescription & formattedDescription );
 
   /**
-   * @brief Build a description from the name and description values
-   * @param name The decription name
-   * @param decriptionsValues The description values
+   * @brief Construct a formatted descrption
+   * @param description Structure containing all the information (name, values, length) needed for building a logPart
+   * @param formattedDescription Structure containing the formatted description
    */
-  void formatDescriptions( LogPart::Description & description );
+  void formatDescriptions( LogPart::Description & description,
+                           FormattedDescription & formattedDescription );
 
   /**
-   * @brief Constructs the string logPart title of the log part.
+   * @brief Construct a the log part title
+   * @param description Structure containing all the information (name, values, length) needed for building a logPart
+   * @param formattedDescription Structure containing the formatted description
+   * @return A string containing the log part title
    */
-  string buildTitlePart( LogPart::Description const & description );
+  string outputTitle( LogPart::Description & description,
+                      FormattedDescription & formattedDescription );
 
   /**
    * @brief Constructs the string logPart descriptions of the log part.
    */
-  string buildDescriptionPart( LogPart::Description const & description );
+
+  /**
+   * @param formattedDescription Structure containing the formatted description
+   * @return A formatted string containing the log part descriptions
+   */
+  string outputDescription( FormattedDescription & formattedDescription );
 
   /// prefix to append to the title of closing section
-  string const m_prefixEndTitle = "End of ";
+  string_view m_prefixEndTitle = "End of ";
 
-  Description m_startDesc = { "", {}, {}, {}, 50, SIZE_MAX, 50, 0 };
-  Description m_endDesc  = { "", {}, {}, {}, 50, SIZE_MAX, 50, 0 };
+  Description m_startDescription = { "", {}, {}, SIZE_MAX, 50};
+  Description m_endDescription  = { "", {}, {}, SIZE_MAX, 50 };
+
+  FormattedDescription m_formattedStartDescription = { {}, 50, 0 };
+  FormattedDescription m_formattedEndDescription  = { {}, 50, 0 };
 
   /// description border margin
   static constexpr size_t m_borderMargin = 2;
@@ -171,7 +191,7 @@ private:
   /// character used for logPart construction
   static constexpr size_t m_borderCharacter = '#';
   // string used to separate the name/description
-  string const m_delimiter = " : ";
+  string_view m_delimiter = " : ";
 
   /// String containing horizontal border
   string m_horizontalBorder;
@@ -180,7 +200,8 @@ private:
 };
 
 template< typename ... Args >
-void LogPart::addDescriptionBySection( Description & description, string const & name, Args const &... args )
+void LogPart::addDescriptionBySection( Description & description, FormattedDescription & formattedDescription,
+                                       string_view name, Args const &... args )
 {
   std::vector< string > values;
   size_t maxValueSize = 0;
@@ -189,27 +210,26 @@ void LogPart::addDescriptionBySection( Description & description, string const &
     static_assert( has_formatter_v< decltype(args) >,
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
-    auto splitValues = splitStringByNewLine( value );
+    std::vector < string > splitValues =  stringutilities::divideLines< string >( value );
     values.insert( values.end(), splitValues.begin(), splitValues.end() );
     maxValueSize = std::max( maxValueSize, value.size());
   } (), ...);
-
-  description.m_names.push_back( splitStringByNewLine( name ) );
+  description.m_names.push_back( stringutilities::divideLines< string >( name ) );
   description.m_values.push_back( values );
-  description.m_logPartWidth = std::min( description.m_logPartWidth, maxValueSize + 6 );
+  formattedDescription.m_width = std::min( formattedDescription.m_width, maxValueSize + 6 );
 
 }
 
 template< typename ... Args >
-void LogPart::addDescription( string const & name, Args const &... args )
+void LogPart::addDescription( string_view name, Args const &... args )
 {
-  addDescriptionBySection( m_startDesc, name, args ... );
+  addDescriptionBySection( m_startDescription, m_formattedStartDescription, name, args ... );
 }
 
 template< typename ... Args >
-void LogPart::addEndDescription( string const & name, Args const &... args )
+void LogPart::addEndDescription( string_view name, Args const &... args )
 {
-  addDescriptionBySection( m_endDesc, name, args ... );
+  addDescriptionBySection( m_endDescription, m_formattedEndDescription, name, args ... );
 }
 
 }
