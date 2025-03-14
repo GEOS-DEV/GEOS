@@ -45,11 +45,7 @@ template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
                                                               CellElementSubRegion & subRegion,
                                                               arrayView1d< real64 const > const & pressure,
-                                                              arrayView1d< real64 const > const & pressure_k,
-                                                              arrayView1d< real64 const > const & pressure_n,
-                                                              arrayView1d< real64 const > const & temperature,
-                                                              arrayView1d< real64 const > const & temperature_k,
-                                                              arrayView1d< real64 const > const & temperature_n )
+                                                              arrayView1d< real64 const > const & temperature )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
@@ -57,15 +53,35 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
     {
       porousWrapper.updateStateFromPressureAndTemperature( k, q,
                                                            pressure[k],
-                                                           pressure_k[k],
-                                                           pressure_n[k],
-                                                           temperature[k],
-                                                           temperature_k[k],
-                                                           temperature_n[k] );
+                                                           temperature[k] );
     }
   } );
 }
 
+template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityFixedStress( POROUSWRAPPER_TYPE porousWrapper,
+                                               CellElementSubRegion & subRegion,
+                                               arrayView1d< real64 const > const & pressure,
+                                               arrayView1d< real64 const > const & pressure_k,
+                                               arrayView1d< real64 const > const & pressure_n,
+                                               arrayView1d< real64 const > const & temperature,
+                                               arrayView1d< real64 const > const & temperature_k,
+                                               arrayView1d< real64 const > const & temperature_n )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateStateFixedStress( k, q,
+                                            pressure[k],
+                                            pressure_k[k],
+                                            pressure_n[k],
+                                            temperature[k],
+                                            temperature_k[k],
+                                            temperature_n[k] );
+    }
+  } );
+}
 
 template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE porousWrapper,
@@ -102,7 +118,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
-    setApplyDefaultValue( 1 ). // negative pressure is allowed by default
+    setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
 
@@ -134,7 +150,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -250,7 +266,7 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
   real64 maxTempChange = 0.0;
   forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&]( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions ( regionNames,
                                                  [&]( localIndex const,
@@ -354,9 +370,9 @@ void FlowSolverBase::initializePreSubGroups()
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel &,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
-      array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+      string_array & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
       std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
       stencilTargetRegionsSet.insert( regionNames.begin(), regionNames.end() );
       stencilTargetRegions.clear();
@@ -389,7 +405,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
                                                                                           ElementSubRegionBase const & subRegion )
@@ -455,7 +471,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     precomputeData( mesh, regionNames );
 
@@ -468,7 +484,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void FlowSolverBase::precomputeData( MeshLevel & mesh,
-                                     arrayView1d< string const > const & regionNames )
+                                     string_array const & regionNames )
 {
   FaceManager & faceManager = mesh.getFaceManager();
   real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
@@ -507,7 +523,7 @@ void FlowSolverBase::initializeState( DomainPartition & domain )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     initializePorosityAndPermeability( mesh, regionNames );
     initializeHydraulicAperture( mesh, regionNames );
@@ -533,7 +549,7 @@ void FlowSolverBase::initializeState( DomainPartition & domain )
   validatePoreVolumes( domain );
 }
 
-void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, string_array const & regionNames )
 {
   // Update porosity and permeability
   // In addition, to avoid multiplying permeability/porosity bay netToGross in the assembly kernel, we do it once and for all here
@@ -566,7 +582,7 @@ void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, arrayV
   } );
 }
 
-void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, const arrayView1d< const string > & regionNames )
+void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
                                                                    [&]( localIndex const,
@@ -577,7 +593,7 @@ void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, const arrayV
   } );
 }
 
-void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, const arrayView1d< const string > & regionNames )
+void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                 ElementSubRegionBase & subRegion )
@@ -596,10 +612,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
-
   arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
-  arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -609,13 +622,15 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
     if( m_isFixedStressPoromechanicsUpdate )
     {
+      arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
+      arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
-      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
+      updatePorosityAndPermeabilityFixedStress( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
     }
     else
     {
-      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, pressure_n, temperature, temperature_n, temperature_n );
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, temperature );
     }
   } );
 }
@@ -703,7 +718,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     fsManager.apply< ElementSubRegionBase,
                      SourceFluxBoundaryCondition >( time + dt,
@@ -886,7 +901,7 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -911,7 +926,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

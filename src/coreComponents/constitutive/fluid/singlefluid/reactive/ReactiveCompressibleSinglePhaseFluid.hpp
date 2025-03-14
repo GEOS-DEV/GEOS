@@ -43,24 +43,25 @@ public:
 
   using DensRelationType  = ExponentialRelation< real64, DENS_EAT >;
   using ViscRelationType  = ExponentialRelation< real64, VISC_EAT >;
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
   ReactiveCompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
                                          ViscRelationType const & viscRelation,
-                                         arrayView2d< real64 > const & density,
-                                         arrayView2d< real64 > const & dDens_dPres,
-                                         arrayView2d< real64 > const & viscosity,
-                                         arrayView2d< real64 > const & dVisc_dPres,
+                                         arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const & density,
+                                         arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER > const & dDensity,
+                                         arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const & viscosity,
+                                         arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER > const & dViscosity,
                                          integer const numPrimarySpecies,
-                                        //  chemicalReactions::EquilibriumReactions const & equilibriumReactions,
-                                        //  chemicalReactions::KineticReactions const & kineticReactions,
+                                         //  chemicalReactions::EquilibriumReactions const & equilibriumReactions,
+                                         //  chemicalReactions::KineticReactions const & kineticReactions,
                                          arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesConcentration,
                                          arrayView2d< real64, compflow::USD_COMP > const & secondarySpeciesConcentration,
                                          arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesAggregateConcentration,
                                          arrayView3d< real64, compflow::USD_COMP_DC > const & dPrimarySpeciesAggregateConcentration_dLogPrimaryConc,
                                          arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates )
-    : ReactiveSingleFluidUpdate( density, dDens_dPres, viscosity, dVisc_dPres, numPrimarySpecies, 
-                                //  equilibriumReactions, kineticReactions, 
-                                 primarySpeciesConcentration, secondarySpeciesConcentration, primarySpeciesAggregateConcentration, 
+    : ReactiveSingleFluidUpdate( density, dDensity, viscosity, dViscosity, numPrimarySpecies,
+                                 //  equilibriumReactions, kineticReactions,
+                                 primarySpeciesConcentration, secondarySpeciesConcentration, primarySpeciesAggregateConcentration,
                                  dPrimarySpeciesAggregateConcentration_dLogPrimaryConc, kineticReactionRates ),
     m_densRelation( densRelation ),
     m_viscRelation( viscRelation )
@@ -120,9 +121,9 @@ public:
   {
     compute( pressure,
              m_density[k][q],
-             m_dDens_dPres[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
              m_viscosity[k][q],
-             m_dVisc_dPres[k][q] );
+             m_dViscosity[k][q][DerivOffset::dP] );
   }
 
   GEOS_HOST_DEVICE
@@ -134,9 +135,9 @@ public:
   {
     compute( pressure,
              m_density[k][q],
-             m_dDens_dPres[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
              m_viscosity[k][q],
-             m_dVisc_dPres[k][q] );
+             m_dViscosity[k][q][DerivOffset::dP] );
   }
 
   GEOS_HOST_DEVICE
@@ -149,24 +150,24 @@ public:
   {
     compute( pressure,
              m_density[k][q],
-             m_dDens_dPres[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
              m_viscosity[k][q],
-             m_dVisc_dPres[k][q] );
+             m_dViscosity[k][q][DerivOffset::dP] );
   }
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   virtual void updateChemistry( localIndex const k,
-                                  localIndex const GEOS_UNUSED_PARAM( q ),
-                                  real64 const pressure,
-                                  real64 const temperature,
-                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override
+                                localIndex const GEOS_UNUSED_PARAM( q ),
+                                real64 const pressure,
+                                real64 const temperature,
+                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override
   {
     for( int i=0; i < m_numPrimarySpecies; i++ )
     {
       m_primarySpeciesAggregateConcentration[k][i] = composition[i];
     }
-    
+
     computeChemistry( pressure,
                       temperature,
                       m_primarySpeciesAggregateConcentration[k],
@@ -185,13 +186,13 @@ public:
   {
     for( int i=0; i < m_numPrimarySpecies; i++ )
     {
-      m_primarySpeciesConcentration[k][i] = std::exp( logPrimaryConc[i]) ;
+      m_primarySpeciesConcentration[k][i] = std::exp( logPrimaryConc[i] );
 
       m_primarySpeciesAggregateConcentration[k][i] = m_primarySpeciesConcentration[k][i];
 
       m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc[k][i][i] = m_primarySpeciesConcentration[k][i];
     }
-    
+
     // computeChemistry( pressure,
     //                   temperature,
     //                   m_primarySpeciesAggregateConcentration[k],
@@ -213,7 +214,7 @@ private:
 class ReactiveCompressibleSinglePhase : public ReactiveSingleFluid
 {
 public:
-
+  using DerivOffset = singlefluid::DerivativeOffset;
   ReactiveCompressibleSinglePhase( string const & name, Group * const parent );
 
   virtual ~ReactiveCompressibleSinglePhase() override;

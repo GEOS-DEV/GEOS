@@ -134,7 +134,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
-                                                                      arrayView1d< string const > const & regionNames )
+                                                                      string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -267,7 +267,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
-                                                                      arrayView1d< string const > const & regionNames )
+                                                                      string_array const & regionNames )
   {
     std::vector< string > fields{ fields::flow::pressure::key() };
 
@@ -301,7 +301,7 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
@@ -357,7 +357,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 cons
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
@@ -396,7 +396,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -420,9 +420,9 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                                                      flowAccessors.get< fields::flow::pressure >(),
                                                                      flowAccessors.get< fields::flow::gravityCoefficient >(),
                                                                      fluidAccessors.get< fields::singlefluid::density >(),
-                                                                     fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                                                     fluidAccessors.get< fields::singlefluid::dDensity >(),
                                                                      flowAccessors.get< fields::flow::mobility >(),
-                                                                     flowAccessors.get< fields::flow::dMobility_dPressure >(),
+                                                                     flowAccessors.get< fields::flow::dMobility >(),
                                                                      permAccessors.get< fields::permeability::permeability >(),
                                                                      permAccessors.get< fields::permeability::dPerm_dPressure >(),
                                                                      permAccessors.get< fields::permeability::dPerm_dDispJump >(),
@@ -464,7 +464,7 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
-                                                                      arrayView1d< string const > const & )
+                                                                      string_array const & )
   {
     fluxApprox.forStencils< CellElementStencilTPFA, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
@@ -553,7 +553,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
-                                                                      arrayView1d< string const > const & )
+                                                                      string_array const & )
   {
     fluxApprox.forStencils< CellElementStencilTPFA, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
@@ -673,7 +673,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
-                                                                      arrayView1d< string const > const & )
+                                                                      string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -879,7 +879,7 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
@@ -918,7 +918,7 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
                                                       flowAccessors.get< fields::flow::pressure_n >(),
                                                       flowAccessors.get< fields::flow::gravityCoefficient >(),
                                                       fluidAccessors.get< fields::singlefluid::density >(),
-                                                      fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                                      fluidAccessors.get< fields::singlefluid::dDensity >(),
                                                       time,
                                                       dt,
                                                       localMatrix.toViewConstSizes(),

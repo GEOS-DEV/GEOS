@@ -37,7 +37,7 @@ ReactiveSingleFluid::
   registerWrapper( viewKeyStruct::primarySpeciesNamesString(), &m_primarySpeciesNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of primary species names" );
-    
+
   // For now this is being hardcoded. We will see where this should come from.
   m_numPrimarySpecies = 3;
   m_numSecondarySpecies = 11;
@@ -71,7 +71,7 @@ void ReactiveSingleFluid::saveConvergedState() const
 void ReactiveSingleFluid::resizeFields( localIndex const size, localIndex const numPts )
 {
   GEOS_UNUSED_VAR( numPts );
-  
+
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
   integer const numKineticReactions = this->numKineticReactions();
@@ -94,8 +94,10 @@ void ReactiveSingleFluid::allocateConstitutiveData( dataRepository::Group & pare
 // void ReactiveSingleFluid::createChemicalReactions()
 // {
 //   // instantiate reactions objects
-//   m_equilibriumReactions = std::make_unique< chemicalReactions::EquilibriumReactions >( getName() + "_equilibriumReactions", m_numPrimarySpecies, m_numSecondarySpecies );
-//   m_kineticReactions = std::make_unique< chemicalReactions::KineticReactions >( getName() + "_kineticReactions", m_numPrimarySpecies, m_numSecondarySpecies, m_numKineticReactions );
+//   m_equilibriumReactions = std::make_unique< chemicalReactions::EquilibriumReactions >( getName() + "_equilibriumReactions",
+// m_numPrimarySpecies, m_numSecondarySpecies );
+//   m_kineticReactions = std::make_unique< chemicalReactions::KineticReactions >( getName() + "_kineticReactions", m_numPrimarySpecies,
+// m_numSecondarySpecies, m_numKineticReactions );
 // }
 
 } //namespace constitutive

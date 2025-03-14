@@ -23,7 +23,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "kernels/ImplicitRateAndStateKernels.hpp"
 #include "rateAndStateFields.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 
 namespace geos
@@ -57,22 +57,29 @@ void ImplicitQDRateAndState::solveRateAndStateEquations( real64 const time_n,
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
-      // solve rate and state equations.
-      rateAndStateKernels::createAndLaunch< rateAndStateKernels::ImplicitFixedStressRateAndStateKernel, parallelDevicePolicy<> >( subRegion,
-                                                                                                                                  viewKeyStruct::frictionLawNameString(),
-                                                                                                                                  m_shearImpedance,
-                                                                                                                                  maxNewtonIter, newtonTol,
-                                                                                                                                  time_n,
-                                                                                                                                  dt ); // save
-                                                                                                                                        // old
-                                                                                                                                        // state
+      string const & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+      constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
+      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [=, &subRegion] ( auto & castedFrictionLaw )
+      {
+
+        // solve rate and state equations.
+        rateAndStateKernels::createAndLaunch< rateAndStateKernels::ImplicitFixedStressRateAndStateKernel,
+                                              parallelDevicePolicy<> >( subRegion,
+                                                                        castedFrictionLaw,
+                                                                        m_shearImpedance,
+                                                                        maxNewtonIter, newtonTol,
+                                                                        time_n,
+                                                                        dt );
+
+      } );
+
       updateSlip( subRegion, dt );
     } );
   } );
@@ -104,14 +111,16 @@ void ImplicitQDRateAndState::updateSlip( ElementSubRegionBase & subRegion, real6
   } );
 }
 
-real64 ImplicitQDRateAndState::setNextDt( real64 const & currentDt, DomainPartition & domain )
+real64 ImplicitQDRateAndState::setNextDt( real64 const & currentTime,
+                                          real64 const & currentDt,
+                                          DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( currentDt );
+  GEOS_UNUSED_VAR( currentTime, currentDt );
 
   real64 maxSlipRate = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     real64 maxSlipRateOnThisRank  = 0.0;

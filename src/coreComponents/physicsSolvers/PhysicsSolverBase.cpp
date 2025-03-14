@@ -172,7 +172,7 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -303,7 +303,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
     if( dtRemaining > 0.0 )
     {
-      nextDt = setNextDt( dtAccepted, domain );
+      nextDt = setNextDt( time_n + (dt - dtRemaining), dtAccepted, domain );
       if( nextDt < dtRemaining )
       {
         // better to do two equal steps than one big and one small (even potentially tiny)
@@ -333,7 +333,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                                         " reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
-  m_nextDt = setNextDt( nextDt, domain );
+  m_nextDt = setNextDt( time_n + dt, nextDt, domain );
 
   // Increase counter to indicate how many cycles since the last timestep cut
   if( m_numTimestepsSinceLastDtCut >= 0 )
@@ -364,15 +364,16 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
   GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, "------------------------------------------------------------------\n" );
 }
 
-real64 PhysicsSolverBase::setNextDt( real64 const & currentDt,
+real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),
+                                     real64 const & currentDt,
                                      DomainPartition & domain )
 {
   integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.minTimeStepIncreaseInterval();
-  real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
-  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on Newton iterations = {}", getName(), nextDtNewton ));
+  real64 const nextDtIter = setNextDtBasedOnIterNumber( currentDt );
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDtIter < LvArray::NumericLimits< real64 >::max )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on number of iterations = {}", getName(), nextDtIter ));
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
-  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDtStateChange < LvArray::NumericLimits< real64 >::max )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
 
   if( ( m_numTimestepsSinceLastDtCut >= 0 ) && ( m_numTimestepsSinceLastDtCut < minTimeStepIncreaseInterval ) )
@@ -382,14 +383,14 @@ real64 PhysicsSolverBase::setNextDt( real64 const & currentDt,
     return currentDt;
   }
 
-  if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
+  if( nextDtIter < nextDtStateChange )      // time step size decided based on convergence
   {
-    if( nextDtNewton > currentDt )
+    if( nextDtIter > currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be increased based on number of iterations.",
                                                                getName() ) );
     }
-    else if( nextDtNewton < currentDt )
+    else if( nextDtIter < currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be decreased based on number of iterations.",
                                                                getName() ) );
@@ -419,7 +420,7 @@ real64 PhysicsSolverBase::setNextDt( real64 const & currentDt,
     }
   }
 
-  return std::min( nextDtNewton, nextDtStateChange );
+  return std::min( nextDtIter, nextDtStateChange );
 }
 
 real64 PhysicsSolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,
@@ -429,7 +430,7 @@ real64 PhysicsSolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,
   return LvArray::NumericLimits< real64 >::max; // i.e., not implemented
 }
 
-real64 PhysicsSolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
+real64 PhysicsSolverBase::setNextDtBasedOnIterNumber( real64 const & currentDt )
 {
   integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
   integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
@@ -1393,7 +1394,7 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
   Timestamp meshModificationTimestamp = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     if( meshModificationTimestamp < mesh.getModificationTimestamp() )
     {

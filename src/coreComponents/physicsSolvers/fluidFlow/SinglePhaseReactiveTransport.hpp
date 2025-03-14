@@ -128,14 +128,14 @@ public:
 
   virtual void
   updateState ( DomainPartition & domain ) override final;
-  
+
   void updateSpeciesAmount( ElementSubRegionBase & subRegion ) const;
-  
+
   virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief assembles the accumulation terms in total mass balance and primary species amount equation for all cells
@@ -150,7 +150,7 @@ public:
                                                                   DofManager const & dofManager,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs ) const;
-  
+
   /**
    * @brief assembles the flux terms for all cells
    * @param dt time step
@@ -207,7 +207,7 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
-  
+
   virtual void
   assembleEDFMFluxTerms( real64 const time_n,
                          real64 const dt,
@@ -216,7 +216,7 @@ public:
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          string const & jumpDofKey ) override final;
-  
+
   virtual void
   assembleStabilizedFluxTerms( real64 const dt,
                                DomainPartition const & domain,

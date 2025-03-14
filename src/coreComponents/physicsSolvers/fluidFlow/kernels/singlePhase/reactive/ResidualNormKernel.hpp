@@ -73,7 +73,7 @@ public:
     {
       stack.localValue[0] = valMass;
     }
-    
+
     // step 2: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {

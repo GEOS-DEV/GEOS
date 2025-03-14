@@ -23,6 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/KernelLaunchSelectors.hpp"
 
@@ -50,14 +51,11 @@ public:
   using Base::m_rankOffset;
   using Base::m_dofNumber;
   using Base::m_elemGhostRank;
-  using Base::m_volume;
-  using Base::m_deltaVolume;
-  using Base::m_porosity;
-  using Base::m_dPoro_dPres;
-  using Base::m_density;
-  using Base::m_dDensity_dPres;
   using Base::m_localMatrix;
   using Base::m_localRhs;
+
+  /// Note: Derivative lineup only supports dP & dT, not component terms
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >;
 
   /// Compile time value for the number of primary species
   static constexpr integer numSpecies = NUM_SPECIES;
@@ -80,8 +78,12 @@ public:
                       real64 const & dt,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
-    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    : Base( rankOffset, dofKey, subRegion, localMatrix, localRhs ),
     m_dt( dt ),
+    m_volume( subRegion.getElementVolume() ),
+    m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
+    m_porosity( solid.getPorosity() ),
+    m_dPoro_dPres( solid.getDporosity_dPressure() ),
     // m_dDensity_dLogPrimaryConc( fluid.dDensity_dLogPrimaryConc() ),
     // m_dPoro_dLogPrimaryConc( solid.getDporosity_dLogPrimaryConc() ),
     m_primarySpeciesAggregateConcentration( fluid.primarySpeciesAggregateConcentration() ),
@@ -106,12 +108,18 @@ public:
       : Base::StackVariables()
     {}
 
-    using Base::StackVariables::poreVolume;
-    using Base::StackVariables::dPoreVolume_dPres;
     using Base::StackVariables::localRow;
     using Base::StackVariables::dofIndices;
     using Base::StackVariables::localResidual;
     using Base::StackVariables::localJacobian;
+
+    // Pore volume information
+
+    /// Pore volume at time n+1
+    real64 poreVolume = 0.0;
+
+    /// Derivative of pore volume with respect to pressure
+    real64 dPoreVolume_dPres = 0.0;
 
     /// Derivative of pore volume with respect to each primary species concentration
     real64 dPoreVolume_dLogPrimaryConc[numSpecies]{};
@@ -127,6 +135,10 @@ public:
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
+    // initialize the pore volume
+    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosity[ei][0];
+    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+
     Base::setup( ei, stack );
 
     // // is - index of the primary species
@@ -150,7 +162,7 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual[is] += (totalPrimarySpeciesConcentration[is] * stack.poreVolume - totalPrimarySpeciesAmount_n[is])
-    //                 - dt * m_volume * primarySpeciesKineticRate[is] // To Check: what's the unit of the kinetic rate 
+    //                 - dt * m_volume * primarySpeciesKineticRate[is] // To Check: what's the unit of the kinetic rate
 
     Base::computeAccumulation( ei, stack );
     // Base::computeAccumulation( ei, stack, [&] ()
@@ -158,7 +170,8 @@ public:
     //   for( integer is = 0; is < numSpecies; ++is )
     //   {
     //     // Step 1: assemble the derivatives of the total mass equation w.r.t log of primary species concentration
-    //     stack.localJacobian[0][is+numDof-numSpecies] = stack.poreVolume * m_dDensity_dLogPrimaryConc[ei][is] + stack.dPoreVolume_dLogPrimaryConc[is] * m_density[ei][0];
+    //     stack.localJacobian[0][is+numDof-numSpecies] = stack.poreVolume * m_dDensity_dLogPrimaryConc[ei][is] +
+    // stack.dPoreVolume_dLogPrimaryConc[is] * m_density[ei][0];
     //   }
     // } );
 
@@ -167,30 +180,40 @@ public:
     for( integer is = 0; is < numSpecies; ++is )
     {
       // Step 2: assemble the accumulation term of the species mass balance equation
-      // Step 2.1: residual 
+      // Step 2.1: residual
       // Primary species amount in pore volume
       stack.localResidual[is+numEqn-numSpecies] -= m_totalPrimarySpeciesAmount_n[ei][is];
-      stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][is] * stack.poreVolume; 
+      stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][is] * stack.poreVolume;
 
       // // Reaction term
       // stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesTotalKineticRate[is];
 
       // Step 2.1: jacobian
       // Drivative of primary species amount in pore volume wrt pressure
-      stack.localJacobian[is+numEqn-numSpecies][0] += stack.dPoreVolume_dPres * m_primarySpeciesAggregateConcentration[ei][is] 
-                                                      /* + stack.poreVolume * m_dTotalPrimarySpeciesConcentration_dPres[ei][is] */; 
+      stack.localJacobian[is+numEqn-numSpecies][0] += stack.dPoreVolume_dPres * m_primarySpeciesAggregateConcentration[ei][is]
+                                                      /* + stack.poreVolume * m_dTotalPrimarySpeciesConcentration_dPres[ei][is] */;
       // // Derivative of reaction term wrt pressure
-      // stack.localJacobian[is+numEqn-numSpecies][0] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPrimarySpeciesTotalKineticRate_dPres[is]; 
+      // stack.localJacobian[is+numEqn-numSpecies][0] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
+      // m_dPrimarySpeciesTotalKineticRate_dPres[is];
 
       // Derivative wrt log of primary species concentration
-      // arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dPrimarySpeciesTotalKineticRate_dLogPrimaryConc = m_dPrimarySpeciesTotalKineticRate_dLogPrimaryConc[ei];
-      
+      // arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dPrimarySpeciesTotalKineticRate_dLogPrimaryConc =
+      // m_dPrimarySpeciesTotalKineticRate_dLogPrimaryConc[ei];
+
       for( integer js = 0; js < numSpecies; ++js )
       {
-        stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] += /* stack.dPoreVolume_dLogPrimaryConc[js] * m_primarySpeciesAggregateConcentration[ei][is] 
-                                                                           + */ stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimaryConc[is][js]; // To check if the permutation is consistent
+        stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] += /* stack.dPoreVolume_dLogPrimaryConc[js] *
+                                                                              m_primarySpeciesAggregateConcentration[ei][is]
+                                                                            + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimaryConc[is][js]; // To
+                                                                                                                                                                  // check
+                                                                                                                                                                  // if
+                                                                                                                                                                  // the
+                                                                                                                                                                  // permutation
+                                                                                                                                                                  // is
+                                                                                                                                                                  // consistent
 
-        // stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * dPrimarySpeciesTotalKineticRate_dLogPrimaryConc[is][js];                                                               
+        // stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
+        // dPrimarySpeciesTotalKineticRate_dLogPrimaryConc[is][js];
       }
     }
 
@@ -212,7 +235,7 @@ public:
 
     // Step 2: assemble the primary species amount balance equation
     // - the species amount balance equations (i = numEqn-numSpecies to i = numEqn-1)
-    integer const beginRowSpecies = numEqn-numSpecies; 
+    integer const beginRowSpecies = numEqn-numSpecies;
     for( integer i = 0; i < numSpecies; ++i )
     {
       m_localRhs[stack.localRow + beginRowSpecies + i] += stack.localResidual[beginRowSpecies+i];
@@ -228,18 +251,26 @@ protected:
   /// Time step size
   real64 const m_dt;
 
+  /// View on the element volumes
+  arrayView1d< real64 const > const m_volume;
+  arrayView1d< real64 const > const m_deltaVolume;
+
+  /// Views on the porosity
+  arrayView2d< real64 const > const m_porosity;
+  arrayView2d< real64 const > const m_dPoro_dPres;
+
   // // View on the derivatives of fluid density wrt log of primary species concentration
   // arrayView2d< real64 const, compflow::USD_COMP > m_dDensity_dLogPrimaryConc;
 
   // // View on the derivatives of porosity wrt log of primary species concentration
   // arrayView2d< real64 const, compflow::USD_COMP > m_dPoro_dLogPrimaryConc;
 
-  // View on the total concentration of ions that contain the primary species 
+  // View on the total concentration of ions that contain the primary species
   arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateConcentration;
 
   // // View on the derivatives of total ion concentration for the primary species wrt pressure
   // arrayView2d< real64 const, compflow::USD_COMP > m_dTotalPrimarySpeciesConcentration_dPres;
-  
+
   // View on the derivatives of total ion concentration for the primary species wrt log of primary species concentration
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc;
 

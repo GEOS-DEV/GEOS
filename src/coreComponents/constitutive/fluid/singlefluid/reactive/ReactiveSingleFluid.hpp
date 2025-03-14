@@ -35,49 +35,49 @@ namespace constitutive
 {
 
 class ReactiveSingleFluidUpdate : public SingleFluidBaseUpdate
-{ 
-  public:
+{
+public:
 
-    GEOS_HOST_DEVICE
-    void computeChemistry( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
-                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
+  GEOS_HOST_DEVICE
+  void computeChemistry( real64 const pressure,
+                         real64 const temperature,
+                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
+                         arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                         arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                         arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const;
 
-    GEOS_HOST_DEVICE
-    virtual void updateChemistry( localIndex const k,
-                                  localIndex const q,
-                                  real64 const pressure,
-                                  real64 const temperature,
-                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;
-    
-    GEOS_HOST_DEVICE
-    virtual void updateChemistryLogConc( localIndex const k,
-                                         localIndex const q,
-                                         real64 const pressure,
-                                         real64 const temperature,
-                                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimaryConc ) const = 0;
+  GEOS_HOST_DEVICE
+  virtual void updateChemistry( localIndex const k,
+                                localIndex const q,
+                                real64 const pressure,
+                                real64 const temperature,
+                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;
 
-  protected:
-    
-    ReactiveSingleFluidUpdate( arrayView2d< real64 > const & density,
-                               arrayView2d< real64 > const & dDens_dPres,
-                               arrayView2d< real64 > const & viscosity,
-                               arrayView2d< real64 > const & dVisc_dPres,
-                               integer const numPrimarySpecies,
-                              //  chemicalReactions::EquilibriumReactions const & equilibriumReactions,
-                              //  chemicalReactions::KineticReactions const & kineticReactions,
-                               arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesConcentration,
-                               arrayView2d< real64, compflow::USD_COMP > const & secondarySpeciesConcentration,
-                               arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesAggregateConcentration,
-                               arrayView3d< real64, compflow::USD_COMP_DC > const & dPrimarySpeciesAggregateConcentration_dLogPrimaryConc,
-                               arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates )
+  GEOS_HOST_DEVICE
+  virtual void updateChemistryLogConc( localIndex const k,
+                                       localIndex const q,
+                                       real64 const pressure,
+                                       real64 const temperature,
+                                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimaryConc ) const = 0;
+
+protected:
+
+  ReactiveSingleFluidUpdate( arrayView2d< real64, constitutive::singlefluid::USD_FLUID >  const & density,
+                             arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER >  const & dDensity,
+                             arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const & viscosity,
+                             arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER >  const & dViscosity,
+                             integer const numPrimarySpecies,
+                             //  chemicalReactions::EquilibriumReactions const & equilibriumReactions,
+                             //  chemicalReactions::KineticReactions const & kineticReactions,
+                             arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesConcentration,
+                             arrayView2d< real64, compflow::USD_COMP > const & secondarySpeciesConcentration,
+                             arrayView2d< real64, compflow::USD_COMP > const & primarySpeciesAggregateConcentration,
+                             arrayView3d< real64, compflow::USD_COMP_DC > const & dPrimarySpeciesAggregateConcentration_dLogPrimaryConc,
+                             arrayView2d< real64, compflow::USD_COMP > const & kineticReactionRates )
     : SingleFluidBaseUpdate( density,
-                             dDens_dPres,
+                             dDensity,
                              viscosity,
-                             dVisc_dPres ),
+                             dViscosity ),
     m_numPrimarySpecies( numPrimarySpecies ),
     // m_equilibriumReactions( equilibriumReactions.createKernelWrapper() ),
     // m_kineticReactions( kineticReactions.createKernelWrapper() ),
@@ -110,22 +110,22 @@ class ReactiveSingleFluidUpdate : public SingleFluidBaseUpdate
    */
   ReactiveSingleFluidUpdate & operator=( ReactiveSingleFluidUpdate && ) = delete;
 
-    /// Reaction related terms
-    integer m_numPrimarySpecies;
+  /// Reaction related terms
+  integer m_numPrimarySpecies;
 
-    // chemicalReactions::EquilibriumReactions::KernelWrapper m_equilibriumReactions;
+  // chemicalReactions::EquilibriumReactions::KernelWrapper m_equilibriumReactions;
 
-    // chemicalReactions::KineticReactions::KernelWrapper m_kineticReactions;
+  // chemicalReactions::KineticReactions::KernelWrapper m_kineticReactions;
 
-    arrayView2d< real64, compflow::USD_COMP >  m_primarySpeciesConcentration;
+  arrayView2d< real64, compflow::USD_COMP >  m_primarySpeciesConcentration;
 
-    arrayView2d< real64, compflow::USD_COMP >  m_secondarySpeciesConcentration;
+  arrayView2d< real64, compflow::USD_COMP >  m_secondarySpeciesConcentration;
 
-    arrayView2d< real64, compflow::USD_COMP >  m_primarySpeciesAggregateConcentration;
+  arrayView2d< real64, compflow::USD_COMP >  m_primarySpeciesAggregateConcentration;
 
-    arrayView3d< real64, compflow::USD_COMP_DC > m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc;
+  arrayView3d< real64, compflow::USD_COMP_DC > m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc;
 
-    arrayView2d< real64, compflow::USD_COMP >  m_kineticReactionRates;
+  arrayView2d< real64, compflow::USD_COMP >  m_kineticReactionRates;
 };
 
 class ReactiveSingleFluid : public SingleFluidBase
@@ -209,12 +209,12 @@ protected:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ReactiveSingleFluidUpdate::
-      computeChemistry( real64 const pressure,
-                        real64 const temperature,
-                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
+  computeChemistry( real64 const pressure,
+                    real64 const temperature,
+                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
 {
   GEOS_UNUSED_VAR( pressure, temperature, primarySpeciesAggregateConcentration, primarySpeciesConcentration, secondarySpeciesConcentration, kineticReactionRates );
 

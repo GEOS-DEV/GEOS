@@ -24,7 +24,6 @@
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/StrainHelper.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -82,7 +81,7 @@ public:
   /**
    * @return The string that may be used to generate a new instance from the PhysicsSolverBase::CatalogInterface::CatalogType
    */
-  static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string catalogName() { return "SolidMechanicsLagrangianFEM"; }
   /**
    * @copydoc PhysicsSolverBase::getCatalogName()
    */
@@ -176,7 +175,7 @@ public:
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -186,7 +185,7 @@ public:
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
@@ -325,7 +324,7 @@ template< typename CONSTITUTIVE_BASE,
           typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
                                                     DofManager const & dofManager,
-                                                    arrayView1d< string const > const & regionNames,
+                                                    string_array const & regionNames,
                                                     string const & materialNamesString,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs,

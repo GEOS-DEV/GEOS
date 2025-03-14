@@ -137,7 +137,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -190,7 +190,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
           globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
           globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
 
-          // working arrays - tjb previously dim was 2
+          // working arrays
           stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
           stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
 
@@ -242,7 +242,7 @@ assembleCouplingTerms( real64 const time_n,
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     integer areWellsShut = 1;
 
@@ -262,7 +262,7 @@ assembleCouplingTerms( real64 const time_n,
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       WellControls const & wellControls = Base::wellSolver()->getWellControls( subRegion );
-      if( !wellControls.isWellOpen( time_n + dt ) )
+      if( !wellControls.isWellOpen( time_n ) )
       {
         return;
       }

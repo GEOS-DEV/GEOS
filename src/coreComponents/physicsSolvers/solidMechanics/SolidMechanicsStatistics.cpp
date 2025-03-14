@@ -57,7 +57,7 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & )
+                                                              string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() ).
@@ -88,7 +88,7 @@ bool SolidMechanicsStatistics::execute( real64 const time_n,
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & )
+                                                                          string_array const & )
   {
     // current time is time_n + dt
     computeNodeStatistics( mesh, time_n + dt );
@@ -163,7 +163,7 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
                                          nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ));
 
   string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
-  TableLayout mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
+  TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
 
   TableTextFormatter mechanicsFormatter( mechanicsLayout );
   GEOS_LOG_RANK_0( mechanicsFormatter.toString( mechanicsData ));

@@ -71,7 +71,7 @@ public:
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_mob;
   using AbstractBase::m_dens;
-  using AbstractBase::m_dDens_dPres;
+  using AbstractBase::m_dDens;
 
   using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_SPECIES+1, NUM_DOF, STENCILWRAPPER >;
   using Base::numDof;
@@ -169,6 +169,7 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
+    using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
     // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) massFlux and its derivatives,
@@ -185,7 +186,7 @@ public:
                                            real64 const (&dFlux_dP)[2] )
     {
       GEOS_UNUSED_VAR( connectionIndex, alpha, mobility );
-      // Step 1: compute the derivatives of the fluid density, potential difference, 
+      // Step 1: compute the derivatives of the fluid density, potential difference,
       // and the massFlux wrt log of primary species concentration (to complete)
 
       // Step 2: compute the speciesFlux
@@ -202,20 +203,20 @@ public:
       localIndex const ei_up  = sei[k_up];
 
       real64 const fluidDens_up = m_dens[er_up][esr_up][ei_up][0];
-      real64 const dDens_dPres = m_dDens_dPres[er_up][esr_up][ei_up][0];
+      real64 const dDens_dPres = m_dDens[er_up][esr_up][ei_up][0][DerivOffset::dP];
 
       // compute species fluxes and derivatives using upstream cell composition
       for( integer is = 0; is < numSpecies; ++is )
       {
         real64 const totalConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][is];
-        speciesFlux[is] = totalConc_i / fluidDens_up * fluxVal; 
+        speciesFlux[is] = totalConc_i / fluidDens_up * fluxVal;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           dSpeciesFlux_dP[ke][is] += totalConc_i / fluidDens_up * dFlux_dP[ke];
         }
 
-        dSpeciesFlux_dP[k_up][is] += - totalConc_i * fluxVal * dDens_dPres / (fluidDens_up * fluidDens_up);
+        dSpeciesFlux_dP[k_up][is] += -totalConc_i * fluxVal * dDens_dPres / (fluidDens_up * fluidDens_up);
 
         for( integer js = 0; js < numSpecies; ++js )
         {
@@ -270,10 +271,10 @@ public:
         RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + is + 1],
                          stack.localFlux[i * numEqn + is + 1] );
         AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
-            ( localRow + is + 1,
-            stack.dofColIndices.data(),
-            stack.localFluxJacobian[i * numEqn + is + 1].dataIfContiguous(),
-            stack.stencilSize * numDof );
+          ( localRow + is + 1,
+          stack.dofColIndices.data(),
+          stack.localFluxJacobian[i * numEqn + is + 1].dataIfContiguous(),
+          stack.stencilSize * numDof );
       }
     } );
   }
@@ -343,11 +344,11 @@ public:
       typename KernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
 
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
-                        flowAccessors, reactiveFlowAccessors, fluidAccessors, 
-                        reactiveFluidAccessors, permAccessors,
-                        dt, localMatrix, localRhs );
+                         flowAccessors, reactiveFlowAccessors, fluidAccessors,
+                         reactiveFluidAccessors, permAccessors,
+                         dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-    } );    
+    } );
   }
 };
 
