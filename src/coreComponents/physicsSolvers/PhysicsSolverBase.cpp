@@ -1439,13 +1439,13 @@ void PhysicsSolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNU
 }
 
 
-void SolverBase::PreStepFieldSpecification( real64 const time, DomainPartition & domain )
+void PhysicsSolverBase::PreStepFieldSpecification( real64 const time, DomainPartition & domain )
 {
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     fsManager.applyNonInitialConditions( time, mesh, this->m_preStepFieldSpecificationNames );
   } );
