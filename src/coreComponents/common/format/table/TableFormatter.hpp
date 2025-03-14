@@ -261,9 +261,7 @@ private:
    */
   void outputLines( PreparedTableLayout const & tableLayout,
                     CellLayoutRows const & cellsLayout,
-                    std::ostringstream & tableOutput,
-                    CellType sectionType,
-                    string_view separatorLine ) const;
+                    std::ostringstream & tableOutput ) const;
 };
 
 /**
