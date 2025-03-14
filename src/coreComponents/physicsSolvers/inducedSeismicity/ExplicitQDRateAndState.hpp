@@ -17,7 +17,7 @@
 #define GEOS_PHYSICSSOLVERS_INDUCEDSEISMICITY_QUASIDYNAMICEQRK32_HPP
 
 #include "QDRateAndStateBase.hpp"
-#include "kernels/ExplicitRateAndStateKernels.hpp"
+#include "kernels/EmbeddedRungeKuttaKernels.hpp"
 
 namespace geos
 {
@@ -52,7 +52,8 @@ public:
                              DomainPartition & domain ) override final;
 
 
-  virtual real64 setNextDt( real64 const & currentDt,
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
                             DomainPartition & domain ) override final;
 
   /**
