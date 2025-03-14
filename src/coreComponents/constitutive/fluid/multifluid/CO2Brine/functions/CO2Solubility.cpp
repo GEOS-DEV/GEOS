@@ -186,13 +186,12 @@ makeSolubilityTables( string const & functionName,
 
   if( 0 < badCount )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered." \
-                               "These will be truncated to zero.\nCheck out report table with max {} values.",
-                               badCount, maxBad ) );
 
     string const pressure = GEOS_FMT( "Pressure ({})", units::getSymbol( units::Unit::Pressure ));
     string const temperature = GEOS_FMT( "Temperature ({})", units::getSymbol( units::Unit::TemperatureInC ));
-    TableLayout const badSolubilityLayout( "", {pressure, temperature, "CO2 solubility (mol/kg)", "H2O solubility (mol/kg)"} );
+    TableLayout const badSolubilityLayout( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered.\n" \
+                                                     "These will be truncated to zero.\nCheck out report table with max {} values.",
+                                                     badCount, maxBad ), {pressure, temperature, "CO2 solubility (mol/kg)", "H2O solubility (mol/kg)"} );
     TableData badSolData;
 
     for( integer row = 0; row < LvArray::math::min( maxBad, badCount ); ++row )
