@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -48,8 +49,6 @@ struct NoOpStuct
 
 namespace isothermalPerforationFluxKernels
 {
-
-
 
 /******************************** PerforationFluxKernel ********************************/
 
@@ -134,18 +133,6 @@ public:
     m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >()),
     m_disableReservoirToWellFlow( disableReservoirToWellFlow )
   {}
-
-  struct StackVariables
-  {
-public:
-    /**
-     * @brief Constructor for the stack variables
-     */
-
-    GEOS_HOST_DEVICE
-    StackVariables() {}
-
-  };
 
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
@@ -499,8 +486,6 @@ public:
     } );
   }
 
-
-  StackVariables m_stackVariables;
 
 protected:
   ElementViewConst< arrayView1d< real64 const > > const m_resPres;

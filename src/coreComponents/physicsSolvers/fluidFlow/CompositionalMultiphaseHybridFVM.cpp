@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -30,8 +30,10 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/kernels/CompositionalMultiphaseHybridFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
 
 /**
  * @namespace the geos namespace that encapsulates the majority of the code
@@ -118,7 +120,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -158,7 +160,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
 }
 
-void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_array const & regionNames )
 {
   FlowSolverBase::precomputeData( mesh, regionNames );
 
@@ -237,7 +239,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -311,7 +313,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -440,7 +442,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
                                                                                           ElementSubRegionBase & subRegion )
@@ -451,7 +453,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
       arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
       auto const subRegionData =
         isothermalCompositionalMultiphaseBaseKernels::
-          ScalingForSystemSolutionKernelFactory::
+          SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
@@ -507,7 +509,6 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
   return LvArray::math::max( MpiWrapper::min( scalingFactor ), m_minScalingFactor );
 }
 
-
 bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & domain,
                                                             DofManager const & dofManager,
                                                             arrayView1d< real64 const > const & localSolution,
@@ -520,7 +521,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     // check cell-centered variables for each region
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
@@ -539,7 +540,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                      m_allowNegativePressure,
-                                                     CompositionalMultiphaseFVM::ScalingType::Global,
+                                                     compositionalMultiphaseUtilities::ScalingType::Global,
                                                      scalingFactor,
                                                      pressure,
                                                      compDens,
@@ -615,7 +616,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -772,7 +773,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -802,7 +803,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
   // 2. Reset the face-based fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 

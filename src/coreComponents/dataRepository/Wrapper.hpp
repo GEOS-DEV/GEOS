@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -411,7 +411,7 @@ public:
   virtual void resize( localIndex const newSize ) override
   {
     wrapperHelpers::move( *m_data, hostMemorySpace, true );
-    wrapperHelpers::resizeDefault( reference(), newSize, m_default );
+    wrapperHelpers::resizeDefault( reference(), newSize, m_default, this->getName() );
   }
 
   /// @cond DO_NOT_DOCUMENT
@@ -727,11 +727,11 @@ public:
                                                                        targetNode,
                                                                        inputFlag == InputFlags::REQUIRED );
           GEOS_THROW_IF( !m_successfulReadFromInput,
-                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'."
-                                   "Available options are:\n {}\n For more details, please refer to documentation at:\n"
+                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'.\n"
+                                   "For more details, please refer to documentation at:\n"
                                    "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
                                    targetNode.name(), nodePos.toString(), targetNode.attribute( "name" ).value(),
-                                   getName(), dumpInputOptions( true ) ),
+                                   getName()),
                          InputError );
         }
         else

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -72,7 +72,14 @@ struct PreComputeSourcesAndReceivers
                                        arrayView2d< real64 const > const receiverCoordinates,
                                        arrayView1d< localIndex > const receiverIsLocal,
                                        arrayView2d< localIndex > const receiverNodeIds,
-                                       arrayView2d< real64 > const receiverConstants )
+                                       arrayView2d< real64 > const receiverConstants,
+                                       arrayView2d< real32 > const sourceValue,
+                                       real64 const dt,
+                                       real32 const timeSourceFrequency,
+                                       real32 const timeSourceDelay,
+                                       localIndex const rickerOrder,
+                                       arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
+                                       bool useSourceWaveletTables )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
@@ -121,6 +128,20 @@ struct PreComputeSourcesAndReceivers
               sourceNodeIds[isrc][a] = elemsToNodes( k, a );
               sourceConstants[isrc][a] = Ntest[a];
             }
+
+            for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
+            {
+              real64 const time_n = cycle * dt;
+              if( useSourceWaveletTables )
+              {
+                sourceValue[cycle][isrc]= sourceWaveletTableWrappers[ isrc ].compute( &time_n );
+              }
+              else
+              {
+                sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              }
+            }
+
           }
         }
       } // end loop over all sources
@@ -368,7 +389,7 @@ struct PreComputeSourcesAndReceivers
    * @param[in] sourceForce force vector of the source
    * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source
    */
-  template< typename EXEC_POLICY, typename FE_TYPE >
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
   static void
   Compute3DSourceAndReceiverConstantsWithDAS( localIndex const size,
                                               ArrayOfArraysView< localIndex const > const baseFacesToNodes,
@@ -581,7 +602,10 @@ struct PreComputeSourcesAndReceivers
                 receiverConstants[ircv][iSample * numNodesPerElem + a] += N[a] * sampleIntegrationConstants[ iSample ];
               }
             }
-            receiverIsLocal[ ircv ] = 2;
+            if( receiverIsLocal[ircv] != 1 )
+            {
+              RAJA::atomicCAS< ATOMIC_POLICY >( &receiverIsLocal[ ircv ], 0, 2 );
+            }
           }
         } // end loop over samples
         // determine if the current rank is the owner of this receiver
@@ -598,7 +622,7 @@ struct PreComputeSourcesAndReceivers
                                                                       coords );
         if( receiverFound && elemGhostRank[k] < 0 )
         {
-          receiverIsLocal[ ircv ] = 1;
+          RAJA::atomicExchange< ATOMIC_POLICY >( &receiverIsLocal[ ircv ], 1 );
         }
       } // end loop over receivers
     } );

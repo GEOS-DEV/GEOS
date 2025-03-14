@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -71,27 +71,32 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target bottom-hole pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target total volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseRateString(), &m_targetPhaseRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetMassRateString(), &m_targetMassRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target Mass Rate rate ( [kg^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 
   registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
@@ -476,6 +481,29 @@ bool WellControls::isWellOpen( real64 const & currentTime ) const
     isOpen = false;
   }
   return isOpen;
+}
+
+void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+{
+  setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_statusTable, currentTime, nextDt );
+}
+
+void WellControls::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )
+{
+  if( table )
+  {
+    // small epsilon to make sure we land on the other side of table interval and pick up the right rate
+    real64 const eps = 1e-6;
+    real64 const dtLimit = (table->getCoord( &currentTime, 0, TableFunction::InterpolationType::Upper ) - currentTime) * ( 1.0 + eps );
+    if( dtLimit > eps && dtLimit < nextDt )
+    {
+      nextDt = dtLimit;
+    }
+  }
 }
 
 } //namespace geos

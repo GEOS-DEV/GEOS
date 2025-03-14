@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -77,21 +77,39 @@ void
 CompositionalMultiphaseReservoirAndWells<>::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
-  {
-    // add Reservoir
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
-  }
-  else if( isThermal() )
-  {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM;
+  LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
 
+  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
+    return;
+
+  linearSolverParameters.mgr.separateComponents = true;
+  linearSolverParameters.dofsPerNode = 3;
+
+  if( dynamic_cast< CompositionalMultiphaseHybridFVM * >( this->flowSolver() ) )
+  {
+    if( isThermal() )
+    {
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for thermal {}/{}",
+                            this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+    }
+    else
+    {
+      linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+    }
   }
   else
   {
-    // add Reservoir
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+    if( isThermal() )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM;
+    }
+    else
+    {
+      linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
+    }
   }
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template<>
@@ -99,16 +117,25 @@ void
 CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >::
 setMGRStrategy()
 {
-  // flow solver here is indeed flow solver, not poromechanics solver
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
+  LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
+
+  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
+    return;
+
+  linearSolverParameters.mgr.separateComponents = true;
+  linearSolverParameters.dofsPerNode = 3;
+
+  if( dynamic_cast< CompositionalMultiphaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( "The poromechanics MGR strategy for hybrid FVM is not implemented" );
+    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}/{}",
+                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName() ) );
   }
   else
   {
-    // add Reservoir
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
+    linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
   }
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template< typename RESERVOIR_SOLVER >
@@ -133,15 +160,6 @@ initializePreSubGroups()
 template< typename RESERVOIR_SOLVER >
 void
 CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
-initializePostInitialConditionsPreSubGroups()
-{
-  Base::initializePostInitialConditionsPreSubGroups();
-  setMGRStrategy();
-}
-
-template< typename RESERVOIR_SOLVER >
-void
-CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
@@ -150,7 +168,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -263,9 +281,13 @@ assembleCouplingTerms( real64 const time_n,
                            this->getCatalogName(), this->getName() ),
                  std::runtime_error );
 
+  BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
+  if( Base::wellSolver()->useTotalMassEquation() )
+    kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
+
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     integer areWellsShut = 1;
 
@@ -293,7 +315,7 @@ assembleCouplingTerms( real64 const time_n,
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
-      if( !wellControls.isWellOpen( time_n + dt ) )
+      if( !wellControls.isWellOpen( time_n ) )
       {
         return;
       }
@@ -304,7 +326,6 @@ assembleCouplingTerms( real64 const time_n,
       string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
       areWellsShut = 0;
 
-      integer useTotalMassEquation=Base::wellSolver()->useTotalMassEquation();
       integer numCrossflowPerforations=0;
       if( isThermal ( )  )
       {
@@ -319,7 +340,7 @@ assembleCouplingTerms( real64 const time_n,
                                                      resDofNumber,
                                                      perforationData,
                                                      fluid,
-                                                     useTotalMassEquation,
+                                                     kernelFlags,
                                                      detectCrossflow,
                                                      numCrossflowPerforations,
                                                      localRhs,
@@ -337,7 +358,7 @@ assembleCouplingTerms( real64 const time_n,
                                                      resDofNumber,
                                                      perforationData,
                                                      fluid,
-                                                     useTotalMassEquation,
+                                                     kernelFlags,
                                                      detectCrossflow,
                                                      numCrossflowPerforations,
                                                      localRhs,

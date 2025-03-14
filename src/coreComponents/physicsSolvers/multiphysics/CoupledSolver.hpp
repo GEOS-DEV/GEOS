@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -309,26 +309,15 @@ public:
   }
 
   virtual real64
-  setNextDtBasedOnStateChange( real64 const & currentDt,
-                               DomainPartition & domain ) override
+  setNextDt( real64 const & currentTime,
+             real64 const & currentDt,
+             DomainPartition & domain ) override
   {
-    real64 nextDt = LvArray::NumericLimits< real64 >::max;
+    real64 nextDt = PhysicsSolverBase::setNextDt( currentTime, currentDt, domain );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       real64 const singlePhysicsNextDt =
-        solver->setNextDtBasedOnStateChange( currentDt, domain );
-      nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
-    } );
-    return nextDt;
-  }
-
-  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt ) override
-  {
-    real64 nextDt = PhysicsSolverBase::setNextDtBasedOnNewtonIter( currentDt );
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-      real64 const singlePhysicsNextDt =
-        solver->setNextDtBasedOnNewtonIter( currentDt );
+        solver->setNextDt( currentTime, currentDt, domain );
       nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
     } );
     return nextDt;

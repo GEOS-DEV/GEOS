@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -62,7 +62,7 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -114,7 +114,7 @@ void AcousticVTIWaveEquationSEM::postInputInitialization()
 }
 
 void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -233,7 +233,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
     precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
@@ -489,7 +489,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
-                                        arrayView1d< string const > const & GEOS_UNUSED_PARAM ( regionNames ) )
+                                        string_array const & GEOS_UNUSED_PARAM ( regionNames ) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -554,7 +554,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames )
+                                        string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -643,7 +643,7 @@ void AcousticVTIWaveEquationSEM::cleanup( real64 const time_n,
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real32 const > const p_n   = nodeManager.getField< acousticvtifields::Pressure_p_n >();

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -107,6 +107,12 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Write PVT tables into a CSV file" ).
+    setDefaultValue( 0 );
+
+  this->registerWrapper( viewKeyStruct::checkPhasePresenceString(), &m_checkPhasePresence ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Check phase presence when computing density and viscosity" ).
     setDefaultValue( 0 );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
@@ -243,9 +249,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 {
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  array1d< array1d< string > > phase1InputParams;
+  std::vector< string_array > phase1InputParams;
   phase1InputParams.resize( 3 );
-  array1d< array1d< string > > phase2InputParams;
+  std::vector< string_array > phase2InputParams;
   phase2InputParams.resize( 3 );
 
   // 1) Create the viscosity, density, enthalpy models
@@ -255,7 +261,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( str );
 
       if( !strs.empty() )
       {
@@ -355,7 +361,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      string_array const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( str );
 
       if( !strs.empty() )
       {
@@ -443,6 +449,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::createKernelWrapper()
                         m_componentMolarWeight.toViewConst(),
                         m_useMass,
                         isThermal(),
+                        m_checkPhasePresence,
                         m_phaseFraction.toView(),
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
@@ -463,6 +470,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                  arrayView1d< geos::real64 const > componentMolarWeight,
                  bool const useMass,
                  bool const isThermal,
+                 bool const checkPhasePresence,
                  PhaseProp::ViewType phaseFraction,
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
@@ -484,6 +492,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   m_p1Index( p1Index ),
   m_p2Index( p2Index ),
   m_isThermal( isThermal ),
+  m_checkPhasePresence( checkPhasePresence ),
   m_phase1( phase1.createKernelWrapper() ),
   m_phase2( phase2.createKernelWrapper() ),
   m_flash( flash.createKernelWrapper() )
