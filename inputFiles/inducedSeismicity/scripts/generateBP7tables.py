@@ -14,7 +14,7 @@ class RateAndStateParameters:
         self.Vstar = 1.0e-6
         self.f = 0.6
         self.Rvw = 200
-        self.Drs = 5.0e-3
+        self.Drs = 5.0e-4
         self.shearModulus = 32.04e9 
         self.cs = 3.464e3
 
@@ -41,11 +41,11 @@ class BP7:
         self.rsParameters = RateAndStateParameters()
 
     def reference_shearTraction( self, r ): 
-        inner_expression = self.Vinit / (2* self.rsParameters.Vstar) * math.exp( self.rsParameters.f + self.rsParameters.b * math.log( self.rsParameters.Vstar / self.Vinit ) / self.rsParameters.a( r ) )
-        t0 = self.normalTraction * self.rsParameters.a(r) *  math.asinh( inner_expression )
-        ty = t0 * self.Vinit / np.linalg.norm([self.Vinit, self.Vzero])
-        tz = t0 * self.Vzero / np.linalg.norm([self.Vinit, self.Vzero])
-        return [ty, tz]
+        inner_expression = self.Vinit / (2* self.rsParameters.Vstar) * math.exp( ( self.rsParameters.f + self.rsParameters.b * math.log( self.rsParameters.Vstar / self.Vinit ) ) / self.rsParameters.a( r ) )
+        t0 = self.normalTraction * self.rsParameters.a(r) *  math.asinh( inner_expression ) + self.rsParameters.shearImpedance() * self.Vinit
+        tx = t0 * self.Vinit / np.linalg.norm([self.Vinit, self.Vzero])
+        ty = t0 * self.Vzero / np.linalg.norm([self.Vinit, self.Vzero])
+        return [tx, ty]
 
     def nucleation_forcing( self, r, t ):
         return self.deltaTau * self.G1( r ) * self.G2( t )
@@ -64,7 +64,8 @@ class BP7:
 
     def initialState( self ):
         theta = self.rsParameters.Drs / self.Vinit
-        Psi = self.rsParameters.f * self.rsParameters.b * math.log( self.rsParameters.Vstar * theta / self.rsParameters.Drs );
+        print( f'theta = {theta}' )
+        Psi = self.rsParameters.f + self.rsParameters.b * math.log( self.rsParameters.Vstar * theta / self.rsParameters.Drs );
         return Psi        
 
 # Function to save a numpy array to a .geos file
@@ -84,23 +85,29 @@ def calcualteBP7Parameters( dir, printTables ):
     if (printTables):
         xcoords = np.linspace(bp7.x[0], bp7.x[1], 100).tolist()
         ycoords = np.linspace(bp7.y[0], bp7.y[1], 100).tolist()
-
+        tcoords = np.linspace(0.1, 1.0, 1000).tolist()
+        tcoords.append( 3.156e+8 )
         # Prepare lists to store data
-        data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 'backgroungShearTraction_x': [], 'backgroungShearTraction_y': [] }
+        data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 'backgroungShearTraction_x': [], 'backgroungShearTraction_y': [], 'a': [] }
         for x, y in product(xcoords, ycoords):
             r = np.sqrt(x**2 + y**2)
             tau0 = bp7.reference_shearTraction( r )
             data['backgroungShearTraction_x'].append( tau0[0] )
             data['backgroungShearTraction_y'].append( tau0[1] )
+            data['a'].append( bp7.rsParameters.a(r) )
     
         writeBP7Tables( data, dir )  
-        forcing_data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 't': np.linspace(0.1, 1.0, 10).tolist(), 'backgroungShearTractionWithForcing_x': [] }
+        forcing_data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 't': tcoords, 'backgroungShearTractionWithForcing_x': [] }
+
+        xnc = -50.0
+        ync = -50.0
         
-        for t in np.linspace(0.1, 1.0, 10):
+        for t in tcoords:
             for x, y in product(xcoords, ycoords):
+                rn = np.sqrt((x - xnc)**2 + (y - ync)**2)
                 r = np.sqrt(x**2 + y**2)
                 tau0 = bp7.reference_shearTraction( r )
-                forcing_data['backgroungShearTractionWithForcing_x'].append( tau0[0] + bp7.nucleation_forcing( r, t ) )
+                forcing_data['backgroungShearTractionWithForcing_x'].append( tau0[0] + bp7.nucleation_forcing( rn, t ) )
 
         writeBP7Tables( forcing_data, dir ) 
 

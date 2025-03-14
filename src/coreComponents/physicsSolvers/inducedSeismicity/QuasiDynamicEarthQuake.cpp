@@ -167,8 +167,8 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         targetDispJump( k, 0 ) = 0.0;
-        targetDispJump( k, 1 ) = deltaSlip( k, 0 ) + backSlipRate( k, 0 ) * dt;
-        targetDispJump( k, 2 ) = deltaSlip( k, 1 ) + backSlipRate( k, 1 ) * dt;
+        targetDispJump( k, 1 ) = deltaSlip( k, 0 ) - backSlipRate( k, 0 ) * dt;
+        targetDispJump( k, 2 ) = deltaSlip( k, 1 ) - backSlipRate( k, 1 ) * dt;
       } );
     } );
   } );

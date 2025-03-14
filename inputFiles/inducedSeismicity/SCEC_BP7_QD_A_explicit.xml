@@ -12,7 +12,7 @@
       name="QDSolver"
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
-      initialDt="1.e-3"
+      initialDt="1.e-5"
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver">
@@ -34,7 +34,7 @@
       discretization="FE1"
       targetRegions="{ Domain, Fault }">
       <NonlinearSolverParameters
-        newtonTol="1.0e200"
+        newtonTol="1.0e-3"
         logLevel="2"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
@@ -57,8 +57,7 @@
   </Solvers>
 
   <Events
-    maxTime="4.5e4"
-    maxCycle="1">
+    maxTime="4.5e4">
 
     <SoloEvent 
       name="generateFault"
@@ -66,7 +65,7 @@
 
     <PeriodicEvent
       name="vtkOutput"
-      cycleFrequency="1"
+      cycleFrequency="10"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>  
       

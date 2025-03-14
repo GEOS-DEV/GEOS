@@ -16,11 +16,11 @@
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver"
-      targetSlipIncrement="1.0e-6">
+      targetSlipIncrement="1.0e-7">
       <NonlinearSolverParameters
-        newtonTol="1.0e200"
+        newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="20"
+        newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
@@ -35,7 +35,7 @@
       discretization="FE1"
       targetRegions="{ Domain, Fault }">
       <NonlinearSolverParameters
-        newtonTol="1.0e200"
+        newtonTol="1.0e-6"
         logLevel="2"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
@@ -59,7 +59,7 @@
 
   <Events
     maxTime="4.5e4"
-    maxCycle="1">
+    maxCycle="10">
     <SoloEvent 
       name="generateFault"
       target="/Solvers/SurfaceGen"/>
@@ -75,10 +75,36 @@
       maxEventDt="1e4"
       target="/Solvers/QDSolver"/>
 
-    <!-- <PeriodicEvent
-      name="resarts"
-      timeFrequency="2e4"
+     <!-- Time history collection -->
+    <PeriodicEvent
+      name="slipRateCollection"
+      cycleFrequency="1"
       targetExactTimestep="0"
-      target="/Outputs/restart"/>   -->
+      target="/Tasks/slipVelocityCollection" />
+
+    <PeriodicEvent
+      name="slipCollection"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/slipCollection"/>
+
+    <PeriodicEvent
+      name="shearTractionCollection"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/shearTractionCollection"/>
+
+    <PeriodicEvent
+      name="stateCollection"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/stateCollection"/>        
+
+  <!-- Time history output -->
+   <PeriodicEvent
+      name="timeHistoryOutput"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
   </Events> 
 </Problem>

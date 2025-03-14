@@ -13,11 +13,11 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -500, 500 }"
-      yCoords="{ -500, 500 }"
-      zCoords="{ -500, 500 }"
-      nx="{ 5 }"
-      ny="{ 5 }"
+      xCoords="{ -505, 505 }"
+      yCoords="{ -505, 505 }"
+      zCoords="{ -5, 5 }"
+      nx="{ 101 }"
+      ny="{ 101 }"
       nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -59,83 +59,82 @@
 
     <Cylinder
       name="slipWeakeningRegion"
-      firstFaceCenter="{  0.0, 0.0, -500.01 }"
-      secondFaceCenter="{ 0.0, 0.0,  500.01 }"
+      firstFaceCenter="{  0.0, 0.0, -505.01 }"
+      secondFaceCenter="{ 0.0, 0.0,  505.01 }"
       outerRadius="200"/>
 
     <Cylinder
       name="nucleationRegion"
-      firstFaceCenter="{ 0.0, 0.0, -500.01 }"
-      secondFaceCenter="{ 0.0, 0.0, 500.01 }"
+      firstFaceCenter="{ 0.0, 0.0, -505.01 }"
+      secondFaceCenter="{ 0.0, 0.0, 505.01 }"
       outerRadius="150"/>
-    
-
+      
   <!-- Stations -->
     <Cylinder
-      name="receiver_1"
-      firstFaceCenter="{ 0.0, 0.0, -500.01 }"
-      secondFaceCenter="{ 0.0, 0.0, 500.01 }"
-      outerRadius="1"/> 
+      name="faultStation_1"
+      firstFaceCenter="{ 0.0, 0.0, -505.01 }"
+      secondFaceCenter="{ 0.0, 0.0, 505.01 }"
+      outerRadius="8"/> 
     <Cylinder
-      name="receiver_2"
-      firstFaceCenter="{ -100.0, 0.0, -500.01 }"
-      secondFaceCenter="{ -100.0, 0.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_2"
+      firstFaceCenter="{ -100.0, 0.0, -505.01 }"
+      secondFaceCenter="{ -100.0, 0.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_3"
-      firstFaceCenter="{ 0.0, 100.0, -500.01 }"
-      secondFaceCenter="{ 0.0, 100.0, 500.01 }"
-      outerRadius="1"/> 
+      name="faultStation_3"
+      firstFaceCenter="{ 0.0, 100.0, -505.01 }"
+      secondFaceCenter="{ 0.0, 100.0, 505.01 }"
+      outerRadius="8.0"/> 
     <Cylinder
-      name="receiver_4"
-     firstFaceCenter="{ 100.0, 0.0, -500.01 }"
-      secondFaceCenter="{ 100.0, 0.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_4"
+     firstFaceCenter="{ 100.0, 0.0, -505.01 }"
+      secondFaceCenter="{ 100.0, 0.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_5"
-      firstFaceCenter="{ 0.0, -100.0, -500.01 }"
-      secondFaceCenter="{ 0.0, -100.0, 500.01 }"
-      outerRadius="1"/> 
+      name="faultStation_5"
+      firstFaceCenter="{ 0.0, -100.0, -505.01 }"
+      secondFaceCenter="{ 0.0, -100.0, 505.01 }"
+      outerRadius="8.0"/> 
     <Cylinder
-      name="receiver_6"
-      firstFaceCenter="{ -100.0, -100.0, -500.01 }"
-      secondFaceCenter="{ -100.0, -100.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_6"
+      firstFaceCenter="{ -100.0, -100.0, -505.01 }"
+      secondFaceCenter="{ -100.0, -100.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_7"
-      firstFaceCenter="{ -100.0, 100.0, -500.01 }"
-      secondFaceCenter="{ -100.0, 100.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_7"
+      firstFaceCenter="{ -100.0, 100.0, -505.01 }"
+      secondFaceCenter="{ -100.0, 100.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_8"
-      firstFaceCenter="{ 100.0, -100.0, -500.01 }"
-      secondFaceCenter="{ 100.0, -100.0, 500.01 }"
-      outerRadius="1"/> 
+      name="faultStation_8"
+      firstFaceCenter="{ 100.0, -100.0, -505.01 }"
+      secondFaceCenter="{ 100.0, -100.0, 505.01 }"
+      outerRadius="8.0"/> 
     <Cylinder
-      name="receiver_9"
-      firstFaceCenter="{ 100.0, 100.0, -500.01 }"
-      secondFaceCenter="{ 100.0, 100.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_9"
+      firstFaceCenter="{ 100.0, 100.0, -505.01 }"
+      secondFaceCenter="{ 100.0, 100.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_10"
-      firstFaceCenter="{ -300.0, 0.0, -500.01 }"
-      secondFaceCenter="{ -300.0, 0.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_10"
+      firstFaceCenter="{ -300.0, 0.0, -505.01 }"
+      secondFaceCenter="{ -300.0, 0.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_11"
-      firstFaceCenter="{ 0.0, 300.0, -500.01 }"
-      secondFaceCenter="{ 0.0, 300.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_11"
+      firstFaceCenter="{ 0.0, 300.0, -505.01 }"
+      secondFaceCenter="{ 0.0, 300.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_12"
-      firstFaceCenter="{ 300.0, 0.0, -500.01 }"
-      secondFaceCenter="{ 300.0, 0.0, 500.01 }"
-      outerRadius="1"/>
+      name="faultStation_12"
+      firstFaceCenter="{ 300.0, 0.0, -505.01 }"
+      secondFaceCenter="{ 300.0, 0.0, 505.01 }"
+      outerRadius="8.0"/>
     <Cylinder
-      name="receiver_13"
-      firstFaceCenter="{ 0.0, -300.0, -500.01 }"
-      secondFaceCenter="{ 0.0, -300.0, 500.01 }"
-      outerRadius="1"/>      
+      name="faultStation_13"
+      firstFaceCenter="{ 0.0, -300.0, -505.01 }"
+      secondFaceCenter="{ 0.0, -300.0, 505.01 }"
+      outerRadius="8.0"/>      
 
   </Geometry>
 
@@ -185,11 +184,12 @@
       setNames="{ zpos, zneg }"/>
 
     <FieldSpecification
-      name="slipWeakeningRSA"
+      name="a_param"
       objectPath="ElementRegions/Fault"
       fieldName="frictionLaw_a"
-      scale="0.004"
-      setNames="{ slipWeakeningRegion }"
+      scale="1"
+      setNames="{ all }"
+      functionName="a_param"
       initialCondition="1"/>
 
   <!-- Shear stress -->
@@ -234,7 +234,7 @@
       name="initialStateVariable"
       objectPath="ElementRegions/Fault"
       fieldName="stateVariable"
-      scale="0.041446531673892825"
+      scale="0.6690775527898214"
       setNames="{ all }"
       initialCondition="1"/>  
       
@@ -254,7 +254,27 @@
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="1"
       scale="1.0e-20"
-      setNames="{all}"/>                 
+      setNames="{all}"/>
+
+    <FieldSpecification
+      name="backSlipRate1"
+      fieldName="backSlipRate"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="1.0e-9"
+      setNames="{all}"/>
+
+    <FieldSpecification
+      name="backSlipRate2"
+      fieldName="backSlipRate"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="0.0"
+      setNames="{all}"/>         
+
+                 
   </FieldSpecifications>
 
   <Functions>
@@ -263,26 +283,53 @@
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
       voxelFile="./tables/backgroungShearTraction_x.geos"
-      interpolation="linear"/>
+      interpolation="nearest"/>
 
    <TableFunction
       name="background_shearStress_t1"
       inputVarNames="{ elementCenter  }"
       coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos, tables/t.geos }"
       voxelFile="./tables/backgroungShearTractionWithForcing_x.geos"
-      interpolation="linear"/>
+      interpolation="nearest"/>
 
     <TableFunction
       name="background_shearStress_t2"
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
       voxelFile="./tables/backgroungShearTraction_y.geos"
-      interpolation="linear"/>  
+      interpolation="nearest"/>
+
+     <TableFunction
+      name="a_param"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
+      voxelFile="./tables/a.geos"
+      interpolation="nearest"/>      
   </Functions>
-  
-  <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotFileRoot="BP7_QD_S"/>
-  </Outputs>
+
+  <Tasks>
+    <PackCollection
+      name="slipVelocityCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="slipVelocity"
+      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+
+    <PackCollection
+      name="slipCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="slip"
+      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+
+    <PackCollection
+      name="shearTractionCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="shearTraction"
+      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+
+    <PackCollection
+      name="stateCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="stateVariable"
+      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+   </Tasks>
 </Problem>
