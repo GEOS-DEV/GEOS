@@ -1038,7 +1038,7 @@ public:
     {
       real64 const phaseAmount = stack.volume * phaseVolFrac[ip] * phaseDens[ip];
       real64 const phaseAmount_n = stack.volume * phaseVolFrac_n[ip] * phaseDens_n[ip];
-      //remove tjb
+
       real64 const dPhaseAmount_dP = stack.volume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
                                                       + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
       dPhaseAmount[FLUID_PROP_COFFSET::dP]=stack.volume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
@@ -1055,12 +1055,6 @@ public:
         dPhaseAmount[FLUID_PROP_COFFSET::dC+jc] = dPhaseAmount[FLUID_PROP_COFFSET::dC+jc] * phaseVolFrac[ip]
                                                   + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
         dPhaseAmount[FLUID_PROP_COFFSET::dC+jc] *= stack.volume;
-      }
-// tjb- remove when safe
-      for( integer ic = 0; ic < numComp; ic++ )
-      {
-        assert( fabs( dPhaseAmount[FLUID_PROP_COFFSET::dC+ic] -dPhaseAmount_dC[ic] ) < FLT_EPSILON );
-
       }
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
@@ -1424,8 +1418,6 @@ public:
     m_isProducer ( wellControls.isProducer() ),
     m_injection ( wellControls.getInjectionStream() )
   {
-
-    GEOS_LOG_RANK( "tjb face setup " <<  m_nextWellElemIndex.size());
   }
 
   struct StackVariables
@@ -1922,7 +1914,6 @@ public:
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, 0 >;
       kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, localMatrix, localRhs, kernelFlags );
-      GEOS_LOG_RANK( "tjb sr "<<subRegion.getName() << " " << subRegion.size());
       kernelType::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }

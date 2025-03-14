@@ -412,7 +412,6 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
 
   map< integer, SortedArray< globalIndex > > elemSetsByStatus;
   m_wellElementStatus.resize( elemStatusGlobal.size());
-  GEOS_LOG_RANK( "tjb m_wellElementStatus "<<m_wellElementStatus.size());
 
   for( localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal )
   {
@@ -717,8 +716,6 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   resize( localElems.size() );
-  GEOS_LOG_RANK( "tjb WellElementSubRegion resize "<< size()<< " " << localElems.size());
-
   // create local elem numbering
 
   // local well elem ordering
@@ -776,7 +773,6 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
 
     m_toNodesRelation[iwelemLocal][LineBlockABC::NodeLocation::TOP]    = inodeTopLocal;
     m_toNodesRelation[iwelemLocal][LineBlockABC::NodeLocation::BOTTOM] = inodeBottomLocal;
-    GEOS_LOG_RANK( "tjb yyy "<< iwelemLocal << " " << m_nextWellElementIndexGlobal[iwelemLocal] );
   }
 
 }
