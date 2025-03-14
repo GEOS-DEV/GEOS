@@ -38,9 +38,10 @@ public:
   using RowsCellInput = std::vector< std::vector< TableData::CellData > >;
 
   /// Represent a row of the Table (header or values) when structured for formatting
-  struct CellLayoutRow {
-     std::vector< TableLayout::CellLayout > cells;
-     size_t sublinesCount;
+  struct CellLayoutRow
+  {
+    std::vector< TableLayout::CellLayout > cells;
+    size_t sublinesCount;
   };
 
   /// Represent the Table (header or values) when structured for formatting
