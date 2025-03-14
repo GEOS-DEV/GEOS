@@ -13,7 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
 /**
  * @file WaveSolverUtils.hpp
  */
@@ -28,39 +27,38 @@
 namespace geos
 {
 
-struct WaveSolverUtils
-{
-  static constexpr real64 epsilonLoc = 1e-8;
-
-  using EXEC_POLICY = parallelDevicePolicy< >;
-  using wsCoordType = real32;
-
-  enum class DASType : integer
+  struct WaveSolverUtils
   {
-    none,               ///< deactivate DAS computation
-    dipole,             ///< use dipole formulation for DAS
-    strainIntegration,  ///< use strain integration for DAS
-  };
+    static constexpr real64 epsilonLoc = 1e-8;
 
-  enum class AttenuationType : integer
-  {
-    none,               ///< deactivate attenuation (default)
-    sls,                ///< istandard-linear-solid description [Fichtner 2014]
-  };
+    using EXEC_POLICY = parallelDevicePolicy<>;
+    using wsCoordType = real32;
 
-
-  GEOS_HOST_DEVICE
-  static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex const order )
-  {
-    real32 const delay = t0 > 0 ? t0 : 1 / f0;
-    real32 pulse = 0.0;
-    real32 const alpha = -pow( f0 * M_PI, 2 );
-    real32 const time_d = time_n - delay;
-    real32 const gaussian = exp( alpha * pow( time_d, 2 ));
-    localIndex const sgn = pow( -1, order + 1 );
-
-    switch( order )
+    enum class DASType : integer
     {
+      none,              ///< deactivate DAS computation
+      dipole,            ///< use dipole formulation for DAS
+      strainIntegration, ///< use strain integration for DAS
+    };
+
+    enum class AttenuationType : integer
+    {
+      none, ///< deactivate attenuation (default)
+      sls,  ///< istandard-linear-solid description [Fichtner 2014]
+    };
+
+    GEOS_HOST_DEVICE
+    static real32 evaluateRicker(real64 const time_n, real32 const f0, real32 const t0, localIndex const order)
+    {
+      real32 const delay = t0 > 0 ? t0 : 1 / f0;
+      real32 pulse = 0.0;
+      real32 const alpha = -pow(f0 * M_PI, 2);
+      real32 const time_d = time_n - delay;
+      real32 const gaussian = exp(alpha * pow(time_d, 2));
+      localIndex const sgn = pow(-1, order + 1);
+
+      switch (order)
+      {
       case 0:
         pulse = sgn * gaussian;
         break;
@@ -68,104 +66,105 @@ struct WaveSolverUtils
         pulse = sgn * (2 * alpha * time_d) * gaussian;
         break;
       case 2:
-        pulse = sgn * (2 * alpha + 4 * pow( alpha, 2 ) * pow( time_d, 2 )) * gaussian;
+        pulse = sgn * (2 * alpha + 4 * pow(alpha, 2) * pow(time_d, 2)) * gaussian;
         break;
       case 3:
-        pulse = sgn * (12 * pow( alpha, 2 ) * time_d + 8 * pow( alpha, 3 ) * pow( time_d, 3 )) * gaussian;
+        pulse = sgn * (12 * pow(alpha, 2) * time_d + 8 * pow(alpha, 3) * pow(time_d, 3)) * gaussian;
         break;
       case 4:
-        pulse = sgn * (12 * pow( alpha, 2 ) + 48 * pow( alpha, 3 ) * pow( time_d, 2 ) + 16 * pow( alpha, 4 ) * pow( time_d, 4 )) * gaussian;
+        pulse = sgn * (12 * pow(alpha, 2) + 48 * pow(alpha, 3) * pow(time_d, 2) + 16 * pow(alpha, 4) * pow(time_d, 4)) * gaussian;
         break;
       default:
-        GEOS_ERROR( "This option is not supported yet, rickerOrder must be in range {0:4}" );
+        GEOS_ERROR("This option is not supported yet, rickerOrder must be in range {0:4}");
+      }
+
+      return pulse;
     }
 
-    return pulse;
-  }
-
-  /**
-   * @brief Initialize (clear) the trace file.
-   * @param[in] prefix Prefix of the output file
-   * @param[in] name Name of the solver on which you write the seismo trace
-   * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
-   * @param[in] nReceivers Number of receivers
-   * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
-   */
-  static void initTrace( char const * prefix,
-                         string const & name,
-                         bool const outputSeismoTrace,
-                         localIndex const nReceivers,
-                         arrayView1d< localIndex const > const receiverIsLocal )
-  {
-    if( !outputSeismoTrace ) return;
-
-    string const outputDir = OutputBase::getOutputDirectory();
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count( 0 );
-
-    forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
+    /**
+     * @brief Initialize (clear) the trace file.
+     * @param[in] prefix Prefix of the output file
+     * @param[in] name Name of the solver on which you write the seismo trace
+     * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
+     * @param[in] nReceivers Number of receivers
+     * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
+     */
+    static void initTrace(char const *prefix,
+                          string const &name,
+                          bool const outputSeismoTrace,
+                          localIndex const nReceivers,
+                          arrayView1d<localIndex const> const receiverIsLocal)
     {
+      if (!outputSeismoTrace)
+        return;
+
+      string const outputDir = OutputBase::getOutputDirectory();
+      RAJA::ReduceSum<ReducePolicy<serialPolicy>, localIndex> count(0);
+
+      forAll<serialPolicy>(nReceivers, [=](localIndex const ircv)
+                           {
       if( receiverIsLocal[ircv] == 1 )
       {
         count += 1;
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
         std::ofstream f( fn, std::ios::out | std::ios::trunc );
-      }
-    } );
+      } });
 
-    localIndex const total = MpiWrapper::sum( count.get() );
-    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( ": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
-  }
+      localIndex const total = MpiWrapper::sum(count.get());
+      GEOS_ERROR_IF(nReceivers != total, GEOS_FMT(": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total));
+    }
 
-  /**
-   * @brief Convenient helper for 3D vectors calling 3 times the scalar version with only the sampled variable argument changed.
-   * @param[in] prefix Prefix of the output file
-   * @param[in] name Name of the solver on which you write the seismo trace
-   * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
-   * @param[in] nReceivers Number of receivers
-   * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
-   * @param[in] nsamplesSeismoTrace Number of samples per seismo trace
-   * @param[out] varAtReceiversx Array containing the variable (x-direction) computed at the receivers
-   * @param[out] varAtReceiversy Array containing the variable (y-direction) computed at the receivers
-   * @param[out] varAtReceiversz Array containing the variable (z-direction) computed at the receivers
-   */
-  static void writeSeismoTraceVector( char const * prefix,
-                                      string const & name,
-                                      bool const outputSeismoTrace,
-                                      localIndex const nReceivers,
-                                      arrayView1d< localIndex const > const receiverIsLocal,
-                                      localIndex const nsamplesSeismoTrace,
-                                      arrayView2d< real32 const > const varAtReceiversx,
-                                      arrayView2d< real32 const > const varAtReceiversy,
-                                      arrayView2d< real32 const > const varAtReceiversz )
-  {
-    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx );
-    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy );
-    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
-  }
-
-  /**
-   * @brief Write the seismo traces to a file.
-   * @param[in] prefix Prefix of the output file
-   * @param[in] name Name of the solver on which you write the seismo trace
-   * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
-   * @param[in] nReceivers Number of receivers
-   * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
-   * @param[in] nsamplesSeismoTrace Number of samples per seismo trace
-   * @param[in] varAtReceivers Array containing the the variable computed at the receivers
-   */
-  static void writeSeismoTrace( char const * prefix,
-                                string const & name,
-                                bool const outputSeismoTrace,
-                                localIndex const nReceivers,
-                                arrayView1d< localIndex const > const receiverIsLocal,
-                                localIndex const nsamplesSeismoTrace,
-                                arrayView2d< real32 const > const varAtReceivers )
-  {
-    if( !outputSeismoTrace ) return;
-
-    string const outputDir = OutputBase::getOutputDirectory();
-    forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
+    /**
+     * @brief Convenient helper for 3D vectors calling 3 times the scalar version with only the sampled variable argument changed.
+     * @param[in] prefix Prefix of the output file
+     * @param[in] name Name of the solver on which you write the seismo trace
+     * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
+     * @param[in] nReceivers Number of receivers
+     * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
+     * @param[in] nsamplesSeismoTrace Number of samples per seismo trace
+     * @param[out] varAtReceiversx Array containing the variable (x-direction) computed at the receivers
+     * @param[out] varAtReceiversy Array containing the variable (y-direction) computed at the receivers
+     * @param[out] varAtReceiversz Array containing the variable (z-direction) computed at the receivers
+     */
+    static void writeSeismoTraceVector(char const *prefix,
+                                       string const &name,
+                                       bool const outputSeismoTrace,
+                                       localIndex const nReceivers,
+                                       arrayView1d<localIndex const> const receiverIsLocal,
+                                       localIndex const nsamplesSeismoTrace,
+                                       arrayView2d<real32 const> const varAtReceiversx,
+                                       arrayView2d<real32 const> const varAtReceiversy,
+                                       arrayView2d<real32 const> const varAtReceiversz)
     {
+      writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx);
+      writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy);
+      writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz);
+    }
+
+    /**
+     * @brief Write the seismo traces to a file.
+     * @param[in] prefix Prefix of the output file
+     * @param[in] name Name of the solver on which you write the seismo trace
+     * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
+     * @param[in] nReceivers Number of receivers
+     * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
+     * @param[in] nsamplesSeismoTrace Number of samples per seismo trace
+     * @param[in] varAtReceivers Array containing the the variable computed at the receivers
+     */
+    static void writeSeismoTrace(char const *prefix,
+                                 string const &name,
+                                 bool const outputSeismoTrace,
+                                 localIndex const nReceivers,
+                                 arrayView1d<localIndex const> const receiverIsLocal,
+                                 localIndex const nsamplesSeismoTrace,
+                                 arrayView2d<real32 const> const varAtReceivers)
+    {
+      if (!outputSeismoTrace)
+        return;
+
+      string const outputDir = OutputBase::getOutputDirectory();
+      forAll<serialPolicy>(nReceivers, [=](localIndex const ircv)
+                           {
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
@@ -184,46 +183,45 @@ struct WaveSolverUtils
         {
           GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
         }
-      }
-    } );
-  }
+      } });
+    }
 
-  /**
-   * @brief Compute the seismo traces.
-   * @param[in] time_n Current time iteration
-   * @param[in] dt time-step
-   * @param[in] timeSeismo time when the seismo is computed
-   * @param[in] iSeismo i-th seismo trace
-   * @param[in] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[in] receiverConstants constant part of the receiver term
-   * @param[in] receiverIsLocal flag indicating whether the receiver is local or not
-   * @param[in] var_np1 Array containing the variable at time n+1
-   * @param[in] var_n Array containing the variable at time n
-   * @param[out] varAtReceivers Array containing the the variable computed at the receivers
-   * @param[in] coeffs Coefficients array for receivers
-   * @param[in] add Boolean to say if you want to add the value of interpolation to the same receiver coefficient or not
-   */
-  static void computeSeismoTrace( real64 const time_n,
-                                  real64 const dt,
-                                  real64 const timeSeismo,
-                                  localIndex const iSeismo,
-                                  arrayView2d< localIndex const > const receiverNodeIds,
-                                  arrayView2d< real64 const > const receiverConstants,
-                                  arrayView1d< localIndex const > const receiverIsLocal,
-                                  arrayView1d< real32 const > const var_np1,
-                                  arrayView1d< real32 const > const var_n,
-                                  arrayView2d< real32 > varAtReceivers,
-                                  arrayView1d< real32 > coeffs = {},
-                                  bool add = false )
-  {
-    real64 const time_np1 = time_n + dt;
-
-    real32 const a1 = LvArray::math::abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
-    real32 const a2 = 1.0 - a1;
-
-    localIndex const nReceivers = receiverConstants.size( 0 );
-    forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+    /**
+     * @brief Compute the seismo traces.
+     * @param[in] time_n Current time iteration
+     * @param[in] dt time-step
+     * @param[in] timeSeismo time when the seismo is computed
+     * @param[in] iSeismo i-th seismo trace
+     * @param[in] receiverNodeIds indices of the nodes of the element where the receiver is located
+     * @param[in] receiverConstants constant part of the receiver term
+     * @param[in] receiverIsLocal flag indicating whether the receiver is local or not
+     * @param[in] var_np1 Array containing the variable at time n+1
+     * @param[in] var_n Array containing the variable at time n
+     * @param[out] varAtReceivers Array containing the the variable computed at the receivers
+     * @param[in] coeffs Coefficients array for receivers
+     * @param[in] add Boolean to say if you want to add the value of interpolation to the same receiver coefficient or not
+     */
+    static void computeSeismoTrace(real64 const time_n,
+                                   real64 const dt,
+                                   real64 const timeSeismo,
+                                   localIndex const iSeismo,
+                                   arrayView2d<localIndex const> const receiverNodeIds,
+                                   arrayView2d<real64 const> const receiverConstants,
+                                   arrayView1d<localIndex const> const receiverIsLocal,
+                                   arrayView1d<real32 const> const var_np1,
+                                   arrayView1d<real32 const> const var_n,
+                                   arrayView2d<real32> varAtReceivers,
+                                   arrayView1d<real32> coeffs = {},
+                                   bool add = false)
     {
+      real64 const time_np1 = time_n + dt;
+
+      real32 const a1 = LvArray::math::abs(dt) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
+      real32 const a2 = 1.0 - a1;
+
+      localIndex const nReceivers = receiverConstants.size(0);
+      forAll<EXEC_POLICY>(nReceivers, [=] GEOS_HOST_DEVICE(localIndex const ircv)
+                          {
       if( receiverIsLocal[ircv] > 0 )
       {
         real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
@@ -248,47 +246,46 @@ struct WaveSolverUtils
         // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
         // left in the forAll loop for sync issues since the following does not depend on `ircv`
         varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
-      }
-    } );
-  }
+      } });
+    }
 
-  /**
-   * @brief Compute the seismo traces for 2d arrays
-   * @param[in] time_n Current time iteration
-   * @param[in] dt time-step
-   * @param[in] regionIndex Index of the current region
-   * @param[in] receiverRegion Array containing the region in which the receiver is located
-   * @param[in] timeSeismo time when the seismo is computed
-   * @param[in] iSeismo i-th seismo trace
-   * @param[in] receiverElem Array containing the element on which the receiver is located
-   * @param[in] receiverConstants constant part of the receiver term
-   * @param[in] receiverIsLocal flag indicating whether the receiver is local or not
-   * @param[in] var_np1 Array containing the variable at time n+1
-   * @param[in] var_n Array containing the variable at time n
-   * @param[out] varAtReceivers Array containing the the variable computed at the receivers
-   */
-  static void compute2dVariableSeismoTrace( real64 const time_n,
-                                            real64 const dt,
-                                            localIndex const regionIndex,
-                                            arrayView1d< localIndex const > const receiverRegion,
-                                            real64 const timeSeismo,
-                                            localIndex const iSeismo,
-                                            arrayView1d< localIndex const > const receiverElem,
-                                            arrayView2d< real64 const > const receiverConstants,
-                                            arrayView1d< localIndex const > const receiverIsLocal,
-                                            arrayView2d< real32 const > const var_np1,
-                                            arrayView2d< real32 const > const var_n,
-                                            arrayView2d< real32 > varAtReceivers )
-  {
-    real64 const time_np1 = time_n + dt;
-
-    real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
-    real32 const a2 = 1.0 - a1;
-
-    localIndex const nReceivers = receiverConstants.size( 0 );
-
-    forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+    /**
+     * @brief Compute the seismo traces for 2d arrays
+     * @param[in] time_n Current time iteration
+     * @param[in] dt time-step
+     * @param[in] regionIndex Index of the current region
+     * @param[in] receiverRegion Array containing the region in which the receiver is located
+     * @param[in] timeSeismo time when the seismo is computed
+     * @param[in] iSeismo i-th seismo trace
+     * @param[in] receiverElem Array containing the element on which the receiver is located
+     * @param[in] receiverConstants constant part of the receiver term
+     * @param[in] receiverIsLocal flag indicating whether the receiver is local or not
+     * @param[in] var_np1 Array containing the variable at time n+1
+     * @param[in] var_n Array containing the variable at time n
+     * @param[out] varAtReceivers Array containing the the variable computed at the receivers
+     */
+    static void compute2dVariableSeismoTrace(real64 const time_n,
+                                             real64 const dt,
+                                             localIndex const regionIndex,
+                                             arrayView1d<localIndex const> const receiverRegion,
+                                             real64 const timeSeismo,
+                                             localIndex const iSeismo,
+                                             arrayView1d<localIndex const> const receiverElem,
+                                             arrayView2d<real64 const> const receiverConstants,
+                                             arrayView1d<localIndex const> const receiverIsLocal,
+                                             arrayView2d<real32 const> const var_np1,
+                                             arrayView2d<real32 const> const var_n,
+                                             arrayView2d<real32> varAtReceivers)
     {
+      real64 const time_np1 = time_n + dt;
+
+      real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
+      real32 const a2 = 1.0 - a1;
+
+      localIndex const nReceivers = receiverConstants.size(0);
+
+      forAll<EXEC_POLICY>(nReceivers, [=] GEOS_HOST_DEVICE(localIndex const ircv)
+                          {
       if( receiverIsLocal[ircv] == 1 )
       {
         if( receiverRegion[ircv] == regionIndex )
@@ -305,203 +302,203 @@ struct WaveSolverUtils
           // left in the forAll loop for sync issues since the following does not depend on `ircv`
           varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
         }
-      }
-    } );
-  }
-
-  /**
-   * @brief Check if the source point is inside an element or not
-   * @param numFacesPerElem number of face on an element
-   * @param elemCenter array containing the center of the elements
-   * @param faceNormal array containing the normal of all faces
-   * @param faceCenter array containing the center of all faces
-   * @param elemsToFaces map to get the global faces from element index and local face index
-   * @param coords coordinate of the point
-   * @return true if coords is inside the element
-   */
-  GEOS_HOST_DEVICE
-  static bool
-  locateSourceElement( real64 const numFacesPerElem,
-                       real64 const (&elemCenter)[3],
-                       arrayView2d< real64 const > const faceNormal,
-                       arrayView2d< real64 const > const faceCenter,
-                       arraySlice1d< localIndex const > const elemsToFaces,
-                       real64 const (&coords)[3] )
-  {
-    //Loop over the element faces
-    real64 tmpVector[3]{};
-    for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
-    {
-
-      localIndex const iface = elemsToFaces[kfe];
-      real64 faceCenterOnFace[3] = {faceCenter[iface][0],
-                                    faceCenter[iface][1],
-                                    faceCenter[iface][2]};
-      real64 faceNormalOnFace[3] = {faceNormal[iface][0],
-                                    faceNormal[iface][1],
-                                    faceNormal[iface][2]};
-
-      //Test to make sure if the normal is outwardly directed
-      LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
-      LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
-      if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
-      {
-        LvArray::tensorOps::scale< 3 >( faceNormalOnFace, -1 );
-      }
-
-      // compute the vector face center to query point
-      LvArray::tensorOps::subtract< 3 >( faceCenterOnFace, coords );
-      localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
-
-      // all dot products should be non-negative (we enforce outward normals)
-      if( s < 0 ) return false;
-
+      } });
     }
-    return true;
-  }
 
-  /**
-   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
-   * @tparam FE_TYPE finite element type
-   * @param[in] coords coordinate of the point
-   * @param[in] elemsToNodes element to node map for the base mesh
-   * @param[in] nodeCoords array of base mesh nodes coordinates
-   * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
-   */
-  template< typename FE_TYPE >
-  GEOS_HOST_DEVICE
-  static void
-  computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
-                                        arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-                                        real64 (& coordsOnRefElem)[3] )
-  {
-    // only the eight corners of the mesh cell are needed to compute the Jacobian
-    real64 xLocal[8][3]{};
-    for( localIndex a = 0; a < 8; ++a )
+    /**
+     * @brief Check if the source point is inside an element or not
+     * @param numFacesPerElem number of face on an element
+     * @param elemCenter array containing the center of the elements
+     * @param faceNormal array containing the normal of all faces
+     * @param faceCenter array containing the center of all faces
+     * @param elemsToFaces map to get the global faces from element index and local face index
+     * @param coords coordinate of the point
+     * @return true if coords is inside the element
+     */
+    GEOS_HOST_DEVICE
+    static bool
+    locateSourceElement(real64 const numFacesPerElem,
+                        real64 const (&elemCenter)[3],
+                        arrayView2d<real64 const> const faceNormal,
+                        arrayView2d<real64 const> const faceCenter,
+                        arraySlice1d<localIndex const> const elemsToFaces,
+                        real64 const (&coords)[3])
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ a ] ] );
-    }
-    // coordsOnRefElem = invJ*(coords-coordsNode_0)
-    real64 invJ[3][3]{};
-    FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
-    for( localIndex i = 0; i < 3; ++i )
-    {
-      // init at (-1,-1,-1) as the origin of the referential elem
-      coordsOnRefElem[i] = -1.0;
-      for( localIndex j = 0; j < 3; ++j )
+      // Loop over the element faces
+      real64 tmpVector[3]{};
+      for (localIndex kfe = 0; kfe < numFacesPerElem; ++kfe)
       {
-        coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
-      }
-    }
-  }
 
-  /**
-   * @brief Compute dotProduct between two vectors
-   * @param numFacesPerElem number of face on an element
-   * @param elemCenter array containing the center of the elements
-   * @param faceNormal array containing the normal of all faces
-   * @param faceCenter array containing the center of all faces
-   * @param elemsToFaces map to get the global faces from element index and local face index
-   * @param coords coordinate of the point
-   * @return true if coords is inside the element
-   */
+        localIndex const iface = elemsToFaces[kfe];
+        real64 faceCenterOnFace[3] = {faceCenter[iface][0],
+                                      faceCenter[iface][1],
+                                      faceCenter[iface][2]};
+        real64 faceNormalOnFace[3] = {faceNormal[iface][0],
+                                      faceNormal[iface][1],
+                                      faceNormal[iface][2]};
 
-
-  static void dotProduct( localIndex const size,
-                          arrayView1d< real32 > const & vector1,
-                          arrayView1d< real32 > const & vector2,
-                          real64 & res )
-  {
-
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > tmp( 0.0 );
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      tmp+= vector1[a]*vector2[a];
-    } );
-
-    res = tmp.get();
-
-  }
-
-/**
- * @brief Converts the DAS direction from dip/azimuth to a 3D unit vector
- * @param[in] dip the dip of the linear DAS
- * @param[in] azimuth the azimuth of the linear DAS
- * @param[out] a unit vector pointing in the DAS direction
- */
-  GEOS_HOST_DEVICE
-  static
-  R1Tensor computeDASVector( real64 const dip, real64 const azimuth )
-  {
-    real64 cd = cos( dip );
-    real64 v1 = cd * cos( azimuth );
-    real64 v2 = cd * sin( azimuth );
-    real64 v3 = sin( dip );
-    R1Tensor dasVector = { v1, v2, v3 };
-    return dasVector;
-  }
-
-  /**
-   * @brief Compute the reference size used for the tetrahederal DG penalty coefficient.
-   *   This implementation uses the radius of the sphere inscribed to the tetrahedron.
-   * @param[in] elemsToNodes element to node map for the base mesh
-   * @param[in] nodeCoords array of base mesh nodes coordinates
-   * @return the radius of the inscribed sphere
-   */
-  template< typename REAL >
-  GEOS_HOST_DEVICE
-  static REAL
-  computeReferenceLengthForPenalty( arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                    arrayView2d< REAL const, nodes::REFERENCE_POSITION_USD > const nodeCoords )
-  {
-    //Loop over the element faces
-    REAL hs = 0;
-    REAL spxf[ 3 ][ 2 ] {};
-    REAL spx[ 3 ][ 3 ] {};
-    REAL m[ 6 ] {};
-    for( int i = 0; i < 4; i++ )
-    {
-      int cf = 0;
-      int jstart = ( i + 1 ) % 4;
-      int j = ( jstart + 1 ) % 4;
-      do
-      {
-        for( int k = 0; k < 3; k ++ )
+        // Test to make sure if the normal is outwardly directed
+        LvArray::tensorOps::copy<3>(tmpVector, faceCenterOnFace);
+        LvArray::tensorOps::subtract<3>(tmpVector, elemCenter);
+        if (LvArray::tensorOps::AiBi<3>(tmpVector, faceNormalOnFace) < 0.0)
         {
-          spxf[ k ][ cf ] = nodeCoords( elemsToNodes[ j ], k )  - nodeCoords( elemsToNodes[ jstart ], k );
+          LvArray::tensorOps::scale<3>(faceNormalOnFace, -1);
         }
-        j = (j + 1 ) % 4;
-        cf++;
-      } while( i != j );
-      m[ 0 ] = LvArray::tensorOps::AiBi< 2 >( spxf[ 0 ], spxf[ 0 ] ); 
-      m[ 1 ] = LvArray::tensorOps::AiBi< 2 >( spxf[ 1 ], spxf[ 1 ] ); 
-      m[ 2 ] = LvArray::tensorOps::AiBi< 2 >( spxf[ 2 ], spxf[ 2 ] ); 
-      m[ 3 ] = LvArray::tensorOps::AiBi< 2 >( spxf[ 1 ], spxf[ 2 ] ); 
-      m[ 4 ] = LvArray::tensorOps::AiBi< 2 >( spxf[ 0 ], spxf[ 2 ] ); 
-      m[ 5 ] = LvArray::tensorOps::AiBi< 2 >( spxf[ 0 ], spxf[ 1 ] ); 
-      hs = hs + LvArray::math::sqrt( LvArray::tensorOps::symDeterminant< 3 >( m ) );
+
+        // compute the vector face center to query point
+        LvArray::tensorOps::subtract<3>(faceCenterOnFace, coords);
+        localIndex const s = computationalGeometry::sign(LvArray::tensorOps::AiBi<3>(faceNormalOnFace, faceCenterOnFace));
+
+        // all dot products should be non-negative (we enforce outward normals)
+        if (s < 0)
+          return false;
+      }
+      return true;
     }
-    for( int i = 0; i < 3; i++ )
+
+    /**
+     * @brief Convert a mesh element point coordinate into a coordinate on the reference element
+     * @tparam FE_TYPE finite element type
+     * @param[in] coords coordinate of the point
+     * @param[in] elemsToNodes element to node map for the base mesh
+     * @param[in] nodeCoords array of base mesh nodes coordinates
+     * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
+     */
+    template <typename FE_TYPE>
+    GEOS_HOST_DEVICE static void
+    computeCoordinatesOnReferenceElement(real64 const (&coords)[3],
+                                         arraySlice1d<localIndex const, cells::NODE_MAP_USD - 1> const elemsToNodes,
+                                         arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const nodeCoords,
+                                         real64 (&coordsOnRefElem)[3])
     {
-      for( int k = 0; k < 3; k ++ )
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[8][3]{};
+      for (localIndex a = 0; a < 8; ++a)
       {
-        spx[ i ][ k ] = nodeCoords( elemsToNodes[ i ], k )  - nodeCoords( elemsToNodes[ 3 ], k );
+        LvArray::tensorOps::copy<3>(xLocal[a], nodeCoords[elemsToNodes[a]]);
+      }
+      // coordsOnRefElem = invJ*(coords-coordsNode_0)
+      real64 invJ[3][3]{};
+      FE_TYPE::invJacobianTransformation(0, xLocal, invJ);
+      for (localIndex i = 0; i < 3; ++i)
+      {
+        // init at (-1,-1,-1) as the origin of the referential elem
+        coordsOnRefElem[i] = -1.0;
+        for (localIndex j = 0; j < 3; ++j)
+        {
+          coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
+        }
       }
     }
-    return LvArray::tensorOps::determinant< 3 >( spx ) / hs;
-  }
-};
 
-/// Declare strings associated with enumeration values.
-ENUM_STRINGS( WaveSolverUtils::DASType,
-              "none",
-              "dipole",
-              "strainIntegration" );
+    /**
+     * @brief Compute dotProduct between two vectors
+     * @param numFacesPerElem number of face on an element
+     * @param elemCenter array containing the center of the elements
+     * @param faceNormal array containing the normal of all faces
+     * @param faceCenter array containing the center of all faces
+     * @param elemsToFaces map to get the global faces from element index and local face index
+     * @param coords coordinate of the point
+     * @return true if coords is inside the element
+     */
 
-ENUM_STRINGS( WaveSolverUtils::AttenuationType,
-              "none",
-              "sls" );
+    static void dotProduct(localIndex const size,
+                           arrayView1d<real32> const &vector1,
+                           arrayView1d<real32> const &vector2,
+                           real64 &res)
+    {
+
+      RAJA::ReduceSum<parallelDeviceReduce, real64> tmp(0.0);
+      forAll<EXEC_POLICY>(size, [=] GEOS_HOST_DEVICE(localIndex const a)
+                          { tmp += vector1[a] * vector2[a]; });
+
+      res = tmp.get();
+    }
+
+    /**
+     * @brief Converts the DAS direction from dip/azimuth to a 3D unit vector
+     * @param[in] dip the dip of the linear DAS
+     * @param[in] azimuth the azimuth of the linear DAS
+     * @param[out] a unit vector pointing in the DAS direction
+     */
+    GEOS_HOST_DEVICE
+    static R1Tensor computeDASVector(real64 const dip, real64 const azimuth)
+    {
+      real64 cd = cos(dip);
+      real64 v1 = cd * cos(azimuth);
+      real64 v2 = cd * sin(azimuth);
+      real64 v3 = sin(dip);
+      R1Tensor dasVector = {v1, v2, v3};
+      return dasVector;
+    }
+
+    /**
+     * @brief Compute the reference size used for the tetrahederal DG penalty coefficient.
+     *   This implementation uses the radius of the sphere inscribed to the tetrahedron.
+     * @param[in] elemsToNodes element to node map for the base mesh
+     * @param[in] nodeCoords array of base mesh nodes coordinates
+     * @return the radius of the inscribed sphere
+     */
+    template <typename REAL>
+    GEOS_HOST_DEVICE static REAL
+    computeReferenceLengthForPenalty(arraySlice1d<localIndex const, cells::NODE_MAP_USD - 1> const elemsToNodes,
+                                     arrayView2d<REAL const, nodes::REFERENCE_POSITION_USD> const nodeCoords)
+    {
+      // Loop over the element faces
+      REAL hs = 0;
+      REAL spxf[3][2]{};
+      REAL v1[3]{};
+      REAL v2[3]{};
+      REAL spx[3][3]{};
+      REAL m[6]{};
+      for (int i = 0; i < 4; i++)
+      {
+        REAL cross[3]{}; 
+        int cf = 0;
+        int jstart = (i + 1) % 4;
+        int j = (jstart + 1) % 4;
+        do
+        {
+          for (int k = 0; k < 3; k++)
+          {
+            spxf[k][cf] = nodeCoords(elemsToNodes[j], k) - nodeCoords(elemsToNodes[jstart], k);
+          }
+          j = (j + 1) % 4;
+          cf++;
+        } while (i != j);
+
+        v1[0] = spxf[0][0];
+        v1[1] = spxf[1][0];
+        v1[2] = spxf[2][0];
+        v2[0] = spxf[0][1];
+        v2[1] = spxf[1][1];
+        v2[2] = spxf[2][1];
+        LvArray::tensorOps::crossProduct(cross,v1, v2);
+        hs = hs + LvArray::math::sqrt(LvArray::tensorOps::AiBi<3>(cross, cross));
+      }
+
+      for (int i = 0; i < 3; i++)
+      {
+        for (int k = 0; k < 3; k++)
+        {
+          spx[i][k] = nodeCoords(elemsToNodes[i], k) - nodeCoords(elemsToNodes[3], k);
+        }
+      }
+      
+
+      return LvArray::math::abs(LvArray::tensorOps::determinant<3>(spx) / hs);
+    }
+  };
+
+  /// Declare strings associated with enumeration values.
+  ENUM_STRINGS(WaveSolverUtils::DASType,
+               "none",
+               "dipole",
+               "strainIntegration");
+
+  ENUM_STRINGS(WaveSolverUtils::AttenuationType,
+               "none",
+               "sls");
 
 } /* namespace geos */
 

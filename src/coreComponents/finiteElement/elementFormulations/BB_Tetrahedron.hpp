@@ -990,7 +990,7 @@ public:
             constexpr int ik2 = k2 + ( d2 == 2 ) * ( -1 );
             constexpr int il2 = l2 + ( d2 == 3 ) * ( -1 );
             constexpr real64 factor1 = correctionFactorDerivative( i1, j1, k1, l1, ii1, ij1, ik1, il1, 3 );
-            constexpr real64 factor2 = correctionFactorDerivative( i1, j1, k2, l2, ii2, ij2, ik2, il2, 3 );
+            constexpr real64 factor2 = correctionFactorDerivative( i2, j2, k2, l2, ii2, ij2, ik2, il2, 3 );
             if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0 && il1 >= 0 &&
                           ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
             {

@@ -307,7 +307,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
 
 
         //  arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfieldsdgdgdg::AcousticVelocity >();
-        //  arrayView1d< real32 const > const density = elementSubRegion.getField< acousticfieldsdgdgdg::AcousticDensity >();
+        //arrayView1d< real32 const > const density = elementSubRegion.getField< acousticfieldsdg::AcousticDensity >();
 
         arrayView2d< localIndex > const elemsToOpposite = elementSubRegion.getField< acousticfieldsdg::ElementToOpposite >();
         arrayView2d< integer > const elemsToOppositePermutation = elementSubRegion.getField< acousticfieldsdg::ElementToOppositePermutation >();
@@ -345,9 +345,13 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
 
           // Pre-compute inverse of mass + damping matrix for each boundary element
           // localIndex nAbsBdryElems = 0;
-          // forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-          // {
-          //   characteristicSize[ k ] = WaveSolverUtils::computeReferenceLengthForPenalty( elemsToNodes, nodeCoords, k );
+          //printf("coucou\n");
+          forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+          {
+            
+             characteristicSize[ k ] = WaveSolverUtils::computeReferenceLengthForPenalty( elemsToNodes[k], nodeCoords);
+             //printf("k=%d\n",k);
+             //printf("characteristicSize=%f\n",characteristicSize[ k ]);
           //   bool bdry = false;
           //   for( int i = 0; i < 4; i++ )
           //   {
@@ -358,7 +362,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
           //     }
           //   }
           //   RAJA::atomicInc< ATOMIC_POLICY >( &m_indexToBoundaryMatrix[ k ])
-          // } );
+          } );
           // m_boundaryInvMassPlusDamping[ regionIndex ][ subRegionIndex ].resizeDimension< 0, 1, 2 >( nAbsBdryElems, FE_TYPE::numNodes, FE_TYPE::numNodes );
 
           // AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
@@ -551,8 +555,9 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
         arrayView2d< integer > const elemsToOppositePermutation = elementSubRegion.getField< acousticfieldsdg::ElementToOppositePermutation >();
 
         arrayView2d< real32 const > const p_nm1 = elementSubRegion.getField< acousticfieldsdg::Pressure_nm1 >();
-        arrayView2d< real32 const > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
+        arrayView2d< real32  > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
         arrayView2d< real32 > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
+        arrayView1d< real32 const > const characteristicSize = elementSubRegion.getField< acousticfieldsdg::CharacteristicSize >();
 
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -560,7 +565,16 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
 
-
+          //for (localIndex i = 0; i < 6; i++)
+          //{
+          //  for (localIndex j = 0; j < 4; j++)
+          //  {
+          //    p_n[i][j] = 5.0;
+          //  }
+          //  
+          //}
+          
+        
           //printf("before call");
 
           AcousticWaveEquationDGKernels::
@@ -575,6 +589,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
           elemsToOpposite,
           elemsToOppositePermutation,
           m_referenceInvMassMatrix,
+          characteristicSize,
           sourceConstants,
           sourceIsAccessible,
           sourceElem,
