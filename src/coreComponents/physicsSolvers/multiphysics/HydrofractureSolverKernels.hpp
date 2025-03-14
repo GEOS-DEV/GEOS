@@ -229,7 +229,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView1d< integer const > const fractureState,
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
-          arrayView2d< real64 const > const dens,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens,
           CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dNormalJump,
           CRSMatrixView< real64, globalIndex const > const & localMatrix )
   {

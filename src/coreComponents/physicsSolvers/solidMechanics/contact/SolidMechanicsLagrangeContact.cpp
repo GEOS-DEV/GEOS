@@ -2236,8 +2236,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, fricitonLawName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
@@ -2347,7 +2347,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {
-  globalIndex numStick, numNewSlip, numSlip, numOpen;
+  globalIndex numStick = 0, numNewSlip = 0, numSlip = 0, numOpen = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & )
