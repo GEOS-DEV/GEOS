@@ -369,7 +369,12 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
   bool const logOutputFailed = outputOpts.writeInLog && isTableTooLargeForLog( *this );
   if( outputOpts.writeInLog && !logOutputFailed )
   { // log output
-    TableTextFormatter textFormatter;
+    TableLayout tableLayout( getName(), {} );
+    if( outputOpts.writeCSV )
+    {
+      tableLayout.addToColumns( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
+    }
+    TableTextFormatter textFormatter( tableLayout );
     GEOS_LOG( textFormatter.toString( *this ));
   }
 
@@ -381,13 +386,14 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
       logStream << csvFormatter.toString( *this );
     }
 
-    { // mini-table in log to notice user where csv has been output
-      // only one column which serve as "title" (centered), next content are designed to be left-aligned
-      TableLayout const tableLayoutInfos( { TableLayout::Column().
-                                              setName( getName() ).
-                                              setHeaderAlignment( TableLayout::Alignment::center ).
-                                              setValuesAlignment( TableLayout::Alignment::left ) } );
-      TableTextFormatter const tableLog( tableLayoutInfos );
+    if( !outputOpts.writeInLog )
+    { // mini-table in log to notice user where csv has been output (if only csv output is enabled)
+      // only one column which serve as "title" (centered), next, stats & texts are designed to be left-aligned
+      TableLayout const tableLayout( { TableLayout::Column().
+                                         setName( getName() ).
+                                         setHeaderAlignment( TableLayout::Alignment::center ).
+                                         setValuesAlignment( TableLayout::Alignment::left ) } );
+      TableTextFormatter const tableLog( tableLayout );
 
       TableData tableData;
       tableData.addRow( getTableDescription());
@@ -398,8 +404,7 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
                           "/ ! \\ To visualize the table, please refer to the generated csv." );
       }
       tableData.addSeparator();
-      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv",
-                                  FunctionBase::getOutputDirectory(), getName() ));
+      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
       GEOS_LOG( tableLog.toString( tableData ) );
     }
   }
@@ -452,12 +457,19 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
   arrayView1d< real64 const > const values = tableFunction.getValues();
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
-  auto const tableTitle = tableFunction.getName();
-  TableLayout::Column parentColumn = TableLayout::Column().
-                                       setName( tableFunction.getTableDescription()).
-                                       setHeaderAlignment( TableLayout::Alignment::left );
-  string logOutput;
 
+  string_view tableTitle = m_tableLayout.getTitleStr();
+  TableLayout::Column parentColumn = TableLayout::Column().
+                                       setName( tableFunction.getTableDescription() ).
+                                       setHeaderAlignment( TableLayout::Alignment::left );
+  if( !m_tableLayout.getColumns().empty() )
+  { // concatainating description parent column if existing
+    parentColumn.m_headerStr = GEOS_FMT( "{}\n{}",
+                                         parentColumn.m_headerStr,
+                                         m_tableLayout.getColumns()[0].m_headerStr );
+  }
+
+  string logOutput;
   if( numDimensions == 1 )
   {
     bool const shortenDescription = tableFunction.getDimUnit( 0 ) == units::Unknown;

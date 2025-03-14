@@ -188,7 +188,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
 {
   using CellLayout = TableLayout::CellLayout;
 
-  CellLayout const & titleInput = tableLayout.getTitle();
+  CellLayout const & titleInput = tableLayout.getTitleLayout();
   size_t const hasTitle = !titleInput.m_lines.empty() && !titleInput.m_lines[0].empty() ? 1 : 0;
 
   // Number of lines per header layer.
@@ -263,7 +263,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   // we add the title, as a first row with all cells merged in one containing the title text
   if( hasTitle )
   {
-    CellLayout const & inputTitleCell = tableLayout.getTitle();
+    CellLayout const & inputTitleCell = tableLayout.getTitleLayout();
     CellLayoutRow & titleRow = headerCellsLayout[0];
     // we setup a row of cells merging with the last cell containing the title
     titleRow = {

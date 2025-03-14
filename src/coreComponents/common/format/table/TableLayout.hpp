@@ -436,14 +436,20 @@ private:
   /**
    * @return The table name. Returned as a for multiline support.
    */
-  CellLayout const & getTitle() const
+  CellLayout const & getTitleLayout() const
   { return m_tableTitleLayout; }
 
   /**
    * @return The table name. Returned as a for multiline support.
    */
-  CellLayout & getTitle()
+  CellLayout & getTitleLayout()
   { return m_tableTitleLayout; }
+
+  /**
+   * @return The table name. Returned as a for multiline support.
+   */
+  string_view getTitleStr() const
+  { return m_tableTitleStr; }
 
   /**
    * @param title The table title
@@ -522,6 +528,19 @@ private:
    */
   void addToColumns( string_view m_headerLayout );
 
+  /**
+   * @brief Create and add columns to the columns vector given a string vector
+   * @param columnNames The columns name
+   */
+  void addToColumns( std::vector< string > const & columnNames );
+
+/**
+ *
+ * @brief Create and add a column to the columns vector given a Column
+ * @param column Vector containing addition information on the column
+ */
+  void addToColumns( TableLayout::Column const & column );
+
 protected:
 
   /**
@@ -547,19 +566,6 @@ protected:
   {
     addToColumns( args ... );
   }
-
-  /**
-   * @brief Create and add columns to the columns vector given a string vector
-   * @param columnNames The columns name
-   */
-  void addToColumns( std::vector< string > const & columnNames );
-
-/**
- *
- * @brief Create and add a column to the columns vector given a Column
- * @param column Vector containing addition information on the column
- */
-  void addToColumns( TableLayout::Column const & column );
 
   /// Columns settings hierarchy
   std::vector< Column > m_tableColumns;
