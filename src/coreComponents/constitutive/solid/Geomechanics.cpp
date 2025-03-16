@@ -31,6 +31,9 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_b2( 0.0 ),
   m_b3( 0.0 ),
   m_b4( 0.0 ),
+  m_C1( 0.0 ),
+  m_C2( 0.0 ),
+  m_C3( 0.0 ),
   m_g0( 0.0 ),
   m_g1( 0.0 ),
   m_g2( 0.0 ),
@@ -101,6 +104,18 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::b4String(), &m_b4 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default tangent elastic bulk modulus parameter 4" );
+
+  registerWrapper( viewKeyStruct::C1String(), &m_C1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for hardened STREN" );
+
+  registerWrapper( viewKeyStruct::C2String(), &m_C2 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for hardened FSLOPE" );
+
+  registerWrapper( viewKeyStruct::C3String(), &m_C3 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for hardened FSLOPE" );
 
   registerWrapper( viewKeyStruct::g0String(), &m_g0 ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -369,7 +384,9 @@ void Geomechanics::postInputInitialization()
     GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
     // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
     // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
-
+    GEOS_THROW_IF( m_C1 < 0.0, "C1 must be greater than or equal to 0", InputError );
+    GEOS_THROW_IF( m_C2 < 0.0, "C2 must be greater than or equal to 0", InputError );
+    GEOS_THROW_IF( m_C3 < 0.0, "C3 must be greater than or equal to 0", InputError );
 }
 
 

@@ -50,6 +50,9 @@ public:
    * @param[in] b2 The value for the tangent elastic bulk modulus paramter 2
    * @param[in] b3 The value for the tangent elastic bulk modulus paramter 3
    * @param[in] b4 The value for the tangent elastic bulk modulus paramter 4
+   * @param[in] C1 The value (constant) for hardened stren
+   * @param[in] C2 The value (constant) for hardened fslope
+   * @param[in] C3 The value (constant) for hardened peakI1
    * @param[in] g0 The value for the tangent elastic shear modulus paramter 0
    * @param[in] g1 The value for the tangent elastic shear modulus paramter 1
    * @param[in] g2 The value for the tangent elastic shear modulus paramter 2
@@ -94,6 +97,9 @@ public:
                        real64 const & b2,
                        real64 const & b3,
                        real64 const & b4,
+                       real64 const & C1,
+                       real64 const & C2,
+                       real64 const & C3,
                        real64 const & g0,
                        real64 const & g1,
                        real64 const & g2,
@@ -161,6 +167,9 @@ public:
     m_b2( b2 ),
     m_b3( b3 ),
     m_b4( b4 ),
+    m_C1( C1 ),
+    m_C2( C2 ),
+    m_C3( C3 ),
     m_g0( g0 ),
     m_g1( g1 ),
     m_g2( g2 ),
@@ -502,6 +511,9 @@ private:
   real64 const & m_b2;
   real64 const & m_b3;
   real64 const & m_b4;
+  real64 const & m_C1;
+  real64 const & m_C2;
+  real64 const & m_C3;
   real64 const & m_g0;
   real64 const & m_g1;
   real64 const & m_g2;
@@ -2734,11 +2746,12 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a2,
-		                                              real64 & a3,
+		                                              re
+al64 & a3,
 		                                              real64 & a4,
 		                                              const real64 & coher,
                                                   const real64 & hardening,
-                                                  const real64 & strengthScale
+                                                  const real64 & GEOS_UNUSED_PARAM( strengthScale )
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
   // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
@@ -2751,15 +2764,19 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   // The following are the input parameters, modified by hardening and or damage
   //  Any change to peakI1 should be copied in the non-hardening return and
   //  yield function updates, which have branch points based on the peakI1 value.
-  real64 stren_h, peakI1_h, fSlope_h, ySlope_h;  
+  //real64 stren_h, peakI1_h, fSlope_h, ySlope_h;  
+	real64 stren_h = m_stren + hardening*m_C1;
+  real64 peakI1_h, fSlope_h, ySlope_h;  
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
 
-  stren_h = m_stren + hardening;
-  fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
+  //stren_h = m_stren + hardening;
+  //fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
+  //ySlope_h = std::min( 0.99999*fSlope_h, m_ySlope );
+  //peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
+  //peakI1_h = strengthScale*peakI1_h;
+  fSlope_h = m_fSlope*(hardening*m_C2/m_g0);
+  peakI1_h = m_peakI1+hardening*m_C3;
   ySlope_h = std::min( 0.99999*fSlope_h, m_ySlope );
-  peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  peakI1_h = strengthScale*peakI1_h;
-
   if (fSlope_h > 0.0 && peakI1_h >= 0.0 && m_stren == 0.0 && ySlope_h == 0.0)
   {// ----------------------------------------------Linear Drucker-Prager
     a1 = peakI1_h * fSlope_h;
@@ -2865,6 +2882,15 @@ public:
 
     /// string/key for tangent elastic bulk modulus parameter 4 
     static constexpr char const * b4String() { return "b4"; }
+
+    /// string/key for constant for tuning hardened stren
+    static constexpr char const * C1String() { return "C1"; }
+
+    /// string/key for constant for tuning  hardened fslope
+    static constexpr char const * C2String() { return "C2"; }
+
+    /// string/key for constant for tuning hardened peakI1
+    static constexpr char const * C3String() { return "C3"; }
 
     /// string/key for tangent elastic shear modulus parameter 0 
     static constexpr char const * g0String() { return "g0"; }
@@ -3029,6 +3055,9 @@ public:
                                 m_b2,
                                 m_b3,
                                 m_b4,
+                                m_C1,
+                                m_C2,
+                                m_C3,
                                 m_g0,
                                 m_g1,
                                 m_g2,
@@ -3103,6 +3132,9 @@ public:
                           m_b2,
                           m_b3,
                           m_b4,
+                          m_C1,
+                          m_C2,
+                          m_C3,
                           m_g0,
                           m_g1,
                           m_g2,
@@ -3241,6 +3273,10 @@ protected:
   real64 m_b3;
   real64 m_b4;
 
+  //  hardening constants
+  real64 m_C1;
+  real64 m_C2;
+  real64 m_C3;
 
   // Tangent elastic shear modulus parameters
   real64 m_g0;
