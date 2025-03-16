@@ -2746,8 +2746,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a2,
-		                                              re
-al64 & a3,
+		                                              real64 & a3,
 		                                              real64 & a4,
 		                                              const real64 & coher,
                                                   const real64 & hardening,
