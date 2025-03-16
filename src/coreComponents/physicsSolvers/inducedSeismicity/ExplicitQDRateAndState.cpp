@@ -127,7 +127,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
     {
       // Compute stresses, and slip velocity and save results at time_n + dtAdapitve
       if( !m_butcherTable.FSAL )
-      {
+      { // The stress update is not needed for FSAL RK methods. Fields are already computed!
         resetStateToBeginningOfStep( domain ); // Reset stress fields
         dtStress = updateStresses( time_n, dtAdaptive, cycleNumber, domain );
         updateSlipVelocity( time_n, dtAdaptive, domain );
@@ -138,6 +138,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
     else
     {
       // Retry with updated time step
+      resetStateToBeginningOfStep( domain ); // Reset stress fields
       dtAdaptive = setNextDt( time_n, dtAdaptive, domain );
     }
   }
