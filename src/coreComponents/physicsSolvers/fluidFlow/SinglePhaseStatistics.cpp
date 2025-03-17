@@ -259,7 +259,8 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     singPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
     singPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
     singPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
-    singPhaseStatsData.addSeparator();
+    singPhaseStatsData.addRow( "", "", "", "" );
+
     singPhaseStatsData.addSeparator();
     singPhaseStatsData.addRow( "statistics", CellType::MergeNext, CellType::MergeNext, "value" );
     singPhaseStatsData.addSeparator();
