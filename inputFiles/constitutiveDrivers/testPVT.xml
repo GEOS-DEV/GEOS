@@ -9,7 +9,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="../baselines/testPVT_hydrogenMixtureA.txt"
+      output="testPVT_hydrogenMixtureA.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -19,7 +19,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="../baselines/testPVT_hydrogenMixtureB.txt"
+      output="testPVT_hydrogenMixtureB.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -29,7 +29,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="../baselines/testPVT_CO2.txt"
+      output="testPVT_CO2.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -39,7 +39,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="../baselines/testPVT_brine.txt"
+      output="testPVT_brine.txt"
       logLevel="1"/>
   </Tasks>
 
@@ -95,25 +95,4 @@
       coordinates="{ 0.0, 1.0 }"
       values="{ 350, 350 }"/>
   </Functions>
-
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
 </Problem>

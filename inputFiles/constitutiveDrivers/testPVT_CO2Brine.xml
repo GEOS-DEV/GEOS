@@ -11,7 +11,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="../baselines/testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
+      output="testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrinePhillipsMixtureB"
@@ -22,7 +22,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="../baselines/testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
+      output="testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrineEzrokhiMixtureA"
@@ -33,7 +33,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="../baselines/testPVT_CO2Brine_testCo2BrineEzrokhiMixtureA.txt"
+      output="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrineEzrokhiMixtureB"
@@ -44,7 +44,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="../baselines/testPVT_CO2Brine_testCo2BrineEzrokhiMixtureB.txt"
+      output="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureB.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2SpycherPruessBrinePhillipsMixtureA"
@@ -55,7 +55,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="../baselines/testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureA.txt"
+      output="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2SpycherPruessBrinePhillipsMixtureB"
@@ -66,7 +66,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="../baselines/testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureB.txt"
+      output="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureB.txt"
       logLevel="1" />
   </Tasks>
 
@@ -129,25 +129,4 @@
       coordinates="{ 0.0, 0.45, 0.55, 1.0 }"
       values="{ 350.0, 350.0, 258, 380 }" />
   </Functions>
-
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }" />
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }" />
-  </ElementRegions>
 </Problem>

@@ -1,0 +1,55 @@
+from geos.ats.test_builder import TestDeck, CurveCheckParameters, generate_geos_tests
+import sys
+sys.path.append("./scripts")
+from pvtDriverPreprocess import get_all_curves
+
+curvecheck_params = {
+    "tolerance": None,
+    "filename": None,
+    "curves": None,
+    "output_columns": 0,
+    "preprocess_instructions": None
+}
+
+def create_test_deck(d):
+    name = d["name"]
+    params = curvecheck_params.copy()
+    params["curves"] = get_all_curves(f"{name}.xml")
+    params["tolerance"] = [1.0e-5] * len(params["curves"])
+    params["filename"] = f"{name}.h5"
+    params["preprocess_instructions"] = [
+        ["./scripts/pvtDriverPreprocess.py", "create_hdf5_file", f"{name}.xml"]
+    ]
+    return TestDeck(
+        name=name,
+        description=d["description"],
+        partitions=((1,1,1),),
+        restart_step=0,
+        check_step=0,
+        restartcheck_params=None,
+        curvecheck_params=CurveCheckParameters(**params))
+
+decks = [{
+    "name": "testPVT",
+    "description": "PVT Driver base test case"
+},{
+    "name": "testPVT_CO2Brine",
+    "description": "PVT Driver test for CO2 Brine fluid models"
+},{
+    "name": "testPVT_CO2BrineTables",
+    "description": "PVT Driver test for CO2 Brine fluid models using user defined tables"
+},{
+    "name": "testPVT_Compositional",
+    "description": "PVT Driver test two phase compositional models"
+},{
+    "name": "testPVT_docExample",
+    "description": "PVT Driver documentation example"
+},{
+    "name": "testPVT_PhaseComposition",
+    "description": "PVT Driver test for output of phase compositions"
+},{
+    "name": "testPVT_ThreePhaseCompositional",
+    "description": "PVT Driver test for three phase immiscible water model"
+}]
+
+generate_geos_tests([create_test_deck(d) for d in decks])
