@@ -12,14 +12,14 @@
       name="QDSolver"
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
-      initialDt="1.e-5"
+      initialDt="1e-5"
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="20"
+        newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
@@ -34,7 +34,7 @@
       discretization="FE1"
       targetRegions="{ Domain, Fault }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-3"
+        newtonTol="1.0e-6"
         logLevel="2"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
@@ -43,8 +43,8 @@
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         solverType="gmres"
-        directParallel="0"
         preconditionerType="mgr"
+        directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangeContactBubbleStab>
     
@@ -74,10 +74,36 @@
       maxEventDt="1e4"
       target="/Solvers/QDSolver"/>
 
-    <!-- <PeriodicEvent
-      name="resarts"
-      timeFrequency="2e4"
+     <!-- Time history collection -->
+    <PeriodicEvent
+      name="slipRateCollection"
+      cycleFrequency="1"
       targetExactTimestep="0"
-      target="/Outputs/restart"/>   -->
+      target="/Tasks/slipVelocityCollection" />
+
+    <PeriodicEvent
+      name="slipCollection"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/slipCollection"/>
+
+    <PeriodicEvent
+      name="shearTractionCollection"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/shearTractionCollection"/>
+
+    <PeriodicEvent
+      name="stateCollection"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/stateCollection"/>        
+
+  <!-- Time history output -->
+   <PeriodicEvent
+      name="timeHistoryOutput"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
   </Events> 
 </Problem>
