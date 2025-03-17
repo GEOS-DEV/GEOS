@@ -91,7 +91,7 @@
      defaultBulkModulus="50.0e9"
      defaultShearModulus="32.04e9"/>
 
-    <RateAndStateFriction
+    <RateAndStateFrictionSlipLaw
       name="frictionLaw"
       defaultA="0.007"
       defaultB="0.005"

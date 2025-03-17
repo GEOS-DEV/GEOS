@@ -17,7 +17,7 @@
 #define GEOS_PHYSICSSOLVERS_INDUCEDSEISMICITY_QUASIDYNAMICEQRK32_HPP
 
 #include "QDRateAndStateBase.hpp"
-#include "kernels/ExplicitRateAndStateKernels.hpp"
+#include "kernels/EmbeddedRungeKuttaKernels.hpp"
 
 namespace geos
 {
