@@ -269,7 +269,8 @@ struct SoreideWhitsonEOSModel
   GEOS_FORCE_INLINE
   static real64 power( real64 const a, real64 const b )
   {
-    return a < MultiFluidConstants::minForSpeciesPresence ? 0.0 : LvArray::math::exp( b * LvArray::math::log( a ) );
+    // return a < MultiFluidConstants::minForSpeciesPresence ? 0.0 : LvArray::math::exp( b * LvArray::math::log( a ) );
+    return a < MultiFluidConstants::minForSpeciesPresence ? 0.0 : std::pow(a,b);
   }
 
   /**
