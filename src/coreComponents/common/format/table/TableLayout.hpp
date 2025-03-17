@@ -118,12 +118,15 @@ public:
   class Column
   {
 public:
+    /// Alias for the list of columns.
+    using ColumnsList = std::vector< Column >;
+
     // The text of the header.
     string m_headerStr;
     /// The header cell layout (view on m_headerStr).
     CellLayout m_headerLayout;
     /// A vector containing all sub-columns in the column.
-    std::vector< Column > m_subColumns;
+    ColumnsList m_subColumns;
     /// struct containing m_alignment for the column (header and values)
     ColumnAlignement m_alignment;
 
@@ -371,6 +374,9 @@ private:
   /// Alias for an initializer list of variants that can contain either a string or a layout column.
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
+  /// Alias for the list of columns.
+  using ColumnsList = Column::ColumnsList;
+
 
   TableLayout() = default;
 
@@ -428,9 +434,15 @@ private:
   }
 
   /**
-   * @return The columns vector
+   * @return The columns list
    */
-  std::vector< Column > const & getColumns() const
+  ColumnsList const & getColumns() const
+  { return m_tableColumns; }
+
+  /**
+   * @return The columns list
+   */
+  ColumnsList & getColumns()
   { return m_tableColumns; }
 
   /**
@@ -568,7 +580,7 @@ protected:
   }
 
   /// Columns settings hierarchy
-  std::vector< Column > m_tableColumns;
+  ColumnsList m_tableColumns;
 
   // Indicate if we have a line break a the beginning of the table
   bool m_lineBreakAtBegin = true;
