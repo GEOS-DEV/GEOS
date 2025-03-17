@@ -1621,7 +1621,8 @@
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
-			<xsd:element name="RateAndStateFriction" type="RateAndStateFrictionType" />
+			<xsd:element name="RateAndStateFrictionAgingLaw" type="RateAndStateFrictionAgingLawType" />
+			<xsd:element name="RateAndStateFrictionSlipLaw" type="RateAndStateFrictionSlipLawType" />
 			<xsd:element name="ReactiveBrine" type="ReactiveBrineType" />
 			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
@@ -2784,7 +2785,21 @@
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSolidProppantPermeabilityType" />
-	<xsd:complexType name="RateAndStateFrictionType">
+	<xsd:complexType name="RateAndStateFrictionAgingLawType">
+		<!--Dc => Rate- and State-dependent friction characteristic length.-->
+		<xsd:attribute name="Dc" type="real64_array" />
+		<!--a => Rate- and State-dependent friction coefficient a.-->
+		<xsd:attribute name="a" type="real64_array" />
+		<!--b => Rate- and State-dependent friction coefficient b.-->
+		<xsd:attribute name="b" type="real64_array" />
+		<!--frictionCoefficient => Friction coefficient-->
+		<xsd:attribute name="frictionCoefficient" type="real64_array" />
+		<!--referenceFrictionCoefficient => Rate- and State-dependent friction reference friction coefficient.-->
+		<xsd:attribute name="referenceFrictionCoefficient" type="real64_array" />
+		<!--referenceVelocity => Rate- and State-dependent friction reference slip rate.-->
+		<xsd:attribute name="referenceVelocity" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="RateAndStateFrictionSlipLawType">
 		<!--Dc => Rate- and State-dependent friction characteristic length.-->
 		<xsd:attribute name="Dc" type="real64_array" />
 		<!--a => Rate- and State-dependent friction coefficient a.-->

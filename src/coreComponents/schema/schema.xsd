@@ -871,8 +871,12 @@
 					<xsd:selector xpath="ProppantSolidProppantPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveRateAndStateFrictionUniqueName">
-					<xsd:selector xpath="RateAndStateFriction" />
+				<xsd:unique name="domainConstitutiveRateAndStateFrictionAgingLawUniqueName">
+					<xsd:selector xpath="RateAndStateFrictionAgingLaw" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveRateAndStateFrictionSlipLawUniqueName">
+					<xsd:selector xpath="RateAndStateFrictionSlipLaw" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveReactiveBrineUniqueName">
@@ -2119,7 +2123,8 @@ the relative residual norm satisfies:
 		<!--upwindingScheme => Type of upwinding scheme. Valid options:
 * PPU
 * C1PPU
-* IHU-->
+* IHU
+* HU2PH-->
 		<xsd:attribute name="upwindingScheme" type="geos_UpwindingScheme" default="PPU" />
 		<!--usePEDFM => (no description available)-->
 		<xsd:attribute name="usePEDFM" type="integer" default="0" />
@@ -2128,7 +2133,7 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:simpleType name="geos_UpwindingScheme">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU|IHU" />
+			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU|IHU|HU2PH" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="OutputsType">
@@ -2637,7 +2642,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--allowLocalCompDensityChopping => Flag indicating whether local (cell-wise) chopping of negative compositions is allowed-->
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contMultiplierDBC => Factor by which continuation parameter is changed every newton when DBC is used-->
@@ -2758,7 +2763,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--allowLocalCompDensityChopping => Flag indicating whether local (cell-wise) chopping of negative compositions is allowed-->
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -2957,6 +2962,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="1" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--timeStepFromTables => Choose time step to honor rates/bhp tables time intervals-->
+		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useTotalMassEquation => Use total mass equation-->
@@ -3351,6 +3358,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="isMatrixPoroelastic" type="integer" default="0" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--leakoffCoefficient => Carter's leakoff coefficient (2*delta_p*(k*phi*Ct/mu/pi)^0.5).-->
+		<xsd:attribute name="leakoffCoefficient" type="real64" default="-1" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Level 0 outputs no specific information for this solver. Higher levels require more outputs.
 1
@@ -3797,7 +3806,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
 		<!--bridgingFactor => Bridging factor used for bridging/screen-out calculation-->
 		<xsd:attribute name="bridgingFactor" type="real64" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -3856,7 +3865,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--allowLocalOBLChopping => Allow keeping solution within OBL limits-->
 		<xsd:attribute name="allowLocalOBLChopping" type="integer" default="1" />
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--componentNames => List of component names-->
@@ -3952,7 +3961,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -3963,7 +3972,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 SourceFluxes application if isThermal is enabled :
 - negative value (injection): the mass balance equation is modified to considered the additional source term,
 - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
-For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
+For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Level 0 outputs no specific information for this solver. Higher levels require more outputs.
@@ -3999,7 +4008,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -4010,7 +4019,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 SourceFluxes application if isThermal is enabled :
 - negative value (injection): the mass balance equation is modified to considered the additional source term,
 - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
-For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
+For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Level 0 outputs no specific information for this solver. Higher levels require more outputs.
@@ -4255,7 +4264,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
-		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -4266,7 +4275,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 SourceFluxes application if isThermal is enabled :
 - negative value (injection): the mass balance equation is modified to considered the additional source term,
 - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
-For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
+For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Level 0 outputs no specific information for this solver. Higher levels require more outputs.
@@ -4455,6 +4464,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--timeStepFromTables => Choose time step to honor rates/bhp tables time intervals-->
+		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
 		<!--writeCSV => Write rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -5287,7 +5298,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
-			<xsd:element name="RateAndStateFriction" type="RateAndStateFrictionType" />
+			<xsd:element name="RateAndStateFrictionAgingLaw" type="RateAndStateFrictionAgingLawType" />
+			<xsd:element name="RateAndStateFrictionSlipLaw" type="RateAndStateFrictionSlipLawType" />
 			<xsd:element name="ReactiveBrine" type="ReactiveBrineType" />
 			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
@@ -5419,6 +5431,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="CO2BrineEzrokhiFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
+		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
@@ -5441,6 +5455,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="CO2BrineEzrokhiThermalFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
+		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
@@ -5463,6 +5479,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="CO2BrinePhillipsFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
+		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
@@ -5485,6 +5503,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="CO2BrinePhillipsThermalFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
+		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
@@ -6564,7 +6584,23 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="RateAndStateFrictionType">
+	<xsd:complexType name="RateAndStateFrictionAgingLawType">
+		<!--defaultA => Default value of the Rate- and State-dependent friction coefficient a.-->
+		<xsd:attribute name="defaultA" type="real64" use="required" />
+		<!--defaultB => Default value of the Rate- and State-dependent friction coefficient b.-->
+		<xsd:attribute name="defaultB" type="real64" use="required" />
+		<!--defaultDc => Default value of the Rate- and State-dependent friction characteristic length.-->
+		<xsd:attribute name="defaultDc" type="real64" use="required" />
+		<!--defaultReferenceFrictionCoefficient => Default value of the Rate- and State-dependent friction reference friction coefficient.-->
+		<xsd:attribute name="defaultReferenceFrictionCoefficient" type="real64" use="required" />
+		<!--defaultReferenceVelocity => Default value of the Rate- and State-dependent friction reference slip rate.-->
+		<xsd:attribute name="defaultReferenceVelocity" type="real64" use="required" />
+		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
+		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="RateAndStateFrictionSlipLawType">
 		<!--defaultA => Default value of the Rate- and State-dependent friction coefficient a.-->
 		<xsd:attribute name="defaultA" type="real64" use="required" />
 		<!--defaultB => Default value of the Rate- and State-dependent friction coefficient b.-->
