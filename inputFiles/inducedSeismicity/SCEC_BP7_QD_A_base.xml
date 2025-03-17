@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Included>
+    <File
+      name="./SCEC_BP7_QD_base.xml"/>
+  </Included>
+
+  <Constitutive>
+    <ElasticIsotropic
+     name="rock"
+     defaultDensity="2670"
+     defaultBulkModulus="50.0e9"
+     defaultShearModulus="32.04e9"/>
+
+    <RateAndStateFrictionAgingLaw
+      name="frictionLaw"
+      defaultA="0.016"
+      defaultB="0.01"
+      defaultDc="0.5e-3"  
+      defaultReferenceVelocity="1.0e-6"
+      defaultReferenceFrictionCoefficient="0.6"/>  
+  </Constitutive>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="BP7_QD_A"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/slipVelocityCollection, /Tasks/slipCollection, /Tasks/shearTractionCollection, /Tasks/stateCollection}"
+      filename="BP7_QD_A" />  
+  </Outputs>
+
+  
+</Problem>

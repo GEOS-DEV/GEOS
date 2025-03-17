@@ -67,11 +67,10 @@ static bool newtonSolve( SurfaceElementSubRegion & subRegion,
       converged.min( elementConverged );
       residualNorm.max( elementResidualNorm );
     } );
-
     real64 const maxResidualNorm = MpiWrapper::max( residualNorm.get() );
     GEOS_LOG_RANK_0( GEOS_FMT( "   Newton iter {} : residual = {:.10e} ", iter, maxResidualNorm ) );
-
-    if( converged.get() )
+    int const globalConvergence = MpiWrapper::min( converged.get() );
+    if( globalConvergence )
     {
       allConverged = true;
       break;

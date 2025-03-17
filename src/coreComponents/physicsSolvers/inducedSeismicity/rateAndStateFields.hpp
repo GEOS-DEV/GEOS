@@ -145,6 +145,14 @@ DECLARE_FIELD( error,
                WRITE_AND_READ,
                "Error for rate-and-state fields" );
 
+DECLARE_FIELD( backSlipRate,
+               "backSlipRate",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "BackSlipRate" );
+
 }
 
 }

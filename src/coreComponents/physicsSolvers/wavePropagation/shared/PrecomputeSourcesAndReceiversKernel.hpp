@@ -389,7 +389,7 @@ struct PreComputeSourcesAndReceivers
    * @param[in] sourceForce force vector of the source
    * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source
    */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
+  template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   Compute3DSourceAndReceiverConstantsWithDAS( localIndex const size,
                                               ArrayOfArraysView< localIndex const > const baseFacesToNodes,
@@ -602,10 +602,7 @@ struct PreComputeSourcesAndReceivers
                 receiverConstants[ircv][iSample * numNodesPerElem + a] += N[a] * sampleIntegrationConstants[ iSample ];
               }
             }
-            if( receiverIsLocal[ircv] != 1 )
-            {
-              RAJA::atomicCAS< ATOMIC_POLICY >( &receiverIsLocal[ ircv ], 0, 2 );
-            }
+            receiverIsLocal[ ircv ] = 2;
           }
         } // end loop over samples
         // determine if the current rank is the owner of this receiver
@@ -622,7 +619,7 @@ struct PreComputeSourcesAndReceivers
                                                                       coords );
         if( receiverFound && elemGhostRank[k] < 0 )
         {
-          RAJA::atomicExchange< ATOMIC_POLICY >( &receiverIsLocal[ ircv ], 1 );
+          receiverIsLocal[ ircv ] = 1;
         }
       } // end loop over receivers
     } );
