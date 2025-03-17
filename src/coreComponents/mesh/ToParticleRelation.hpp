@@ -112,6 +112,17 @@ typedef ToParticleRelation< array2d< localIndex > > FixedToManyParticleRelation;
 typedef ToParticleRelation< ArrayOfArrays< localIndex > > OrderedVariableToManyParticleRelation;
 
 /**
+ * @brief Resize the particle relation at index
+ * @param relation The relationship mapping to remove a single particle relation from
+ *                 a single object from.
+ * @param index The index of the particle to resize relations.
+ * @param size The size of the new particle relation.
+ */
+void resizeArray( OrderedVariableToManyParticleRelation & relation,
+             localIndex const index,
+             localIndex const size );
+
+/**
  * @brief Remove a particle relation from an object in the relation.
  * @param relation The relationship mapping to remove a single particle relation from
  *                 a single object from.
