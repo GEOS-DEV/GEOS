@@ -11,7 +11,7 @@
       initialStress="-1.0"
       steps="50"
       output="none"
-      baseline="../baselines/testTriaxial_elasticIsotropic.txt"
+      baseline="testTriaxial_elasticIsotropic.txt"
       logLevel="0"/>
   </Tasks>
 
@@ -61,7 +61,7 @@
   <ElementRegions>
     <CellElementRegion
       name="dummy"
-      cellBlocks="{ * }"
+      cellBlocks="{ cellBlock01 }"
       materialList="{ dummy }"/>
   </ElementRegions>
 </Problem>

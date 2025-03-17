@@ -11,7 +11,7 @@
       initialStress="-1.0"
       steps="50"
       logLevel="0"
-      baseline="../baselines/testTriaxial_delftEggLoadPathDryUseLinear.txt"
+      baseline="testTriaxial_delftEggLoadPathDryUseLinear.txt"
       output="none"/>
   </Tasks>
 
@@ -66,7 +66,7 @@
   <ElementRegions>
     <CellElementRegion
       name="dummy"
-      cellBlocks="{ * }"
+      cellBlocks="{ cellBlock01 }"
       materialList="{ dummy }"/>
   </ElementRegions>
 </Problem>

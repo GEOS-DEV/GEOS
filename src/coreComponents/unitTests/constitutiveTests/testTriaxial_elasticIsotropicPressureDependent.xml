@@ -12,7 +12,7 @@
       steps="20"
       logLevel="0"
       output="none"
-      baseline="../baselines/testTriaxial_elasticIsotropicPressureDependent.txt"/>
+      baseline="testTriaxial_elasticIsotropicPressureDependent.txt"/>
   </Tasks>
 
   <Events
@@ -57,7 +57,7 @@
   <ElementRegions>
     <CellElementRegion
       name="dummy"
-      cellBlocks="{ * }"
+      cellBlocks="{ cellBlock01 }"
       materialList="{ dummy }"/>
   </ElementRegions>
 </Problem>

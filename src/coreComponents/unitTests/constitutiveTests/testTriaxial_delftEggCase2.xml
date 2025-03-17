@@ -10,7 +10,7 @@
       radialControl="stressFunction"
       initialStress="-4.6e6"
       steps="50"
-      baseline="../baselines/testTriaxial_delftEggCase2.txt"
+      baseline="testTriaxial_delftEggCase2.txt"
       output="none"/>
   </Tasks>
 
@@ -65,7 +65,7 @@
   <ElementRegions>
     <CellElementRegion
       name="dummy"
-      cellBlocks="{ * }"
+      cellBlocks="{ cellBlock01 }"
       materialList="{ dummy }"/>
   </ElementRegions>
 </Problem>
