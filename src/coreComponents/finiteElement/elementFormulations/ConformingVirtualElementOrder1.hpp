@@ -61,12 +61,6 @@ public:
   /// The number of quadrature points per element.
   static constexpr localIndex numQuadraturePoints = 1;
 
-  ConformingVirtualElementOrder1() = default;
-
-  GEOS_HOST_DEVICE
-  virtual ~ConformingVirtualElementOrder1() override
-  {}
-
   /**
    * @struct StackVariables
    * @brief Kernel variables allocated on the stack.
@@ -77,11 +71,6 @@ public:
    */
   struct StackVariables : public FiniteElementBase::StackVariables
   {
-    /**
-     * Default constructor
-     */
-    GEOS_HOST_DEVICE
-    StackVariables() = default;
 
     /// The number of support points.
     localIndex numSupportPoints;
@@ -106,12 +95,6 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData : public FiniteElementBase::MeshData< SUBREGION_TYPE >
   {
-    /**
-     * Constructor
-     */
-    MeshData()
-    {}
-
     /// View to the array containing nodes coordinates.
     InputNodeCoords nodesCoords;
     /// View to the cell-to-node map in the sub-region.
