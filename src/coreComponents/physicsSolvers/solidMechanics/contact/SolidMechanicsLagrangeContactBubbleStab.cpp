@@ -896,8 +896,6 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
 
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
-    // std::cout << fractureState << std::endl;
-
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
                                                           finiteElement::FiniteElementBase const &,
                                                           arrayView1d< localIndex const > const & faceElementList )
@@ -912,8 +910,6 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
 
       arrayView1d< localIndex > const keys_v = keys.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
-
-      // std::cout<< faceElementList.size() << std::endl;
       forAll< parallelDevicePolicy<> >( faceElementList.size(),
                                         [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const kfe )
