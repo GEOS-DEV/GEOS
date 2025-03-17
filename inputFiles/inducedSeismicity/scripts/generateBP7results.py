@@ -81,7 +81,7 @@ class FaultStation:
 
     def __init__(self, element_size=10, location="0 m, 0 m",
                  min_time_step=1, max_time_step=1, input_data=None, station_number=None):
-          """
+        """
         Initialize the FaultStation with either synthetic data or input data.
 
         :param num_timesteps: Number of time steps (default: 100)
