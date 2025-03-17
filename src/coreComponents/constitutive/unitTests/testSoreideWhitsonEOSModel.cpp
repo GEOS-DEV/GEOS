@@ -452,8 +452,8 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( 
   stackArray1d< real64, numComps > logFugacityCoefficients( numComps );
   stackArray2d< real64, numComps *numDof > logFugacityCoefficientDerivs( numComps, numDof );
 
-  // Inflate the values of the log figacity coefficients to catch errors
-  real64 constexpr scale = 1.0e3;
+  // Inflate the values of the log fugacity coefficients to catch errors
+  real64 const scale = 1.0e3;
 
   EOS::computeLogFugacityCoefficients( numComps,
                                        pressure,
