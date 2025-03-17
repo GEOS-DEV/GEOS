@@ -372,7 +372,7 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
     TableLayout tableLayout( getName(), {} );
     if( outputOpts.writeCSV )
     {
-      tableLayout.addToColumns( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
+      tableLayout.addColumn( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
     }
     TableTextFormatter textFormatter( tableLayout );
     GEOS_LOG( textFormatter.toString( *this ));

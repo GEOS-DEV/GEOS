@@ -139,6 +139,13 @@ public:
     /**
      * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
      */
+    explicit Column( string_view name ):
+      Column( name, ColumnAlignement() )
+    {}
+
+    /**
+     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
+     */
     Column( string_view name, ColumnAlignement alignment );
 
     /**
@@ -199,42 +206,49 @@ public:
      * @param subCol A list of sub-column names to add.
      * @return The current column object
      */
-    TableLayout::Column & addSubColumns( std::initializer_list< TableLayout::Column > subCol );
+    Column & addSubColumns( std::initializer_list< Column > subCol );
 
     /**
      * @brief Adds multiple sub-columns to the column.
      * @param subColNames A list of sub-column names to add.
      * @return The current column object
      */
-    TableLayout::Column & addSubColumns( std::initializer_list< string > subColNames );
+    Column & addSubColumns( std::initializer_list< string > subColNames );
 
     /**
      * @brief Adds multiple sub-columns to the column.
      * @param subColNames A list of sub-column names to add.
      * @return The current column object
      */
-    TableLayout::Column & addSubColumns( std::vector< string > const & subColNames );
+    Column & addSubColumns( std::vector< string > const & subColNames );
 
     /**
      * @brief Adds a single sub-column to the column.
      * @param subColName The name of the sub-column to add.
      * @return The current column object.
      */
-    TableLayout::Column & addSubColumns( string_view subColName );
+    Column & addSubColumn( string_view subColName );
+
+    /**
+     * @brief Adds a single sub-column to the column.
+     * @param subCol The sub-column to add.
+     * @return The current column object.
+     */
+    Column & addSubColumn( Column const & subCol );
 
     /**
      * @brief Sets the header alignment for the column.
      * @param headerAlignment The alignment to set for the column header (left, right, or center).
      * @return The current column object
      */
-    TableLayout::Column & setHeaderAlignment( Alignment headerAlignment );
+    Column & setHeaderAlignment( Alignment headerAlignment );
 
     /**
      * @brief Sets the values alignment for the column.
      * @param valueAlignment The alignment to set for the column values (left, right, or center).
      * @return The current column object
      */
-    TableLayout::Column & setValuesAlignment( Alignment valueAlignment );
+    Column & setValuesAlignment( Alignment valueAlignment );
 
     /**
      * @brief Checks if the column has any child columns.
@@ -390,10 +404,7 @@ private:
   {
     setMargin( MarginValue::medium );
     setTitle( title );
-    for( auto const & column :columns )
-    {
-      addToColumns( column );
-    }
+    addColumns( columns );
   }
 
   /**
@@ -430,7 +441,7 @@ private:
   {
     setMargin( MarginValue::medium );
     setTitle( title );
-    addToColumns( args );
+    addColumns( args );
   }
 
   /**
@@ -535,23 +546,28 @@ private:
   { return m_maxColumnWidth; }
 
   /**
-   * @brief Create and add a column to the columns vector given a string
-   * @param m_headerLayout The column name
-   */
-  void addToColumns( string_view m_headerLayout );
-
-  /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
-  void addToColumns( std::vector< string > const & columnNames );
+  void addColumns( std::vector< TableLayout::Column > const & columnNames );
 
-/**
- *
- * @brief Create and add a column to the columns vector given a Column
- * @param column Vector containing addition information on the column
- */
-  void addToColumns( TableLayout::Column const & column );
+  /**
+   * @brief Create and add columns to the columns vector given a string vector
+   * @param columns The columns list
+   */
+  void addColumns( std::vector< string > const & columns );
+
+  /**
+   * @brief Create and add a column to the columns vector given a string
+   * @param columnName The column name
+   */
+  void addColumn( string_view columnName );
+
+  /**
+   * @brief Create and add a column to the columns vector given a Column
+   * @param column Vector containing addition information on the column
+   */
+  void addColumn( TableLayout::Column const & column );
 
 protected:
 
@@ -564,7 +580,7 @@ protected:
     for( auto const & arg : args )
     {
       std::visit( [this]( auto const & value ) {
-        addToColumns( value );
+        addColumn( value );
       }, arg );
     }
   }
@@ -576,7 +592,7 @@ protected:
   template< typename ... Ts >
   void processArguments( Ts &... args )
   {
-    addToColumns( args ... );
+    addColumns( args ... );
   }
 
   /// Columns settings hierarchy

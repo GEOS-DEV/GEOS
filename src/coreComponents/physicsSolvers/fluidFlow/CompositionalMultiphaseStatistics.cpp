@@ -144,7 +144,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
               }
             }
 
-            ptableLayout.addToColumns( pstatsLayout.str());
+            ptableLayout.addColumn( pstatsLayout.str());
             pstatsLayout.str( "" );
           };
 

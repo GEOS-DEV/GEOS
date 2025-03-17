@@ -24,21 +24,29 @@
 namespace geos
 {
 
-void TableLayout::addToColumns( std::vector< string > const & columnNames )
+void TableLayout::addColumns( std::vector< string > const & columnNames )
 {
-  for( auto const & m_headerLayout : columnNames )
+  for( auto const & columnName : columnNames )
   {
-    addToColumns( m_headerLayout );
+    addColumn( columnName );
   }
 }
 
-void TableLayout::addToColumns( string_view m_headerLayout )
+void TableLayout::addColumns( std::vector< TableLayout::Column > const & columns )
 {
-  TableLayout::Column column = TableLayout::Column().setName( m_headerLayout );
+  for( auto const & column : columns )
+  {
+    addColumn( column );
+  }
+}
+
+void TableLayout::addColumn( string_view columnName )
+{
+  TableLayout::Column column = TableLayout::Column().setName( columnName );
   m_tableColumns.emplace_back( column );
 }
 
-void TableLayout::addToColumns( TableLayout::Column const & column )
+void TableLayout::addColumn( TableLayout::Column const & column )
 {
   m_tableColumns.emplace_back( column );
 }
@@ -153,9 +161,15 @@ TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list<
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( string_view subColName )
+TableLayout::Column & TableLayout::Column::addSubColumn( string_view subColName )
 {
   m_subColumns.emplace_back( Column( subColName, TableLayout::ColumnAlignement() ) );
+  return *this;
+}
+
+TableLayout::Column & TableLayout::Column::addSubColumn( TableLayout::Column const & subCol )
+{
+  m_subColumns.push_back( subCol );
   return *this;
 }
 
