@@ -17,11 +17,12 @@
  * @file PhillipsBrineDensity.cpp
  */
 
-#include "EquationOfState.hpp"
 #include "PhillipsBrineDensity.hpp"
-#include "PressureTemperatureCoordinates.hpp"
-#include "BrineSalinity.hpp"
-#include "ImmiscibleWaterParameters.hpp"
+
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"

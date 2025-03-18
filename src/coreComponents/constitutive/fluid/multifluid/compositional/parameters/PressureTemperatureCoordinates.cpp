@@ -17,10 +17,11 @@
  * @file PressureTemperatureCoordinates.hpp
  */
 
+#include "PressureTemperatureCoordinates.hpp"
+
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "functions/FunctionManager.hpp"
-#include "PressureTemperatureCoordinates.hpp"
 
 namespace geos
 {

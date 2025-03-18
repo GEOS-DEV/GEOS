@@ -18,8 +18,9 @@
  */
 
 #include "PhillipsBrineViscosity.hpp"
-#include "PressureTemperatureCoordinates.hpp"
-#include "BrineSalinity.hpp"
+
+#include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 

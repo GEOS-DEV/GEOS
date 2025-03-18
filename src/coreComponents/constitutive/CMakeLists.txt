@@ -246,7 +246,6 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.cpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
-     fluid/multifluid/compositional/models/BrineSalinity.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.cpp
@@ -256,6 +255,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
      fluid/multifluid/compositional/models/PhillipsBrineDensity.cpp
      fluid/multifluid/compositional/models/PhillipsBrineViscosity.cpp
+     fluid/multifluid/compositional/parameters/BrineSalinity.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp
