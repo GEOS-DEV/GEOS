@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -55,11 +55,7 @@ public:
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
-                                                      real64 const & GEOS_UNUSED_PARAM( pressure_k ),
-                                                      real64 const & GEOS_UNUSED_PARAM( pressure_n ),
-                                                      real64 const & temperature,
-                                                      real64 const & GEOS_UNUSED_PARAM( temperature_k ),
-                                                      real64 const & GEOS_UNUSED_PARAM( temperature_n ) ) const override final
+                                                      real64 const & temperature ) const override final
   {
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );

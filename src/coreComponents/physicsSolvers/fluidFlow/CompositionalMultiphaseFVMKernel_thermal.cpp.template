@@ -1,6 +1,6 @@
-#include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalDirichletFluxComputeKernel.hpp"
 
-// using DirichletFaceBasedAssemblyKernelPolicy = @DirichletFaceBasedAssemblyKernelPolicy@;
+// using DirichletFluxComputeKernelPolicy = @DirichletFluxComputeKernelPolicy@;
 
 namespace geos
 {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -150,7 +150,8 @@ public:
     GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)" );
     size_t free, total;
     GEOS_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
-    LIFO_LOG_RANK( " LIFO : available memory on device " << free / ( 1024.0 * 1024.0 * 1024.0 ) << " GB" );
+    double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
+    LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
     return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );
   }
 

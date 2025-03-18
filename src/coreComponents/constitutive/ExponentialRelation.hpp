@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,7 +21,7 @@
 #define GEOS_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
 #include "common/DataTypes.hpp"
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 
 #include <cmath>
 
@@ -421,19 +421,19 @@ public:
 private:
 
   /// variable shift
-  T m_x0;
+  T m_x0{0};
 
   /// variable shift
-  T m_w0;
+  T m_w0{0};
 
   /// scaling coefficient
-  T m_y0;
+  T m_y0{0};
 
   /// exponential coefficient
-  T m_alpha;
+  T m_alpha{0};
 
   /// exponential coefficient
-  T m_beta;
+  T m_beta{0};
 
 };
 

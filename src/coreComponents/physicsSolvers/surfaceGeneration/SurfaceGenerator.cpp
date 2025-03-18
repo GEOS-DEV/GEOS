@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -18,12 +18,11 @@
  */
 
 #include "SurfaceGenerator.hpp"
-#include "ParallelTopologyChange.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
@@ -36,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
 
+#include "ParallelTopologyChange.hpp"
 
 #include <algorithm>
 
@@ -175,20 +175,32 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 
 SurfaceGenerator::SurfaceGenerator( const string & name,
                                     Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_failCriterion( 1 ),
 //  m_maxTurnAngle(91.0),
   m_nodeBasedSIF( 1 ),
   m_isPoroelastic( 0 ),
-  m_rockToughness( 1.0e99 ),
+  m_initialRockToughness( 1.0e99 ),
+  m_toughnessScalingFactor( 0.0 ),
+  m_fractureOrigin( { 0.0, 0.0, 0.0 } ),
   m_mpiCommOrder( 0 )
 {
   this->registerWrapper( viewKeyStruct::failCriterionString(), &this->m_failCriterion );
 
 
-  registerWrapper( viewKeyStruct::rockToughnessString(), &m_rockToughness ).
+  registerWrapper( viewKeyStruct::initialRockToughnessString(), &m_initialRockToughness ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Rock toughness of the solid material" );
+    setDescription( "Initial rock toughness of the solid material" );
+
+  registerWrapper( viewKeyStruct::toughnessScalingFactorString(), &m_toughnessScalingFactor ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Scaling factor for the rock toughness of the solid material" );
+
+  registerWrapper( viewKeyStruct::fractureOriginString(), &m_fractureOrigin ).
+    setDefaultValue( m_fractureOrigin ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Coordinate of fracture origin" );
 
   registerWrapper( viewKeyStruct::nodeBasedSIFString(), &m_nodeBasedSIF ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -253,7 +265,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -325,7 +337,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );//this->getGroupByPath<DomainPartition>("/Problem/domain");
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -367,28 +379,33 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = meshLevel.getFaceManager();
     ElementRegionManager & elementManager = meshLevel.getElemManager();
     arrayView2d< real64 const > const & faceNormals = faceManager.faceNormal();
+    arrayView2d< real64 const > const & faceCenters = faceManager.faceCenter();
 
     //TODO: roughness to KIC should be made a material constitutive relationship.
     arrayView2d< real64 > const & KIC = faceManager.getField< surfaceGeneration::K_IC >();
 
     for( localIndex kf=0; kf<faceManager.size(); ++kf )
     {
-      if( m_rockToughness >= 0 )
+      if( m_initialRockToughness >= 0 )
       {
-        KIC[kf][0] = m_rockToughness;
-        KIC[kf][1] = m_rockToughness;
-        KIC[kf][2] = m_rockToughness;
+        KIC[kf][0] = m_initialRockToughness;
+        KIC[kf][1] = m_initialRockToughness;
+        KIC[kf][2] = m_initialRockToughness;
       }
       else
       {
         arrayView2d< localIndex const > const & faceToRegionMap = faceManager.elementRegionList();
         arrayView2d< localIndex const > const & faceToSubRegionMap = faceManager.elementSubRegionList();
         arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
+
+        KIC[kf][0] = 1e99;
+        KIC[kf][1] = 1e99;
+        KIC[kf][2] = 1e99;
 
         for( localIndex k=0; k<faceToRegionMap.size( 1 ); ++k )
         {
@@ -423,6 +440,25 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
           }
         }
       }
+      if( m_toughnessScalingFactor > 0.0 )
+      {
+        real64 faceCenter[3];
+        faceCenter[0] = faceCenters[kf][0];
+        faceCenter[1] = faceCenters[kf][1];
+        faceCenter[2] = faceCenters[kf][2];
+
+        for( localIndex dim=0; dim<3; ++dim )
+        {
+          real64 const initialRockToughness = KIC[kf][dim];
+
+          real64 const scaledToughness = scalingToughness( m_fractureOrigin,
+                                                           faceCenter,
+                                                           initialRockToughness,
+                                                           m_toughnessScalingFactor );
+
+          KIC[kf][dim] = scaledToughness;
+        }
+      }
     }
   } );
 }
@@ -438,7 +474,7 @@ void SurfaceGenerator::postRestartInitialization()
   // repopulate the fracture stencil
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -478,7 +514,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
 
@@ -504,7 +540,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -558,7 +594,6 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
       permModel.initializeState();
     }
-
   } );
 
   return rval;
@@ -722,27 +757,20 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-      ArrayOfArraysView< localIndex const > const faceMap = subRegion.faceList().toViewConst();
+      arrayView2d< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
       for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
-        nodeMap.resizeArray( kfe, 8 );
 
         localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
+        nodeMap.resizeArray( kfe, 2*numNodesInFace );
         for( localIndex a = 0; a < numNodesInFace; ++a )
         {
 
-          // TODO HACK need to generalize to something other than quads
-          //wu40: I temporarily make it work for tet mesh. Need further check with Randy.
           nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], a );
           nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], a );
         }
 
-        if( numNodesInFace == 3 )
-        {
-          nodeMap[kfe][6] = faceToNodeMap( faceMap[ kfe ][ 0 ], 2 );
-          nodeMap[kfe][7] = faceToNodeMap( faceMap[ kfe ][ 1 ], 2 );
-        }
       }
     } );
   }
@@ -1013,9 +1041,9 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
-  arraySlice1d< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList()[nodeID];
-  arraySlice1d< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList()[nodeID];
-  arraySlice1d< localIndex const > const & nodeToElementMap = nodeManager.elementList()[nodeID];
+  arraySlice1d< localIndex const > const nodeToRegionMap = nodeManager.elementRegionList()[nodeID];
+  arraySlice1d< localIndex const > const nodeToSubRegionMap = nodeManager.elementSubRegionList()[nodeID];
+  arraySlice1d< localIndex const > const nodeToElementMap = nodeManager.elementList()[nodeID];
 
   // BACKWARDS COMPATIBILITY HACK!
   //
@@ -1936,6 +1964,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                                                     this->m_originalFaceToEdges.toViewConst(),
                                                                     faceIndices );
           m_faceElemsRupturedThisSolve.insert( newFaceElement );
+          GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo::SurfaceGenerator, GEOS_FMT ( "Created new FaceElement {} when creating face {} from {}", newFaceElement, newFaceIndex, faceIndex ) );
           modifiedObjects.newElements[ {fractureElementRegion.getIndexInParent(), 0} ].insert( newFaceElement );
         }
       } // if( faceManager.SplitObject( faceIndex, newFaceIndex ) )
@@ -2878,7 +2907,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const &,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                  [&]( localIndex const,
@@ -4551,19 +4580,30 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
     maxRuptureRate = std::max( maxRuptureRate, ruptureRate( faceElemIndex ) );
   }
 
-  real64 globalMaxRuptureRate;
-  MpiWrapper::allReduce( &maxRuptureRate,
-                         &globalMaxRuptureRate,
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOS );
+  real64 const globalMaxRuptureRate = MpiWrapper::allReduce( maxRuptureRate,
+                                                             MpiWrapper::Reduction::Max,
+                                                             MPI_COMM_GEOS );
 
   return globalMaxRuptureRate;
 }
 
+real64 SurfaceGenerator::scalingToughness( R1Tensor const fractureOrigin,
+                                           real64 const (&faceCenter)[3],
+                                           real64 const initialRockToughness,
+                                           real64 const toughnessScalingFactor )
+{
+  real64 const distance = sqrt( (fractureOrigin[0] - faceCenter[0])*(fractureOrigin[0] - faceCenter[0]) +
+                                (fractureOrigin[1] - faceCenter[1])*(fractureOrigin[1] - faceCenter[1]) +
+                                (fractureOrigin[2] - faceCenter[2])*(fractureOrigin[2] - faceCenter[2]) );
+
+  real64 scaledToughness = initialRockToughness*( 1 + toughnessScalingFactor*sqrt( distance ) );
+
+  return scaledToughness;
+}
 
 
-REGISTER_CATALOG_ENTRY( SolverBase,
+
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase,
                         SurfaceGenerator,
                         string const &, dataRepository::Group * const )
 

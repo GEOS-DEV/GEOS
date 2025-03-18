@@ -57,6 +57,8 @@
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
         "H1_Wedge_Lagrange1_Gauss6",
         "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Tetrahedron_Lagrange1_Gauss5",
+        "H1_Tetrahedron_Lagrange1_Gauss14",
         "H1_Pyramid_Lagrange1_Gauss5",
         "H1_Tetrahedron_VEM_Gauss1",
         "H1_Prism5_VEM_Gauss1",
@@ -416,11 +418,11 @@
       "STENCIL"
     ],
     "constants": [
-      [ "FaceBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "FluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "NAME": [
-        "FaceBasedAssemblyKernel"
+        "FluxComputeKernel"
       ],
       "NDIM": [
         1,
@@ -448,18 +450,18 @@
     "explicit": []
   },
 
-  "IsothermalCompositionalMultiphaseFVM_DirichletFaceBasedAssemblyKernels": {
+  "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
       "NCOMP_NDOF",
       "KERNEL_TYPE"
     ],
     "constants": [
-      [ "DirichletFaceBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "NAME": [
-        "DirichletFaceBasedAssemblyKernel"
+        "DirichletFluxComputeKernel"
       ],
       "NCOMP_NDOF": [
         "1, 2",
@@ -479,18 +481,18 @@
     "explicit": []
   },
 
-  "ThermalCompositionalMultiphaseFVM_DirichletFaceBasedAssemblyKernels": {
+  "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
       "NCOMP_NDOF",
       "KERNEL_TYPE"
     ],
     "constants": [
-      [ "DirichletFaceBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
       "NAME": [
-        "DirichletFaceBasedAssemblyKernel"
+        "DirichletFluxComputeKernel"
       ],
       "NCOMP_NDOF": [
         "1, 2",

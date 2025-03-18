@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOS Contributors
@@ -21,6 +21,7 @@
 
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
@@ -29,7 +30,7 @@
 #include "physicsSolvers/surfaceGeneration/LogLevelsInfo.hpp"
 #include "dataRepository/LogLevelsInfo.hpp"
 #include "mesh/MeshFields.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 
 namespace geos
 {
@@ -79,14 +80,29 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to determine whether or not to apply lagging update for the fracture stencil weights. " );
 
+  registerWrapper( viewKeyStruct::leakoffConstString(), &m_leakoffCoefficient ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Carter's leakoff coefficient (2*delta_p*(k*phi*Ct/mu/pi)^0.5)." );
+
   m_numResolves[0] = 0;
+}
+
+template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::setMGRStrategy()
+{
+  LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
+
+  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
+    return;
+
+  linearSolverParameters.mgr.separateComponents = true;
+  linearSolverParameters.dofsPerNode = 3;
 
   // This may need to be different depending on whether poroelasticity is on or not.
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hydrofracture;
-  m_linearSolverParameters.get().mgr.separateComponents = false;
-  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  m_linearSolverParameters.get().dofsPerNode = 3;
-
+  linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::hydrofracture;
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
+                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -117,10 +133,26 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
   } );
 #endif
 
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerField< fields::flow::fractureCreationTime >( viewKeyStruct::fractureCreationTimeString() ).
+        setApplyDefaultValue( 0.0 );
+    } );
+  } );
+
   if( m_isLaggingFractureStencilWeightsUpdate )
   {
     flowSolver()->enableLaggingFractureStencilWeightsUpdate();
   }
+
+  checkRockOnlyMatrix( meshBodies );
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -153,9 +185,32 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
 }
 
 template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::checkRockOnlyMatrix( dataRepository::Group & meshBodies )
+{
+  bool rockOnlyMatrix = true;
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & )
+    {
+      rockOnlyMatrix = false;
+    } );
+  } );
+  GEOS_THROW_IF( (!rockOnlyMatrix && m_leakoffCoefficient > 0),
+                 "Carter's leak-off model is only compatible with rock-only matrix",
+                 InputError );
+}
+
+template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::postInputInitialization()
 {
   Base::postInputInitialization();
+
+  setMGRStrategy();
 
   static const std::set< integer > binaryOptions = { 0, 1 };
   GEOS_ERROR_IF( binaryOptions.count( m_isMatrixPoroelastic ) == 0, viewKeyStruct::isMatrixPoroelasticString() << " option can be either 0 (false) or 1 (true)" );
@@ -164,8 +219,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postInputInitialization()
                  viewKeyStruct::newFractureInitializationTypeString() << " option can be either Pressure or Displacement" );
 
   m_surfaceGenerator = &this->getParent().template getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
-
-  flowSolver()->allowNegativePressure();
 
   GEOS_LOG_RANK_0_IF( m_useQuasiNewton, GEOS_FMT( "{}: activated Quasi-Newton", this->getName()));
 }
@@ -176,10 +229,8 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
                                                                             int const cycleNumber,
                                                                             DomainPartition & domain )
 {
-  if( cycleNumber == 0 && time_n <= 0 )
-  {
-    initializeNewFractureFields( domain );
-  }
+  // for initial fracture initialization in case when surface generator was called outside of the solver
+  initializeNewFractureFields( time_n, domain );
 
   real64 dtReturn = dt;
 
@@ -211,16 +262,13 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
     // currently the only method is implicit time integration
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-
     if( !this->m_performStressInitialization && m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
     {
       locallyFractured = 1;
     }
-    MpiWrapper::allReduce( &locallyFractured,
-                           &globallyFractured,
-                           1,
-                           MPI_MAX,
-                           MPI_COMM_GEOS );
+    globallyFractured = MpiWrapper::allReduce( locallyFractured,
+                                               MpiWrapper::Reduction::Max,
+                                               MPI_COMM_GEOS );
 
     if( globallyFractured == 0 )
     {
@@ -229,7 +277,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
     else
     {
       // We initialize the fields for new fracture cells
-      initializeNewFractureFields( domain );
+      initializeNewFractureFields( time_n, domain );
 
       FieldIdentifiers fieldsToBeSync;
 
@@ -293,7 +341,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume = subRegion.getField< flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
-    ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
     string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
@@ -367,11 +415,11 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
   maxHydraulicAperture  = MpiWrapper::max( maxHydraulicAperture );
 
   GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max aperture change: {} m, max hydraulic aperture change: {} m",
-                                                           this->getName(), fmt::format( "{:.{}f}", maxApertureChange, 6 ), fmt::format( "{:.{}f}", maxHydraulicApertureChange, 6 ) ) );
+                                                           this->getName(), fmt::format( "{:.{}e}", maxApertureChange, 6 ), fmt::format( "{:.{}e}", maxHydraulicApertureChange, 6 ) ) );
   GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min aperture: {} m, max aperture: {} m",
-                                                           this->getName(), fmt::format( "{:.{}f}", minAperture, 6 ), fmt::format( "{:.{}f}", maxAperture, 6 ) ) );
+                                                           this->getName(), fmt::format( "{:.{}e}", minAperture, 6 ), fmt::format( "{:.{}e}", maxAperture, 6 ) ) );
   GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min hydraulic aperture: {} m, max hydraulic aperture: {} m",
-                                                           this->getName(), fmt::format( "{:.{}f}", minHydraulicAperture, 6 ), fmt::format( "{:.{}f}", maxHydraulicAperture, 6 ) ) );
+                                                           this->getName(), fmt::format( "{:.{}e}", minHydraulicAperture, 6 ), fmt::format( "{:.{}e}", maxHydraulicAperture, 6 ) ) );
 }
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition const & domain,
@@ -387,15 +435,15 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition
     string const flowDiscretizationName = flowSolver()->getDiscretizationName();
 
     // restrict coupling to fracture regions only (as done originally in setupSystem)
-    map< std::pair< string, string >, array1d< string > > dispMeshTargets;
-    map< std::pair< string, string >, array1d< string > > presMeshTargets;
+    map< std::pair< string, string >, string_array > dispMeshTargets;
+    map< std::pair< string, string >, string_array > presMeshTargets;
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                     [&] ( string const & meshBodyName,
                                           MeshLevel const & meshLevel,
-                                          arrayView1d< string const > const & regionNames )
+                                          string_array const & regionNames )
     {
-      array1d< string > regions;
+      string_array regions;
       ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
       elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                                       [&]( localIndex const,
@@ -404,8 +452,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition
         regions.emplace_back( region.getName() );
       } );
 
-      dispMeshTargets[std::make_pair( meshBodyName, solidDiscretizationName )] = std::move( regions );
-      presMeshTargets[std::make_pair( meshBodyName, flowDiscretizationName )] = std::move( regions );
+      dispMeshTargets[std::make_pair( meshBodyName, solidDiscretizationName )] = regions;
+      presMeshTargets[std::make_pair( meshBodyName, flowDiscretizationName )] = regions;
     } );
 
     dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
@@ -627,7 +675,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                                              [&]( localIndex const,
@@ -668,8 +716,84 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
 
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
 
+  assembleFluidLeakSource( time, dt, domain, dofManager, localMatrix, localRhs );
+
   this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
+
+template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::
+assembleFluidLeakSource( real64 const time,
+                         real64 const dt,
+                         DomainPartition & domain,
+                         DofManager const & dofManager,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  if( m_leakoffCoefficient <= 0 )
+    return;
+
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >;
+
+  string const presDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                string_array const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElementSubRegion const & subRegion )
+    {
+      localIndex regionSize = subRegion.size();
+
+      string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+      SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+
+      arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
+
+      arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens = fluid.density();
+      arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDens = fluid.dDensity();
+
+      arrayView1d< real64 const > const area = subRegion.getElementArea();
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 const > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime >();
+
+      constexpr integer numDof = 1;
+      constexpr integer numEqn = 1;
+      globalIndex dofIndices[numDof]{};
+      real64 localJacobian[numEqn][numDof]{};
+      forAll< serialPolicy >( regionSize,
+                              [&] ( localIndex const kfe )
+      {
+        if( elemGhostRank[kfe] >= 0 || LvArray::math::abs( time - fractureCreationTime[kfe] ) < 1e-12 )
+          return;
+        const globalIndex localRow = presDofNumber[kfe] - rankOffset;
+        for( integer idof = 0; idof < numDof; ++idof )
+          dofIndices[idof] = presDofNumber[kfe] + idof;
+        localJacobian[0][0] =
+          m_leakoffCoefficient * area[kfe] * dDens[kfe][0][DerivOffset::dP] /
+          LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
+        localMatrix.template addToRow< serialAtomic >( localRow,
+                                                       dofIndices,
+                                                       localJacobian[0],
+                                                       numDof );
+        // mid-point rule in time
+        localRhs[localRow] +=
+          m_leakoffCoefficient * area[kfe] * dens[kfe][0] /
+          LvArray::math::sqrt( time + dt / 2.0 - fractureCreationTime[kfe] );
+      } );
+    } );
+  } );
+}
+
 
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::
@@ -707,16 +831,12 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
     {
       arrayView1d< real64 const > const & fluidPressure = subRegion.getField< flow::pressure >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
       // if matching on lassen/crusher, move to device policy
       using execPolicy = serialPolicy;
       forAll< execPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-        {
-          return;
-        }
 
         constexpr int kfSign[2] = { -1, 1 };
 
@@ -742,7 +862,6 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
         for( localIndex kf=0; kf<2; ++kf )
         {
           localIndex const faceIndex = elemsToFaces[kfe][kf];
-
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
 
@@ -796,7 +915,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -815,12 +934,12 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
       arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
       arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< array1d< globalIndex > >( dispDofKey );
 
-      arrayView2d< real64 const > const dens = fluid.density();
+      arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens = fluid.density();
 
       arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
       arrayView1d< real64 const > const area = subRegion.getElementArea();
 
-      ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
       ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
       arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
@@ -874,7 +993,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -906,15 +1025,23 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 c
 }
 
 template< typename POROMECHANICS_SOLVER >
-real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & currentDt,
+void HydrofractureSolver< POROMECHANICS_SOLVER >::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  Base::resetStateToBeginningOfStep( domain );
+  updateState( domain );
+}
+
+template< typename POROMECHANICS_SOLVER >
+real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & currentTime,
+                                                               real64 const & currentDt,
                                                                DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( currentTime, domain );
   real64 nextDt = 0.0;
 
   if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
   {
-    nextDt = this->setNextDtBasedOnNewtonIter( currentDt );
+    nextDt = this->setNextDtBasedOnIterNumber( currentDt );
   }
   else
   {
@@ -935,7 +1062,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
     localIndex numRows = 0;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             FaceElementSubRegion const & elementSubRegion )
@@ -968,7 +1095,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -990,11 +1117,12 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 }
 
 template< typename POROMECHANICS_SOLVER >
-void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( DomainPartition & domain )
+void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( real64 time,
+                                                                               DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -1018,7 +1146,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = subRegion.m_2dFaceTo2dElems.toViewConst();
         map< localIndex, localIndex > const & edgesToConnectorEdges = subRegion.m_edgesTo2dFaces;
 
-        ArrayOfArraysView< localIndex const > const faceMap = subRegion.faceList().toViewConst();
+        arrayView2d< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
         arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
         arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
@@ -1026,6 +1154,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
         real64 const defaultDensity = fluid.defaultDensity();
         arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
+        arrayView1d< real64 > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime >();
 
 
         arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
@@ -1112,6 +1241,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
               aperture[newElemIndex] = 0;
             }
           }
+          // add creation time
+          fractureCreationTime[newElemIndex] = time;
           GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SurfaceGenerator,
                                       GEOS_FMT( "New elem index = {:4d} , init aper = {:4.2e}, init press = {:4.2e} ",
                                                 newElemIndex, aperture[newElemIndex], fluidPressure[newElemIndex] ) );
@@ -1158,7 +1289,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
             }
           } );
         }
-
         subRegion.m_recalculateConnectionsFor2dFaces.clear();
         subRegion.m_newFaceElements.clear();
       } );
@@ -1169,9 +1299,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 namespace
 {
 typedef HydrofractureSolver<> SinglePhaseHydrofracture;
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseHydrofracture, string const &, Group * const )
 // typedef HydrofractureSolver< MultiphasePoromechanics<> > MultiphaseHydrofracture;
-// REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }
 
 } /* namespace geos */

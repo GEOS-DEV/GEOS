@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,7 +21,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/multiphysics/LogLevelsInfo.hpp"
 
 #include <tuple>
@@ -30,7 +30,7 @@ namespace geos
 {
 
 template< typename ... SOLVERS >
-class CoupledSolver : public SolverBase
+class CoupledSolver : public PhysicsSolverBase
 {
 
 public:
@@ -42,7 +42,7 @@ public:
    */
   CoupledSolver( const string & name,
                  Group * const parent )
-    : SolverBase( name, parent )
+    : PhysicsSolverBase( name, parent )
   {
     forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
     {
@@ -54,7 +54,7 @@ public:
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
 
-    this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+    this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
     addLogLevel< logInfo::Coupling >();
@@ -309,26 +309,15 @@ public:
   }
 
   virtual real64
-  setNextDtBasedOnStateChange( real64 const & currentDt,
-                               DomainPartition & domain ) override
+  setNextDt( real64 const & currentTime,
+             real64 const & currentDt,
+             DomainPartition & domain ) override
   {
-    real64 nextDt = LvArray::NumericLimits< real64 >::max;
+    real64 nextDt = PhysicsSolverBase::setNextDt( currentTime, currentDt, domain );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       real64 const singlePhysicsNextDt =
-        solver->setNextDtBasedOnStateChange( currentDt, domain );
-      nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
-    } );
-    return nextDt;
-  }
-
-  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt ) override
-  {
-    real64 nextDt = SolverBase::setNextDtBasedOnNewtonIter( currentDt );
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-      real64 const singlePhysicsNextDt =
-        solver->setNextDtBasedOnNewtonIter( currentDt );
+        solver->setNextDt( currentTime, currentDt, domain );
       nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
     } );
     return nextDt;
@@ -344,7 +333,7 @@ public:
     {
       solver->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
     } );
-    SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+    PhysicsSolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   /**@}*/
@@ -411,7 +400,7 @@ protected:
                                          int const cycleNumber,
                                          DomainPartition & domain )
   {
-    return SolverBase::solverStep( time_n, dt, cycleNumber, domain );
+    return PhysicsSolverBase::solverStep( time_n, dt, cycleNumber, domain );
   }
 
   /**

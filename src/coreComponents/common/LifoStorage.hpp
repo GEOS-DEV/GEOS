@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -64,7 +64,8 @@ public:
     m_bufferCount( 0 )
   {
     LIFO_LOG_RANK( " LIFO : maximum size "<< m_maxNumberOfBuffers << " buffers " );
-    LIFO_LOG_RANK( " LIFO : buffer size " << m_bufferSize / ( 1024.0 * 1024.0 ) << "MB" );
+    double bufferSize = ( ( double ) m_bufferSize ) / ( 1024.0 * 1024.0 );
+    LIFO_LOG_RANK( " LIFO : buffer size "<< bufferSize << "MB" );
     if( numberOfBuffersToStoreOnDevice < 0 )
     {
 #ifdef GEOS_USE_CUDA

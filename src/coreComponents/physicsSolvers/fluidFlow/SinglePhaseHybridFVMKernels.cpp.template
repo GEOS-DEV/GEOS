@@ -1,4 +1,4 @@
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"

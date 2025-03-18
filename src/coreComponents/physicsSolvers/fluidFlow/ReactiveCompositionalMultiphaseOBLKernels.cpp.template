@@ -1,10 +1,10 @@
-#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
 #include "finiteVolume/FaceElementToCellStencil.hpp"
 
-using FaceBasedAssemblyKernelPolicy = @FaceBasedAssemblyKernelPolicy@;
+using FluxComputeKernelPolicy = @FluxComputeKernelPolicy@;
 
 namespace geos
 {
