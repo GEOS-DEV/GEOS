@@ -254,16 +254,8 @@ DECLARE_FIELD( energy_n,
                array1d< real64 >,
                0,
                NOPLOT,
-               WRITE_AND_READ,
+               NO_WRITE,
                "Energy at the previous converged time step" );
-
-DECLARE_FIELD( massCreated,
-               "massCreated",
-               array1d< real64 >,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "The amount of remaining mass that was introduced when the SurfaceElement was created." );
 
 DECLARE_FIELD( fractureCreationTime,
                "fractureCreationTime",

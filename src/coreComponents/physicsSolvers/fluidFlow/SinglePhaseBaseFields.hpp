@@ -43,15 +43,31 @@ DECLARE_FIELD( mass,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Mass" );
+               "Fluid mass" );
 
 DECLARE_FIELD( mass_n,
                "mass_n",
                array1d< real64 >,
                0,
                NOPLOT,
+               NO_WRITE,
+               "Fluid mass at the previous converged time step" );
+
+DECLARE_FIELD( dMass,
+               "dMass",
+               array2dLayoutFluid,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivatives of the fluid mass" );
+
+DECLARE_FIELD( massCreated,
+               "massCreated",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
                WRITE_AND_READ,
-               "Mass at the previous converged time step" );
+               "The amount of remaining mass that was introduced when the SurfaceElement was created." );
 
 DECLARE_FIELD( mobility,
                "mobility",
@@ -68,6 +84,14 @@ DECLARE_FIELD( dMobility,
                NOPLOT,
                NO_WRITE,
                "dMobility" );
+
+DECLARE_FIELD( dEnergy,
+               "dEnergy",
+               array2dLayoutFluid,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Derivatives of energy" );
 
 }
 

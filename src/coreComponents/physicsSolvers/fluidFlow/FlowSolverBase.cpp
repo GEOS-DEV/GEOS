@@ -46,11 +46,7 @@ template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
                                                               CellElementSubRegion & subRegion,
                                                               arrayView1d< real64 const > const & pressure,
-                                                              arrayView1d< real64 const > const & pressure_k,
-                                                              arrayView1d< real64 const > const & pressure_n,
-                                                              arrayView1d< real64 const > const & temperature,
-                                                              arrayView1d< real64 const > const & temperature_k,
-                                                              arrayView1d< real64 const > const & temperature_n )
+                                                              arrayView1d< real64 const > const & temperature )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
@@ -58,15 +54,35 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
     {
       porousWrapper.updateStateFromPressureAndTemperature( k, q,
                                                            pressure[k],
-                                                           pressure_k[k],
-                                                           pressure_n[k],
-                                                           temperature[k],
-                                                           temperature_k[k],
-                                                           temperature_n[k] );
+                                                           temperature[k] );
     }
   } );
 }
 
+template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityFixedStress( POROUSWRAPPER_TYPE porousWrapper,
+                                               CellElementSubRegion & subRegion,
+                                               arrayView1d< real64 const > const & pressure,
+                                               arrayView1d< real64 const > const & pressure_k,
+                                               arrayView1d< real64 const > const & pressure_n,
+                                               arrayView1d< real64 const > const & temperature,
+                                               arrayView1d< real64 const > const & temperature_k,
+                                               arrayView1d< real64 const > const & temperature_n )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateStateFixedStress( k, q,
+                                            pressure[k],
+                                            pressure_k[k],
+                                            pressure_n[k],
+                                            temperature[k],
+                                            temperature_k[k],
+                                            temperature_n[k] );
+    }
+  } );
+}
 
 template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE porousWrapper,
@@ -564,10 +580,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
-  arrayView1d< real64 const > const & pressure_n = subRegion.getField< flow::pressure_n >();
-
   arrayView1d< real64 const > const & temperature = subRegion.getField< flow::temperature >();
-  arrayView1d< real64 const > const & temperature_n = subRegion.getField< flow::temperature_n >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
@@ -577,13 +590,15 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
     if( m_isFixedStressPoromechanicsUpdate )
     {
+      arrayView1d< real64 const > const & pressure_n = subRegion.getField< flow::pressure_n >();
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< flow::pressure_k >();
+      arrayView1d< real64 const > const & temperature_n = subRegion.getField< flow::temperature_n >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< flow::temperature_k >();
-      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
+      updatePorosityAndPermeabilityFixedStress( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
     }
     else
     {
-      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, pressure_n, temperature, temperature_n, temperature_n );
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, temperature );
     }
   } );
 }
