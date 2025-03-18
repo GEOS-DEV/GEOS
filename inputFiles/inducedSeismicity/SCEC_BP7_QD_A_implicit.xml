@@ -16,7 +16,7 @@
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver"
-      targetSlipIncrement="1.0e-7">
+      targetSlipIncrement="1.0e-4">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
@@ -35,7 +35,7 @@
       discretization="FE1"
       targetRegions="{ Domain, Fault }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-4"
         logLevel="2"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
@@ -58,8 +58,7 @@
   </Solvers>
 
   <Events
-    maxTime="4.5e4"
-    maxCycle="10">
+    maxTime="10">
     <SoloEvent 
       name="generateFault"
       target="/Solvers/SurfaceGen"/>
@@ -72,8 +71,16 @@
       
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e4"
+      maxEventDt=".1"
+      beginTime='0.0'
+      endTime="1.0"
       target="/Solvers/QDSolver"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      maxEventDt="1"
+      beginTime='1.0'
+      target="/Solvers/QDSolver"/>  
 
      <!-- Time history collection -->
     <PeriodicEvent
@@ -103,7 +110,7 @@
   <!-- Time history output -->
    <PeriodicEvent
       name="timeHistoryOutput"
-      cycleFrequency="1"
+      cycleFrequency="10"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
   </Events> 

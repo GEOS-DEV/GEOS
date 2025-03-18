@@ -94,6 +94,7 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
       arrayView1d< real64 > const normalTraction  = subRegion.getField< rateAndState::normalTraction >();
 
       arrayView2d< real64 const > const backgroundShearStress = subRegion.getField< rateAndState::backgroundShearStress >();
+      arrayView2d< real64 const > const perturbation = subRegion.getField< rateAndState::shearStressPerturbation >();
       arrayView1d< real64 const > const backgroundNormalStress = subRegion.getField< rateAndState::backgroundNormalStress >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -101,7 +102,7 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
         normalTraction[k] = backgroundNormalStress[k] - traction[k][0]; // compressive traction is negative in geos
         for( int i = 0; i < 2; ++i )
         {
-          shearTraction( k, i ) = backgroundShearStress( k, i ) + traction( k, i+1 );
+          shearTraction( k, i ) = backgroundShearStress( k, i ) + perturbation( k, i ) + traction( k, i+1 );
         }
       } );
     } );
@@ -121,7 +122,7 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::applyBackGroundStress( real64 cons
                                                                      MeshLevel & mesh,
                                                                      string_array const & )
   {
-    string_array keys = { rateAndState::backgroundNormalStress::key(), rateAndState::backgroundShearStress::key()};
+    string_array keys = { rateAndState::backgroundNormalStress::key(), rateAndState::backgroundShearStress::key(), rateAndState::shearStressPerturbation::key() };
     for( auto key : keys )
     {
       fsManager.apply< ElementSubRegionBase >( time_n + dt,

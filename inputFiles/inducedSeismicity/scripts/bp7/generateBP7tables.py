@@ -65,7 +65,7 @@ def calcualteBP7Parameters( dir, printTables ):
     if (printTables):
         xcoords = np.linspace(bp7.x[0], bp7.x[1], 100).tolist()
         ycoords = np.linspace(bp7.y[0], bp7.y[1], 100).tolist()
-        tcoords = np.linspace(0.1, 1.0, 1000).tolist()
+        tcoords = np.linspace(1e-6, 1.0, 1000).tolist()
         tcoords.append( 3.156e+8 )
         # Prepare lists to store data
         data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 'backgroungShearTraction_x': [], 'backgroungShearTraction_y': [], 'a': [] }
@@ -77,7 +77,7 @@ def calcualteBP7Parameters( dir, printTables ):
             data['a'].append( bp7.rsParameters.a(r) )
     
         writeBP7Tables( data, dir )  
-        forcing_data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 't': tcoords, 'backgroungShearTractionWithForcing_x': [] }
+        forcing_data = { 'z': [0.0], 'x': xcoords, 'y': ycoords, 't': tcoords, 'stressPerturbation_x': [] }
 
         xnc = -50.0
         ync = -50.0
@@ -85,9 +85,7 @@ def calcualteBP7Parameters( dir, printTables ):
         for t in tcoords:
             for x, y in product(xcoords, ycoords):
                 rn = np.sqrt((x - xnc)**2 + (y - ync)**2)
-                r = np.sqrt(x**2 + y**2)
-                tau0 = bp7.reference_shearTraction( r )
-                forcing_data['backgroungShearTractionWithForcing_x'].append( tau0[0] + bp7.nucleation_forcing( rn, t ) )
+                forcing_data['stressPerturbation_x'].append( bp7.nucleation_forcing( rn, t ) )
 
         writeBP7Tables( forcing_data, dir ) 
 

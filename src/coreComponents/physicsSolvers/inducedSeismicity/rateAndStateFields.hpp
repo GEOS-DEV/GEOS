@@ -128,6 +128,14 @@ DECLARE_FIELD( backgroundShearStress,
                WRITE_AND_READ,
                "Background Shear Stress" );
 
+DECLARE_FIELD( shearStressPerturbation,
+                "shearStressPerturbation",
+                array2d< real64 >,
+                0.0,
+                LEVEL_0,
+                WRITE_AND_READ,
+                "Perturbation to the shear stress");               
+
 DECLARE_FIELD( rungeKuttaStageRates,
                "rungeKuttaStageRates",
                array3d< real64 >,

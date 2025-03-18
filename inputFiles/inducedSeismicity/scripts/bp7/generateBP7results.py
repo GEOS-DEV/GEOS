@@ -82,7 +82,7 @@ class FaultStationFile:
 class FaultStation:
     """Stores numerical data for a fault station and provides an interface to generate a FaultFile."""
 
-    def __init__(self, element_size=10, location="0 m, 0 m",
+    def __init__(self, num_timesteps=10, element_size=10, location="0 m, 0 m",
                  min_time_step=1, max_time_step=1, input_data=None, station_number=None):
         """
         Initialize the FaultStation with either synthetic data or input data.
@@ -98,7 +98,8 @@ class FaultStation:
         self.element_size = element_size
         self.location = location
         self.min_time_step = min_time_step
-        self.max_time_step = max_time_step  
+        self.max_time_step = max_time_step
+        self.num_timesteps = num_timesteps 
 
         if input_data is not None and station_number is not None:
             # If input_data is provided, call process_input_data()
@@ -106,7 +107,6 @@ class FaultStation:
         else:
             # Otherwise, generate synthetic data
             self.generate_data(100)
-            self.num_timesteps = num_timesteps     
 
     def read_input_data(self, input_data, station_number):
         """
@@ -118,7 +118,6 @@ class FaultStation:
         """
         # Extract time data
         time = np.squeeze(input_data[f'stateVariable Time'])
-        self.num_timesteps = time.shape[0]
 
         # Extract fault station variables
         slip = np.squeeze(input_data[f'slip faultStation_{station_number}'])
@@ -174,10 +173,10 @@ class FaultStation:
 
         # Lambda function for dual-axis plotting
         plot_dual = lambda ax, y1, y2, label1, label2, color1="b", color2="r": (
-            ax.plot(time, y1, label=label1, color=color1),
+            ax.plot(time[0:self.num_timesteps], y1[0:self.num_timesteps], label=label1, color=color1),
             ax.set_ylabel(label1, color=color1),
             ax.tick_params(axis="y", labelcolor=color1),
-            (ax2 := ax.twinx()).plot(time, y2, label=label2, color=color2, linestyle="--"),
+            (ax2 := ax.twinx()).plot(time[0:self.num_timesteps], y2[0:self.num_timesteps], label=label2, color=color2, linestyle="--"),
             ax2.set_ylabel(label2, color=color2),
             ax2.tick_params(axis="y", labelcolor=color2)
         )
@@ -194,7 +193,7 @@ class FaultStation:
         plot_dual(axs[2], shear_stress_2, shear_stress_3, "Shear Stress 2 (MPa)", "Shear Stress 3 (MPa)")
         
         # Plot State Variable
-        axs[3].plot(time, state, label='State Variable', color='g')
+        axs[3].plot(time[0:self.num_timesteps], state[0:self.num_timesteps], label='State Variable', color='g')
         axs[3].set_xlabel("Time (s)")
         axs[3].set_ylabel("Log10(theta)")
         axs[3].legend()
@@ -213,11 +212,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input-dir', type=str, help='input direrctory', default='.')
     parser.add_argument('-o', '--output-dir', type=str, help='output directory', default='.')
+    parser.add_argument('-nt', '--num-time-steps', type=int, help='num_timesteps', default=10)
     args = parser.parse_args()
     output_dir = os.path.abspath( args.output_dir )
     for i in range(13):  # Loop over 13 fault stations
         location_str = f"x2 = {fault_stations_locations[i][0]}, x3 = {fault_stations_locations[i][1]}"
         station = FaultStation(
+        num_timesteps=args.num_time_steps,
         element_size=10,  
         location=location_str,  
         min_time_step=9.6225e-04,  

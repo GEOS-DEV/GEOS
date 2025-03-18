@@ -15,7 +15,7 @@
       elementTypes="{ C3D8 }"
       xCoords="{ -505, 505 }"
       yCoords="{ -505, 505 }"
-      zCoords="{ -5, 5 }"
+      zCoords="{ -10, 10 }"
       nx="{ 101 }"
       ny="{ 101 }"
       nz="{ 2 }"
@@ -200,7 +200,7 @@
       component="0"
       scale="1.0"
       setNames="{all}"
-      functionName="initial_background_shearStress_t1"
+      functionName="background_shearStress_t1"
       initialCondition="1"/>
 
     <FieldSpecification
@@ -214,20 +214,20 @@
       initialCondition="1"/>        
     
     <FieldSpecification
-      name="backgroundShearStress_t1"
-      fieldName="backgroundShearStress"
+      name="shearStressPerturbation_t1"
+      fieldName="shearStressPerturbation"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="0"
       scale="1.0"
       setNames="{all}"
-      functionName="background_shearStress_t1"/>
+      functionName="shearStressPerturbation_t1"/>
 
     <FieldSpecification
       name="backGroundNormalStress"
       fieldName="backgroundNormalStress"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       scale="25.0e6"
-      setNames="{all}"/>  
+      setNames="{all}"/>
 
 <!-- Initial conditions -->
     <FieldSpecification
@@ -262,7 +262,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="0"
-      scale="1.0e-9"
+      scale="-1.0e-9"
       setNames="{all}"/>
 
     <FieldSpecification
@@ -272,24 +272,22 @@
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="1"
       scale="0.0"
-      setNames="{all}"/>         
-
-                 
+      setNames="{all}"/>                          
   </FieldSpecifications>
 
   <Functions>
    <TableFunction
-      name="initial_background_shearStress_t1"
+      name="background_shearStress_t1"
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
       voxelFile="./tables/backgroungShearTraction_x.geos"
       interpolation="nearest"/>
 
    <TableFunction
-      name="background_shearStress_t1"
-      inputVarNames="{ elementCenter  }"
+      name="shearStressPerturbation_t1"
+      inputVarNames="{ elementCenter, time  }"
       coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos, tables/t.geos }"
-      voxelFile="./tables/backgroungShearTractionWithForcing_x.geos"
+      voxelFile="./tables/stressPerturbation_x.geos"
       interpolation="nearest"/>
 
     <TableFunction

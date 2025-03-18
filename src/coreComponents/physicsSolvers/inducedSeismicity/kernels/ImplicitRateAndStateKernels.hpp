@@ -198,7 +198,7 @@ public:
       else
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "  Attempt {} failed. Halving dt and retrying.", attempt ) );
-        dt *= 0.5;
+        dt *= 0.1;
       }
     }
     if( !converged )
