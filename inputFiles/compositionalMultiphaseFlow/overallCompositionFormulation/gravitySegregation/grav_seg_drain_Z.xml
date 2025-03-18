@@ -4,7 +4,6 @@
   <Included>
     <File name="grav_seg_base.xml"/>
   </Included>
-  <!-- SPHINX_SOLVER   maxCompFractionChange="0.2" minScalingFactor="1.0"-->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <CompositionalMultiphaseFVM
@@ -31,7 +30,6 @@
         logLevel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
-  <!-- SPHINX_SOLVER_END -->
 
   <Functions>
     <TableFunction
@@ -52,7 +50,6 @@
       voxelFile="tables/drainageRelPerm_gas.txt"/>
   </Functions>
 
-  <!-- SPHINX_OUTPUT -->  
   <Outputs>
     <VTK
       name="vtkOutput_drain"/>
@@ -65,7 +62,6 @@
     <Restart
       name="restartOutput"/> 
   </Outputs>
-  <!-- SPHINX_OUTPUT_END -->
 
   <Events
     maxTime="86400">
