@@ -76,8 +76,8 @@ public:
   static constexpr integer ACC_OP = 0;
   // kinetic reaction
   static constexpr integer KIN_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases;
-  // rock internal energy
-  static constexpr integer RE_INTER_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs;
+  // temperature
+  static constexpr integer TEMP_OP = KIN_OP + numDofs + 2 * numPhases + 1 + numPhases;
 
   static constexpr real64 secondsToDaysMult = 1.0 / (60 * 60 * 24);
   static constexpr real64 pascalToBarMult = 1.0 / 1e5;
@@ -201,11 +201,11 @@ public:
     // + rock energy
     if( enableEnergyBalance )
     {
-      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLVals_n[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
+      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[TEMP_OP] - OBLVals_n[TEMP_OP]) * m_rockVolumetricHeatCapacity[ei];
 
       for( integer v = 0; v < numDofs; ++v )
       {
-        stack.localJacobian[numDofs-1][v] += m_referenceRockVolume[ei] * OBLDers[RE_INTER_OP][v] * m_rockVolumetricHeatCapacity[ei];
+        stack.localJacobian[numDofs-1][v] += m_referenceRockVolume[ei] * OBLDers[TEMP_OP][v] * m_rockVolumetricHeatCapacity[ei];
       }   // end of fill offdiagonal part + contribute to diagonal
     }
   }
@@ -519,18 +519,16 @@ public:
   static constexpr integer FLUX_OP = numDofs;
   // diffusion
   static constexpr integer UPSAT_OP = numDofs + numDofs * numPhases;
+  // diffusion
   static constexpr integer GRAD_OP = numDofs + numDofs * numPhases + numPhases;
-
-  // temperature
-  static constexpr integer RE_TEMP_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 1;
-  // rock conduction
-  static constexpr integer ROCK_COND_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2;
   // gravity (density)
-  static constexpr integer GRAV_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3;
+  static constexpr integer GRAV_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs;
   // capillary pressure
-  static constexpr integer PC_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + numPhases;
+  static constexpr integer PC_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + numPhases;
   // porosity
-  static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + 2 * numPhases;
+  static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2 * numPhases;
+  // temperature
+  static constexpr integer TEMP_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 * numPhases + 1;
 
   /// Maximum number of elements at the face
   static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
@@ -804,31 +802,16 @@ public:
     // [4] add rock conduction
     if( enableEnergyBalance )
     {
-      real64 const tDiff = OBLValsJ[RE_TEMP_OP] - OBLValsI[RE_TEMP_OP];
-      real64 const gammaTDiff = transD * m_dt * tDiff;
-
-      arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsUp = (tDiff < 0) ? OBLValsI : OBLValsJ;
-      arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDersUp = (tDiff < 0) ? OBLDersI : OBLDersJ;
-      integer const upOffset = (tDiff < 0) ? 0 : numDofs;
-      localIndex const erUp = (tDiff < 0) ? erI : erJ;
-      localIndex const esrUp = (tDiff < 0) ? esrI : esrJ;
-      localIndex const eiUp = (tDiff < 0) ? eiI : eiJ;
-
-      real64 const poroUp = m_referencePorosity[erUp][esrUp][eiUp];
-      real64 const rockCondUp = m_rockThermalConductivity[erUp][esrUp][eiUp];
+      real64 const tDiff = OBLValsJ[TEMP_OP] - OBLValsI[TEMP_OP];
+      real64 const gammaTi = transD * m_dt * (1 - m_referencePorosity[erI][esrI][eiI]) * m_rockThermalConductivity[erI][esrI][eiI];
+      real64 const gammaTj = transD * m_dt * (1 - m_referencePorosity[erJ][esrJ][eiJ]) * m_rockThermalConductivity[erJ][esrJ][eiJ];
 
       // rock heat transfers flows from cell i to j
-      stack.localFlux[numComps] -= gammaTDiff * OBLValsUp[ROCK_COND_OP] * (1 - poroUp) * rockCondUp;
+      stack.localFlux[numComps] -= tDiff * (gammaTi + gammaTj) / 2;
       for( integer v = 0; v < numDofs; ++v )
       {
-        stack.localFluxJacobian[numComps][v + upOffset] -= gammaTDiff * OBLDersUp[ROCK_COND_OP][v] * (1 - poroUp) * rockCondUp;
-        // the last variable - T
-        if( v == numDofs - 1 )
-        {
-          real64 const tFlux = transD * m_dt * OBLValsUp[ROCK_COND_OP] * (1 - poroUp) * rockCondUp;
-          stack.localFluxJacobian[numComps][v] += tFlux;
-          stack.localFluxJacobian[numComps][numDofs + v] -= tFlux;
-        }
+        stack.localFluxJacobian[numComps][v] += OBLDersI[TEMP_OP][v] * (gammaTi + gammaTj) / 2;
+        stack.localFluxJacobian[numComps][numDofs + v] -= OBLDersJ[TEMP_OP][v] * (gammaTi + gammaTj) / 2;
       }
     }
   }
