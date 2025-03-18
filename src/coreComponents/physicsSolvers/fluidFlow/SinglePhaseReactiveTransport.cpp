@@ -27,6 +27,7 @@
 #include "constitutive/fluid/multifluid/reactive/ReactiveFluidSelector.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 /**
  * @namespace the geos namespace that encapsulates the majority of the code
@@ -44,6 +45,8 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
   m_hasDiffusion( 0 )
 {
   // To add modeling parameters we want to add here
+
+  addLogLevel< logInfo::Convergence >();
 }
 
 // TODO: we need to update the class of ReactiveSingleFluid to be consistent with the chemistry module!!!
@@ -907,8 +910,8 @@ real64 SinglePhaseReactiveTransport::calculateResidualNorm( real64 const & GEOS_
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1]  + globalResidualNorm[2] * globalResidualNorm[2] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( RtotalMass RspeciesAmount ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                                    globalResidualNorm[0], globalResidualNorm[2], globalResidualNorm[1] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( RtotalMass RspeciesAmount ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                               globalResidualNorm[0], globalResidualNorm[2], globalResidualNorm[1] ));
   }
   else
   {
@@ -924,8 +927,8 @@ real64 SinglePhaseReactiveTransport::calculateResidualNorm( real64 const & GEOS_
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( RtotalMass RspeciesAmount ) = ( {:4.2e} {:4.2e} )",
-                                                                    globalResidualNorm[0], globalResidualNorm[1] ) );
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( RtotalMass RspeciesAmount ) = ( {:4.2e} {:4.2e} )",
+                                                               globalResidualNorm[0], globalResidualNorm[1] ) );
   }
   return residualNorm;
 }
