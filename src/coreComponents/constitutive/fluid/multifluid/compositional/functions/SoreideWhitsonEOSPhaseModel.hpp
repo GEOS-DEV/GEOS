@@ -17,8 +17,8 @@
  * @file SoreideWhitsonEOSModel.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSMODEL_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSMODEL_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_HPP_
 
 #include "CubicEOSPhaseModel.hpp"
 
@@ -32,7 +32,7 @@ namespace compositional
 {
 
 template< typename EOS_TYPE >
-struct SoreideWhitsonEOSModel
+struct SoreideWhitsonEOSPhaseModel
 {
   using CubicModel = CubicEOSPhaseModel< EOS_TYPE >;
   using Deriv = typename CubicModel::Deriv;
@@ -269,21 +269,7 @@ struct SoreideWhitsonEOSModel
   GEOS_FORCE_INLINE
   static real64 power( real64 const a, real64 const b )
   {
-    // return a < MultiFluidConstants::minForSpeciesPresence ? 0.0 : LvArray::math::exp( b * LvArray::math::log( a ) );
-    return a < MultiFluidConstants::minForSpeciesPresence ? 0.0 : std::pow(a,b);
-  }
-
-  /**
-   * @brief Check if a component has a specific type
-   * @param[in] type The type of the component
-   * @param[in] targetType The target type to check
-   * @return returns true if the type matches the target type
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static bool isType( integer const type, ComponentProperties::ComponentType const targetType )
-  {
-    return (type == static_cast< int >(targetType));
+    return a < MultiFluidConstants::minForSpeciesPresence ? 0.0 : std::pow( a, b );
   }
 };
 
@@ -294,6 +280,6 @@ struct SoreideWhitsonEOSModel
 } // namespace geos
 
 // Include the implementation
-#include "SoreideWhitsonEOSModelImpl.hpp"
+#include "SoreideWhitsonEOSPhaseModel_impl.hpp"
 
-#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSMODEL_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_HPP_

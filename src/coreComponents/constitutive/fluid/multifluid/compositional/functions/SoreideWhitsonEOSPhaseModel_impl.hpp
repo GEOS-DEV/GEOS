@@ -14,13 +14,14 @@
  */
 
 /**
- * @file SoreideWhitsonEOSModelImpl.hpp
+ * @file SoreideWhitsonEOSPhaseModel_impl.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSMODELIMPL_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSMODELIMPL_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_IMPL_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_IMPL_HPP_
 
-#include "SoreideWhitsonEOSModel.hpp"
+#include "SoreideWhitsonEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ComponentType.hpp"
 
 namespace geos
 {
@@ -34,7 +35,7 @@ namespace compositional
 template< typename EOS_TYPE >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computePureCoefficients( integer const ic,
                          real64 const & pressure,
                          real64 const & temperature,
@@ -63,7 +64,7 @@ computePureCoefficients( integer const ic,
 template< typename EOS_TYPE >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computePureCoefficients( integer const ic,
                          real64 const & pressure,
                          real64 const & temperature,
@@ -105,7 +106,7 @@ computePureCoefficients( integer const ic,
 template< typename EOS_TYPE >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 getBinaryInteractionCiefficient( real64 const & pressure,
                                  real64 const & temperature,
                                  ComponentProperties::KernelWrapper const & componentProperties,
@@ -126,7 +127,8 @@ getBinaryInteractionCiefficient( real64 const & pressure,
   integer type_i = componentProperties.m_componentType[i];
   integer type_j = componentProperties.m_componentType[j];
 
-  if( isType( type_i, ComponentProperties::ComponentType::Water ) && !isType( type_j, ComponentProperties::ComponentType::Water ) )
+  if( isComponentType( type_i, ComponentType::Water ) &&
+      !isComponentType( type_j, ComponentType::Water ) )
   {
     integer t = type_i;
     type_i = type_j;
@@ -136,7 +138,8 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     j = t;
   }
 
-  if( isType( type_i, ComponentProperties::ComponentType::Water ) || !isType( type_j, ComponentProperties::ComponentType::Water ))
+  if( isComponentType( type_i, ComponentType::Water ) ||
+      !isComponentType( type_j, ComponentType::Water ))
   {
     return;
   }
@@ -150,7 +153,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
   // - Yan et al. (2011) https://doi.org/10.1016/j.ijggc.2011.08.004
   // - Chabab et al. (2019) https://doi.org/10.1016/j.ijggc.2019.102825
   // - Chabab et al. (2024) https://doi.org/10.1016/j.ijhydene.2023.10.290
-  if( isType( type_i, ComponentProperties::ComponentType::CarbonDioxide ))
+  if( isComponentType( type_i, ComponentType::CarbonDioxide ))
   {
     // We have options here:
     // Original Soreide & Whitson (1992); Yan et al. (2011); Chabab et al. (2019)
@@ -164,7 +167,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     kij = A0*a0 + A1*a1 + A2*a2;
     dkij_dT = -6.7222*A2*a2 * dTr_dT;
   }
-  else if( isType( type_i, ComponentProperties::ComponentType::HydrogenSulphide ))
+  else if( isComponentType( type_i, ComponentType::HydrogenSulphide ))
   {
     // Equation (15) Soreide & Whitson (1992)
     real64 constexpr A0 = -0.20441;
@@ -172,7 +175,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     kij = A0 + A1*Tr;
     dkij_dT = A1*dTr_dT;
   }
-  else if( isType( type_i, ComponentProperties::ComponentType::Nitrogen ))
+  else if( isComponentType( type_i, ComponentType::Nitrogen ))
   {
     // Equation (13) Soreide & Whitson (1992)
     real64 constexpr A0 = -1.70235;
@@ -183,7 +186,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     kij = A0*a0 + A1*a1*Tr;
     dkij_dT = A1*a1*dTr_dT;
   }
-  else if( isType( type_i, ComponentProperties::ComponentType::Hydrogen ))
+  else if( isComponentType( type_i, ComponentType::Hydrogen ))
   {
     // Equation (12) and Table 5. Chabab et al. (2024)
     real64 constexpr D0 = -2.11917;
@@ -218,7 +221,7 @@ template< typename EOS_TYPE >
 template< integer USD >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeMixtureCoefficients( integer const numComps,
                             real64 const & pressure,
                             real64 const & temperature,
@@ -260,7 +263,7 @@ template< typename EOS_TYPE >
 template< integer USD >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeMixtureCoefficients( integer const numComps,
                             real64 const & pressure,
                             real64 const & temperature,
@@ -323,7 +326,7 @@ template< typename EOS_TYPE >
 template< integer USD >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
@@ -378,7 +381,7 @@ template< typename EOS_TYPE >
 template< integer USD >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
@@ -439,7 +442,7 @@ template< typename EOS_TYPE >
 template< integer USD >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
@@ -505,7 +508,7 @@ template< typename EOS_TYPE >
 template< integer USD >
 GEOS_HOST_DEVICE
 void
-SoreideWhitsonEOSModel< EOS_TYPE >::
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
@@ -693,4 +696,4 @@ computeLogFugacityCoefficients( integer const numComps,
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSMODELIMPL_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_IMPL_HPP_

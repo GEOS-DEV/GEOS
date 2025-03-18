@@ -18,6 +18,8 @@
  */
 
 #include "ComponentProperties.hpp"
+#include "ComponentType.hpp"
+
 #include "common/format/StringUtilities.hpp"
 
 namespace geos
@@ -70,28 +72,9 @@ void ComponentProperties::classifyComponents( string_array const & componentName
 {
   integer const numComps = componentNames.size();
   componentType.resize( numComps );
-  std::unordered_map< string, ComponentType > const nameDict =
-  {
-    { "co2", ComponentType::CarbonDioxide },
-    { "h2", ComponentType::Hydrogen },
-    { "h2s", ComponentType::HydrogenSulphide },
-    { "n2", ComponentType::Nitrogen },
-    { "h2o", ComponentType::Water }
-  };
-
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    string const name = stringutilities::toLower( componentNames[ic] );
-    auto const it = nameDict.find( name );
-    if( it == nameDict.end())
-    {
-      // Default is hydrocarbon
-      componentType[ic] = static_cast< integer >(ComponentType::HydroCarbon);
-    }
-    else
-    {
-      componentType[ic] = static_cast< integer >(it->second);
-    }
+    componentType[ic] = static_cast< integer >( getComponentTypeFromName( componentNames[ic] ) );
   }
 }
 

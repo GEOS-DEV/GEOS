@@ -14,7 +14,7 @@
  */
 
 // Source includes
-#include "constitutive/fluid/multifluid/compositional/functions/SoreideWhitsonEOSModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 
@@ -69,7 +69,7 @@ using TestData = std::tuple<
   >;
 
 template< integer NC, typename EOS_TYPE >
-class SoreideWhitsonEOSModelTestFixture : public ::testing::TestWithParam< TestData< NC > >
+class SoreideWhitsonEOSPhaseModelTestFixture : public ::testing::TestWithParam< TestData< NC > >
 {
 public:
   static constexpr integer numComps = NC;
@@ -77,11 +77,11 @@ public:
   static constexpr real64 absTol = 1.0e-4;
   static constexpr real64 relTol = 1.0e-5;
   using ParamType = TestData< NC >;
-  using EOS = SoreideWhitsonEOSModel< EOS_TYPE >;
+  using EOS = SoreideWhitsonEOSPhaseModel< EOS_TYPE >;
   using Deriv = typename EOS::Deriv;
 public:
-  SoreideWhitsonEOSModelTestFixture();
-  ~SoreideWhitsonEOSModelTestFixture() = default;
+  SoreideWhitsonEOSPhaseModelTestFixture();
+  ~SoreideWhitsonEOSPhaseModelTestFixture() = default;
 
   void testPureCoefficients( ParamType const & testData );
   void testBinaryInteractionCiefficients( ParamType const & testData );
@@ -94,7 +94,7 @@ protected:
 };
 
 template< integer NC, typename EOS_TYPE >
-SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::SoreideWhitsonEOSModelTestFixture():
+SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::SoreideWhitsonEOSPhaseModelTestFixture():
   m_fluid( FluidData< NC >::create() )
 {}
 
@@ -123,7 +123,7 @@ std::vector< TestData< NC > > generateTestData()
 
 template< integer NC, typename EOS_TYPE >
 void
-SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
@@ -183,7 +183,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamTy
 
 template< integer NC, typename EOS_TYPE >
 void
-SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCiefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCiefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
@@ -258,7 +258,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCieffici
 
 template< integer NC, typename EOS_TYPE >
 void
-SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
@@ -311,7 +311,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( Para
   internal::testNumericalDerivative< numValues >( pressure, dp, derivatives.toSliceConst(),
                                                   [&]( real64 const p, auto & values )
   {
-    SoreideWhitsonEOSModel< EOS_TYPE >::
+    SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
                                 p,
                                 temperature,
@@ -331,7 +331,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( Para
   internal::testNumericalDerivative< numValues >( temperature, dT, derivatives.toSliceConst(),
                                                   [&]( real64 const t, auto & values )
   {
-    SoreideWhitsonEOSModel< EOS_TYPE >::
+    SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
                                 pressure,
                                 t,
@@ -355,7 +355,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( Para
     {
       real64 const z_old = composition[kc];
       composition[kc] += z;
-      SoreideWhitsonEOSModel< EOS_TYPE >::
+      SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
       computeMixtureCoefficients( numComps,
                                   pressure,
                                   temperature,
@@ -373,7 +373,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( Para
 
 template< integer NC, typename EOS_TYPE >
 void
-SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testCompressibilityFactor( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFactor( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
@@ -440,7 +440,7 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testCompressibilityFactor( Pa
 
 template< integer NC, typename EOS_TYPE >
 void
-SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
@@ -537,8 +537,8 @@ SoreideWhitsonEOSModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( 
   }
 }
 
-using PengRobinson4 = SoreideWhitsonEOSModelTestFixture< 4, PengRobinsonEOS >;
-using SoaveRedlichKwong3 = SoreideWhitsonEOSModelTestFixture< 3, SoaveRedlichKwongEOS >;
+using PengRobinson4 = SoreideWhitsonEOSPhaseModelTestFixture< 4, PengRobinsonEOS >;
+using SoaveRedlichKwong3 = SoreideWhitsonEOSPhaseModelTestFixture< 3, SoaveRedlichKwongEOS >;
 
 TEST_P( PengRobinson4, testSWModel )
 {
@@ -560,8 +560,8 @@ TEST_P( SoaveRedlichKwong3, testSWModel )
   testLogFugacityCoefficients( testParam );
 }
 
-INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSModelTest, PengRobinson4, ::testing::ValuesIn( generateTestData< 4 >()) );
-INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSModelTest, SoaveRedlichKwong3, ::testing::ValuesIn( generateTestData< 3 >()) );
+INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSPhaseModelTest, PengRobinson4, ::testing::ValuesIn( generateTestData< 4 >()) );
+INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSPhaseModelTest, SoaveRedlichKwong3, ::testing::ValuesIn( generateTestData< 3 >()) );
 
 } // namespace testing
 

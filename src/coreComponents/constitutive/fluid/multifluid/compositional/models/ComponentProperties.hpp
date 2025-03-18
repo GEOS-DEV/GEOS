@@ -37,17 +37,6 @@ namespace compositional
 class ComponentProperties final
 {
 public:
-  enum class ComponentType : integer
-  {
-    HydroCarbon,
-    Water,
-    Hydrogen,
-    HydrogenSulphide,
-    CarbonDioxide,
-    Nitrogen
-  };
-
-public:
   ComponentProperties( string_array const & componentNames,
                        array1d< real64 > const & componentMolarWeight );
   ~ComponentProperties() = default;

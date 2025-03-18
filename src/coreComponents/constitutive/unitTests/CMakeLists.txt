@@ -2,6 +2,7 @@
 set( gtest_geosx_tests
      testCompositionalDensity.cpp
      testCompositionalProperties.cpp
+     testCompositionalFluidComponentType.cpp
      testCubicEOS.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
@@ -16,7 +17,7 @@ set( gtest_geosx_tests
      testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
-     testSoreideWhitsonEOSModel.cpp
+     testSoreideWhitsonEOSPhaseModel.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp )
