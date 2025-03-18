@@ -119,7 +119,7 @@ if(NOT DEFINED GEOS_KERNEL_SPEC)
 endif()
   
 file( READ ${GEOS_KERNEL_SPEC} kernelSpecs )
- 
+
 set( kernelTemplateFileList
      solidMechanics/kernels/SolidMechanicsKernels.cpp.template
      solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template

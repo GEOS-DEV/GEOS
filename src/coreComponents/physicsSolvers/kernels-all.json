@@ -59,25 +59,19 @@
         "H1_Tetrahedron_Lagrange1_Gauss1",
         "H1_Tetrahedron_Lagrange1_Gauss5",
         "H1_Tetrahedron_Lagrange1_Gauss14",
-        "H1_Pyramid_Lagrange1_Gauss5",
-        "H1_Tetrahedron_VEM_Gauss1",
-        "H1_Prism5_VEM_Gauss1",
-        "H1_Prism6_VEM_Gauss1",
-        "H1_Prism7_VEM_Gauss1",
-        "H1_Prism8_VEM_Gauss1",
-        "H1_Prism9_VEM_Gauss1",
-        "H1_Prism10_VEM_Gauss1",
-        "Q1_Hexahedron_Lagrange_GaussLobatto",
-        "Q2_Hexahedron_Lagrange_GaussLobatto",
-        "Q3_Hexahedron_Lagrange_GaussLobatto",
-        "Q4_Hexahedron_Lagrange_GaussLobatto",
-        "Q5_Hexahedron_Lagrange_GaussLobatto",
-        "H1_Hexahedron_VEM_Gauss1",
-        "H1_Wedge_VEM_Gauss1",
-        "H1_Prism11_VEM_Gauss1"
+        "H1_Pyramid_Lagrange1_Gauss5"
       ]
     },
-    "explicit": []
+    "explicit": [ "CellElementSubRegion#ElasticIsotropic#H1_Tetrahedron_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Prism5_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Prism6_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Prism7_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Prism8_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Prism9_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Prism10_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Hexahedron_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Wedge_VEM_Gauss1",
+                  "CellElementSubRegion#ElasticIsotropic#H1_Prism11_VEM_Gauss1" ]
   },
 
   "SolidMechanicsFixedStressThermoPoromechanicsKernels": {
@@ -112,11 +106,6 @@
         "H1_Prism8_VEM_Gauss1",
         "H1_Prism9_VEM_Gauss1",
         "H1_Prism10_VEM_Gauss1",
-        "Q1_Hexahedron_Lagrange_GaussLobatto",
-        "Q2_Hexahedron_Lagrange_GaussLobatto",
-        "Q3_Hexahedron_Lagrange_GaussLobatto",
-        "Q4_Hexahedron_Lagrange_GaussLobatto",
-        "Q5_Hexahedron_Lagrange_GaussLobatto",
         "H1_Hexahedron_VEM_Gauss1",
         "H1_Wedge_VEM_Gauss1",
         "H1_Prism11_VEM_Gauss1"
@@ -153,11 +142,6 @@
         "H1_Prism8_VEM_Gauss1",
         "H1_Prism9_VEM_Gauss1",
         "H1_Prism10_VEM_Gauss1",
-        "Q1_Hexahedron_Lagrange_GaussLobatto",
-        "Q2_Hexahedron_Lagrange_GaussLobatto",
-        "Q3_Hexahedron_Lagrange_GaussLobatto",
-        "Q4_Hexahedron_Lagrange_GaussLobatto",
-        "Q5_Hexahedron_Lagrange_GaussLobatto",
         "H1_Hexahedron_VEM_Gauss1",
         "H1_Wedge_VEM_Gauss1",
         "H1_Prism11_VEM_Gauss1"
