@@ -15,6 +15,7 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/ParticleBlockManager.hpp"
 #include "mesh/generators/MeshComponentBase.hpp"
 namespace geos
