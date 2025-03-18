@@ -2,7 +2,7 @@
 <Problem>
   <Included>
     <File
-      name="./SpringSlider_base.xml"/>
+      name="./SpringSlider_A_base.xml"/>
   </Included>
 
   <Solvers>

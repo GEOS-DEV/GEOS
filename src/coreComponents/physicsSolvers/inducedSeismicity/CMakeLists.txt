@@ -26,6 +26,7 @@ set( inducedSeismicitySolvers_headers
      rateAndStateFields.hpp
      SeismicityRate.hpp
      SpringSlider.hpp
+     kernels/EmbeddedRungeKuttaKernels.hpp
      kernels/ExplicitRateAndStateKernels.hpp
      kernels/ImplicitRateAndStateKernels.hpp
      kernels/RateAndStateKernelsBase.hpp
