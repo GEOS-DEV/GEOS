@@ -1417,8 +1417,7 @@ public:
     m_useTotalMassEquation ( kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) ),
     m_isProducer ( wellControls.isProducer() ),
     m_injection ( wellControls.getInjectionStream() )
-  {
-  }
+  {}
 
   struct StackVariables
   {
@@ -1714,12 +1713,23 @@ public:
      *  With this convention, currentConnRate < 0 at the last connection for a producer
      *                        currentConnRate > 0 at the last connection for a injector
      */
-    // If upwind element is shut avoid upstream calculations
-    localIndex const iwelemNext = m_elemStatus[m_nextWellElemIndex[iwelem]]==WellElementSubRegion::WellElemStatus::OPEN ?  m_nextWellElemIndex[iwelem] : -1;
+
+    if( m_elemStatus[iwelem] == WellElementSubRegion::WellElemStatus::CLOSED )
+    {
+      return;
+    }
+
+    localIndex iwelemNext =  m_nextWellElemIndex[iwelem] ;
+
+    // Current element is open and next element is closed =>   dependency on next segment
+    if( iwelemNext >= 0 &&  m_elemStatus[m_nextWellElemIndex[iwelemNext]]==WellElementSubRegion::WellElemStatus::CLOSED )
+    {
+      iwelemNext = -1;
+    }
+
     real64 const currentConnRate = m_connRate[iwelem];
     localIndex iwelemUp = -1;
-
-    if( iwelemNext < 0 && !m_isProducer ) // exit connection, injector
+    if( iwelemNext < 0 && !m_isProducer )  // exit connection, injector
     {
       // we still need to define iwelemUp for Jacobian assembly
       iwelemUp = iwelem;

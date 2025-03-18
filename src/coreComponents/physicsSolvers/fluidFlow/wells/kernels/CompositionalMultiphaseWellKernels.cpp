@@ -352,16 +352,16 @@ PressureRelationKernel::
   // loop over the well elements to compute the pressure relations between well elements
   forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
-    if ( elemStatus[iwelem] ==  WellElementSubRegion::WellElemStatus::CLOSED  )
+    if( elemStatus[iwelem] ==  WellElementSubRegion::WellElemStatus::CLOSED )
     {
       return;
     }
-    
+
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
- 
+
       WellControls::Control newControl = currentControl;
       ControlEquationHelper::switchControl( isProducer,
                                             inputControl,
