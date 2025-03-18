@@ -27,6 +27,10 @@
 namespace geos
 {
 
+TableFormatter::TableFormatter():
+  m_tableLayout()
+{}
+
 TableFormatter::TableFormatter( TableLayout const & tableLayout ):
   m_tableLayout( tableLayout )
 {}

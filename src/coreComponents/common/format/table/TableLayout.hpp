@@ -626,6 +626,12 @@ class PreparedTableLayout : public TableLayout
 public:
 
   /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * without any column / title). Feature is not tested.
+   */
+  PreparedTableLayout();
+
+  /**
    * @brief Precompute various information for formatting from a configurated TableLayout:
    *        - parent-child relationships between columns and sub-columns,
    *        - layout elements size,

@@ -244,6 +244,12 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
   return DeepFirstIterator( startColumn, idxLayer );
 }
 
+PreparedTableLayout::PreparedTableLayout(  ):
+  TableLayout(),
+  m_columnLayersCount( 0 ),
+  m_lowermostColumnCount( 0 )
+{}
+
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),

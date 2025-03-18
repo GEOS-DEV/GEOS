@@ -38,9 +38,10 @@ public:
   using RowsCellInput = std::vector< std::vector< TableData::CellData > >;
 
   /// Represent a row of the Table (header or values) when structured for formatting
-  struct CellLayoutRow {
-     std::vector< TableLayout::CellLayout > cells;
-     size_t sublinesCount;
+  struct CellLayoutRow
+  {
+    std::vector< TableLayout::CellLayout > cells;
+    size_t sublinesCount;
   };
 
   /// Represent the Table (header or values) when structured for formatting
@@ -52,7 +53,11 @@ protected:
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
 
-  TableFormatter() = default;
+  /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * without any column / title). Feature is not tested.
+   */
+  TableFormatter();
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
@@ -69,10 +74,11 @@ class TableCSVFormatter : public TableFormatter
 public:
 
   /**
-   * @brief Construct a new Table Formatter
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * without any column / title). Feature is not tested.
    */
   TableCSVFormatter():
-    TableFormatter( TableLayout() )
+    TableFormatter()
   {}
 
   /**
@@ -121,10 +127,11 @@ class TableTextFormatter : public TableFormatter
 public:
 
   /**
-   * @brief Construct a new TableFormatter
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * without any column / title). Feature is not tested.
    */
   TableTextFormatter():
-    TableFormatter( TableLayout() )
+    TableFormatter()
   {}
 
   /**
