@@ -15,11 +15,11 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for physics solvers well
+ * This file contains common log level informations for the field specification
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_LOGLEVELSINFO_HPP_
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_LOGLEVELSINFO_HPP_
+#ifndef GEOS_FIELDSPECIFICATION_LOGLEVELSNFO_HPP_
+#define GEOS_FIELDSPECIFICATION_LOGLEVELSNFO_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -36,36 +36,23 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct BoundaryConditions
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Information on boundary conditions"; }
-};
-
-struct SystemSolution
+struct BoundaryCondition
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Log single phase well system solution"; }
+  static constexpr std::string_view getDescription() { return "Boundary condition information"; }
 };
 
-struct WellComponents
+struct FaceBoundaryCondition
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well components information"; }
+  static constexpr std::string_view getDescription() { return "Face boundary condition information"; }
 };
 
-struct WellControl
+struct SourceFluxFailure
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well control information"; }
+  static constexpr std::string_view getDescription() { return "Indicate a source flux failure"; }
 };
-
-struct WellValidity
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well validity information"; }
-};
-
 
 /// @endcond
 ///@}
@@ -74,4 +61,4 @@ struct WellValidity
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_LOGLEVELSINFO_HPP
+#endif // GEOS_FIELDSPECIFICATION_LOGLEVELSNFO_HPP_
