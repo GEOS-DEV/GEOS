@@ -15,11 +15,11 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for physics solvers
+ * This file contains common log level informations for fileIO
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
-#define GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
+#ifndef GEOS_FILEIO_LOGLEVELSINFO_HPP
+#define GEOS_FILEIO_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -35,16 +35,30 @@ namespace logInfo
 ///@{
 
 /// @cond DO_NOT_DOCUMENT
-struct ConfigurationStatistics
+
+struct DataCollectorInitialization
 {
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Output configuration statistics"; }
+  static constexpr int getMinLogLevel() { return 3; }
+  static constexpr std::string_view getDescription() { return "Information on Time history Initialization"; }
 };
 
-struct Tolerance
+struct ChomboIOInitialization
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Information on chomboIO coupling Initialization"; }
+};
+
+struct OutputEvents
 {
   static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Output Tolerance computed the given fracture element"; }
+  static constexpr std::string_view getDescription() { return "Information on output events (VTK/ChomboIO/HDF5)"; }
+};
+
+
+struct HDF5Writing
+{
+  static constexpr int getMinLogLevel() { return 3; }
+  static constexpr std::string_view getDescription() { return "Information on buffered data in an HDF5 file "; }
 };
 
 /// @endcond
@@ -54,4 +68,4 @@ struct Tolerance
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
+#endif // GEOS_FILEIO_LOGLEVELSINFO_HPP

@@ -1006,7 +1006,8 @@
 				</xsd:unique>
 			</xsd:element>
 		</xsd:choice>
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCycle => Maximum simulation cycle for the global event loop. Disabled by default.-->
 		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
@@ -1031,7 +1032,8 @@
 		<xsd:attribute name="finalDtStretch" type="real64" default="0.001" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
@@ -1062,7 +1064,8 @@
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--function => Name of an optional function to evaluate when the time/cycle criteria are met.If the result is greater than the specified eventThreshold, the function will continue to execute.-->
 		<xsd:attribute name="function" type="groupNameRef" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
@@ -1099,7 +1102,8 @@
 		<xsd:attribute name="finalDtStretch" type="real64" default="0.001" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
@@ -1195,7 +1199,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
 . If not provided, we use a default pressure influence function-->
@@ -1224,7 +1229,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
@@ -1252,7 +1258,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
@@ -1288,7 +1295,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
 		<xsd:attribute name="initialPhaseName" type="groupNameRef" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumberOfEquilibrationIterations => Maximum number of equilibration iterations-->
 		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="integer" default="5" />
@@ -1314,7 +1322,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
@@ -1354,7 +1363,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
@@ -1380,7 +1390,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType = stress-->
 		<xsd:attribute name="inputStress" type="R2SymTensor" default="{0,0,0,0,0,0}" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--nodalScaleFlag => The flag to indicate whether to apply the nodal scale on the traction magnitude-->
 		<xsd:attribute name="nodalScaleFlag" type="integer" default="0" />
@@ -1652,7 +1663,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
 		</xsd:choice>
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
 		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
@@ -1699,6 +1711,9 @@ stress - traction is applied to the faces as specified by the inner product of i
 		</xsd:choice>
 		<!--file => Path to the well file-->
 		<xsd:attribute name="file" type="path" use="required" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
 		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
 		<!--minSegmentLength => Minimum length of a well segment [m]-->
@@ -1809,7 +1824,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="fieldsToImport" type="groupNameRef_array" default="{}" />
 		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mainBlockName => For multi-block files, name of the 3d mesh block.-->
 		<xsd:attribute name="mainBlockName" type="groupNameRef" default="main" />
@@ -1949,7 +1965,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--krylovWeakestTol => Weakest-allowed tolerance for adaptive method-->
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs``-->
 		<xsd:attribute name="preconditionerType" type="geos_LinearSolverParameters_PreconditionerType" default="iluk" />
@@ -2034,7 +2051,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="lineSearchResidualFactor" type="real64" default="1" />
 		<!--lineSearchStartingIteration => Iteration when line search starts.-->
 		<xsd:attribute name="lineSearchStartingIteration" type="integer" default="0" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAllowedResidualNorm => Maximum value of residual norm that is allowed in a Newton loop-->
 		<xsd:attribute name="maxAllowedResidualNorm" type="real64" default="1e+09" />
@@ -2151,9 +2169,7 @@ the relative residual norm satisfies:
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Output timing information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputFullQuadratureData => If true writes out data associated with every quadrature point.-->
 		<xsd:attribute name="outputFullQuadratureData" type="integer" default="0" />
@@ -2172,9 +2188,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--inputPath => Path at which the chombo to geos file will be written.-->
 		<xsd:attribute name="inputPath" type="string" default="/INVALID_INPUT_PATH" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Output timing information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputPath => Path at which the geos to chombo file will be written.-->
 		<xsd:attribute name="outputPath" type="string" use="required" />
@@ -2191,9 +2205,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Output timing information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
@@ -2204,9 +2216,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Output timing information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
@@ -2219,9 +2229,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel-->
 		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="{}" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Output timing information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
 		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
@@ -2249,7 +2257,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="filename" type="string" default="TimeHistory" />
 		<!--format => The output file format for time history output.-->
 		<xsd:attribute name="format" type="string" default="hdf" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
@@ -2267,7 +2276,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
 		<!--levelNames => Names of mesh levels to output.-->
 		<xsd:attribute name="levelNames" type="string_array" default="{}" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--numberOfTargetProcesses => Number of output aggregate files to be written.-->
 		<xsd:attribute name="numberOfTargetProcesses" type="integer" default="1" />
@@ -2380,17 +2390,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -2429,17 +2429,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -2514,17 +2504,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -2589,17 +2569,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -2662,17 +2632,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--kappaminDBC => Factor that controls how much dissipation is kept in the system when continuation is used-->
 		<xsd:attribute name="kappaminDBC" type="real64" default="1e-20" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -2775,17 +2735,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -2848,19 +2798,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
- - Crossflow information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -2883,18 +2821,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
 		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
@@ -2936,19 +2863,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Well control information
- - Crossflow information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -2995,7 +2910,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
@@ -3074,17 +2990,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -3149,17 +3055,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
 		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
@@ -3214,17 +3110,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
@@ -3249,17 +3135,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--shearImpedance => Shear impedance.-->
 		<xsd:attribute name="shearImpedance" type="real64" use="required" />
@@ -3284,17 +3160,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--shearImpedance => Shear impedance.-->
 		<xsd:attribute name="shearImpedance" type="real64" use="required" />
@@ -3317,18 +3183,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--proppantSolverName => Name of the proppant solver used by the coupled solver-->
 		<xsd:attribute name="proppantSolverName" type="groupNameRef" use="required" />
@@ -3361,19 +3216,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--leakoffCoefficient => Carter's leakoff coefficient (2*delta_p*(k*phi*Ct/mu/pi)^0.5).-->
 		<xsd:attribute name="leakoffCoefficient" type="real64" default="-1" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
- - Fracture generation information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
@@ -3418,17 +3261,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--shearImpedance => Shear impedance.-->
 		<xsd:attribute name="shearImpedance" type="real64" use="required" />
@@ -3455,17 +3288,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--shearImpedance => Shear impedance.-->
 		<xsd:attribute name="shearImpedance" type="real64" use="required" />
@@ -3492,17 +3315,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3534,18 +3347,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3579,18 +3381,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3620,19 +3411,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
- - Crossflow information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -3657,18 +3436,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3701,17 +3469,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
 		<xsd:attribute name="localDissipation" type="geos_PhaseFieldDamageFEM_LocalDissipation" use="required" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3744,18 +3502,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -3822,17 +3569,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -3879,17 +3616,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -3934,17 +3661,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--stressSolverName => Name of solver for computing stress-->
 		<xsd:attribute name="stressSolverName" type="string" default="" />
@@ -3975,17 +3692,7 @@ SourceFluxes application if isThermal is enabled :
 For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -4022,17 +3729,7 @@ SourceFluxes application if isThermal is enabled :
 For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -4065,18 +3762,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -4112,18 +3798,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -4153,18 +3828,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsConformingFracturesSolverName => Name of the poromechanicsConformingFractures solver used by the coupled solver-->
 		<xsd:attribute name="poromechanicsConformingFracturesSolverName" type="groupNameRef" use="required" />
@@ -4193,18 +3857,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -4234,18 +3887,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -4278,17 +3920,7 @@ SourceFluxes application if isThermal is enabled :
 For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
@@ -4317,18 +3949,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -4353,18 +3974,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
 		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
@@ -4400,18 +4010,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
 		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
@@ -4448,19 +4047,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Well control information
- - Crossflow information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -4491,18 +4078,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--iterPenaltyT => Factor for tuning the iterative penalty coefficient for tangential traction-->
 		<xsd:attribute name="iterPenaltyT" type="real64" default="0.1" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling
- - Configuration information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4561,17 +4137,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4615,18 +4181,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling
- - Configuration information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4672,17 +4227,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4726,17 +4271,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -4796,17 +4331,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--needsNeighborList => Flag for whether to construct neighbor list-->
 		<xsd:attribute name="needsNeighborList" type="integer" default="0" />
@@ -4865,21 +4390,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--isPoroelastic => Flag that defines whether the material is poroelastic or not.-->
 		<xsd:attribute name="isPoroelastic" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Fracture generation information
-2
- - The summary of declared fields and coupling
- - Mapping information
-3
- - Rupture rate information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
@@ -4921,7 +4432,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	<xsd:complexType name="CellToCellDataCollectionType">
 		<!--flowSolverName => Name of the flow solver, to get the permeabilities.-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
-		<!--logLevel => When higher than 1: Display store events details.-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meshBody => Name of the target -->
 		<xsd:attribute name="meshBody" type="groupNameRef" use="required" />
@@ -4930,9 +4442,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -4949,10 +4459,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--flowSolverName => Name of the flow solver-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - CFL information
- - Print statistics-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
@@ -4963,9 +4470,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="HydrofractureInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -4976,9 +4481,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -4989,9 +4492,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -5007,7 +4508,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
 		<!--fluid => Fluid to test-->
 		<xsd:attribute name="fluid" type="groupNameRef" use="required" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
@@ -5047,7 +4549,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
 		<!--fluid => Fluid to test-->
 		<xsd:attribute name="fluid" type="groupNameRef" use="required" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
@@ -5063,7 +4566,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	<xsd:complexType name="RelpermDriverType">
 		<!--baseline => Baseline file-->
 		<xsd:attribute name="baseline" type="path" default="none" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
@@ -5076,9 +4580,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -5089,9 +4591,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -5102,9 +4602,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -5115,9 +4613,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -5128,9 +4624,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
@@ -5143,9 +4637,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--flowSolverName => Name of the flow solver-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Print statistics-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => Write statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
@@ -5156,9 +4648,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--disableInelasticity => Flag to enable/disable inelastic behavior-->
 		<xsd:attribute name="disableInelasticity" type="integer" default="0" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Initialization information-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--resetDisplacements => Flag to reset displacements (and velocities)-->
 		<xsd:attribute name="resetDisplacements" type="integer" default="1" />
@@ -5169,9 +4659,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsStatisticsType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Print statistics-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
@@ -5186,13 +4674,7 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<!--fluxNames => Name(s) array of the SourceFlux(s) for which we want the statistics. Use "*" to target all SourceFlux.-->
 		<xsd:attribute name="fluxNames" type="groupNameRef_array" default="{*}" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Print aggregated statistics of all source fluxes in a mesh
-2
- - Print statistics for each source flux in a mesh
-3
- - Print statistics for each source flux in each regions-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => Write statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
@@ -5206,7 +4688,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="baseline" type="path" default="none" />
 		<!--initialStress => Initial stress (scalar used to set an isotropic stress state)-->
 		<xsd:attribute name="initialStress" type="real64" use="required" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--material => Solid material to test-->
 		<xsd:attribute name="material" type="groupNameRef" use="required" />
@@ -5439,7 +4922,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
@@ -5463,7 +4947,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
@@ -5487,7 +4972,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
@@ -5511,7 +4997,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
-		<!--logLevel => Log level-->
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
@@ -6623,6 +6110,9 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -6639,6 +6129,9 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
