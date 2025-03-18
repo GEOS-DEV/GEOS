@@ -20,6 +20,7 @@ Contains:
 set( surfaceGeneration_headers
      EmbeddedSurfaceGenerator.hpp
      EmbeddedSurfacesParallelSynchronization.hpp
+     LogLevelsInfo.hpp
      ParallelTopologyChange.hpp
      SurfaceGenerator.hpp
      SurfaceGeneratorFields.hpp
