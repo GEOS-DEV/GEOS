@@ -18,7 +18,7 @@
  */
 
 #include "MultiFluidTest.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"

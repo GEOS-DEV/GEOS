@@ -18,9 +18,9 @@
  */
 
 #include "ImmiscibleWaterFlashModel.hpp"
-#include "ImmiscibleWaterParameters.hpp"
-#include "EquationOfState.hpp"
-#include "CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 
 namespace geos
 {
