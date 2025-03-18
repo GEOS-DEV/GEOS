@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SoreideWhitsonEOSModel.hpp
+ * @file SoreideWhitsonEOSPhaseModel.hpp
  */
 
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_HPP_
