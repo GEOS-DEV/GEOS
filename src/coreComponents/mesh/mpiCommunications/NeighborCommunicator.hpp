@@ -23,7 +23,6 @@
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
 #include "../ElementRegionManager.hpp"
-#include "../ElementRegionManager.hpp"
 
 namespace geos
 {
@@ -291,21 +290,6 @@ public:
   }
 
   void addNeighborGroupToMesh( MeshLevel & mesh ) const;
-
-
-  localIndex_array m_newLocalNodes;
-  localIndex_array m_newLocalEdges;
-  localIndex_array m_newLocalFaces;
-  ElementRegionManager::ElementReferenceAccessor< array1d< localIndex > > m_newLocalElements;
-  array1d< array1d< localIndex_array > > m_newLocalElementsData;
-  buffer_unit_type const * m_receiveBufferPtr = nullptr;
-
-  localIndex_array m_newGhostNodes;
-  localIndex_array m_newGhostEdges;
-  localIndex_array m_newGhostFaces;
-  ElementRegionManager::ElementReferenceAccessor< localIndex_array > m_newGhostElems;
-  array1d< array1d< localIndex_array > > m_newGhostElemsData;
-
 
 private:
 

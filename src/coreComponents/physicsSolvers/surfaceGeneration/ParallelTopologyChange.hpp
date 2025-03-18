@@ -24,8 +24,6 @@
 
 #define PARALLEL_TOPOLOGY_CHANGE_METHOD 1
 
-#define PARALLEL_TOPOLOGY_CHANGE_METHOD 1
-
 namespace geos
 {
 class MeshLevel;

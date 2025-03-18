@@ -2389,7 +2389,6 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
   arrayView2d< localIndex const > const & faceToSubRegionMap = faceManager.elementSubRegionList();
   arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
 
-
 #if 1
   if( getLogLevel() > 2 )
   {

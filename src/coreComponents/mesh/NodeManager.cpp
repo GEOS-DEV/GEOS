@@ -27,7 +27,6 @@
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -299,10 +298,6 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      packList,
                                      m_toElements.getElementRegionManager(),
                                      overwriteUpMaps );
-
-  // GEOS_ERROR_IF_EQ( m_unmappedGlobalIndicesInToEdges.size(), 0 );
-  // GEOS_ERROR_IF_EQ( m_unmappedGlobalIndicesInToFaces.size(), 0 );
-  
 
   return unPackedSize;
 }
