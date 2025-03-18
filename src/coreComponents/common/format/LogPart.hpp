@@ -210,7 +210,7 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
     static_assert( has_formatter_v< decltype(args) >,
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
-    std::vector < string > splitValues =  stringutilities::divideLines< string >( value );
+    std::vector< string_view > splitValues =  stringutilities::divideLines< string_view >( value );
     values.insert( values.end(), splitValues.begin(), splitValues.end() );
     maxValueSize = std::max( maxValueSize, value.size());
   } (), ...);

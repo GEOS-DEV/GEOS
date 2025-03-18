@@ -248,7 +248,6 @@ std::vector< STRING_T > divideLines( string_view value )
     end = value.find( '\n', current );
   }
   // Add the last part
-  std::cout << "string view txt " <<  STRING_T( value.substr( current )  ) << std::endl;
   if( current <= value.size())
     lines.push_back( STRING_T( value.substr( current )  ) );
 

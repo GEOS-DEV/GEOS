@@ -86,7 +86,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
     auto wrappedValues = wrapTextToMaxLength( values, valueSpaceAvailable );
 
     size_t maxValueWidth = (*std::max_element( wrappedValues.begin(), wrappedValues.end(),
-                                                     []( string const & a, string const & b ) {
+                                                     []( string_view a, string_view b ) {
       return a.length() < b.length();
     } )).size();
    // maxValueWidth = 0;
