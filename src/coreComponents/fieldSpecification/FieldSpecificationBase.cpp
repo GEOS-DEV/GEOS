@@ -17,6 +17,7 @@
 
 #include "common/MpiWrapper.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -83,7 +84,9 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
 
-  enableLogLevelInput();
+  addLogLevel< logInfo::BoundaryCondition >();
+  addLogLevel< logInfo::FaceBoundaryCondition >();
+  addLogLevel< logInfo::SourceFluxFailure >();
 }
 
 
