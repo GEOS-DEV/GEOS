@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSEFEM_HPP_
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
-
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 namespace geos
 {
 
@@ -41,6 +41,8 @@ public:
                                                                        CONSTITUTIVE_TYPE,
                                                                        FE_TYPE >;
 
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
+
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
@@ -56,17 +58,10 @@ public:
   using Base::m_fracturePresDofNumber;
   using Base::m_matrixPresDofNumber;
   using Base::m_wDofNumber;
+  using Base::m_dFluidMass;
   using Base::m_fluidDensity;
-  using Base::m_fluidDensity_n;
-  using Base::m_dFluidDensity_dPressure;
-  using Base::m_porosity_n;
   using Base::m_surfaceArea;
-  using Base::m_elementVolume;
-  using Base::m_deltaVolume;
   using Base::m_cellsToEmbeddedSurfaces;
-  using Base::m_dt;
-
-
 
   ThermalSinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
                                        EdgeManager const & edgeManager,
@@ -160,20 +155,15 @@ public:
 
 private:
 
-  /// Views on fluid density derivative wrt temperature
-  arrayView2d< real64 const > const m_dFluidDensity_dTemperature;
+  /// Views on energy
+  arrayView1d< real64 const > const m_energy;
+  arrayView1d< real64 const > const m_energy_n;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_dEnergy;
 
   /// Views on fluid internal energy
-  arrayView2d< real64 const > const m_fluidInternalEnergy_n;
-  arrayView2d< real64 const > const m_fluidInternalEnergy;
-  arrayView2d< real64 const > const m_dFluidInternalEnergy_dPressure;
-  arrayView2d< real64 const > const m_dFluidInternalEnergy_dTemperature;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidInternalEnergy;
 
-  /// Views on temperature
-  arrayView1d< real64 const > const m_temperature_n;
-  arrayView1d< real64 const > const m_temperature;
-
-  /// The rank-global fluid pressure array.
+  /// The rank-global fluid temperature array.
   arrayView1d< real64 const > const m_matrixTemperature;
 };
 

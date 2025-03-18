@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -27,7 +27,7 @@ namespace coupledReservoirAndWellsInternal
 {
 
 void
-addCouplingNumNonzeros( SolverBase const * const solver,
+addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
                         DomainPartition & domain,
                         DofManager & dofManager,
                         arrayView1d< localIndex > const & rowLengths,
@@ -38,7 +38,7 @@ addCouplingNumNonzeros( SolverBase const * const solver,
 {
   solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & meshLevel,
-                                                                        arrayView1d< string const > const & regionNames )
+                                                                        string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
@@ -111,18 +111,18 @@ addCouplingNumNonzeros( SolverBase const * const solver,
   } );
 }
 
-bool validateWellPerforations( SolverBase const * const reservoirSolver,
+bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
                                WellSolverBase const * const wellSolver,
                                DomainPartition const & domain )
 {
   std::pair< string, string > badPerforation;
 
-  arrayView1d< string const > const flowTargetRegionNames =
-    reservoirSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & flowTargetRegionNames =
+    reservoirSolver->getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
 
   wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                             MeshLevel const & meshLevel,
-                                                                            arrayView1d< string const > const & regionNames )
+                                                                            string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )

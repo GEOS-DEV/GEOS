@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -69,8 +69,8 @@ void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group & pare
 {
   SlurryFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_density.setValues< serialPolicy >( m_referenceDensity );
-  m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
+  m_density.value.setValues< serialPolicy >( m_referenceDensity );
+  m_viscosity.value.setValues< serialPolicy >( m_referenceViscosity );
 }
 
 
@@ -109,21 +109,21 @@ ProppantSlurryFluid::createKernelWrapper()
                         m_nIndices,
                         m_Ks,
                         m_isNewtonianFluid,
-                        m_density,
-                        m_dDensity_dPressure,
+                        m_density.value,
+                        m_density.derivs,
                         m_dDensity_dProppantConc,
                         m_dDensity_dCompConc,
                         m_componentDensity,
                         m_dCompDens_dPres,
                         m_dCompDens_dCompConc,
-                        m_fluidDensity,
+                        m_fluidDensity.value,
                         m_dFluidDens_dPres,
                         m_dFluidDens_dCompConc,
                         m_fluidViscosity,
                         m_dFluidVisc_dPres,
                         m_dFluidVisc_dCompConc,
-                        m_viscosity,
-                        m_dViscosity_dPressure,
+                        m_viscosity.value,
+                        m_viscosity.derivs,
                         m_dViscosity_dProppantConc,
                         m_dViscosity_dCompConc );
 }

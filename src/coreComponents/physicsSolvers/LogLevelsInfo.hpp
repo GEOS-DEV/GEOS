@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -35,22 +36,10 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct Fields
+struct Configuration
 {
   static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "The summary of declared fields and coupling"; }
-};
-
-struct LineSearch
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Line search information"; }
-};
-
-struct Solution
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Solution information (scaling, maximum changes, quality check)"; }
+  static constexpr std::string_view getDescription() { return "Solver runtime settings"; }
 };
 
 struct Convergence
@@ -59,10 +48,16 @@ struct Convergence
   static constexpr std::string_view getDescription() { return "Convergence information"; }
 };
 
-struct TimeStep
+struct Coupling
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Time step information"; }
+  static constexpr std::string_view getDescription() { return "Coupling information"; }
+};
+
+struct Fields
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "The summary of declared fields and coupling"; }
 };
 
 struct LinearSolver
@@ -71,22 +66,81 @@ struct LinearSolver
   static constexpr std::string_view getDescription() { return "Linear solver information"; }
 };
 
+struct LinearSolverConfiguration
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Print linear solver configuration"; }
+};
+
+struct LineSearch
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Line search information"; }
+};
+
 struct NonlinearSolver
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Nonlinear solver information"; }
 };
 
+struct ResidualNorm
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Output residual norm"; }
+};
+
+struct Solution
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Solution information (scaling, maximum changes, quality check)"; }
+};
+
+struct SolverInitialization
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Information on solver Initialization"; }
+};
+
+struct SolverExecution
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Information on solver execution"; }
+};
+struct SolverExecutionDetails
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "More precise information on solver execution"; }
+};
+
+struct SolverSteps
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Solver step Information"; }
+};
+
+struct Statistics
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Print statistics"; }
+};
+
+struct SurfaceGenerator
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Fracture generation information"; }
+};
+
+struct TimeStep
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Time step information"; }
+};
+
 struct Timers
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Solver timers information"; }
-};
-
-struct Initialization
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Initialization information"; }
 };
 
 /// @endcond

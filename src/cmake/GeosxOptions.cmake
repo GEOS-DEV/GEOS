@@ -129,6 +129,12 @@ endif( NOT BLT_CXX_STD STREQUAL c++17 )
 
 message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
+option( GEOS_USE_LARGE_MEM_MODEL "Enables use of large mem model (linux only)" OFF )
+if(GEOS_USE_LARGE_MEM_MODEL)
+    message(STATUS "Large memory model enabled: Adding -mcmodel=large to CMAKE_CXX_FLAGS")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcmodel=large")
+endif()
+
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
@@ -136,7 +142,7 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
-                                 GNU "-Wno-unused-parameter -Wno-unused-variable -Wno-dangling-reference"
+                                 GNU "-Wno-unused-parameter -Wno-unused-variable"
                                  CLANG "-Wno-unused-parameter -Wno-unused-variable -fstandalone-debug"
                                )
 

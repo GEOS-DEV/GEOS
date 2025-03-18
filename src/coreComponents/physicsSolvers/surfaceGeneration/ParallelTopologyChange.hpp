@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,6 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_SURFACEGENERATION_PARALLELTOPOLOGYCHANGE_HPP_
 
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+
+#define PARALLEL_TOPOLOGY_CHANGE_METHOD 1
 
 #define PARALLEL_TOPOLOGY_CHANGE_METHOD 1
 
@@ -43,15 +45,15 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
 
 struct TopologyChangeStepData
 {
-  void init( ElementRegionManager const & elemManager)
+  void init( ElementRegionManager const & elemManager )
   {
-    m_nodes.resize(0) ;
-    m_edges.resize(0) ;
-    m_faces.resize(0) ;
+    m_nodes.resize( 0 );
+    m_edges.resize( 0 );
+    m_faces.resize( 0 );
     m_elements.resize( elemManager.numRegions() );
     m_elementsView.resize( elemManager.numRegions() );
-    m_elementsData.resize(elemManager.numRegions() );
-    m_size = 0 ;
+    m_elementsData.resize( elemManager.numRegions() );
+    m_size = 0;
 
     for( localIndex er=0; er<elemManager.numRegions(); ++er )
     {
@@ -61,7 +63,7 @@ struct TopologyChangeStepData
       m_elementsData[er].resize( elemRegion.numSubRegions());
       for( localIndex esr=0; esr<elemRegion.numSubRegions(); ++esr )
       {
-        m_elementsData[er][esr].resize(0);
+        m_elementsData[er][esr].resize( 0 );
         m_elements[er][esr].set( m_elementsData[er][esr] );
         m_elementsView[er][esr] = m_elementsData[er][esr];
       }
@@ -83,9 +85,9 @@ struct TopologyChangeStepData
 struct TopologyChangeUnpackStepData : public TopologyChangeStepData
 {
   void init( buffer_type const & receiveBuffer,
-             ElementRegionManager const & elemManager)
+             ElementRegionManager const & elemManager )
   {
-    m_bufferPtr = receiveBuffer.data() ;
+    m_bufferPtr = receiveBuffer.data();
     TopologyChangeStepData::init( elemManager );
   }
 

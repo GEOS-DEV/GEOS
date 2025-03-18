@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -39,7 +39,7 @@ class FaceElementSubRegion : public SurfaceElementSubRegion
 public:
 
   /// Face element to faces map type
-  using FaceMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using FaceMapType = FixedOneToManyRelation;
 
   /**
    * @name Static factory catalog functions
@@ -111,15 +111,34 @@ public:
                                        bool const overwriteDownMaps ) override;
 
 
+  /**
+   * @brief Size of packing of the FaceElement to face relation.
+   * @param packList The list of face elements to pack
+   * @return The size of the packed data
+   */
   localIndex packToFaceRelationSize( arrayView1d< localIndex const > const & packList ) const;
 
+  /**
+   * @brief Pack the FaceElement to face relation.
+   * @param buffer The buffer to pack the data into
+   * @param packList The list of face elements to pack
+   * @return The size of the packed data
+   */
   localIndex packToFaceRelation( buffer_unit_type * & buffer,
                                  arrayView1d< localIndex const > const & packList ) const;
 
+  /**
+   * @brief Unpack the FaceElement to face relation.
+   * @param buffer The buffer to unpack the data from
+   * @param packList The list of face elements to unpack
+   * @param overwriteUpMaps Flag to overwrite the up maps
+   * @param overwriteDownMaps Flag to overwrite the down maps
+   * @return The size of the unpacked data
+   */
   localIndex unpackToFaceRelation( buffer_unit_type const * & buffer,
-                                       array1d< localIndex > & packList,
-                                       bool const overwriteUpMaps,
-                                       bool const overwriteDownMaps );
+                                   array1d< localIndex > & packList,
+                                   bool const overwriteUpMaps,
+                                   bool const overwriteDownMaps );
 
 
 
@@ -324,6 +343,23 @@ public:
     return m_2dElemToCollocatedNodesBuckets.toViewConst();
   }
 
+  /**
+   * @brief Get the surface element to cells map.
+   * @return The surface element to cells map
+   */
+  FixedToManyElementRelation & getToCellRelation()
+  {
+    return m_2dElemToElems;
+  }
+
+  /**
+   * @copydoc getToCellRelation()
+   */
+  FixedToManyElementRelation const & getToCellRelation() const
+  {
+    return m_2dElemToElems;
+  }
+
 private:
 
   /**
@@ -356,6 +392,9 @@ private:
    * @see FaceElementSubRegion::get2dElemToCollocatedNodesBuckets
    */
   ArrayOfArrays< array1d< globalIndex > > m_2dElemToCollocatedNodesBuckets;
+
+  /// Map between the surface elements and the cells
+  FixedToManyElementRelation m_2dElemToElems;
 
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient

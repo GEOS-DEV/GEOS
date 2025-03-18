@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -16,6 +16,7 @@
 #include "NonlinearSolverParameters.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/table/TableFormatter.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -27,9 +28,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-
-  // This enables logLevel filtering
-  enableLogLevelInput();
 
   registerWrapper( viewKeysStruct::lineSearchActionString(), &m_lineSearchAction ).
     setApplyDefaultValue( LineSearchAction::Attempt ).
@@ -69,9 +67,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
   registerWrapper( viewKeysStruct::normTypeString(), &m_normType ).
     setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( solverBaseKernels::NormType::Linf ).
+    setApplyDefaultValue( physicsSolverBaseKernels::NormType::Linf ).
     setDescription( "Norm used by the flow solver to check nonlinear convergence. "
-                    "Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
+                    "Valid options:\n* " + EnumStrings< physicsSolverBaseKernels::NormType >::concat( "\n* " ) );
 
   registerWrapper( viewKeysStruct::minNormalizerString(), &m_minNormalizer ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -182,6 +180,10 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
 
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::NonlinearSolver >();
+  addLogLevel< logInfo::LineSearch >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void NonlinearSolverParameters::postInputInitialization()
@@ -235,10 +237,8 @@ void NonlinearSolverParameters::print() const
     tableData.addRow( "Sequential convergence criterion", m_sequentialConvergenceCriterion );
     tableData.addRow( "Subcycling", m_subcyclingOption );
   }
-  TableLayout const tableLayout = TableLayout( {
-      TableLayout::ColumnParam{"Parameter", TableLayout::Alignment::left},
-      TableLayout::ColumnParam{"Value", TableLayout::Alignment::left},
-    }, GEOS_FMT( "{}: nonlinear solver", getParent().getName() ) );
+  TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: nonlinear solver", getParent().getName() ),
+                                               { "Parameter", "Value" } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
 }

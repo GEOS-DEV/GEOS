@@ -5,6 +5,201 @@ Notes
 This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
+PR #3555 (2024-03-11)
+=====================
+Add aging law.
+
+PR #3494 (2024-03-11)
+=====================
+Added more log level documentation
+
+PR #3427 (2024-03-10)
+=====================
+Well time step selector based on rates/bhp tables and clarify well rates logic.
+
+PR #3485 (2024-03-09)
+=====================
+Use mass and energy consistently for single phase solvers.
+
+PR #3460 (2024-03-08)
+=====================
+Refactor single phase constitutive containers.
+
+PR #3525 (2025-03-06)
+=====================
+Add analytical leakoff feature for hydrofrac solver.
+
+PR #3401 (2025-03-05)
+=====================
+Bugfix for IHU.
+
+PR #3483 (2025-03-02)
+=====================
+Remove relative permeability from wells.
+
+PR #3576 (2025-03-01)
+=====================
+Add an option to skip density and viscosity computes when phase is not present for CO2 fluid update.
+
+PR #3571 (2025-02-28)
+=====================
+Do not allow negative pressure by default, except for hydrofrac.
+
+PR #3551 (2025-02-19)
+=====================
+Add Passing Crack to the integrated tests.
+
+PR #3541 (2025-02-18)
+=====================
+Well control parallel synchronization fix.
+
+PR #3443 (2025-02-17)
+=====================
+Added tests for overall composition (Z) formulation.
+
+PR #3547 (2025-02-17)
+=====================
+Multiphase contact bugfix, add test case to ats, removed redundant linear solver params for other tests.
+
+PR #3546 (2025-02-15)
+=====================
+Fix 1d edfm case and add it to ats.
+
+PR #2968 (2025-02-13)
+=====================
+Replace array1d<string> with std::vector<string>.
+
+PR #3227 (2025-02-06)
+=====================
+Add targetRegion for perforations (optional).
+
+PR #3502 (2025-02-04)
+=====================
+Add array to store the source values in time inside wave solvers.
+
+PR #3395 (2025-01-22)
+=====================
+Add new fields and change the default input for some tests.
+
+PR #3416 (2025-01-21)
+=====================
+Refactoring of induced seismicity EQ solvers to add coupling.
+
+PR #3310 (2025-01-21)
+======================
+Scalable rock toughness required new field.
+
+PR #3228 (2025-01-15)
+=====================
+deltaVolume added in multiphase.
+
+PR #3495 (2025-01-08)
+=====================
+Add missing logic to support switching from fixed mass rate injection rate constraint to max injection pressure.
+
+PR #3384 (2025-01-07)
+=====================
+Added plastic strain output.
+
+PR #3486 (2025-01-06)
+=====================
+useNewGravity became gravityDensityScheme.
+
+PR #3479 (2024-12-15)
+=====================
+Refine inputFiles/compositionalMultiphaseFlow: shift reference pressures to initial pressures, make nonlinear tuning more reasonable, minimize output.
+
+PR #3450 (2024-12-14)
+=====================
+Fix timestep selector flaw in SolidMechanicsLagrangeContact.
+
+PR #3450 (2024-12-08)
+=====================
+Added test for explicit runge kutta sprinslider.
+
+PR #3480 (2024-12-06)
+=====================
+Add "logLevel" parameter under /Problem/Outputs in baseline files
+
+PR #3361 (2024-12-03)
+=====================
+Revert default gravity treatment to old version. Make the way introduced in #3337 optional.
+
+PR #3361 (2024-12-03)
+=====================
+Baseline diffs after reimplementation of wave equation acoustic gradient for velocity and density parameters: new field "partialGradient2" and "pressureForward" field replacing "pressureDoubleDerivative".
+
+PR #3393 (2024-12-02)
+=====================
+Fix netToGross bug.
+
+PR #3381 (2024-12-01)
+=====================
+A few baseline diffs for order FaceElementSubRegion::m_toFacesRelation map. Not sure why this was changed by this PR, but the previous order seems incorrect for a couple of cases.
+
+PR #2957 (2024-11-27)
+=====================
+Added ExternalDataRepository.
+
+PR #3448 (2024-11-21)
+=====================
+Switched the FaceElementSubRegion::m_toFacesRelation and FaceElementSubRegion::m_2dElemToElems back to array2d instead of ArrayOfArray. This results in a reordering m_toFacesRelation back to the "correct" assumed order of "original face first". This fixes a bug that failed to remove the CellStencil entry when a FaceElement splits two cells.
+
+PR #2637 (2024-11-21)
+=====================
+Added numberOfTargetProcesses.
+
+PR #3439 (2024-11-20)
+=====================
+EDFM bugfixes: derivatives sign, frac/cell element volume, fix apertures inconsistency in test cases.
+
+PR ##3440 (2024-11-18)
+=====================
+Added Lagrange multiplier with bubble functions stabilization (sli only) and possibility to specify a slip.
+
+PR #3339 (2024-11-14)
+=====================
+Hypre improvements, rebaseline is due to field value change (amgNumFunctions).
+
+PR #3434 (2024-11-09)
+=====================
+Bugfix: Fixed output of ArrayOfArray objects to restart files.
+
+PR #3374 (2024-11-09)
+====================
+Bugfix for gravity treatment in flux for thermal.
+
+PR #3372 (2024-11-09)
+====================
+Fix a bug related to mass and energy updates for poromechanics.
+
+PR #3426 (2024-11-08)
+====================
+Bugfix: reset accumulation in fracture when time step cut occurs in hydrofrac solver.
+
+PR #3413 (2024-11-07)
+====================
+Add tests for poro-thermo-plastic model.
+
+PR #3337 (2024-11-06)
+====================
+Change density treatment for gravity in multiphase flow solver.
+
+PR #3408 (2024-11-06)
+====================
+EFEM bugfixes: effective traction + oldStress.
+
+PR #3280 (2024-11-05)
+====================
+Added Sprig-slider test.
+
+PR #2909 (2024-10-30)
+=====================
+Add routine for automatic time steps in waveSolvers with new attributes
+
+PR #3156 (2024-10-29)
+====================
+Restart check errors due to 1) schema node added to enable thermal option in well model and 2) arrays removed/added for option.  Max difference errors due treatment of shutin wells.  Previously non-zero rate value reported for shutin well, new code will set rate arrays to zero.
 
 PR #2878 (2024-10-17)
 =====================
@@ -48,7 +243,7 @@ Added restartcheks to hydrofrac cases and reduced time of cases that were too lo
 
 PR #3135 (2024-09-04)
 ======================
-Temperature dependent single phase thermal conductivity. Rebaseline all thermal cases. 
+Temperature dependent single phase thermal conductivity. Rebaseline all thermal cases.
 
 PR #3294 (2024-09-01)
 ======================
@@ -64,13 +259,13 @@ Reuse computeSinglePhaseFlux. Rebaseline due to minor numerical diffs.
 
 PR #3249 (2024-08-14)
 ======================
-Two initialization options for poromechanical models. Rebaseline the corresponding cases. 
+Two initialization options for poromechanical models. Rebaseline the corresponding cases.
 
 PR #3278 (2024-08-12)
 ======================
-Renamed GEOSX to GEOS in enternal mesh import, so rebaseline to change these names is the baselines. 
+Renamed GEOSX to GEOS in enternal mesh import, so rebaseline to change these names is the baselines.
 
-202 (2024-08-03)
+PR #3202 (2024-08-03)
 ======================
 Acoustic VTI tests needed rebaselining after update in source and receiver location algorithm.
 

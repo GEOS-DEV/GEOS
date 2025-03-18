@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -301,29 +301,35 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   m_receiveBufferPtr = receiveBuff.data();
 
   m_unpackedSize = 0;
-  m_nodeUnpackList.resize(0);
-  m_edgeUnpackList.resize(0);
-  m_faceUnpackList.resize(0);
-  m_elementAdjacencyReceiveListArray =
-    elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString(),
-                                                                std::to_string( this->m_neighborRank ) );
 
+  m_nodeUnpackList.resize( 0 );
   m_unpackedSize += nodeManager.unpackGlobalMaps( m_receiveBufferPtr, m_nodeUnpackList, 0 );
-  m_unpackedSize += edgeManager.unpackGlobalMaps( m_receiveBufferPtr, m_edgeUnpackList, 0 );
-  m_unpackedSize += faceManager.unpackGlobalMaps( m_receiveBufferPtr, m_faceUnpackList, 0 );
-  m_unpackedSize += elemManager.unpackGlobalMaps( m_receiveBufferPtr,
-                                                m_elementAdjacencyReceiveListArray );
 
+  m_edgeUnpackList.resize( 0 );
+  m_unpackedSize += edgeManager.unpackGlobalMaps( m_receiveBufferPtr, m_edgeUnpackList, 0 );
+
+  m_faceUnpackList.resize( 0 );
+  m_unpackedSize += faceManager.unpackGlobalMaps( m_receiveBufferPtr, m_faceUnpackList, 0 );
+
+  m_elementAdjacencyReceiveListArray = elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString(),
+                                                                                                   std::to_string( this->m_neighborRank ) );
+
+  m_unpackedSize += elemManager.unpackGlobalMaps( m_receiveBufferPtr,
+                                                  m_elementAdjacencyReceiveListArray );
 
 }
 
 void NeighborCommunicator::unpackGhostsData( MeshLevel & mesh,
-                                            int const commID )
+                                             int const commID )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager & elemManager = mesh.getElemManager();
+
+  ElemAdjListViewType elementAdjacencyReceiveList =
+    elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString(),
+                                                                                           std::to_string( this->m_neighborRank ) );
 
 
   m_unpackedSize += nodeManager.unpackUpDownMaps( m_receiveBufferPtr, m_nodeUnpackList, false, false );
@@ -335,10 +341,6 @@ void NeighborCommunicator::unpackGhostsData( MeshLevel & mesh,
   m_unpackedSize += nodeManager.unpack( m_receiveBufferPtr, m_nodeUnpackList, 0, false, events );
   m_unpackedSize += edgeManager.unpack( m_receiveBufferPtr, m_edgeUnpackList, 0, false, events );
   m_unpackedSize += faceManager.unpack( m_receiveBufferPtr, m_faceUnpackList, 0, false, events );
-
-  ElemAdjListViewType elementAdjacencyReceiveList =
-    elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString(),
-                                                                                           std::to_string( this->m_neighborRank ) );
   m_unpackedSize += elemManager.unpack( m_receiveBufferPtr, elementAdjacencyReceiveList );
 
   waitAllDeviceEvents( events );
@@ -509,8 +511,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location{};
-    fieldsToBeSync.getLocation( iter.first, location );
+    FieldLocation const location = fieldsToBeSync.getLocation( iter.first );
     switch( location )
     {
       case FieldLocation::Node:
@@ -567,8 +568,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location{};
-    fieldsToBeSync.getLocation( iter.first, location );
+    FieldLocation const location = fieldsToBeSync.getLocation( iter.first );
     switch( location )
     {
       case FieldLocation::Node:
@@ -626,8 +626,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location{};
-    fieldsToBeSync.getLocation( iter.first, location );
+    FieldLocation const location = fieldsToBeSync.getLocation( iter.first );
     switch( location )
     {
       case FieldLocation::Node:

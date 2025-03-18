@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -20,11 +20,9 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -57,6 +55,7 @@ public:
   using Base::flowSolver;
   using Base::solidMechanicsSolver;
   using Base::assembleElementBasedTerms;
+  using Base::resetStateToBeginningOfStep;
 
 
   /**
@@ -84,7 +83,7 @@ public:
 //  }
   }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -121,7 +120,8 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual real64 setNextDt( real64 const & currentDt,
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
                             DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
@@ -129,6 +129,8 @@ public:
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
+
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
   /**@}*/
 
@@ -176,6 +178,10 @@ public:
 
     constexpr static char const * isLaggingFractureStencilWeightsUpdateString() { return "isLaggingFractureStencilWeightsUpdate"; }
 
+    constexpr static char const * leakoffConstString() {return "leakoffCoefficient"; }
+
+    constexpr static char const * fractureCreationTimeString() {return "fractureCreationTime"; }
+
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
     constexpr static char const * apertureAtFailureString() { return "apertureAtFailure"; }
@@ -212,6 +218,7 @@ protected:
                                    DofManager const & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix );
 
+  virtual void setMGRStrategy() override;
 
 private:
 
@@ -220,12 +227,19 @@ private:
                                          int const cycleNumber,
                                          DomainPartition & domain ) override final;
 
+  void checkRockOnlyMatrix( dataRepository::Group & meshBodies );
 
+  void assembleFluidLeakSource( real64 time,
+                                real64 dt,
+                                DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) const;
   /**
    * @brief Initialize fields on the newly created elements of the fracture.
    * @param domain the physical domain object
    */
-  void initializeNewFractureFields( DomainPartition & domain );
+  void initializeNewFractureFields( real64 time, DomainPartition & domain );
 
   // name of the contact relation
   string m_contactRelationName;
@@ -252,6 +266,8 @@ private:
   // flag to determine whether or not to apply lagging update for the fracture stencil weights
   integer m_isLaggingFractureStencilWeightsUpdate;
 
+  // analytical leakoff coefficient
+  real64 m_leakoffCoefficient;
 };
 
 ENUM_STRINGS( HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::InitializationType,

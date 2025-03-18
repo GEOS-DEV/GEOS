@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -26,6 +26,7 @@
 #include "mesh/FaceManager.hpp"
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/MpiWrapper.hpp"
 
 namespace geos
@@ -381,69 +382,68 @@ void NodeManager::outputObjectConnectivity() const
       printf( "  Reference positions:\n" );
       for( localIndex a=0; a<this->size(); ++a )
       {
-        printf( "  %3d( %3lld ): %6.2f, %6.2f, %6.2f \n", a, m_localToGlobalMap(a), m_referencePosition( a, 0 ), m_referencePosition( a, 1 ), m_referencePosition( a, 2 ) );
+        printf( "  %3d( %3lld ): %6.2f, %6.2f, %6.2f \n", a, m_localToGlobalMap( a ), m_referencePosition( a, 0 ), m_referencePosition( a, 1 ), m_referencePosition( a, 2 ) );
       }
 
       printf( "\n  Reference positions (sorted by global):\n" );
-      map< globalIndex, localIndex > const sortedGlobalToLocalMap(m_globalToLocalMap.begin(), m_globalToLocalMap.end());
+      map< globalIndex, localIndex > const sortedGlobalToLocalMap( m_globalToLocalMap.begin(), m_globalToLocalMap.end());
       for( auto indexPair : sortedGlobalToLocalMap )
       {
-        globalIndex const ga = indexPair.first;
         localIndex const a = indexPair.second;
-        printf( "  %3d( %3lld ): %6.2f, %6.2f, %6.2f \n", a, m_localToGlobalMap(a), m_referencePosition( a, 0 ), m_referencePosition( a, 1 ), m_referencePosition( a, 2 ) );
-      }      
-      
-      // printf( "  toEdgesRelation: \n" );
-      // arrayView1d< globalIndex const > const & edgeLocalToGlobal = m_toEdgesRelation.relatedObjectLocalToGlobal();
-      // for( localIndex a=0; a<this->size(); ++a )
-      // {
-      //   printf( "  %3d(%3lld): ", a, m_localToGlobalMap(a) );
+        printf( "  %3d( %3lld ): %6.2f, %6.2f, %6.2f \n", a, m_localToGlobalMap( a ), m_referencePosition( a, 0 ), m_referencePosition( a, 1 ), m_referencePosition( a, 2 ) );
+      }
 
-      //   for( localIndex b=0; b<m_toEdgesRelation.sizeOfSet( a ); ++b )
-      //   {
-      //     printf( "%3d", m_toEdgesRelation( a, b ) );
-      //     if( b != m_toEdgesRelation.sizeOfSet( a ) - 1 )
-      //     {
-      //       printf( ", " );
-      //     }
-      //   }
-      //   printf( "\n           (");
-      //   for( localIndex b=0; b<m_toEdgesRelation.sizeOfSet( a ); ++b )
-      //   {
-      //     printf( "%3lld",edgeLocalToGlobal( m_toEdgesRelation( a, b ) ) );
-      //     if( b != m_toEdgesRelation.sizeOfSet( a ) - 1 )
-      //     {
-      //       printf( ", " );
-      //     }
-      //   }
-      //   printf( " )\n" );
-      // }
+      printf( "  toEdgesRelation: \n" );
+      arrayView1d< globalIndex const > const & edgeLocalToGlobal = m_toEdgesRelation.relatedObjectLocalToGlobal();
+      for( localIndex a=0; a<this->size(); ++a )
+      {
+        printf( "  %3d(%3lld): ", a, m_localToGlobalMap( a ) );
 
-      // printf( "  toFacesRelation: \n" );
-      // arrayView1d< globalIndex const > const & faceLocalToGlobal = m_toFacesRelation.relatedObjectLocalToGlobal();
-      // for( localIndex a=0; a<this->size(); ++a )
-      // {
-      //   printf( "  %3d(%3lld): ", a, m_localToGlobalMap(a) );
+        for( localIndex b=0; b<m_toEdgesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3d", m_toEdgesRelation( a, b ) );
+          if( b != m_toEdgesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( "\n           (" );
+        for( localIndex b=0; b<m_toEdgesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3lld", edgeLocalToGlobal( m_toEdgesRelation( a, b ) ) );
+          if( b != m_toEdgesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( " )\n" );
+      }
 
-      //   for( localIndex b=0; b<m_toFacesRelation.sizeOfSet( a ); ++b )
-      //   {
-      //     printf( "%3d", m_toFacesRelation( a, b ) );
-      //     if( b != m_toFacesRelation.sizeOfSet( a ) - 1 )
-      //     {
-      //       printf( ", " );
-      //     }
-      //   }
-      //   printf( "\n           (");
-      //   for( localIndex b=0; b<m_toFacesRelation.sizeOfSet( a ); ++b )
-      //   {
-      //     printf( "%3lld",faceLocalToGlobal( m_toFacesRelation( a, b ) ) );
-      //     if( b != m_toFacesRelation.sizeOfSet( a ) - 1 )
-      //     {
-      //       printf( ", " );
-      //     }
-      //   }
-      //   printf( " )\n" );
-      // }
+      printf( "  toFacesRelation: \n" );
+      arrayView1d< globalIndex const > const & faceLocalToGlobal = m_toFacesRelation.relatedObjectLocalToGlobal();
+      for( localIndex a=0; a<this->size(); ++a )
+      {
+        printf( "  %3d(%3lld): ", a, m_localToGlobalMap( a ) );
+
+        for( localIndex b=0; b<m_toFacesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3d", m_toFacesRelation( a, b ) );
+          if( b != m_toFacesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( "\n           (" );
+        for( localIndex b=0; b<m_toFacesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3lld", faceLocalToGlobal( m_toFacesRelation( a, b ) ) );
+          if( b != m_toFacesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( " )\n" );
+      }
     }
     MpiWrapper::barrier();
   }
