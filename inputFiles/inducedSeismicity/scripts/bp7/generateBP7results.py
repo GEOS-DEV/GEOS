@@ -2,6 +2,9 @@ import datetime
 import numpy as np
 import os
 import argparse
+from rs_parameters import RateAndStateParameters   
+from geos.hdf5_wrapper import hdf5_wrapper
+import matplotlib.pyplot as plt
 
 MODELER = "Matteo Cusini, Lawrence Livermore National Laboratory"
 CODE  = "GEOS"
@@ -94,6 +97,8 @@ class FaultStation:
         """
         self.element_size = element_size
         self.location = location
+        self.min_time_step = min_time_step
+        self.max_time_step = max_time_step  
 
         if input_data is not None and station_number is not None:
             # If input_data is provided, call process_input_data()
@@ -101,9 +106,7 @@ class FaultStation:
         else:
             # Otherwise, generate synthetic data
             self.generate_data(100)
-            self.num_timesteps = num_timesteps
-            self.min_time_step = min_time_step
-            self.max_time_step = max_time_step     
+            self.num_timesteps = num_timesteps     
 
     def read_input_data(self, input_data, station_number):
         """
@@ -114,24 +117,28 @@ class FaultStation:
         :param location: Fault station location as "x2 m, x3 m".
         """
         # Extract time data
-        time = np.asarray(input_data[f'stateVariable Time'])
+        time = np.squeeze(input_data[f'stateVariable Time'])
+        self.num_timesteps = time.shape[0]
 
         # Extract fault station variables
-        slip = np.asarray(input_data[f'slip faultStation_{station_number}'])
-        slip_velocity = np.asarray(input_data[f'slipVelocity faultStation_{station_number}'])
-        shear_traction = np.asarray(input_data[f'shearTraction faultStation_{station_number}'])
+        slip = np.squeeze(input_data[f'slip faultStation_{station_number}'])
+        slip_velocity = np.squeeze(input_data[f'slipVelocity faultStation_{station_number}'])
+        shear_traction = np.squeeze(input_data[f'shearTraction faultStation_{station_number}'])
         
         # Ensure data has the correct shape
-        if slip.shape[1] != 2 or slip_velocity.shape[1] != 2 or shear_traction.shape[1] != 2:
+        if slip_velocity.shape[1] != 2 or shear_traction.shape[1] != 2:
             raise ValueError(f"Data for faultStation_{station_number} is not in expected shape (Nx2).")
 
         # Assign the components to separate variables
-        slip_2, slip_3 = slip[:, 0], slip[:, 1]
-        slip_rate_2, slip_rate_3 = np.log10(slip_velocity[:, 0]), np.log10(slip_velocity[:, 1])
-        shear_stress_2, shear_stress_3 = shear_traction[:, 0], shear_traction[:, 1]
+        slip_2, slip_3 = slip, slip
+        slip_rate_2 = np.log10(np.maximum( slip_velocity[:, 0], 1e-20 ) )
+        slip_rate_3 = np.log10(np.maximum( slip_velocity[:, 1], 1e-20 ) )
+        shear_stress_2, shear_stress_3 = shear_traction[:, 0] / 1.0e6 , shear_traction[:, 1] / 1.0e6
 
         # Extract state variable
-        state = np.asarray(input_data[f'stateVariable state'])
+        rsParams = RateAndStateParameters()
+        Psi = np.squeeze(input_data[f'stateVariable faultStation_{station_number}'])
+        state = np.log10 ( (rsParams.Drs / rsParams.Vstar) * np.exp((Psi - rsParams.f) / rsParams.b) )
 
         self.data = np.column_stack((time, slip_2, slip_3, slip_rate_2, slip_rate_3, shear_stress_2, shear_stress_3, state))
           
@@ -148,20 +155,58 @@ class FaultStation:
 
         self.data = np.column_stack((time, slip_2, slip_3, slip_rate_2, slip_rate_3, shear_stress_2, shear_stress_3, state))
 
-    def read_data(self, filename):
-        """Read data from a file """
-        pass
-
     def get_station_file(self):
         """Return a FaultFile instance linked to this station."""
         return FaultStationFile(self)
+    
+    def plot(self):
+        time = self.data[:, 0]  # Extract time
+        # Extract data columns
+        slip_2 = self.data[:, 1]
+        slip_3 = self.data[:, 2]
+        slip_rate_2 = self.data[:, 3]
+        slip_rate_3 = self.data[:, 4]
+        shear_stress_2 = self.data[:, 5]
+        shear_stress_3 = self.data[:, 6]
+        state = self.data[:, 7]
 
-def getDataFromHDF5( hdf5FilePath, var_name, set_name):
+        fig, axs = plt.subplots(4, 1, figsize=(10, 12), sharex=True)
+
+        # Lambda function for dual-axis plotting
+        plot_dual = lambda ax, y1, y2, label1, label2, color1="b", color2="r": (
+            ax.plot(time, y1, label=label1, color=color1),
+            ax.set_ylabel(label1, color=color1),
+            ax.tick_params(axis="y", labelcolor=color1),
+            (ax2 := ax.twinx()).plot(time, y2, label=label2, color=color2, linestyle="--"),
+            ax2.set_ylabel(label2, color=color2),
+            ax2.tick_params(axis="y", labelcolor=color2)
+        )
+
+
+        
+        # Plot Slip
+        plot_dual(axs[0], slip_2, slip_3, "Slip 2 (m)", "Slip 3 (m)")
+
+        # Plot Slip Rate (Log Scale)
+        plot_dual(axs[1], slip_rate_2, slip_rate_3, "Log10(Slip Rate 2) (m/s)", "Log10(Slip Rate 3) (m/s)")
+
+        # Plot Shear Stress
+        plot_dual(axs[2], shear_stress_2, shear_stress_3, "Shear Stress 2 (MPa)", "Shear Stress 3 (MPa)")
+        
+        # Plot State Variable
+        axs[3].plot(time, state, label='State Variable', color='g')
+        axs[3].set_xlabel("Time (s)")
+        axs[3].set_ylabel("Log10(theta)")
+        axs[3].legend()
+        axs[3].grid()
+
+        plt.suptitle(f"Fault Station at {self.location}")
+        plt.tight_layout()
+        plt.show()
+
+def getDataFromHDF5( hdf5FilePath ):
     # Read HDF5
-    data = hdf5_wrapper(f'{hdf5FilePath}').get_copy()
-    var = data[f'{var_name} {set_name}']
-    var = np.asarray(var)
-    time = data[f'{var_name} Time']        
+    return hdf5_wrapper(f'{hdf5FilePath}').get_copy()  
 
 # Example usage
 if __name__ == "__main__":
@@ -169,16 +214,17 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--input-dir', type=str, help='input direrctory', default='.')
     parser.add_argument('-o', '--output-dir', type=str, help='output directory', default='.')
     args = parser.parse_args()
-    output_dir = os.path.abspath( args.ouput_dir )
+    output_dir = os.path.abspath( args.output_dir )
     for i in range(13):  # Loop over 13 fault stations
         location_str = f"x2 = {fault_stations_locations[i][0]}, x3 = {fault_stations_locations[i][1]}"
         station = FaultStation(
-        num_timesteps=100,  
         element_size=10,  
         location=location_str,  
         min_time_step=9.6225e-04,  
-        max_time_step=5.0636e+04  
-        )
+        max_time_step=5.0636e+04,
+        input_data=getDataFromHDF5(f'{args.input_dir}/BP7_QD_A.hdf5'), 
+        station_number=i+1 )
         file = station.get_station_file()
-        filename = output_dir + f"/fault_station_{i}.data"  
+        filename = output_dir + f"/fault_station_{i+1}.data"  
         file.write( filename )
+        station.plot()
