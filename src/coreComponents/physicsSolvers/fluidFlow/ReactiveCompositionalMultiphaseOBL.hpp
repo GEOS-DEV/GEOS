@@ -179,10 +179,16 @@ public:
   void updateOBLOperators( ObjectManagerBase & dataGroup ) const;
 
   /**
-   * @brief Get the number of fluid components (species)
+   * @brief Get the total number of components (species)
+   * @return the total number of components
+   */
+  localIndex numComponents() const { return m_numComponents; }
+
+  /**
+   * @brief Get the number of solid components (species)
    * @return the number of components
    */
-  localIndex numFluidComponents() const { return m_numComponents; }
+  localIndex numSolidComponents() const { return m_numSolidComponents; }
 
   /**
    * @brief Get the number of fluid phases
@@ -234,6 +240,8 @@ public:
     static constexpr char const * numPhasesString() { return "numPhases"; }
 
     static constexpr char const * numComponentsString() { return "numComponents"; }
+
+    static constexpr char const * numSolidComponentsString() { return "numSolidComponents"; }
 
     static constexpr char const * enableEnergyBalanceString() { return "enableEnergyBalance"; }
 
@@ -314,8 +322,11 @@ private:
   /// the max number of fluid phases
   integer m_numPhases;
 
-  /// the number of fluid components
+  /// the number of all components
   integer m_numComponents;
+
+  /// the number of solid components
+  integer m_numSolidComponents;
 
   /// list of component names
   array1d< string > m_componentNames;

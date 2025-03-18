@@ -3457,6 +3457,8 @@ Level 0 outputs no specific information for this solver. Higher levels require m
 		<xsd:attribute name="numComponents" type="integer" use="required" />
 		<!--numPhases => Number of phases-->
 		<xsd:attribute name="numPhases" type="integer" use="required" />
+		<!--numSolidComponents => Number of solid components-->
+		<xsd:attribute name="numSolidComponents" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->

@@ -194,7 +194,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
                                         real64 const perturbParameter,
                                         real64 const relTol )
 {
-  localIndex const NC = solver.numFluidComponents();
+  localIndex const NC = solver.numComponents();
   localIndex const NOPS = solver.numOBLOperators();
 
   array1d< string > const operators( NOPS );
@@ -322,7 +322,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
                             real64 const relTol,
                             LAMBDA assembleFunction )
 {
-  localIndex const NC = solver.numFluidComponents();
+  localIndex const NC = solver.numComponents();
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
