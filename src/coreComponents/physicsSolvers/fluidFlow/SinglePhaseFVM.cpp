@@ -31,6 +31,8 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
@@ -62,7 +64,9 @@ template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
-{}
+{
+  BASE::template addLogLevel< logInfo::Convergence >();
+}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()
@@ -211,8 +215,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                                    FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                               FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
   }
   else
   {
@@ -226,8 +230,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
     }
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence,
-                                    GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+                               GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
   }
   return residualNorm;
 }
@@ -695,12 +699,14 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       {
         BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                     setName, targetGroup.getName(), numTargetFaces ) );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                          GEOS_FMT( faceBcLogMessage,
+                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          fs );
         }
 
         if( stencil.size() == 0 )
@@ -729,12 +735,13 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       {
         BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                     setName, targetGroup.getName(), numTargetFaces ) );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition, GEOS_FMT( faceBcLogMessage,
+                                                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          fs );
         }
 
         if( stencil.size() == 0 )
@@ -798,12 +805,14 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       {
         BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                     setName, targetGroup.getName(), numTargetFaces ) );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                          GEOS_FMT( faceBcLogMessage,
+                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          fs );
         }
 
         if( stencil.size() == 0 )

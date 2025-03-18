@@ -23,6 +23,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "kernels/ImplicitRateAndStateKernels.hpp"
 #include "rateAndStateFields.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 
@@ -41,6 +42,8 @@ ImplicitQDRateAndState::ImplicitQDRateAndState( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-7 ).
     setDescription( "Target slip incrmeent for timestep size selction" );
+
+  addLogLevel< logInfo::SolverSteps >();
 }
 
 ImplicitQDRateAndState::~ImplicitQDRateAndState()
@@ -90,9 +93,9 @@ real64 ImplicitQDRateAndState::solverStep( real64 const & time_n,
                                            DomainPartition & domain )
 {
   applyInitialConditionsToFault( cycleNumber, domain );
-  GEOS_LOG_LEVEL_RANK_0( 1, "Stress solver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Stress solver" );
   updateStresses( time_n, dt, cycleNumber, domain );
-  GEOS_LOG_LEVEL_RANK_0( 1, "Rate and state solver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and state solver" );
   solveRateAndStateEquations( time_n, dt, domain );
   saveState( domain );
   return dt;
@@ -142,7 +145,7 @@ real64 ImplicitQDRateAndState::setNextDt( real64 const & currentTime,
 
   real64 const nextDt = m_targetSlipIncrement / maxSlipRate;
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "The next dt will be {:.2e} s", nextDt ));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, GEOS_FMT( "The next dt will be {:.2e} s", nextDt ));
 
   return nextDt;
 }

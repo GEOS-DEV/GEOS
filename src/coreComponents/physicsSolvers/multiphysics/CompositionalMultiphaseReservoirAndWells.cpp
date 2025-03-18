@@ -28,11 +28,11 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 
 
@@ -50,6 +50,7 @@ CompositionalMultiphaseReservoirAndWells( const string & name,
   : Base( name, parent )
 {
   Base::template addLogLevel< logInfo::Crossflow >();
+  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 template< typename RESERVOIR_SOLVER >
@@ -109,8 +110,9 @@ setMGRStrategy()
       linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
     }
   }
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template<>
@@ -135,8 +137,9 @@ setMGRStrategy()
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template< typename RESERVOIR_SOLVER >
@@ -371,10 +374,10 @@ assembleCouplingTerms( real64 const time_n,
         globalIndex const totalNumCrossflowPerforations = MpiWrapper::sum( numCrossflowPerforations );
         if( totalNumCrossflowPerforations > 0 )
         {
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Crossflow, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
-                                                                    "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
-                                                                    this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
-                                                                    WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ));
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Crossflow, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
+                                                               "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
+                                                               this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
+                                                               WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ));
         }
       }
 

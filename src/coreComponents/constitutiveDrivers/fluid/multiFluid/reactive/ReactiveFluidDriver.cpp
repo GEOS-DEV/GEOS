@@ -18,6 +18,8 @@
  */
 
 #include "ReactiveFluidDriver.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 #include "functions/TableFunction.hpp"
 #include "functions/FunctionManager.hpp"
@@ -32,8 +34,6 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
                                           Group * const parent ):
   TaskBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::fluidNameString(), &m_fluidName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -66,6 +66,9 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  addLogLevel< logInfo::Initialisation >();
+  addLogLevel< logInfo::Results >();
 }
 
 
@@ -136,21 +139,18 @@ bool ReactiveFluidDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   // depending on logLevel, print some useful info
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "Launching ReactiveFluid Driver" );
-    GEOS_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
-    GEOS_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
-    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOS_LOG_RANK_0( "  No. of Primary Species ...... " << m_numPrimarySpecies );
-    GEOS_LOG_RANK_0( "  No. of Secondary Species ...... " << m_numSecondarySpecies );
-    GEOS_LOG_RANK_0( "  No. of Kinetic Reactions ...... " << m_numKineticReactions );
-    GEOS_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
-    GEOS_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
-    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching ReactiveFluid Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Fluid .................. " << m_fluidName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseFluid.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Primary Species ...... " << m_numPrimarySpecies );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Secondary Species ...... " << m_numSecondarySpecies );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Kinetic Reactions ...... " << m_numKineticReactions );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Pressure Control ....... " << m_pressureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Temperature Control .... " << m_temperatureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -343,10 +343,7 @@ void ReactiveFluidDriver::compareWithBaseline()
 
   // success
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }

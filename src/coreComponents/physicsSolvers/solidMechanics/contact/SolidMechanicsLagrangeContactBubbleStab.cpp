@@ -26,6 +26,7 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
@@ -965,7 +966,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 

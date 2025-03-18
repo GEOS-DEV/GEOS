@@ -35,10 +35,12 @@
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
@@ -192,6 +194,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.01 ).
     setDescription( "Minimum value for solution scaling factor" );
+
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::Solution >();
+  addLogLevel< logInfo::SourceFluxFailure >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void CompositionalMultiphaseBase::postInputInitialization()
@@ -1586,12 +1593,14 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                          ElementSubRegionBase & subRegion,
                                                          string const & )
     {
-      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+                                        GEOS_FMT( bcLogMessage,
+                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        fs );
       }
 
       if( targetSet.size() == 0 )
@@ -1600,11 +1609,10 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       }
       if( !subRegion.hasWrapper( dofKey ) )
       {
-        if( fs.getLogLevel() >= 1 )
-        {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                   getDataContext(), setName, subRegion.getName() ) );
-        }
+        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
+                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), setName, subRegion.getName() ),
+                                         fs );
         return;
       }
 
@@ -2307,23 +2315,23 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
     maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
     maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
-                                                             getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
-                                                             getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
+                                                        getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
+                                                        getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
     if( m_targetCompFracChange < LvArray::NumericLimits< real64 >::max )
     {
       maxCompFracChange = MpiWrapper::max( maxCompFracChange );
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max component fraction change during time step = {} %",
-                                                               getName(), GEOS_FMT( "{:.{}f}", 100*maxCompFracChange, 3 ) ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max component fraction change during time step = {} %",
+                                                          getName(), GEOS_FMT( "{:.{}f}", 100*maxCompFracChange, 3 ) ) );
     }
 
     if( m_isThermal )
     {
       maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative temperature change during time step = {} %",
-                                                               getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative temperature change during time step = {} %",
+                                                          getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
     }
 
     real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
@@ -2430,50 +2438,54 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
     maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
     maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
-                                                             getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
-                                                             getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
+                                                        getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
+                                                        getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
     if( m_targetRelativeCompDensChange < LvArray::NumericLimits< real64 >::max )
     {
       maxRelativeCompDensChange = MpiWrapper::max( maxRelativeCompDensChange );
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative component density change during time step = {} %",
-                                                               getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeCompDensChange, 3 ) ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative component density change during time step = {} %",
+                                                          getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeCompDensChange, 3 ) ) );
     }
 
     if( m_isThermal )
     {
       maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative temperature change during time step = {} %",
-                                                               getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative temperature change during time step = {} %",
+                                                          getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
     }
 
     real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
 
     real64 const nextDtPressure = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
                                   / std::max( eps, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
-    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on pressure change = {}", getName(), nextDtPressure ));
+    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::TimeStep,
+                                    GEOS_FMT( "{}: next time step based on pressure change = {}", getName(), nextDtPressure ),
+                                    m_nonlinearSolverParameters );
     real64 const nextDtPhaseVolFrac = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
                                       / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
-    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on phase volume fraction change = {}", getName(), nextDtPhaseVolFrac ));
+    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::TimeStep,
+                                    GEOS_FMT( "{}: next time step based on phase volume fraction change = {}", getName(), nextDtPhaseVolFrac ),
+                                    m_nonlinearSolverParameters );
     real64 nextDtCompDens = LvArray::NumericLimits< real64 >::max;
     if( m_targetRelativeCompDensChange < LvArray::NumericLimits< real64 >::max )
     {
       nextDtCompDens = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeCompDensChange
                        / std::max( eps, maxRelativeCompDensChange + m_solutionChangeScalingFactor * m_targetRelativeCompDensChange );
-      if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on component density change = {}", getName(), nextDtCompDens ));
+      GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::TimeStep,
+                                      GEOS_FMT( "{}: next time step based on component density change = {}", getName(), nextDtCompDens ),
+                                      m_nonlinearSolverParameters );
     }
     real64 nextDtTemperature = LvArray::NumericLimits< real64 >::max;
     if( m_isThermal )
     {
       nextDtTemperature = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeTempChange
                           / std::max( eps, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange );
-      if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on temperature change = {}", getName(), nextDtPhaseVolFrac ));
+      GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::TimeStep,
+                                      GEOS_FMT( "{}: next time step based on temperature change = {}", getName(), nextDtPhaseVolFrac ),
+                                      m_nonlinearSolverParameters );
     }
 
     return std::min( std::min( nextDtPressure, std::min( nextDtPhaseVolFrac, nextDtCompDens ) ), nextDtTemperature );
@@ -2753,8 +2765,8 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                              GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                         GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }
 
 bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainPartition & domain ) const
@@ -2762,8 +2774,8 @@ bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainParti
   bool isConverged = FlowSolverBase::checkSequentialSolutionIncrements( domain );
 
   string const unit = m_useMass ? "kg/m3" : "mol/m3";
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, GEOS_FMT( "    {}: Max component density change during outer iteration: {} {}",
-                                                              getName(), fmt::format( "{:.{}f}", m_sequentialCompDensChange, 3 ), unit ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence, GEOS_FMT( "    {}: Max component density change during outer iteration: {} {}",
+                                                         getName(), fmt::format( "{:.{}f}", m_sequentialCompDensChange, 3 ), unit ) );
 
   return isConverged && (m_sequentialCompDensChange < m_maxSequentialCompDensChange);
 }

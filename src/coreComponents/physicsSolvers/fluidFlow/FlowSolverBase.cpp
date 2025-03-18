@@ -25,12 +25,14 @@
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
@@ -143,6 +145,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< physicsSolverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
+
+  addLogLevel< logInfo::Convergence >();
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -812,12 +816,11 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   {
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
 
-    if( bc.getLogLevel() >= 1 )
-    {
-      GEOS_LOG_RANK_0( GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
-                                 bc.getCatalogName(), bc.getName(),
-                                 time + dt, dt * globalSumFluxes[aquiferIndex] ) );
-    }
+    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+                                    GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
+                                              bc.getCatalogName(), bc.getName(),
+                                              time + dt, dt * globalSumFluxes[aquiferIndex] ),
+                                    bc );
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );
 }
@@ -916,13 +919,15 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
 {
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",
-                                                              getName(), GEOS_FMT( "{:.{}f}", m_sequentialPresChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                         GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",
+                                   getName(), GEOS_FMT( "{:.{}f}", m_sequentialPresChange, 3 ) ) );
 
   if( m_isThermal )
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, GEOS_FMT( "    {}: Max temperature change during outer iteration: {} K",
-                                                                getName(), GEOS_FMT( "{:.{}f}", m_sequentialTempChange, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                           GEOS_FMT( "    {}: Max temperature change during outer iteration: {} K",
+                                     getName(), GEOS_FMT( "{:.{}f}", m_sequentialTempChange, 3 ) ) );
   }
 
   return (m_sequentialPresChange < m_maxSequentialPresChange) && (m_sequentialTempChange < m_maxSequentialTempChange);

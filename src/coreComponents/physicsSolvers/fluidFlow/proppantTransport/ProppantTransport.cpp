@@ -33,6 +33,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportKernels.hpp"
@@ -82,6 +83,7 @@ ProppantTransport::ProppantTransport( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag that enables/disables proppant-packing update" );
 
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 void ProppantTransport::postInputInitialization()
@@ -867,10 +869,8 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   return residualNorm;
 }

@@ -64,9 +64,6 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
-
-  addLogLevel< logInfo::WellControl >();
-  addLogLevel< logInfo::Crossflow >();
 }
 
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )

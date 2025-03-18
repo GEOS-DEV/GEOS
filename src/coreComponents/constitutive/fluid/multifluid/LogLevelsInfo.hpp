@@ -15,11 +15,11 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for the surface generation
+ * This file contains common log level informations for fluid
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_SURFACEGENERATION_LOGLEVELSINFO_HPP_
-#define GEOS_PHYSICSSOLVERS_SURFACEGENERATION_LOGLEVELSINFO_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_LOGLEVELSINFO_HPP
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -28,19 +28,18 @@ namespace geos
 
 namespace logInfo
 {
+/**
+ * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
+ */
+///@{
 
-struct Mapping
+struct PVT
 {
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Mapping information"; }
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Output PVT table"; }
 };
 
-struct RuptureRate
-{
-  static constexpr int getMinLogLevel() { return 3; }
-  static constexpr std::string_view getDescription() { return "Rupture rate information"; }
-};
-
+/// @cond DO_NOT_DOCUMENT
 /// @endcond
 ///@}
 
@@ -48,4 +47,4 @@ struct RuptureRate
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_SURFACEGENERATION_LOGLEVELSINFO_HPP
+#endif // GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_LOGLEVELSINFO_HPP
