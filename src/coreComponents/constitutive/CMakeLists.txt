@@ -54,6 +54,7 @@ set( constitutive_headers
      dispersion/DispersionSelector.hpp
      dispersion/LinearIsotropicDispersion.hpp
      fluid/multifluid/Layouts.hpp
+     fluid/multifluid/LogLevelsInfo.hpp
      fluid/multifluid/MultiFluidSelector.hpp
      fluid/multifluid/MultiFluidBase.hpp
      fluid/multifluid/MultiFluidConstants.hpp

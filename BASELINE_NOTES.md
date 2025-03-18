@@ -9,6 +9,10 @@ PR #3555 (2024-03-11)
 =====================
 Add aging law.
 
+PR #3494 (2024-03-11)
+=====================
+Added more log level documentation
+
 PR #3427 (2024-03-10)
 =====================
 Well time step selector based on rates/bhp tables and clarify well rates logic.
