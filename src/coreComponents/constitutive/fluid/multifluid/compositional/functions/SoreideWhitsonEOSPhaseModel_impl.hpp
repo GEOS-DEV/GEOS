@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_SOREIDEWHITSONEOSPHASEMODEL_IMPL_HPP_
 
 #include "SoreideWhitsonEOSPhaseModel.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/ComponentType.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentType.hpp"
 
 namespace geos
 {

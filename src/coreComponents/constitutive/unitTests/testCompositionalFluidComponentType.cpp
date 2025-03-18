@@ -14,7 +14,7 @@
  */
 
 // Source includes
-#include "constitutive/fluid/multifluid/compositional/models/ComponentType.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentType.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

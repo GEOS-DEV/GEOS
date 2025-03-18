@@ -94,8 +94,6 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel_impl.hpp
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
-     fluid/multifluid/compositional/models/ComponentProperties.hpp
-     fluid/multifluid/compositional/models/ComponentType.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
@@ -108,6 +106,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/NullModel.hpp
      fluid/multifluid/compositional/models/PhaseModel.hpp
      fluid/multifluid/compositional/parameters/ComponentProperties.hpp
+     fluid/multifluid/compositional/parameters/ComponentType.hpp
      fluid/multifluid/compositional/parameters/CriticalVolume.hpp
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
@@ -246,7 +245,6 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.cpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
-     fluid/multifluid/compositional/models/ComponentProperties.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.cpp
@@ -254,6 +252,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.cpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
+     fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
