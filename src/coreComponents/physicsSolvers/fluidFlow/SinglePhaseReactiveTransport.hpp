@@ -124,6 +124,11 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
+  virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override final;
+
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void
@@ -224,6 +229,11 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
+  {
+    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
+  };
+
 protected:
 
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
@@ -233,6 +243,9 @@ protected:
 
   /// name of the reactive fluid constitutive model
   string m_reactiveFluidModelName;
+
+  /// flag to determine whether or not to apply diffusion
+  integer m_hasDiffusion;
 };
 
 template< typename OBJECT_TYPE >

@@ -20,6 +20,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASE_REACTIVE_FLUXCOMPUTEKERNEL_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASE_REACTIVE_FLUXCOMPUTEKERNEL_HPP
 
+#include "constitutive/diffusion/DiffusionFields.hpp"
+#include "constitutive/diffusion/DiffusionBase.hpp"
+#include "constitutive/solid/porosity/PorosityBase.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 #include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
 #include "constitutive/fluid/multifluid/reactive/ReactiveMultiFluidFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
@@ -93,6 +97,15 @@ public:
                               fields::reactivefluid::primarySpeciesAggregateConcentration,
                               fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc >;
 
+  using DiffusionAccessors =
+    StencilMaterialAccessors< constitutive::DiffusionBase,
+                              fields::diffusion::diffusivity,
+                              fields::diffusion::dDiffusivity_dTemperature >;
+
+  using PorosityAccessors =
+    StencilMaterialAccessors< constitutive::PorosityBase,
+                              fields::porosity::referencePorosity >;
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of my MPI rank
@@ -113,6 +126,9 @@ public:
                      SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                      ReactiveSinglePhaseFluidAccessors const & reactiveSinglePhaseFluidAccessors,
                      PermeabilityAccessors const & permeabilityAccessors,
+                     DiffusionAccessors const & diffusionAccessors,
+                     PorosityAccessors const & porosityAccessors,
+                     integer const & hasDiffusion,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
@@ -128,7 +144,11 @@ public:
     m_logPrimarySpeciesConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::logPrimarySpeciesConcentration {} ) ),
     m_dMob_dLogPrimaryConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::dMobility_dLogPrimaryConc {} ) ),
     m_primarySpeciesAggregateConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::primarySpeciesAggregateConcentration {} ) ),
-    m_dPrimarySpeciesAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc {} ) )
+    m_dPrimarySpeciesAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc {} ) ),
+    m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
+    m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
+    m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
+    m_hasDiffusion( hasDiffusion )
   {}
 
   /**
@@ -156,6 +176,12 @@ public:
     using Base::StackVariables::dofColIndices;
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
+
+    /// Diffusion transmissibility
+    real64 diffusionTransmissibility[maxNumConns][numFluxSupportPoints]{};
+    /// Derivatives of diffusion transmissibility with respect to temperature
+    real64 dDiffusionTrans_dT[maxNumConns][numFluxSupportPoints]{};
+
   };
 
   /**
@@ -165,9 +191,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] NoOpFunc the function used to customize the computation of the flux
    */
+  template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
-                    StackVariables & stack ) const
+                    StackVariables & stack,
+                    FUNC && kernelOp = NoOpFunc{} ) const
   {
     using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
     // ***********************************************
@@ -208,20 +236,20 @@ public:
       // compute species fluxes and derivatives using upstream cell composition
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const totalConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][is];
-        speciesFlux[is] = totalConc_i / fluidDens_up * fluxVal;
+        real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][is];
+        speciesFlux[is] = aggregateConc_i / fluidDens_up * fluxVal;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
-          dSpeciesFlux_dP[ke][is] += totalConc_i / fluidDens_up * dFlux_dP[ke];
+          dSpeciesFlux_dP[ke][is] += aggregateConc_i / fluidDens_up * dFlux_dP[ke];
         }
 
-        dSpeciesFlux_dP[k_up][is] += -totalConc_i * fluxVal * dDens_dPres / (fluidDens_up * fluidDens_up);
+        dSpeciesFlux_dP[k_up][is] += -aggregateConc_i * fluxVal * dDens_dPres / (fluidDens_up * fluidDens_up);
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dTotalConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][is][js];
-          dSpeciesFlux_dLogConc[k_up][is][js] += dTotalConc_i_dLogConc_j / fluidDens_up * fluxVal;
+          real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][is][js];
+          dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConc_i_dLogConc_j / fluidDens_up * fluxVal;
         }
       }
 
@@ -248,7 +276,118 @@ public:
           }
         }
       }
+
+      // Customize the kernel with this lambda
+      kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP );
     } );
+
+    // *****************************************************
+    // Computation of the diffusion term in the species flux
+
+    if( m_hasDiffusion )
+    {
+      // Step 1: compute the diffusion transmissibilities at this face
+      m_stencilWrapper.computeWeights( iconn,
+                                       m_diffusivity,
+                                       m_dDiffusivity_dTemp,
+                                       stack.diffusionTransmissibility,
+                                       stack.dDiffusionTrans_dT );
+
+      localIndex k[numFluxSupportPoints]{};
+      localIndex connectionIndex = 0;
+
+      for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
+      {
+        for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
+        {
+          localIndex const seri[numFluxSupportPoints]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+          localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+          localIndex const sei[numFluxSupportPoints]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
+
+          // clear working arrays
+          real64 diffusionFlux[numSpecies]{};
+          // real64 dDiffusionFlux_dP[numFluxSupportPoints][numSpecies]{}; // Turn on if diffusionFlux is pressure-dependent
+          real64 dDiffusionFlux_dLogConc[numFluxSupportPoints][numSpecies][numSpecies]{};
+
+          real64 const diffusionTrans[numFluxSupportPoints] = { stack.diffusionTransmissibility[connectionIndex][0],
+                                                                stack.diffusionTransmissibility[connectionIndex][1] };
+
+          //***** calculation of flux *****
+          // loop over primary species
+          for( integer is = 0; is < numSpecies; ++is )
+          {
+            real64 speciesGrad_i = 0.0;
+            // real64 dSpeciesGrad_i_dP[numFluxSupportPoints]{}; // Turn on if speciesGrad is pressure-dependent
+            real64 dSpeciesGrad_i_dLogConc[numFluxSupportPoints][numSpecies]{};
+
+            // Step 2: compute species gradient
+            for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+            {
+              localIndex const er  = seri[ke];
+              localIndex const esr = sesri[ke];
+              localIndex const ei  = sei[ke];
+
+              real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er][esr][ei][is];
+
+              speciesGrad_i += diffusionTrans[ke] * aggregateConc_i;
+
+              for( integer js = 0; js < numSpecies; ++js )
+              {
+                real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er][esr][ei][is][js];
+
+                dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConc_i_dLogConc_j;
+              }
+            }
+
+            // choose upstream cell for species upwinding
+            localIndex const k_up = (speciesGrad_i >= 0) ? 0 : 1;
+
+            localIndex const er_up  = seri[k_up];
+            localIndex const esr_up = sesri[k_up];
+            localIndex const ei_up  = sei[k_up];
+
+            // computation of the upwinded species flux
+            diffusionFlux[is] += m_referencePorosity[er_up][esr_up][ei_up] * speciesGrad_i;
+
+            // add contributions of the derivatives of component fractions wrt pressure/component fractions
+            for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
+            {
+              for( integer js = 0; js < numSpecies; ++js )
+              {
+                dDiffusionFlux_dLogConc[ke][is][js] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_i_dLogConc[ke][js];
+              }
+            }
+          } // loop over primary species
+
+          // Add the local diffusion flux contribution to the residual and Jacobian
+          // loop over primary species
+          for( integer is = 0; is < numSpecies; ++is )
+          {
+            integer const eqIndex0 = k[0] * numEqn + is + 1;
+            integer const eqIndex1 = k[1] * numEqn + is + 1;
+
+            stack.localFlux[eqIndex0] += m_dt * diffusionFlux[is];
+            stack.localFlux[eqIndex1] -= m_dt * diffusionFlux[is];
+
+            for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+            {
+              localIndex const localDofIndexPres = k[ke] * numDof;
+              // stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dDiffusionFlux_dP[ke][is];
+              // stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dDiffusionFlux_dP[ke][is];
+
+              for( integer js = 0; js < numSpecies; ++js )
+              {
+                localIndex const localDofIndexComp = localDofIndexPres + js + 1;
+                stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dDiffusionFlux_dLogConc[ke][is][js];
+                stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dDiffusionFlux_dLogConc[ke][is][js];
+              }
+            }
+          }
+
+          connectionIndex++;
+        }
+      }
+    }
   }
 
   /**
@@ -287,11 +426,21 @@ protected:
   /// Views on derivatives of fluid mobilities
   ElementViewConst< arrayView2d< real64 const, compflow::USD_FLUID_DC > > const m_dMob_dLogPrimaryConc;
 
-  /// Views on primary species total concentration
+  /// Views on primary species aggregate concentration
   ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_primarySpeciesAggregateConc;
 
-  /// Views on primary species total concentration
+  /// Views on primary species aggregate concentration
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dPrimarySpeciesAggregateConc_dLogPrimaryConc;
+
+  /// Views on diffusivity
+  ElementViewConst< arrayView3d< real64 const > > const m_diffusivity;
+  ElementViewConst< arrayView3d< real64 const > > const m_dDiffusivity_dTemp;
+
+  /// View on the reference porosity
+  ElementViewConst< arrayView1d< real64 const > > const m_referencePorosity;
+
+  /// Flag of adding the diffusion term
+  integer const m_hasDiffusion;
 };
 
 /**
@@ -306,6 +455,7 @@ public:
    * @tparam POLICY the policy used in the RAJA kernel
    * @tparam STENCILWRAPPER the type of the stencil wrapper
    * @param[in] numSpecies the number of primary species
+   * @param[in] hasDiffusion the flag of adding diffusion term
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
@@ -318,6 +468,7 @@ public:
   template< typename POLICY, typename STENCILWRAPPER >
   static void
   createAndLaunch( integer const numSpecies,
+                   integer const hasDiffusion,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -342,10 +493,12 @@ public:
       typename KernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
       typename KernelType::ReactiveSinglePhaseFluidAccessors reactiveFluidAccessors( elemManager, solverName );
       typename KernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
+      typename KernelType::DiffusionAccessors diffusionAccessors( elemManager, solverName );
+      typename KernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
-                         flowAccessors, reactiveFlowAccessors, fluidAccessors,
-                         reactiveFluidAccessors, permAccessors,
+                         flowAccessors, reactiveFlowAccessors, fluidAccessors, reactiveFluidAccessors,
+                         permAccessors, diffusionAccessors, porosityAccessors, hasDiffusion,
                          dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

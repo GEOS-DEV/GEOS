@@ -21,6 +21,8 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/diffusion/DiffusionFields.hpp"
+#include "constitutive/diffusion/DiffusionSelector.hpp"
 #include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
 #include "constitutive/fluid/multifluid/reactive/ReactiveFluidSelector.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -38,7 +40,8 @@ using namespace constitutive;
 SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
                                                             Group * const parent ):
   SinglePhaseBase( name, parent ),
-  m_numPrimarySpecies( 0 )
+  m_numPrimarySpecies( 0 ),
+  m_hasDiffusion( 0 )
 {
   // To add modeling parameters we want to add here
 }
@@ -66,6 +69,13 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
       {
         m_reactiveFluidModelName = getConstitutiveName< ReactiveSingleFluid >( subRegion );
       }
+
+      // If at least one region has a diffusion model, consider it enabled for all
+      string const diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+      if( !diffusionName.empty() )
+      {
+        m_hasDiffusion = true;
+      }
     } );
   } );
 
@@ -92,6 +102,21 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
+      if( m_hasDiffusion )
+      {
+        subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 ).
+          setDescription( "Name of the diffusion constitutive model to use" );
+
+        string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+        diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+        GEOS_THROW_IF( diffusionName.empty(),
+                       GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                       InputError );
+      }
+
       subRegion.registerField< logPrimarySpeciesConcentration >( getName() ).
         reference().resizeDimension< 1 >( m_numPrimarySpecies );
 
@@ -162,12 +187,32 @@ void SinglePhaseReactiveTransport::resetStateToBeginningOfStep( DomainPartition 
   } );
 }
 
-// void SinglePhaseReactiveTransport::implicitStepComplete( real64 const & time,
-//                                                          real64 const & dt,
-//                                                          DomainPartition & domain )
-// {
+void SinglePhaseReactiveTransport::implicitStepComplete( real64 const & time,
+                                                         real64 const & dt,
+                                                         DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
 
-// }
+  SinglePhaseBase::implicitStepComplete( time, dt, domain );
+
+  if( m_hasDiffusion )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        string const & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+        DiffusionBase const & diffusionMaterial = getConstitutiveModel< DiffusionBase >( subRegion, diffusionName );
+        arrayView1d< real64 const > const temperature = subRegion.template getField< fields::flow::temperature >();
+        diffusionMaterial.saveConvergedTemperatureState( temperature );
+      } );
+    } );
+  }
+}
 
 void SinglePhaseReactiveTransport::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                    real64 const dt,
@@ -269,6 +314,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
       {
         singlePhaseReactiveFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                                               m_hasDiffusion,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -282,6 +328,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
       {
         singlePhaseReactiveFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                                               m_hasDiffusion,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -390,6 +437,15 @@ void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, strin
 
     SinglePhaseBase::updateMass( subRegion );
     updateSpeciesAmount( subRegion );
+
+    // If the diffusion is supported, initialize the model
+    if( m_hasDiffusion )
+    {
+      string const & diffusionName = subRegion.template getReference< string >( viewKeyStruct::diffusionNamesString() );
+      DiffusionBase const & diffusionMaterial = getConstitutiveModel< DiffusionBase >( subRegion, diffusionName );
+      arrayView1d< real64 const > const temperature = subRegion.template getField< fields::flow::temperature >();
+      diffusionMaterial.initializeTemperatureState( temperature );
+    }
   } );
 }
 
