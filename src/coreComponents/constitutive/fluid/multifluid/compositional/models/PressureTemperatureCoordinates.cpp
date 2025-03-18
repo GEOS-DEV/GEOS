@@ -17,15 +17,10 @@
  * @file PressureTemperatureCoordinates.hpp
  */
 
-#include "PressureTemperatureCoordinates.hpp"
+#include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-
 #include "functions/FunctionManager.hpp"
-#include "functions/TableFunction.hpp"
-#ifdef GEOS_USE_MATHPRESSO
-#include "functions/SymbolicFunction.hpp"
-#include "functions/CompositeFunction.hpp"
-#endif
+#include "PressureTemperatureCoordinates.hpp"
 
 namespace geos
 {
@@ -73,7 +68,7 @@ void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase
                                     "At least 2 values must be provided", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
                           InputError );
 
-    // Values must be increasing
+    // Values must be strictly increasing
     GEOS_THROW_IF( !isIncreasing( m_pressureCoordinates.toSliceConst()),
                    GEOS_FMT( "{}: invalid values of pressure coordinates provided in {}. "
                              "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
@@ -88,7 +83,7 @@ void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase
                                     "At least 2 values must be provided", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
                           InputError );
 
-    // Values must be increasing
+    // Values must be strictly increasing
     GEOS_THROW_IF( !isIncreasing( m_temperatureCoordinates.toSliceConst()),
                    GEOS_FMT( "{}: invalid values of temperature coordinates provided in {}. "
                              "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
