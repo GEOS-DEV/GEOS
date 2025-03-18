@@ -46,7 +46,7 @@ enum class ComponentType : integer
 };
 
 ENUM_STRINGS( ComponentType,
-              "",
+              "hc",
               "h2o",
               "h2",
               "h2s",
