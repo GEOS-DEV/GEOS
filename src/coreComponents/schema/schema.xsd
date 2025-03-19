@@ -4519,6 +4519,8 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="outputMassDensity" type="integer" default="0" />
 		<!--outputPhaseComposition => Flag to indicate that phase compositions should be output-->
 		<xsd:attribute name="outputPhaseComposition" type="integer" default="0" />
+		<!--precision => The precision to use to data out to files-->
+		<xsd:attribute name="precision" type="integer" default="4" />
 		<!--pressureControl => Function controlling pressure time history-->
 		<xsd:attribute name="pressureControl" type="groupNameRef" use="required" />
 		<!--steps => Number of load steps to take-->
