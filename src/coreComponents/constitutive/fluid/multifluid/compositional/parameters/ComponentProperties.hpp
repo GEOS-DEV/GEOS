@@ -38,11 +38,7 @@ class ComponentProperties final
 {
 public:
   ComponentProperties( string_array const & componentNames,
-                       array1d< real64 > const & componentMolarWeight ):
-    m_componentNames ( componentNames ),
-    m_componentMolarWeight ( componentMolarWeight )
-  {}
-
+                       array1d< real64 > const & componentMolarWeight );
   ~ComponentProperties() = default;
   ComponentProperties( const ComponentProperties & ) = default;
   const ComponentProperties & operator=( const ComponentProperties & ) = delete;
@@ -57,6 +53,7 @@ public:
    * Data accessors
    */
   string_array const & getComponentName() const { return m_componentNames; }
+  arrayView1d< integer > const & getComponentType() const { return m_componentType; }
   arrayView1d< real64 > const & getComponentMolarWeight() const { return m_componentMolarWeight; }
   arrayView1d< real64 > const & getComponentCriticalPressure() const { return m_componentCriticalPressure; }
   arrayView1d< real64 > const & getComponentCriticalTemperature() const { return m_componentCriticalTemperature; }
@@ -65,19 +62,13 @@ public:
 
   struct KernelWrapper
   {
-    KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight,
+    KernelWrapper( arrayView1d< integer const > const & componentType,
+                   arrayView1d< real64 const > const & componentMolarWeight,
                    arrayView1d< real64 const > const & componentCriticalPressure,
                    arrayView1d< real64 const > const & componentCriticalTemperature,
                    arrayView1d< real64 const > const & componentAcentricFactor,
                    arrayView1d< real64 const > const & componentVolumeShift,
-                   arrayView2d< real64 const > const & componentBinaryCoeff ):
-      m_componentMolarWeight ( componentMolarWeight ),
-      m_componentCriticalPressure ( componentCriticalPressure ),
-      m_componentCriticalTemperature( componentCriticalTemperature ),
-      m_componentAcentricFactor( componentAcentricFactor ),
-      m_componentVolumeShift( componentVolumeShift ),
-      m_componentBinaryCoeff( componentBinaryCoeff )
-    {}
+                   arrayView2d< real64 const > const & componentBinaryCoeff );
 
     /**
      * @brief Move the KernelWrapper to the given execution space, optionally touching it.
@@ -88,6 +79,7 @@ public:
      */
     void move( LvArray::MemorySpace const space, bool const touch )
     {
+      m_componentType.move( space, touch );
       m_componentMolarWeight.move( space, touch );
       m_componentCriticalPressure.move( space, touch );
       m_componentCriticalTemperature.move( space, touch );
@@ -97,6 +89,7 @@ public:
     }
 
     // Standard compositional input
+    arrayView1d< integer const > m_componentType;
     arrayView1d< real64 const > m_componentMolarWeight;
     arrayView1d< real64 const > m_componentCriticalPressure;
     arrayView1d< real64 const > m_componentCriticalTemperature;
@@ -109,20 +102,16 @@ public:
    * @brief Function to create and return a KernelWrapper
    * @return the KernelWrapper object
    */
-  KernelWrapper createKernelWrapper() const
-  {
-    return KernelWrapper( m_componentMolarWeight,
-                          m_componentCriticalPressure,
-                          m_componentCriticalTemperature,
-                          m_componentAcentricFactor,
-                          m_componentVolumeShift,
-                          m_componentBinaryCoeff );
-  }
+  KernelWrapper createKernelWrapper() const;
+
+private:
+  static void classifyComponents( string_array const & componentNames, array1d< integer > & componentType );
 
 public:
   // Standard compositional input
   string_array const & m_componentNames;
   array1d< real64 > const & m_componentMolarWeight;
+  array1d< integer > m_componentType;
   array1d< real64 > m_componentCriticalPressure;
   array1d< real64 > m_componentCriticalTemperature;
   array1d< real64 > m_componentAcentricFactor;
