@@ -40,6 +40,7 @@ set( mesh_headers
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfacesParallelSynchronization.hpp
      EmbeddedSurfaceSubRegion.hpp
+     LogLevelsInfo.hpp
      MeshFields.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
@@ -77,6 +78,7 @@ set( mesh_headers
      generators/CellBlockUtilities.hpp
      generators/LineBlock.hpp
      generators/LineBlockABC.hpp
+     generators/LogLevelsInfo.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp

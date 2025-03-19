@@ -22,7 +22,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
-#include "physicsSolvers/multiphysics/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include <tuple>
 
@@ -57,7 +57,9 @@ public:
     this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
+    addLogLevel< logInfo::Convergence >();
     addLogLevel< logInfo::Coupling >();
+    addLogLevel< logInfo::TimeStep >();
   }
 
   /// deleted copy constructor
@@ -91,7 +93,9 @@ public:
                                getDataContext(),
                                solverName, solverType ),
                      InputError );
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Coupling, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->getCatalogName(), solverName ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
+                             GEOS_FMT( "{}: found {} solver named {}",
+                                       getName(), solver->getCatalogName(), solverName ) );
     } );
   }
 
@@ -309,26 +313,15 @@ public:
   }
 
   virtual real64
-  setNextDtBasedOnStateChange( real64 const & currentDt,
-                               DomainPartition & domain ) override
+  setNextDt( real64 const & currentTime,
+             real64 const & currentDt,
+             DomainPartition & domain ) override
   {
-    real64 nextDt = LvArray::NumericLimits< real64 >::max;
+    real64 nextDt = PhysicsSolverBase::setNextDt( currentTime, currentDt, domain );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       real64 const singlePhysicsNextDt =
-        solver->setNextDtBasedOnStateChange( currentDt, domain );
-      nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
-    } );
-    return nextDt;
-  }
-
-  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt ) override
-  {
-    real64 nextDt = PhysicsSolverBase::setNextDtBasedOnNewtonIter( currentDt );
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-      real64 const singlePhysicsNextDt =
-        solver->setNextDtBasedOnNewtonIter( currentDt );
+        solver->setNextDt( currentTime, currentDt, domain );
       nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
     } );
     return nextDt;
@@ -486,7 +479,8 @@ protected:
         // Solve the subproblems nonlinearly
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
         {
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::NonlinearSolver, GEOS_FMT( "  Iteration {:2}: {}", iter + 1, solver->getName() ) );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                                 GEOS_FMT( "  Iteration {:2}: {}", iter + 1, solver->getName() ) );
           real64 solverDt = solver->nonlinearImplicitStep( time_n,
                                                            stepDt,
                                                            cycleNumber,
@@ -537,7 +531,7 @@ protected:
       {
         // cut timestep, go back to beginning of step and restart the Newton loop
         stepDt *= dtCutFactor;
-        GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
+        GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
         // notify the solver statistics counter that this is a time step cut
         m_solverStatistics.logTimeStepCut();
@@ -589,11 +583,11 @@ protected:
 
     if( params.m_subcyclingOption == 0 )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, "***** Single Pass solver, no subcycling *****" );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence, "***** Single Pass solver, no subcycling *****" );
     }
     else
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter + 1 ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter + 1 ) );
 
       if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::ResidualNorm )
       {
@@ -634,7 +628,8 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+        GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                               GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -661,7 +656,8 @@ protected:
 
       if( isConverged )
       {
-        GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence, GEOS_FMT( "***** The iterative coupling has converged in {} iteration(s) *****", iter + 1 ) );
+        GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                               GEOS_FMT( "***** The iterative coupling has converged in {} iteration(s) *****", iter + 1 ) );
       }
     }
     return isConverged;
