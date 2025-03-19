@@ -504,7 +504,7 @@ void DomainPartition::outputPartitionInformation() const
 
           partitionsData.push_back( tableData );
           if( partitionsData.size() == 1 ||
-              !partitionsData[0].compareTableDataTo( partitionsData.back()))
+              !(partitionsData[0] == partitionsData.back()))
           {
             TableTextFormatter logPartition( layout );
             GEOS_LOG( logPartition.toString( tableData ));

@@ -186,18 +186,15 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     //check to make sure our dimensions agree
     {
       string_view partitionsLogMessage =
-        "The total number of processes does not correspond to the total number of partitions.\n"
-        "Check that the number of partitions specified is consistent with the number of processes used.\n"
-        "  -x, --x-partitions - Number of partitions in the x-direction\n"
-        "  -y, --y-partitions - Number of partitions in the y-direction\n"
-        "  -z, --z-partitions - Number of partitions in the z-direction";
+        "The total number of processes = {} does not correspond to the total number of partitions = {}.\n"
+        "The number of cells in an axis cannot be lower that the partition count of this axis\n";
 
       int nbPartitions = 1;
       for( int i = 0; i < m_nsdof; i++ )
       {
         nbPartitions *= this->m_Partitions( i );
       }
-      GEOS_ERROR_IF_NE_MSG( nbPartitions, m_size, partitionsLogMessage );
+      GEOS_ERROR_IF_NE_MSG( nbPartitions, m_size, GEOS_FMT( partitionsLogMessage, m_size, nbPartitions )  );
     }
 
     //get communicator, rank, and coordinates

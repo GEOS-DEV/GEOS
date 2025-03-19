@@ -1454,9 +1454,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 * lower-->
 		<xsd:attribute name="interpolation" type="geos_TableFunction_InterpolationType" default="linear" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Output the loaded/computed table data in the log if succinct enough, otherwise output it in a CSV file.-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />

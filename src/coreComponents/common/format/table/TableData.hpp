@@ -46,7 +46,7 @@ public:
     string value = "";
   };
 
-  using RowsData = std::vector< std::vector< CellData > >;
+  using DataRows = std::vector< std::vector< CellData > >;
 
   /**
    * @brief Add a row to the table.
@@ -84,16 +84,45 @@ public:
    */
   std::vector< string > const & getErrorMsgs() const;
 
-  RowsData const & getCellsData() const
+  DataRows const & getCellsData() const
   { return m_rows; }
 
-  bool compareTableDataTo( TableData tableTarget ) const;
+  inline bool operator==( TableData const & comparingTable ) const
+  {
+    DataRows const & currentTableData = getCellsData();
+    DataRows const & comparingTableData = comparingTable.getCellsData();
+
+    if( currentTableData.size() != comparingTableData.size())
+    {
+      return false;
+    }
+
+    for( size_t idxRow = 0; idxRow < currentTableData.size(); idxRow++ )
+    {
+      std::vector< TableData::CellData > const & currentTableRow = currentTableData[idxRow];
+      std::vector< TableData::CellData > const & targetTableRow = comparingTableData[idxRow];
+      if( currentTableRow.size() != targetTableRow.size() )
+      {
+        return false;
+      }
+      for( size_t idxCol = 0; idxCol < currentTableRow.size(); idxCol++ )
+      {
+        if( currentTableRow[idxCol].value != targetTableRow[idxCol].value )
+        {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
 
 private:
   /// vector containing all rows with cell values
-  RowsData m_rows;
+  DataRows m_rows;
 
 };
+
 
 /**
  * @brief Class for managing 2D table m_data
