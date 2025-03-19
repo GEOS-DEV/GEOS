@@ -18,6 +18,7 @@
  */
 #include "CO2BrineFluid.hpp"
 
+#include "constitutive/fluid/multifluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "common/Units.hpp"
@@ -86,8 +87,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 CO2BrineFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -126,6 +125,7 @@ CO2BrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
+  addLogLevel< logInfo::PVT >();
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
@@ -339,8 +339,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && getLogLevel() > 0, // writeInLog
+    !isClone && (isLogLevelActive< logInfo::PVT >( this->getLogLevel())), // writeInLog
   };
+
 
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",
                                          phase1InputParams,
@@ -375,7 +376,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           {
             TableFunction::OutputOptions const flashOutputOpts = {
               !isClone && m_writeCSV,// writeCSV
-              !isClone && getLogLevel() > 0, // writeInLog
+              !isClone && ( isLogLevelActive< logInfo::PVT >( this->getLogLevel())), // writeInLog
             };
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                                  strs,
@@ -421,7 +422,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
     TableFunction::OutputOptions const flashOutputOpts = {
       !isClone && m_writeCSV,// writeCSV
-      !isClone && getLogLevel() > 0, // writeInLog
+      !isClone && ( isLogLevelActive< logInfo::PVT >( this->getLogLevel() )), // writeInLog
     };
 
     m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),

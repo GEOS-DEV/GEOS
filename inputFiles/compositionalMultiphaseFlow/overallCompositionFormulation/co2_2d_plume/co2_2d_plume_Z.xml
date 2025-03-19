@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!--maxCompFractionChange="0.005" -->
   <Solvers>
     <CompositionalMultiphaseFVM
       name="compflow"

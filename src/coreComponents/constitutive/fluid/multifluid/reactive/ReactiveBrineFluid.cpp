@@ -18,6 +18,7 @@
  */
 #include "ReactiveBrineFluid.hpp"
 
+#include "constitutive/fluid/multifluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -87,6 +88,8 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
+
+  addLogLevel< logInfo::PVT >();
 }
 
 template< typename PHASE >
@@ -203,7 +206,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && getLogLevel() >= 0, // writeInLog
+    !isClone && (isLogLevelActive< logInfo::PVT >( this->getLogLevel() )), // writeInLog
   };
 
   // then, we are ready to instantiate the phase models
