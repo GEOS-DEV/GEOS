@@ -32,11 +32,12 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalCompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/PerforationFluxKernels.hpp"
@@ -117,6 +118,14 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
+  addLogLevel< logInfo::ResidualNorm >();
+  addLogLevel< logInfo::BoundaryConditions >();
+  addLogLevel< logInfo::WellComponents >();
+  addLogLevel< logInfo::WellControl >();
+  addLogLevel< logInfo::WellValidity >();
+  addLogLevel< logInfo::Solution >();
+
 }
 
 void CompositionalMultiphaseWell::postInputInitialization()
@@ -575,7 +584,6 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
-  integer const logLevel = wellControls.getLogLevel();
   real64 const & refGravCoef = wellControls.getReferenceGravityCoef();
 
   real64 & currentBHP =
@@ -612,11 +620,9 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
     } );
   } );
 
-  if( logLevel >= 2 )
-  {
-    GEOS_LOG_RANK( GEOS_FMT( "{}: BHP (at the specified reference elevation) = {} Pa",
-                             wellControlsName, currentBHP ) );
-  }
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
+                          GEOS_FMT( "{}: BHP (at the specified reference elevation) = {} Pa",
+                                    wellControlsName, currentBHP ) );
 
 }
 
@@ -662,7 +668,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
-  integer const logLevel = wellControls.getLogLevel();
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
   string const massUnit = m_useMass ? "kg" : "mol";
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
@@ -708,6 +714,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                   dPhaseDens,
                                   phaseFrac,
                                   dPhaseFrac,
+                                  logSurfaceCondition,
                                   &useSurfaceConditions,
                                   &surfacePres,
                                   &surfaceTemp,
@@ -717,7 +724,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                   dCurrentPhaseVolRate,
                                   &currentMassRate,
                                   &iwelemRef,
-                                  &logLevel,
                                   &wellControlsName,
                                   &massUnit,
                                   &massDensity] ( localIndex const )
@@ -734,14 +740,15 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         {
           // we need to compute the surface density
           fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
-          if( logLevel >= 2 )
+          if( logSurfaceCondition )
           {
             GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
                                      wellControlsName, surfacePres, surfaceTemp ) );
-#ifdef GEOS_USE_HIP
-            GEOS_UNUSED_VAR( wellControlsName );
-#endif
           }
+#ifdef GEOS_USE_HIP
+          GEOS_UNUSED_VAR( wellControlsName );
+#endif
+
         }
         else
         {
@@ -775,16 +782,16 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
           dCurrentTotalVolRate[COFFSET_WJ::dT] = ( useSurfaceConditions ==  0 ) * currentTotalRate * -dTotalDens[iwelemRef][0][Deriv::dT] * totalDensInv * totalDensInv;
         }
 
+        if( logSurfaceCondition && useSurfaceConditions )
+        {
+          GEOS_LOG_RANK( GEOS_FMT( "{}: total fluid density at surface conditions = {} {}/sm3, total rate = {} {}/s, total surface volumetric rate = {} sm3/s",
+                                   wellControlsName, totalDens[iwelemRef][0], massUnit, connRate[iwelemRef], massUnit, currentTotalVolRate ) );
+        }
+
         dCurrentTotalVolRate[COFFSET_WJ::dQ] = totalDensInv;
         for( integer ic = 0; ic < numComp; ++ic )
         {
           dCurrentTotalVolRate[COFFSET_WJ::dC+ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
-        }
-
-        if( logLevel >= 2 && useSurfaceConditions )
-        {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: total fluid density at surface conditions = {} {}/sm3, total rate = {} {}/s, total surface volumetric rate = {} sm3/s",
-                                   wellControlsName, totalDens[iwelemRef][0], massUnit, currentTotalRate, massUnit, currentTotalVolRate ) );
         }
 
         // Step 3: update the phase volume rate
@@ -825,10 +832,10 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
           }
           applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], &dCurrentPhaseVolRate[ip][COFFSET_WJ::dC], work.data() );
 
-          if( logLevel >= 2 && useSurfaceConditions )
+          if( logSurfaceCondition && useSurfaceConditions )
           {
             GEOS_LOG_RANK( GEOS_FMT( "{}: density of phase {} at surface conditions = {} {}/sm3, phase surface volumetric rate = {} sm3/s",
-                                     wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
+                                     wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] )  );
           }
         }
       } );
@@ -930,7 +937,9 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
   } );
   maxPhaseVolFrac = MpiWrapper::max( maxPhaseVolFrac );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxPhaseVolFrac, 4 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::WellComponents,
+                         GEOS_FMT( "        {}: Max well phase volume fraction change = {}",
+                                   getName(), fmt::format( "{:.{}f}", maxPhaseVolFrac, 4 ) ) );
 
 }
 
@@ -1351,19 +1360,17 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
     globalResidualNorm[0] = MpiWrapper::max( localResidualNorm[0] );
     globalResidualNorm[1] = MpiWrapper::max( localResidualNorm[1] );
     resNorm=sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
-    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-    {
-      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
-    }
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                            coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+
   }
   else
   {
     resNorm= MpiWrapper::max( resNorm );
-    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-    {
-      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), resNorm );
-    }
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                            coupledSolverAttributePrefix(), resNorm ));
   }
   return resNorm;
 }
@@ -1452,25 +1459,34 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
   minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
 
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
-                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well component density change: {} {} (before scaling)",
-                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::WellComponents,
+                         GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
+                                   getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::WellComponents,
+                         GEOS_FMT( "        {}: Max well component density change: {} {} (before scaling)",
+                                   getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
 
   if( m_isThermal )
   {
     maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well temperature change: {} K (before scaling)",
-                                        getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::WellComponents,
+                           GEOS_FMT( "        {}: Max well temperature change: {} K (before scaling)",
+                                     getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
   }
 
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well pressure scaling factor: {}", getName(), minPresScalingFactor ) );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well component density scaling factor: {}", getName(), minCompDensScalingFactor ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::WellComponents,
+                         GEOS_FMT( "        {}: Min well pressure scaling factor: {}",
+                                   getName(), minPresScalingFactor ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::WellComponents,
+                         GEOS_FMT( "        {}: Min well component density scaling factor: {}",
+                                   getName(), minCompDensScalingFactor ) );
   if( m_isThermal )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well temperature scaling factor: {}", getName(), minTempScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::WellComponents,
+                           GEOS_FMT( "        {}: Min well temperature scaling factor: {}",
+                                     getName(), minTempScalingFactor ) );
   }
 
 
@@ -1524,8 +1540,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
 
         if( !subRegionData.localMinVal )
         {
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                      GEOS_FMT( "Solution is invalid in well {} (either a negative pressure or a negative component density was found)", subRegion.getName()) );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                                 GEOS_FMT( "Solution is invalid in well {} (either a negative pressure or a negative component density was found)", subRegion.getName()) );
         }
 
         localCheck = std::min( localCheck, subRegionData.localMinVal );
@@ -1617,15 +1633,18 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
     if( numNegPres > 0 )
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative well pressure values: {}, minimum value: {} Pa",
-                                          getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::WellValidity,
+                             GEOS_FMT( "        {}: Number of negative well pressure values: {}, minimum value: {} Pa",
+                                       getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
     string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
     if( numNegDens > 0 )
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative well component density values: {}, minimum value: {} {} ",
-                                          getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::WellValidity,
+                             GEOS_FMT( "        {}: Number of negative well component density values: {}, minimum value: {} {} ",
+                                       getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
     if( minTotalDens > 0 )
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative total well density values: {}, minimum value: {} {} ",
-                                          getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::WellValidity,
+                             GEOS_FMT( "        {}: Number of negative total well density values: {}, minimum value: {} {} ",
+                                       getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
 
   }
 
@@ -1952,27 +1971,27 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
             if( wellControls.isProducer() )
             {
               wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( time_n ) );
-              GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
-                                          GEOS_FMT( "Control switch for well {} from BHP constraint to phase volumetric rate constraint", subRegion.getName() ) );
+              GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                     GEOS_FMT( "Control switch for well {} from BHP constraint to phase volumetric rate constraint", subRegion.getName() ) );
             }
             else if( wellControls.getInputControl() == WellControls::Control::MASSRATE )
             {
               wellControls.switchToMassRateControl( wellControls.getTargetMassRate( time_n ) );
-              GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
-                                          GEOS_FMT( "Control switch for well {} from BHP constraint to mass rate constraint", subRegion.getName()) );
+              GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                     GEOS_FMT( "Control switch for well {} from BHP constraint to mass rate constraint", subRegion.getName()) );
             }
             else
             {
               wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( time_n ) );
-              GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
-                                          GEOS_FMT( "Control switch for well {} from BHP constraint to total volumetric rate constraint", subRegion.getName()) );
+              GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                     GEOS_FMT( "Control switch for well {} from BHP constraint to total volumetric rate constraint", subRegion.getName()) );
             }
           }
           else
           {
             wellControls.switchToBHPControl( wellControls.getTargetBHP( time_n ) );
-            GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
-                                        GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName() ) );
+            GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                   GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName() ) );
           }
         }
 
