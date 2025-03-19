@@ -70,7 +70,7 @@ void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase
                           InputError );
 
     // Values must be strictly increasing
-    GEOS_THROW_IF( !isIncreasing( m_pressureCoordinates.toSliceConst()),
+    GEOS_THROW_IF( !isStrictlyIncreasing( m_pressureCoordinates.toSliceConst()),
                    GEOS_FMT( "{}: invalid values of pressure coordinates provided in {}. "
                              "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
                    InputError );
@@ -85,21 +85,21 @@ void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase
                           InputError );
 
     // Values must be strictly increasing
-    GEOS_THROW_IF( !isIncreasing( m_temperatureCoordinates.toSliceConst()),
+    GEOS_THROW_IF( !isStrictlyIncreasing( m_temperatureCoordinates.toSliceConst()),
                    GEOS_FMT( "{}: invalid values of temperature coordinates provided in {}. "
                              "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
                    InputError );
   }
 }
 
-bool PressureTemperatureCoordinates::isIncreasing( arraySlice1d< real64 const > const & array )
+bool PressureTemperatureCoordinates::isStrictlyIncreasing( arraySlice1d< real64 const > const & array )
 {
   localIndex const size = array.size();
   GEOS_ASSERT( 1 < size );
   real64 constexpr epsilon = MultiFluidConstants::epsilon;
   for( localIndex i = 1; i < size; ++i )
   {
-    if( array[i] - array[i-1] < -epsilon )
+    if( array[i] - array[i-1] < epsilon )
     {
       return false;
     }
@@ -107,7 +107,8 @@ bool PressureTemperatureCoordinates::isIncreasing( arraySlice1d< real64 const > 
   return true;
 }
 
-std::pair< integer, integer > PressureTemperatureCoordinates::getVariableIndices( FunctionBase const * function )
+std::pair< integer, integer >
+PressureTemperatureCoordinates::getVariableIndices( FunctionBase const * function )
 {
   auto const & inputVarNames = function->getWrapper< string_array >( dataRepository::keys::inputVarNames ).reference();
   if( inputVarNames.size() == 2 && inputVarNames[0] == "temperature" )

@@ -38,7 +38,7 @@ namespace compositional
    Parameter container for pressure and temperature interpolation points
    These are used by functions that are tabulated functions of pressure and temperature. These
    user inputs allow the user to explicitly select the points at which the functions should be
-   tabuulated.
+   tabulated.
  */
 class PressureTemperatureCoordinates : public ModelParameters
 {
@@ -62,9 +62,23 @@ protected:
   void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
 protected:
-  static bool isIncreasing( arraySlice1d< real64 const > const & array );
+  /**
+   * @brief Check if an array has strictly increasing values
+   * @param[in] array The array to be checked
+   * @return @c true if the array has values that are strictly increasing
+   */
+  static bool isStrictlyIncreasing( arraySlice1d< real64 const > const & array );
 
-  static std::pair< integer, integer > getVariableIndices( FunctionBase const * fluid );
+  /**
+   * @brief Get the ordering of input variables on a user supplied function
+   * @details Checks a table (or function) of 2 variables pressure and temperature and determines if
+              pressure is the first variable. This will return a pair of integers {pIndex, tIndex} which
+              will be {0,1} if pressure is the first input variable on the function and {1,0} if
+              temperature is the first input variable.
+   * @param[in] function The function to be checked
+   * @return @c {1,0} if temperature is the first input variable otherwise {0,1}
+   */
+  static std::pair< integer, integer > getVariableIndices( FunctionBase const * function );
 };
 
 } // end namespace compositional
