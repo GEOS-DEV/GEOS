@@ -3,7 +3,11 @@ set( testSources
      testLogPart.cpp 
      testStringUtilities.cpp )
 
+set( gtest_geosx_mpi_tests
+     testLogPart.cpp )
+
 set( dependencyList gtest common ${parallelDeps} )
+
 
 # Add gtest C++ based tests
 foreach( test ${testSources} )

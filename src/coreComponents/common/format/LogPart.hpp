@@ -35,14 +35,13 @@ class LogPart
 public:
 
   /**
-   * @brief Construct a new LogPart
-   * @param m_logPartTitle The logPart title
-   * @param rank MPI rank of the owner process, by default set to -1
+   * @brief Initialize a LogPart given a title
+   * @param m_logPartTitle The title who will be used for top and bottom LogPart
    */
-  LogPart( string_view m_logPartTitle, int rank = -1 );
+  LogPart( string_view m_logPartTitle );
 
   /**
-   * @brief Add a description to the opening LogPart
+   * @brief Add a description to the top LogPart
    * @param name The first part of the description
    * @param args The remaining part of the description,all remaining values will be concatened and aligned
    * @note Descriptions values can be be any formatted types.
@@ -51,13 +50,13 @@ public:
   void addDescription( string_view name, Args const & ... args );
 
   /**
-   * @brief Add a description to the opening logPart. No specific format will be apply the this description
+   * @brief Add a description to the top logPart. No specific format will be apply the this description
    * @param description The string value of the description.
    */
   void addDescription( string_view description );
 
   /**
-   * @brief Add a description to the closing logPart by concatening a description name and descriptions values.
+   * @brief Add a description to the bottom logPart by concatening a description name and descriptions values.
    * @param name The first part of the description
    * @param args The remaining part of the description, all remaining values will be concatened and aligned
    * @note Descriptions values can be be any formatted types.
@@ -66,7 +65,7 @@ public:
   void addEndDescription( string_view name, Args const & ... args );
 
   /**
-   * @brief Add a description to the opening logPart. No specific format will be apply the this description
+   * @brief Add a description to the top logPart. No specific format will be apply the this description
    * @param description The string value of the description
    */
   void addEndDescription( string_view description );
@@ -98,7 +97,7 @@ public:
 private:
 
   /**
-   * @brief Structure containing all information needed in order to construct a LogPart.
+   * @brief Structure containing all information needed in order to construct a top or bottom LogPart.
    * All these variables can be adjusted.
    */
   struct Description
@@ -129,9 +128,28 @@ private:
     size_t m_maxNameWidth;
   };
 
+  Description m_startDescription = { "", {}, {}, SIZE_MAX, 50};
+  Description m_endDescription  = { "", {}, {}, SIZE_MAX, 50 };
+
+  FormattedDescription m_formattedStartDescription = { {}, 50, 0 };
+  FormattedDescription m_formattedEndDescription  = { {}, 50, 0 };
+
+  /// description border margin
+  static constexpr size_t m_borderMargin = 2;
+  /// numbers of character used as border
+  static constexpr size_t m_nbBorderChar = 2;
+  /// character used for logPart construction
+  static constexpr size_t m_borderCharacter = '#';
+  /// prefix to append to the title of bottom section
+  static constexpr string_view m_prefixEndTitle = "End of ";
+  /// string used to separate the name/description
+  static constexpr string_view m_delimiter = " : ";
+
+  /// String containing horizontal border
+  string m_horizontalBorder;
 
   /**
-   * @brief Add a description to a specific section (opening or closing)
+   * @brief Add a description to a specific section (top or bottom)
    * @param name The first part of the description
    * @param args The remaining part of the description, all remaining values will be concatened and aligned
    * @note Descriptions values can be be any formatted types. Values will be aligned altogether.
@@ -149,7 +167,7 @@ private:
                                FormattedDescription & formattedDescription );
 
   /**
-   * @brief Construct a formatted descrption
+   * @brief Construct a formatted description from the all the descriptions set in input
    * @param description Structure containing all the information (name, values, length) needed for building a logPart
    * @param formattedDescription Structure containing the formatted description
    */
@@ -157,46 +175,18 @@ private:
                            FormattedDescription & formattedDescription );
 
   /**
-   * @brief Construct a the log part title
    * @param description Structure containing all the information (name, values, length) needed for building a logPart
    * @param formattedDescription Structure containing the formatted description
-   * @return A string containing the log part title
+   * @return A formatted string containing the log part title
    */
   string outputTitle( LogPart::Description & description,
                       FormattedDescription & formattedDescription );
-
-  /**
-   * @brief Constructs the string logPart descriptions of the log part.
-   */
 
   /**
    * @param formattedDescription Structure containing the formatted description
    * @return A formatted string containing the log part descriptions
    */
   string outputDescription( FormattedDescription & formattedDescription );
-
-  /// prefix to append to the title of closing section
-  string_view m_prefixEndTitle = "End of ";
-
-  Description m_startDescription = { "", {}, {}, SIZE_MAX, 50};
-  Description m_endDescription  = { "", {}, {}, SIZE_MAX, 50 };
-
-  FormattedDescription m_formattedStartDescription = { {}, 50, 0 };
-  FormattedDescription m_formattedEndDescription  = { {}, 50, 0 };
-
-  /// description border margin
-  static constexpr size_t m_borderMargin = 2;
-  /// numbers of character used as border
-  static constexpr size_t m_nbBorderChar = 2;
-  /// character used for logPart construction
-  static constexpr size_t m_borderCharacter = '#';
-  // string used to separate the name/description
-  string_view m_delimiter = " : ";
-
-  /// String containing horizontal border
-  string m_horizontalBorder;
-  /// MPI rank of the owner process, output to all process by default
-  integer m_rank;
 };
 
 template< typename ... Args >

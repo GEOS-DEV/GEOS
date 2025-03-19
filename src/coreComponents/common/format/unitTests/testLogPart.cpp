@@ -14,6 +14,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/format/LogPart.hpp"
+#include "common/initializeEnvironment.hpp"
 #include <gtest/gtest.h>
 
 using namespace geos;
@@ -225,5 +226,12 @@ TEST( testLogPart, multiLineWithExtraSpace )
 int main( int argc, char * * argv )
 {
   testing::InitGoogleTest( &argc, argv );
-  return RUN_ALL_TESTS();;
+
+  geos::setupMPI( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geos::finalizeMPI();
+
+  return result;
 }

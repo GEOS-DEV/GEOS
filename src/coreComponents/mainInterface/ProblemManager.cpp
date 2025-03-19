@@ -172,13 +172,13 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  LogPart meshGenerationLog( "Mesh generation", 0 );
+  LogPart meshGenerationLog( "Mesh generation" );
   meshGenerationLog.begin();
   generateMesh();
   meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-  LogPart numericalMethodLog( "Numerical Methods", 0 );
+  LogPart numericalMethodLog( "Numerical Methods" );
   numericalMethodLog.begin();
   applyNumericalMethods();
   numericalMethodLog.end();
@@ -187,7 +187,7 @@ void ProblemManager::problemSetup()
 
   initialize();
 
-  LogPart importFieldsLog( "Import fields", 0 );
+  LogPart importFieldsLog( "Import fields" );
   importFieldsLog.begin();
   importFields();
   importFieldsLog.end();

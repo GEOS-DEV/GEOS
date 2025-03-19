@@ -271,7 +271,8 @@ std::vector< STRING_T > divideLines( string_view value );
  * @param maxLength The max length a line can have.
  * @return A vector containing the lines wrapped.
  */
-std::vector< std::string > wrapTextToMaxLength( std::vector< std::string > const & lines, size_t maxLength );
+template< typename STRING_T >
+std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines, size_t maxLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values
