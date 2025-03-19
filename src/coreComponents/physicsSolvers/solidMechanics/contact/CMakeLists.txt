@@ -3,6 +3,7 @@ set( solidMechanicsSolvers_headers
      ${solidMechanicsSolvers_headers}
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
+     contact/LogLevelsInfo.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
      contact/SolidMechanicsLagrangeContact.hpp
      contact/SolidMechanicsLagrangeContactBubbleStab.hpp
@@ -18,7 +19,6 @@ set( solidMechanicsSolvers_headers
      contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp
      contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp
      contact/kernels/SolidMechanicsLagrangeContactKernels.hpp 
-     contact/LogLevelsInfo.hpp
      PARENT_SCOPE )
 
 
