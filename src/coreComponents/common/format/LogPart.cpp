@@ -26,8 +26,8 @@ namespace geos
 
 LogPart::LogPart( string_view logPartTitle )
 {
-  m_startDescription.m_title = logPartTitle;
-  m_endDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
+  m_formattedStartDescription.m_title = logPartTitle;
+  m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
 }
 
 void LogPart::addDescription( string_view description )
@@ -90,7 +90,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
     } )).size();
     // maxValueWidth = 0;
     size_t const totalLineWidth = formattedDescription.m_maxNameWidth + maxValueWidth + borderSpaceWidth + m_delimiter.size();
-    formattedDescription.m_width = std::max( formattedDescription.m_width, totalLineWidth );
+    m_width = std::max( m_width, totalLineWidth );
 
     //2.5 merge both name and values
     size_t const lineCount = std::max( names.size(), wrappedValues.size());
@@ -121,11 +121,11 @@ void LogPart::formatDescriptions( LogPart::Description & description,
         string const spaces = std::string( formattedDescription.m_maxNameWidth - formattedLines[idxLine].size(), ' ' );
         formattedLines[idxLine] = GEOS_FMT( "{}{}", formattedLines[idxLine], spaces );
       }
-      formattedDescription.m_width = std::max( formattedDescription.m_width, formattedLines[idxLine].size() );
+      m_width = std::max( m_width, formattedLines[idxLine].size() );
     }
 
   }
-  formattedDescription.m_width = std::max( formattedDescription.m_width, description.m_minWidth );
+  m_width = std::max( m_width, description.m_minWidth );
 }
 
 string LogPart::outputDescription( FormattedDescription & formattedDescription )
@@ -137,21 +137,20 @@ string LogPart::outputDescription( FormattedDescription & formattedDescription )
   {
     oss << borderCharacters;
     oss << GEOS_FMT( "{:<{}}{:<{}}", " ", m_borderMargin,
-                     line, formattedDescription.m_width - m_nbBorderChar * 2 - m_borderMargin );
+                     line, m_width - m_nbBorderChar * 2 - m_borderMargin );
     oss << borderCharacters << '\n';
   }
   return oss.str();
 }
 
-string LogPart::outputTitle( LogPart::Description & description,
-                             FormattedDescription & formattedDescription )
+string LogPart::outputTitle( LogPart::FormattedDescription & formattedDescription )
 {
-  size_t const titleRowLength = formattedDescription.m_width;
+  size_t const titleRowLength = m_width;
   string const borderCharacters =  string( m_nbBorderChar, m_borderCharacter );
 
   return GEOS_FMT( "\n{}{:^{}}{}\n",
                    borderCharacters,
-                   description.m_title,
+                   formattedDescription.m_title,
                    titleRowLength  - 4,
                    borderCharacters );
 }
@@ -190,9 +189,9 @@ void LogPart::begin( std::ostream & os )
     formatDescriptions( m_startDescription, m_formattedStartDescription );
   }
 
-  string const line = string( m_formattedStartDescription.m_width, m_borderCharacter );
+  string const line = string( m_width, m_borderCharacter );
   os << '\n' << line;
-  os << outputTitle( m_startDescription, m_formattedStartDescription );
+  os << outputTitle( m_formattedStartDescription );
   os << line << '\n';
   os << outputDescription( m_formattedStartDescription ) << '\n';
 }
@@ -206,14 +205,14 @@ void LogPart::end( std::ostream & os )
 
   formatDescriptions( m_endDescription, m_formattedEndDescription );
 
-  string const line =  string( m_formattedEndDescription.m_width, m_borderCharacter );
+  string const line =  string( m_width, m_borderCharacter );
   if( !m_endDescription.m_names.empty() )
   {
     os << '\n';
     os << outputDescription( m_formattedEndDescription );
     os << line;
   }
-  os << outputTitle( m_endDescription, m_formattedEndDescription );
+  os << outputTitle( m_formattedEndDescription );
   os << line << "\n\n";
 }
 

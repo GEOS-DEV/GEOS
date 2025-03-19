@@ -183,19 +183,19 @@ TEST( testLogPart, valuesMultiLines )
   std::cout <<oss.str() << std::endl;
   EXPECT_EQ( oss.str(),
              "\n"
-             "##  dummy name : long dummy end values, long dummy end  ##\n"
-             "##               values, long dummy end values, long    ##\n"
-             "##               dummy end values                       ##\n"
-             "##  dummy name : long dummy end values                  ##\n"
-             "##               long dummy end values                  ##\n"
-             "##               long dummy end values                  ##\n"
-             "##               long dummy end values                  ##\n"
-             "##  dummy name : small dummy end value                  ##\n"
-             "##  Ceci est un timestep extremement long 10h00h00545ms ##\n"
-             "##  ( 1h 30 s en heure)                                 ##\n"
-             "##########################################################\n"
-             "##                End of TIMESTEP START                 ##\n"
-             "##########################################################\n\n"
+             "##  dummy name : long dummy end values, long dummy end   ##\n"
+             "##               values, long dummy end values, long     ##\n"
+             "##               dummy end values                        ##\n"
+             "##  dummy name : long dummy end values                   ##\n"
+             "##               long dummy end values                   ##\n"
+             "##               long dummy end values                   ##\n"
+             "##               long dummy end values                   ##\n"
+             "##  dummy name : small dummy end value                   ##\n"
+             "##  Ceci est un timestep extremement long 10h00h00545ms  ##\n"
+             "##  ( 1h 30 s en heure)                                  ##\n"
+             "###########################################################\n"
+             "##                 End of TIMESTEP START                 ##\n"
+             "###########################################################\n\n"
              );
   oss.clear();
 }
