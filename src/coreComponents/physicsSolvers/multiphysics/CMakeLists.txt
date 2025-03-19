@@ -33,7 +33,6 @@ set( multiPhysicsSolvers_headers
     PoromechanicsInitialization.hpp
     PoromechanicsFields.hpp
     PoromechanicsInitialization.hpp
-    LogLevelsInfo.hpp
     poromechanicsKernels/MultiphasePoromechanics.hpp
     poromechanicsKernels/MultiphasePoromechanics_impl.hpp
     poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
