@@ -1483,10 +1483,6 @@ public:
     {
       stack.numConnectedElems = 1;
     }
-    else if( m_elemStatus[m_nextWellElemIndex[iconn]]==WellElementSubRegion::WellElemStatus::CLOSED )
-    {
-      stack.numConnectedElems = 1;
-    }
 
     stack.localFlux.resize( stack.numConnectedElems*numEqn );
     stack.localFluxJacobian.resize( stack.numConnectedElems * numEqn, stack.stencilSize * numDof );
@@ -1714,17 +1710,15 @@ public:
      *                        currentConnRate > 0 at the last connection for a injector
      */
 
-    if( m_elemStatus[iwelem] == WellElementSubRegion::WellElemStatus::CLOSED )
-    {
-      return;
-    }
-
-    localIndex iwelemNext =  m_nextWellElemIndex[iwelem] ;
+    localIndex iwelemNext =  m_nextWellElemIndex[iwelem];
 
     // Current element is open and next element is closed =>   dependency on next segment
-    if( iwelemNext >= 0 &&  m_elemStatus[m_nextWellElemIndex[iwelemNext]]==WellElementSubRegion::WellElemStatus::CLOSED )
+    if( iwelemNext >= 0 )
     {
-      iwelemNext = -1;
+      if( m_elemStatus[m_nextWellElemIndex[iwelemNext]]==WellElementSubRegion::WellElemStatus::CLOSED )
+      {
+        iwelemNext = -1;
+      }
     }
 
     real64 const currentConnRate = m_connRate[iwelem];

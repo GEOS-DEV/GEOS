@@ -230,10 +230,11 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
             perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
           }
         }
-#if 1
-        //
+
         array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
+        // global index local elements (size == subregion.size)
         arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
+        // global index for all elements (size == total number of well elements)
         arrayView1d< globalIndex const > globalElementIndex = subRegion.getGlobalElementIndex();
 
         arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
@@ -269,13 +270,9 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
         // Set local well element status array
         for( integer i=0; i<subRegion.size(); i++ )
         {
-          if( elemGhostRank[i] < 0 )
-          {
-            integer gi = globalElementIndex[i];
-            localElemStatus[i] = currentStatus[gi];
-          }
+          integer gi = globalWellElementIndex[i];
+          localElemStatus[i] = currentStatus[gi];
         }
-#endif
       }
     } );
 

@@ -48,6 +48,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
+  registerWrapper( viewKeyStruct::wellLocalElementGlobaleIndexString(), &m_globalWellElementIndex );
   registerWrapper( viewKeyStruct::wellLocalElementStatusString(), &m_wellLocalElementStatus );
 
 
@@ -496,8 +497,6 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
 
   // Store local to global index mapping
   integer n_localElems = localElems.size();
-  m_globalWellElementIndex.resize( n_localElems );
-
   for( integer i=0; i<n_localElems; i++ )
   {
     m_globalWellElementIndex[i] = localElems[i];
@@ -989,21 +988,38 @@ void WellElementSubRegion::setupCommArrays( )
 
 void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & localElemPerfStatus )
 {
+  integer numElements = m_globalElementIndex.size();
+
   // Gather and broadcast element perf status to all cores
   // Number of active perfs per segment (sized total number of segments)
-  array1d< integer > activePerfsPerElement( m_globalElementIndex.size());
-  activePerfsPerElement.resize( m_globalElementIndex.size() );
+  array1d< integer > activePerfsPerElement( numElements );
+  activePerfsPerElement.resize( numElements );
   MpiWrapper::allgatherv( localElemPerfStatus.data(), localElemPerfStatus.size(), activePerfsPerElement.data(), m_elementPerRank.data(), m_mpiElementOffset.data(), MPI_COMM_GEOS );
 
+
+  // Sort indices based on the global index
+  std::vector< size_t > indices( numElements );
+  for( size_t i = 0; i < indices.size(); ++i )
+  {
+    indices[i] = i;   // Initialize indices
+  }
+  std::sort( indices.begin(), indices.end(), [&]( size_t i1, size_t i2 ) {
+    return m_globalElementIndex[i1] < m_globalElementIndex[i2];   // Sort in ascending order global index
+  } );
+  // Create sorted perfs per element list
+  array1d< integer >sortedPerfsPerElem( numElements );
+  for( integer i=0; i<numElements; i++ )
+  {
+    sortedPerfsPerElem[i]=activePerfsPerElement[indices[i]];
+  }
   // Set segment status
-  integer numElements = activePerfsPerElement.size();
   std::fill( m_wellElementStatus.begin(), m_wellElementStatus.end(), 0 );
   if( numElements > 0 )
   {
-    m_wellElementStatus[numElements-1] = activePerfsPerElement[numElements-1] > 0 ? WellElemStatus::OPEN : WellElemStatus::CLOSED;
+    m_wellElementStatus[numElements-1] = sortedPerfsPerElem[numElements-1] > 0 ? WellElemStatus::OPEN : WellElemStatus::CLOSED;
     for( integer i=numElements-2; i>=0; i-- )
     {
-      if( activePerfsPerElement[i] == 0 )
+      if( sortedPerfsPerElem[i] == 0 )
       {
         if( m_wellElementStatus[i+1] == WellElemStatus::OPEN )
         {
@@ -1016,14 +1032,17 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
           m_wellElementStatus[i] =  WellElemStatus::CLOSED;
         }
       }
-      else //  activePerfsPerElement[i] == 1
+      else //  sortedPerfsPerElem[i] == 1
       {
         // Open - connected to open perforation
         m_wellElementStatus[i] =  WellElemStatus::OPEN;
       }
     }
   }
-
+  for( integer i=0; i<m_globalElementIndex.size(); i++ )
+  {
+    GEOS_LOG_RANK_0( "tjb finstat "<< i << " " << m_globalElementIndex[i] << " " << m_wellElementStatus[i] );
+  }
 }
 
 }  // namespace geos

@@ -315,6 +315,8 @@ public:
     /// @return String key for the well radius
     static constexpr char const * radiusString() { return "radius"; }
     /// @return String key for the well element status
+    static constexpr char const * wellLocalElementGlobaleIndexString() { return "wellLocalElementGlobaleIndex"; }
+    /// @return String key for the well element status
     static constexpr char const * wellLocalElementStatusString() { return "wellLocalElementStatus"; }
 
     /// ViewKey for the well control name
@@ -331,7 +333,8 @@ public:
     dataRepository::ViewKey topRank            = { topRankString() };
     /// ViewKey for the well radius
     dataRepository::ViewKey radius             = { radiusString() };
-
+    /// ViewKey for the global element index
+    dataRepository::ViewKey wellLocalEwellLocalElementGlobaleIndex = { wellLocalElementGlobaleIndexString() };
     /// ViewKey for the well element status
     dataRepository::ViewKey wellLocalElementStatus   = { wellLocalElementStatusString() };
   }
