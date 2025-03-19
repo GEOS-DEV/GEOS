@@ -463,7 +463,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       compPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
       compPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
       compPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
-      compPhaseStatsData.addRow( "", "", "", "" );
+      compPhaseStatsData.addSeparator();
 
       compPhaseStatsData.addSeparator();
       compPhaseStatsData.addRow( "statistics", "phase/component", CellType::MergeNext, "value" );
