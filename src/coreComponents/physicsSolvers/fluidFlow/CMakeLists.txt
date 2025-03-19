@@ -28,6 +28,7 @@ set( fluidFlowSolvers_headers
      CompositionalMultiphaseUtilities.hpp
      ImmiscibleMultiphaseFlow.hpp
      ImmiscibleMultiphaseFlowFields.hpp
+     LogLevelsInfo.hpp
      ReactiveCompositionalMultiphaseOBL.hpp
      ReactiveCompositionalMultiphaseOBLFields.hpp
      SourceFluxStatistics.hpp
