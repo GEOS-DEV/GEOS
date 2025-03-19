@@ -165,9 +165,6 @@ private:
 
   /// The rank-global fluid temperature array.
   arrayView1d< real64 const > const m_matrixTemperature;
-
-  /// Views on energy
-  arrayView1d< real64 const > const m_energy_n;
 };
 
 
