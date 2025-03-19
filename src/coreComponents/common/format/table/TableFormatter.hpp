@@ -199,17 +199,28 @@ private:
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
+   * @param inputDataColumnsCount The number of input data columns count, for verification purpose.
    */
   void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
-                                  CellLayoutRows & headerCellsLayout ) const;
+                                  CellLayoutRows & headerCellsLayout,
+                                  size_t inputDataColumnsCount ) const;
+  /**
+   * @brief Populates the data cells layout based on input data values, as a free layout (no columns layout).
+   * @param tableLayout The layout of the table,
+   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
+   * @param inputDataValues A 2D vector containing the actual input data values.
+   */
+  void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
+                                CellLayoutRows & dataCellsLayout,
+                                RowsCellInput const & inputDataValues ) const;
 
-/**
- * @brief Populates the data cells layout based on input data values.
- * @param tableLayout The layout of the table,
- * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
- * @param inputDataValues A 2D vector containing the actual input data values.
- * @param nbVisibleColumn The number of columns that are not hidden
- */
+  /**
+   * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
+   * @param tableLayout The layout of the table,
+   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
+   * @param inputDataValues A 2D vector containing the actual input data values.
+   * @param nbVisibleColumn The number of columns that are not hidden
+   */
   void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
                                 CellLayoutRows & dataCellsLayout,
                                 RowsCellInput const & inputDataValues,

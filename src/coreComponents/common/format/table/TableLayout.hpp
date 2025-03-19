@@ -392,7 +392,10 @@ private:
   using ColumnsList = Column::ColumnsList;
 
 
-  TableLayout() = default;
+  TableLayout()
+  {
+    setMargin( MarginValue::medium );
+  }
 
   /**
    * @brief Construct a new Table Layout object
