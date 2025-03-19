@@ -28,6 +28,7 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
@@ -90,6 +91,8 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   addLogLevel< logInfo::Configuration >();
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::Tolerance >();
 
   // Strategy: AMG with separate displacement components
   linSolParams.dofsPerNode = 3;
@@ -99,7 +102,6 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   // Strategy: static condensation of bubble dofs using MGR
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
-
 }
 
 SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianContact()
@@ -963,11 +965,11 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   int hasConfigurationConvergedGlobally = (totCondNotConv == 0) ? true : false;
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence,
-                              GEOS_FMT( "  ALM convergence summary:"
-                                        " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
-                                        globalCondConv[0], globalCondConv[1], globalCondConv[2],
-                                        globalCondConv[3], globalCondConv[4] ));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                         GEOS_FMT( "  ALM convergence summary:"
+                                   " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
+                                   globalCondConv[0], globalCondConv[1], globalCondConv[2],
+                                   globalCondConv[3], globalCondConv[4] ));
 
   if( hasConfigurationConvergedGlobally )
   {
@@ -1150,7 +1152,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
@@ -1836,7 +1838,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
 
-            GEOS_LOG_LEVEL( 2,
+            GEOS_LOG_LEVEL( logInfo::Tolerance,
                             GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
                                       kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 
