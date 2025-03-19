@@ -696,9 +696,13 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
     finalFractures[fractureName] = finalFracMesh;
   }
 
+  // Matteo: Create edfmMeshPartitions using newPartitions and the map between the global cell ids and the global edfm fracture cell ids
+  // vtkSmartPointer< vtkPartitionedDataSet > const edfmSplitMesh = splitMeshByPartition( input.getEmbeddedSurfaceBlocks(), numRanks,
+  // edfmMeshPartitions.toViewConst() );
+  // vtkSmartPointer< vtkUnstructuredGrid > finalEDFMMesh = vtk::redistribute( *edfmSplitMesh, MPI_COMM_GEOS );
   // Ouassim: just add the edfm mesh at the moment and see.
-  auto edfmMesh = input.getEmbeddedSurfaceBlocks();
-  return AllMeshes( finalMesh, finalFractures, edfmMesh );
+  auto finalEDFMMesh = input.getEmbeddedSurfaceBlocks();
+  return AllMeshes( finalMesh, finalFractures, finalEDFMMesh );
 }
 
 /**

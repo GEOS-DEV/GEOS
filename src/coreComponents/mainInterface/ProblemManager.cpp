@@ -46,6 +46,7 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/EmbeddedSurfacesParallelSynchronization.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
@@ -159,7 +160,10 @@ ProblemManager::~ProblemManager()
 
 
 Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
-{ return nullptr; }
+{
+  // Unused as all children are created within the constructor
+  return nullptr;
+}
 
 
 void ProblemManager::problemSetup()
@@ -455,52 +459,44 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
     meshManager.generateMeshLevels( domain );
     Group & meshBodies = domain.getMeshBodies();
 
-    // Parse element regions
-    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
-
-    for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
+    auto parseRegions = [&]( string_view regionManagerKey, bool const hasParticles )
     {
-      string const regionName = regionNode.attribute( "name" ).value();
-      try
-      {
-        string const
-        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                    regionNode.attribute( "meshBody" ).value() );
+      xmlWrapper::xmlNode regionsNode = xmlProblemNode.child( regionManagerKey.data() );
+      xmlWrapper::xmlNodePos regionsNodePos = xmlDocument.getNodePosition( regionsNode );
+      std::set< string > regionNames;
 
-        MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-        meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+      for( xmlWrapper::xmlNode regionNode : regionsNode.children() )
+      {
+        auto const regionNodePos = xmlDocument.getNodePosition( regionNode );
+        string const regionName = Group::processInputName( regionNode, regionNodePos,
+                                                           regionsNode.name(), regionsNodePos, regionNames );
+        try
         {
-          ElementRegionManager & elementManager = meshLevel.getElemManager();
-          Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-          newRegion->processInputFileRecursive( xmlDocument, regionNode );
-        } );
+          string const regionMeshBodyName =
+            ElementRegionBase::verifyMeshBodyName( meshBodies,
+                                                   regionNode.attribute( "meshBody" ).value() );
+
+          MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+          meshBody.setHasParticles( hasParticles );
+          meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+          {
+            ObjectManagerBase & elementManager = hasParticles ?
+                                                 static_cast< ObjectManagerBase & >( meshLevel.getParticleManager() ):
+                                                 static_cast< ObjectManagerBase & >( meshLevel.getElemManager() );
+            Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+            newRegion->processInputFileRecursive( xmlDocument, regionNode );
+          } );
+        }
+        catch( InputError const & e )
+        {
+          throw InputError( e, GEOS_FMT( "Error while parsing region {} ({}):\n",
+                                         regionName, regionNodePos.toString() ) );
+        }
       }
-      catch( InputError const & e )
-      {
-        string const nodePosString = xmlDocument.getNodePosition( regionNode ).toString();
-        throw InputError( e, "Error while parsing region " + regionName + " (" + nodePosString + "):\n" );
-      }
-    }
+    };
 
-    // Parse particle regions
-    xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::particleManagerString() );
-
-    for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
-    {
-      string const regionName = regionNode.attribute( "name" ).value();
-      string const
-      regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                  regionNode.attribute( "meshBody" ).value() );
-
-      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-      meshBody.setHasParticles( true );
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-      {
-        ParticleManager & particleManager = meshLevel.getParticleManager();
-        Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
-        newRegion->processInputFileRecursive( xmlDocument, regionNode );
-      } );
-    }
+    parseRegions( MeshLevel::groupStructKeys::elemManagerString(), false );
+    parseRegions( MeshLevel::groupStructKeys::particleManagerString(), true );
   }
 }
 
@@ -686,7 +682,7 @@ void ProblemManager::generateMesh()
   domain.outputPartitionInformation();
 
   // Create Embedded fractures here.
-  generateEmbeddedFractures();
+  generateEmbeddedSurfacesMesh();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -731,43 +727,99 @@ void ProblemManager::generateMesh()
 
 }
 
-void ProblemManager::generateEmbeddedFractures() const
+void ProblemManager::generateEmbeddedSurfacesMesh()
 {
   DomainPartition & domain = getDomainPartition();
 
   MeshBody & meshBody = domain.getMeshBody( 0 );
   CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
   Group const & embSurfBlocks = cellBlockManager.getEmbeddedSurfaceBlocks();
-  string const & faceBlockName = embeddedSurfaceRegion.getFaceBlockName();
 
-  if( embSurfBlocks.hasGroup( faceBlockName ))
+  // Get meshLevel
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+  // Get EmbeddedSurfaceSubRegions
+  elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & surfaceRegion )
   {
-    EmbeddedSurfaceBlockABC const & embSurf = embSurfBlocks.getGroup< EmbeddedSurfaceBlockABC >( faceBlockName );
 
-    elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
-                                                                           localIndex const esr,
-                                                                           ElementRegionBase &,
-                                                                           CellElementSubRegion & subRegion )
+    EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion = surfaceRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
+    string const & faceBlockName = surfaceRegion.getFaceBlockName();
+
+    if( embSurfBlocks.hasGroup( faceBlockName ))
     {
-      FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+      // Get managers
 
-      embeddedSurfaceSubRegion.copyFromEmbeddedSurfaceBlock( er,
-                                                             esr,
-                                                             nodeManager,
-                                                             embSurfNodeManager,
-                                                             edgeManager,
-                                                             cellToEdges,
-                                                             embSurf );
+      NodeManager & nodeManager = meshLevel.getNodeManager();
+      EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
+      EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-      // Add all the fracture information to the CellElementSubRegion
-      for( localIndex edfmIndex=0; edfmIndex < embSurf.numEmbeddedSurfElem(); ++edfmIndex )
+      NewObjectLists newObjects;
+
+      EmbeddedSurfaceBlockABC const & embSurf = embSurfBlocks.getGroup< EmbeddedSurfaceBlockABC >( faceBlockName );
+
+      elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
+                                                                             localIndex const esr,
+                                                                             ElementRegionBase &,
+                                                                             CellElementSubRegion & subRegion )
       {
-        localIndex cellIndex = embSurf.getEmbeddedSurfElemTo3dElem().toCellIndex[edfmIndex][0];
-        subRegion.addFracturedElement( cellIndex, edfmIndex );
-        newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( edfmIndex );
+        FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+
+        embeddedSurfaceSubRegion.copyFromEmbeddedSurfaceBlock( er,
+                                                               esr,
+                                                               nodeManager,
+                                                               embSurfNodeManager,
+                                                               edgeManager,
+                                                               cellToEdges,
+                                                               embSurf );
+
+        // Add all the fracture information to the CellElementSubRegion
+        for( localIndex edfmIndex = 0; edfmIndex < embSurf.numEmbeddedSurfElem(); ++edfmIndex )
+        {
+          localIndex cellIndex = embSurf.getEmbeddedSurfElemTo3dElem().toCellIndex[edfmIndex][0];
+          subRegion.addFracturedElement( cellIndex, edfmIndex );
+          newObjects.newElements[ {surfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( edfmIndex );
+        }
+      } ); // end loop over subregions
+
+      // add all new nodes to newObject list
+      for( localIndex ni = 0; ni < embSurfNodeManager.size(); ni++ )
+      {
+        newObjects.newNodes.insert( ni );
       }
-    } );   // end loop over subregions
-  }
+
+      // Set the ghostRank form the parent cell
+      ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+        elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+      embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
+
+      embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                                   domain.getNeighbors(),
+                                                                   newObjects,
+                                                                   1,
+                                                                   surfaceRegion.getName() );
+
+      // addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
+
+      EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
+
+      // Populate EdgeManager for embedded surfaces.
+      EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
+
+      EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion.edgeList();
+
+      localIndex numOfPoints = embSurfNodeManager.size();
+
+      // Create the edges
+      embSurfEdgeManager.buildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+      // Node to cell map
+      embSurfNodeManager.setElementMaps( elemManager );
+      // Node to edge map
+      embSurfNodeManager.setEdgeMaps( embSurfEdgeManager );
+      embSurfNodeManager.compressRelationMaps();
+    }
+  } );
 }
 
 void ProblemManager::importFields()
