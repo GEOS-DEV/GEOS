@@ -2943,10 +2943,10 @@ public:
     static constexpr char const * b4String() { return "b4"; }
 
     /// string/key for constant for tuning hardened stren
-    static constexpr char const * C1aString() { return "C1"; }
+    static constexpr char const * C1aString() { return "C1a"; }
 
     /// string/key for constant for tuning  hardened fslope
-    static constexpr char const * C2aString() { return "C2"; }
+    static constexpr char const * C2aString() { return "C2a"; }
 
     /// string/key for constant for tuning hardened peakI1
     static constexpr char const * C3String() { return "C3"; }
