@@ -345,7 +345,7 @@ TEST( testTable, table2DTable )
 }
 
 TEST( testTable, headerOnlyTable )
-{
+{ // this test exists because we don't want the code to crash if the number of data rows == 0
   string filename = "fluid1_phaseModel1_PhillipsBrineDensity_table";
   string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv", filename );
   TableLayout const tableLayoutInfos( filename,
