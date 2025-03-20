@@ -60,6 +60,10 @@ public:
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > composition;
@@ -85,8 +89,7 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      EOS_TYPE,
-      EOS_TYPE,
+      flashData,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -124,6 +127,10 @@ public:
     constexpr integer numValues = 1 + 2*numComps;
 
     auto componentProperties = this->m_fluid->createKernelWrapper();
+
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
 
     bool const expectedStatus = std::get< 3 >( data );
     if( !expectedStatus ) return;
@@ -164,8 +171,7 @@ public:
         t,
         zmf.toSliceConst(),
         componentProperties,
-        EOS_TYPE,
-        EOS_TYPE,
+        flashData,
         kValues.toSlice(),
         values[0],
         displacedLiquidComposition.toSlice(),
@@ -183,8 +189,7 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      EOS_TYPE,
-      EOS_TYPE,
+      flashData,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -196,8 +201,7 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      EOS_TYPE,
-      EOS_TYPE,
+      flashData,
       vapourFraction,
       liquidComposition.toSliceConst(),
       vapourComposition.toSliceConst(),

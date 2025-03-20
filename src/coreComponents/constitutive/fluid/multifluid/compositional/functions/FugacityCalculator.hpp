@@ -22,7 +22,8 @@
 
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "CubicEOSPhaseModel.hpp"
+#include "FlashData.hpp"
 
 namespace geos
 {
@@ -43,6 +44,7 @@ struct FugacityCalculator
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
    * @param[in] equationOfState The equation of state
+   * @param[in] flashData The parameters required for the flash
    * @param[out] logFugacity the calculated log fugacity
    */
   template< int USD >
@@ -53,6 +55,7 @@ struct FugacityCalculator
                                   arraySlice1d< real64 const, USD > const & composition,
                                   ComponentProperties::KernelWrapper const & componentProperties,
                                   EquationOfStateType const equationOfState,
+                                  FlashData const & flashData,
                                   arraySlice1d< real64 > const & logFugacity );
 
   /**
@@ -63,6 +66,7 @@ struct FugacityCalculator
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
    * @param[in] equationOfState The equation of state
+   * @param[in] flashData The parameters required for the flash
    * @param[in] logFugacity the calculated log fugacity
    * @param[out] logFugacityDerivs the calculated derivatives of the log fugacity
    */
@@ -74,6 +78,7 @@ struct FugacityCalculator
                                              arraySlice1d< real64 const, USD1 > const & composition,
                                              ComponentProperties::KernelWrapper const & componentProperties,
                                              EquationOfStateType const equationOfState,
+                                             FlashData const & flashData,
                                              arraySlice1d< real64 const > const & logFugacity,
                                              arraySlice2d< real64, USD2 > const & logFugacityDerivs );
 };
@@ -86,8 +91,10 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                              arraySlice1d< real64 const, USD > const & composition,
                                              ComponentProperties::KernelWrapper const & componentProperties,
                                              EquationOfStateType const equationOfState,
+                                             FlashData const & flashData,
                                              arraySlice1d< real64 > const & logFugacity )
 {
+  GEOS_UNUSED_VAR( flashData );
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
@@ -118,9 +125,11 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
                                                         arraySlice1d< real64 const, USD1 > const & composition,
                                                         ComponentProperties::KernelWrapper const & componentProperties,
                                                         EquationOfStateType const equationOfState,
+                                                        FlashData const & flashData,
                                                         arraySlice1d< real64 const > const & logFugacity,
                                                         arraySlice2d< real64, USD2 > const & logFugacityDerivs )
 {
+  GEOS_UNUSED_VAR( flashData );
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::

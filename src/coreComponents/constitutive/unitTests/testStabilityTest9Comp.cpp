@@ -55,6 +55,10 @@ public:
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > composition;
@@ -71,6 +75,7 @@ public:
                                                          composition.toSliceConst(),
                                                          componentProperties,
                                                          EOS_TYPE,
+                                                         flashData,
                                                          tangentPlaneDistance,
                                                          kValues.toSlice() );
 
@@ -84,6 +89,10 @@ public:
   void testFlash( FlashData const & data )
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
+
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
 
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
@@ -99,6 +108,7 @@ public:
                             composition.toSliceConst(),
                             componentProperties,
                             EOS_TYPE,
+                            flashData,
                             tangentPlaneDistance,
                             kValues[0] );
 
@@ -113,8 +123,7 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      EOS_TYPE,
-      EOS_TYPE,
+      flashData,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),

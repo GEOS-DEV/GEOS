@@ -25,6 +25,7 @@
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
 
 namespace geos
 {
@@ -48,6 +49,7 @@ public:
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
    * @param[in] equationOfState The equation of state
+   * @param[in] flashData The parameters required for the flash
    * @param[out] tangentPlaneDistance the minimum tangent plane distance (TPD)
    * @param[out] kValues the k-values estimated from the stationary points
    * @return a flag indicating that 2 stationary points have been found
@@ -60,6 +62,7 @@ public:
                        arraySlice1d< real64 const, USD1 > const & composition,
                        ComponentProperties::KernelWrapper const & componentProperties,
                        EquationOfStateType const & equationOfState,
+                       FlashData const & flashData,
                        real64 & tangentPlaneDistance,
                        arraySlice1d< real64, USD2 > const & kValues )
   {
@@ -84,6 +87,7 @@ public:
                                             composition,
                                             componentProperties,
                                             equationOfState,
+                                            flashData,
                                             logFugacity );
     for( integer const ic : presentComponents )
     {
@@ -118,6 +122,7 @@ public:
                                                 normalizedComposition.toSliceConst(),
                                                 componentProperties,
                                                 equationOfState,
+                                                flashData,
                                                 logFugacity );
 
         // Calculate the TPD

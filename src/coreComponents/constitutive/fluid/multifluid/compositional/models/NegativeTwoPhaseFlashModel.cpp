@@ -71,10 +71,11 @@ NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
-  m_liquidEos( liquidEos ),
-  m_vapourEos( vapourEos ),
   m_componentCriticalVolume( componentCriticalVolume )
-{}
+{
+  m_flashData.liquidEos = liquidEos;
+  m_flashData.vapourEos = vapourEos;
+}
 
 std::unique_ptr< ModelParameters >
 NegativeTwoPhaseFlashModel::createParameters( std::unique_ptr< ModelParameters > parameters )

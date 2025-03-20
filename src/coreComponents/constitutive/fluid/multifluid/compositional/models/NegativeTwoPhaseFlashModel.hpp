@@ -25,6 +25,7 @@
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 
@@ -78,7 +79,8 @@ public:
                                                          temperature,
                                                          compFraction,
                                                          componentProperties,
-                                                         m_liquidEos,
+                                                         m_flashData.liquidEos,
+                                                         m_flashData,
                                                          tangentPlaneDistance,
                                                          kValues[0] );
     GEOS_ERROR_IF( !stabilityStatus,
@@ -93,8 +95,7 @@ public:
                                                                temperature,
                                                                compFraction,
                                                                componentProperties,
-                                                               m_liquidEos,
-                                                               m_vapourEos,
+                                                               m_flashData,
                                                                kValues,
                                                                phaseFraction.value[m_vapourIndex],
                                                                phaseCompFraction.value[m_liquidIndex],
@@ -110,8 +111,7 @@ public:
                                                  temperature,
                                                  compFraction,
                                                  componentProperties,
-                                                 m_liquidEos,
-                                                 m_vapourEos,
+                                                 m_flashData,
                                                  phaseFraction.value[m_vapourIndex],
                                                  phaseCompFraction.value[m_liquidIndex].toSliceConst(),
                                                  phaseCompFraction.value[m_vapourIndex].toSliceConst(),
@@ -178,8 +178,7 @@ private:
   integer const m_numComponents;
   integer const m_liquidIndex;
   integer const m_vapourIndex;
-  EquationOfStateType const m_liquidEos;
-  EquationOfStateType const m_vapourEos;
+  FlashData m_flashData;
   arrayView1d< real64 const > const m_componentCriticalVolume;
 };
 
