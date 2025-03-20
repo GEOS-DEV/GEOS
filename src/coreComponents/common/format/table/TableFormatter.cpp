@@ -243,7 +243,8 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
 
   // TODO: integrate this error in the table, and use an equality with the visible+non-visible lowermost column count
   // (PreparedTableLayout should have a visible & nonvisible getLowermostColumnsCount() verion)
-  GEOS_ERROR_IF_GT( lowermostColumnsCount, inputDataColumnsCount );
+  if (inputDataColumnsCount > 0)
+    GEOS_ERROR_IF_GT( lowermostColumnsCount, inputDataColumnsCount );
 
   headerCellsLayout.resize( previousRowsCount + headerRowsCount );
   for( size_t rowId = previousRowsCount; rowId < headerCellsLayout.size(); rowId++ )
