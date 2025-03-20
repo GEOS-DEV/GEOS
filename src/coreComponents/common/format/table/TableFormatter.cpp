@@ -230,8 +230,6 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
 {
   using CellLayout = TableLayout::CellLayout;
 
-  CellLayout const & titleInput = tableLayout.getTitleLayout();
-
   // Number of lines per header layer.
   size_t const columnsLayersCount = tableLayout.getColumnLayersCount();
   // number of visible data columns (we fit the number of data columns if no column layout has been specified)
@@ -242,6 +240,9 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   // n-1 -> separator
   size_t const previousRowsCount = headerCellsLayout.size();
   auto const getColumnRowId = [=] ( size_t columnLayer ) { return previousRowsCount + columnLayer * 2; };
+
+  // TODO: integrate this error in the table, and use an equality with the visible+non-visible lowermost column count (add this stat to PreparedTableLayout)
+  GEOS_ASSERT_LE( lowermostColumnsCount, inputDataColumnsCount );
 
   headerCellsLayout.resize( previousRowsCount + headerRowsCount );
   for( size_t rowId = previousRowsCount; rowId < headerCellsLayout.size(); rowId++ )
