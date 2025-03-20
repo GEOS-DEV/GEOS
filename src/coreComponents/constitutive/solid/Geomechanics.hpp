@@ -1229,6 +1229,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
     stepFlag  = 0;
     return stepFlag;
+    
 
   // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // CC: TODO pass model particle delete flag
@@ -1244,6 +1245,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     stepFlag  = 1;
 
     return stepFlag;
+
 }
 
 GEOS_HOST_DEVICE
@@ -2697,6 +2699,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 
 
   real64 CR_h = m_cr * (1+((hardening*m_C5)/m_g0) );
+  std::cout<<" X/p0_new: " << X << " CR_new: " << CR_h << std::endl;
 	// --------------------------------------------------------------------
 	// *** SHEAR LIMIT FUNCTION (Ff) ***
 	// --------------------------------------------------------------------
@@ -2859,19 +2862,21 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
     a2 = (fSlope_hd-ySlope_hd )/(stren_hd - ySlope_hd*peakI1_hd);
     a3 = (stren_hd-ySlope_hd*peakI1_hd)*std::exp(-a2*peakI1_hd);
     a4 = ySlope_hd ;
-    std::cout<<" hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
-    std::cout<<" hardening: " << hardening << "FSLOPEHD: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhD: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;
+    //std::cout<<" hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
+    //std::cout<<" hardening: " << hardening << "FSLOPEHD: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhD: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;
 
   }
   else
   {
-	  std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
-	  std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEDH: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhd: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;  
+	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
+	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEDH: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhd: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;  
 }
 
   //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
   //std::cout<<"peakI1_h = "<<peakI1_h<<", stren_h = "<<stren_h<<", ySlope_h = "<<ySlope_h<<", fSlope_h = "<<fSlope_h<<std::endl;
   //std::cout<<"a1 = "<<a1<<", a2 = "<<a2<<", a3 = "<<a3<<", a4 = "<<a4<<std::endl;
+  std::cout<<" strenhd: " << stren_hd << "FSLOPEHD: "<< fSlope_hd << " peakI1hd: " << peakI1_hd << "YSLOPEHD: " << ySlope_hd  <<std::endl;
+
 }
 
 
