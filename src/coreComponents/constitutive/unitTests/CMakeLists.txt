@@ -1,5 +1,6 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testBrineSalinity.cpp
      testCompositionalDensity.cpp
      testCompositionalPhillipsBrineDensity.cpp
      testCompositionalPhillipsBrineViscosity.cpp
@@ -18,6 +19,7 @@ set( gtest_geosx_tests
      testNegativeTwoPhaseFlash.cpp
      testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp
+     testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
      testSoreideWhitsonEOSPhaseModel.cpp
      testStabilityTest2Comp.cpp

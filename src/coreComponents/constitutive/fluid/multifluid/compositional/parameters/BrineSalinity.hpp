@@ -52,6 +52,7 @@ protected:
 
   void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
+public:
   struct viewKeyStruct
   {
     static constexpr char const * salinityString() { return "salinity"; }
