@@ -640,6 +640,8 @@ public:
    *        - layout elements size,
    *        - line wrapping.
    *        For now, called automatically at TableFormatter construction.
+   * @note If an error happen while this process, it must output the table name and the error
+   *       message in a GEOS_WARNING().
    */
   PreparedTableLayout( TableLayout const & other );
 
