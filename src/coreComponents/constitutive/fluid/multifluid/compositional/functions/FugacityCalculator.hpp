@@ -23,6 +23,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "CubicEOSPhaseModel.hpp"
+#include "SoreideWhitsonEOSPhaseModel.hpp"
 #include "FlashData.hpp"
 
 namespace geos
@@ -94,7 +95,6 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                              FlashData const & flashData,
                                              arraySlice1d< real64 > const & logFugacity )
 {
-  GEOS_UNUSED_VAR( flashData );
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
@@ -115,6 +115,17 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                     componentProperties,
                                     logFugacity );
   }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    flashData.salinity,
+                                    logFugacity );
+  }
 }
 
 template< int USD1, int USD2 >
@@ -129,7 +140,6 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
                                                         arraySlice1d< real64 const > const & logFugacity,
                                                         arraySlice2d< real64, USD2 > const & logFugacityDerivs )
 {
-  GEOS_UNUSED_VAR( flashData );
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
@@ -149,6 +159,18 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
                                     temperature,
                                     composition,
                                     componentProperties,
+                                    logFugacity,
+                                    logFugacityDerivs );
+  }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    flashData.salinity,
                                     logFugacity,
                                     logFugacityDerivs );
   }
