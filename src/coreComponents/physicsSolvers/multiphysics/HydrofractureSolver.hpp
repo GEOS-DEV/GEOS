@@ -20,11 +20,9 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -122,7 +120,8 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual real64 setNextDt( real64 const & currentDt,
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
                             DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
