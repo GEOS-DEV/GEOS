@@ -629,7 +629,7 @@ class PreparedTableLayout : public TableLayout
 public:
 
   /**
-   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
    * without any column / title). Feature is not tested.
    */
   PreparedTableLayout();
