@@ -160,13 +160,14 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
                                               CellLayoutRows & dataCellsLayout,
                                               size_t & tableTotalWidth ) const
 {
-  bool const hasColumnLayout = !tableLayout.getColumns().empty();
+  bool const hasColumnLayout = tableLayout.getColumnLayersCount() > 0;
   RowsCellInput const & inputDataValues( tableInputData.getTableDataRows() );
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
 
-  populateHeaderCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
+  populateTitleCellsLayout( tableLayout, headerCellsLayout );
   if( hasColumnLayout )
   {
+    populateHeaderCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
     size_t nbVisibleColumns = headerCellsLayout.back().cells.size();
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues, nbVisibleColumns );
   }
@@ -199,6 +200,30 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   propagateRowWidth( referenceRow, dataCellsLayout, tableLayout );
 }
 
+void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
+                                                   CellLayoutRows & headerCellsLayout ) const
+{
+  TableLayout::CellLayout const & titleInput = tableLayout.getTitleLayout();
+  if( !titleInput.m_lines.empty() && !titleInput.m_lines[0].empty() )
+  { // if it exists, we add the title, as a first row with all cells merged in one containing the title text
+    headerCellsLayout.reserve( headerCellsLayout.size() + 2 );
+
+    // the title row consists in a row of cells merging with the last cell containing the title text
+    headerCellsLayout.emplace_back() = {
+      std::vector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+                                              TableLayout::CellLayout( CellType::MergeNext ) ), // cells
+      titleInput.m_lines.size(), // sublinesCount
+    };
+    headerCellsLayout.back().cells.back() = titleInput;
+
+    headerCellsLayout.emplace_back() = {
+      std::vector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+                                              TableLayout::CellLayout( CellType::Separator ) ), // cells
+      1, // sublinesCount
+    };
+  }
+}
+
 void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                                     CellLayoutRows & headerCellsLayout,
                                                     size_t const inputDataColumnsCount ) const
@@ -206,96 +231,76 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   using CellLayout = TableLayout::CellLayout;
 
   CellLayout const & titleInput = tableLayout.getTitleLayout();
-  size_t const hasTitle = !titleInput.m_lines.empty() && !titleInput.m_lines[0].empty() ? 1 : 0;
-
-  // TODO: error if inputDataValues size is not consistent with tableLayout.getLowermostColumnsCount(), if headerLayersCount>0
 
   // Number of lines per header layer.
-  size_t const headerLayersCount = tableLayout.getColumnLayersCount();
-  // Number of rows in headerCellsLayout by taking into account title & separators lines
-  size_t const headerRowsCount = ( headerLayersCount + hasTitle ) * 2;
+  size_t const columnsLayersCount = tableLayout.getColumnLayersCount();
   // number of visible data columns (we fit the number of data columns if no column layout has been specified)
-  size_t const headerColumnsCount = headerLayersCount > 0 ?
-                                    tableLayout.getLowermostColumnsCount() : inputDataColumnsCount;
+  size_t const lowermostColumnsCount = tableLayout.getLowermostColumnsCount();
+  // Number of rows in headerCellsLayout by taking into account title & separators lines
+  size_t const headerRowsCount = ( columnsLayersCount ) * 2;
   // lambda to get the header row id in the headerCellsLayout: [title -> separator ->] column layer 0 ->  separator -> ... -> column layer
   // n-1 -> separator
-  auto const getHeaderRowId = [=]( size_t headerLayer ) { return ( headerLayer + hasTitle ) * 2; };
+  size_t const previousRowsCount = headerCellsLayout.size();
+  auto const getColumnRowId = [=] ( size_t columnLayer ) { return previousRowsCount + columnLayer * 2; };
 
-  headerCellsLayout.resize( headerRowsCount );
-  for( size_t rowId = 0; rowId < headerRowsCount; rowId++ )
+  headerCellsLayout.resize( previousRowsCount + headerRowsCount );
+  for( size_t rowId = previousRowsCount; rowId < headerCellsLayout.size(); rowId++ )
   {
     if( ( rowId % 2 ) == 1 )
     { // each even row is a separator
       headerCellsLayout[rowId] = {
-        std::vector< CellLayout >( headerColumnsCount, CellLayout( CellType::Separator ) ),
-        1
+        std::vector< CellLayout >( lowermostColumnsCount, CellLayout( CellType::Separator ) ), // cells
+        1 // sublinesCount
       };
     }
     else
-    { // the others will be filled (title, headers)
-      headerCellsLayout[rowId].cells.reserve( headerColumnsCount );
+    { // the others are headers that will be filled
+      headerCellsLayout[rowId].cells.reserve( lowermostColumnsCount );
     }
   }
 
-  if( headerLayersCount > 0 )
+  // number of times we will divide the each headers in the headerCellsLayout (key is the Column ptr)
+  std::map< std::ptrdiff_t, size_t > subdivsCount;
+
+  for( auto it = tableLayout.beginDeepFirst(); it != tableLayout.endDeepFirst(); ++it )
   {
-    // number of times we will divide the each headers in the headerCellsLayout (key is the Column ptr)
-    std::map< std::ptrdiff_t, size_t > subdivsCount;
-
-    for( auto it = tableLayout.beginDeepFirst(); it != tableLayout.endDeepFirst(); ++it )
+    CellLayout const & currentCell = it->m_headerLayout;
+    if( currentCell.m_cellType != CellType::Hidden )
     {
-      CellLayout const & currentCell = it->m_headerLayout;
-      if( currentCell.m_cellType != CellType::Hidden )
+      size_t const layer = it.getCurrentLayer();
+      size_t const rowId = getColumnRowId( layer );
+
+      // we subdivide divide parent cells each time we have a cell which has a neightboor to its right
+      if( it->hasParent() )
       {
-        size_t const layer = it.getCurrentLayer();
-        size_t const rowId = getHeaderRowId( layer );
+        // we subdivide the parent by the subdiv count of the current (+1 if cell has a neightboor at its right)
+        size_t const incrementsCount = subdivsCount[std::ptrdiff_t( it.getPtr() )] + ( it->hasNext() ? 1 : 0 );
+        subdivsCount[std::ptrdiff_t( it->getParent() )] += incrementsCount;
+      }
 
-        // we add up empty cells under the current one to fill the space to the data.
-        if( !it->hasChild() )
+      // the current cell layer number of lines must be the max of all cells of this layer
+      headerCellsLayout[rowId].sublinesCount = std::max( headerCellsLayout[rowId].sublinesCount,
+                                                         currentCell.m_lines.size() );
+
+      // we add the current cell and all its subdivision
+      for( size_t idxColumn = 0; idxColumn < subdivsCount[std::ptrdiff_t( it.getPtr() )]; idxColumn++ )
+      {
+        CellLayout mergingCell{ CellType::MergeNext, TableLayout::Alignment::center };
+        headerCellsLayout[rowId].cells.push_back( mergingCell );
+      }
+      headerCellsLayout[rowId].cells.push_back( currentCell );
+
+      // we add up empty cells under the current one to fill the space to the data.
+      if( !it->hasChild() )
+      {
+        for( size_t subLayer = layer + 1; subLayer < columnsLayersCount; subLayer++ )
         {
-          for( size_t subLayer = layer + 1; subLayer < headerLayersCount; subLayer++ )
-          {
-            CellLayout emptyCell{CellType::Header, TableLayout::Alignment::center};
-            emptyCell.m_cellWidth = currentCell.m_cellWidth;
-            headerCellsLayout[getHeaderRowId( subLayer )].cells.push_back( emptyCell );
-          }
+          CellLayout emptyCell{CellType::Header, TableLayout::Alignment::center};
+          emptyCell.m_cellWidth = currentCell.m_cellWidth;
+          headerCellsLayout[getColumnRowId( subLayer )].cells.push_back( emptyCell );
         }
-
-        // we subdivide divide parent cells each time we have a cell which has a neightboor to its right
-        if( it->hasParent() )
-        {
-          // we subdivide the parent by the subdiv count of the current (+1 if cell has a neightboor at its right)
-          size_t const incrementsCount = subdivsCount[std::ptrdiff_t( it.getPtr() )] + ( it->hasNext() ? 1 : 0 );
-          subdivsCount[std::ptrdiff_t( it->getParent() )] += incrementsCount;
-        }
-
-        // the current cell layer number of lines must be the max of all cells of this layer
-        headerCellsLayout[rowId].sublinesCount = std::max( headerCellsLayout[rowId].sublinesCount,
-                                                           currentCell.m_lines.size() );
-
-        // we add the current cell and all its subdivision
-        for( size_t idxColumn = 0; idxColumn < subdivsCount[std::ptrdiff_t( it.getPtr() )]; idxColumn++ )
-        {
-          CellLayout mergingCell{ CellType::MergeNext, TableLayout::Alignment::center };
-          headerCellsLayout[rowId].cells.push_back( mergingCell );
-        }
-        headerCellsLayout[rowId].cells.push_back( currentCell );
       }
     }
-  }
-
-  // we add the title, as a first row with all cells merged in one containing the title text
-  if( hasTitle )
-  {
-    CellLayout const & inputTitleCell = tableLayout.getTitleLayout();
-    CellLayoutRow & titleRow = headerCellsLayout[0];
-    // we setup a row of cells merging with the last cell containing the title
-    titleRow = {
-      std::vector< CellLayout >( headerCellsLayout[1].cells.size(),
-                                 CellLayout( CellType::MergeNext ) ),              // cells
-      inputTitleCell.m_lines.size() // sublinesCount
-    };
-    titleRow.cells.back() = inputTitleCell;
   }
 }
 

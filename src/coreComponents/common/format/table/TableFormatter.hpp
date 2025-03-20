@@ -54,7 +54,7 @@ protected:
   PreparedTableLayout const m_tableLayout;
 
   /**
-   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
    * without any column / title). Feature is not tested.
    */
   TableFormatter();
@@ -74,7 +74,7 @@ class TableCSVFormatter : public TableFormatter
 public:
 
   /**
-   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
    * without any column / title). Feature is not tested.
    */
   TableCSVFormatter():
@@ -127,7 +127,7 @@ class TableTextFormatter : public TableFormatter
 public:
 
   /**
-   * @brief Construct a default Table Formatter without layout specification (to only insert data in it, 
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
    * without any column / title). Feature is not tested.
    */
   TableTextFormatter():
@@ -191,6 +191,15 @@ private:
                     size_t tableTotalWidth ) const;
 
   /**
+   * @brief Populate a grid of CellLayout with the title rows.
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
+   *                          gridified layout.
+   */
+  void populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
+                                 CellLayoutRows & headerCellsLayout ) const;
+
+  /**
    * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
    * @note To produce a grid with the given column tree, there are 2 corner cases:
    *       - A column have less subcolumns layers than its neightboors -> empty "Header" cells  will be added bellow.
@@ -199,7 +208,7 @@ private:
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
-   * @param inputDataColumnsCount The number of input data columns count, for verification purpose.
+   * @param inputDataColumnsCount The number of input data columns count, helps verifying the number of column.
    */
   void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                   CellLayoutRows & headerCellsLayout,
