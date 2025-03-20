@@ -51,6 +51,10 @@ NegativeTwoPhaseFlashModel::createKernelWrapper() const
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
+  //BrineSalinity const * brineSalinity = m_parameters.get< BrineSalinity >();
+  //real64 const salinity = (brineSalinity == nullptr) ? 0.0 : brineSalinity->m_salinity;
+  real64 const salinity = 0.0;
+
   CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
@@ -58,6 +62,7 @@ NegativeTwoPhaseFlashModel::createKernelWrapper() const
                         vapourIndex,
                         liquidEos,
                         vapourEos,
+                        salinity,
                         criticalVolume->m_componentCriticalVolume );
 }
 
@@ -67,6 +72,7 @@ NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
   integer const vapourIndex,
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
+  real64 const salinity,
   arrayView1d< real64 const > const componentCriticalVolume ):
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
@@ -75,6 +81,7 @@ NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
 {
   m_flashData.liquidEos = liquidEos;
   m_flashData.vapourEos = vapourEos;
+  m_flashData.salinity = salinity;
 }
 
 std::unique_ptr< ModelParameters >

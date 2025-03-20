@@ -39,9 +39,12 @@ struct FlashData
 {
   /// The equation of state for the liquid phase
   EquationOfStateType liquidEos;
-  
+
   /// The equation of state for the vapour phase
   EquationOfStateType vapourEos;
+
+  /// Salinity for the aqueous phase
+  real64 salinity{0.0};
 };
 
 } // namespace compositional
