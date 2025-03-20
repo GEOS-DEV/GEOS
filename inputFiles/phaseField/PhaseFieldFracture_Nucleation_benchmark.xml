@@ -82,6 +82,22 @@
       scale="27.0"/>
 
     <FieldSpecification
+      name="compressiveStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="rock_compressiveStrength"
+      scale="77.0"/>
+
+    <FieldSpecification
+      name="deltaCoefficient"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="rock_deltaCoefficient"
+      scale="3.22"/>
+
+    <FieldSpecification
       name="yPosDisp"
       fieldName="totalDisplacement"
       component="1"

@@ -136,6 +136,22 @@
       scale="27e6"/>
 
     <FieldSpecification
+      name="compressiveStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="rock_compressiveStrength"
+      scale="77e6"/>
+
+    <FieldSpecification
+      name="deltaCoefficient"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="rock_deltaCoefficient"
+      scale="0.0"/>
+
+    <FieldSpecification
       name="xtraction"
       fieldName="totalDisplacement"
       component="0"
