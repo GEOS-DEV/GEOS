@@ -241,7 +241,8 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   size_t const previousRowsCount = headerCellsLayout.size();
   auto const getColumnRowId = [=] ( size_t columnLayer ) { return previousRowsCount + columnLayer * 2; };
 
-  // TODO: integrate this error in the table, and use an equality with the visible+non-visible lowermost column count (add this stat to PreparedTableLayout)
+  // TODO: integrate this error in the table, and use an equality with the visible+non-visible lowermost column count
+  // (PreparedTableLayout should have a visible & nonvisible getLowermostColumnsCount() verion)
   GEOS_ERROR_IF_GT( lowermostColumnsCount, inputDataColumnsCount );
 
   headerCellsLayout.resize( previousRowsCount + headerRowsCount );
