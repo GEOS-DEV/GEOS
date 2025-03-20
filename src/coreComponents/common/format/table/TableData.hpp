@@ -44,6 +44,11 @@ public:
     CellType type;
     /// The cell value
     string value = "";
+
+    bool operator==( CellData const & other ) const
+    {
+      return value == other.value;
+    }
   };
 
   using DataRows = std::vector< std::vector< CellData > >;
@@ -89,32 +94,8 @@ public:
 
   inline bool operator==( TableData const & comparingTable ) const
   {
-    DataRows const & currentTableData = getCellsData();
-    DataRows const & comparingTableData = comparingTable.getCellsData();
 
-    if( currentTableData.size() != comparingTableData.size())
-    {
-      return false;
-    }
-
-    for( size_t idxRow = 0; idxRow < currentTableData.size(); idxRow++ )
-    {
-      std::vector< TableData::CellData > const & currentTableRow = currentTableData[idxRow];
-      std::vector< TableData::CellData > const & targetTableRow = comparingTableData[idxRow];
-      if( currentTableRow.size() != targetTableRow.size() )
-      {
-        return false;
-      }
-      for( size_t idxCol = 0; idxCol < currentTableRow.size(); idxCol++ )
-      {
-        if( currentTableRow[idxCol].value != targetTableRow[idxCol].value )
-        {
-          return false;
-        }
-      }
-    }
-
-    return true;
+    return getCellsData() == comparingTable.getCellsData();
   }
 
 private:
