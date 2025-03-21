@@ -229,6 +229,8 @@ void QDRateAndStateBase::resetStateToBeginningOfStep( DomainPartition & domain )
       arrayView2d< real64 const > const dispJump_n      = subRegion.getField< contact::dispJump_n >();
       arrayView2d< real64 const > const shearTraction_n = subRegion.getField< rateAndState::shearTraction_n >();
       arrayView1d< real64 const > const normalTraction_n = subRegion.getField< rateAndState::normalTraction_n >();
+      arrayView2d< real64 const > const deltaSlip_n     = subRegion.getField< contact::deltaSlip >();
+
 
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )

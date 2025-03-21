@@ -15,6 +15,7 @@
 
 #include "WellGeneratorBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/generators/LogLevelsInfo.hpp"
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
@@ -70,6 +71,9 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
+
+  addLogLevel< logInfo::InternalWell >();
+  addLogLevel< logInfo::PerforationTable >();
 }
 
 Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )
@@ -131,11 +135,16 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( getLogLevel() >= 1 && MpiWrapper::commRank() == 0 )
+  if( isLogLevelActive< logInfo::PerforationTable >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
   {
     logInternalWell();
+  }
+
+  if( isLogLevelActive< logInfo::InternalWell >( this->getLogLevel()) && MpiWrapper::commRank() == 0 )
+  {
     logPerforationTable();
   }
+
 
 }
 

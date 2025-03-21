@@ -16,7 +16,7 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
