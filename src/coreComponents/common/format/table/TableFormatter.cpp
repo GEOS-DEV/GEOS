@@ -186,7 +186,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   // only after all cells that are not merge, we can process the merged cells.
   stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
   if( !getErrorsList().errors.empty())
-    stretchRowToMergedCellsWidth( columnsWidth, getErrorsList().errors, tableLayout, true );
+    stretchColumnsByMergedCellsWidth( columnsWidth, getErrorsList().errors, tableLayout, true );
   stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
 
   // the columns width array is now sized after all the table, we can compute the total table width

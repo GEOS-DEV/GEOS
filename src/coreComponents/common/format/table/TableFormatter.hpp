@@ -69,7 +69,11 @@ protected:
 
   std::unique_ptr< ErrorListing > m_errors = std::make_unique< ErrorListing >();
 
-  TableFormatter() = default;
+  /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
+   */
+  TableFormatter();
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
