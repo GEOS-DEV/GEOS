@@ -78,6 +78,10 @@ public:
   virtual void applyInitialConditionsToFault( int const cycleNumber,
                                               DomainPartition & domain ) const;
 
+  void resetStateToBeginningOfStep( DomainPartition & domain ) override;  
+  
+  virtual void resetStressState( DomainPartition & domain ) = 0;
+
 protected:
 
   /// shear impedance

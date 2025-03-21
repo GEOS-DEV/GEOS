@@ -144,7 +144,7 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::applyBackGroundStress( real64 cons
 }
 
 template< typename RSSOLVER_TYPE >
-void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::resetStateToBeginningOfStep( DomainPartition & domain )
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::resetStressState( DomainPartition & domain )
 {
   m_stressSolver->resetStateToBeginningOfStep( domain );
 }

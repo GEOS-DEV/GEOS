@@ -205,4 +205,45 @@ void QDRateAndStateBase::saveState( DomainPartition & domain ) const
   } );
 }
 
+void QDRateAndStateBase::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+
+  {
+    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                           [&]( localIndex const,
+                                                                                SurfaceElementSubRegion & subRegion )
+    {
+      arrayView1d< real64 > const stateVariable = subRegion.getField< rateAndState::stateVariable >();
+      arrayView2d< real64 > const slipVelocity  = subRegion.getField< rateAndState::slipVelocity >();
+      arrayView2d< real64 > const deltaSlip     = subRegion.getField< contact::deltaSlip >();
+      arrayView2d< real64 > const dispJump      = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const shearTraction      = subRegion.getField< rateAndState::shearTraction >();
+      arrayView1d< real64 > const normalTraction      = subRegion.getField< rateAndState::normalTraction >();
+
+
+      arrayView1d< real64 const > const stateVariable_n = subRegion.getField< rateAndState::stateVariable_n >();
+      arrayView2d< real64 const > const slipVelocity_n  = subRegion.getField< rateAndState::slipVelocity_n >();
+      arrayView2d< real64 const > const dispJump_n      = subRegion.getField< contact::dispJump_n >();
+      arrayView2d< real64 const > const shearTraction_n = subRegion.getField< rateAndState::shearTraction_n >();
+      arrayView1d< real64 const > const normalTraction_n = subRegion.getField< rateAndState::normalTraction_n >();
+
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        stateVariable[k]  = stateVariable_n[k];
+        normalTraction[k] = normalTraction_n[k];
+        LvArray::tensorOps::copy< 2 >( deltaSlip[k], deltaSlip_n[k] );
+        LvArray::tensorOps::copy< 2 >( slipVelocity[k], slipVelocity_n[k] );
+        LvArray::tensorOps::copy< 3 >( dispJump[k], dispJump_n[k] );
+        LvArray::tensorOps::copy< 2 >( shearTraction[k], shearTraction_n[k] );
+      } );
+    } );
+  } );
+
+  resetStressState( domain );
+}
+
 } // namespace geos

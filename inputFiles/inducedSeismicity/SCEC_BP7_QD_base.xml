@@ -262,7 +262,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       component="0"
-      scale="-1.0e-9"
+      scale="1.0e-9"
       setNames="{all}"/>
 
     <FieldSpecification

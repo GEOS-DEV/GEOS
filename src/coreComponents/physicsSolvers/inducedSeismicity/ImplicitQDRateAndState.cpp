@@ -141,7 +141,7 @@ real64 ImplicitQDRateAndState::setNextDt( real64 const & currentTime,
     maxSlipRate = MpiWrapper::max( maxSlipRateOnThisRank );
   } );
 
-  real64 const nextDt = m_targetSlipIncrement / maxSlipRate;
+  real64 const nextDt =  m_targetSlipIncrement / maxSlipRate;
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "The next dt will be {:.2e} s", nextDt ));
 

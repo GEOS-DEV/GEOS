@@ -16,7 +16,7 @@
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver"
-      targetSlipIncrement="1.0e-4">
+      targetSlipIncrement="1e-5">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
@@ -39,13 +39,13 @@
         logLevel="2"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="1"
-        lineSearchAction="Require"
+        lineSearchAction="None"
         lineSearchMaxCuts="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         preconditionerType="mgr"
-        directParallel="0"
+        directParallel="1"
         logLevel="0"/>
     </SolidMechanicsLagrangeContactBubbleStab>
     
