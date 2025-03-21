@@ -177,27 +177,26 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   }
 
   // this reference row will store the displayed number & width of all columns (and will be stretched by data & headers)
-  auto & referenceRow = hasColumnLayout ? headerCellsLayout.back() : dataCellsLayout.front();
-  // TODO: add an error when the reference row is not only made of value/header cells (or search a row that conforms to this rule)
+  auto & columnsWidth = hasColumnLayout ? headerCellsLayout.back() : dataCellsLayout.front();
 
-  stretchRowToCellsWidth( referenceRow, headerCellsLayout );
-  stretchRowToCellsWidth( referenceRow, dataCellsLayout );
+  stretchColumnsByCellsWidth( columnsWidth, headerCellsLayout );
+  stretchColumnsByCellsWidth( columnsWidth, dataCellsLayout );
 
   // after that, we can process the merged cells.
-  stretchRowToMergedCellsWidth( referenceRow, headerCellsLayout, tableLayout, false );
-  stretchRowToMergedCellsWidth( referenceRow, dataCellsLayout, tableLayout, true );
+  stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
+  stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
 
   // the reference row is now sized after all the table, we can compute tableTotalWidth
   tableTotalWidth = tableLayout.getBorderMargin() * 2 + 2;
-  for( size_t columnId = 0; columnId < referenceRow.cells.size(); ++columnId )
+  for( size_t columnId = 0; columnId < columnsWidth.size(); ++columnId )
   {
-    tableTotalWidth += referenceRow.cells[columnId].m_cellWidth +
+    tableTotalWidth += columnsWidth[columnId] +
                        size_t( columnId > 0 ? tableLayout.getColumnMargin() : 0 );
   }
 
   // we can now propagate the reference row width to all cells
-  propagateRowWidth( referenceRow, headerCellsLayout, tableLayout );
-  propagateRowWidth( referenceRow, dataCellsLayout, tableLayout );
+  applyColumnsWidth( columnsWidth, headerCellsLayout, tableLayout );
+  applyColumnsWidth( columnsWidth, dataCellsLayout, tableLayout );
 }
 
 void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
@@ -243,7 +242,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
 
   // TODO: integrate this error in the table, and use an equality with the visible+non-visible lowermost column count
   // (PreparedTableLayout should have a visible & nonvisible getLowermostColumnsCount() verion)
-  if (inputDataColumnsCount > 0)
+  if( inputDataColumnsCount > 0 )
     GEOS_ERROR_IF_GT( lowermostColumnsCount, inputDataColumnsCount );
 
   headerCellsLayout.resize( previousRowsCount + headerRowsCount );
@@ -391,8 +390,8 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
   }
 }
 
-void TableTextFormatter::stretchRowToCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
-                                                 TableFormatter::CellLayoutRows const & tableGrid ) const
+void TableTextFormatter::stretchColumnsByCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
+                                                     TableFormatter::CellLayoutRows const & tableGrid ) const
 {
   // first, we reduce by column all regular cells in the first row.
   size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].cells.size();
@@ -413,10 +412,10 @@ void TableTextFormatter::stretchRowToCellsWidth( TableFormatter::CellLayoutRow &
   }
 }
 
-void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
-                                                       TableFormatter::CellLayoutRows & tableGrid,
-                                                       PreparedTableLayout const & tableLayout,
-                                                       bool const compress ) const
+void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
+                                                           TableFormatter::CellLayoutRows & tableGrid,
+                                                           PreparedTableLayout const & tableLayout,
+                                                           bool const compress ) const
 {
   // To get consistent results, we must process column by column.
   size_t const numRows = tableGrid.size();
@@ -488,7 +487,7 @@ void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayou
             TableLayout::CellLayout const & mergedCell = row.cells[mergedId];
             mergedColumnsWidth += referenceRow.cells[mergedId].m_cellWidth + flexSpaces[mergedId];
             mergedColumnsWidth += spaceBetweenColumns;
-            if( mergedCell.m_cellType != CellType::MergeNext )
+            if( mergedCell.m_cellType != CellType::MergeNext || columnId == numColumns - 1 )
             {
               // this is the last cell to merge (which contains the actual merged content),
               // we can compute here the space potencially wasted by the flexible space
@@ -521,7 +520,7 @@ void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayou
   }
 }
 
-void TableTextFormatter::propagateRowWidth( TableFormatter::CellLayoutRow const & referenceRow,
+void TableTextFormatter::applyColumnsWidth( TableFormatter::CellLayoutRow const & referenceRow,
                                             TableFormatter::CellLayoutRows & tableGrid,
                                             PreparedTableLayout const & tableLayout ) const
 {
