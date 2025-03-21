@@ -115,11 +115,15 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::C3String(), &m_C3 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Constant for hardened FSLOPE" );
+    setDescription( "Constant for hardened PEAKI1" );
+
+  registerWrapper( viewKeyStruct::C4String(), &m_C4 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for hardened X, p0" );
 
   registerWrapper( viewKeyStruct::C5String(), &m_C5 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Constant for hardened FSLOPE" );
+    setDescription( "Constant for hardened CR" );
 
   registerWrapper( viewKeyStruct::g0String(), &m_g0 ).
     setInputFlag( InputFlags::REQUIRED ).

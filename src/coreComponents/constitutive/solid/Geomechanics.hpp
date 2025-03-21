@@ -53,6 +53,7 @@ public:
    * @param[in] C1a The value (constant) for hardened stren
    * @param[in] C2a The value (constant) for hardened fslope
    * @param[in] C3 The value (constant) for hardened peakI1
+   * @param[in] C4 The value (constant) for hardened X, p0
    * @param[in] C5 The value (constant) for hardened cr
    * @param[in] g0 The value for the tangent elastic shear modulus paramter 0
    * @param[in] g1 The value for the tangent elastic shear modulus paramter 1
@@ -101,6 +102,7 @@ public:
                        real64 const & C1a,
                        real64 const & C2a,
                        real64 const & C3,
+                       real64 const & C4,
                        real64 const & C5,
                        real64 const & g0,
                        real64 const & g1,
@@ -172,6 +174,7 @@ public:
     m_C1a( C1a ),
     m_C2a( C2a ),
     m_C3( C3 ),
+    m_C4( C4 ),
     m_C5( C5 ),
     m_g0( g0 ),
     m_g1( g1 ),
@@ -517,6 +520,7 @@ private:
   real64 const & m_C1a;
   real64 const & m_C2a;
   real64 const & m_C3;
+  real64 const & m_C4;
   real64 const & m_C5;
   real64 const & m_g0;
   real64 const & m_g1;
@@ -2697,9 +2701,12 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
   real64 peakI1_h = m_peakI1+hardening*m_C3;
   real64 peakI1_hd = (nonlinearCoher)*peakI1_h + ( damageV2 )*0;
 
+  real64 X_h = m_p0 + (hardening*m_C4) + (X*0);
 
   real64 CR_h = m_cr * (1+((hardening*m_C5)/m_g0) );
-  std::cout<<" X/p0_new: " << X << " CR_new: " << CR_h << std::endl;
+  //std::cout<<" X/p0_new: " << X << " CR_new: " << CR_h << std::endl;
+
+
 	// --------------------------------------------------------------------
 	// *** SHEAR LIMIT FUNCTION (Ff) ***
 	// --------------------------------------------------------------------
@@ -2710,7 +2717,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	// --------------------------------------------------------------------
 	// *** Branch Point (Kappa) ***
 	// --------------------------------------------------------------------
-	real64  Kappa  = peakI1_hd- CR_h*(peakI1_hd-X); // Branch Point
+	real64  Kappa  = peakI1_hd- CR_h*(peakI1_hd-X_h); // Branch Point
 
 	// --------------------------------------------------------------------
 	// *** COMPOSITE YIELD FUNCTION ***
@@ -2718,11 +2725,11 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	// Evaluate Composite Yield Function F(I1) = Ff(I1)*fc(I1) in each region.
 	// The elseif statements have nested if statements, which is not equivalent
 	// to them having a single elseif(A&&B&&C)
-	if( I1mZ < X )
+	if( I1mZ < X_h )
 	{//---------------------------------------------------(I1<X)
 		YIELD = 1;
 	}
-	else if(( I1mZ < Kappa )&&( I1mZ >= X )) 
+	else if(( I1mZ < Kappa )&&( I1mZ >= X_h )) 
   {// ---------------(X<I1<kappa)
 		// p3 is the maximum achievable volumetric plastic strain in compresson
 		// so if a value of 0 has been specified this indicates the user
@@ -2731,7 +2738,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 		// **Elliptical Cap Function: (fc)**
 		// fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
 		// faster version: fc2 = fc^2
-		real64 fc2 = 1.0 - ((Kappa-I1mZ)/(Kappa-X))*((Kappa-I1mZ)/(Kappa-X));
+		real64 fc2 = 1.0 - ((Kappa-I1mZ)/(Kappa-X_h))*((Kappa-I1mZ)/(Kappa-X_h));
 		if(rJ2*rJ2 > Ff*Ff*fc2 )
 		{
 			YIELD = 1;
@@ -2957,6 +2964,9 @@ public:
     static constexpr char const * C3String() { return "C3"; }
 
     /// string/key for constant for tuning hardened peakI1
+    static constexpr char const * C4String() { return "C4"; }
+
+    /// string/key for constant for tuning hardened peakI1
     static constexpr char const * C5String() { return "C5"; }
 
     /// string/key for tangent elastic shear modulus parameter 0 
@@ -3125,6 +3135,7 @@ public:
                                 m_C1a,
                                 m_C2a,
                                 m_C3,
+                                m_C4,
                                 m_C5,
                                 m_g0,
                                 m_g1,
@@ -3202,8 +3213,9 @@ public:
                           m_b4,
                           m_C1a,
                           m_C2a,
-                          m_C5,
                           m_C3,
+                          m_C4,
+                          m_C5,
                           m_g0,
                           m_g1,
                           m_g2,
@@ -3346,6 +3358,7 @@ protected:
   real64 m_C1a;
   real64 m_C2a;
   real64 m_C3;
+  real64 m_C4;
   real64 m_C5;
 
   // Tangent elastic shear modulus parameters
