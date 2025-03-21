@@ -10,9 +10,10 @@ PR #3537 (2025-03-20)
 =====================
 Added two attributes to TableFunction: writeCSV and logLevel.
 
-PR #3555 (2024-03-11)
+
+PR #2125 (2024-03-20)
 =====================
-Add aging law.
+Phase-field nucleation model.
 
 PR #3494 (2024-03-11)
 =====================
