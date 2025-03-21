@@ -88,8 +88,8 @@ computePureCoefficients( integer const ic,
 
   real64 const csw = power( salinity, 1.1 );
 
-  real64 const sqrtAlpha = 1.0 - 0.4530*(1.0 - tr*(1.0 - 0.0103*csw)) + 0.0034*(trToMinus3 - 1.0);
-  real64 const dSqrtAlpha_dtr = 0.4530*(1.0 - 0.0103*csw) - 0.0102*trToMinus3/tr;
+  real64 const sqrtAlpha = 1.0 + 0.4530*(1.0 - tr*(1.0 - 0.0103*csw)) + 0.0034*(trToMinus3 - 1.0);
+  real64 const dSqrtAlpha_dtr = -0.4530*(1.0 - 0.0103*csw) - 0.0102*trToMinus3/tr;
   real64 const alpha = sqrtAlpha * sqrtAlpha;
   real64 const dAlpha_dt = 2.0 * sqrtAlpha * dSqrtAlpha_dtr / criticalTemperature[ic];
 
@@ -214,6 +214,8 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
     real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
     dkij_dT = dkij_dTr * dTr_dT;
+std::cout << "FlashData kij " << temperature << " " << Tci << " " << Tr << " " << omega << " " << kij << " " << dkij_dT << "\n";
+    //kij = dkij_dT = 0.0;
   }
 }
 
@@ -491,7 +493,7 @@ computeLogFugacityCoefficients( integer const numComps,
                                             aMixtureCoefficient,
                                             bMixtureCoefficient,
                                             compressibilityFactor );
-
+std::cout << "FlashData SW : " << compressibilityFactor << "\n";
   // step 4: use mixture coefficients and compressibility factor to update fugacity coefficients
   CubicModel::computeLogFugacityCoefficients( numComps,
                                               composition,
