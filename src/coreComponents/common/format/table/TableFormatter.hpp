@@ -34,23 +34,40 @@ class TableFormatter
 {
 
 public:
+
   /// Represent the TableData values
   using RowsCellInput = std::vector< std::vector< TableData::CellData > >;
 
   /// Represent a row of the Table (header or values) when structured for formatting
-  struct CellLayoutRow {
-     std::vector< TableLayout::CellLayout > cells;
-     size_t sublinesCount;
+  struct CellLayoutRow
+  {
+    std::vector< TableLayout::CellLayout > cells;
+    size_t sublinesCount;
   };
 
   /// Represent the Table (header or values) when structured for formatting
   using CellLayoutRows = std::vector< CellLayoutRow >;
+
+  struct ErrorListing
+  {
+    CellLayoutRows errors;
+
+    void addError( string_view text, size_t nbCells );
+    bool errorRowExists();
+    void clear(); // at TableFormatter::toString() start
+  };
+
+
+  ErrorListing & getErrorsList() const
+  { return *m_errors; }
 
 
 protected:
 
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
+
+  std::unique_ptr< ErrorListing > m_errors = std::make_unique< ErrorListing >();
 
   TableFormatter() = default;
 

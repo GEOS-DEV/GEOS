@@ -97,7 +97,7 @@ public:
 
     /**
      * @brief Constructor to fully initialize a cell given with given celltype, text and alignment.
-     * m_cellWidth will be initialized aDter
+     * m_cellWidth will be initialized after
      * @param cellType The type of the cell.
      * @param alignment The alignment of the cell (left, right, or center).
      */

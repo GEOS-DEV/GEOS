@@ -168,6 +168,8 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
 
   // after that, we can process the merged cells.
   stretchRowToMergedCellsWidth( referenceRow, headerCellsLayout, tableLayout, false );
+  if( !getErrorsList().errors.empty())
+    stretchRowToMergedCellsWidth( referenceRow, getErrorsList().errors, tableLayout, true );
   stretchRowToMergedCellsWidth( referenceRow, dataCellsLayout, tableLayout, true );
 
   // the reference row is now sized after all the table, we can compute tableTotalWidth
@@ -180,6 +182,8 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
 
   // we can now propagate the reference row width to all cells
   propagateRowWidth( referenceRow, headerCellsLayout, tableLayout );
+  if( !getErrorsList().errors.empty())
+    propagateRowWidth( referenceRow, getErrorsList().errors, tableLayout );
   propagateRowWidth( referenceRow, dataCellsLayout, tableLayout );
 }
 
@@ -289,6 +293,15 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
   };
 
   // TODO: error if inputDataValues size is not consistent with visible headers count
+  for( auto const & columnsData : inputDataValues )
+  {
+    if( columnsData.size() != tableLayout.getLowermostColumnsCount())
+    {
+      getErrorsList().addError( " Error 1, test de la fonctionnalité ",
+                                nbVisibleColumn );
+      return;
+    }
+  }
 
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
   {
@@ -397,7 +410,6 @@ void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayou
       }
     }
   }
-
   // compression of flexible space, mandatory for when we merge cells in intersecting column sets.
   if( compress && numRows > 0 )
   {
@@ -420,7 +432,7 @@ void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayou
             TableLayout::CellLayout const & mergedCell = tableGrid[rowId].cells[mergedId];
             mergedColumnsWidth += referenceRow.cells[mergedId].m_cellWidth + flexSpaces[mergedId];
             mergedColumnsWidth += spaceBetweenColumns;
-            if( mergedCell.m_cellType != CellType::MergeNext )
+            if( mergedCell.m_cellType != CellType::MergeNext || columnId == numColumns - 1 )
             {
               // this is the last cell to merge (which contains the actual merged content),
               // we can compute here the space potencially wasted by the flexible space
@@ -445,7 +457,6 @@ void TableTextFormatter::stretchRowToMergedCellsWidth( TableFormatter::CellLayou
         flexSpaces[columnId] = size_t( std::max( size_t( 0 ), flexSpaces[columnId] - oversize ) );
     }
   }
-
   for( size_t columnId = 0; columnId < numColumns; columnId++ )
   {
     // TODO warning if <0 (wrong computation) -> ignore addition
@@ -500,6 +511,11 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
   }
   tableOutput << sepLine << '\n';
   outputLines( tableLayout, headerCellsLayout, tableOutput );
+  if( getErrorsList().errorRowExists())
+  {
+    std::cout << "jump exist " << std::endl;
+    outputLines( tableLayout, getErrorsList().errors, tableOutput );
+  }
   if( !dataCellsLayout.empty())
   {
     outputLines( tableLayout, dataCellsLayout, tableOutput );
@@ -602,5 +618,26 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
     }
     idxRow++;
   }
+}
+void TableFormatter::ErrorListing::addError( string_view text, size_t nbCells )
+{
+  errors.push_back(
+    {
+      std::vector< TableLayout::CellLayout >( nbCells, TableLayout::CellLayout( CellType::MergeNext ) ),
+      0
+    } );
+
+  errors[errors.size() - 1].cells[0].m_cellWidth = 0;
+  errors[errors.size() - 1].cells[0].m_cellType = CellType::Value;
+  errors[errors.size() - 1].cells[0].m_lines.push_back( text );
+}
+bool TableFormatter::ErrorListing::errorRowExists()
+{
+  return errors.size() != 0;
+}
+
+void TableFormatter::ErrorListing::clear()
+{
+  errors.clear();
 }
 }
