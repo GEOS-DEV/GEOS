@@ -85,33 +85,21 @@ TEST( testTable, tableEmptyRow )
              "|  Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim.  |  [30.21543]  |  30.45465142  |   787442  |       10  |\n"
              "-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" );
 }
-TEST( testTable, tableEmptyRow2 )
-{
-  //table with empty row
-  TableLayout const tableLayout( "InternalWellGenerator well_injector1",
-                                 {"Well\nelement no.\nPV weighted\nbar",
-                                  "CordX",
-                                  "CoordZ",
-                                  "Prev\nelement",
-                                  "Next\nelement"} );
 
+TEST( testTable, tableOneTrickyLine )
+{
+  TableLayout const tableLayout( "", { "Well", "CordX", "CoordZ", "Prev", "Next" } );
   TableData tableData;
-  tableData.addRow( "value1", CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, "" );
+  tableData.addRow( "value1", CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext );
 
   TableTextFormatter const tableText( tableLayout );
-  std::cout<<tableText.toString( tableData )<<std::endl;
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-             "|                                                              InternalWellGenerator well_injector1                                                               |\n"
-             "|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|\n"
-             "|                                                   Well                                                   |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
-             "|                                               element no.                                                |              |               |  element  |  element  |\n"
-             "|                                               PV weighted                                                |              |               |           |           |\n"
-             "|                                                   bar                                                    |              |               |           |           |\n"
-             "|----------------------------------------------------------------------------------------------------------|--------------|---------------|-----------|-----------|\n"
-             "|                                                                                                  value1  |  [30.21543]  |          3.0  |       54  |        0  |\n"
-             "-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" );
+             "---------------------------------------------------\n"
+             "|   Well   |  CordX  |  CoordZ  |  Prev  |  Next  |\n"
+             "|----------|---------|----------|--------|--------|\n"
+             "|  value1  |                                      |\n"
+             "---------------------------------------------------\n" );
 }
 
 TEST( testTable, tableClassic )

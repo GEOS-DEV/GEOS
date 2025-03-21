@@ -487,7 +487,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
             TableLayout::CellLayout const & mergedCell = row.cells[mergedId];
             mergedColumnsWidth += referenceRow.cells[mergedId].m_cellWidth + flexSpaces[mergedId];
             mergedColumnsWidth += spaceBetweenColumns;
-            if( mergedCell.m_cellType != CellType::MergeNext || columnId == numColumns - 1 )
+            if( mergedCell.m_cellType != CellType::MergeNext || mergedId == numColumns - 1 )
             {
               // this is the last cell to merge (which contains the actual merged content),
               // we can compute here the space potencially wasted by the flexible space
@@ -509,7 +509,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
         }
       }
       if( oversize > 0 )
-        flexSpaces[columnId] = size_t( std::max( size_t( 0 ), flexSpaces[columnId] - oversize ) );
+        flexSpaces[columnId] = size_t( std::max( 0, integer( flexSpaces[columnId] ) - oversize ) );
     }
   }
 
