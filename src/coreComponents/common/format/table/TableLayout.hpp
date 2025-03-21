@@ -392,7 +392,10 @@ private:
   using ColumnsList = Column::ColumnsList;
 
 
-  TableLayout() = default;
+  TableLayout()
+  {
+    setMargin( MarginValue::medium );
+  }
 
   /**
    * @brief Construct a new Table Layout object
@@ -626,11 +629,19 @@ class PreparedTableLayout : public TableLayout
 public:
 
   /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
+   */
+  PreparedTableLayout();
+
+  /**
    * @brief Precompute various information for formatting from a configurated TableLayout:
    *        - parent-child relationships between columns and sub-columns,
    *        - layout elements size,
    *        - line wrapping.
    *        For now, called automatically at TableFormatter construction.
+   * @note If an error happen while this process, it must output the table name and the error
+   *       message in a GEOS_WARNING().
    */
   PreparedTableLayout( TableLayout const & other );
 

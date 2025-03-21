@@ -86,6 +86,22 @@ TEST( testTable, tableEmptyRow )
              "-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n" );
 }
 
+TEST( testTable, tableOneTrickyLine )
+{
+  TableLayout const tableLayout( "", { "Well", "CordX", "CoordZ", "Prev", "Next" } );
+  TableData tableData;
+  tableData.addRow( "value1", CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "---------------------------------------------------\n"
+             "|   Well   |  CordX  |  CoordZ  |  Prev  |  Next  |\n"
+             "|----------|---------|----------|--------|--------|\n"
+             "|  value1  |                                      |\n"
+             "---------------------------------------------------\n" );
+}
+
 TEST( testTable, tableClassic )
 {
   TableLayout const tableLayout( "InternalWellGenerator well_injector1",
@@ -344,8 +360,8 @@ TEST( testTable, table2DTable )
              );
 }
 
-TEST( testTable, layoutTable )
-{
+TEST( testTable, headerOnlyTable )
+{ // this test exists because we don't want the code to crash if the number of data rows == 0
   string filename = "fluid1_phaseModel1_PhillipsBrineDensity_table";
   string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv", filename );
   TableLayout const tableLayoutInfos( filename,
@@ -572,6 +588,53 @@ TEST( testTable, testCellMerging )
              "|                Alpha  |    1001  |         8  |              Beta  |         2002  |           |\n"
              "|                       |          |            |             water  |          1.0  |           |\n"
              "--------------------------------------------------------------------------------------------------\n"
+             );
+}
+
+TEST( testTable, testFreeLayout )
+{
+  TableData tableData;
+  tableData.addRow( "ProductB", CellType::MergeNext, 40, CellType::Hidden );
+  tableData.addSeparator();
+  tableData.addRow( "ProductA", 1234, 40, "ProductName" );
+  tableData.addRow( "ProductA", 12345678, 40, "ProductName" );
+  tableData.addRow( "ProductE", 123456789, CellType::Separator, "ProductName" );
+  tableData.addRow( "ProductA", 12345678, 40, "ProductName" );
+  tableData.addSeparator();
+  tableData.addRow( "ProductB", CellType::MergeNext, 40, CellType::Hidden );
+  tableData.addSeparator();
+  tableData.addRow( "ProductC", CellType::MergeNext, CellType::MergeNext, "121212465465465666656461245452145454545" );
+  tableData.addRow( "ProductG", CellType::Separator, CellType::Separator, CellType::Separator );
+  tableData.addRow( "ProductD", 123456789, CellType::MergeNext, "Mini table in table" );
+  tableData.addRow( "ProductE", 123456789, CellType::Separator, CellType::Separator );
+  tableData.addRow( "ProductA", 12345678, 40, "ProductName" );
+  tableData.addRow( "ProductA", 12345678, 159812312323123, "ProductName" );
+  tableData.addSeparator();
+  tableData.addRow( CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, "121212465465465666656461245452145454545" );
+
+  // Don't specify any TableLayout on purpose, to use the default one while have total layout freedom.
+  TableTextFormatter const tableText;
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "----------------------------------------------------------------\n"
+             "|  ProductB  |                             40  |               |\n"
+             "|------------|---------------------------------|---------------|\n"
+             "|  ProductA  |       1234  |               40  |  ProductName  |\n"
+             "|  ProductA  |   12345678  |               40  |  ProductName  |\n"
+             "|  ProductE  |  123456789  |-------------------|  ProductName  |\n"
+             "|  ProductA  |   12345678  |               40  |  ProductName  |\n"
+             "|------------|---------------------------------|---------------|\n"
+             "|  ProductB  |                             40  |               |\n"
+             "|------------|-------------------------------------------------|\n"
+             "|  ProductC  |        121212465465465666656461245452145454545  |\n"
+             "|  ProductG  |-------------------------------------------------|\n"
+             "|  ProductD  |  123456789  |              Mini table in table  |\n"
+             "|  ProductE  |  123456789  |-----------------------------------|\n"
+             "|  ProductA  |   12345678  |               40  |  ProductName  |\n"
+             "|  ProductA  |   12345678  |  159812312323123  |  ProductName  |\n"
+             "|--------------------------------------------------------------|\n"
+             "|                     121212465465465666656461245452145454545  |\n"
+             "----------------------------------------------------------------\n"
              );
 }
 

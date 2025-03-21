@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_COMPOSITIONALDENSITY_HPP_
 
 #include "FunctionBase.hpp"
-#include "EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
