@@ -163,6 +163,8 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   bool const hasColumnLayout = tableLayout.getColumnLayersCount() > 0;
   RowsCellInput const & inputDataValues( tableInputData.getTableDataRows() );
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
+  // this array will store the displayed width of all columns (it will be scaled by data & headers width)
+  std::vector< size_t > columnsWidth;
 
   populateTitleCellsLayout( tableLayout, headerCellsLayout );
   if( hasColumnLayout )
@@ -170,23 +172,22 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
     populateHeaderCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
     size_t nbVisibleColumns = headerCellsLayout.back().cells.size();
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues, nbVisibleColumns );
+    columnsWidth = std::vector< size_t >( nbVisibleColumns, 0 );
   }
   else
   {
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues );
+    columnsWidth = std::vector< size_t >( inputDataRowsCount, 0 );
   }
-
-  // this reference row will store the displayed number & width of all columns (and will be stretched by data & headers)
-  auto & columnsWidth = hasColumnLayout ? headerCellsLayout.back() : dataCellsLayout.front();
 
   stretchColumnsByCellsWidth( columnsWidth, headerCellsLayout );
   stretchColumnsByCellsWidth( columnsWidth, dataCellsLayout );
 
-  // after that, we can process the merged cells.
+  // only after all cells that are not merge, we can process the merged cells.
   stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
   stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
 
-  // the reference row is now sized after all the table, we can compute tableTotalWidth
+  // the columns width array is now sized after all the table, we can compute the total table width
   tableTotalWidth = tableLayout.getBorderMargin() * 2 + 2;
   for( size_t columnId = 0; columnId < columnsWidth.size(); ++columnId )
   {
@@ -194,7 +195,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
                        size_t( columnId > 0 ? tableLayout.getColumnMargin() : 0 );
   }
 
-  // we can now propagate the reference row width to all cells
+  // we can now propagate the columns width width to all cells
   applyColumnsWidth( columnsWidth, headerCellsLayout, tableLayout );
   applyColumnsWidth( columnsWidth, dataCellsLayout, tableLayout );
 }
@@ -390,7 +391,7 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
   }
 }
 
-void TableTextFormatter::stretchColumnsByCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
+void TableTextFormatter::stretchColumnsByCellsWidth( std::vector< size_t > & columnsWidth,
                                                      TableFormatter::CellLayoutRows const & tableGrid ) const
 {
   // first, we reduce by column all regular cells in the first row.
@@ -405,14 +406,14 @@ void TableTextFormatter::stretchColumnsByCellsWidth( TableFormatter::CellLayoutR
         auto const & cell = rowCells[columnId];
         bool const isToMerge = columnId > 0 && rowCells[columnId-1].m_cellType == CellType::MergeNext;
         bool const isContentCell = cell.m_cellType != CellType::MergeNext;
-        if( isContentCell && !isToMerge && referenceRow.cells[columnId].m_cellWidth < cell.m_cellWidth )
-          referenceRow.cells[columnId].m_cellWidth = rowCells[columnId].m_cellWidth;
+        if( isContentCell && !isToMerge && columnsWidth[columnId] < cell.m_cellWidth )
+          columnsWidth[columnId] = rowCells[columnId].m_cellWidth;
       }
     }
   }
 }
 
-void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
+void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t > & columnsWidth,
                                                            TableFormatter::CellLayoutRows & tableGrid,
                                                            PreparedTableLayout const & tableLayout,
                                                            bool const compress ) const
@@ -421,7 +422,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
   size_t const numRows = tableGrid.size();
   size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].cells.size();
   size_t const spaceBetweenColumns = size_t( tableLayout.getColumnMargin() );
-  std::vector< size_t > flexSpaces = std::vector< size_t >( referenceRow.cells.size(), 0 );
+  std::vector< size_t > flexSpaces = std::vector< size_t >( columnsWidth.size(), 0 );
 
   for( size_t columnId = 0; columnId < numColumns; columnId++ )
   {
@@ -433,7 +434,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
       if( isContentCell && isLastToMerge )
       { // detected cells to merge, accumulating content width & column number & space
         size_t mergedCellsWidth = cell.m_cellWidth;
-        size_t mergedColumnsWidth = referenceRow.cells[columnId].m_cellWidth + flexSpaces[columnId];
+        size_t mergedColumnsWidth = columnsWidth[columnId] + flexSpaces[columnId];
         size_t mergedCellsCount = 1;
         for( integer mergedId = columnId - 1; mergedId >= 0; --mergedId )
         {
@@ -441,7 +442,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
           if( leftCell.m_cellType != CellType::MergeNext )
             break;
 
-          mergedColumnsWidth += referenceRow.cells[mergedId].m_cellWidth + flexSpaces[mergedId];
+          mergedColumnsWidth += columnsWidth[mergedId] + flexSpaces[mergedId];
           mergedColumnsWidth += spaceBetweenColumns;
           ++mergedCellsCount;
         }
@@ -469,7 +470,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
   {
     for( size_t columnId = 0; columnId < numColumns; columnId++ )
     {
-      size_t const currentColumnWidth = referenceRow.cells[columnId].m_cellWidth + flexSpaces[columnId];
+      size_t const currentColumnWidth = columnsWidth[columnId] + flexSpaces[columnId];
       integer oversize = std::numeric_limits< integer >::max();
       for( size_t rowId = 0; rowId < numRows; rowId++ )
       {
@@ -485,7 +486,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
           for( size_t mergedId = columnId + 1; mergedId < numColumns; mergedId++ )
           {
             TableLayout::CellLayout const & mergedCell = row.cells[mergedId];
-            mergedColumnsWidth += referenceRow.cells[mergedId].m_cellWidth + flexSpaces[mergedId];
+            mergedColumnsWidth += columnsWidth[mergedId] + flexSpaces[mergedId];
             mergedColumnsWidth += spaceBetweenColumns;
             if( mergedCell.m_cellType != CellType::MergeNext || mergedId == numColumns - 1 )
             {
@@ -516,11 +517,11 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( TableFormatter::CellL
   for( size_t columnId = 0; columnId < numColumns; columnId++ )
   {
     // TODO warning if <0 (wrong computation) -> ignore addition
-    referenceRow.cells[columnId].m_cellWidth += size_t( flexSpaces[columnId] );
+    columnsWidth[columnId] += size_t( flexSpaces[columnId] );
   }
 }
 
-void TableTextFormatter::applyColumnsWidth( TableFormatter::CellLayoutRow const & referenceRow,
+void TableTextFormatter::applyColumnsWidth( std::vector< size_t > const & columnsWidth,
                                             TableFormatter::CellLayoutRows & tableGrid,
                                             PreparedTableLayout const & tableLayout ) const
 {
@@ -535,18 +536,18 @@ void TableTextFormatter::applyColumnsWidth( TableFormatter::CellLayoutRow const 
       bool const isToMerge = columnId > 0 && tableGrid[rowId].cells[columnId-1].m_cellType == CellType::MergeNext;
       if( !isToMerge )
       {
-        cell.m_cellWidth = std::max( cell.m_cellWidth, referenceRow.cells[columnId].m_cellWidth );
+        cell.m_cellWidth = std::max( cell.m_cellWidth, columnsWidth[columnId] );
       }
       else
       {
-        size_t mergedColumnsWidth = referenceRow.cells[columnId].m_cellWidth;
+        size_t mergedColumnsWidth = columnsWidth[columnId];
         for( integer previousColumnId = columnId-1; previousColumnId >= 0; --previousColumnId )
         {
           TableLayout::CellLayout const & leftCell = tableGrid[rowId].cells[previousColumnId];
           if( leftCell.m_cellType != CellType::MergeNext )
             break;
 
-          mergedColumnsWidth += referenceRow.cells[previousColumnId].m_cellWidth + spaceBetweenColumns;
+          mergedColumnsWidth += columnsWidth[previousColumnId] + spaceBetweenColumns;
         }
         cell.m_cellWidth = mergedColumnsWidth;
       }

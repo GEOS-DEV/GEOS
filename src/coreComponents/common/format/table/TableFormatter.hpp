@@ -204,7 +204,7 @@ private:
    * @note To produce a grid with the given column tree, there are 2 corner cases:
    *       - A column have less subcolumns layers than its neightboors -> empty "Header" cells  will be added bellow.
    *       - A parent column has 2 or more sub-columns -> it will be subdivised with "MergeNext" cells.
-   *         This is why stretchRowToMergedCellsWidth() must be called on the grid,
+   *         This is why stretchColumnsByMergedCellsWidth() must be called on the grid,
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
@@ -236,32 +236,34 @@ private:
                                 size_t nbVisibleColumn ) const;
 
   /**
-   * @brief Adjust cell widths in a row to accommodate content width requirements.
-   * @param referenceRow The row to store the result in (typically, a unique reference row).
+   * @brief Expend the columns width to accomodate with the content of all cells that are not merged.
+   * @param columnsWidth The array to store the resulting columns width in.
    * @param tableGrid The grid of cells containing content.
    */
-  void stretchRowToCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
-                               TableFormatter::CellLayoutRows const & tableGrid ) const;
+  void stretchColumnsByCellsWidth( std::vector< size_t > & columnsWidth,
+                                   TableFormatter::CellLayoutRows const & tableGrid ) const;
 
   /**
    * @brief Adjust cell widths to accommodate merged cells across multiple columns.
-   * @param referenceRow The row to store the result in (typically, a unique reference row).
+   * @param columnsWidth The array to store the resulting columns width in.
+   *                     Initialized by stretchColumnsByCellsWidth().
    * @param tableGrid The grid of cells containing content that is potencially merged.
+   *                  The merged cells width will be computed.
    * @param tableLayout Layout information, including column margins and other settings.
    * @param compress Enable a final compression pass instead of only expanding widths.
    */
-  void stretchRowToMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
-                                     TableFormatter::CellLayoutRows & tableGrid,
-                                     PreparedTableLayout const & tableLayout,
-                                     bool const compress ) const;
+  void stretchColumnsByMergedCellsWidth( std::vector< size_t > & columnsWidth,
+                                         TableFormatter::CellLayoutRows & tableGrid,
+                                         PreparedTableLayout const & tableLayout,
+                                         bool const compress ) const;
 
   /**
-   * @brief Applies column widths from a given reference row to all rows in the table grid.
-   * @param referenceRow The row containing the finalized column width values.
+   * @brief Applies column widths to all rows in the table grid.
+   * @param columnsWidth The row containing the finalized column width values.
    * @param tableGrid The grid of cells that will have widths propagated to all rows.
    * @param tableLayout Layout information including spacing and other display settings.
    */
-  void propagateRowWidth( TableFormatter::CellLayoutRow const & referenceRow,
+  void applyColumnsWidth( std::vector< size_t > const & columnsWidth,
                           TableFormatter::CellLayoutRows & tableGrid,
                           PreparedTableLayout const & tableLayout ) const;
 
