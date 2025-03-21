@@ -88,6 +88,6 @@ public:
 } // namespace geos
 
 // Implementation
-#include "CompositionalPropertiesImpl.hpp"
+#include "CompositionalProperties_impl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_COMPOSITIONALPROPERTIES_HPP_
