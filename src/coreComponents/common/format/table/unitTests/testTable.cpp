@@ -622,6 +622,8 @@ TEST( testTable, testCellMerging )
 TEST( testTable, testFreeLayout )
 {
   TableData tableData;
+  tableData.addRow( "ProductB", CellType::MergeNext, 40, CellType::Hidden );
+  tableData.addSeparator();
   tableData.addRow( "ProductA", 1234, 40, "ProductName" );
   tableData.addRow( "ProductA", 12345678, 40, "ProductName" );
   tableData.addRow( "ProductE", 123456789, CellType::Separator, "ProductName" );
@@ -643,6 +645,8 @@ TEST( testTable, testFreeLayout )
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
              "----------------------------------------------------------------\n"
+             "|  ProductB  |                             40  |               |\n"
+             "|------------|---------------------------------|---------------|\n"
              "|  ProductA  |       1234  |               40  |  ProductName  |\n"
              "|  ProductA  |   12345678  |               40  |  ProductName  |\n"
              "|  ProductE  |  123456789  |-------------------|  ProductName  |\n"
