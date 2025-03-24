@@ -116,10 +116,9 @@ TableLayout::Column & TableLayout::Column::setName( string_view name )
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
+TableLayout::Column & TableLayout::Column::setVisibility( bool visible )
 {
-  // TODO error if celltype is not (header or hidden)
-  m_headerLayout.m_cellType = celltype;
+  m_headerLayout.m_cellType = visible ? CellType::Header : CellType::Hidden;
   return *this;
 }
 
@@ -284,6 +283,7 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
       for( auto & subCol : column.m_subColumns )
       {
         subCol.setParent( &column );
+        subCol.setVisibility( subCol.isVisible() && column.isVisible() );
       }
 
       prepareLayoutRecusive( column.m_subColumns, level + 1 );
