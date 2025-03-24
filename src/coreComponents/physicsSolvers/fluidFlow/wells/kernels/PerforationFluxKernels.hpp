@@ -50,8 +50,6 @@ struct NoOpStuct
 namespace isothermalPerforationFluxKernels
 {
 
-
-
 /******************************** PerforationFluxKernel ********************************/
 
 template< integer NC, integer NP, integer IS_THERMAL >
@@ -136,18 +134,6 @@ public:
     m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >()),
     m_disableReservoirToWellFlow( disableReservoirToWellFlow )
   {}
-
-  struct StackVariables
-  {
-public:
-    /**
-     * @brief Constructor for the stack variables
-     */
-
-    GEOS_HOST_DEVICE
-    StackVariables() {}
-
-  };
 
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
@@ -516,8 +502,6 @@ public:
     } );
   }
 
-
-  StackVariables m_stackVariables;
 
 protected:
   ElementViewConst< arrayView1d< real64 const > > const m_resPres;

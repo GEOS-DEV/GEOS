@@ -24,7 +24,6 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 #include "ToParticleRelation.hpp"
 
 namespace geos
