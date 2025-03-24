@@ -120,6 +120,13 @@ TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
 {
   // TODO error if celltype is not (header or hidden)
   m_headerLayout.m_cellType = celltype;
+  if( !m_subColumns.empty() )
+  {
+    for( auto & subColumn : m_subColumns )
+    {
+      subColumn.setVisibility( celltype );
+    }
+  }
   return *this;
 }
 
@@ -253,6 +260,7 @@ PreparedTableLayout::PreparedTableLayout(  ):
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),
+  m_totalLowermostColumnCount( 0 ),
   m_lowermostColumnCount( 0 )
 {
   prepareLayoutRecusive( m_tableColumns, 0 );
@@ -263,14 +271,24 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
                                                  size_t level )
 {
-  m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
+  if( columns[0].m_headerLayout.m_cellType != CellType::Hidden )
+  {
+    m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
+  }
 
   for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
     Column & column = columns[idxColumn];
+    CellType cellType = column.m_headerLayout.m_cellType;
 
-    if( column.m_headerLayout.m_cellType != CellType::Hidden && !column.hasChild() )
-      ++m_lowermostColumnCount;
+    if( !column.hasChild() )
+    {
+      ++m_totalLowermostColumnCount;
+      if( cellType!= CellType::Hidden )
+      {
+        ++m_lowermostColumnCount;
+      }
+    }
 
     column.m_headerLayout.prepareLayout( column.m_headerStr, getMaxColumnWidth() );
 
@@ -286,7 +304,8 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
         subCol.setParent( &column );
       }
 
-      prepareLayoutRecusive( column.m_subColumns, level + 1 );
+      prepareLayoutRecusive( column.m_subColumns, level + 1);
+
     }
   }
 }

@@ -669,9 +669,17 @@ public:
   size_t getLowermostColumnsCount() const
   { return m_lowermostColumnCount; }
 
+  /**
+   * @return The number columns that does not contain child (useful to know the maximum number of
+   *         column to show in a given row).
+   */
+  size_t getTotalLowermostColumnsCount() const
+  { return m_totalLowermostColumnCount; }
+
 private:
 
   size_t m_columnLayersCount;
+  size_t m_totalLowermostColumnCount;
   size_t m_lowermostColumnCount;
 
   /**
