@@ -10,6 +10,9 @@ PR #3537 (2025-03-20)
 =====================
 Added two attributes to TableFunction: writeCSV and logLevel.
 
+PR #3396 (2024-03-21)
+=====================
+Use solid mechanics solver directly to perform poromechanics initialization.
 
 PR #2125 (2024-03-20)
 =====================
