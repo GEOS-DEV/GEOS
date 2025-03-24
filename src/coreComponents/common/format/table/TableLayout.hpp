@@ -523,30 +523,22 @@ private:
   bool isLineBreakEnabled() const;
 
   /**
-   * @return The border margin,
-   * number of spaces at each table sides
+   * @return The number of spaces at each table sides
    */
   integer const & getBorderMargin() const
   { return m_borderMargin; }
 
   /**
-   * @return The column margin,
-   * numbers of spaces separating both left and right side from a vertical line
+   * @return The number of character between two columns (spaces + the separacting character).
    */
   integer const & getColumnMargin() const
   { return m_columnMargin; }
 
   /**
-   * @return The table margin value
+   * @return The number of margin spaces around contents.
    */
   integer const & getMarginValue() const
   { return m_marginValue; }
-
-  /**
-   * @return The margin title
-   */
-  integer const & getMarginTitle() const
-  { return m_titleMargin; }
 
   /**
    * @return The margin title
@@ -607,7 +599,7 @@ protected:
   /// Columns settings hierarchy
   ColumnsList m_tableColumns;
 
-  // Indicate if we have a line break a the beginning of the table
+  /// Indicate if we have a line break a the beginning of the table
   bool m_lineBreakAtBegin = true;
 
   /// Table title text
@@ -620,10 +612,14 @@ protected:
   size_t m_maxColumnWidth = noColumnMaxWidth;
 
 
+  /// The number of spaces at each table sides
   integer m_borderMargin;
+
+  /// The number of character between two columns (spaces + the separacting character).
   integer m_columnMargin;
+
+  /// The number of margin spaces around contents.
   integer m_marginValue;
-  integer m_titleMargin = 2;
 
 };
 
