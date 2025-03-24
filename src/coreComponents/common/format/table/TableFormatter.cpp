@@ -169,7 +169,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   populateTitleCellsLayout( tableLayout, headerCellsLayout );
   if( hasColumnLayout )
   {
-    populateHeaderCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
+    populateHeaderCellsLayout( tableLayout, headerCellsLayout );
     size_t nbVisibleColumns = headerCellsLayout.back().cells.size();
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues, nbVisibleColumns );
     columnsWidth = std::vector< size_t >( nbVisibleColumns, 0 );
@@ -229,8 +229,7 @@ void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & t
 }
 
 void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
-                                                    CellLayoutRows & headerCellsLayout,
-                                                    size_t const inputDataColumnsCount ) const
+                                                    CellLayoutRows & headerCellsLayout ) const
 {
   using CellLayout = TableLayout::CellLayout;
 
@@ -244,11 +243,6 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   // n-1 -> separator
   size_t const previousRowsCount = headerCellsLayout.size();
   auto const getColumnRowId = [=] ( size_t columnLayer ) { return previousRowsCount + columnLayer * 2; };
-
-  // TODO: integrate this error in the table, and use an equality with the visible+non-visible lowermost column count
-  // (PreparedTableLayout should have a visible & nonvisible getLowermostColumnsCount() verion)
-  if( inputDataColumnsCount > 0 )
-    GEOS_ERROR_IF_GT( lowermostColumnsCount, inputDataColumnsCount );
 
   headerCellsLayout.resize( previousRowsCount + headerRowsCount );
   for( size_t rowId = previousRowsCount; rowId < headerCellsLayout.size(); rowId++ )
@@ -324,12 +318,11 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     }
   };
 
-  // TODO: error if inputDataValues size is not consistent with visible headers count / columns count
   for( auto const & columnsData : inputDataValues )
   {
-    if( columnsData.size() != tableLayout.getLowermostColumnsCount())
+    if( columnsData.size() != tableLayout.getTotalLowermostColumnsCount())
     {
-      getErrorsList().addError( " Error 1, test de la fonctionnalité ",
+      getErrorsList().addError( "Warning : One or more data lines are not equal to the number of headers",
                                 nbVisibleColumn );
       return;
     }
@@ -579,16 +572,32 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
   }
   tableOutput << sepLine << '\n';
   outputLines( tableLayout, headerCellsLayout, tableOutput );
-  if( getErrorsList().errorRowExists())
-  {
-    std::cout << "jump exist " << std::endl;
-    outputLines( tableLayout, getErrorsList().errors, tableOutput );
-  }
+
   if( !dataCellsLayout.empty())
   {
     outputLines( tableLayout, dataCellsLayout, tableOutput );
-    tableOutput << sepLine;
   }
+
+  if( getErrorsList().errorRowExists())
+  {
+    CellLayoutRows & errorsList = getErrorsList().errors;
+    for( CellLayoutRow & errorLayout : errorsList )
+    {
+      TableLayout::CellLayout & errorConfig = errorLayout.cells[errorLayout.cells.size() - 1];
+      size_t maxSize =  tableLayout.getTableWidthInStep();
+      errorConfig.m_lines = stringutilities::wrapTextToMaxLength( errorConfig.m_lines,
+                                                                  maxSize );
+      errorConfig.m_cellWidth = maxSize + tableLayout.getBorderMargin() * 2;
+      errorLayout.sublinesCount = errorConfig.m_lines.size();
+    }
+
+    outputLines( tableLayout, errorsList, tableOutput );
+  }
+
+  if( !dataCellsLayout.empty() || getErrorsList().errorRowExists())
+    tableOutput << sepLine;
+
+
   if( tableLayout.isLineBreakEnabled())
   {
     tableOutput << '\n';
@@ -692,12 +701,12 @@ void TableFormatter::ErrorListing::addError( string_view text, size_t nbCells )
   errors.push_back(
     {
       std::vector< TableLayout::CellLayout >( nbCells, TableLayout::CellLayout( CellType::MergeNext ) ),
-      0
+      1
     } );
 
-  errors[errors.size() - 1].cells[0].m_cellWidth = 0;
-  errors[errors.size() - 1].cells[0].m_cellType = CellType::Value;
-  errors[errors.size() - 1].cells[0].m_lines.push_back( text );
+  errors[errors.size() - 1].cells[nbCells - 1].m_cellWidth = 0;
+  errors[errors.size() - 1].cells[nbCells - 1].m_cellType = CellType::Value;
+  errors[errors.size() - 1].cells[nbCells - 1].m_lines.push_back( text );
 }
 bool TableFormatter::ErrorListing::errorRowExists()
 {

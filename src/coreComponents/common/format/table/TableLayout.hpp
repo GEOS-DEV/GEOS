@@ -676,6 +676,16 @@ public:
   size_t getTotalLowermostColumnsCount() const
   { return m_totalLowermostColumnCount; }
 
+  inline size_t getTableWidthInStep() const
+  {
+    size_t width = 0;
+    for( auto const & column : m_tableColumns )
+    {
+      width += column.m_headerLayout.m_cellWidth;
+    }
+    return width;
+  }
+
 private:
 
   size_t m_columnLayersCount;

@@ -552,7 +552,35 @@ TEST( testTable, testCellMerging )
       .setName( "Next\nelement" )} );
 
   TableData tableData;
-  tableData.addRow( 1500, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext );
+  tableData.addRow( "ProductA", 1234, 40, "ProductName", 5678, 60 );
+  tableData.addRow( "ProductA", 54, 4564575, "long size value", 5454554512, 60 );
+  tableData.addSeparator();
+  tableData.addRow( "ProductA", 54, 4564575, CellType::Hidden, 5454554512, 60 );
+  tableData.addSeparator();
+  tableData.addRow( 3.14f, 2.718f, CellType::MergeNext, 1.618f, 0.577f, CellType::Hidden );
+
+  // testing a merged cell that is shorter than its 2 containing columns
+  tableData.addRow( "P1\nP2\nP3", "2002\n2003\n2004", CellType::MergeNext, "12121212454521454545455656", 4004, CellType::MergeNext );
+
+  tableData.addRow( "Long product size", CellType::Separator, 4564575, "long size value", 5454554512, 60 );
+  tableData.addRow( "ProductAfdggfd", 5445, 4565, "PrName", 5454512, 64650 );
+  tableData.addRow( 3.14f, 2.718f, CellType::MergeNext, 1.618f, 0.577f, CellType::MergeNext );
+  tableData.addSeparator();
+  tableData.addRow( "CellType::MergeNext", CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, "Item2" );
+  tableData.addSeparator();
+  tableData.addRow( 1500, 2500, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext );
+  tableData.addSeparator();
+  tableData.addRow( 1.23f, 4.56f, CellType::MergeNext, "764654665465465654654646", 0.12f, 40 );
+  tableData.addRow( "Long product size", 54, 4564575, "long size value", 5454554512, 60 );
+  tableData.addRow( "ProductA", 54, 4564575, "long size value", 5454554512, 60 );
+  tableData.addSeparator();
+  tableData.addRow( "P1", "2002", CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, "121212465465465666656461245452145454545" );
+
+  // testing a merged cell that is wider than its 4 containing columns (so it must stretch them to fit)
+  tableData.addRow( "P1", "2002", CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, "123121321654698761121212465465465666656461245452145454545" );
+
+  tableData.addSeparator();
+  tableData.addRow( "Alpha", 1001, 8, "Beta\nwater", "2002\n1.0", CellType::MergeNext );
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
@@ -653,12 +681,55 @@ TEST( testTable, tableMismatchingHeaderData )
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "-----------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-             "|                                                          InternalWellGenerator well_injector1                                                           |\n"
-             "|---------------------------------------------------------------------------------------------------------------------------------------------------------|\n"
-             "|                           Duis fringilla, ligula sed porta fringilla,                            |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
-             "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |              |               |  element  |  element  |\n"
-             "|--------------------------------------------------------------------------------------------------|--------------|---------------|-----------|-----------|\n"
+             "-------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "|                                                     InternalWellGenerator well_injector1                                                      |\n"
+             "|-----------------------------------------------------------------------------------------------------------------------------------------------|\n"
+             "|                           Duis fringilla, ligula sed porta fringilla,                            |  CordX  |  CoordZ  |   Prev    |   Next    |\n"
+             "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |         |          |  element  |  element  |\n"
+             "|--------------------------------------------------------------------------------------------------|---------|----------|-----------|-----------|\n"
+             "|                                     Warning : One or more data lines are not equal to the number of headers                                   |\n"
+             "------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             );
+}
+
+TEST( testTable, tableHiddenError )
+{
+  TableLayout const tableLayout( "Title table",{
+    TableLayout::Column()
+      .setName( "Cras egestas" )
+      .setHeaderAlignment( TableLayout::Alignment::center ),
+    TableLayout::Column()
+      .setName( "Column4" )
+      .addSubColumns( { TableLayout::Column()
+                          .setName( "Local elements" ).addSubColumns( {"SubLocales1", "SubLocales2"} ),
+                        TableLayout::Column()
+                          .setName( "Ghost Elements" ).addSubColumns( {"SubGhost1", "SubGhost2"} ),
+                        TableLayout::Column()
+                          .setName( "Active Elements" ).addSubColumns( {"SubActive1", "SubActive2"} )
+                      } )
+      .setVisibility( CellType::Hidden ),
+    TableLayout::Column()
+      .setName( "Prev\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::left ),
+    TableLayout::Column()
+      .setName( "Next\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::center )} );
+
+
+  TableData tableData;
+  tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0, 53 );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "-------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "|                                                     InternalWellGenerator well_injector1                                                      |\n"
+             "|-----------------------------------------------------------------------------------------------------------------------------------------------|\n"
+             "|                           Duis fringilla, ligula sed porta fringilla,                            |  CordX  |  CoordZ  |   Prev    |   Next    |\n"
+             "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |         |          |  element  |  element  |\n"
+             "|--------------------------------------------------------------------------------------------------|---------|----------|-----------|-----------|\n"
+             "|                                     Warning : One or more data lines are not equal to the number of headers                                   |\n"
+             "-------------------------------------------------------------------------------------------------------------------------------------------------\n"
              );
 }
 
