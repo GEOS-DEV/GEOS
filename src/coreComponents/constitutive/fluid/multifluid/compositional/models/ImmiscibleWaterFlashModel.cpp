@@ -21,6 +21,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 
 namespace geos
 {
@@ -56,9 +57,8 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
-  //BrineSalinity const * brineSalinity = m_parameters.get< BrineSalinity >();
-  //real64 const salinity = (brineSalinity == nullptr) ? 0.0 : brineSalinity->m_salinity;
-  real64 const salinity = 0.0;
+  BrineSalinity const * brineSalinity = m_parameters.get< BrineSalinity >();
+  real64 const salinity = (brineSalinity == nullptr) ? 0.0 : brineSalinity->m_salinity;
 
   CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
 
