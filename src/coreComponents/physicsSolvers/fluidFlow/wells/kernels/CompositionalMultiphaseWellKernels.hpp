@@ -205,7 +205,7 @@ struct PressureRelationKernel
           integer const targetPhaseIndex,
           WellControls const & wellControls,
           real64 const & time,
-          arrayView1d< integer const > const elemStatus,  
+          arrayView1d< integer const > const elemStatus,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,

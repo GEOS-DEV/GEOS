@@ -385,7 +385,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
 
       bool const hasNonZeroRate = MpiWrapper::max< integer >( hasNonZero( connRate ));
 
-      if( time_n <= 0.0  || (wellControls.isWellOpen( time_n ) && !hasNonZeroRate ) )
+      if( wellControls.isWellOpen() && !hasNonZeroRate )
       {
         // TODO: change the way we access the flowSolver here
         SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
@@ -455,7 +455,7 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
 
       // if the well is open, we don't have to do anything, so we just return
       WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( time_n ) )
+      if( wellControls.isWellOpen(  ) )
       {
         return;
       }
@@ -1087,7 +1087,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
         outputFile << time_n;
       }
 
-      if( !wellControls.isWellOpen( time_n ) )
+      if( !wellControls.isWellOpen( ) )
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         if( outputFile.is_open())

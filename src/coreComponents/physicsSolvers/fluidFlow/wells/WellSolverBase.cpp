@@ -217,65 +217,64 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
       WellControls & wellControls = getWellControls( subRegion );
 
       // Set perforation status
-      if( wellControls.isWellOpen( time_n ) )
+
+
+      PerforationData & perforationData = *subRegion.getPerforationData();
+      string_array const & perfName = perforationData.getPerfName();
+      arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
+      // for now set to open
+      for( integer i=0; i<perforationData.size(); i++ )
       {
-
-        PerforationData & perforationData = *subRegion.getPerforationData();
-        string_array const & perfName = perforationData.getPerfName();
-        arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
-        // for now set to open
-        for( integer i=0; i<perforationData.size(); i++ )
+        TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfName[i] );
+        perfStatus[i]=PerforationData::PerforationStatus::OPEN;
+        if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
         {
-          TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfName[i] );
-          perfStatus[i]=PerforationData::PerforationStatus::OPEN;
-          if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
+          perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
+        }
+      }
+
+      array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
+      // global index local elements (size == subregion.size)
+      arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
+      // global index for all elements (size == total number of well elements)
+      arrayView1d< globalIndex const > globalElementIndex = subRegion.getGlobalElementIndex();
+
+      arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
+      array1d< integer > & currentStatus = subRegion.getWellElementStatus();
+      // Local elements
+      array1d< integer > & localElemStatus = subRegion.getWellLocalElementStatus();
+
+      integer numLocalElements = subRegion.getNumLocalElements();
+      array1d< integer > segStatus( numLocalElements );
+
+      // Local perforations
+      for( integer j =0; j < perforationData.size(); j++ )
+      {
+        localIndex const iwelem = perfWellElemIndex[j];
+        if( elemGhostRank[iwelem] < 0 )
+        {
+          if( perfStatus[j] )
           {
-            perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
+            segStatus[iwelem] +=1;
           }
         }
+      }
+      // Broadcast segment status so all cores have same well status
+      subRegion.setElementStatus( segStatus );
+      integer numOpenElements = 0;
+      array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
+      for( integer i=0; i<currentStatus.size(); i++ )
+      {
+        numOpenElements += updatedStatus[i];
+      }
+      numOpenElements>0 ?  wellControls.setWellStatus( time_n, WellControls::Status::OPEN ) :  wellControls.setWellStatus( time_n, WellControls::Status::CLOSED );
 
-        array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
-        // global index local elements (size == subregion.size)
-        arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
-        // global index for all elements (size == total number of well elements)
-        arrayView1d< globalIndex const > globalElementIndex = subRegion.getGlobalElementIndex();
 
-        arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
-        array1d< integer > & currentStatus = subRegion.getWellElementStatus();
-        // Local elements
-        array1d< integer > & localElemStatus = subRegion.getWellLocalElementStatus();
-
-        integer numLocalElements = subRegion.getNumLocalElements();
-        array1d< integer > segStatus( numLocalElements );
-
-        // Local perforations
-        for( integer j =0; j < perforationData.size(); j++ )
-        {
-          localIndex const iwelem = perfWellElemIndex[j];
-          if( elemGhostRank[iwelem] < 0 )
-          {
-            if( perfStatus[j] )
-            {
-              segStatus[iwelem] +=1;
-            }
-          }
-        }
-        // Broadcast segment status so all cores have same well status
-        subRegion.setElementStatus( segStatus );
-        integer numOpenElements = 0;
-        array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
-        for( integer i=0; i<currentStatus.size(); i++ )
-        {
-          numOpenElements += updatedStatus[i];
-        }
-        wellControls.setWellStatus( numOpenElements>0 );
-
-        // Set local well element status array
-        for( integer i=0; i<subRegion.size(); i++ )
-        {
-          integer gi = globalWellElementIndex[i];
-          localElemStatus[i] = currentStatus[gi];
-        }
+      // Set local well element status array
+      for( integer i=0; i<subRegion.size(); i++ )
+      {
+        integer gi = globalWellElementIndex[i];
+        localElemStatus[i] = currentStatus[gi];
       }
     } );
 
@@ -392,6 +391,7 @@ WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const
 
 real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & currentDt, geos::DomainPartition & domain )
 {
+  FunctionManager & functionManager = FunctionManager::getInstance();
   real64 nextDt = PhysicsSolverBase::setNextDt( currentTime, currentDt, domain );
 
   if( m_timeStepFromTables )
@@ -403,7 +403,20 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
       mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             WellElementSubRegion & subRegion )
       {
+        real64 nextDt_perf=nextDt;
         WellControls & wellControls = getWellControls( subRegion );
+        // Find min dt from perf status tables
+        PerforationData & perforationData = *subRegion.getPerforationData();
+        string_array const & perfName = perforationData.getPerfName();
+        arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
+        // Get dt for local perforations
+        for( integer i=0; i<perforationData.size(); i++ )
+        {
+          TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfName[i] );
+          WellControls::setNextDtFromTable( tableFunction, currentTime, nextDt_perf );
+        }
+        nextDt = MpiWrapper::min< real64 >( nextDt_perf );
+        // Find min dt including rate and status tables
         real64 const nextDt_orig = nextDt;
         wellControls.setNextDtFromTables( currentTime, nextDt );
         if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDt < nextDt_orig )

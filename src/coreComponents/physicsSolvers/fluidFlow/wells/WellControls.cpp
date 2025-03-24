@@ -50,7 +50,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr ),
   m_statusTable( nullptr ),
-  m_wellStatus( true )
+  m_wellStatus( WellControls::Status::OPEN )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -470,29 +470,37 @@ void WellControls::postInputInitialization()
 
 }
 
-bool WellControls::isWellOpen( real64 const & currentTime ) const
+void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
-  bool isOpen = true;
+  m_wellStatus =  status;
+  if( m_wellStatus == WellControls::Status::OPEN )
+  {
 
-  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
-      && isZero( getTargetMassRate( currentTime ) ))
-  {
-    isOpen = false;
+    if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
+        && isZero( getTargetMassRate( currentTime ) ))
+    {
+      m_wellStatus =  WellControls::Status::CLOSED;
+    }
+    if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
+    {
+      m_wellStatus =  WellControls::Status::CLOSED;
+    }
   }
-  if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
-  {
-    isOpen = false;
-  }
-  return isOpen && getWellStatus();
 }
 
-void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+bool WellControls::isWellOpen() const
 {
-  setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
-  setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
-  setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
-  setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
-  setNextDtFromTable( m_statusTable, currentTime, nextDt );
+  return getWellStatus() == WellControls::Status::OPEN;
+}
+
+
+void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
+{
+  WellControls::setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_statusTable, currentTime, nextDt );
 }
 
 void WellControls::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )

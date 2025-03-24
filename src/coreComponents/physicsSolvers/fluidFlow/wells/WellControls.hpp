@@ -53,6 +53,14 @@ public:
     INJECTOR   /**< An injection well */
   };
 
+  /** Status of wells
+   * Either open or closed
+   */
+  enum class Status : integer
+  {
+    OPEN,  /**< flowing well */
+    CLOSED   /**< shutin well */
+  };
 
   /** Types of well controls
    * Used to specifiy a well's operating conditions
@@ -264,11 +272,10 @@ public:
   bool isProducer() const { return ( m_type == Type::PRODUCER ); }
 
   /**
-   * @brief Is the well open (or shut) at @p currentTime?
-   * @param[in] currentTime the current time
+   * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup
    * @return a boolean
    */
-  bool isWellOpen( real64 const & currentTime ) const;
+  bool isWellOpen() const;
 
   /**
    * @brief Getter for the flag to enable crossflow
@@ -287,19 +294,20 @@ public:
    * @param[in] currentTime the current time
    * @param[inout] nextDt the time step
    */
-  void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
+  void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
 
   /**
-   * @brief Set well status from internal action, eg. all perfs closed
+   * @brief Set well status from time and internal action, eg. all perfs closed
+   * @param[in] currentTime the current time
    * @param[in] status
    */
-  void setWellStatus ( bool status ) { m_wellStatus = status;};
+  void setWellStatus ( real64 const & currentTime, WellControls::Status status );
 
   /**
    * @brief Is the well open (or shut) based on internal action
-   * @return a boolean
+   * @return a Status
    */
-  bool getWellStatus () const { return m_wellStatus; }
+  WellControls::Status getWellStatus () const { return m_wellStatus; }
   ///@}
 
   /**
@@ -357,11 +365,13 @@ public:
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
 
+  static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+
 protected:
 
   virtual void postInputInitialization() override;
 
-  void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+
 
 private:
 
@@ -452,8 +462,8 @@ private:
   /// Status table
   TableFunction const * m_statusTable;
 
-  /// Well status set from action (for example, all perfs closed by environment)
-  bool m_wellStatus;
+  /// Well status
+  WellControls::Status m_wellStatus;
 
 };
 

@@ -199,9 +199,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
             globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
             globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
 
-          // working arrays
-          stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
-          stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
+            // working arrays
+            stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
+            stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
 
             for( integer idof = 0; idof < wellNDOF; ++idof )
             {
@@ -272,7 +272,7 @@ assembleCouplingTerms( real64 const time_n,
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       WellControls const & wellControls = Base::wellSolver()->getWellControls( subRegion );
-      if( !wellControls.isWellOpen( time_n ) )
+      if( !wellControls.isWellOpen( ) )
       {
         return;
       }
