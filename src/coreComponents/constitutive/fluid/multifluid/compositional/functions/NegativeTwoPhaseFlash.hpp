@@ -258,9 +258,6 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                                         temperature,
                                                         componentProperties,
                                                         kVapourLiquid );
-    kVapourLiquid[0] = 100.0;
-    kVapourLiquid[1] = 100.0;
-    kVapourLiquid[2] = 0.01;//KValueInitialization::computeWaterGasKvalue(pressure, temperature);
   }
 
   auto const presentComponents = componentIndices.toSliceConst();
@@ -290,11 +287,11 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     {
       break;
     }
-std::cout << "FlashData "
-<< std::fixed << std::setprecision(6) << "{" << kVapourLiquid[0] << ", " << kVapourLiquid[1] << ", " << kVapourLiquid[2] << "}, "
-<< std::scientific << std::setprecision(4) << error << " "
-<< vapourPhaseMoleFraction
-<< "\n";
+    std::cout << "FlashData "
+              << std::fixed << std::setprecision( 6 ) << "{" << kVapourLiquid[0] << ", " << kVapourLiquid[1] << ", " << kVapourLiquid[2] << "}, "
+              << std::scientific << std::setprecision( 4 ) << error << " "
+              << vapourPhaseMoleFraction
+              << "\n";
     // Update K-values
     for( integer ic = 0; ic < numComps; ++ic )
     {
