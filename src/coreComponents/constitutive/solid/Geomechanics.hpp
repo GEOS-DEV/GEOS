@@ -79,6 +79,8 @@ public:
    * @param[in] bulkModulus The ArrayView holding the bulk modulus for each element/particle.
    * @param[in] shearModulus The ArrayView holding the shear modulus for each element/particle.
    * @param[in] velocityGradient The ArrayView holding the velocity gradient for each element/particle.
+   * @param[in] materialDirection The ArrayView holding the material direction for each element/particle.
+   * @param[in] deformationGradient The ArrayView holding the deformation gradient for each element/particle.
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point.
    * @param[in] porosity The ArrayView holding the porosity for each quadrature point.
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
@@ -120,6 +122,9 @@ public:
                        real64 const & cr,
                        real64 const & fluidBulkModulus,
                        real64 const & fluidInitialPressure,
+                       int const & enableBuckling,
+                       real64 const & bucklingLength,
+                       real64 const & bucklingAmplitude,
                        int const & enableCreep,
                        real64 const & creepC0,
                        real64 const & creepC1,
@@ -139,6 +144,8 @@ public:
                        arrayView1d< real64 > const bulkModulus,
                        arrayView1d< real64 > const shearModulus,
                        arrayView3d< real64 const > const velocityGradient,
+                       arrayView2d< real64 > const & materialDirection,
+                       arrayView3d< real64 > const & deformationGradient,
                        arrayView3d< real64 > const plasticStrain,
                        arrayView2d< real64 > const porosity,
                        arrayView2d< real64 > const damage,
@@ -187,6 +194,9 @@ public:
     m_cr( cr ),
     m_fluidBulkModulus( fluidBulkModulus ),
     m_fluidInitialPressure( fluidInitialPressure ),
+    m_enableBuckling( enableBuckling ),
+    m_bucklingLength( bucklingLength ),
+    m_bucklingAmplitude( bucklingAmplitude ),
     m_enableCreep( enableCreep ),
     m_creepC0( creepC0 ),
     m_creepC1( creepC1 ),
@@ -206,6 +216,8 @@ public:
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_velocityGradient( velocityGradient ),
+    m_materialDirection( materialDirection ),
+    m_deformationGradient( deformationGradient ),    
     m_plasticStrain( plasticStrain ),
     m_porosity( porosity ),
     m_damage( damage ),
@@ -528,6 +540,9 @@ private:
   real64 const & m_cr;
   real64 const & m_fluidBulkModulus;
   real64 const & m_fluidInitialPressure;
+  int const & m_enableBuckling;
+  real64 const & m_bucklingLength;
+  real64 const & m_bucklingAmplitude;
   int const & m_enableCreep;
   real64 const & m_creepC0;
   real64 const & m_creepC1;
@@ -553,6 +568,12 @@ private:
 
   /// A reference to the ArrayView holding the velocity gradient for each element/particle.
   arrayView3d< real64 const > const m_velocityGradient;
+
+  /// A reference to the ArrayView holding the material direction for each element/particle.
+  arrayView2d< real64 > const m_materialDirection;
+
+  /// A reference to the ArrayView holding the deformation gradient for each element/particle.
+  arrayView3d< real64 > const m_deformationGradient;
 
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView3d< real64 > const m_plasticStrain;
@@ -691,6 +712,69 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::scale< 3, 3 >( denseD, 0.5 );
   real64 D[6] = { 0 };
   LvArray::tensorOps::denseToSymmetric<3>( D, denseD );
+
+  // vvv-----------------------------------------------------------------------BUCKLING
+  // The deformation gradient and material direction are used to compute a direction
+  // strain for use with a micro-structure buckling model
+  // make sure material direction is normalized.
+  real64 materialDirection[3] = { 0 };
+  LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
+  LvArray::tensorOps::normalize< 3 >( materialDirection );
+
+  real64 buckling= 1.0;   // strength-scale multiplier from buckling of truss-like microstructure
+  if( m_enableBuckling > 0)
+  {
+
+    // m_enableBuckling
+    // m_bucklingLength
+    // m_bucklingAmplitude
+
+    // Number of unit cells per element, round up to nearest integer
+    real64 beta = std::ceil( m_lengthScale[k] / m_bucklingLength );
+
+    // Compute the length-scale dependent compaction-buckling scalar used to 
+    // modify crush and shear strength:
+    real64 J = 1.; // volumetric or directional stretch
+    if (m_enableBuckling == 1)
+    { // Isotropic:
+      J = LvArray::tensorOps::determinant< 3 >( m_deformationGradient[k] );
+    }
+    else if (m_enableBuckling == 2)
+    { // Anisotropic:
+      real64 temp[3] = { 0 };
+      LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( temp, m_deformationGradient[k], materialDirection  );
+      J = LvArray::tensorOps::AiBi< 3 >( temp, materialDirection);
+    }
+    else{
+      GEOS_LOG_RANK( "unsupported buckling type: " << m_enableBuckling );
+    }
+
+    real64 ev0 = m_p0 / ( 2.*m_b0 );
+    real64 ev1 = ev0 - m_p3;
+    real64 ev = log(J);     // volumetric or directional strain
+    real64 normalizedStrain; // normalizedStrain
+
+    if (ev >= ev0)
+    {
+      normalizedStrain = 0.;
+    }
+    else if (ev0 > ev && ev > ev1)
+    {
+      normalizedStrain = (ev-ev0)/(ev1-ev0);
+    }
+    else
+    {
+      normalizedStrain = 1.0;
+    }
+    // strength scale multiplier to crush curve (0: complete losss of strength, 1: no effect)
+    real64 pi = 3.141592653589793;
+    buckling = 1.0 - m_bucklingAmplitude*pow( sin( -1.0*beta*pi*normalizedStrain) , 2 );
+    buckling = fmin(1.0,fmax(0.0,buckling));
+  }
+  // ^^^-----------------------------------------------------------------------BUCKLING
+
+
+
 
   // unrotated beginning-of-step stress:  sigma_old_unrotated = R_old^T*sigma_old*R_old
   real64 oldStress[6] = { 0 };
@@ -1135,6 +1219,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       LvArray::tensorOps::copy< 6 >( ep_old, ep_dev );
       LvArray::tensorOps::add< 6 >( ep_old, ep_iso );
 	}
+
+
 	// -------------------------------------------------------------------------------
 
   // (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
@@ -1801,6 +1887,45 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 
   real64 one_third = 1.0 / 3.0;
   real64 identity[6] = {1.0,1.0,1.0,0.0,0.0,0.0};
+
+
+  // real64 buckling= 1.0;   // strength-scale multiplier from buckling of truss-like microstructure
+  // if (m_buckling_alpha < 1)
+  // { // Compute the length-scale dependent compaction-buckling scalar used to 
+  //   // modify crush and shear strength:
+  //   real64 J;
+  //   if (m_bucklingType == "isotropic")
+  //   {
+  //     J = det(F);
+  //   }
+  //   else
+  //   {
+  //     J = dot(F,materialDirection);
+  //   }
+  //   real64 ev0 = m_p0/(2*m_b0);
+  //   real64 ev1 = ev0 - p3;
+  //   real64 ev = log(J);
+  //   real64 compactionStrain;
+  //   if (ev >= ev0)
+  //   {
+  //     compactionStrain = 0.;
+  //   }
+  //   else if (ev0 > ev && ev > ev1)
+  //   {
+  //     compactionStrain = (ev-ev0)/(ev1-ev0);
+  //   }
+  //   else
+  //   {
+  //     compactionStrain = 1.0;
+  //   }
+
+  //   // strength scale multiplier:
+  //   buckling = 1.0 - m_buckling_alpha*pow(sin(-1.0*ceil(m_buckling_beta)*pi*compactionStrain),2)
+  //   buckling = min(1.0,max(0.0,buckling));
+  // }    
+
+
+
 
   // (1)  Compute the elastic properties based on the stress and plastic strain at
   // the start of the substep.  These will be constant over the step unless elastic-plastic
@@ -2945,6 +3070,15 @@ public:
     /// string/key for nonassociativity parameter
     static constexpr char const * betaString() { return "beta"; }
 
+    /// string/key for buckling flag
+    static constexpr char const * enableBucklingString() { return "enableBuckling"; }
+
+    /// string/key for buckling Length
+    static constexpr char const * bucklingLengthString() { return "bucklingLength"; }
+
+    /// string/key for buckling amplitude 
+    static constexpr char const * bucklingAmplitudeString() { return "bucklingAmplitude"; }
+
     /// string/key for creep flag
     static constexpr char const * creepString() { return "enableCreep"; }
 
@@ -3002,6 +3136,12 @@ public:
     //string/key for element/particle velocityGradient value
     static constexpr char const * velocityGradientString() { return "velocityGradient"; }
 
+    /// string/key for material direction value
+    static constexpr char const * materialDirectionString() { return "materialDirection"; }
+
+    // string/key for element/particle deformation gradient value
+    static constexpr char const * deformationGradientString() { return "deformationGradient"; }
+
     /// string/key for quadrature point plasticStrain value 
     static constexpr char const * plasticStrainString() { return "plasticStrain"; }
 
@@ -3055,6 +3195,9 @@ public:
                                 m_cr,
                                 m_fluidBulkModulus,
                                 m_fluidInitialPressure,
+                                m_enableBuckling,
+                                m_bucklingLength,
+                                m_bucklingAmplitude,
                                 m_enableCreep,
                                 m_creepC0,
                                 m_creepC1,
@@ -3074,6 +3217,8 @@ public:
                                 m_bulkModulus,
                                 m_shearModulus,
                                 m_velocityGradient,
+                                m_materialDirection,
+                                m_deformationGradient,
                                 m_plasticStrain,
                                 m_porosity,
                                 m_damage,
@@ -3129,6 +3274,9 @@ public:
                           m_cr,
                           m_fluidBulkModulus,
                           m_fluidInitialPressure,
+                          m_enableBuckling,
+                          m_bucklingLength,
+                          m_bucklingAmplitude,
                           m_enableCreep,
                           m_creepC0,
                           m_creepC1,
@@ -3148,6 +3296,8 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_velocityGradient,
+                          m_materialDirection,
+                          m_deformationGradient,
                           m_plasticStrain,
                           m_porosity,
                           m_damage,
@@ -3284,6 +3434,11 @@ protected:
   real64 m_fluidBulkModulus;
   real64 m_fluidInitialPressure;
 
+  // Buckling parameter
+  int m_enableBuckling;
+  real64 m_bucklingLength;
+  real64 m_bucklingAmplitude;
+
   // Flag to enable creep
   int m_enableCreep;
 
@@ -3317,6 +3472,12 @@ protected:
  
   ///State variable: The velocity gradient for each element/particle
   array3d< real64 > m_velocityGradient;
+
+  /// State variable: The material direction for each element/particle
+  array2d< real64 > m_materialDirection;
+
+  /// State variable: The deformation gradient values for each element/particle.
+  array3d< real64 > m_deformationGradient;
 
   ///State variable: The plastic strain values for each quadrature point
   array3d< real64 > m_plasticStrain;

@@ -6004,6 +6004,17 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
+    // if(  constitutiveModel.hasWrapper( "internalEnergy" ) )
+    // {
+    //   arrayView1d< real64 const > const particleInternalEnergy = subRegion.getField< fields::mpm::internalEnergy >(); 
+    //   arrayView1d< real64 > const constitutiveInternalEnergy = constitutiveModel.getReference< array1d< real64 > >( "internalEnergy" );
+    //   forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    //   {
+    //     localIndex const p = activeParticleIndices[pp];
+    //     constitutiveInternalEnergy[p] = particleInternalEnergy[p];
+    //   } );
+    // }
+
     if(  constitutiveModel.hasWrapper( "crackTipDistance" ) )
     {
       arrayView1d< real64 const > const particleCrackTipDistance = subRegion.getField< fields::mpm::particleCrackTipDistance >(); 

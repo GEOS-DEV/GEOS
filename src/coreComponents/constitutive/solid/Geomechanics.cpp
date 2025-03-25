@@ -57,6 +57,9 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_cr( 0.0 ),
   m_fluidBulkModulus(0.0 ),
   m_fluidInitialPressure( 0.0 ),
+  m_enableBuckling( 0 ),
+  m_bucklingLength( 1. ),
+  m_bucklingAmplitude( 1. ),
   m_enableCreep( 0 ),
   m_creepC0( 0.0),
   m_creepC1( 0.0 ),
@@ -76,6 +79,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_bulkModulus(),
   m_shearModulus(),
   m_velocityGradient(),
+  m_deformationGradient(),
   m_plasticStrain(),
   m_damage(),
   m_lengthScale(),
@@ -206,6 +210,18 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Nonassociativity parameter" );
 
+  registerWrapper( viewKeyStruct::enableBucklingString(), &m_enableBuckling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Buckling flag" );
+
+  registerWrapper( viewKeyStruct::bucklingLengthString(), &m_bucklingLength ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Buckling Length" );    
+
+  registerWrapper( viewKeyStruct::bucklingAmplitudeString(), &m_bucklingAmplitude ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Buckling Amplitude" );
+
   registerWrapper( viewKeyStruct::creepString(), &m_enableCreep ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep flag" );
@@ -284,6 +300,14 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Velocity gradient" );
 
+  registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Material direction" );
+
+  registerWrapper( viewKeyStruct::deformationGradientString(), &m_deformationGradient ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Array of element/particle deformation gradient values" );
+
   registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -308,27 +332,24 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point strength scale values" );
-
 }
-
 
 Geomechanics::~Geomechanics()
 {}
-
 
 void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   m_bulkModulus.resize( 0 );
   m_shearModulus.resize( 0 );
   m_velocityGradient.resize( 0, 3, 3 );
+  m_materialDirection.resize( 0, 3 );
+  m_deformationGradient.resize( 0, 3, 3);
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
 }
-
 
 void Geomechanics::postInputInitialization()
 {
