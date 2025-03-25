@@ -357,10 +357,26 @@ public:
   /// groupKey struct for the WellElementSubRegion class
   groupKeysWellElementSubRegion;
 
+  /**
+   * @brief Get number of local elements
+   * @return number of elements
+   */
   integer const & getNumLocalElements() const { return m_numLocalElements;}
+
+  /**
+   * @brief Setup offset arrays needed for MPI comm of perforatin sttus
+   */
   void setupCommArrays();
+
+  /**
+   * @brief Set status (Open/Closed) for locally owned elements
+   */
   void setElementStatus( arrayView1d< integer >  const & localElemPerfStatus );
 
+  /**
+   * @brief Get global element index for all elements
+   * @return list of indicies
+   */
   array1d< globalIndex > const & getGlobalElementIndex() const { return m_globalElementIndex; }
 private:
 

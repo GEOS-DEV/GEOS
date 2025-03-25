@@ -236,8 +236,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
       array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
       // global index local elements (size == subregion.size)
       arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
-      // global index for all elements (size == total number of well elements)
-      arrayView1d< globalIndex const > globalElementIndex = subRegion.getGlobalElementIndex();
 
       arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
       array1d< integer > & currentStatus = subRegion.getWellElementStatus();
@@ -408,7 +406,7 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
         // Find min dt from perf status tables
         PerforationData & perforationData = *subRegion.getPerforationData();
         string_array const & perfName = perforationData.getPerfName();
-        arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
+
         // Get dt for local perforations
         for( integer i=0; i<perforationData.size(); i++ )
         {

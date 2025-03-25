@@ -151,7 +151,10 @@ public:
    */
   virtual string_array const & getPerfTargetRegion() const = 0;
 
-
+  /**
+   * @brief Get names of perfs
+   * @return list perforation names
+   */
   virtual string_array const & getPerfName() const = 0;
 
   /**
