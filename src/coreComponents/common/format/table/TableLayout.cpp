@@ -262,14 +262,19 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
                                                  size_t level )
 {
-  m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
-
   for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
     Column & column = columns[idxColumn];
 
-    if( column.m_headerLayout.m_cellType != CellType::Hidden && !column.hasChild() )
-      ++m_lowermostColumnCount;
+    if( column.isVisible() )
+    {
+      m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
+
+      if( !column.hasChild() )
+      {
+        ++m_lowermostColumnCount;
+      }
+    }
 
     column.m_headerLayout.prepareLayout( column.m_headerStr, getMaxColumnWidth() );
 
