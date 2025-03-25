@@ -6,6 +6,110 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3396 (2024-03-21)
+=====================
+Use solid mechanics solver directly to perform poromechanics initialization.
+
+PR #2125 (2024-03-20)
+=====================
+Phase-field nucleation model.
+
+PR #3494 (2024-03-11)
+=====================
+Added more log level documentation
+
+PR #3427 (2024-03-10)
+=====================
+Well time step selector based on rates/bhp tables and clarify well rates logic.
+
+PR #3485 (2024-03-09)
+=====================
+Use mass and energy consistently for single phase solvers.
+
+PR #3460 (2024-03-08)
+=====================
+Refactor single phase constitutive containers.
+
+PR #3525 (2025-03-06)
+=====================
+Add analytical leakoff feature for hydrofrac solver.
+
+PR #3401 (2025-03-05)
+=====================
+Bugfix for IHU.
+
+PR #3483 (2025-03-02)
+=====================
+Remove relative permeability from wells.
+
+PR #3576 (2025-03-01)
+=====================
+Add an option to skip density and viscosity computes when phase is not present for CO2 fluid update.
+
+PR #3571 (2025-02-28)
+=====================
+Do not allow negative pressure by default, except for hydrofrac.
+
+PR #3551 (2025-02-19)
+=====================
+Add Passing Crack to the integrated tests.
+
+PR #3541 (2025-02-18)
+=====================
+Well control parallel synchronization fix.
+
+PR #3443 (2025-02-17)
+=====================
+Added tests for overall composition (Z) formulation.
+
+PR #3547 (2025-02-17)
+=====================
+Multiphase contact bugfix, add test case to ats, removed redundant linear solver params for other tests.
+
+PR #3546 (2025-02-15)
+=====================
+Fix 1d edfm case and add it to ats.
+
+PR #2968 (2025-02-13)
+=====================
+Replace array1d<string> with std::vector<string>.
+
+PR #3227 (2025-02-06)
+=====================
+Add targetRegion for perforations (optional).
+
+PR #3502 (2025-02-04)
+=====================
+Add array to store the source values in time inside wave solvers.
+
+PR #3395 (2025-01-22)
+=====================
+Add new fields and change the default input for some tests.
+
+PR #3416 (2025-01-21)
+=====================
+Refactoring of induced seismicity EQ solvers to add coupling.
+
+PR #3310 (2025-01-21)
+======================
+Scalable rock toughness required new field.
+
+PR #3228 (2025-01-15)
+=====================
+deltaVolume added in multiphase.
+
+PR #3495 (2025-01-08)
+=====================
+Add missing logic to support switching from fixed mass rate injection rate constraint to max injection pressure.
+
+PR #3384 (2025-01-07)
+=====================
+Added plastic strain output.
+
+PR #3486 (2025-01-06)
+=====================
+useNewGravity became gravityDensityScheme.
+
 PR #3479 (2024-12-15)
 =====================
 Refine inputFiles/compositionalMultiphaseFlow: shift reference pressures to initial pressures, make nonlinear tuning more reasonable, minimize output.
@@ -100,7 +204,7 @@ Add routine for automatic time steps in waveSolvers with new attributes
 
 PR #3156 (2024-10-29)
 ====================
-Restart check errors due to 1) schema node added to enable thermal option in well model and 2) arrays removed/added for option.  Max difference errors due treatment of shutin wells.  Previously non-zero rate value reported for shutin well, new code will set rate arrays to zero. 
+Restart check errors due to 1) schema node added to enable thermal option in well model and 2) arrays removed/added for option.  Max difference errors due treatment of shutin wells.  Previously non-zero rate value reported for shutin well, new code will set rate arrays to zero.
 
 PR #2878 (2024-10-17)
 =====================

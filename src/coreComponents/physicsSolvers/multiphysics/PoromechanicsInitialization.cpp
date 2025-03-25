@@ -21,16 +21,16 @@
 
 #include "events/tasks/TasksManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsStatistics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
-#include "physicsSolvers/multiphysics/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -46,7 +46,6 @@ PoromechanicsInitialization( const string & name,
   m_solidMechanicsStatistics(),
   m_solidMechanicsStateResetTask( name, parent )
 {
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -59,7 +58,7 @@ PoromechanicsInitialization( const string & name,
     setApplyDefaultValue( "" ).
     setDescription( "Name of the solid mechanics statistics" );
 
-  addLogLevel< logInfo::Initialization >();
+  addLogLevel< logInfo::SolverInitialization >();
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -87,8 +86,9 @@ postInputInitialization()
     TasksManager & tasksManager = problemManager.getGroup< TasksManager >( "Tasks" );
 
     GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
-                   GEOS_FMT( "{}: statistics task named {} not found",
+                   GEOS_FMT( "{}: {} task named {} not found",
                              getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ),
+                             SolidMechanicsStatistics::catalogName(),
                              m_solidMechanicsStatisticsName ),
                    InputError );
 
@@ -110,16 +110,18 @@ execute( real64 const time_n,
          real64 const eventProgress,
          DomainPartition & domain )
 {
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Initialization, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
-                                                                 getName(), time_n, m_poromechanicsSolverName ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverInitialization, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)", //1
+                                                                  getName(), time_n, m_poromechanicsSolverName ) );
   m_poromechanicsSolver->setStressInitialization( true );
 
   m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
-  m_poromechanicsSolver->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
+  m_poromechanicsSolver->flowSolver()->initializeState( domain );
+  m_poromechanicsSolver->updateBulkDensity( domain );
+  m_poromechanicsSolver->solidMechanicsSolver()->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Initialization, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
-                                                                 getName(), time_n + dt, m_poromechanicsSolverName ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverInitialization, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",//1
+                                                                  getName(), time_n + dt, m_poromechanicsSolverName ) );
   m_poromechanicsSolver->setStressInitialization( false );
 
   if( m_solidMechanicsStatistics != nullptr )
@@ -136,6 +138,7 @@ execute( real64 const time_n,
 namespace
 {
 typedef PoromechanicsInitialization< MultiphasePoromechanics<> > MultiphasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFractures<> > MultiphasePoromechanicsConformingFracturesInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> > > MultiphaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics<> > SinglePhasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFractures<> > SinglePhasePoromechanicsConformingFracturesInitialization;
@@ -144,6 +147,7 @@ typedef PoromechanicsInitialization< SinglePhasePoromechanicsEmbeddedFractures >
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics<> > > HydrofractureInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsConformingFracturesInitialization, string const &, Group * const )

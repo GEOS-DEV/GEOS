@@ -24,7 +24,6 @@
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/StrainHelper.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -82,7 +81,7 @@ public:
   /**
    * @return The string that may be used to generate a new instance from the PhysicsSolverBase::CatalogInterface::CatalogType
    */
-  static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string catalogName() { return "SolidMechanicsLagrangianFEM"; }
   /**
    * @copydoc PhysicsSolverBase::getCatalogName()
    */
@@ -176,7 +175,7 @@ public:
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -186,7 +185,7 @@ public:
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
@@ -279,6 +278,15 @@ public:
     return m_rigidBodyModes;
   }
 
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( bool const performStressInitialization )
+  {
+    m_performStressInitialization = performStressInitialization;
+  }
+
 protected:
   virtual void postInputInitialization() override;
 
@@ -294,8 +302,11 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-//  MPI_iCommData m_iComm;
+
+  /// Flag to indicate that the solver is running in fixed stress (sequential) mode
   bool m_isFixedStressPoromechanicsUpdate;
+  /// Flag to indicate that the solver is going to perform stress initialization
+  bool m_performStressInitialization;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -325,7 +336,7 @@ template< typename CONSTITUTIVE_BASE,
           typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
                                                     DofManager const & dofManager,
-                                                    arrayView1d< string const > const & regionNames,
+                                                    string_array const & regionNames,
                                                     string const & materialNamesString,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs,

@@ -30,6 +30,8 @@ namespace geos
 namespace units
 {
 
+/// Darcy to m^2 conversion factor
+static constexpr double DarcyToSqM = 9.869233e-13;
 
 /**
  * @return the input Kelvin degrees converted in Celsius
@@ -99,6 +101,12 @@ enum Unit : integer
 
   /// Transmissibility in m2/s
   Transmissibility,
+
+  /// Molar volume in m3/mol
+  MolarVolume,
+
+  /// Molar density in mol/m3
+  MolarDensity,
 };
 
 
@@ -126,6 +134,8 @@ constexpr inline std::string_view getDescription( Unit unit )
     case MassRate:          return "mass rate [kg/s]";
     case MoleRate:          return "mole rate [mol/s]";
     case Transmissibility:  return "transmissibility [(Pa*s*rm3/s)/Pa]";
+    case MolarVolume:       return "molar volume [m3/mol]";
+    case MolarDensity:      return "molar density [mol/m3]";
   }
 }
 
@@ -153,6 +163,8 @@ constexpr inline std::string_view getSymbol( Unit unit )
     case MassRate:          return "kg/s";
     case MoleRate:          return "mol/s";
     case Transmissibility:  return "(Pa*s*rm3/s)/Pa";
+    case MolarVolume:       return "m3/mol";
+    case MolarDensity:      return "mol/m3";
   }
 }
 
@@ -183,6 +195,8 @@ inline string formatValue( real64 value, Unit unit )
     case MassRate:          return GEOS_FMT( "mass rate of {} [kg/s]", value );
     case MoleRate:          return GEOS_FMT( "mole rate of {} [mol/s]", value );
     case Transmissibility:  return GEOS_FMT( "transmissibility of {} [(Pa*s*rm3/s)/Pa]", value );
+    case MolarVolume:       return GEOS_FMT( "molar volume of {} [m3/mol]", value );
+    case MolarDensity:      return GEOS_FMT( "molar density of {} [mol/m3]", value );
   }
 }
 

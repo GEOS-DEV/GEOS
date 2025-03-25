@@ -59,6 +59,20 @@ bool isZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
   return -tol <= val && val <= tol;
 }
 
+template< typename ARRAY_TYPE >
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE
+bool hasNonZero( ARRAY_TYPE const & array )
+{
+  for( auto it = array.begin(); it != array.end(); ++it )
+  {
+    if( !isZero( *it ) )
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 template< typename T >
 GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isOdd( T x )

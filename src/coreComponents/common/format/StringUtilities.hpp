@@ -88,7 +88,7 @@ string join( CONTAINER const & container, S const & delim = S() )
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S, typename LAMBDA >
-string joinLamda( IT first, IT last, S const & delim, LAMBDA formattingFunc )
+string joinLambda( IT first, IT last, S const & delim, LAMBDA formattingFunc )
 {
   if( first == last )
   {
@@ -114,9 +114,9 @@ string joinLamda( IT first, IT last, S const & delim, LAMBDA formattingFunc )
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename CONTAINER, typename S, typename LAMBDA >
-string joinLamda( CONTAINER const & container, S const & delim, LAMBDA formattingFunc )
+string joinLambda( CONTAINER const & container, S const & delim, LAMBDA formattingFunc )
 {
-  return joinLamda( std::begin( container ), std::end( container ), delim, formattingFunc );
+  return joinLambda( std::begin( container ), std::end( container ), delim, formattingFunc );
 }
 
 /**
@@ -212,6 +212,13 @@ string_view trim( string_view str,
                   string_view charsToRemove );
 
 /**
+ * @brief Trim the left string
+ * @param[in] s the string to trim
+ * @return the trimmed string
+ */
+string_view ltrimSpaces( string_view s );
+
+/**
  * @brief Trim the string so it does not starts nor ends with any whitespaces
  * @param[in] str the string to trim
  * @return the trimmed string
@@ -235,6 +242,15 @@ string removeStringAndFollowingContent( string_view str,
  */
 template< typename T >
 string addCommaSeparators( T const & num );
+
+/**
+ * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
+ * If a word has a greater size than maxLength, it will be cut in one or many parts.
+ * @param lines Vector containing all the lines to be formatted.
+ * @param maxLength The max length a line can have.
+ * @return A vector containing the lines wrapped.
+ */
+std::vector< std::string > wrapTextToMaxLength( std::vector< std::string > const & lines, size_t maxLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

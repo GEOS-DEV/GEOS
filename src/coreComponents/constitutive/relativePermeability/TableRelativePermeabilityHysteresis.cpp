@@ -278,7 +278,6 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
                                          drainagePhaseRelPermMinEndPoint,
                                          drainagePhaseRelPermMaxEndPoint );
 
-
   // imbibition if provided
   real64 imbibitionPhaseMinVolFraction = drainagePhaseMinVolFraction; // output
   real64 imbibitionPhaseMaxVolFraction = drainagePhaseMaxVolFraction;
@@ -493,7 +492,7 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
 
   if( numPhases == 2 )
   {
-    for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
@@ -512,12 +511,12 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   }
   else if( numPhases == 3 )
   {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
     }
-    for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );

@@ -21,8 +21,6 @@
 #define GEOS_CONSTITUTIVE_CONTACT_FRICTIONBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "functions/TableFunction.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
 
 
 namespace geos
@@ -125,7 +123,6 @@ public:
                                arraySlice1d< real64 const > const & dispJump,
                                arraySlice1d< real64 const > const & penalty,
                                arraySlice1d< real64 const > const & traction,
-                               real64 const faceArea,
                                bool const symmetric,
                                bool const fixedLimitTau,
                                real64 const normalTractionTolerance,
@@ -134,7 +131,7 @@ public:
                                real64 ( & tractionNew )[3],
                                integer & fractureState ) const
   {
-    GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, faceArea, symmetric, fixedLimitTau,
+    GEOS_UNUSED_VAR( oldDispJump, dispJump, penalty, traction, symmetric, fixedLimitTau,
                      normalTractionTolerance, tangentialTractionTolerance,
                      dTraction_dDispJump, tractionNew, fractureState );
   }
@@ -153,9 +150,8 @@ public:
                                    arraySlice1d< real64 const > const & deltaDispJump,
                                    arraySlice1d< real64 const > const & penalty,
                                    arraySlice1d< real64 const > const & traction,
-                                   real64 const faceArea,
                                    arraySlice1d< real64 > const & tractionNew ) const
-  { GEOS_UNUSED_VAR( dispJump, deltaDispJump, penalty, traction, faceArea, tractionNew ); }
+  { GEOS_UNUSED_VAR( dispJump, deltaDispJump, penalty, traction, tractionNew ); }
 
   /**
    * @brief Check for the constraint satisfaction
