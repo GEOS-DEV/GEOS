@@ -140,8 +140,6 @@ public:
   /// ijk partition indexes
   array1d< int > m_coords;
 
-private:
-
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
    * @param idim Dimension index in the cartesian.
@@ -153,6 +151,9 @@ private:
   void addNeighbors( const unsigned int idim,
                      MPI_Comm & cartcomm,
                      int * ncoords );
+
+private:
+
 
   /**
    * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.

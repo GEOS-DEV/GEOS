@@ -131,7 +131,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.m_coords.data() );
 
     int ncoords[3];
-    addNeighbors( 0, cartcomm, ncoords );
+    partition.addNeighbors( 0, cartcomm, ncoords );
 
     MpiWrapper::commFree( cartcomm );
   }
@@ -302,57 +302,57 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   } );
 }
 
-void DomainPartition::addNeighbors( const unsigned int idim,
-                                    MPI_Comm & cartcomm,
-                                    int * ncoords )
-{
-  std::vector< NeighborCommunicator > & neighbors = getNeighbors();
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+// void DomainPartition::addNeighbors( const unsigned int idim,
+//                                     MPI_Comm & cartcomm,
+//                                     int * ncoords )
+// {
+//   std::vector< NeighborCommunicator > & neighbors = getNeighbors();
+//   PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+//   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
-  if( idim == nsdof )
-  {
-    bool me = true;
-    for( int i = 0; i < nsdof; i++ )
-    {
-      if( ncoords[i] != partition.m_coords( i ))
-      {
-        me = false;
-        break;
-      }
-    }
-    int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
-    if( !me && !std::any_of( neighbors.begin(), neighbors.end(), [=]( NeighborCommunicator const & nn ) { return nn.neighborRank( ) == neighborRank; } ) )
-    {
-      neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
-    }
-  }
-  else
-  {
-    const int dim = partition.getPartitions()( LvArray::integerConversion< localIndex >( idim ));
-    const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
-    for( int i = -1; i < 2; i++ )
-    {
-      ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
-      bool ok = true;
-      if( periodic )
-      {
-        if( ncoords[idim] < 0 )
-          ncoords[idim] = dim - 1;
-        else if( ncoords[idim] >= dim )
-          ncoords[idim] = 0;
-      }
-      else
-      {
-        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
-      }
-      if( ok )
-      {
-        addNeighbors( idim + 1, cartcomm, ncoords );
-      }
-    }
-  }
-}
+//   if( idim == nsdof )
+//   {
+//     bool me = true;
+//     for( int i = 0; i < nsdof; i++ )
+//     {
+//       if( ncoords[i] != partition.m_coords( i ))
+//       {
+//         me = false;
+//         break;
+//       }
+//     }
+//     int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
+//     if( !me && !std::any_of( neighbors.begin(), neighbors.end(), [=]( NeighborCommunicator const & nn ) { return nn.neighborRank( ) == neighborRank; } ) )
+//     {
+//       neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
+//     }
+//   }
+//   else
+//   {
+//     const int dim = partition.getPartitions()( LvArray::integerConversion< localIndex >( idim ));
+//     const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
+//     for( int i = -1; i < 2; i++ )
+//     {
+//       ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
+//       bool ok = true;
+//       if( periodic )
+//       {
+//         if( ncoords[idim] < 0 )
+//           ncoords[idim] = dim - 1;
+//         else if( ncoords[idim] >= dim )
+//           ncoords[idim] = 0;
+//       }
+//       else
+//       {
+//         ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
+//       }
+//       if( ok )
+//       {
+//         addNeighbors( idim + 1, cartcomm, ncoords );
+//       }
+//     }
+//   }
+// }
 
 void DomainPartition::outputPartitionInformation() const
 {

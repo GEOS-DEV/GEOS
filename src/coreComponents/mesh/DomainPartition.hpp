@@ -114,9 +114,9 @@ public:
    * This functions should have been implemented `private`
    * and an additional functions to initiate the recursion could have been implemented.
    */
-  void addNeighbors( const unsigned int idim,
-                     MPI_Comm & cartcomm,
-                     int * ncoords );
+  // void addNeighbors( const unsigned int idim,
+  //                    MPI_Comm & cartcomm,
+  //                    int * ncoords );
 
   /**
    * @brief Outputs information about the partitioning of the domain.

@@ -203,11 +203,11 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
 
     //add neighbors
-    {
-      int ncoords[nsdof];
-      m_neighbors.clear();
-      addNeighbors( 0, cartcomm, ncoords );
-    }
+    // {
+    //   int ncoords[nsdof];
+    //   m_neighbors.clear();
+    //   addNeighbors( 0, cartcomm, ncoords );
+    // }
 
     MpiWrapper::commFree( cartcomm );
   }
