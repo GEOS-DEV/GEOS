@@ -39,13 +39,16 @@ DomainPartition::DomainPartition( string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  // this->registerWrapper( "Neighbors", &neighbors ).
-  //   setRestartFlags( RestartFlags::NO_WRITE ).
-  //   setSizedFromParent( false );
 
   this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
+
+  std::vector< NeighborCommunicator > & neighbors = getNeighbors();
+  this->registerWrapper( "Neighbors", &neighbors ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( false );
+
 
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );

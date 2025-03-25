@@ -1526,6 +1526,8 @@
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
+		<!--Neighbors => (no description available)-->
+		<xsd:attribute name="Neighbors" type="std___1_vector_lt_geos_NeighborCommunicator_cm_-std___1_allocator_lt_geos_NeighborCommunicator_gt__gt_" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>
