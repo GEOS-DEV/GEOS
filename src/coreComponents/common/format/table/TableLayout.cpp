@@ -99,64 +99,67 @@ TableLayout::CellLayout::CellLayout( CellType type, TableLayout::Alignment align
   m_alignment( alignment )
 {}
 
+TableLayout::Cell::Cell():
+  m_layout(),
+  m_text()
+{}
+
+TableLayout::Cell::Cell( CellType cellType, TableLayout::Alignment alignment ):
+  m_layout( cellType, TableLayout::Alignment::center ),
+  m_text()
+{}
+
+TableLayout::Cell::Cell( CellType cellType, TableLayout::Alignment alignment, string_view value ):
+  m_layout( cellType, TableLayout::Alignment::center ),
+  m_text( value )
+{}
+
 TableLayout::Column::Column():
-  m_headerStr(),
-  m_headerLayout( CellType::Header )
+  m_header( CellType::Header, defaultHeaderAlignment )
 {}
 
 TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):
-  m_headerStr( name ),
-  m_headerLayout( CellType::Header, alignment.headerAlignment ),
+  m_header( CellType::Header, alignment.headerAlignment, name ),
   m_alignment( alignment )
 {}
 
 TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
-  m_headerStr = name;
+  m_header.m_text = name;
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::setVisibility( bool visible )
 {
-  m_headerLayout.m_cellType = visible ? CellType::Header : CellType::Hidden;
+  m_header.m_layout.m_cellType = visible ? CellType::Header : CellType::Hidden;
   return *this;
-}
-
-/**
- * @brief Creates a vector of sub-columns from a list of names.
- * @tparam CONTAINER Container type of sub-column names (e.g. std::vector<std::string>).
- * @param names Sub-column names list.
- * @param alignment alignment of the sub-columns to create.
- * @return A vector of TableLayout::Column, ready to use for TableLayout::Column::m_subColumns.
- */
-template< typename CONTAINER >
-static std::vector< TableLayout::Column > makeSubColumnsFromStrings( CONTAINER const & names,
-                                                                     TableLayout::ColumnAlignement const alignment )
-{
-  std::vector< TableLayout::Column > subColumns;
-  subColumns.reserve( names.size());
-  for( auto const & name : names )
-  {
-    subColumns.emplace_back( TableLayout::Column( name, alignment ) );
-  }
-  return subColumns;
 }
 
 TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< string > subColNames )
 {
-  m_subColumns = makeSubColumnsFromStrings( subColNames, m_alignment );
+  m_subColumns.reserve( m_subColumns.size() + subColNames.size() );
+  for( auto const & name : subColNames )
+  {
+    m_subColumns.emplace_back( TableLayout::Column( name, m_alignment ) );
+  }
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::addSubColumns( std::vector< string > const & subColNames )
 {
-  m_subColumns = makeSubColumnsFromStrings( subColNames, m_alignment );
+  m_subColumns.reserve( m_subColumns.size() + subColNames.size() );
+  for( auto const & name : subColNames )
+  {
+    m_subColumns.emplace_back( TableLayout::Column( name, m_alignment ) );
+  }
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< TableLayout::Column > subCol )
+TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< TableLayout::Column > newSubColumns )
 {
-  m_subColumns = subCol;
+  m_subColumns.insert( m_subColumns.end(),
+                       std::make_move_iterator( newSubColumns.begin() ),
+                       std::make_move_iterator( newSubColumns.end() ) );
   return *this;
 }
 
@@ -175,7 +178,7 @@ TableLayout::Column & TableLayout::Column::addSubColumn( TableLayout::Column con
 TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerAlignment )
 {
   m_alignment.headerAlignment = headerAlignment;
-  m_headerLayout.m_alignment = headerAlignment;
+  m_header.m_layout.m_alignment = headerAlignment;
 
   if( !m_subColumns.empty() )
   {
@@ -276,7 +279,7 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
       }
     }
 
-    column.m_headerLayout.prepareLayout( column.m_headerStr, getMaxColumnWidth() );
+    column.m_header.prepareLayout( getMaxColumnWidth() );
 
     if( idxColumn < columns.size() - 1 )
     {
@@ -306,6 +309,11 @@ void TableLayout::CellLayout::prepareLayout( string_view inputText, size_t maxLi
     // maxLineWidth has been updated
     m_cellWidth = maxLineWidth;
   }
+}
+
+void TableLayout::Cell::prepareLayout( size_t maxLineWidth )
+{
+  m_layout.prepareLayout( m_text, maxLineWidth );
 }
 
 }

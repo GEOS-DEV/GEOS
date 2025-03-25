@@ -51,7 +51,7 @@ string TableCSVFormatter::headerToString() const
   size_t total_size = 0;
   for( auto const & column : m_tableLayout.getColumns())
   {
-    for( auto const & str : column.m_headerLayout.m_lines )
+    for( auto const & str : column.m_header.m_layout.m_lines )
     {
       total_size += str.size();
     }
@@ -62,7 +62,7 @@ string TableCSVFormatter::headerToString() const
   for( std::size_t idxColumn = 0; idxColumn < m_tableLayout.getColumns().size(); ++idxColumn )
   {
     std::ostringstream strValue;
-    for( auto const & str :  m_tableLayout.getColumns()[idxColumn].m_headerLayout.m_lines )
+    for( auto const & str :  m_tableLayout.getColumns()[idxColumn].m_header.m_layout.m_lines )
     {
       result.append( str );
     }
@@ -267,7 +267,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
 
   for( auto it = tableLayout.beginDeepFirst(); it != tableLayout.endDeepFirst(); ++it )
   {
-    CellLayout const & currentCell = it->m_headerLayout;
+    CellLayout const & currentCell = it->m_header.m_layout;
     if( currentCell.m_cellType != CellType::Hidden )
     {
       size_t const layer = it.getCurrentLayer();
@@ -332,10 +332,10 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     {
       if( !columnIt->hasChild())
       {   // we take into account only the (enabled) headers that are the nearest to the data
-        if( columnIt->m_headerLayout.m_cellType != CellType::Hidden )
+        if( columnIt->isVisible() )
         {
           TableData::CellData const & inputCell = inputDataValues[idxRow][idxInputColumn];
-          CellType const type = columnIt->m_headerLayout.m_cellType == CellType::Hidden ?
+          CellType const type = !columnIt->isVisible() ?
                                 CellType::Hidden :
                                 inputCell.type;
           string_view value = inputCell.type == CellType::Separator ?

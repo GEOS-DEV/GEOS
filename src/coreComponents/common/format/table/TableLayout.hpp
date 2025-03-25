@@ -43,6 +43,12 @@ public:
   /// Type of aligment for a column
   enum Alignment { right, left, center };
 
+  /// default value for columns header cells alignement
+  static constexpr Alignment defaultHeaderAlignment = Alignment::center;
+
+  /// default value for data cells alignement
+  static constexpr Alignment defaultValueAlignment = Alignment::right;
+
   /// Space to apply between all data and border
   enum MarginValue : integer
   {
@@ -63,14 +69,14 @@ public:
   struct ColumnAlignement
   {
     /// Alignment for column name. By default aligned to center
-    Alignment headerAlignment = Alignment::center;
+    Alignment headerAlignment = defaultHeaderAlignment;
     /// Alignment for column values. By default aligned to right side
-    Alignment valueAlignment = Alignment::right;
+    Alignment valueAlignment = defaultValueAlignment;
   };
 
   /**
    * @struct CellLayout
-   * @brief View on cell data grouping the cell information to display it in a table (content, type, alignment, ...).
+   * @brief View on cell data with information to display it in a table (content, type, alignment, ...).
    * @note the source text must not be freeed/moved as the CellLayout will *only be a view on the text data*.
    */
   struct CellLayout
@@ -85,7 +91,7 @@ public:
     std::vector< string_view > m_lines;
 
     /**
-     * @brief Constructor to initialize a Cell with a default settings.
+     * @brief Constructor to initialize a Cell with a default settings. Use prepareLayout() when setup.
      */
     CellLayout();
 
@@ -96,7 +102,7 @@ public:
     CellLayout( CellType cellType );
 
     /**
-     * @brief Constructor to fully initialize a cell given with given celltype, text and alignment.
+     * @brief Constructor to fully initialize a cell with given celltype, text and alignment.
      * m_cellWidth will be initialized aDter
      * @param cellType The type of the cell.
      * @param alignment The alignment of the cell (left, right, or center).
@@ -104,11 +110,52 @@ public:
     CellLayout( CellType cellType, TableLayout::Alignment alignment );
 
     /**
+     * @brief Set the data view to the given string_view & precompute display settings.
      * @param value The view on the text of the cell. `m_lines` will contain each separated lines, and
      *              `m_cellWidth`, the maximum line width. Called automatically by PreparedTableLayout.
+     *              Must not be deallocated!
      * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
      */
     void prepareLayout( string_view value, size_t maxLineWidth );
+  };
+
+  /**
+   * @struct CellLayout
+   * @brief View on cell data grouping the cell information to display it in a table (content, type, alignment, ...).
+   * @note the source text must not be freeed/moved as the CellLayout will *only be a view on the text data*.
+   */
+  struct Cell
+  {
+    /// The view & display setting on m_text.
+    CellLayout m_layout;
+    /// The text data of the cell (potencially multiline).
+    string m_text;
+
+    /**
+     * @brief Constructor to initialize a Cell with a default settings. Use prepareLayout() after setup.
+     */
+    Cell();
+
+    /**
+     * @brief Constructor to partially initialize a cell with display settings. Use prepareLayout() after setup.
+     * @param cellType The type of the cell.
+     * @param alignment The alignment of the cell (left, right, or center).
+     */
+    Cell( CellType cellType, TableLayout::Alignment alignment );
+
+    /**
+     * @brief Constructor to partially initialize a cell with all settings. Use prepareLayout() after setup.
+     * @param cellType The type of the cell.
+     * @param alignment The alignment of the cell (left, right, or center).
+     * @param value The text to set in the cell (stored in m_text).
+     */
+    Cell( CellType cellType, TableLayout::Alignment alignment, string_view value );
+
+    /**
+     * @brief Precompute m_layout display settings and link it with m_text.
+     * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
+     */
+    void prepareLayout( size_t maxLineWidth );
   };
 
   /**
@@ -121,10 +168,8 @@ public:
     /// Alias for the list of columns.
     using ColumnsList = std::vector< Column >;
 
-    /// The text of the header.
-    string m_headerStr;
-    /// The header cell layout (view on m_headerStr).
-    CellLayout m_headerLayout;
+    /// The header cell
+    Cell m_header;
     /// A vector containing all sub-columns in the column.
     ColumnsList m_subColumns;
     /// struct containing m_alignment for the column (header and values)
@@ -137,7 +182,7 @@ public:
 
     /**
      * @brief Construct a default column with minimal parameters.
-     * @param name The name of the Column (stored in m_headerStr).
+     * @param name The name of the Column.
      */
     explicit Column( string_view name ):
       Column( name, ColumnAlignement() )
@@ -145,7 +190,7 @@ public:
 
     /**
      * @brief Construct a default column with minimal parameters.
-     * @param name The name of the Column (stored in m_headerStr).
+     * @param name The name of the Column.
      * @param alignment The alignment setting of the column header and values.
      */
     Column( string_view name, ColumnAlignement alignment );
@@ -276,7 +321,7 @@ public:
      * @return True if the column and its children are visible.
      */
     bool isVisible() const
-    { return m_headerLayout.m_cellType!=CellType::Hidden; }
+    { return m_header.m_layout.m_cellType!=CellType::Hidden; }
 
 private:
     /// Pointer to the parent cell (if any).
