@@ -195,11 +195,11 @@ public:
     Column & setName( string_view name );
 
     /**
-     * @brief Set the column visibility.
-     * @param celltype Cell type to apply to hide the colmun
+     * @brief Set the column and its children visibility.
+     * @param visible True to make the column visible.
      * @return The current column .
      */
-    Column & setVisibility( CellType celltype );
+    Column & setVisibility( bool visible );
 
     /**
      * @brief Adds multiple sub-columns to the column.
@@ -269,6 +269,12 @@ public:
      */
     bool hasNext() const
     { return this->m_next != nullptr; }
+
+    /**
+     * @return True if the column and its children are visible.
+     */
+    bool isVisible() const
+    { return m_headerLayout.m_cellType!=CellType::Hidden; }
 
 private:
     /// Pointer to the parent cell (if any).

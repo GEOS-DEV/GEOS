@@ -27,6 +27,7 @@
 namespace geos
 {
 
+
 TableFormatter::TableFormatter():
   m_tableLayout()
 {}

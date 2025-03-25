@@ -10,21 +10,23 @@ GEOS is transitioning to a new `Uberenv <https://github.com/LLNL/uberenv>`_ and 
 * `Manual compiler configuration <https://spack.readthedocs.io/en/latest/getting_started.html?highlight=compilers.yaml#manual-compiler-configuration>`_
 * `External packages <https://spack.readthedocs.io/en/latest/packages_yaml.html#external-packages>`_
 
-Building the dependencies can be as simple as running:
 
-.. code-block:: console
-
-    ./scripts/uberenv/uberenv.py
-
-from the `thirdPartyLibs <https://github.com/GEOS-DEV/thirdPartyLibs>`_ directory. This will create a directory ``uberenv_libs`` (or a directory name you specify by adding ``--prefix directory-name``) in the current working directory, clone Spack into ``uberenv_libs/spack`` and install the dependencies into ``uberenv_libs/system_dependent_path``. It will then spit out host-config files (see :ref:`HostConfig`) in the current directory which you can use to build GEOS or LvArray. While the above command **should** work on every system, it **should never be used** to build GEOS. Invoked as such, Spack will ignore any system libraries you have installed and will go down a rabbit hole building dependencies. Furthermore this does not allow you to choose the compiler to build with. Both of these are easily solved by creating a ``spack.yaml`` configuration file, also known in Spack as an environment file, to tell Spack where pre-installed system libraries and compiles are located. See :ref:`SpackYaml` for more on how to create a ``spack.yaml`` file.
-
-Once you have the ``spack.yaml`` file setup, you can run Uberenv again and instruct it to use the environment file with the command line option ``--spack-env-file``. If for instance you added Clang 14.0.6 to the ``spack.yaml`` file, then your command to build the dependencies would look something like this:
+Building the dependencies with Uberenv involves running:
 
 .. code-block:: console
 
     ./scripts/uberenv/uberenv.py --spack-env-file=/path/to/your/spack.yaml --spec="%clang@14.0.6" --prefix=/output/path/to/third-party/GEOS/libraries
 
-For more Uberenv command-line options, you can run the ``uberenv.py`` script with the ``--help`` option or consult the `command line options <https://uberenv.readthedocs.io/en/latest/#command-line-options>`_.
+The Uberenv command **requires** the ``--spack-env-file`` option to pass in a ``spack.yaml`` configuration file, also known in Spack as an environment file, to tell Spack where pre-installed system libraries and compilers are located. See :ref:`SpackYaml` for more on how to create a ``spack.yaml`` file.
+
+.. warning::
+  Without a ``spack.yaml`` configuration file, Spack will ignore any system libraries you have installed and will go down a rabbit hole building dependencies. Without a ``spack.yaml`` configuration file, Spack will not allow you to choose the compiler to build with. The Uberenv command **must** be used with a ``spack.yaml`` configuration file, it **should never be used without one**.
+
+This Uberenv command uses the ``--spec`` option to determine what compiler you want to use, and where you can also specify how you want your dependencies built (see :ref:`BuildConfig`). In the the Uberenv command above, Clang 14.0.6 is chosen from the ``spack.yaml`` file.
+
+This Uberenv command will create a directory specified by ``--prefix=directory-name`` (or a directory named ``uberenv_libs`` if the option is not provided) in the current working directory, clone Spack into ``directory-name/spack`` and install the dependencies into ``directory-name/system_dependent_path``. This Uberenv command will then spit out host-config files (see :ref:`HostConfig`) in the current directory which you can use to build GEOS or LvArray.
+
+For more Uberenv command-line options, you can run the ``uberenv.py`` script with the ``--help`` option or consult the `Uberenv command line options documentation <https://uberenv.readthedocs.io/en/latest/#command-line-options>`_.
 
 .. note::
   There is no requirement that your environment file be named ``spack.yaml`` when it is passed to Uberenv using the ``--spack-env-file`` command line option.
@@ -41,7 +43,7 @@ The ``spack.yaml`` configuration file tells Spack where it can find relevant pac
 
 There are many examples and resources available for constructing a ``spack.yaml`` file:
 
-* GEOS's LC configuration files for `toss_4_x86_64_ib <https://github.com/GEOS-DEV/thirdPartyLibs/blob/feature/han12/docker_spack/scripts/spack_configs/toss_4_x86_64_ib/spack.yaml>`_ and `blueos_3_ppc64le_ib_p9 <https://github.com/GEOS-DEV/thirdPartyLibs/tree/feature/han12/docker_spack/scripts/spack_configs/blueos_3_ppc64le_ib_p9/spack.yaml>`_. Additionally, the header of these configuration files include the Spack spec to pass to ``--spec`` for different compilers and package variants.
+* GEOS's LC configuration files for `toss_4_x86_64_ib <https://github.com/GEOS-DEV/thirdPartyLibs/blob/master/scripts/spack_configs/toss_4_x86_64_ib/spack.yaml>`_ and `blueos_3_ppc64le_ib_p9 <https://github.com/GEOS-DEV/thirdPartyLibs/blob/master/scripts/spack_configs/blueos_3_ppc64le_ib_p9/spack.yaml>`_. Additionally, the header of these configuration files include the Spack spec to pass to ``--spec`` for different compilers and package variants.
 * LLNL's shared Spack configurations for RADIUSS projects: https://github.com/LLNL/radiuss-spack-configs/tree/main
 * NERSC Spack Infrastructure: https://github.com/NERSC/spack-infrastructure/tree/main
 * Shared Spack configuration files with other HPC sites: https://github.com/spack/spack-configs
@@ -74,7 +76,7 @@ In the LC configuration files mentioned in :ref:`SpackYaml` section, you will se
     require: "@git.06da35b1a4b1066a093bc0c6c48aee12bee74cd4"
   ...
 
-This tells Spack that GEOS always `requires <https://spack.readthedocs.io/en/latest/packages_yaml.html#requirements-syntax>`_ a specific commit of ``hypre``, a commit on the latest develop branch in this case. Ideally, package versions should be specified in the `GEOS Spack package file  <https://github.com/GEOS-DEV/thirdPartyLibs/blob/feature/han12/docker_spack/scripts/spack_packages/packages/geosx/package.py>`_. However, when a version of a package is newer than what Spack knows about or an unversioned commit is needed, the Spack package syntax cannot express that requirement. As a result:
+This tells Spack that GEOS always `requires <https://spack.readthedocs.io/en/latest/packages_yaml.html#requirements-syntax>`_ a specific commit of ``hypre``, a commit on the latest develop branch in this case. Ideally, package versions should be specified in the `GEOS Spack package file  <https://github.com/GEOS-DEV/thirdPartyLibs/blob/master/scripts/spack_packages/packages/geosx/package.py>`_. However, when a version of a package is newer than what Spack knows about or an unversioned commit is needed, the Spack package syntax cannot express that requirement. As a result:
 
 .. warning::
   Every ``spack.yaml`` file **must have the list of packages with the "require" keyword** to ensure these packages are built with the right versions or commits. See LC configuration files mentioned in :ref:`SpackYaml` section for the list.
@@ -84,7 +86,7 @@ This tells Spack that GEOS always `requires <https://spack.readthedocs.io/en/lat
 Uberenv configuration file
 --------------------------
 
-Uberenv needs a `.uberenv_config.json <https://github.com/GEOS-DEV/thirdPartyLibs/blob/feature/han12/docker_spack/.uberenv_config.json>`_ configuration file to function as a submodule.
+Uberenv needs a `.uberenv_config.json <https://github.com/GEOS-DEV/thirdPartyLibs/blob/master/.uberenv_config.json>`_ configuration file to function as a submodule.
 Details on the various configuration options can be found in `Uberenv project configuration documentation <https://uberenv.readthedocs.io/en/latest/#project-configuration>`_. The most notable option for maintenance is ``spack_commit``, which is the Spack commit that Uberenv checkouts to build the dependencies.
 
 
@@ -103,19 +105,22 @@ It is worth noting that GEOS has `two project json files <https://uberenv.readth
 .. note::
     When building ``pygeosx``, Spack will build various python packages, however by default they are not installed in python. There are various ways of accomplishing `this <https://spack.readthedocs.io/en/latest/basic_usage.html#extensions-python-support>`_, but the recommended approach is to use spack environments. Once you build ``pygeosx`` using Uberenv, Spack will create a view that ensures the Spack-built python can find the built python packages. For example, with a default ``uberenv_libs`` directory of dependencies, the path to the view of python will be ``uberenv_libs/._view/*/bin/python3``. If you want to use your ``pygeosx`` python3 executable in GEOS, you will need to update your host-config's ``Python3_ROOT_DIR`` and ``Python3_EXECUTABLE`` to the path to Spack's view of python.
 
+
+.. _BuildConfig:
+
 Build Configuration
 -------------------
 
 .. warning::
 	The spack build system is undergoing updates. The ``petsc`` variant and others are still a work in progress.
 
-The GEOS Spack package has a lot of options, or what Spack calls variants, for controlling which dependencies you would like to build and how you'd like them built. The `GEOS Spack package file  <https://github.com/GEOS-DEV/thirdPartyLibs/blob/feature/han12/docker_spack/scripts/spack_packages/packages/geosx/package.py>`_ has variants that are marked with ``variant()`` in the file.
+The GEOS Spack package has a lot of options, or what Spack calls variants, for controlling which dependencies you would like to build and how you'd like them built. The `GEOS Spack package file  <https://github.com/GEOS-DEV/thirdPartyLibs/blob/master/scripts/spack_packages/packages/geosx/package.py>`_ has variants that are marked with ``variant()`` in the file.
 
 For example if you wanted to build with GCC 8.3.1, without Caliper and with Hypre as the Linear Algebra Interface, your spec would be ``%gcc@8.3.1 ~caliper lai=hypre``.
 
 The GEOS Spack package lists out the libraries that GEOS depends ons. These dependencies are marked with ``depends_on()`` in the file.
 
-Using the Spack spec syntax, you can inturn specify variants for each of the dependencies of GEOS. For example, you could modify the spec above to build RAJA in debug mode by using ``%gcc@8.3.1 ~caliper lai=hypre ^raja build_type=Debug``. When building with Uberenv, Spack should print out a table containing the full spec for every dependency it will build. If you would like to look at the variants for say RAJA in more detail, you can find the package file at ``uberenv_libs/spack/var/spack/repos/builtin/packages/raja/package.py``, by using `file finder <https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts#source-code-browsing>`_ on the `Spack Github website <https://github.com/GEOS-DEV/thirdPartyLibs>`_, or by searching for the package at https://packages.spack.io/.
+Using the Spack spec syntax, you can inturn specify variants for each of the dependencies of GEOS. For example, you could modify the spec above to build RAJA in debug mode by using ``%gcc@8.3.1 ~caliper lai=hypre ^raja build_type=Debug``. When building with Uberenv, Spack should print out a table containing the full spec for every dependency it will build. If you would like to look at the variants for say RAJA in more detail, you can find the package file at ``uberenv_libs/spack/var/spack/repos/builtin/packages/raja/package.py``, by using `file finder <https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts#source-code-browsing>`_ on the `Spack Github website <https://github.com/spack/spack>`_, or by searching for the package at https://packages.spack.io/.
 
 
 .. _HostConfig:
@@ -123,7 +128,7 @@ Using the Spack spec syntax, you can inturn specify variants for each of the dep
 Host-Config Generation
 ----------------------
 
-The logic for generating the host-configs can be found in the `GEOS spack recipe <https://github.com/GEOS-DEV/thirdPartyLibs/blob/feature/han12/docker_spack/scripts/spack_packages/packages/geosx/package.py>`_. The GEOS host-config is generated by the ``geos_hostconfig()`` function, while the LvArray host-config is generated by the ``lvarray_hostconfig()`` function. After successfully building all the third-party dependencies, Spack will call these two functions to populate two host-configs based on information it knows about the dependencies.
+The logic for generating the host-configs can be found in the `GEOS spack recipe <https://github.com/GEOS-DEV/thirdPartyLibs/blob/master/scripts/spack_packages/packages/geosx/package.py>`_. The GEOS host-config is generated by the ``geos_hostconfig()`` function, while the LvArray host-config is generated by the ``lvarray_hostconfig()`` function. After successfully building all the third-party dependencies, Spack will call these two functions to populate two host-configs based on information it knows about the dependencies.
 
 .. note::
   The host-config generation is currently based on LC systems, and the generated host-config may be missing or have incorrect details for your system (e.g. choice of ``MPIEXEC_NUMPROC_FLAG``). Please modify the python functions and/or host-configs generated as needed.

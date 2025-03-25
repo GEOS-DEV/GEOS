@@ -179,7 +179,7 @@ TEST( testTable, tableHiddenColumn )
       .setName( "CoordX" )
       .setValuesAlignment( TableLayout::Alignment::left )
       .setHeaderAlignment( TableLayout::Alignment::right )
-      .setVisibility( CellType::Hidden ),
+      .setVisibility( false ),
     TableLayout::Column()
       .setName( "C" )
       .setValuesAlignment( TableLayout::Alignment::left )
@@ -190,10 +190,10 @@ TEST( testTable, tableHiddenColumn )
       .setHeaderAlignment( TableLayout::Alignment::left ),
     TableLayout::Column()
       .setName( "Prev\nelement" )
-      .setVisibility( CellType::Hidden ),
+      .setVisibility( false ),
     TableLayout::Column()
       .setName( "Next\nelement" )
-      .setVisibility( CellType::Hidden )
+      .setVisibility( false )
   } );
 
   TableData tableData;
@@ -393,11 +393,15 @@ TEST( testTable, subColumns )
     TableLayout::Column()
       .setName( "Column4" )
       .addSubColumns( { TableLayout::Column()
-                          .setName( "Local elements" ).addSubColumns( {"SubLocales1", "SubLocales2"} ),
+                          .setName( "Local elements" )
+                          .addSubColumns( {"SubLocales1", "SubLocales2"} ),
                         TableLayout::Column()
-                          .setName( "Ghost Elements" ).addSubColumns( {"SubGhost1", "SubGhost2"} ),
+                          .setName( "Ghost Elements" )
+                          .addSubColumns( {"SubGhost1", "SubGhost2"} )
+                          .setVisibility( false ),
                         TableLayout::Column()
-                          .setName( "Active Elements" ).addSubColumns( {"SubActive1", "SubActive2"} )
+                          .setName( "Active Elements" )
+                          .addSubColumns( {"SubActive1", "SubActive2"} )
                       } ),
     "Column5"
   } );
@@ -413,20 +417,20 @@ TEST( testTable, subColumns )
   EXPECT_EQ( tableText.toString(
                tableData ),
              "\n"
-             "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-             "|        |   Column1   |                     Nodes                     |  Column3  |                                         Column4                                         |  Column5  |\n"
-             "|--------|-------------|-----------------------------------------------|-----------|-----------------------------------------------------------------------------------------|-----------|\n"
-             "|        |             |  LocalesNodes  |  GhostNodes  |  ActiveNodes  |           |        Local elements         |      Ghost Elements       |       Active Elements       |           |\n"
-             "|--------|-------------|----------------|--------------|---------------|-----------|-------------------------------|---------------------------|-----------------------------|-----------|\n"
-             "|        |             |                |              |               |           |  SubLocales1  |  SubLocales2  |  SubGhost1  |  SubGhost2  |  SubActive1  |  SubActive2  |           |\n"
-             "|--------|-------------|----------------|--------------|---------------|-----------|---------------|---------------|-------------|-------------|--------------|--------------|-----------|\n"
-             "|  3547  |       1289  |          7534  |        6901  |         4832  |     9281  |         1154  |         5360  |       2739  |       9004  |        1497  |           6  |        7  |\n"
-             "|  5142  |       8290  |           364  |        2310  |         7011  |     1427  |         2574  |         9043  |       5305  |        608  |         980  |           6  |        7  |\n"
-             "|  3174  |       8259  |          6092  |        1783  |         7435  |     2891  |          914  |          178  |       4635  |       5839  |        8124  |           6  |        7  |\n"
-             "|  6193  |       7481  |          1305  |        9037  |       4306.1  |     6157  |         1849  |         2753  |        910  |       2369  |        9992  |           6  |        7  |\n"
-             "|  8012  |  5729.2112  |          6975  |    3201.213  |         9448  |     1820  |         4125  |       182.12  |       7453  |       5069  |        3912  |           6  |        7  |\n"
-             "|  4381  |       6728  |          5204  |        8663  |         2035  |     7804  |         6310  |         9621  |       4158  |        789  |        2537  |           6  |        7  |\n"
-             "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "--------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "|        |   Column1   |                     Nodes                     |  Column3  |                           Column4                           |  Column5  |\n"
+             "|--------|-------------|-----------------------------------------------|-----------|-------------------------------------------------------------|-----------|\n"
+             "|        |             |  LocalesNodes  |  GhostNodes  |  ActiveNodes  |           |        Local elements         |       Active Elements       |           |\n"
+             "|--------|-------------|----------------|--------------|---------------|-----------|-------------------------------|-----------------------------|-----------|\n"
+             "|        |             |                |              |               |           |  SubLocales1  |  SubLocales2  |  SubActive1  |  SubActive2  |           |\n"
+             "|--------|-------------|----------------|--------------|---------------|-----------|---------------|---------------|--------------|--------------|-----------|\n"
+             "|  3547  |       1289  |          7534  |        6901  |         4832  |     9281  |         1154  |         5360  |        1497  |           6  |        7  |\n"
+             "|  5142  |       8290  |           364  |        2310  |         7011  |     1427  |         2574  |         9043  |         980  |           6  |        7  |\n"
+             "|  3174  |       8259  |          6092  |        1783  |         7435  |     2891  |          914  |          178  |        8124  |           6  |        7  |\n"
+             "|  6193  |       7481  |          1305  |        9037  |       4306.1  |     6157  |         1849  |         2753  |        9992  |           6  |        7  |\n"
+             "|  8012  |  5729.2112  |          6975  |    3201.213  |         9448  |     1820  |         4125  |       182.12  |        3912  |           6  |        7  |\n"
+             "|  4381  |       6728  |          5204  |        8663  |         2035  |     7804  |         6310  |         9621  |        2537  |           6  |        7  |\n"
+             "--------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
              );
 }
 
@@ -707,7 +711,7 @@ TEST( testTable, tableHiddenError )
                         TableLayout::Column()
                           .setName( "Active Elements" ).addSubColumns( {"SubActive1", "SubActive2"} )
                       } )
-      .setVisibility( CellType::Hidden ),
+      .setVisibility( false ),
     TableLayout::Column()
       .setName( "Prev\nelement" )
       .setHeaderAlignment( TableLayout::Alignment::left ),
