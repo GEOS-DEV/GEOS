@@ -105,12 +105,12 @@ TableLayout::Cell::Cell():
 {}
 
 TableLayout::Cell::Cell( CellType cellType, TableLayout::Alignment alignment ):
-  m_layout( cellType, TableLayout::Alignment::center ),
+  m_layout( cellType, alignment ),
   m_text()
 {}
 
 TableLayout::Cell::Cell( CellType cellType, TableLayout::Alignment alignment, string_view value ):
-  m_layout( cellType, TableLayout::Alignment::center ),
+  m_layout( cellType, alignment ),
   m_text( value )
 {}
 
