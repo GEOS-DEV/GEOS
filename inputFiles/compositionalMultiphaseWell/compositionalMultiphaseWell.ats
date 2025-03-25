@@ -93,6 +93,38 @@ decks = [
         restart_step=24,
         check_step=28,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    TestDeck(
+        name="staged_close_perf_1",
+        description=
+        "Vertical well with perfortion plugging schedule, perfs are closed from bottom to top",
+        partitions=[(1, 1, 1), (1, 1, 4)],
+        restart_step=20,
+        check_step=26,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    TestDeck(
+        name="staged_close_perf_2",
+        description=
+        "Vertical well with perfortion plugging schedule, perfs are closed from top to bottom",
+        partitions=[(1, 1, 1), (1, 1, 4)],
+        restart_step=120,
+        check_step=126,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    TestDeck(
+        name="staged_open_perf_1",
+        description=
+        "Vertical well with perfortion plugging schedule, perfs are opened from bottom to top",
+        partitions=[(1, 1, 1), (1, 1, 4)],
+        restart_step=60,
+        check_step=65,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    TestDeck(
+        name="staged_open_perf_2",
+        description=
+        "Vertical well with perfortion plugging schedule, perfs are opened from top to bottom",
+        partitions=[(1, 1, 1), (1, 1, 4)],
+        restart_step=180,
+        check_step=190,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
 generate_geos_tests(decks)

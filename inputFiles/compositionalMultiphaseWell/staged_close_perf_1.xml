@@ -1,0 +1,246 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <CompositionalMultiphaseReservoir
+      name="reservoirSystem"
+      flowSolverName="compositionalMultiphaseFlow"
+      wellSolverName="compositionalMultiphaseWell"
+      logLevel="2"
+        writeLinearSystem="2"
+      targetRegions="{ reservoir, wellRegion1 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+         logLevel="4"
+        lineSearchAction="None"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+	      directParallel="0" />
+    </CompositionalMultiphaseReservoir>
+
+    <CompositionalMultiphaseFVM
+      name="compositionalMultiphaseFlow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ reservoir }"
+      temperature="297.15"/>
+
+    <CompositionalMultiphaseWell
+      name="compositionalMultiphaseWell"
+      logLevel="4"
+      writeCSV="1"
+      targetRegions="{ wellRegion1 }">
+      <WellControls
+        name="wellControls1"
+        type="producer"
+        control="BHP"
+        referenceElevation="0.5"
+        targetBHP="4e6"
+        targetPhaseRate="1e-3"
+        targetPhaseName="water"/>
+    </CompositionalMultiphaseWell>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 5 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 5 }"
+      cellBlockNames="{ cb1 }">
+
+      <InternalWell
+        name="well_producer1"
+        wellRegionName="wellRegion1"
+        wellControlsName="wellControls1"
+      logLevel="1"
+        polylineNodeCoords="{ { 0.5, 0.5, 4.9 },
+                              { 0.5, 0.5, 0.1 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="5">
+        <Perforation
+          name="producer1_perf0"
+          perfStatusTable="{{0, 0.5e4},{1.0,0.0}}"
+          distanceFromHead="0.5"/>
+        <Perforation
+          name="producer1_perf1"
+          perfStatusTable="{{0, 1.50e4},{1.0,0.0}}"
+          distanceFromHead="1.50"/>
+        <Perforation
+          name="producer1_perf2"
+          perfStatusTable="{{0, 2.00e4},{1.0,0.0}}"
+          distanceFromHead="2.50"/>
+        <Perforation
+          name="producer1_perf3"
+          perfStatusTable="{{0, 3.25e4},{1.0,0.0}}"
+          distanceFromHead="3.50"/>
+        <Perforation
+          name="producer1_perf4"
+          perfStatusTable="{{0, 3.0e4},{1.0,0.0}}"
+          distanceFromHead="4.00"/>
+      </InternalWell>
+
+    </InternalMesh>
+  </Mesh>
+
+  <Tasks>
+
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"/>
+
+  </Tasks>
+
+  <Events
+    maxTime="4.0e4">
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="2e2"
+      target="/Tasks/compflowStatistics"/>
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="2.5e3"
+      target="/Solvers/reservoirSystem"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.5e3"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.25e4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"
+        />
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="reservoir"
+      cellBlocks="{ * }"
+      materialList="{ fluid, rock, relperm }"/>
+
+    <WellElementRegion
+      name="wellRegion1"
+      materialList="{ fluid, relperm }"/>
+
+  </ElementRegions>
+
+  <Constitutive>
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+      flashModelParaFile="co2flash.txt"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.1, 0.15 }"
+      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="initialComposition_co2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialComposition_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="1.0"/>
+
+    <HydrostaticEquilibrium
+     name="equil"
+     objectPath="ElementRegions"
+     datumElevation="0"
+     datumPressure="2.214e7"
+     initialPhaseName="water"
+     componentNames="{ co2, water }"
+     componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                             initWaterCompFracTable }"
+     temperatureVsElevationTableName="initTempTable"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+        name="initCO2CompFracTable"
+        coordinates="{ -3000.0, 0.0 }"
+        values="{ 0.0, 0.0 }"/>
+
+    <TableFunction
+        name="initWaterCompFracTable"
+        coordinates="{ -3000.0, 0.0 }"
+        values="{ 1.0, 1.0 }"/>
+
+    <TableFunction
+        name="initTempTable"
+        coordinates="{ -3000.0, 0.0 }"
+        values="{ 368, 288 }"/>
+
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
