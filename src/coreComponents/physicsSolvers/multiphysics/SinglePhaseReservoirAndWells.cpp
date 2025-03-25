@@ -241,8 +241,8 @@ assembleCouplingTerms( real64 const time_n,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs )
 {
-  GEOS_UNUSED_VAR(time_n);
-  
+  GEOS_UNUSED_VAR( time_n );
+
   using TAG = singlePhaseWellKernels::SubRegionTag;
   using ROFFSET = singlePhaseWellKernels::RowOffset;
   using COFFSET = singlePhaseWellKernels::ColOffset;
