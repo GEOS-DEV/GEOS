@@ -622,6 +622,8 @@ void ProblemManager::generateMesh()
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+
+  //***** This is where we setup the partition information ***** 
   domain.setupBaseLevelMeshGlobalInfo();
 
   // setup the MeshLevel associated with the discretizations
@@ -676,6 +678,7 @@ void ProblemManager::generateMesh()
     }
   }
 
+  //***** this is where the ghosts are setup ***** 
   domain.setupCommunications( useNonblockingMPI );
   domain.outputPartitionInformation();
 

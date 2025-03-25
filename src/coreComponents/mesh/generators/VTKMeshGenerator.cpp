@@ -116,7 +116,7 @@ void VTKMeshGenerator::postInputInitialization()
 
 }
 
-void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionBase & partition )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
@@ -196,7 +196,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    partition.setMetisNeighborList( std::move( neighbors ) );
+    partition.setNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
   }
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOS mesh data structure", catalogName(), getName() ) );

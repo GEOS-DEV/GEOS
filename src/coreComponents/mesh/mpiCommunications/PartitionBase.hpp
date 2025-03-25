@@ -60,7 +60,18 @@ public:
                               unsigned int yPartitions,
                               unsigned int zPartitions ) = 0;
 
-  virtual void setNeighborList( std::vector< int > const & neighbors ) {}
+  virtual void addNeighbors( const unsigned int idim,
+                             MPI_Comm & comm,
+                             int * ncoords ) = 0;
+
+  virtual void setNeighborList( std::vector< int > const & neighbors ) 
+  {
+    m_neighbors.clear();
+    for( auto const & n : neighbors )
+    {
+      m_neighbors.emplace_back( n );
+    }
+  }
 
   /**
    * @brief Returns the number of colors.

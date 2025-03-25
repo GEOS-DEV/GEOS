@@ -17,6 +17,7 @@
 #include "mesh/generators/CollocatedNodes.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 
 #include "mesh/generators/ParMETISInterface.hpp"
 #ifdef GEOS_USE_SCOTCH
@@ -24,6 +25,7 @@
 #endif
 
 #include "common/TypeDispatch.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>

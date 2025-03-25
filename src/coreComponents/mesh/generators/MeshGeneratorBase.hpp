@@ -138,7 +138,7 @@ private:
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partition The reference to spatial partition
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionBase & partition )
   {
     GEOS_UNUSED_VAR( cellBlockManager );
     GEOS_UNUSED_VAR( partition );

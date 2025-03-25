@@ -75,7 +75,6 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
   }
 
   setSize( size );
-  setContactGhostRange( 0.0 );
 }
 
 void SpatialPartition::setColorValue()
@@ -125,10 +124,10 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
         break;
       }
     }
-    if( !me )
+    int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
+    if( !me && !std::any_of( m_neighbors.begin(), m_neighbors.end(), [=]( NeighborCommunicator const & nn ) { return nn.neighborRank( ) == neighborRank; } ) )
     {
-      int const rank = MpiWrapper::cartRank( cartcomm, ncoords );
-      m_neighbors.push_back( NeighborCommunicator( rank ) );
+      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }
   }
   else
@@ -171,8 +170,6 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
     m_gridSize[i] *= ratio;
     m_gridMin[i] *= ratio;
     m_gridMax[i] *= ratio;
-    m_contactGhostMin[i] *= ratio;
-    m_contactGhostMax[i] *= ratio;
   }
 }
 
@@ -199,6 +196,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     {
       int reorder = 0;
       MpiWrapper::cartCreate( MPI_COMM_GEOS, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int rank = MpiWrapper::commRank( cartcomm );
     GEOS_ERROR_IF_NE( rank, getRank() );
@@ -321,14 +319,14 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
   return true;
 }
 
-void SpatialPartition::setContactGhostRange( const real64 bufferSize )
-{
-  LvArray::tensorOps::copy< 3 >( m_contactGhostMin, m_min );
-  LvArray::tensorOps::addScalar< 3 >( m_contactGhostMin, -bufferSize );
+// void SpatialPartition::setContactGhostRange( const real64 bufferSize )
+// {
+//   LvArray::tensorOps::copy< 3 >( m_contactGhostMin, m_min );
+//   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMin, -bufferSize );
 
-  LvArray::tensorOps::copy< 3 >( m_contactGhostMax, m_max );
-  LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
-}
+//   LvArray::tensorOps::copy< 3 >( m_contactGhostMax, m_max );
+//   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
+// }
 
 void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion,
                                                    MPI_iCommData & commData )

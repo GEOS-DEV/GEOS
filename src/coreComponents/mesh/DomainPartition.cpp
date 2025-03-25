@@ -86,6 +86,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
 #if defined(GEOS_USE_MPI)
   PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
+
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
   const std::set< int > metisNeighborList = partition.getMetisNeighborList();

@@ -29,19 +29,8 @@ ParMETISPartition::ParMETISPartition():
   PartitionBase(),
   m_Periodic( nsdof ),
   m_coords( nsdof ),
-  m_min{ 0.0 },
-  m_max{ 0.0 },
-  m_blockSize{ 1.0 },
-  m_gridSize{ 0.0 },
-  m_gridMin{ 0.0 },
-  m_gridMax{ 0.0 },
   m_Partitions()
-{
-  m_size = 0;
-  m_rank = 0;
-  m_numColors = 8,
-  setPartitions( 1, 1, 1 );
-}
+{}
 
 ParMETISPartition::~ParMETISPartition()
 {}
@@ -62,78 +51,54 @@ void ParMETISPartition::setPartitions( unsigned int xPartitions,
   setContactGhostRange( 0.0 );
 }
 
-int ParMETISPartition::getColor()
-{
-  int color = 0;
+// void ParMETISPartition::addNeighbors( const unsigned int idim,
+//                                      MPI_Comm & cartcomm,
+//                                      int * ncoords )
+// {
 
-  if( isOdd( m_coords[0] ) )
-  {
-    color += 1;
-  }
-
-  if( isOdd( m_coords[1] ) )
-  {
-    color += 2;
-  }
-
-  if( isOdd( m_coords[2] ) )
-  {
-    color += 4;
-  }
-
-  m_numColors = 8;
-
-  return color;
-}
-
-void ParMETISPartition::addNeighbors( const unsigned int idim,
-                                     MPI_Comm & cartcomm,
-                                     int * ncoords )
-{
-
-  if( idim == nsdof )
-  {
-    bool me = true;
-    for( int i = 0; i < nsdof; i++ )
-    {
-      if( ncoords[i] != this->m_coords( i ))
-      {
-        me = false;
-        break;
-      }
-    }
-    if( !me )
-    {
-      int const rank = MpiWrapper::cartRank( cartcomm, ncoords );
-      m_neighbors.push_back( NeighborCommunicator( rank ) );
-    }
-  }
-  else
-  {
-    const int dim = this->m_Partitions( LvArray::integerConversion< localIndex >( idim ) );
-    const bool periodic = this->m_Periodic( LvArray::integerConversion< localIndex >( idim ) );
-    for( int i = -1; i < 2; i++ )
-    {
-      ncoords[idim] = this->m_coords( LvArray::integerConversion< localIndex >( idim ) ) + i;
-      bool ok = true;
-      if( periodic )
-      {
-        if( ncoords[idim] < 0 )
-          ncoords[idim] = dim - 1;
-        else if( ncoords[idim] >= dim )
-          ncoords[idim] = 0;
-      }
-      else
-      {
-        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
-      }
-      if( ok )
-      {
-        addNeighbors( idim + 1, cartcomm, ncoords );
-      }
-    }
-  }
-}
+//   if( idim == nsdof )
+//   {
+//     bool me = true;
+//     for( int i = 0; i < nsdof; i++ )
+//     {
+//       if( ncoords[i] != this->m_coords( i ))
+//       {
+//         me = false;
+//         break;
+//       }
+//     }
+//     if( !me )
+//     {
+//       int const rank = MpiWrapper::cartRank( cartcomm, ncoords );
+//       m_neighbors.push_back( NeighborCommunicator( rank ) );
+//     }
+//   }
+//   else
+//   {
+//     const int dim = this->m_Partitions( LvArray::integerConversion< localIndex >( idim ) );
+//     const bool periodic = this->m_Periodic( LvArray::integerConversion< localIndex >( idim ) );
+//     for( int i = -1; i < 2; i++ )
+//     {
+//       ncoords[idim] = this->m_coords( LvArray::integerConversion< localIndex >( idim ) ) + i;
+//       bool ok = true;
+//       if( periodic )
+//       {
+//         if( ncoords[idim] < 0 )
+//           ncoords[idim] = dim - 1;
+//         else if( ncoords[idim] >= dim )
+//           ncoords[idim] = 0;
+//       }
+//       else
+//       {
+//         ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
+//       }
+//       if( ok )
+//       {
+//         addNeighbors( idim + 1, cartcomm, ncoords );
+//       }
+//     }
+//   }
+// }
 
 void ParMETISPartition::updateSizes( arrayView1d< real64 > const domainL,
                                     real64 const dt )
@@ -144,124 +109,27 @@ void ParMETISPartition::updateSizes( arrayView1d< real64 > const domainL,
     m_min[i] *= ratio;
     m_max[i] *= ratio;
     //m_PartitionLocations[i] *= ratio; ?
-    m_blockSize[i] *= ratio;
-    m_gridSize[i] *= ratio;
     m_gridMin[i] *= ratio;
     m_gridMax[i] *= ratio;
-    m_contactGhostMin[i] *= ratio;
-    m_contactGhostMax[i] *= ratio;
   }
 }
 
 void ParMETISPartition::setSizes( real64 const ( &min )[ 3 ],
                                  real64 const ( &max )[ 3 ] )
 {
-
+  std::cout<<" MpiWrapper::commRank() = "<<MpiWrapper::commRank()<<" has neighbors ( ";
+  for( integer const neighborRank : metisNeighborList )
   {
-    //get size of problem and decomposition
-    m_size = MpiWrapper::commSize( MPI_COMM_GEOS );
-
-    //check to make sure our dimensions agree
-    {
-      int check = 1;
-      for( int i = 0; i < nsdof; i++ )
-      {
-        check *= this->m_Partitions( i );
-      }
-      GEOS_ERROR_IF_NE( check, m_size );
-    }
-
-    //get communicator, rank, and coordinates
-    MPI_Comm cartcomm;
-    {
-      int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
-    }
-    m_rank = MpiWrapper::commRank( cartcomm );
-    MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
-
-    //add neighbors
-    {
-      int ncoords[nsdof];
-      m_neighbors.clear();
-      addNeighbors( 0, cartcomm, ncoords );
-    }
-
-    MpiWrapper::commFree( cartcomm );
+    m_neighbors.emplace_back( neighborRank );
+    std::cout<<neighborRank<<", ";
   }
-
-  // global values
-  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
-  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
-  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
-  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
-
-  // block values
-  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
-
-  LvArray::tensorOps::copy< 3 >( m_min, min );
-  for( int i = 0; i < nsdof; ++i )
-  {
-    const int nloc = m_Partitions( i ) - 1;
-    const localIndex nlocl = static_cast< localIndex >(nloc);
-    if( m_PartitionLocations[i].empty() )
-    {
-      // the default "even" spacing
-      m_blockSize[ i ] /= m_Partitions( i );
-      m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
-      m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
-
-      m_PartitionLocations[i].resize( nlocl );
-      for( localIndex j = 0; j < m_PartitionLocations[ i ].size(); ++j )
-      {
-        m_PartitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
-      }
-    }
-    else if( nlocl == m_PartitionLocations[i].size() )
-    {
-      const int parIndex = m_coords[i];
-      if( parIndex == 0 )
-      {
-        m_min[i] = min[i];
-        m_max[i] = m_PartitionLocations[i][parIndex];
-      }
-      else if( parIndex == nloc )
-      {
-        m_min[i] = m_PartitionLocations[i][parIndex-1];
-        m_max[i] = max[i];
-      }
-      else
-      {
-        m_min[i] = m_PartitionLocations[i][parIndex-1];
-        m_max[i] = m_PartitionLocations[i][parIndex];
-      }
-    }
-    else
-    {
-      GEOS_ERROR( "ParMETISPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
-    }
-  }
+  std::cout<<" )"<<std::endl;
 }
 
 bool ParMETISPartition::isCoordInPartition( const real64 & coord, const int dir ) const
 {
-  bool rval = true;
-  const int i = dir;
-  if( m_Periodic( i ))
-  {
-    if( m_Partitions( i ) != 1 )
-    {
-      real64 localCenter = MapValueToRange( coord, m_gridMin[ i ], m_gridMax[ i ] );
-      rval = rval && localCenter >= m_min[ i ] && localCenter < m_max[ i ];
-    }
-
-  }
-  else
-  {
-    rval = rval && (m_Partitions[ i ] == 1 || (coord >= m_min[ i ] && coord < m_max[ i ]));
-  }
-
-  return rval;
+  GEOS_UNUSED_VAR( coord, dir );
+  return true;
 }
 
 bool ParMETISPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,

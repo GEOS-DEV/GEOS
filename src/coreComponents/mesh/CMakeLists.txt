@@ -98,6 +98,7 @@ set( mesh_headers
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionBase.hpp
+     mpiCommunications/ParMETISPartition.hpp
      mpiCommunications/SpatialPartition.hpp
      simpleGeometricObjects/Rectangle.hpp
      simpleGeometricObjects/Disc.hpp
@@ -175,6 +176,7 @@ set( mesh_sources
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
+     mpiCommunications/ParMETISPartition.cpp
      simpleGeometricObjects/Rectangle.cpp
      simpleGeometricObjects/Disc.cpp
      simpleGeometricObjects/CustomPolarObject.cpp

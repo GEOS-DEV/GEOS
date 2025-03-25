@@ -45,16 +45,14 @@ public:
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
 
-  void setSizes( real64 const ( &min )[ 3 ],
-                 real64 const ( &max )[ 3 ] ) override;
+  virtual void setSizes( real64 const ( &min )[ 3 ],
+                 real64 const ( &max )[ 3 ] ) override final;
 
 
 
   void setPartitions( unsigned int xPartitions,
                       unsigned int yPartitions,
                       unsigned int zPartitions ) override;
-
-  int getColor() override;
 
   void repartitionMasterParticles( ParticleSubRegion & subRegion,
                                    MPI_iCommData & commData );

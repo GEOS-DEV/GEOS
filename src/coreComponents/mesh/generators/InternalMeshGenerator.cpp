@@ -540,9 +540,11 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionBase & partitionBase )
 {
   GEOS_MARK_FUNCTION;
+
+  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partitionBase);
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.

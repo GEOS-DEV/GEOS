@@ -88,7 +88,7 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+  void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionBase & partition ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

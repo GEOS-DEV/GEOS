@@ -45,8 +45,8 @@ public:
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
 
-  void setSizes( real64 const ( &min )[ 3 ],
-                 real64 const ( &max )[ 3 ] ) override;
+  virtual void setSizes( real64 const ( &min )[ 3 ],
+                 real64 const ( &max )[ 3 ] ) override final;
 
 
   void setPartitions( unsigned int xPartitions,
@@ -122,16 +122,9 @@ private:
    *
    * @note Rough copy/paste of DomainPartition::AddNeighbors
    */
-  void addNeighbors( const unsigned int idim,
+  virtual void addNeighbors( const unsigned int idim,
                      MPI_Comm & cartcomm,
-                     int * ncoords );
-
-  /**
-   * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
-   * @param bufferSize The distance.
-   */
-  void setContactGhostRange( const real64 bufferSize );
-
+                     int * ncoords ) override;
 
   /// Locations of partition boundaries
   array1d< real64 > m_PartitionLocations[3];
@@ -139,16 +132,6 @@ private:
   /// Length of partition dimensions (excluding ghost objects).
   real64 m_blockSize[3];
 
-
-  /**
-   * @brief Ghost position (min).
-   */
-  real64 m_contactGhostMin[3];
-
-  /**
-   * @brief Ghost position (max).
-   */
-  real64 m_contactGhostMax[3];
 
   /// number of partitions
   array1d< int > m_Partitions;

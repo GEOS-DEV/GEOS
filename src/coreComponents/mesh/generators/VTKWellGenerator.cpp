@@ -64,9 +64,7 @@ void VTKWellGenerator::fillPolylineDataStructure( )
     globalIndex ipoint = 0;
     for( vtkIdType c = 0; c < points->GetNumberOfPoints(); ++c, ++ipoint )
     {
-      real64 point[3];
-      points->GetPoint( c, point );
-      LvArray::tensorOps::copy< 3 >( m_polyNodeCoords[ipoint], point );
+      points->GetPoint( c, m_polyNodeCoords[ipoint] );
     }
 
     GEOS_ERROR_IF( polyData->GetLines()->GetNumberOfCells() == 0, GEOS_FMT( "{}: Error! Your VTK file {} doesn't contain any well",
