@@ -1039,10 +1039,6 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
       }
     }
   }
-  for( integer i=0; i<m_globalElementIndex.size(); i++ )
-  {
-    GEOS_LOG_RANK_0( "tjb finstat "<< i << " " << m_globalElementIndex[i] << " " << m_wellElementStatus[i] );
-  }
 }
 
 }  // namespace geos

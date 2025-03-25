@@ -1096,6 +1096,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const & time,
                                                      arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR(time);
 
   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )
@@ -1691,7 +1692,8 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
                                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR(time_n);
+  
   forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames )

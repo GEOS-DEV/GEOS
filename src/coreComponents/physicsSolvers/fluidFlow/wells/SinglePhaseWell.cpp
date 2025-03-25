@@ -438,7 +438,8 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
                                     arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR(time_n);
+  
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
