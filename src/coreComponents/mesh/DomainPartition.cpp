@@ -76,7 +76,7 @@ std::vector< NeighborCommunicator > & DomainPartition::getNeighbors()
  * @return Container of communicators.
  */
 std::vector< NeighborCommunicator > const & DomainPartition::getNeighbors() const
-{ return getPartition().getNeighbors(); };
+{ return getPartition().getNeighbors(); }
 
 
 void DomainPartition::initializationOrder( string_array & order )
