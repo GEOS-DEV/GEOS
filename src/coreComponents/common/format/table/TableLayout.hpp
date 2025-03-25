@@ -104,8 +104,8 @@ public:
     CellLayout( CellType cellType, TableLayout::Alignment alignment );
 
     /**
-     * @param inputText The view on the text of the cell. `m_lines` will contain each separated lines, and
-     *                  `m_cellWidth`, the maximum line width. Called automatically by PreparedTableLayout.
+     * @param value The view on the text of the cell. `m_lines` will contain each separated lines, and
+     *              `m_cellWidth`, the maximum line width. Called automatically by PreparedTableLayout.
      * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
      */
     void prepareLayout( string_view value, size_t maxLineWidth );
@@ -121,7 +121,7 @@ public:
     /// Alias for the list of columns.
     using ColumnsList = std::vector< Column >;
 
-    // The text of the header.
+    /// The text of the header.
     string m_headerStr;
     /// The header cell layout (view on m_headerStr).
     CellLayout m_headerLayout;
@@ -131,20 +131,22 @@ public:
     ColumnAlignement m_alignment;
 
     /**
-     * @brief Default constructor.
-     * Initializes a column with default values.
+     * @brief Construct a default column with no parameter (must be configurated).
      */
     Column();
 
     /**
-     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
+     * @brief Construct a default column with minimal parameters.
+     * @param name The name of the Column (stored in m_headerStr).
      */
     explicit Column( string_view name ):
       Column( name, ColumnAlignement() )
     {}
 
     /**
-     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
+     * @brief Construct a default column with minimal parameters.
+     * @param name The name of the Column (stored in m_headerStr).
+     * @param alignment The alignment setting of the column header and values.
      */
     Column( string_view name, ColumnAlignement alignment );
 
@@ -644,6 +646,7 @@ public:
    *        For now, called automatically at TableFormatter construction.
    * @note If an error happen while this process, it must output the table name and the error
    *       message in a GEOS_WARNING().
+   * @param other The table layout configuration.
    */
   PreparedTableLayout( TableLayout const & other );
 
