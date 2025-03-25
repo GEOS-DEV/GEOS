@@ -672,31 +672,21 @@ public:
    * @return The number of visible columns that does not contain child (useful to know the maximum number of
    *         column to show in a given row).
    */
-  size_t getLowermostColumnsCount() const
-  { return m_lowermostColumnCount; }
+  size_t getVisibleLowermostColumnCount() const
+  { return m_visibleLowermostColumnCount; }
 
   /**
    * @return The number columns that does not contain child (useful to know the maximum number of
    *         column to show in a given row).
    */
-  size_t getTotalLowermostColumnsCount() const
+  size_t getTotalLowermostColumnCount() const
   { return m_totalLowermostColumnCount; }
-
-  inline size_t getTableWidthInStep() const
-  {
-    size_t width = 0;
-    for( auto const & column : m_tableColumns )
-    {
-      width += column.m_headerLayout.m_cellWidth;
-    }
-    return width;
-  }
 
 private:
 
   size_t m_columnLayersCount;
   size_t m_totalLowermostColumnCount;
-  size_t m_lowermostColumnCount;
+  size_t m_visibleLowermostColumnCount;
 
   /**
    * @brief Recursive part of column layout preparation, see constructor documentation.

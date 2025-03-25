@@ -680,25 +680,34 @@ TEST( testTable, tableMismatchingHeaderData )
                                   "Next\nelement"} );
 
   TableData tableData;
-  tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0, 53 );
+  tableData.addRow( "value1", "[30.21543]", "3.0", 51, 45, 53 );
+  tableData.addRow( "value2", "[30.21543]", "3.0", 52, 123 );
+  tableData.addRow( "value3", "[30]", "4", 53 );
+  tableData.addRow( "value4", "[30.21543]", "3.0", 54, 412, 53, 7, 5 );
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "-------------------------------------------------------------------------------------------------------------------------------------------------\n"
-             "|                                                     InternalWellGenerator well_injector1                                                      |\n"
-             "|-----------------------------------------------------------------------------------------------------------------------------------------------|\n"
-             "|                           Duis fringilla, ligula sed porta fringilla,                            |  CordX  |  CoordZ  |   Prev    |   Next    |\n"
-             "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |         |          |  element  |  element  |\n"
-             "|--------------------------------------------------------------------------------------------------|---------|----------|-----------|-----------|\n"
-             "|                                     Warning : One or more data lines are not equal to the number of headers                                   |\n"
-             "------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "|                                                        InternalWellGenerator well_injector1                                                        |\n"
+             "|----------------------------------------------------------------------------------------------------------------------------------------------------|\n"
+             "|                           Duis fringilla, ligula sed porta fringilla,                            |    CordX     |  CoordZ  |   Prev    |   Next    |\n"
+             "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |              |          |  element  |  element  |\n"
+             "|--------------------------------------------------------------------------------------------------|--------------|----------|-----------|-----------|\n"
+             "|                                                                                          value1  |  [30.21543]  |     3.0  |       51  |       45  |\n"
+             "|                                                                                          value2  |  [30.21543]  |     3.0  |       52  |      123  |\n"
+             "|                                                                                          value3  |        [30]  |       4  |       53  |           |\n"
+             "|                                                                                          value4  |  [30.21543]  |     3.0  |       54  |      412  |\n"
+             "------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "|                                      Warning : One or more data lines are not equal to the number of headers                                       |\n"
+             "|                                                           Data can be missing/misaligned                                                           |\n"
+             "------------------------------------------------------------------------------------------------------------------------------------------------------\n"
              );
 }
 
-TEST( testTable, tableHiddenError )
+TEST( testTable, tableHideSubColumn )
 {
-  TableLayout const tableLayout( "Title table",{
+  TableLayout const tableLayout( "Title table", {
     TableLayout::Column()
       .setName( "Cras egestas" )
       .setHeaderAlignment( TableLayout::Alignment::center ),
@@ -721,19 +730,23 @@ TEST( testTable, tableHiddenError )
 
 
   TableData tableData;
-  tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0, 53 );
+  tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0, 3 );
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "-------------------------------------------------------------------------------------------------------------------------------------------------\n"
-             "|                                                     InternalWellGenerator well_injector1                                                      |\n"
-             "|-----------------------------------------------------------------------------------------------------------------------------------------------|\n"
-             "|                           Duis fringilla, ligula sed porta fringilla,                            |  CordX  |  CoordZ  |   Prev    |   Next    |\n"
-             "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |         |          |  element  |  element  |\n"
-             "|--------------------------------------------------------------------------------------------------|---------|----------|-----------|-----------|\n"
-             "|                                     Warning : One or more data lines are not equal to the number of headers                                   |\n"
-             "-------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "------------------------------------------\n"
+             "|              Title table               |\n"
+             "|----------------------------------------|\n"
+             "|  Cras egestas  |  Prev     |   Next    |\n"
+             "|                |  element  |  element  |\n"
+             "|----------------|-----------|-----------|\n"
+             "|        value1  |           |           |\n"
+             "------------------------------------------\n"
+             "|  Warning : One or more data lines are  |\n"
+             "|   not equal to the number of headers   |\n"
+             "|     Data can be missing/misaligned     |\n"
+             "------------------------------------------\n"
              );
 }
 

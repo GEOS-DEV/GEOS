@@ -246,14 +246,14 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
 PreparedTableLayout::PreparedTableLayout(  ):
   TableLayout(),
   m_columnLayersCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_visibleLowermostColumnCount( 0 )
 {}
 
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),
   m_totalLowermostColumnCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_visibleLowermostColumnCount( 0 )
 {
   prepareLayoutRecusive( m_tableColumns, 0 );
 
@@ -263,13 +263,14 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
                                                  size_t level )
 {
-  if( columns[0].m_headerLayout.m_cellType != CellType::Hidden )
-  {
-    m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
-  }
+
 
   for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
+
+    if( columns[idxColumn].isVisible())
+      m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
+
     Column & column = columns[idxColumn];
     CellType cellType = column.m_headerLayout.m_cellType;
 
@@ -278,7 +279,7 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
       ++m_totalLowermostColumnCount;
       if( cellType!= CellType::Hidden )
       {
-        ++m_lowermostColumnCount;
+        ++m_visibleLowermostColumnCount;
       }
     }
 
@@ -297,7 +298,7 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
         subCol.setVisibility( subCol.isVisible() && column.isVisible() );
       }
 
-      prepareLayoutRecusive( column.m_subColumns, level + 1);
+      prepareLayoutRecusive( column.m_subColumns, level + 1 );
 
     }
   }

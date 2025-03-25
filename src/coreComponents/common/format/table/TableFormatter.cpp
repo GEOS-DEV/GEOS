@@ -186,8 +186,6 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
 
   // only after all cells that are not merge, we can process the merged cells.
   stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
-  if( !getErrorsList().errors.empty())
-    stretchColumnsByMergedCellsWidth( columnsWidth, getErrorsList().errors, tableLayout, true );
   stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
 
   // the columns width array is now sized after all the table, we can compute the total table width
@@ -200,9 +198,15 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
 
   // we can now propagate the columns width width to all cells
   applyColumnsWidth( columnsWidth, headerCellsLayout, tableLayout );
-  if( !getErrorsList().errors.empty())
-    applyColumnsWidth( columnsWidth, getErrorsList().errors, tableLayout );
   applyColumnsWidth( columnsWidth, dataCellsLayout, tableLayout );
+
+  if( !getErrorsList().errors.empty())
+  {
+    stretchColumnsByCellsWidth( columnsWidth, getErrorsList().errors );
+    stretchColumnsByMergedCellsWidth( columnsWidth, getErrorsList().errors, tableLayout, true );
+    applyColumnsWidth( columnsWidth, getErrorsList().errors, tableLayout );
+
+  }
 }
 
 void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
@@ -215,14 +219,14 @@ void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & t
 
     // the title row consists in a row of cells merging with the last cell containing the title text
     headerCellsLayout.emplace_back() = {
-      std::vector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+      std::vector< TableLayout::CellLayout >( tableLayout.getVisibleLowermostColumnCount(),
                                               TableLayout::CellLayout( CellType::MergeNext ) ), // cells
       titleInput.m_lines.size(), // sublinesCount
     };
     headerCellsLayout.back().cells.back() = titleInput;
 
     headerCellsLayout.emplace_back() = {
-      std::vector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+      std::vector< TableLayout::CellLayout >( tableLayout.getVisibleLowermostColumnCount(),
                                               TableLayout::CellLayout( CellType::Separator ) ), // cells
       1, // sublinesCount
     };
@@ -237,7 +241,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   // Number of lines per header layer.
   size_t const columnsLayersCount = tableLayout.getColumnLayersCount();
   // number of visible data columns (we fit the number of data columns if no column layout has been specified)
-  size_t const lowermostColumnsCount = tableLayout.getLowermostColumnsCount();
+  size_t const lowermostColumnsCount = tableLayout.getVisibleLowermostColumnCount();
   // Number of rows in headerCellsLayout by taking into account title & separators lines
   size_t const headerRowsCount = ( columnsLayersCount ) * 2;
   // lambda to get the header row id in the headerCellsLayout: [title -> separator ->] column layer 0 ->  separator -> ... -> column layer
@@ -315,30 +319,37 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     inputDataValues.size(),
     {
       std::vector< TableLayout::CellLayout >( nbVisibleColumn, TableLayout::CellLayout() ), // cells
-      0 // sublinesCount
+      1 // sublinesCount
     }
   };
 
-  for( auto const & columnsData : inputDataValues )
-  {
-    if( columnsData.size() != tableLayout.getTotalLowermostColumnsCount())
-    {
-      getErrorsList().addError( "Warning : One or more data lines are not equal to the number of headers",
-                                nbVisibleColumn );
-      return;
-    }
-  }
-
+  bool errorInData = false;
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
   {
     CellLayoutRow & outputRow = dataCellsLayout[idxRow];
     size_t maxLinesInRow = 0;
     size_t idxInputColumn = 0;
     size_t idxOutputColumn = 0;
+
+    // data input malformed
+    if( !errorInData &&  tableLayout.getTotalLowermostColumnCount() != inputDataValues[idxRow].size())
+    {
+      getErrorsList().addError( "Warning : One or more data lines are not equal to the number of headers\nData can be missing/misaligned",
+                                nbVisibleColumn );
+      errorInData = true;
+    }
+
     for( auto columnIt = tableLayout.beginDeepFirst(); columnIt != tableLayout.endDeepFirst(); ++columnIt )
     {
-      if( !columnIt->hasChild())
-      {   // we take into account only the (enabled) headers that are the nearest to the data
+      if( !columnIt->hasChild() )
+      { // we take into account only the (enabled) headers that are the nearest to the data
+
+        // data input too large, cut and continue
+        if( idxInputColumn > inputDataValues[idxRow].size() - 1)
+        {
+          continue;
+        }
+
         if( columnIt->m_headerLayout.m_cellType != CellType::Hidden )
         {
           TableData::CellData const & inputCell = inputDataValues[idxRow][idxInputColumn];
@@ -371,8 +382,8 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
   dataCellsLayout = std::vector< CellLayoutRow >{
     inputDataValues.size(),
     {
-      std::vector< TableLayout::CellLayout >( nbColumns, TableLayout::CellLayout() ), // cells
-      0 // sublinesCount
+      std::vector< TableLayout::CellLayout >( nbColumns, TableLayout::CellLayout() ),   // cells
+      1   // sublinesCount
     }
   };
   TableLayout::ColumnAlignement const defaultAlignment;
@@ -439,7 +450,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
       bool const isContentCell = cell.m_cellType != CellType::MergeNext;
       bool const isLastToMerge = columnId > 0 && tableGrid[rowId].cells[columnId-1].m_cellType == CellType::MergeNext;
       if( isContentCell && isLastToMerge )
-      { // detected cells to merge, accumulating content width & column number & space
+      {   // detected cells to merge, accumulating content width & column number & space
         size_t mergedCellsWidth = cell.m_cellWidth;
         size_t mergedColumnsWidth = columnsWidth[columnId] + flexSpaces[columnId];
         size_t mergedCellsCount = 1;
@@ -456,7 +467,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
 
         integer const overflowingWidth = mergedCellsWidth - mergedColumnsWidth;
         if( overflowingWidth > 0 )
-        { // if the merged content width exceeds the available columns width, we balance the resizing over all cells.
+        {   // if the merged content width exceeds the available columns width, we balance the resizing over all cells.
           auto [stretchPerColumn, remainingStretch] = std::div( overflowingWidth, mergedCellsCount );
           for( size_t mergedId = size_t( columnId - mergedCellsCount + 1 ); mergedId <= columnId; ++mergedId )
           {
@@ -465,7 +476,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
           }
         }
         else
-        { //if not overflowing, it means the merged cell needs to be stretch to fit the available column space.
+        {   //if not overflowing, it means the merged cell needs to be stretch to fit the available column space.
           cell.m_cellWidth += size_t( -overflowingWidth );
         }
       }
@@ -487,7 +498,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
         bool const isToMergeWithLeft = columnId > 0 && leftCell.m_cellType == CellType::MergeNext;
         bool const isFirstToMerge = isToMergeWithRight && !isToMergeWithLeft;
         if( isFirstToMerge )
-        { // we detected a set of cells to merge, let's compute its total width
+        {   // we detected a set of cells to merge, let's compute its total width
           size_t mergedColumnsWidth = currentColumnWidth;
           for( size_t mergedId = columnId + 1; mergedId < numColumns; mergedId++ )
           {
@@ -505,12 +516,12 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
           }
         }
         else if( isToMergeWithLeft )
-        { // to prevent any side effects, we only shrink columns at the left of a merge
+        {   // to prevent any side effects, we only shrink columns at the left of a merge
           oversize = 0;
           break;
         }
         else
-        { // no merge here, so any flexible space may be unnecessary
+        {   // no merge here, so any flexible space may be unnecessary
           integer const potentialOversize = flexSpaces[columnId];
           oversize = std::min( oversize, potentialOversize );
         }
@@ -585,13 +596,13 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
     for( CellLayoutRow & errorLayout : errorsList )
     {
       TableLayout::CellLayout & errorConfig = errorLayout.cells[errorLayout.cells.size() - 1];
-      size_t maxSize =  tableLayout.getTableWidthInStep();
-      errorConfig.m_lines = stringutilities::wrapTextToMaxLength( errorConfig.m_lines,
-                                                                  maxSize );
-      errorConfig.m_cellWidth = maxSize + tableLayout.getBorderMargin() * 2;
+      size_t tableWidth = errorConfig.m_cellWidth;
+      errorConfig.prepareLayout( errorConfig.m_lines[0], errorConfig.m_cellWidth );
+      errorConfig.m_cellWidth = tableWidth;
       errorLayout.sublinesCount = errorConfig.m_lines.size();
     }
 
+    tableOutput << sepLine << '\n';
     outputLines( tableLayout, errorsList, tableOutput );
   }
 
@@ -666,12 +677,12 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
           char const cellSpaceChar = isSeparator ? m_horizontalLine : ' ';
 
           if( isLeftBorderCell )
-          { // left table border
+          {   // left table border
             isLeftBorderCell=false;
             tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
           }
           else
-          { // left side of a cell that have a neightboor
+          {   // left side of a cell that have a neightboor
             tableOutput << string( nbColumnSpaces, cellSpaceChar );
           }
 
@@ -679,7 +690,7 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
           formatCell( tableOutput, cell, idxSubLine );
 
           if( !isRightBorderCell )
-          { // right side of a cell that have a neightboor
+          {   // right side of a cell that have a neightboor
             bool const isNextSeparator = row.cells[idxColumn + 1].m_cellType == CellType::Separator;
             bool const upMerged = idxRow > 0 && rows[idxRow - 1].cells[idxColumn].m_cellType == CellType::MergeNext;
             bool const downMerged = idxRow < nbRows - 1 && rows[idxRow + 1].cells[idxColumn].m_cellType == CellType::MergeNext;
@@ -688,7 +699,7 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
                              m_horizontalLine : m_verticalLine );
           }
           else
-          { // right table border
+          {   // right table border
             tableOutput << string( nbBorderSpaces, cellSpaceChar ) << m_verticalLine << "\n";
           }
         }

@@ -50,14 +50,33 @@ public:
 
   struct ErrorListing
   {
+    /// View on cell error grouping the cell information to display at the end of the table
     CellLayoutRows errors;
+    /// Contain all the errors
+    std::vector< string > errorText;
 
+    /**
+     * @brief Add an error that will be display at the end of the table
+     * @param text The string error to display.
+     * @param nbCells The numbers cells that must be equal to the number of a CellLayoutRow
+     * present in headerCellsLayout or dataCellsLayout
+     */
     void addError( string_view text, size_t nbCells );
+
+    /**
+     * @return true if an error has already been added
+     */
     bool errorRowExists();
-    void clear(); // at TableFormatter::toString() start
+    
+    /**
+     * @brief Clear all error at the beginning of the formatter
+     */
+    void clear(); 
   };
 
-
+  /**
+   * @return The Errors List object
+   */
   ErrorListing & getErrorsList() const
   { return *m_errors; }
 
