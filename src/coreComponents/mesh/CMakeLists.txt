@@ -88,7 +88,6 @@ set( mesh_headers
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
      generators/ParticleMeshGenerator.hpp
-     generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
      generators/Region.hpp
      generators/WellGeneratorBase.hpp
