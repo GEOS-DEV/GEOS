@@ -75,6 +75,14 @@ public:
   int numColor() const
   { return m_numColors; }
 
+
+  std::vector< NeighborCommunicator > & getNeighbors()
+  { return m_neighbors; };
+
+  std::vector< NeighborCommunicator > const & getNeighbors() const
+  { return m_neighbors; };
+
+
 protected:
   /**
    * @brief Preventing dummy default constructor.
