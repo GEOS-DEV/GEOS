@@ -388,7 +388,7 @@ computeCompressibilityFactor( integer const numComps,
                               arraySlice1d< real64 const, USD > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               real64 const & salinity,
-                              real64 const & compressibilityFactor,
+                              real64 & compressibilityFactor,
                               arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
   integer constexpr numMaxDofs = maxNumComps + 2;
@@ -428,7 +428,16 @@ computeCompressibilityFactor( integer const numComps,
                               aMixtureCoefficientDerivs,    // output
                               bMixtureCoefficientDerivs );
 
-  // 2. Calculate derivatives
+  // 2.1: Update the compressibility factor
+  computeCompressibilityFactor( numComps,
+                                pressure,
+                                temperature,
+                                composition,
+                                componentProperties,
+                                salinity,
+                                compressibilityFactor );
+
+  // 2.2: Calculate derivatives
   CubicModel::computeCompressibilityFactor( numComps,
                                             aMixtureCoefficient,
                                             bMixtureCoefficient,

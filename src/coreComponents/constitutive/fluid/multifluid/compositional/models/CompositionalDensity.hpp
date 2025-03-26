@@ -27,6 +27,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CompositionalProperties.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp"
 
 namespace geos
 {
@@ -67,6 +68,7 @@ public:
                                 arraySlice1d< real64 const, USD > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 EquationOfStateType const equationOfState,
+                                real64 const & salinity,
                                 real64 & compressibilityFactor,
                                 arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
@@ -139,6 +141,7 @@ void CompositionalDensityUpdate::compute(
                                 phaseComposition,
                                 componentProperties,
                                 m_equationOfState,
+                                0.0,
                                 compressibilityFactor,
                                 tempDerivs.toSlice() );
 
@@ -169,6 +172,7 @@ void CompositionalDensityUpdate::computeCompressibilityFactor( integer const num
                                                                arraySlice1d< real64 const, USD > const & composition,
                                                                ComponentProperties::KernelWrapper const & componentProperties,
                                                                EquationOfStateType const equationOfState,
+                                                               real64 const & salinity,
                                                                real64 & compressibilityFactor,
                                                                arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
@@ -191,6 +195,18 @@ void CompositionalDensityUpdate::computeCompressibilityFactor( integer const num
                                   temperature,
                                   composition,
                                   componentProperties,
+                                  compressibilityFactor,
+                                  compressibilityFactorDerivs );
+  }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
+    computeCompressibilityFactor( numComps,
+                                  pressure,
+                                  temperature,
+                                  composition,
+                                  componentProperties,
+                                  salinity,
                                   compressibilityFactor,
                                   compressibilityFactorDerivs );
   }

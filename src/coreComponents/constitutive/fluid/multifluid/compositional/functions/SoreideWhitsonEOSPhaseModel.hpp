@@ -215,14 +215,14 @@ struct SoreideWhitsonEOSPhaseModel
                                 real64 & compressibilityFactor );
 
   /**
-   * @brief Compute compressibility factor derivatives
+   * @brief Compute compressibility factor and derivatives
    * @details Computes the compressibility factor (z-factor) for the cubic EOS model including derivatives
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
-   * @param[in] compressibilityFactor the current compressibility factor
+   * @param[out] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
   template< integer USD >
@@ -234,7 +234,7 @@ struct SoreideWhitsonEOSPhaseModel
                                 arraySlice1d< real64 const, USD > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 real64 const & salinity,
-                                real64 const & compressibilityFactor,
+                                real64 & compressibilityFactor,
                                 arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**

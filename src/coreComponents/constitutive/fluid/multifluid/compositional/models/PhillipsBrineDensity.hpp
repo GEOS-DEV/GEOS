@@ -43,6 +43,7 @@ class PhillipsBrineDensityUpdate final : public FunctionBaseUpdate
 public:
   PhillipsBrineDensityUpdate( TableFunction const & brineVolumeShiftTable,
                               integer const waterIndex,
+                              real64 const salinity,
                               real64 const brineMolarWeight,
                               EquationOfStateType const equationOfState );
 
@@ -73,6 +74,9 @@ protected:
 
   /// The brine molecular weight
   real64 const m_brineMolarWeight;
+
+  /// The salinity
+  real64 const m_salinity{0.0};
 
   /// Equation of state for the density correction
   EquationOfStateType const m_equationOfState;
@@ -126,6 +130,7 @@ private:
                                             arraySlice1d< real64 const > const & temperatureCoords,
                                             ComponentProperties const & componentProperties,
                                             EquationOfStateType const equationOfState,
+                                            real64 const salinity,
                                             integer const waterIndex,
                                             arraySlice1d< real64 > const & molarVolume );
 
@@ -145,6 +150,9 @@ private:
 
   /// Equation of state for the density correction
   EquationOfStateType m_equationOfState;
+
+  /// The salinity
+  real64 m_salinity{0.0};
 
   /// The brine molecular weight
   real64 m_brineMolarWeight;
@@ -184,6 +192,7 @@ void PhillipsBrineDensityUpdate::compute(
                                                             phaseComposition,
                                                             componentProperties,
                                                             m_equationOfState,
+                                                            m_salinity,
                                                             compressibilityFactor,
                                                             dCompressibilityFactor );
 
