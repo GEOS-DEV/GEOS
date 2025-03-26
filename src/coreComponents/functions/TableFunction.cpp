@@ -458,7 +458,9 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                        setHeaderAlignment( TableLayout::Alignment::left );
   if( !m_tableLayout.getColumns().empty() )
   { // concatainating description parent column if existing
-    parentColumn.m_header.m_text += '\n' + m_tableLayout.getColumns()[0].m_header.m_text;
+    parentColumn.m_header.setText( GEOS_FMT( "{}\n{}",
+                                             parentColumn.m_header.getText(),
+                                             m_tableLayout.getColumns()[0].m_header.getText() ) );
   }
 
   string logOutput;

@@ -82,21 +82,21 @@ bool TableLayout::isLineBreakEnabled() const
 { return m_lineBreakAtBegin; }
 
 TableLayout::CellLayout::CellLayout():
-  m_cellWidth( 0 ),
   m_cellType( CellType::Header ),
-  m_alignment( TableLayout::Alignment::center )
+  m_alignment( TableLayout::Alignment::center ),
+  m_cellWidth( 0 )
 {}
 
 TableLayout::CellLayout::CellLayout( CellType const cellType ):
-  m_cellWidth( 0 ),
   m_cellType( cellType ),
-  m_alignment( TableLayout::Alignment::center )
+  m_alignment( TableLayout::Alignment::center ),
+  m_cellWidth( 0 )
 {}
 
 TableLayout::CellLayout::CellLayout( CellType type, TableLayout::Alignment alignment ):
-  m_cellWidth( 0 ),
   m_cellType( type ),
-  m_alignment( alignment )
+  m_alignment( alignment ),
+  m_cellWidth( 0 )
 {}
 
 TableLayout::Cell::Cell():
@@ -114,6 +114,50 @@ TableLayout::Cell::Cell( CellType cellType, TableLayout::Alignment alignment, st
   m_text( value )
 {}
 
+TableLayout::Cell::Cell( TableLayout::Cell const & other ):
+  Cell()
+{ *this = other; }
+
+TableLayout::Cell::Cell( TableLayout::Cell && other ):
+  Cell()
+{ *this = other; }
+
+TableLayout::Cell & TableLayout::Cell::operator=( TableLayout::Cell const & other )
+{
+  if( this != &other )
+  {
+    if( !m_layout.getLines().empty() || !other.m_layout.getLines().empty() )
+      throw std::runtime_error( "Cannot copy from a Cell after its layout has been prepared." );
+
+    m_layout.m_cellType = other.m_layout.m_cellType;
+    m_layout.m_alignment = other.m_layout.m_alignment;
+    m_text = other.m_text;
+  }
+  return *this;
+}
+
+TableLayout::Cell & TableLayout::Cell::operator=( TableLayout::Cell && other )
+{
+  if( this != &other )
+  {
+    if( !m_layout.getLines().empty() || !other.m_layout.getLines().empty() )
+      throw std::runtime_error( "Cannot move from a Cell after its layout has been prepared." );
+
+    m_layout.m_cellType = other.m_layout.m_cellType;
+    m_layout.m_alignment = other.m_layout.m_alignment;
+    m_text = std::move( other.m_text );
+  }
+  return *this;
+}
+
+void TableLayout::Cell::setText( string_view text )
+{
+  if( !m_layout.getLines().empty() )
+    throw std::runtime_error( "Cannot reassign Cell text after its layout has been prepared." );
+
+  m_text = text;
+}
+
 TableLayout::Column::Column():
   m_header( CellType::Header, defaultHeaderAlignment )
 {}
@@ -125,7 +169,7 @@ TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement ali
 
 TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
-  m_header.m_text = name;
+  m_header.setText( name );
   return *this;
 }
 
