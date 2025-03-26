@@ -209,7 +209,7 @@ TableLayout::DeepFirstIterator & TableLayout::DeepFirstIterator::operator++()
     while( m_currentColumn->hasChild() )
     {
       m_currentLayer++;
-      m_currentColumn = &m_currentColumn->m_subColumns[0];
+      m_currentColumn = &m_currentColumn->m_subColumns.front();
     }
   }
   else
@@ -237,7 +237,7 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
     while( startColumn->hasChild() )
     {
       idxLayer++;
-      startColumn = &startColumn->m_subColumns[0];
+      startColumn = &startColumn->m_subColumns.front();
     }
   }
   return DeepFirstIterator( startColumn, idxLayer );
@@ -263,7 +263,6 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
                                                  size_t level )
 {
-
 
   for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {

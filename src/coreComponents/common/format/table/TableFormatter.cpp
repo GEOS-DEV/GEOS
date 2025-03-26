@@ -213,7 +213,7 @@ void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & t
                                                    CellLayoutRows & headerCellsLayout ) const
 {
   TableLayout::CellLayout const & titleInput = tableLayout.getTitleLayout();
-  if( !titleInput.m_lines.empty() && !titleInput.m_lines[0].empty() )
+  if( !titleInput.m_lines.empty() && !titleInput.m_lines.front().empty() )
   { // if it exists, we add the title, as a first row with all cells merged in one containing the title text
     headerCellsLayout.reserve( headerCellsLayout.size() + 2 );
 
@@ -378,7 +378,7 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
                                                   CellLayoutRows & dataCellsLayout,
                                                   RowsCellInput const & inputDataValues ) const
 {
-  size_t const nbColumns = !inputDataValues.empty() ? inputDataValues[0].size() : 0;
+  size_t const nbColumns = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
   dataCellsLayout = std::vector< CellLayoutRow >{
     inputDataValues.size(),
     {
@@ -413,11 +413,11 @@ void TableTextFormatter::stretchColumnsByCellsWidth( std::vector< size_t > & col
                                                      TableFormatter::CellLayoutRows const & tableGrid ) const
 {
   // first, we reduce by column all regular cells in the first row.
-  size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].cells.size();
+  size_t const numColumns = tableGrid.empty() ? 0 : tableGrid.front().cells.size();
   for( TableFormatter::CellLayoutRow const & currentRow : tableGrid )
   {
     auto const & rowCells = currentRow.cells;
-    if( rowCells[0].m_cellType != CellType::Separator )
+    if( rowCells.front().m_cellType != CellType::Separator )
     {
       for( size_t columnId = 0; columnId < numColumns; columnId++ )
       {
@@ -438,7 +438,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
 {
   // To get consistent results, we must process column by column.
   size_t const numRows = tableGrid.size();
-  size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].cells.size();
+  size_t const numColumns = tableGrid.empty() ? 0 : tableGrid.front().cells.size();
   size_t const spaceBetweenColumns = size_t( tableLayout.getColumnMargin() );
   std::vector< size_t > flexSpaces = std::vector< size_t >( columnsWidth.size(), 0 );
 
@@ -542,7 +542,7 @@ void TableTextFormatter::applyColumnsWidth( std::vector< size_t > const & column
                                             PreparedTableLayout const & tableLayout ) const
 {
   size_t const numRows = tableGrid.size();
-  size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].cells.size();
+  size_t const numColumns = tableGrid.empty() ? 0 : tableGrid.front().cells.size();
   size_t const spaceBetweenColumns = size_t( tableLayout.getColumnMargin() );
   for( size_t rowId = 0; rowId < numRows; rowId++ )
   {
@@ -590,14 +590,14 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
     outputLines( tableLayout, dataCellsLayout, tableOutput );
   }
 
-  if( getErrorsList().errorRowExists())
+  if( getErrorsList().errorRowExists()) //fonction dédié outputErros
   {
     CellLayoutRows & errorsList = getErrorsList().errors;
     for( CellLayoutRow & errorLayout : errorsList )
     {
       TableLayout::CellLayout & errorConfig = errorLayout.cells[errorLayout.cells.size() - 1];
       size_t tableWidth = errorConfig.m_cellWidth;
-      errorConfig.prepareLayout( errorConfig.m_lines[0], errorConfig.m_cellWidth );
+      errorConfig.prepareLayout( errorConfig.m_lines.front(), errorConfig.m_cellWidth );
       errorConfig.m_cellWidth = tableWidth;
       errorLayout.sublinesCount = errorConfig.m_lines.size();
     }
@@ -656,7 +656,7 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
                                       std::ostringstream & tableOutput ) const
 {
   size_t const nbRows = rows.size();
-  size_t const nbColumns = !rows.empty() ? rows[0].cells.size() : 0;
+  size_t const nbColumns = !rows.empty() ? rows.front().cells.size() : 0;
   size_t const nbBorderSpaces = tableLayout.getBorderMargin();
   size_t const nbColumnSpaces = ( tableLayout.getColumnMargin() - 1 ) / 2;
 

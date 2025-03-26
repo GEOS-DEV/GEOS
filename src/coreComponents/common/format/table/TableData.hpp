@@ -86,6 +86,8 @@ private:
 
   /// vector containing all rows with cell values
   std::vector< std::vector< CellData > > m_rows;
+  /// Indicate whether the data are consistent or not
+  bool m_areDataConsistent = true;
 
 };
 
@@ -109,6 +111,8 @@ public:
     std::vector< string > headerNames;
     /// TableData to be built
     TableData tableData;
+    /// 
+    bool areDataConsistent;
   };
 
   /**
@@ -127,8 +131,9 @@ public:
    * @param dim1AxisCoordinates Vector containing all column axis values
    * @param values Array containing all table values contiguously
    * @param columnMajorValues Set the row/column major convention
+   * @return true if all data are set are consisted, false otherwise
    */
-  void collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
+  bool collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
                            arraySlice1d< real64 const > dim1AxisCoordinates,
                            arrayView1d< real64 const > values,
                            bool columnMajorValues );
@@ -154,12 +159,14 @@ public:
    * @param dataDescription The table dataDescription shown at the top left side
    * @param rowFmt The y axis units of the table.
    * @param columnFmt  The x axis units of the table.
+   * @param isDataConsistent Indicate in the tableDataHolder whether the data are consistent or not
    * @note The rows and columns FMT can be customized. The bracket "{}" will be replaced by the axis value.
    * By default it displays the axis value.
    * I.E to display a customized axis to show the pressures in y axis, a rowFmt value can be : "pressure [K] = {}"
    */
   TableDataHolder buildTableData( string_view dataDescription,
-                                  string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
+                                  string_view rowFmt = "{}", string_view columnFmt = "{}",
+                                  bool isDataConsistent = true) const;
 
 private:
   /// @brief all cell values by their [ row ][ column ]

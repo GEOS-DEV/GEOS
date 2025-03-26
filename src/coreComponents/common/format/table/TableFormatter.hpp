@@ -51,7 +51,7 @@ public:
   struct ErrorListing
   {
     /// View on cell error grouping the cell information to display at the end of the table
-    CellLayoutRows errors;
+    CellLayoutRows errors; //TODO à enlever
     /// Contain all the errors
     std::vector< string > errorText;
 

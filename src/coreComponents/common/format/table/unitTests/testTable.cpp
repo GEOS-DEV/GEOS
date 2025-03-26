@@ -18,6 +18,8 @@
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "dataRepository/Group.hpp"
+#include "common/DataTypes.hpp"
+#include "LvArray/src/MallocBuffer.hpp"
 // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
@@ -324,7 +326,6 @@ TEST( testTable, tableEmptyTitle )
 
 TEST( testTable, table2DTable )
 {
-  //collect
   TableData2D tableData;
 
   for( real64 p = 10000; p<20000; p+=5000 )
@@ -336,17 +337,14 @@ TEST( testTable, table2DTable )
     }
   }
 
-  //convert
   string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
   string const columnFmt = GEOS_FMT( "{} = {{}}", "Pressure" );
   TableData2D::TableDataHolder tableconverted = tableData.buildTableData( "Viscosity kg*s",
                                                                           rowFmt,
                                                                           columnFmt );
 
-  //format
   TableLayout const tableLayout( "", tableconverted.headerNames );
 
-  //log
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableconverted.tableData ),
              "\n"
@@ -705,7 +703,7 @@ TEST( testTable, tableMismatchingHeaderData )
              );
 }
 
-TEST( testTable, tableHideSubColumn )
+TEST( testTable, tableHiddeSubColumn )
 {
   TableLayout const tableLayout( "Title table", {
     TableLayout::Column()
@@ -748,6 +746,68 @@ TEST( testTable, tableHideSubColumn )
              "|     Data can be missing/misaligned     |\n"
              "------------------------------------------\n"
              );
+}
+
+
+TEST( testTable, tableZoup )
+{
+  TableData2D tableData2D;
+
+  // 1. Prepare values
+  real64 numRow = 5;
+  real64 numCol = 5;
+  array1d< real64 > values( 25 );
+  for( real64 p = 0; p< numRow; p+=1 )
+  {
+    // real64 randomDecrease = ( rand() % 5 );
+    for( real64 t = 0; t<numCol; t+=1 )
+    {
+      real64 value = t + p*numCol;
+      values[t + p*numCol]  = value;
+    }
+  }
+  arrayView1d< real64 const > const valuesConst = values;
+
+  // 1. Prepare coordinates
+  ArrayOfArrays< real64 > coordinates( 2, 6 );
+  std::array< real64, 4 > coordXValues = { 0, 1, 2, 3 };
+  std::array< real64, 4 > coordYValues = { 0, 1, 2, 3 };
+
+  coordinates.appendToArray( 0, coordXValues.begin(), coordXValues.begin() + coordXValues.size() );
+  coordinates.appendToArray( 1, coordYValues.begin(), coordYValues.begin() + coordYValues.size() );
+
+  ArrayOfArraysView< real64 const > constCoordinates = coordinates.toViewConst();
+
+  string const rowFmt = GEOS_FMT( "{}", "Temperature" );
+  string const columnFmt = GEOS_FMT( "{}", "Pressure" );
+
+  // 3. Convert
+  TableData2D::TableDataHolder tableConverted = tableData2D.convertTable2D( constCoordinates,
+                                                                            rowFmt,
+                                                                            columnFmt,
+                                                                            values,
+                                                                            true,
+                                                                            "T" );
+  // 4. Prepare table
+  TableLayout tableLayout;
+  tableLayout.addColumns( tableConverted.headerNames );
+  TableCSVFormatter const csvFormat( tableLayout );
+  csvFormat.toString( tableConverted.tableData );
+
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableConverted.tableData ),
+             "\n"
+             "---------------------------------------------------------------------\n"
+             "|   Viscosity kg*s    |  Pressure = 10000  |    Pressure = 15000    |\n"
+             "|---------------------|--------------------|------------------------|\n"
+             "|  Temperature = 300  |              0.03  |                  0.02  |\n"
+             "|  Temperature = 350  |             0.035  |  0.023333333333333334  |\n"
+             "|  Temperature = 400  |              0.04  |   0.02666666666666667  |\n"
+             "---------------------------------------------------------------------\n"
+             );
+
+  //todo version longue à faire  std::array< real64, 6 > coordXValues = { 0, 1, 2, 3,4,5 };
 }
 
 

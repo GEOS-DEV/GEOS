@@ -35,7 +35,7 @@ void TableData::addSeparator()
     GEOS_ERROR( "Bad use of a Tabledata::addSeparator(). Make sure you have added values in TableData" );
   }
 
-  integer rowSize = m_rows[0].size();
+  integer rowSize = m_rows.front().size();
   m_rows.emplace_back( std::vector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
 
 }
@@ -50,7 +50,7 @@ std::vector< std::vector< TableData::CellData > > const & TableData::getTableDat
   return m_rows;
 }
 
-void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
+bool TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
                                       arraySlice1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,
                                       bool columnMajorInputValues )
@@ -59,15 +59,31 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
   arraySlice1d< real64 const > columAxisCoordinates = columnMajorInputValues ? dim0AxisCoordinates : dim1AxisCoordinates;
   integer const nCol = columAxisCoordinates.size();
   integer const nRow = rowAxisCoordinates.size();
-  // TODO: 1. restore the table non-blocking error system. 2. add this assert 3. add any other error to it.
-  GEOS_ASSERT( nRow * nCol == values.size() );
+
+  bool isDataConsistent = true;
+
+  array1d< real64 > wellConstructValues( values.size() );
+
+  if( nRow * nCol != values.size())
+  {
+    isDataConsistent = false;
+    wellConstructValues = values;
+    if( nRow * nCol > values.size())
+    {
+      wellConstructValues.resizeDefault( nRow * nCol, 0 );
+    }
+  }
+
+
   for( integer y = 0; y < nRow; y++ )
   {
     for( integer x = 0; x < nCol; x++ )
     {
-      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], values[ x + y*nCol ] );
+      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], wellConstructValues[ x + y*nCol ] );
     }
   }
+
+  return isDataConsistent;
 }
 
 TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
@@ -79,13 +95,14 @@ TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< rea
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
-  collectTableValues( coordinates[0], coordinates[1], values, columnMajorValues );
-  return buildTableData( valueDescription, rowFmt, columnFmt );
+  bool isDataConsistent = collectTableValues( coordinates[0], coordinates[1], values, columnMajorValues );
+  return buildTableData( valueDescription, rowFmt, columnFmt, isDataConsistent );
 }
 
 TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit,
                                                           string_view rowFmt,
-                                                          string_view columnFmt ) const
+                                                          string_view columnFmt,
+                                                          bool isDataConsistent ) const
 {
   TableData2D::TableDataHolder tableData1D;
 
@@ -111,6 +128,9 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
       {
         currentRowValues.push_back( {CellType::Value, ""} );
       }
+      // float / double : voir ce qui se passe en cas de 1. NaN, 2. +-Inv, ou 3. autre nb non valide en IEEE 754
+      // voir pour detecter un nombre non valide, et insérer un texte adapté ("NaN", "+Inf", "-Inf", "Error")
+      // ajouter l'erreur au listing ("Some values are +Inf").
       currentRowValues.push_back( {CellType::Value, GEOS_FMT( "{}", cellValue )} );
     }
 
