@@ -494,11 +494,6 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
   {
     index = iterKeyLookup->second;
 
-    if( takeOwnership )
-    {
-      m_ownsValues[index] = true;
-    }
-
     // if value is empty, then move source into value slot
     if( m_values[index].second==nullptr )
     {
@@ -506,7 +501,7 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       m_constKeyValues[index].second = rawPtr( index );
       m_constValues[index].second = rawPtr( index );
     }
-    else
+    else // value was not empty
     {
       if( overwrite )
       {
@@ -523,9 +518,18 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else
       {
-        delete source;
+        GEOS_LOG( "MappedVector::insert(): Inserting with an existing key (" << keyName <<
+                  ") without overwrite flag. Existing object will NOT be deleted. "
+                  "Efforts should be made to avoid the redundant registrations, and this "
+                  "should be an changed to an error!" );
       }
     }
+
+    if( takeOwnership )
+    {
+      m_ownsValues[index] = true;
+    }
+
   }
 
   return &(*(m_values[index].second));
