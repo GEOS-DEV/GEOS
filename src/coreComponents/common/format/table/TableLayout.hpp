@@ -182,17 +182,32 @@ public:
     Cell( CellType cellType, TableLayout::Alignment alignment, string_view value );
 
     /**
-     * @name Copy/Move operations
-     * @{
-     * @brief Copy/move data, or throw an error if the layout has already been prepared (which means instance
+     * @brief Copy data, or throw an error if the layout has already been prepared (which means instance
      *        will reference potencially outdated reference, and we do not want to compute the layout twice)
-     * @param other source data.
+     * @param other The source data.
      */
     Cell( Cell const & other );
+    
+    /**
+     * @brief Move data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     */
     Cell( Cell && other );
+    
+    /**
+     * @brief Copy data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     */
     Cell & operator=( Cell const & other );
+    
+    /**
+     * @brief Move data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     */
     Cell & operator=( Cell && other );
-    /** @} */
 
     /**
      * @return The full cell text.
