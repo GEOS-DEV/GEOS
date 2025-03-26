@@ -359,6 +359,27 @@ static void addUmpireHighWaterMarks()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
+    cudaError_t error;
+    size_t p_val;
+    error = cudaDeviceGetLimit(&p_val, cudaLimitStackSize);
+    if (error != cudaSuccess) {
+        printf("cudaDeviceGetLimit failed with %d, line(%d)\n", error, __LINE__);
+    }
+    printf("stack size limit: %ld\n", p_val);
+
+
+    error = cudaDeviceSetLimit(cudaLimitStackSize, 64 * 1024);
+    if (error != cudaSuccess) {
+        printf("cudaDeviceSetLimit failed with %d, line(%d)\n", error, __LINE__);
+    }
+
+    error = cudaDeviceGetLimit(&p_val, cudaLimitStackSize);
+    if (error != cudaSuccess) {
+        printf("cudaDeviceGetLimit failed with %d, line(%d)\n", error, __LINE__);
+    }
+
+    printf("stack size limit: %ld\n", p_val);
+
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();
