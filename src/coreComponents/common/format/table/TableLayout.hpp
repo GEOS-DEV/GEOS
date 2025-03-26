@@ -113,6 +113,7 @@ public:
 
     /**
      * @brief Set the width of the cell, which must be constrained by the content lines length.
+     * @param cellWidth the new width to consider for this cell.
      */
     void setWidth( size_t cellWidth )
     { m_cellWidth = cellWidth; }
@@ -199,6 +200,7 @@ public:
      * @brief Copy data, or throw an error if the layout has already been prepared (which means instance
      *        will reference potencially outdated reference, and we do not want to compute the layout twice)
      * @param other The source data.
+     * @return The instance reference.
      */
     Cell & operator=( Cell const & other );
     
@@ -206,6 +208,7 @@ public:
      * @brief Move data, or throw an error if the layout has already been prepared (which means instance
      *        will reference potencially outdated reference, and we do not want to compute the layout twice)
      * @param other The source data.
+     * @return The instance reference.
      */
     Cell & operator=( Cell && other );
 
