@@ -138,6 +138,8 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
   checkInputSize( m_componentProperties->m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentProperties->m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
 
+  m_componentProperties->classifyComponents();
+
   if( m_componentProperties->m_componentVolumeShift.empty() )
   {
     m_componentProperties->m_componentVolumeShift.resize( NC );
@@ -300,6 +302,10 @@ template class CompositionalMultiphaseFluid<
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashModel,
+    compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
     compositional::ImmiscibleWaterFlashModel,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
@@ -312,6 +318,11 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseLohrenzBrayClarkViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalTwoPhasePhillipsBrine,
                         string const &,
                         dataRepository::Group * const )
 

@@ -214,8 +214,6 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
     real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
     dkij_dT = dkij_dTr * dTr_dT;
-std::cout << "FlashData kij " << temperature << " " << Tci << " " << Tr << " " << omega << " " << kij << " " << dkij_dT << "\n";
-    //kij = dkij_dT = 0.0;
   }
 }
 
@@ -493,7 +491,7 @@ computeLogFugacityCoefficients( integer const numComps,
                                             aMixtureCoefficient,
                                             bMixtureCoefficient,
                                             compressibilityFactor );
-std::cout << "FlashData SW : " << compressibilityFactor << "\n";
+
   // step 4: use mixture coefficients and compressibility factor to update fugacity coefficients
   CubicModel::computeLogFugacityCoefficients( numComps,
                                               composition,

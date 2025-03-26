@@ -401,7 +401,7 @@ computeLogFugacityCoefficients( integer const numComps,
                                 aMixtureCoefficient,
                                 bMixtureCoefficient,
                                 compressibilityFactor ); // output
-std::cout << "FlashData PR : " << compressibilityFactor << "\n";
+
   // step 3: use mixture coefficients and compressibility factor to update fugacity coefficients
   computeLogFugacityCoefficients( numComps, // number of components
                                   composition, // cell input
@@ -871,7 +871,7 @@ computeCompressibilityFactor( integer const numComps,
         }
       }
     }
-std::cout << "FlashData ROOTS: " << roots[0] << ", " << roots[1] << ", " << roots[2] << "\n";
+
     stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMax( numComps );
     stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMin( numComps );
     computeLogFugacityCoefficients( numComps, composition, binaryInteractionCoefficients, zMin,
@@ -1021,9 +1021,6 @@ solveCubicPolynomial( real64 const & m3,
     numRoots = 1;
   }
 }
-
-using CubicEOSPR = CubicEOSPhaseModel< PengRobinsonEOS >;
-using CubicEOSSRK = CubicEOSPhaseModel< SoaveRedlichKwongEOS >;
 
 } // namespace compositional
 

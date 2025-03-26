@@ -50,9 +50,9 @@ public:
     : m_fluid( TestFluid< numComps >::create( {Fluid::C1, Fluid::CO2, Fluid::H2O} ) )
   {
 // These correlations only work with the correct values
-m_fluid->criticalPressure[0] = 46.0e5;
-m_fluid->criticalTemperature[0] = 190.6;
-m_fluid->acentricFactor[0] = 0.0108;
+    m_fluid->criticalPressure[0] = 46.0e5;
+    m_fluid->criticalTemperature[0] = 190.6;
+    m_fluid->acentricFactor[0] = 0.0108;
   }
   ~SoreideWhitsonFlashTestFixture() = default;
 
@@ -103,18 +103,18 @@ m_fluid->acentricFactor[0] = 0.0108;
       return;
     }
 
-((void)expectedVapourFraction);
+    ((void)expectedVapourFraction);
 
-std::cout
-<< "FlashData<" << numComps << ">{"
-<< std::scientific << std::setprecision(1) << pressure << ", "
-<< std::fixed << std::setprecision(2) << temperature << ", "
-<< std::fixed << std::setprecision(2) << flashData.salinity << ", "
-<< std::fixed << std::setprecision(3) << "{" << composition[0] << ", " << composition[1] << ", " << composition[2] << "}, "
-<< std::fixed << std::setprecision(8) << vapourFraction << ", "
-<< std::fixed << std::setprecision(6) << "{" << liquidComposition[0] << ", " << liquidComposition[1] << ", " << liquidComposition[2] << "}, "
-<< std::fixed << std::setprecision(6) << "{" << vapourComposition[0] << ", " << vapourComposition[1] << ", " << vapourComposition[2] << "}, "
-"},\n";
+    std::cout
+      << "FlashData<" << numComps << ">{"
+      << std::scientific << std::setprecision( 1 ) << pressure << ", "
+      << std::fixed << std::setprecision( 2 ) << temperature << ", "
+      << std::fixed << std::setprecision( 2 ) << flashData.salinity << ", "
+      << std::fixed << std::setprecision( 3 ) << "{" << composition[0] << ", " << composition[1] << ", " << composition[2] << "}, "
+      << std::fixed << std::setprecision( 8 ) << vapourFraction << ", "
+      << std::fixed << std::setprecision( 6 ) << "{" << liquidComposition[0] << ", " << liquidComposition[1] << ", " << liquidComposition[2] << "}, "
+      << std::fixed << std::setprecision( 6 ) << "{" << vapourComposition[0] << ", " << vapourComposition[1] << ", " << vapourComposition[2] << "}, "
+                                                                                                                                              "},\n";
 
     // Check the vaopur fraction
     //checkRelativeError( expectedVapourFraction, vapourFraction, relTol, absTol );
@@ -132,56 +132,56 @@ std::cout
       checkRelativeError( expectedVapourComposition[0], vapourComposition[comp0], relTol, absTol );
       checkRelativeError( expectedVapourComposition[1], vapourComposition[comp1], relTol, absTol );
     }
-**/
+ **/
   }
 
   void testFlashDerivatives( FlashData const & data )
   {
-    GEOS_UNUSED_VAR(data);
+    GEOS_UNUSED_VAR( data );
     /**
-    // Number of output values from each flash calculation
-    constexpr integer numValues = 1 + 2*numComps;
+       // Number of output values from each flash calculation
+       constexpr integer numValues = 1 + 2*numComps;
 
-    auto componentProperties = this->m_fluid->createKernelWrapper();
+       auto componentProperties = this->m_fluid->createKernelWrapper();
 
-    constitutive::compositional::FlashData flashData;
-    flashData.liquidEos = EOS_TYPE;
-    flashData.vapourEos = EOS_TYPE;
+       constitutive::compositional::FlashData flashData;
+       flashData.liquidEos = EOS_TYPE;
+       flashData.vapourEos = EOS_TYPE;
 
-    bool const expectedStatus = std::get< 3 >( data );
-    if( !expectedStatus ) return;
+       bool const expectedStatus = std::get< 3 >( data );
+       if( !expectedStatus ) return;
 
-    real64 const pressure = std::get< 0 >( data );
-    real64 const temperature = std::get< 1 >( data );
-    stackArray1d< real64, numComps > composition;
-    TestFluid< numComps >::createArray( composition, std::get< 2 >( data ));
+       real64 const pressure = std::get< 0 >( data );
+       real64 const temperature = std::get< 1 >( data );
+       stackArray1d< real64, numComps > composition;
+       TestFluid< numComps >::createArray( composition, std::get< 2 >( data ));
 
-    real64 vapourFraction = -1.0;
-    stackArray1d< real64, numComps > liquidComposition( numComps );
-    stackArray1d< real64, numComps > vapourComposition( numComps );
-    stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+       real64 vapourFraction = -1.0;
+       stackArray1d< real64, numComps > liquidComposition( numComps );
+       stackArray1d< real64, numComps > vapourComposition( numComps );
+       stackArray2d< real64, numComps > kValues( 1, numComps );
+       kValues.zero();
 
-    stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
-    stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
-    stackArray2d< real64, numComps * numDofs > vapourCompositionDerivs( numComps, numDofs );
-    stackArray1d< real64, numValues > derivatives( numValues );
+       stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
+       stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
+       stackArray2d< real64, numComps * numDofs > vapourCompositionDerivs( numComps, numDofs );
+       stackArray1d< real64, numValues > derivatives( numValues );
 
-    // Combine values and derivatives into a single output
-    auto const concatDerivatives = []( integer const kc, auto & derivs, auto const & v, auto const & xmf, auto const & ymf ){
-      derivs[0] = v[kc];
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
+       // Combine values and derivatives into a single output
+       auto const concatDerivatives = []( integer const kc, auto & derivs, auto const & v, auto const & xmf, auto const & ymf ){
+       derivs[0] = v[kc];
+       for( integer ic = 0; ic < numComps; ++ic )
+       {
         derivs[1+ic] = xmf( ic, kc );
         derivs[1+ic+numComps] = ymf( ic, kc );
-      }
-    };
+       }
+       };
 
-    auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
-      stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
-      stackArray1d< real64, numComps > displacedVapourComposition( numComps );
+       auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
+       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
+       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
 
-      NegativeTwoPhaseFlash::compute(
+       NegativeTwoPhaseFlash::compute(
         numComps,
         p,
         t,
@@ -192,74 +192,74 @@ std::cout
         values[0],
         displacedLiquidComposition.toSlice(),
         displacedVapourComposition.toSlice() );
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
+       for( integer ic = 0; ic < numComps; ++ic )
+       {
         values[1+ic] = displacedLiquidComposition[ic];
         values[1+ic+numComps] = displacedVapourComposition[ic];
-      }
-    };
+       }
+       };
 
-    NegativeTwoPhaseFlash::compute(
-      numComps,
-      pressure,
-      temperature,
-      composition.toSliceConst(),
-      componentProperties,
-      flashData,
-      kValues.toSlice(),
-      vapourFraction,
-      liquidComposition.toSlice(),
-      vapourComposition.toSlice() );
+       NegativeTwoPhaseFlash::compute(
+       numComps,
+       pressure,
+       temperature,
+       composition.toSliceConst(),
+       componentProperties,
+       flashData,
+       kValues.toSlice(),
+       vapourFraction,
+       liquidComposition.toSlice(),
+       vapourComposition.toSlice() );
 
-    NegativeTwoPhaseFlash::computeDerivatives(
-      numComps,
-      pressure,
-      temperature,
-      composition.toSliceConst(),
-      componentProperties,
-      flashData,
-      vapourFraction,
-      liquidComposition.toSliceConst(),
-      vapourComposition.toSliceConst(),
-      vapourFractionDerivs.toSlice(),
-      liquidCompositionDerivs.toSlice(),
-      vapourCompositionDerivs.toSlice() );
+       NegativeTwoPhaseFlash::computeDerivatives(
+       numComps,
+       pressure,
+       temperature,
+       composition.toSliceConst(),
+       componentProperties,
+       flashData,
+       vapourFraction,
+       liquidComposition.toSliceConst(),
+       vapourComposition.toSliceConst(),
+       vapourFractionDerivs.toSlice(),
+       liquidCompositionDerivs.toSlice(),
+       vapourCompositionDerivs.toSlice() );
 
-    // Test against numerically calculated values
-    // --- Pressure derivatives ---
-    concatDerivatives( Deriv::dP, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
-    real64 const dp = 1.0e-4 * pressure;
-    geos::testing::internal::testNumericalDerivative< numValues >(
-      pressure, dp, derivatives,
-      [&]( real64 const p, auto & values ) {
-      evaluateFlash( p, temperature, composition, values );
-    } );
+       // Test against numerically calculated values
+       // --- Pressure derivatives ---
+       concatDerivatives( Deriv::dP, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
+       real64 const dp = 1.0e-4 * pressure;
+       geos::testing::internal::testNumericalDerivative< numValues >(
+       pressure, dp, derivatives,
+       [&]( real64 const p, auto & values ) {
+       evaluateFlash( p, temperature, composition, values );
+       } );
 
-    // --- Temperature derivatives ---
-    concatDerivatives( Deriv::dT, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
-    real64 const dT = 1.0e-6 * temperature;
-    geos::testing::internal::testNumericalDerivative< numValues >(
-      temperature, dT, derivatives,
-      [&]( real64 const t, auto & values ) {
-      evaluateFlash( pressure, t, composition, values );
-    } );
+       // --- Temperature derivatives ---
+       concatDerivatives( Deriv::dT, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
+       real64 const dT = 1.0e-6 * temperature;
+       geos::testing::internal::testNumericalDerivative< numValues >(
+       temperature, dT, derivatives,
+       [&]( real64 const t, auto & values ) {
+       evaluateFlash( pressure, t, composition, values );
+       } );
 
-    // --- Composition derivatives ---
-    real64 constexpr dz = 1.0e-7;
-    for( integer jc = 0; jc < numComps; ++jc )
-    {
-      if( composition[jc] < 1.0e-6 ) continue;
-      integer const kc = Deriv::dC + jc;
-      concatDerivatives( kc, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
-      geos::testing::internal::testNumericalDerivative< numValues >(
+       // --- Composition derivatives ---
+       real64 constexpr dz = 1.0e-7;
+       for( integer jc = 0; jc < numComps; ++jc )
+       {
+       if( composition[jc] < 1.0e-6 ) continue;
+       integer const kc = Deriv::dC + jc;
+       concatDerivatives( kc, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
+       geos::testing::internal::testNumericalDerivative< numValues >(
         0.0, dz, derivatives,
         [&]( real64 const z, auto & values ) {
         real64 const originalFraction = composition[jc];
         composition[jc] += z;
         evaluateFlash( pressure, temperature, composition, values );
         composition[jc] = originalFraction;
-      }, 10*relTol, 10*absTol );
-    }*/
+       }, 10*relTol, 10*absTol );
+       }*/
   }
 
 protected:
@@ -275,14 +275,14 @@ std::vector< FlashData > generateTestData()
 {
   std::vector< FlashData > testData;
   auto const feeds = {
-    Feed<numComps>{0.3, 0.3, 0.4}
+    Feed< numComps >{0.0, 0.5, 0.5}
   };
   for( const auto & composition : feeds )
   {
     //for( const real64 pressure : {1.1e5, 1.0e6, 1.0e8} )
-    real64 pressure = 50.0;
-    real64 const dp = pow(1000.0, 1.0/50);
-    for (int i = 0; i <= 50; i++)
+    real64 pressure = 1.0;
+    real64 const dp = pow( 1000.0/pressure, 1.0/50 );
+    for( int i = 0; i <= 50; i++ )
     {
       for( const real64 temperature : {2.97150e+02} )
       {
@@ -294,7 +294,7 @@ std::vector< FlashData > generateTestData()
       pressure *= dp;
     }
   }
-  return {testData[0]};
+  return testData;
 }
 
 //-------------------------------------------------------------------------------

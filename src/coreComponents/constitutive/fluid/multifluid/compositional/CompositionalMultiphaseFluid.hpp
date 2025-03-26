@@ -30,6 +30,8 @@
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ModelParameters.hpp"
 
 namespace geos
@@ -156,6 +158,10 @@ using CompositionalTwoPhaseConstantViscosity = CompositionalMultiphaseFluid<
 using CompositionalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashModel,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalTwoPhasePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashModel,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 using CompositionalThreePhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::ImmiscibleWaterFlashModel,

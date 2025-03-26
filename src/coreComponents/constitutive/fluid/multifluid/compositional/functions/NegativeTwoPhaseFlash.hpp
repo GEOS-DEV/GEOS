@@ -287,11 +287,7 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     {
       break;
     }
-    std::cout << "FlashData "
-              << std::fixed << std::setprecision( 6 ) << "{" << kVapourLiquid[0] << ", " << kVapourLiquid[1] << ", " << kVapourLiquid[2] << "}, "
-              << std::scientific << std::setprecision( 4 ) << error << " "
-              << vapourPhaseMoleFraction
-              << "\n";
+
     // Update K-values
     for( integer ic = 0; ic < numComps; ++ic )
     {
