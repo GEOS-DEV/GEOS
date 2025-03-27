@@ -392,9 +392,9 @@ void Geomechanics::postInputInitialization()
     GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
     // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
     // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
-    GEOS_THROW_IF( m_C1a < 0.0, "C1a must be greater than or equal to 0", InputError );
-    GEOS_THROW_IF( m_C2a < 0.0, "C2a must be greater than or equal to 0", InputError );
-    GEOS_THROW_IF( m_C3 < 0.0, "C3 must be greater than or equal to 0", InputError );
+    //GEOS_THROW_IF( m_C1a < 0.0, "C1a must be greater than or equal to 0", InputError );
+    //GEOS_THROW_IF( m_C2a < 0.0, "C2a must be greater than or equal to 0", InputError );
+    //GEOS_THROW_IF( m_C3 < 0.0, "C3 must be greater than or equal to 0", InputError );
 }
 
 
