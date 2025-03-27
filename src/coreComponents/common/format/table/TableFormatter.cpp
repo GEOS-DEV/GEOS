@@ -368,7 +368,6 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
       0 // sublinesCount
     }
   };
-  TableLayout::ColumnAlignement const defaultAlignment;
 
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
   {
@@ -382,7 +381,7 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
                           string_view( inputCell.value );
 
       TableLayout::CellLayout & outputCell = outputRow.cells[idxColumn];
-      outputCell = TableLayout::CellLayout( inputCell.type, defaultAlignment.valueAlignment );
+      outputCell = TableLayout::CellLayout( inputCell.type, TableLayout::defaultValueAlignment );
       outputCell.prepareLayout( value, tableLayout.getMaxColumnWidth() );
 
       maxLinesInRow  = std::max( maxLinesInRow, outputCell.getHeight() );
