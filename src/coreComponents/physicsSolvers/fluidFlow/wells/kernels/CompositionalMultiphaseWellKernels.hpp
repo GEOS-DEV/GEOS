@@ -1709,10 +1709,10 @@ public:
 
     localIndex iwelemNext =  m_nextWellElemIndex[iwelem];
 
-    // Current element is open and next element is closed =>   dependency on next segment
+    // Current element is open and next element is closed =>  no dependency on next segment
     if( iwelemNext >= 0 )
     {
-      if( m_elemStatus[m_nextWellElemIndex[iwelemNext]]==WellElementSubRegion::WellElemStatus::CLOSED )
+      if( m_elemStatus[iwelemNext]==WellElementSubRegion::WellElemStatus::CLOSED )
       {
         iwelemNext = -1;
       }

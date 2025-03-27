@@ -370,6 +370,7 @@ public:
 
   /**
    * @brief Set status (Open/Closed) for locally owned elements
+   * @param[in] localElemPerfStatus Array containing status
    */
   void setElementStatus( arrayView1d< integer >  const & localElemPerfStatus );
 
