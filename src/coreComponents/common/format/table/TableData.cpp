@@ -43,6 +43,7 @@ void TableData::addSeparator()
 void TableData::clear()
 {
   m_rows.clear();
+  getErrorsList().clear();
 }
 
 std::vector< std::vector< TableData::CellData > > const & TableData::getTableDataRows() const
@@ -50,7 +51,7 @@ std::vector< std::vector< TableData::CellData > > const & TableData::getTableDat
   return m_rows;
 }
 
-bool TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
+void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
                                       arraySlice1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,
                                       bool columnMajorInputValues )
@@ -60,20 +61,25 @@ bool TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
   integer const nCol = columAxisCoordinates.size();
   integer const nRow = rowAxisCoordinates.size();
 
-  bool isDataConsistent = true;
-
   array1d< real64 > wellConstructValues( values.size() );
 
   if( nRow * nCol != values.size())
   {
-    isDataConsistent = false;
     wellConstructValues = values;
     if( nRow * nCol > values.size())
     {
+      m_errors->addError( GEOS_FMT( "Warning : The number of values is insufficient for the number of columns * rows:\n"
+                                    "Expected {} values, Found {} values", nRow * nCol, values.size() ) );
       wellConstructValues.resizeDefault( nRow * nCol, 0 );
     }
+    else
+    {
+      m_errors->addError(
+        GEOS_FMT( "Warning : Too much data for the number of columns * rows:\n"
+                  "Expected {} values, Found {} values\n"
+                  "Data may be missaligned", nRow * nCol, values.size() ) );
+    }
   }
-
 
   for( integer y = 0; y < nRow; y++ )
   {
@@ -82,8 +88,6 @@ bool TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
       addCell( rowAxisCoordinates[y], columAxisCoordinates[x], wellConstructValues[ x + y*nCol ] );
     }
   }
-
-  return isDataConsistent;
 }
 
 TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
@@ -95,14 +99,13 @@ TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< rea
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
-  bool isDataConsistent = collectTableValues( coordinates[0], coordinates[1], values, columnMajorValues );
-  return buildTableData( valueDescription, rowFmt, columnFmt, isDataConsistent );
+  collectTableValues( coordinates[0], coordinates[1], values, columnMajorValues );
+  return buildTableData( valueDescription, rowFmt, columnFmt );
 }
 
 TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit,
                                                           string_view rowFmt,
-                                                          string_view columnFmt,
-                                                          bool isDataConsistent ) const
+                                                          string_view columnFmt ) const
 {
   TableData2D::TableDataHolder tableData1D;
 
@@ -111,6 +114,11 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   for( auto const & columnValue : m_columnValues )
   {
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
+  }
+
+  for( auto const & error : m_errors->errorText )
+  {
+    tableData1D.tableData.getErrorsList().addError( error );
   }
 
   // insert row value and row cell values

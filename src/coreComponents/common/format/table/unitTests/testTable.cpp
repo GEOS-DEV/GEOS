@@ -696,7 +696,7 @@ TEST( testTable, tableMismatchingHeaderData )
              "|                                                                                          value2  |  [30.21543]  |     3.0  |       52  |      123  |\n"
              "|                                                                                          value3  |        [30]  |       4  |       53  |           |\n"
              "|                                                                                          value4  |  [30.21543]  |     3.0  |       54  |      412  |\n"
-             "------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+             "|----------------------------------------------------------------------------------------------------------------------------------------------------|\n"
              "|                                      Warning : One or more data lines are not equal to the number of headers                                       |\n"
              "|                                                           Data can be missing/misaligned                                                           |\n"
              "------------------------------------------------------------------------------------------------------------------------------------------------------\n"
@@ -740,7 +740,7 @@ TEST( testTable, tableHiddeSubColumn )
              "|                |  element  |  element  |\n"
              "|----------------|-----------|-----------|\n"
              "|        value1  |           |           |\n"
-             "------------------------------------------\n"
+             "|----------------------------------------|\n"
              "|  Warning : One or more data lines are  |\n"
              "|   not equal to the number of headers   |\n"
              "|     Data can be missing/misaligned     |\n"
@@ -748,8 +748,7 @@ TEST( testTable, tableHiddeSubColumn )
              );
 }
 
-
-TEST( testTable, tableZoup )
+TEST( testTable, table2DMismatchingCoordValues )
 {
   TableData2D tableData2D;
 
@@ -757,59 +756,112 @@ TEST( testTable, tableZoup )
   real64 numRow = 5;
   real64 numCol = 5;
   array1d< real64 > values( 25 );
-  for( real64 p = 0; p< numRow; p+=1 )
+  for( real64 p = 0; p < numRow; p += 1 )
   {
-    // real64 randomDecrease = ( rand() % 5 );
-    for( real64 t = 0; t<numCol; t+=1 )
+    for( real64 t = 0; t < numCol; t += 1 )
     {
-      real64 value = t + p*numCol;
-      values[t + p*numCol]  = value;
+      real64 value = t + p * numCol;
+      values[t + p * numCol] = value;
     }
   }
   arrayView1d< real64 const > const valuesConst = values;
 
-  // 1. Prepare coordinates
-  ArrayOfArrays< real64 > coordinates( 2, 6 );
-  std::array< real64, 4 > coordXValues = { 0, 1, 2, 3 };
-  std::array< real64, 4 > coordYValues = { 0, 1, 2, 3 };
+  // Fonction d'assistance pour tester les coordonnées
+  auto testCoordinates = [&tableData2D, &values]( std::array< real64, 6 > & coordXValues, std::array< real64, 6 > & coordYValues, std::size_t expectedCoordSize )
+  {
 
-  coordinates.appendToArray( 0, coordXValues.begin(), coordXValues.begin() + coordXValues.size() );
-  coordinates.appendToArray( 1, coordYValues.begin(), coordYValues.begin() + coordYValues.size() );
+    struct Result
+    {
+      string text;
+      string csv;
+    };
+    // 1. Prepare coordinates
+    ArrayOfArrays< real64 > coordinates( 2, expectedCoordSize );
+    coordinates.appendToArray( 0, coordXValues.begin(), coordXValues.begin() + coordXValues.size());
+    coordinates.appendToArray( 1, coordYValues.begin(), coordYValues.begin() + coordYValues.size());
 
-  ArrayOfArraysView< real64 const > constCoordinates = coordinates.toViewConst();
+    ArrayOfArraysView< real64 const > constCoordinates = coordinates.toViewConst();
 
-  string const rowFmt = GEOS_FMT( "{}", "Temperature" );
-  string const columnFmt = GEOS_FMT( "{}", "Pressure" );
+    string const rowFmt = GEOS_FMT( "{}", "Temperature" );
+    string const columnFmt = GEOS_FMT( "{}", "Pressure" );
 
-  // 3. Convert
-  TableData2D::TableDataHolder tableConverted = tableData2D.convertTable2D( constCoordinates,
-                                                                            rowFmt,
-                                                                            columnFmt,
-                                                                            values,
-                                                                            true,
-                                                                            "T" );
-  // 4. Prepare table
-  TableLayout tableLayout;
-  tableLayout.addColumns( tableConverted.headerNames );
-  TableCSVFormatter const csvFormat( tableLayout );
-  csvFormat.toString( tableConverted.tableData );
+    // 3. Convert
+    TableData2D::TableDataHolder tableConverted = tableData2D.convertTable2D( constCoordinates,
+                                                                              rowFmt,
+                                                                              columnFmt,
+                                                                              values,
+                                                                              true,
+                                                                              "T" );
 
+    // 4. Prepare table
+    TableLayout tableLayout;
+    tableLayout.addColumns( tableConverted.headerNames );
 
-  TableTextFormatter const tableText( tableLayout );
-  EXPECT_EQ( tableText.toString( tableConverted.tableData ),
-             "\n"
-             "---------------------------------------------------------------------\n"
-             "|   Viscosity kg*s    |  Pressure = 10000  |    Pressure = 15000    |\n"
-             "|---------------------|--------------------|------------------------|\n"
-             "|  Temperature = 300  |              0.03  |                  0.02  |\n"
-             "|  Temperature = 350  |             0.035  |  0.023333333333333334  |\n"
-             "|  Temperature = 400  |              0.04  |   0.02666666666666667  |\n"
-             "---------------------------------------------------------------------\n"
-             );
+    TableTextFormatter const tableText( tableLayout );
+    TableCSVFormatter const csvOutput( tableLayout );
 
-  //todo version longue à faire  std::array< real64, 6 > coordXValues = { 0, 1, 2, 3,4,5 };
+    return Result{tableText.toString( tableConverted.tableData ),
+                  csvOutput.toString( tableConverted.tableData )};
+  };
+
+  // Test with too many values
+  {
+    std::array< real64, 6 > coordXValues = { 0, 1, 2, 3 };
+    std::array< real64, 6 > coordYValues = { 0, 1, 2, 3 };
+    auto [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 4 );
+    EXPECT_EQ( textFormatted,
+               "\n"
+               "-----------------------------------------------------------------------------------------\n"
+               "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |\n"
+               "|-------------------|----------------|----------------|----------------|----------------|\n"
+               "|  Temperature = 0  |             0  |             0  |             0  |             0  |\n"
+               "|  Temperature = 1  |            11  |             7  |             8  |             9  |\n"
+               "|  Temperature = 2  |            17  |            13  |            14  |            15  |\n"
+               "|  Temperature = 3  |            23  |            19  |            20  |            21  |\n"
+               "|---------------------------------------------------------------------------------------|\n"
+               "|   Warning : The number of values is insufficient for the number of columns * rows:    |\n"
+               "|                          Expected 36 values, Found 25 values                          |\n"
+               "-----------------------------------------------------------------------------------------\n" );
+
+    EXPECT_EQ( csvFormatted,
+               "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3\n"
+               "Temperature = 0,0,0,0,0\n"
+               "Temperature = 1,11,7,8,9\n"
+               "Temperature = 2,17,13,14,15\n"
+               "Temperature = 3,23,19,20,21\n" );
+  }
+  tableData2D.clear();
+  {
+    std::array< real64, 6 > coordXValues = { 0, 1, 2, 3, 4, 5 };
+    std::array< real64, 6 > coordYValues = { 0, 1, 2, 3, 4, 5 };
+    auto [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 6 );
+
+    EXPECT_EQ( textFormatted,
+               "\n"
+               "---------------------------------------------------------------------------------------------------------------------------\n"
+               "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |  Pressure = 4  |  Pressure = 5  |\n"
+               "|-------------------|----------------|----------------|----------------|----------------|----------------|----------------|\n"
+               "|  Temperature = 0  |             0  |             1  |             2  |             3  |             4  |             5  |\n"
+               "|  Temperature = 1  |             6  |             7  |             8  |             9  |            10  |            11  |\n"
+               "|  Temperature = 2  |            12  |            13  |            14  |            15  |            16  |            17  |\n"
+               "|  Temperature = 3  |            18  |            19  |            20  |            21  |            22  |            23  |\n"
+               "|  Temperature = 4  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|  Temperature = 5  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|-------------------------------------------------------------------------------------------------------------------------|\n"
+               "|                    Warning : The number of values is insufficient for the number of columns * rows:                     |\n"
+               "|                                           Expected 36 values, Found 25 values                                           |\n"
+               "---------------------------------------------------------------------------------------------------------------------------\n" );
+
+    EXPECT_EQ( csvFormatted,
+               "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3,Pressure = 4,Pressure = 5\n"
+               "Temperature = 0,0,1,2,3,4,5\n"
+               "Temperature = 1,6,7,8,9,10,11\n"
+               "Temperature = 2,12,13,14,15,16,17\n"
+               "Temperature = 3,18,19,20,21,22,23\n"
+               "Temperature = 4,24,0,0,0,0,0\n"
+               "Temperature = 5,0,0,0,0,0,0\n" );
+  }
 }
-
 
 int main( int argc, char * * argv )
 {

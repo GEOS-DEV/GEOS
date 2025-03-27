@@ -48,32 +48,6 @@ public:
   /// Represent the Table (header or values) when structured for formatting
   using CellLayoutRows = std::vector< CellLayoutRow >;
 
-  struct ErrorListing
-  {
-    /// View on cell error grouping the cell information to display at the end of the table
-    CellLayoutRows errors; //TODO à enlever
-    /// Contain all the errors
-    std::vector< string > errorText;
-
-    /**
-     * @brief Add an error that will be display at the end of the table
-     * @param text The string error to display.
-     * @param nbCells The numbers cells that must be equal to the number of a CellLayoutRow
-     * present in headerCellsLayout or dataCellsLayout
-     */
-    void addError( string_view text, size_t nbCells );
-
-    /**
-     * @return true if an error has already been added
-     */
-    bool errorRowExists();
-    
-    /**
-     * @brief Clear all error at the beginning of the formatter
-     */
-    void clear(); 
-  };
-
   /**
    * @return The Errors List object
    */
@@ -86,7 +60,7 @@ protected:
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
 
-  std::unique_ptr< ErrorListing > m_errors = std::make_unique< ErrorListing >();
+  std::unique_ptr< geos::ErrorListing > m_errors = std::make_unique< geos::ErrorListing >();
 
   /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
@@ -203,12 +177,14 @@ private:
    * @param tableData A constant reference to the `TableData` object, which contains the actual data for the table.
    * @param headerCellsLayout A reference to a `CellLayoutRows` where the header cells will be populated.
    * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
+   * @param errorCellsLayout A reference to a `CellLayoutRows` where the error cells will be populated.
    * @param separatorLine A string that will be used as the table separator line
    */
   void initalizeTableGrids( PreparedTableLayout const & tableLayout,
                             TableData const & tableData,
                             CellLayoutRows & dataCellsLayout,
                             CellLayoutRows & headerCellsLayout,
+                            CellLayoutRows & errorCellsLayout,
                             size_t & tableTotalWidth ) const;
 
   /**
@@ -217,12 +193,14 @@ private:
    * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
    * @param headerCellsLayout The layout of the header rows
    * @param dataCellsLayout The layout of the data rows
+   * @param errorCellsLayout The layout of the error rows
    * @param separatorLine The string to be used as the table separator line
    */
   void outputTable( PreparedTableLayout const & tableLayout,
                     std::ostringstream & tableOutput,
                     CellLayoutRows const & headerCellsLayout,
                     CellLayoutRows const & dataCellsLayout,
+                    CellLayoutRows & errorCellsLayout,
                     size_t tableTotalWidth ) const;
 
   /**
@@ -249,7 +227,7 @@ private:
                                   CellLayoutRows & headerCellsLayout ) const;
   /**
    * @brief Populates the data cells layout based on input data values, as a free layout (no columns layout).
-   * @param tableLayout The layout of the table,
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
    * @param inputDataValues A 2D vector containing the actual input data values.
    */
@@ -258,8 +236,18 @@ private:
                                 RowsCellInput const & inputDataValues ) const;
 
   /**
+   * @brief Populates the error cells layout based on input error values
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param errorCellsLayout A reference to the layout for the error cells that will be populated.
+   * @param inputError A vector containing all the error to display.
+   */
+  void populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
+                                 CellLayoutRows & errorCellsLayout,
+                                 std::vector< string > const & inputError ) const;
+
+  /**
    * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
-   * @param tableLayout The layout of the table,
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
    * @param inputDataValues A 2D vector containing the actual input data values.
    * @param nbVisibleColumn The number of columns that are not hidden
