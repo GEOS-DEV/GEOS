@@ -92,7 +92,7 @@ decks = [
         partitions=[(1, 1, 1), (1, 2, 1)],
         restart_step=24,
         check_step=28,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="staged_close_perf_1",
         description=
@@ -100,7 +100,7 @@ decks = [
         partitions=[(1, 1, 1), (1, 1, 4)],
         restart_step=20,
         check_step=26,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="staged_close_perf_2",
         description=
@@ -108,7 +108,7 @@ decks = [
         partitions=[(1, 1, 1), (1, 1, 4)],
         restart_step=120,
         check_step=126,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="staged_open_perf_1",
         description=
@@ -116,7 +116,7 @@ decks = [
         partitions=[(1, 1, 1), (1, 1, 4)],
         restart_step=60,
         check_step=65,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="staged_open_perf_2",
         description=
