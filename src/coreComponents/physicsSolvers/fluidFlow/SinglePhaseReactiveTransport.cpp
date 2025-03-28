@@ -94,7 +94,7 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
   // n_c components + one pressure ( + one temperature if needed )
   m_numDofPerCell = m_isThermal ? m_numPrimarySpecies + 2 : m_numPrimarySpecies + 1;
 
-  // 2. Register and resize all fields as necessary (to finish)
+  // 2. Register and resize all fields as necessary
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
                                                    string_array const & regionNames )
@@ -263,7 +263,7 @@ void SinglePhaseReactiveTransport::assembleAccumulationTermsInMassBalanceAndSpec
 
       if( m_isThermal )
       {
-        singlePhaseReactiveBaseKernels::
+        thermalSinglePhaseReactiveBaseKernels::
           AccumulationKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                      dt,
@@ -313,9 +313,9 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      if( m_isThermal ) // To implement the thermal case
+      if( m_isThermal )
       {
-        singlePhaseReactiveFVMKernels::
+        thermalSinglePhaseReactiveFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
                                                                                dofManager.rankOffset(),
@@ -483,25 +483,14 @@ void SinglePhaseReactiveTransport::applyBoundaryConditions( real64 const time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  // if( m_keepVariablesConstantDuringInitStep )
-  // {
-  //   // this function is going to force the current flow state to be constant during the time step
-  //   // this is used when the poromechanics solver is performing the stress initialization
-  //   // TODO: in the future, a dedicated poromechanics kernel should eliminate the flow vars to construct a reduced system
-  //   //       which will remove the need for this brittle passing aroung of flag
-  //   keepVariablesConstantDuringInitStep( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
-  // }
-  // else
-  // {
   // apply pressure boundary conditions.
-  applyPresSpeciesDirichletBC( time_n, dt, domain, dofManager, localMatrix.toViewConstSizes(), localRhs.toView() );
+  applyDirichletBC( time_n, dt, domain, dofManager, localMatrix.toViewConstSizes(), localRhs.toView() );
 
   // // apply flux boundary conditions (To finish)
   // applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 
   // // apply aquifer boundary conditions (To finish)
   // applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
-  // }
 }
 
 // // To finish
@@ -668,12 +657,12 @@ char const bcLogMessage[] =
   "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
 }
 
-void SinglePhaseReactiveTransport::applyPresSpeciesDirichletBC( real64 const time_n,
-                                                                real64 const dt,
-                                                                DomainPartition & domain,
-                                                                DofManager const & dofManager,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                arrayView1d< real64 > const & localRhs ) const
+void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
+                                                     real64 const dt,
+                                                     DomainPartition & domain,
+                                                     DofManager const & dofManager,
+                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     arrayView1d< real64 > const & localRhs ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -1005,7 +994,7 @@ void SinglePhaseReactiveTransport::applySystemSolution( DofManager const & dofMa
 
 void SinglePhaseReactiveTransport::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
-  FlowSolverBase::saveConvergedState( subRegion );
+  SinglePhaseBase::saveConvergedState( subRegion );
 
   arrayView2d< real64 const, compflow::USD_COMP > const totalPrimarySpeciesAmount = subRegion.template getField< fields::flow::totalPrimarySpeciesAmount >();
   arrayView2d< real64, compflow::USD_COMP > const totalPrimarySpeciesAmount_n = subRegion.template getField< fields::flow::totalPrimarySpeciesAmount_n >();

@@ -39,12 +39,13 @@ namespace singlePhaseReactiveFVMKernels
 /**
  * @class FluxComputeKernel
  * @tparam NUM_SPECIES number of fluid primary species
+ * @tparam NUM_EQN number of equations
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_SPECIES, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_SPECIES+1, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
+class FluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -77,7 +78,7 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens;
 
-  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_SPECIES+1, NUM_DOF, STENCILWRAPPER >;
+  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -112,8 +113,13 @@ public:
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
    * @param[in] singlePhaseFlowAccessors
+   * @param[in] reactiveSinglePhaseFlowAccessors
    * @param[in] singlePhaseFluidAccessors
+   * @param[in] reactiveSinglePhaseFluidAccessors
    * @param[in] permeabilityAccessors
+   * @param[in] diffusionAccessors
+   * @param[in] porosityAccessors
+   * @param[in] hasDiffusion the flag to turn on diffusion calculation
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -213,9 +219,11 @@ public:
                                            real64 const & fluxVal,
                                            real64 const (&dFlux_dP)[2] )
     {
-      GEOS_UNUSED_VAR( connectionIndex, alpha, mobility );
       // Step 1: compute the derivatives of the fluid density, potential difference,
       // and the massFlux wrt log of primary species concentration (to complete)
+      real64 dFlux_dLogConc[numFluxSupportPoints][numSpecies]{};
+
+      GEOS_UNUSED_VAR( dFlux_dLogConc ); // Todo: to add the massFlux derivatives wrt speciesConc
 
       // Step 2: compute the speciesFlux
       real64 speciesFlux[numSpecies]{};
@@ -233,7 +241,7 @@ public:
       real64 const fluidDens_up = m_dens[er_up][esr_up][ei_up][0];
       real64 const dDens_dPres = m_dDens[er_up][esr_up][ei_up][0][DerivOffset::dP];
 
-      // compute species fluxes and derivatives using upstream cell composition
+      // compute species fluxes and derivatives using upstream cell concentration
       for( integer is = 0; is < numSpecies; ++is )
       {
         real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][is];
@@ -256,8 +264,8 @@ public:
       /// populate local flux vector and derivatives
       for( integer is = 0; is < numSpecies; ++is )
       {
-        integer const eqIndex0 = k[0] * numEqn + is + 1;
-        integer const eqIndex1 = k[1] * numEqn + is + 1;
+        integer const eqIndex0 = k[0] * numEqn + numEqn - numSpecies + is;
+        integer const eqIndex1 = k[1] * numEqn + numEqn - numSpecies + is;
 
         stack.localFlux[eqIndex0] +=  m_dt * speciesFlux[is];
         stack.localFlux[eqIndex1] -=  m_dt * speciesFlux[is];
@@ -270,7 +278,7 @@ public:
 
           for( integer js = 0; js < numSpecies; ++js )
           {
-            localIndex const localDofIndexSpecies = localDofIndexPres + js + 1;
+            localIndex const localDofIndexSpecies = localDofIndexPres + js + numDof - numSpecies;
             stack.localFluxJacobian[eqIndex0][localDofIndexSpecies] += m_dt * dSpeciesFlux_dLogConc[ke][is][js];
             stack.localFluxJacobian[eqIndex1][localDofIndexSpecies] -= m_dt * dSpeciesFlux_dLogConc[ke][is][js];
           }
@@ -278,14 +286,28 @@ public:
       }
 
       // Customize the kernel with this lambda
-      kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP );
+      kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP, fluidDens_up );
     } );
+  }
 
-    // *****************************************************
-    // Computation of the diffusion term in the species flux
-
+  /**
+   * @brief Compute the local diffusion contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the flux
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   * @param[in] NoOpFunc the function used to customize the computation of the flux
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  void computeDiffusion( localIndex const iconn,
+                         StackVariables & stack,
+                         FUNC && kernelOp = NoOpFunc{} ) const
+  {
     if( m_hasDiffusion )
     {
+      // *****************************************************
+      // Computation of the diffusion term in the species flux
+
       // Step 1: compute the diffusion transmissibilities at this face
       m_stencilWrapper.computeWeights( iconn,
                                        m_diffusivity,
@@ -306,6 +328,7 @@ public:
 
           // clear working arrays
           real64 diffusionFlux[numSpecies]{};
+          real64 speciesGrad[numSpecies]{};
           // real64 dDiffusionFlux_dP[numFluxSupportPoints][numSpecies]{}; // Turn on if diffusionFlux is pressure-dependent
           real64 dDiffusionFlux_dLogConc[numFluxSupportPoints][numSpecies][numSpecies]{};
 
@@ -316,7 +339,6 @@ public:
           // loop over primary species
           for( integer is = 0; is < numSpecies; ++is )
           {
-            real64 speciesGrad_i = 0.0;
             // real64 dSpeciesGrad_i_dP[numFluxSupportPoints]{}; // Turn on if speciesGrad is pressure-dependent
             real64 dSpeciesGrad_i_dLogConc[numFluxSupportPoints][numSpecies]{};
 
@@ -329,7 +351,7 @@ public:
 
               real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er][esr][ei][is];
 
-              speciesGrad_i += diffusionTrans[ke] * aggregateConc_i;
+              speciesGrad[is] += diffusionTrans[ke] * aggregateConc_i;
 
               for( integer js = 0; js < numSpecies; ++js )
               {
@@ -340,14 +362,14 @@ public:
             }
 
             // choose upstream cell for species upwinding
-            localIndex const k_up = (speciesGrad_i >= 0) ? 0 : 1;
+            localIndex const k_up = (speciesGrad[is] >= 0) ? 0 : 1;
 
             localIndex const er_up  = seri[k_up];
             localIndex const esr_up = sesri[k_up];
             localIndex const ei_up  = sei[k_up];
 
             // computation of the upwinded species flux
-            diffusionFlux[is] += m_referencePorosity[er_up][esr_up][ei_up] * speciesGrad_i;
+            diffusionFlux[is] += m_referencePorosity[er_up][esr_up][ei_up] * speciesGrad[is];
 
             // add contributions of the derivatives of component fractions wrt pressure/component fractions
             for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
@@ -357,14 +379,10 @@ public:
                 dDiffusionFlux_dLogConc[ke][is][js] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_i_dLogConc[ke][js];
               }
             }
-          } // loop over primary species
 
-          // Add the local diffusion flux contribution to the residual and Jacobian
-          // loop over primary species
-          for( integer is = 0; is < numSpecies; ++is )
-          {
-            integer const eqIndex0 = k[0] * numEqn + is + 1;
-            integer const eqIndex1 = k[1] * numEqn + is + 1;
+            // Add the local diffusion flux contribution to the residual and Jacobian
+            integer const eqIndex0 = k[0] * numEqn + numEqn - numSpecies + is;
+            integer const eqIndex1 = k[1] * numEqn + numEqn - numSpecies + is;
 
             stack.localFlux[eqIndex0] += m_dt * diffusionFlux[is];
             stack.localFlux[eqIndex1] -= m_dt * diffusionFlux[is];
@@ -377,13 +395,15 @@ public:
 
               for( integer js = 0; js < numSpecies; ++js )
               {
-                localIndex const localDofIndexComp = localDofIndexPres + js + 1;
-                stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dDiffusionFlux_dLogConc[ke][is][js];
-                stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dDiffusionFlux_dLogConc[ke][is][js];
+                localIndex const localDofIndexSpecies = localDofIndexPres + js + numDof - numSpecies;
+                stack.localFluxJacobian[eqIndex0][localDofIndexSpecies] += m_dt * dDiffusionFlux_dLogConc[ke][is][js];
+                stack.localFluxJacobian[eqIndex1][localDofIndexSpecies] -= m_dt * dDiffusionFlux_dLogConc[ke][is][js];
               }
             }
-          }
 
+            // Customize the kernel with this lambda
+            kernelOp( is, k, seri, sesri, sei, connectionIndex, k_up );
+          }   // loop over primary species
           connectionIndex++;
         }
       }
@@ -395,9 +415,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
+  template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
-                 StackVariables & stack ) const
+                 StackVariables & stack,
+                 FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Call Base::complete to assemble the total mass balance equation
     // In the lambda, add contribution to residual and jacobian into the species amount balance equation
@@ -407,14 +429,43 @@ public:
       // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix
       for( integer is = 0; is < numSpecies; ++is )
       {
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + is + 1],
-                         stack.localFlux[i * numEqn + is + 1] );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies + is],
+                         stack.localFlux[i * numEqn + numEqn - numSpecies + is] );
         AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
-          ( localRow + is + 1,
+          ( localRow + numEqn - numSpecies + is,
           stack.dofColIndices.data(),
-          stack.localFluxJacobian[i * numEqn + is + 1].dataIfContiguous(),
+          stack.localFluxJacobian[i * numEqn + numEqn - numSpecies + is].dataIfContiguous(),
           stack.stencilSize * numDof );
       }
+
+      // call the lambda to assemble additional terms, such as thermal terms
+      kernelOp( i, localRow );
+    } );
+  }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numConnections the number of connections
+   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numConnections,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
+    {
+      typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
+                                                  kernelComponent.numPointsInFlux( iconn ) );
+
+      kernelComponent.setup( iconn, stack );
+      kernelComponent.computeFlux( iconn, stack );
+      kernelComponent.computeDiffusion( iconn, stack );
+      kernelComponent.complete( iconn, stack );
     } );
   }
 
@@ -429,7 +480,7 @@ protected:
   /// Views on primary species aggregate concentration
   ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_primarySpeciesAggregateConc;
 
-  /// Views on primary species aggregate concentration
+  /// Views on the derivative of primary species aggregate concentration wrt log of primary concentration
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dPrimarySpeciesAggregateConc_dLogPrimaryConc;
 
   /// Views on diffusivity
@@ -482,12 +533,13 @@ public:
     {
       integer constexpr NUM_SPECIES = NS();
       integer constexpr NUM_DOF = 1+NS();
+      integer constexpr NUM_EQN = 1+NS();
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_DOF, STENCILWRAPPER >;
+      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER >;
       typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
       typename KernelType::ReactiveSinglePhaseFlowAccessors reactiveFlowAccessors( elemManager, solverName );
       typename KernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );

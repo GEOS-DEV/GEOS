@@ -195,11 +195,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         string const fluidModelName = castedFluid.getCatalogName();
-        GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( m_isThermal && ((fluidModelName != "ThermalCompressibleSinglePhaseFluid") && (fluidModelName != "ThermalReactiveCompressibleSinglePhase")),
                        GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
-        GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( !m_isThermal && ((fluidModelName == "ThermalCompressibleSinglePhaseFluid") || (fluidModelName == "ThermalReactiveCompressibleSinglePhase")),
                        GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );

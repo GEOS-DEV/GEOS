@@ -28,6 +28,8 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp"
 #include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
 
 
@@ -180,13 +182,13 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void
-  applyPresSpeciesDirichletBC( real64 const time_n,
-                               real64 const dt,
-                               DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) const;
+  virtual void
+  applyDirichletBC( real64 const time_n,
+                    real64 const dt,
+                    DomainPartition & domain,
+                    DofManager const & dofManager,
+                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                    arrayView1d< real64 > const & localRhs ) const override;
 
   /**
    * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application

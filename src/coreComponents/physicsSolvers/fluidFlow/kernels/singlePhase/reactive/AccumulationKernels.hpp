@@ -53,6 +53,7 @@ public:
   using Base::m_elemGhostRank;
   using Base::m_localMatrix;
   using Base::m_localRhs;
+  using Base::m_dMass;
 
   /// Note: Derivative lineup only supports dP & dT, not component terms
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >;
@@ -87,7 +88,7 @@ public:
     // m_dDensity_dLogPrimaryConc( fluid.dDensity_dLogPrimaryConc() ),
     // m_dPoro_dLogPrimaryConc( solid.getDporosity_dLogPrimaryConc() ),
     m_primarySpeciesAggregateConcentration( fluid.primarySpeciesAggregateConcentration() ),
-    // m_dTotalPrimarySpeciesConcentration_dPres( fluid.dTotalPrimarySpeciesConcentration_dPres() ),
+    // m_dPrimarySpeciesAggregateConcentration_dPres( fluid.dPrimarySpeciesAggregateConcentration_dPres() ),
     m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc( fluid.dPrimarySpeciesAggregateConcentration_dLogPrimaryConc() ),
     m_kineticReactionRates( fluid.kineticReactionRates() ),
     // m_dPrimarySpeciesTotalKineticRate_dPres( fluid.dPrimarySpeciesTotalKineticRate_dPres() ),
@@ -150,30 +151,25 @@ public:
 
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
-   * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    * @param[in] kernelOp the function used to customize the kernel
    */
-  template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
-                            StackVariables & stack,
-                            FUNC && kernelOp = NoOpFunc{} ) const
+                            StackVariables & stack ) const
   {
     // Residual[is] += (totalPrimarySpeciesConcentration[is] * stack.poreVolume - totalPrimarySpeciesAmount_n[is])
     //                 - dt * m_volume * primarySpeciesKineticRate[is] // To Check: what's the unit of the kinetic rate
 
     Base::computeAccumulation( ei, stack );
-    // Base::computeAccumulation( ei, stack, [&] ()
-    // {
+
+    // Step 1: assemble the derivatives of the total mass equation w.r.t log of primary species concentration
     //   for( integer is = 0; is < numSpecies; ++is )
     //   {
-    //     // Step 1: assemble the derivatives of the total mass equation w.r.t log of primary species concentration
     //     stack.localJacobian[0][is+numDof-numSpecies] = stack.poreVolume * m_dDensity_dLogPrimaryConc[ei][is] +
     // stack.dPoreVolume_dLogPrimaryConc[is] * m_density[ei][0];
     //   }
-    // } );
 
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dPrimarySpeciesAggregateConcentration_dLogPrimaryConc = m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc[ei];
 
@@ -216,8 +212,6 @@ public:
         // dPrimarySpeciesTotalKineticRate_dLogPrimaryConc[is][js];
       }
     }
-
-    kernelOp(); // To add thermal dependency
   }
 
   /**
@@ -268,8 +262,8 @@ protected:
   // View on the total concentration of ions that contain the primary species
   arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateConcentration;
 
-  // // View on the derivatives of total ion concentration for the primary species wrt pressure
-  // arrayView2d< real64 const, compflow::USD_COMP > m_dTotalPrimarySpeciesConcentration_dPres;
+  // // View on the derivatives of aggregate concentration for the primary species wrt pressure
+  // arrayView2d< real64 const, compflow::USD_COMP > m_dPrimarySpeciesAggregateConcentration_dPres;
 
   // View on the derivatives of total ion concentration for the primary species wrt log of primary species concentration
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc;

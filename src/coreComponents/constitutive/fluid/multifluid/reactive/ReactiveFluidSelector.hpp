@@ -22,6 +22,7 @@
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/multifluid/reactive/ReactiveBrineFluid.hpp"
 #include "constitutive/fluid/singlefluid/reactive/ReactiveCompressibleSinglePhaseFluid.hpp"
+#include "constitutive/fluid/singlefluid/reactive/ThermalReactiveCompressibleSinglePhaseFluid.hpp"
 
 #include "common/GeosxConfig.hpp"
 
@@ -51,14 +52,16 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( ReactiveSingleFluid const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveCompressibleSinglePhase >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ReactiveCompressibleSinglePhase,
+                               ThermalReactiveCompressibleSinglePhase >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( ReactiveSingleFluid & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveCompressibleSinglePhase >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ReactiveCompressibleSinglePhase,
+                               ThermalReactiveCompressibleSinglePhase >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

@@ -212,14 +212,14 @@ private:
    * @param[in] q           gauss point index
    * @param[in] pressure    the target pressure value
    * @param[in] temperature the target temperature value
-   * @param[in] composition the target composition value
+   * @param[in] logPrimaryConc the target logPrimaryConc value
    */
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimaryConc ) const = 0;
 
 };
 //END_SPHINX_INCLUDE_02

@@ -23,6 +23,7 @@
 #include "constitutive/fluid/singlefluid/CompressibleSinglePhaseFluid.hpp"
 #include "constitutive/fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp"
 #include "constitutive/fluid/singlefluid/reactive/ReactiveCompressibleSinglePhaseFluid.hpp"
+#include "constitutive/fluid/singlefluid/reactive/ThermalReactiveCompressibleSinglePhaseFluid.hpp"
 
 namespace geos
 {
@@ -34,7 +35,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveCompressibleSinglePhase,
+  ConstitutivePassThruHandler< ThermalReactiveCompressibleSinglePhase,
+                               ReactiveCompressibleSinglePhase,
                                ThermalCompressibleSinglePhaseFluid,
                                CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
@@ -43,7 +45,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveCompressibleSinglePhase,
+  ConstitutivePassThruHandler< ThermalReactiveCompressibleSinglePhase,
+                               ReactiveCompressibleSinglePhase,
                                ThermalCompressibleSinglePhaseFluid,
                                CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }

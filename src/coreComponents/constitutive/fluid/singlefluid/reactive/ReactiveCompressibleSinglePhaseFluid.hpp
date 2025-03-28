@@ -146,7 +146,7 @@ public:
                        localIndex const q,
                        real64 const pressure,
                        real64 const GEOS_UNUSED_PARAM( temperature ),
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( composition ) ) const override
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConc ) ) const override
   {
     compute( pressure,
              m_density[k][q],
@@ -161,11 +161,11 @@ public:
                                 localIndex const GEOS_UNUSED_PARAM( q ),
                                 real64 const pressure,
                                 real64 const temperature,
-                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override
+                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primaryConc ) const override
   {
     for( int i=0; i < m_numPrimarySpecies; i++ )
     {
-      m_primarySpeciesAggregateConcentration[k][i] = composition[i];
+      m_primarySpeciesAggregateConcentration[k][i] = primaryConc[i];
     }
 
     computeChemistry( pressure,

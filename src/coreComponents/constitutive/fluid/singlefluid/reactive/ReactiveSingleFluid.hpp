@@ -51,7 +51,7 @@ public:
                                 localIndex const q,
                                 real64 const pressure,
                                 real64 const temperature,
-                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;
+                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primaryConc ) const = 0;
 
   GEOS_HOST_DEVICE
   virtual void updateChemistryLogConc( localIndex const k,
