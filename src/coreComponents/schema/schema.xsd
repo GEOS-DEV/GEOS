@@ -3530,10 +3530,21 @@ Information output from lower logLevels is added with the desired log level-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Information output from lower logLevels is added with the desired log level-->
+Level 0 outputs no specific information for this solver. Higher levels require more outputs.
+1
+ - Line search information
+ - Solution information (scaling, maximum changes, quality check)
+ - Convergence information
+ - Time step information
+ - Linear solver information
+ - Nonlinear solver information
+ - Solver timers information
+ - Coupling information
+2
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4047,7 +4058,7 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeStepFromTables => Choose time step to honor rates/bhp tables time intervals-->
 		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
-		<!--writeCSV => When set to 1, write the rates into a CSV file-->
+		<!--writeCSV => Write rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
