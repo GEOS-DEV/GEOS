@@ -77,6 +77,21 @@ computePureCoefficients( integer const ic,
                          real64 & daCoefficient_dt,
                          real64 & dbCoefficient_dt )
 {
+  arraySlice1d< integer const > const & componentType = componentProperties.m_componentType;
+  if( !isComponentType( componentType[ic], ComponentType::Water ))
+  {
+    CubicModel::computePureCoefficients( ic,
+                                         pressure,
+                                         temperature,
+                                         componentProperties,
+                                         aCoefficient,
+                                         bCoefficient,
+                                         daCoefficient_dp,
+                                         dbCoefficient_dp,
+                                         daCoefficient_dt,
+                                         dbCoefficient_dt );
+    return;
+  }
   arraySlice1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
   arraySlice1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
 
@@ -163,9 +178,10 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 constexpr A2 = -21.2566;
     real64 const a0 = 1.0 + 0.15587 * power( salinity, 0.7505 );
     real64 const a1 = 1.0 + 0.17837 * power( salinity, 0.979 );
-    real64 const a2 = LvArray::math::exp( -6.7222*Tr - salinity );
-    kij = A0*a0 + A1*a1 + A2*a2;
-    dkij_dT = -6.7222*A2*a2 * dTr_dT;
+    real64 constexpr e2 = -6.7222;
+    real64 const a2 = LvArray::math::exp( e2*Tr - salinity );
+    kij = A0*a0 + A1*a1*Tr + A2*a2;
+    dkij_dT = (A1*a1 + e2*A2*a2) * dTr_dT;
   }
   else if( isComponentType( type_i, ComponentType::HydrogenSulphide ))
   {
@@ -181,7 +197,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 constexpr A0 = -1.70235;
     real64 constexpr A1 = 0.44338;
     real64 const csw = power( salinity, 0.75 );
-    real64 const a0 = 1.0 + 0.25587*csw;
+    real64 const a0 = 1.0 + 0.025587*csw;
     real64 const a1 = 1.0 + 0.08126*csw;
     kij = A0*a0 + A1*a1*Tr;
     dkij_dT = A1*a1*dTr_dT;
@@ -205,15 +221,36 @@ getBinaryInteractionCiefficient( real64 const & pressure,
 
     // Table 2 from Soreide & Whitson (1992)
     // See also equations (11) and (12)
-    real64 const A0 = 1.1120 - 1.7369 * power( omega, -0.1 );
-    real64 const A1 = 1.1001 + 0.8360 * omega;
-    real64 const A2 = -0.15742 - 1.0988 * omega;
-    real64 const a0 = 1.0 + 0.017407*salinity;
-    real64 const a1 = 1.0 + 0.033516*salinity;
-    real64 const a2 = 1.0 + 0.011478*salinity;
-    kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
-    real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
-    dkij_dT = dkij_dTr * dTr_dT;
+    // For methane we will use the tuned parameters
+    if( 0.02 < omega )
+    {
+      // Original parameters from Soreide & Whitson (1992)
+      real64 const A0 = 1.1120 - 1.7369 * power( omega, -0.1 );
+      real64 const A1 = 1.1001 + 0.8360 * omega;
+      real64 const A2 = -0.15742 - 1.0988 * omega;
+
+      real64 const a0 = 1.0 + 0.017407*salinity;
+      real64 const a1 = 1.0 + 0.033516*salinity;
+      real64 const a2 = 1.0 + 0.011478*salinity;
+      kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
+      real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
+      dkij_dT = dkij_dTr * dTr_dT;
+    }
+    else
+    {
+      // Tuned parameters
+      real64 const A0 = 1.616705 - 1.884534 * power( omega, -0.1 );
+      real64 const A1 = 0.8157014 + 0.8723632 * omega;
+      real64 const A2 = -0.0887821 - 0.8767864 * omega;
+
+      real64 const a0 = 1.0 + 0.09988448*salinity;
+      real64 const a1 = 1.0 + 0.1485516*salinity;
+      real64 const a2 = 1.0 + 0.2111324*salinity;
+
+      kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
+      real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
+      dkij_dT = dkij_dTr * dTr_dT;
+    }
   }
 }
 

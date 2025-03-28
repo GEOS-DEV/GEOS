@@ -241,7 +241,7 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   }
 
   // Check if k-Values need to be initialised
-  bool needInitialisation = true;
+  bool needInitialisation = false;
   for( integer ic = 0; ic < numComps; ++ic )
   {
     if( kVapourLiquid[ic] < MultiFluidConstants::epsilon )
