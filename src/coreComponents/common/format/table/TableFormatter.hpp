@@ -207,6 +207,26 @@ private:
                     size_t tableTotalWidth ) const;
 
   /**
+   * @brief Outputs the formatted table lines to the output stream.
+   * @param tableLayout The layout of the table
+   * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
+   * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
+   */
+  void outputLines( PreparedTableLayout const & tableLayout,
+                    CellLayoutRows const & cellsLayout,
+                    std::ostringstream & tableOutput ) const;
+
+  /**
+   * @brief Outputs the formatted table lines to the output stream.
+   * @param tableLayout The layout of the table
+   * @param errorCellsLayout The layout of the error rows
+   * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
+   */
+  void outputErrors( PreparedTableLayout const & tableLayout,
+                    CellLayoutRows & errorCellsLayout,
+                    std::ostringstream & tableOutput ) const;
+
+  /**
    * @brief Populate a grid of CellLayout with the title rows.
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
@@ -303,19 +323,6 @@ private:
   void formatCell( std::ostringstream & tableOutput,
                    TableLayout::CellLayout const & cell,
                    size_t idxLine ) const;
-
-  /**
-   * @brief Outputs the formatted table lines to the output stream.
-   * @param tableLayout The layout of the table
-   * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
-   * @param tableOutput The output stream
-   * @param nbLinesRow A vector containing the number of sub-lines for each row.
-   * @param sectionType The type of the section being processed (Header, Value, etc.).
-   * @param separatorLine The table separator line string
-   */
-  void outputLines( PreparedTableLayout const & tableLayout,
-                    CellLayoutRows const & cellsLayout,
-                    std::ostringstream & tableOutput ) const;
 };
 
 /**

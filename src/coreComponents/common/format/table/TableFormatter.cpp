@@ -628,21 +628,9 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
     outputLines( tableLayout, dataCellsLayout, tableOutput );
   }
 
-  if( !errorCellsLayout.empty())   //todo fonction
+  if( !errorCellsLayout.empty())
   {
-    for( CellLayoutRow & errorLayout : errorCellsLayout )
-    {
-      TableLayout::CellLayout & errorConfig = errorLayout.cells[errorLayout.cells.size() - 1];
-      if( errorConfig.m_cellType == CellType::Value )
-      {
-        size_t tableWidth = errorConfig.getWidth();
-        errorConfig.prepareLayout( errorConfig.getLines().front(), errorConfig.getWidth() );
-        errorConfig.setWidth( tableWidth );
-        errorLayout.sublinesCount = errorConfig.getHeight();
-      }
-    }
-
-    outputLines( tableLayout, errorCellsLayout, tableOutput );
+    outputErrors( tableLayout, errorCellsLayout, tableOutput );
   }
 
   if( !dataCellsLayout.empty() || getErrorsList().hasErrors())
@@ -653,6 +641,25 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
   {
     tableOutput << '\n';
   }
+}
+
+void TableTextFormatter::outputErrors( PreparedTableLayout const & tableLayout,
+                                      CellLayoutRows & errorCellsLayout,
+                                      std::ostringstream & tableOutput ) const
+{
+  for( CellLayoutRow & errorLayout : errorCellsLayout )
+  {
+    TableLayout::CellLayout & errorConfig = errorLayout.cells[errorLayout.cells.size() - 1];
+    if( errorConfig.m_cellType == CellType::Value )
+    {
+      size_t const tableWidth = errorConfig.getWidth();
+      errorConfig.prepareLayout( errorConfig.getLines().front(), errorConfig.getWidth() );
+      errorConfig.setWidth( tableWidth );
+      errorLayout.sublinesCount = errorConfig.getHeight();
+    }
+  }
+
+  outputLines( tableLayout, errorCellsLayout, tableOutput );
 }
 
 /**

@@ -757,21 +757,22 @@ TEST( testTable, table2DMismatchingCoordValues )
   TableData2D tableData2D;
 
   // 1. Prepare values
-  real64 numRow = 5;
-  real64 numCol = 5;
+  real64 const numRow = 5;
+  real64 const numCol = 5;
   array1d< real64 > values( 25 );
   for( real64 p = 0; p < numRow; p += 1 )
   {
     for( real64 t = 0; t < numCol; t += 1 )
     {
-      real64 value = t + p * numCol;
+      real64 const value = t + p * numCol;
       values[t + p * numCol] = value;
     }
   }
   arrayView1d< real64 const > const valuesConst = values;
 
-  // Fonction d'assistance pour tester les coordonnées
-  auto testCoordinates = [&tableData2D, &values]( std::array< real64, 6 > & coordXValues, std::array< real64, 6 > & coordYValues, std::size_t expectedCoordSize )
+  auto const testCoordinates = [&tableData2D, &values]( std::array< real64, 6 > const & coordXValues,
+                                                  std::array< real64, 6 >  const & coordYValues,
+                                                  std::size_t const expectedCoordSize )
   {
 
     struct Result
@@ -779,18 +780,19 @@ TEST( testTable, table2DMismatchingCoordValues )
       string text;
       string csv;
     };
-    // 1. Prepare coordinates
+
+    // 2. Prepare coordinates
     ArrayOfArrays< real64 > coordinates( 2, expectedCoordSize );
     coordinates.appendToArray( 0, coordXValues.begin(), coordXValues.begin() + coordXValues.size());
     coordinates.appendToArray( 1, coordYValues.begin(), coordYValues.begin() + coordYValues.size());
 
-    ArrayOfArraysView< real64 const > constCoordinates = coordinates.toViewConst();
+    ArrayOfArraysView< real64 const > const constCoordinates = coordinates.toViewConst();
 
     string const rowFmt = GEOS_FMT( "{}", "Temperature" );
     string const columnFmt = GEOS_FMT( "{}", "Pressure" );
 
     // 3. Convert
-    TableData2D::TableDataHolder tableConverted = tableData2D.convertTable2D( constCoordinates,
+    TableData2D::TableDataHolder const tableConverted = tableData2D.convertTable2D( constCoordinates,
                                                                               rowFmt,
                                                                               columnFmt,
                                                                               values,
@@ -808,11 +810,10 @@ TEST( testTable, table2DMismatchingCoordValues )
                   csvOutput.toString( tableConverted.tableData )};
   };
 
-  // Test with too many values
-  {
-    std::array< real64, 6 > coordXValues = { 0, 1, 2, 3 };
-    std::array< real64, 6 > coordYValues = { 0, 1, 2, 3 };
-    auto [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 4 );
+  {  // Test with too many values
+    std::array< real64, 6 > const coordXValues = { 0, 1, 2, 3 };
+    std::array< real64, 6 > const coordYValues = { 0, 1, 2, 3 };
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 4 );
     EXPECT_EQ( textFormatted,
                "\n"
                "-----------------------------------------------------------------------------------------\n"
@@ -834,11 +835,13 @@ TEST( testTable, table2DMismatchingCoordValues )
                "Temperature = 2,17,13,14,15\n"
                "Temperature = 3,23,19,20,21\n" );
   }
+  
+
   tableData2D.clear();
-  {
-    std::array< real64, 6 > coordXValues = { 0, 1, 2, 3, 4, 5 };
-    std::array< real64, 6 > coordYValues = { 0, 1, 2, 3, 4, 5 };
-    auto [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 6 );
+  {// Test with not enough values
+    std::array< real64, 6 > const coordXValues = { 0, 1, 2, 3, 4, 5 };
+    std::array< real64, 6 > const coordYValues = { 0, 1, 2, 3, 4, 5 };
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 6 );
 
     EXPECT_EQ( textFormatted,
                "\n"
@@ -887,7 +890,7 @@ TEST( testTable, tableSpecialsValues )
       .setName( "Next\nelement" )
       .setHeaderAlignment( TableLayout::Alignment::center )} );
 
-  LvArray::NumericLimits< float > realLimit;
+  LvArray::NumericLimits< float > const realLimit;
 
   TableData tableData;
   tableData.addRow( realLimit.infinity, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
@@ -922,4 +925,3 @@ int main( int argc, char * * argv )
   testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }
-
