@@ -1867,7 +1867,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 
   // Compute strain hardening applied to the STREN parameter
   real64 hardening = 0.0;
-	std::cout<<"hardeningK: " << m_strainHardeningK << std::endl;
+	//std::cout<<"hardeningK: " << m_strainHardeningK << std::endl;
 
 
    if (m_strainHardeningK > 0)
@@ -1881,7 +1881,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
    	real64 ep_J2 = ep_old[0]*ep_old[0] + ep_old[1]*ep_old[1] + ep_old[2]*ep_old[2]
 		 	   + 3*ep_old[3]*ep_old[3] + 3*ep_old[4]*ep_old[4] + 3*ep_old[5]*ep_old[5]
 		 	   - ep_old[1]*ep_old[2] - ep_old[0]*ep_old[1] - ep_old[0]*ep_old[2]; 
-    std::cout<< " ep_J2: " << ep_J2 << std::endl;
+    //std::cout<< " ep_J2: " << ep_J2 << std::endl;
 		if (ep_J2 > 0.)
 		{
 			real64 equilivantPlasticStrain = (2./3.)*sqrt(ep_J2);
@@ -2882,7 +2882,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
   //std::cout<<"peakI1_h = "<<peakI1_h<<", stren_h = "<<stren_h<<", ySlope_h = "<<ySlope_h<<", fSlope_h = "<<fSlope_h<<std::endl;
   //std::cout<<"a1 = "<<a1<<", a2 = "<<a2<<", a3 = "<<a3<<", a4 = "<<a4<<std::endl;
-  std::cout<<" strenhd: " << stren_hd << "FSLOPEHD: "<< fSlope_hd << " peakI1hd: " << peakI1_hd << "YSLOPEHD: " << ySlope_hd  <<std::endl;
+  //std::cout<<" strenhd: " << stren_hd << "FSLOPEHD: "<< fSlope_hd << " peakI1hd: " << peakI1_hd << "YSLOPEHD: " << ySlope_hd  <<std::endl;
 
 }
 
