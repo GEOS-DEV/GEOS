@@ -697,8 +697,8 @@ TEST( testTable, tableMismatchingHeaderData )
              "|                                                                                          value3  |        [30]  |       4  |       53  |           |\n"
              "|                                                                                          value4  |  [30.21543]  |     3.0  |       54  |      412  |\n"
              "|----------------------------------------------------------------------------------------------------------------------------------------------------|\n"
-             "|                                      Warning : One or more data lines are not equal to the number of headers                                       |\n"
-             "|                                                           Data can be missing/misaligned                                                           |\n"
+             "|  Error : One or more data lines are not equal to the number of headers                                                                             |\n"
+             "|  Data can be missing/misaligned                                                                                                                    |\n"
              "------------------------------------------------------------------------------------------------------------------------------------------------------\n"
              );
 }
@@ -742,12 +742,12 @@ TEST( testTable, tableHiddeSubColumn )
              "|------------------------|-----------|-----------|\n"
              "|  dummy value in table  |           |           |\n"
              "|------------------------------------------------|\n"
-             "|    Warning : One or more data lines are not    |\n"
-             "|         equal to the number of headers         |\n"
-             "|         Data can be missing/misaligned         |\n"
-             "|             Warning : Bad use of a             |\n"
-             "|    Tabledata::addSeparator(). Make sure you    |\n"
-             "|         have added values in TableData         |\n"
+             "|  Error : One or more data lines are not equal  |\n"
+             "|  to the number of headers                      |\n"
+             "|  Data can be missing/misaligned                |\n"
+             "|  Warning : Bad use of a                        |\n"
+             "|  Tabledata::addSeparator(). Make sure you      |\n"
+             "|  have added values in TableData                |\n"
              "--------------------------------------------------\n"
              );
 }
@@ -771,8 +771,8 @@ TEST( testTable, table2DMismatchingCoordValues )
   arrayView1d< real64 const > const valuesConst = values;
 
   auto const testCoordinates = [&tableData2D, &values]( std::array< real64, 6 > const & coordXValues,
-                                                  std::array< real64, 6 >  const & coordYValues,
-                                                  std::size_t const expectedCoordSize )
+                                                        std::array< real64, 6 >  const & coordYValues,
+                                                        std::size_t const expectedCoordSize )
   {
 
     struct Result
@@ -793,11 +793,11 @@ TEST( testTable, table2DMismatchingCoordValues )
 
     // 3. Convert
     TableData2D::TableDataHolder const tableConverted = tableData2D.convertTable2D( constCoordinates,
-                                                                              rowFmt,
-                                                                              columnFmt,
-                                                                              values,
-                                                                              true,
-                                                                              "T" );
+                                                                                    rowFmt,
+                                                                                    columnFmt,
+                                                                                    values,
+                                                                                    true,
+                                                                                    "T" );
 
     // 4. Prepare table
     TableLayout tableLayout;
@@ -824,8 +824,8 @@ TEST( testTable, table2DMismatchingCoordValues )
                "|  Temperature = 2  |            17  |            13  |            14  |            15  |\n"
                "|  Temperature = 3  |            23  |            19  |            20  |            21  |\n"
                "|---------------------------------------------------------------------------------------|\n"
-               "|   Warning : The number of values is insufficient for the number of columns * rows:    |\n"
-               "|                          Expected 36 values, Found 25 values                          |\n"
+               "|  Warning : The number of values is insufficient for the number of columns * rows:     |\n"
+               "|  Expected 36 values, Found 25 values                                                  |\n"
                "-----------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
@@ -835,7 +835,7 @@ TEST( testTable, table2DMismatchingCoordValues )
                "Temperature = 2,17,13,14,15\n"
                "Temperature = 3,23,19,20,21\n" );
   }
-  
+
 
   tableData2D.clear();
   {// Test with not enough values
@@ -855,8 +855,8 @@ TEST( testTable, table2DMismatchingCoordValues )
                "|  Temperature = 4  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
                "|  Temperature = 5  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
                "|-------------------------------------------------------------------------------------------------------------------------|\n"
-               "|                    Warning : The number of values is insufficient for the number of columns * rows:                     |\n"
-               "|                                           Expected 36 values, Found 25 values                                           |\n"
+               "|  Warning : The number of values is insufficient for the number of columns * rows:                                       |\n"
+               "|  Expected 36 values, Found 25 values                                                                                    |\n"
                "---------------------------------------------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
@@ -914,7 +914,7 @@ TEST( testTable, tableSpecialsValues )
              "|   3.4028235e+38  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
              "|           1e-45  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
              "|---------------------------------------------------------------------------|\n"
-             "|                    Invalid values detected (nan/inf).                     |\n"
+             "|  Warning : Invalid values detected (nan/inf).                             |\n"
              "-----------------------------------------------------------------------------\n"
              );
 }
