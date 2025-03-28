@@ -43,6 +43,12 @@ public:
   /// Type of aligment for a column
   enum Alignment { right, left, center };
 
+  /// default value for columns header cells alignement
+  static constexpr Alignment defaultHeaderAlignment = Alignment::center;
+
+  /// default value for data cells alignement
+  static constexpr Alignment defaultValueAlignment = Alignment::right;
+
   /// Space to apply between all data and border
   enum MarginValue : integer
   {
@@ -63,29 +69,25 @@ public:
   struct ColumnAlignement
   {
     /// Alignment for column name. By default aligned to center
-    Alignment headerAlignment = Alignment::center;
+    Alignment headerAlignment = defaultHeaderAlignment;
     /// Alignment for column values. By default aligned to right side
-    Alignment valueAlignment = Alignment::right;
+    Alignment valueAlignment = defaultValueAlignment;
   };
 
   /**
-   * @struct CellLayout
-   * @brief View on cell data grouping the cell information to display it in a table (content, type, alignment, ...).
+   * @brief View on cell data with information to display it in a table (content, type, alignment, ...).
    * @note the source text must not be freeed/moved as the CellLayout will *only be a view on the text data*.
    */
-  struct CellLayout
+  class CellLayout
   {
-    /// Maximum length of the data in the cell.
-    size_t m_cellWidth;
+public:
     /// The type of the cell (Header,Value, Merge, ...).
     CellType m_cellType;
     /// The alignment of the cell (left, center, right).
     Alignment m_alignment;
-    /// vector containing each cell content, separated by lines.
-    std::vector< string_view > m_lines;
 
     /**
-     * @brief Constructor to initialize a Cell with a default settings.
+     * @brief Constructor to initialize a Cell with a default settings. Use prepareLayout() when setup.
      */
     CellLayout();
 
@@ -96,19 +98,147 @@ public:
     CellLayout( CellType cellType );
 
     /**
-     * @brief Constructor to fully initialize a cell given with given celltype, text and alignment.
-     * m_cellWidth will be initialized after
+     * @brief Constructor to fully initialize a cell with given celltype, text and alignment.
+     * m_cellWidth will be initialized aDter
      * @param cellType The type of the cell.
      * @param alignment The alignment of the cell (left, right, or center).
      */
     CellLayout( CellType cellType, TableLayout::Alignment alignment );
 
     /**
-     * @param inputText The view on the text of the cell. `m_lines` will contain each separated lines, and
-     *                  `m_cellWidth`, the maximum line width. Called automatically by PreparedTableLayout.
+     * @return The width of the cell, which must be constrained by the content lines length.
+     */
+    size_t getWidth() const
+    { return m_cellWidth; }
+
+    /**
+     * @brief Set the width of the cell, which must be constrained by the content lines length.
+     * @param cellWidth the new width to consider for this cell.
+     */
+    void setWidth( size_t cellWidth )
+    { m_cellWidth = cellWidth; }
+
+    /**
+     * @return The view on each cell line.
+     */
+    std::vector< string_view > const & getLines() const
+    { return m_lines; }
+
+    /**
+     * @return The view on each cell line.
+     */
+    std::vector< string_view > & getLines() 
+    { return m_lines; }
+
+    /**
+     * @return get the height of the cell (its number of lines).
+     */
+    size_t getHeight() const
+    { return m_lines.size(); }
+
+    /**
+     * @return True if the cell has no text.
+     */
+    size_t isEmpty() const
+    { return m_lines.empty() || m_lines[0].empty(); }
+
+    /**
+     * @brief Set the data view to the given string_view & precompute display settings.
+     * @param value The view on the full cell text, with '\n' for manual line breaks. Must not be deallocated!
+     *              `getLines()` will then contain each lines, and `m_cellWidth`, the maximum line width.
      * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
      */
     void prepareLayout( string_view value, size_t maxLineWidth );
+
+private:
+    /// The width of the cell, which must be constrained by the content lines length.
+    size_t m_cellWidth;
+    /// vector containing each cell content, separated by lines.
+    std::vector< string_view > m_lines;
+  };
+
+  /**
+   * @brief Represents a cell in a table with ownership of its text data.
+   * @note Unlike CellLayout which is just a view, Cell owns its text data (m_text).
+   *       For safety & performance reasons, Cell is non-copyable/movable after layout has been prepared.
+   */
+  class Cell
+  {
+public:
+    /// The view & display setting on m_text.
+    CellLayout m_layout;
+
+    /**
+     * @brief Constructor to initialize a Cell with a default settings. Use prepareLayout() after setup.
+     */
+    Cell();
+
+    /**
+     * @brief Constructor to partially initialize a cell with display settings. Use prepareLayout() after setup.
+     * @param cellType The type of the cell.
+     * @param alignment The alignment of the cell (left, right, or center).
+     */
+    Cell( CellType cellType, TableLayout::Alignment alignment );
+
+    /**
+     * @brief Constructor to partially initialize a cell with all settings. Use prepareLayout() after setup.
+     * @param cellType The type of the cell.
+     * @param alignment The alignment of the cell (left, right, or center).
+     * @param value The text to set in the cell (stored in m_text).
+     */
+    Cell( CellType cellType, TableLayout::Alignment alignment, string_view value );
+
+    /**
+     * @brief Copy data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     */
+    Cell( Cell const & other );
+
+    /**
+     * @brief Move data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     */
+    Cell( Cell && other );
+
+    /**
+     * @brief Copy data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     * @return The instance reference.
+     */
+    Cell & operator=( Cell const & other );
+
+    /**
+     * @brief Move data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     * @return The instance reference.
+     */
+    Cell & operator=( Cell && other );
+
+    /**
+     * @return The full cell text.
+     */
+    string_view getText() const
+    { return m_text; }
+
+    /**
+     * @brief Set the full cell text.
+     * @param text The full cell text, with '\n' for manual line breaks.
+     */
+    void setText( string_view text );
+
+    /**
+     * @brief Precompute m_layout display settings and link it with m_text.
+     * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
+     */
+    void prepareLayout( size_t maxLineWidth );
+
+private:
+    /// The text data of the cell (potencially multiline).
+    string m_text;
   };
 
   /**
@@ -121,30 +251,30 @@ public:
     /// Alias for the list of columns.
     using ColumnsList = std::vector< Column >;
 
-    // The text of the header.
-    string m_headerStr;
-    /// The header cell layout (view on m_headerStr).
-    CellLayout m_headerLayout;
+    /// The header cell
+    Cell m_header;
     /// A vector containing all sub-columns in the column.
     ColumnsList m_subColumns;
     /// struct containing m_alignment for the column (header and values)
     ColumnAlignement m_alignment;
 
     /**
-     * @brief Default constructor.
-     * Initializes a column with default values.
+     * @brief Construct a default column with no parameter (must be configurated).
      */
     Column();
 
     /**
-     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
+     * @brief Construct a default column with minimal parameters.
+     * @param name The name of the Column.
      */
     explicit Column( string_view name ):
       Column( name, ColumnAlignement() )
     {}
 
     /**
-     * @brief Move constructor. Ignore any input pointer (m_next, m_parent).
+     * @brief Construct a default column with minimal parameters.
+     * @param name The name of the Column.
+     * @param alignment The alignment setting of the column header and values.
      */
     Column( string_view name, ColumnAlignement alignment );
 
@@ -274,7 +404,7 @@ public:
      * @return True if the column and its children are visible.
      */
     bool isVisible() const
-    { return m_headerLayout.m_cellType!=CellType::Hidden; }
+    { return m_header.m_layout.m_cellType!=CellType::Hidden; }
 
 private:
     /// Pointer to the parent cell (if any).
@@ -523,30 +653,22 @@ private:
   bool isLineBreakEnabled() const;
 
   /**
-   * @return The border margin,
-   * number of spaces at each table sides
+   * @return The number of spaces at each table sides
    */
   integer const & getBorderMargin() const
   { return m_borderMargin; }
 
   /**
-   * @return The column margin,
-   * numbers of spaces separating both left and right side from a vertical line
+   * @return The number of character between two columns (spaces + the separacting character).
    */
   integer const & getColumnMargin() const
   { return m_columnMargin; }
 
   /**
-   * @return The table margin value
+   * @return The number of margin spaces around contents.
    */
   integer const & getMarginValue() const
   { return m_marginValue; }
-
-  /**
-   * @return The margin title
-   */
-  integer const & getMarginTitle() const
-  { return m_titleMargin; }
 
   /**
    * @return The margin title
@@ -607,7 +729,7 @@ protected:
   /// Columns settings hierarchy
   ColumnsList m_tableColumns;
 
-  // Indicate if we have a line break a the beginning of the table
+  /// Indicate if we have a line break a the beginning of the table
   bool m_lineBreakAtBegin = true;
 
   /// Table title text
@@ -620,10 +742,14 @@ protected:
   size_t m_maxColumnWidth = noColumnMaxWidth;
 
 
+  /// The number of spaces at each table sides
   integer m_borderMargin;
+
+  /// The number of character between two columns (spaces + the separacting character).
   integer m_columnMargin;
+
+  /// The number of margin spaces around contents.
   integer m_marginValue;
-  integer m_titleMargin = 2;
 
 };
 
@@ -648,6 +774,7 @@ public:
    *        For now, called automatically at TableFormatter construction.
    * @note If an error happen while this process, it must output the table name and the error
    *       message in a GEOS_WARNING().
+   * @param other The table layout configuration.
    */
   PreparedTableLayout( TableLayout const & other );
 

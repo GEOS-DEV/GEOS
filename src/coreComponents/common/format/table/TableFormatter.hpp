@@ -41,11 +41,14 @@ public:
   /// Represent a row of the Table (header or values) when structured for formatting
   struct CellLayoutRow
   {
+    /// The cell list of the row instance.
     std::vector< TableLayout::CellLayout > cells;
+
+    /// The maximum number of lines in the `cells` texts (no text is considered as one line).
     size_t sublinesCount;
   };
 
-  /// Represent the Table (header or values) when structured for formatting
+  /// Represent a table section (title + header or values) layout: view on the data and its layout settings.
   using CellLayoutRows = std::vector< CellLayoutRow >;
 
   /**
