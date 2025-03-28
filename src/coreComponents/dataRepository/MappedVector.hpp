@@ -467,6 +467,7 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
                                                             bool takeOwnership,
                                                             bool overwrite )
 {
+  GEOS_UNUSED_VAR( overwrite );
   INDEX_TYPE index = KeyIndex::invalid_index;
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find( keyName );
 
