@@ -258,15 +258,14 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel())&& MpiWrapper::commRank() == 0 )
     {
       TableData singPhaseStatsData;
-      singPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
+      singPhaseStatsData.addRow( "Pressure[Pa]", std::numeric_limits< real64 >::infinity(), stats.averagePressure, stats.maxPressure );
       singPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
       singPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
-      singPhaseStatsData.addSeparator();
       singPhaseStatsData.addSeparator();
       singPhaseStatsData.addRow( "statistics", CellType::MergeNext, CellType::MergeNext, "value" );
       singPhaseStatsData.addSeparator();
 
-      singPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
+      singPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext );
       singPhaseStatsData.addSeparator();
       singPhaseStatsData.addRow( GEOS_FMT( "Total fluid mass [{}]", massUnit ), CellType::MergeNext, CellType::MergeNext, stats.totalMass );
 
