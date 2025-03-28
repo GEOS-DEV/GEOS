@@ -161,6 +161,22 @@ DECLARE_FIELD( backSlipRate,
                WRITE_AND_READ,
                "BackSlipRate" );
 
+DECLARE_FIELD( totalSlip,
+                "totalSlip",
+                array2d< real64 >,
+                0.0,
+                LEVEL_0,
+                WRITE_AND_READ,
+                "totalSlip at current time." );
+                
+DECLARE_FIELD( totalSlip_n,
+               "totalSlip_n",
+               array2d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "totalSlip at time n." );                    
+
 }
 
 }

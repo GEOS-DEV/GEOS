@@ -118,7 +118,7 @@
 
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/slipCollection,/Tasks/slipRateCollection,/Tasks/stateVariableCollection}"
+      sources="{/Tasks/slipCollection,/Tasks/slipRateCollection,/Tasks/stateVariableCollection,/Tasks/deltaSlipCollection}"
       filename="springSlider"/>
   </Outputs>
 
@@ -126,7 +126,12 @@
     <PackCollection
       name="slipCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
-      fieldName="displacementJump"/>
+      fieldName="totalSlip"/>
+
+    <PackCollection
+      name="deltaSlipCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="deltaSlip"/>  
     
     <PackCollection
       name="slipRateCollection"

@@ -65,14 +65,6 @@ void SpringSlider< RSSOLVER_TYPE >::registerDataOnMesh( Group & meshBodies )
     {
       // 3-component functions on fault
       string const labels3Comp[3] = { "normal", "tangent1", "tangent2" };
-      subRegion.registerField< contact::dispJump >( this->getName() ).
-        setDimLabels( 1, labels3Comp ).
-        reference().template resizeDimension< 1 >( 3 );
-
-      subRegion.registerField< contact::dispJump_n >( this->getName() ).
-        setDimLabels( 1, labels3Comp ).
-        reference().template resizeDimension< 1 >( 3 );
-
       string const labels2Comp[2] = { "tangent1", "tangent2" };
 
       subRegion.registerField< contact::deltaSlip >( this->getName() ).

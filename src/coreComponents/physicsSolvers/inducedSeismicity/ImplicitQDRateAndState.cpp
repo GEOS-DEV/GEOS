@@ -104,13 +104,18 @@ real64 ImplicitQDRateAndState::solverStep( real64 const & time_n,
 
 void ImplicitQDRateAndState::updateSlip( ElementSubRegionBase & subRegion, real64 const dt ) const
 {
-  arrayView2d< real64 const > const slipVelocity    = subRegion.getField< rateAndState::slipVelocity >();
-  arrayView2d< real64 > const deltaSlip             = subRegion.getField< contact::deltaSlip >();
+  arrayView2d< real64 const > const slipVelocity = subRegion.getField< rateAndState::slipVelocity >();
+  arrayView2d< real64 > const deltaSlip          = subRegion.getField< contact::deltaSlip >();
+  arrayView2d< real64 const > const totalSlip_n  = subRegion.getField< rateAndState::totalSlip_n >();
+  arrayView2d< real64 > const totalSlip          = subRegion.getField< rateAndState::totalSlip >();
+
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     deltaSlip[k][0] = slipVelocity[k][0] * dt;
     deltaSlip[k][1] = slipVelocity[k][1] * dt;
+    totalSlip[k][0] = totalSlip_n[k][0] + deltaSlip[k][0];
+    totalSlip[k][1] = totalSlip_n[k][0] + deltaSlip[k][1];
   } );
 }
 

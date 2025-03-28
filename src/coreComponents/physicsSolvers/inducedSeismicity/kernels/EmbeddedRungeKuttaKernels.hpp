@@ -92,9 +92,8 @@ public:
     m_slipVelocity( subRegion.getField< fields::rateAndState::slipVelocity >() ),
     m_slipVelocity_n( subRegion.getField< fields::rateAndState::slipVelocity_n >() ),
     m_deltaSlip( subRegion.getField< fields::contact::deltaSlip >() ),
-    m_deltaSlip_n( subRegion.getField< fields::contact::deltaSlip_n >() ),
-    m_dispJump( subRegion.getField< fields::contact::dispJump >() ),
-    m_dispJump_n( subRegion.getField< fields::contact::dispJump_n >() ),
+    m_totalSlip( subRegion.getField< fields::rateAndState::totalSlip >() ),
+    m_totalSlip_n( subRegion.getField< fields::rateAndState::totalSlip_n >() ),
     m_error( subRegion.getField< fields::rateAndState::error >() ),
     m_stageRates( subRegion.getField< fields::rateAndState::rungeKuttaStageRates >() ),
     m_frictionLaw( frictionLaw.createKernelUpdates() ),
@@ -149,12 +148,11 @@ public:
       deltaSlipIncrement[1] += m_butcherTable.a[stageIndex-1][i] * m_stageRates[k][i][1];
       stateVariableIncrement += m_butcherTable.a[stageIndex-1][i] * m_stageRates[k][i][2];
     }
-    m_deltaSlip[k][0] = m_deltaSlip_n[k][0] + dt*deltaSlipIncrement[0];
-    m_deltaSlip[k][1] = m_deltaSlip_n[k][1] + dt*deltaSlipIncrement[1];
+    m_deltaSlip[k][0] = dt*deltaSlipIncrement[0];
+    m_deltaSlip[k][1] = dt*deltaSlipIncrement[1];
+    m_totalSlip[k][0] = m_totalSlip_n[k][0] + dt*deltaSlipIncrement[0];
+    m_totalSlip[k][1] = m_totalSlip_n[k][0] + dt*deltaSlipIncrement[1];
     m_stateVariable[k] = m_stateVariable_n[k] + dt*stateVariableIncrement;
-
-    m_dispJump[k][1] = m_dispJump_n[k][1] + m_deltaSlip[k][0];
-    m_dispJump[k][2] = m_dispJump_n[k][2] + m_deltaSlip[k][1];
   }
 
   /**
@@ -185,16 +183,13 @@ public:
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
 
-    m_deltaSlip[k][0]  = m_deltaSlip_n[k][0]  + dt * deltaSlipIncrement[0];
-    m_deltaSlip[k][1]  = m_deltaSlip_n[k][1]  + dt * deltaSlipIncrement[1];
-    m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
+    m_deltaSlip[k][0]  = dt * deltaSlipIncrement[0];
+    m_deltaSlip[k][1]  = dt * deltaSlipIncrement[1];
+    m_stateVariable[k] = dt * stateVariableIncrement;
 
-    real64 const deltaSlipLowOrder[2]  = {m_deltaSlip_n[k][0]  + dt * deltaSlipIncrementLowOrder[0],
-                                          m_deltaSlip_n[k][1]  + dt * deltaSlipIncrementLowOrder[1]};
+    real64 const deltaSlipLowOrder[2]  = { dt * deltaSlipIncrementLowOrder[0],
+                                           dt * deltaSlipIncrementLowOrder[1]};
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
-
-    m_dispJump[k][1] = m_dispJump_n[k][1] + m_deltaSlip[k][0];
-    m_dispJump[k][2] = m_dispJump_n[k][2] + m_deltaSlip[k][1];
 
     // Compute error
     m_error[k][0] = computeError( m_deltaSlip[k][0], deltaSlipLowOrder[0], absTol, relTol );
@@ -223,12 +218,9 @@ public:
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
 
-    real64 const deltaSlipLowOrder[2]  = {m_deltaSlip_n[k][0]  + dt * deltaSlipIncrementLowOrder[0],
-                                          m_deltaSlip_n[k][1]  + dt * deltaSlipIncrementLowOrder[1]};
+    real64 const deltaSlipLowOrder[2]  = { dt * deltaSlipIncrementLowOrder[0],
+                                           dt * deltaSlipIncrementLowOrder[1]};
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
-
-    m_dispJump[k][1] = m_dispJump_n[k][1] + m_deltaSlip[k][0];
-    m_dispJump[k][2] = m_dispJump_n[k][2] + m_deltaSlip[k][1];
 
     // Compute error
     m_error[k][0] = computeError( m_deltaSlip[k][0], deltaSlipLowOrder[0], absTol, relTol );
@@ -265,15 +257,12 @@ private:
 
   /// Current slip change
   arrayView2d< real64 > const m_deltaSlip;
+  
+  /// Current Slip
+  arrayView2d< real64 > const m_totalSlip;
 
-  /// Slip change at time t_n
-  arrayView2d< real64 > const m_deltaSlip_n;
-
-  /// Current displacment jump
-  arrayView2d< real64 > const m_dispJump;
-
-  /// Displacment jump at time t_n
-  arrayView2d< real64 > const m_dispJump_n;
+  /// Slip at time t_n
+  arrayView2d< real64 > const m_totalSlip_n;
 
   /// Local error for each solution component stored as slip1, slip2, state
   arrayView2d< real64 > const m_error;
