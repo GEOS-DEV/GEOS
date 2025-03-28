@@ -67,7 +67,7 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setPlotLevel( PlotLevel::NOPLOT );
 
-  m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
+//  m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 
   excludeWrappersFromPacking( { viewKeyStruct::localToGlobalMapString(),
                                 viewKeyStruct::globalToLocalMapString(),
@@ -89,7 +89,14 @@ ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog
 
 SortedArray< localIndex > & ObjectManagerBase::createSet( const string & newSetName )
 {
-  return m_sets.registerWrapper< SortedArray< localIndex > >( newSetName ).reference();
+  if( m_sets.hasWrapper( newSetName ) )
+  {
+    return m_sets.getReference< SortedArray< localIndex > >( newSetName );
+  }
+  else
+  {
+    return m_sets.registerWrapper< SortedArray< localIndex > >( newSetName ).reference();
+  }  
 }
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,

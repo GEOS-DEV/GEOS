@@ -489,47 +489,28 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
     m_constValues.emplace_back( keyName, rawPtr( index ) );
 
   }
-  // if key was found
-  else
+  else // key was found. already exists!
   {
     index = iterKeyLookup->second;
 
     // if value is empty, then move source into value slot
     if( m_values[index].second==nullptr )
     {
-      m_values[index].second = std::move( source );
+      m_values[index].second = source;
       m_constKeyValues[index].second = rawPtr( index );
       m_constValues[index].second = rawPtr( index );
-    }
-    else // value was not empty
-    {
-      if( overwrite )
-      {
-        deleteValue( index );
-        m_values[index].second = std::move( source );
-        m_constKeyValues[index].second = rawPtr( index );
-        m_constValues[index].second = rawPtr( index );
-      }
-      else if( typeid( source ) != typeid( m_values[index].second ) )
-      {
-        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
-                    ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
-                    " != " << LvArray::system::demangleType( m_values[ index ].second ) );
-      }
-      else
-      {
-        GEOS_LOG( "MappedVector::insert(): Inserting with an existing key (" << keyName <<
-                  ") without overwrite flag. Existing object will NOT be deleted. "
-                  "Efforts should be made to avoid the redundant registrations, and this "
-                  "should be an changed to an error!" );
-      }
-    }
 
-    if( takeOwnership )
-    {
-      m_ownsValues[index] = true;
+      if( takeOwnership )
+      {
+        m_ownsValues[index] = true;
+      }
+  
     }
-
+    else if( m_values[index].second != source ) // this insertion is OK if the source pointer is the same address as the existing value
+    {
+      GEOS_ERROR( "MappedVector::insert(): Inserting with an existing key (" << keyName <<
+                "). Avoid the redundant registrations" );
+    }
   }
 
   return &(*(m_values[index].second));
