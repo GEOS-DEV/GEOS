@@ -283,22 +283,25 @@ PressureRelationKernel::
           bool const isLocallyOwned,
           localIndex const iwelemControl,
           WellControls const & wellControls,
-          real64 const & timeAtEndOfStep,
+          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
+          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   using Deriv = constitutive::singlefluid::DerivativeOffset;
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
-  real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
-  real64 const targetRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
+  real64 const targetBHP = wellControls.getTargetBHP( time );
+  real64 const targetRate = wellControls.getTargetTotalRate( time );
 
   // dynamic well control data
   real64 const & currentBHP =
@@ -627,26 +630,21 @@ PerforationKernel::
     // get the local index of the well element
     localIndex const iwelem = perfWellElemIndex[iperf];
 
-    compute< IS_THERMAL >( resPressure[er][esr][ei],
-                           resDensity[er][esr][ei][0],
-                           dResDensity[er][esr][ei][0],
-                           dResDensity[er][esr][ei][0][Deriv::dP],  // tjb remove
-                           resViscosity[er][esr][ei][0],
-                           dResViscosity[er][esr][ei][0],
-                           dResViscosity[er][esr][ei][0][Deriv::dP],// tjb remove
-                           wellElemGravCoef[iwelem],
-                           wellElemPressure[iwelem],
-                           wellElemDensity[iwelem][0],
-                           dWellElemDensity[iwelem][0],
-                           dWellElemDensity[iwelem][0][Deriv::dP],// tjb remove
-                           wellElemViscosity[iwelem][0],
-                           dWellElemViscosity[iwelem][0],
-                           dWellElemViscosity[iwelem][0][Deriv::dP],// tjb remove
-                           perfGravCoef[iperf],
-                           perfTransmissibility[iperf],
-                           perfRate[iperf],
-                           dPerfRate[iperf],
-                           dPerfRate_dPres[iperf] );
+    compute( resPressure[er][esr][ei],
+             resDensity[er][esr][ei][0],
+             dResDensity[er][esr][ei][0][Deriv::dP],
+             resViscosity[er][esr][ei][0],
+             dResViscosity[er][esr][ei][0][Deriv::dP],
+             wellElemGravCoef[iwelem],
+             wellElemPressure[iwelem],
+             wellElemDensity[iwelem][0],
+             dWellElemDensity[iwelem][0][Deriv::dP],
+             wellElemViscosity[iwelem][0],
+             dWellElemViscosity[iwelem][0][Deriv::dP],
+             perfGravCoef[iperf],
+             perfTransmissibility[iperf],
+             perfRate[iperf],
+             dPerfRate_dPres[iperf] );
 
 
   } );
@@ -702,7 +700,7 @@ PresTempInitializationKernel::
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
           ElementViewConst< arrayView1d< real64 const > > const & resTemp,
-          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resDensity,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID, constitutive::singlefluid::USD_FLUID > > const & resDensity,
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,

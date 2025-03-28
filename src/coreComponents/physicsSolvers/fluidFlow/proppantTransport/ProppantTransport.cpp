@@ -33,6 +33,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportKernels.hpp"
@@ -81,6 +82,7 @@ ProppantTransport::ProppantTransport( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag that enables/disables proppant-packing update" );
 
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 void ProppantTransport::postInputInitialization()
@@ -96,7 +98,7 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames )
+                                                   string_array const & regionNames )
   {
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -170,7 +172,7 @@ void ProppantTransport::initializePreSubGroups()
   // Validate proppant models in regions
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
@@ -199,7 +201,7 @@ void ProppantTransport::initializePreSubGroups()
   } );
 }
 
-void ProppantTransport::resizeFractureFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ProppantTransport::resizeFractureFields( MeshLevel & mesh, string_array const & regionNames )
 {
   if( m_numComponents > 0 )
   {
@@ -324,7 +326,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
   // We have to redo the below loop after fractures are generated
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -364,7 +366,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
 
     FlowSolverBase::precomputeData( mesh, regionNames );
@@ -413,7 +415,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
 
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
@@ -453,7 +455,7 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -477,7 +479,7 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -543,7 +545,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase const & subRegion )
@@ -603,7 +605,7 @@ void ProppantTransport::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -682,7 +684,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     //  Apply Dirichlet BC for proppant concentration
 
@@ -842,7 +844,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -894,10 +896,8 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   return residualNorm;
 }
@@ -928,7 +928,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
 
     FieldIdentifiers fieldsToBeSync;
@@ -953,7 +953,7 @@ void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -984,7 +984,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( tim
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     string const meshBodyName = mesh.getParent().getParent().getName();
     string const meshLevelName = mesh.getName();
@@ -1041,7 +1041,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 

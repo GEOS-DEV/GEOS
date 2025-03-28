@@ -23,8 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
 
@@ -291,6 +290,13 @@ public:
   updateMass( ElementSubRegionBase & subRegion ) const;
 
   /**
+   * @brief Template function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  template< integer IS_THERMAL >
+  void updateMass( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Function to update energy
    * @param subRegion subregion that contains the fields
    */
@@ -320,9 +326,9 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
 
-  virtual void initializeThermalState( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void initializeThermalState( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
@@ -414,13 +420,6 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  geos::constitutive::SingleFluidBase const & fluid =
-    getConstitutiveModel< geos::constitutive::SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-  //START_SPHINX_INCLUDE_COUPLEDSOLID
-  geos::constitutive::CoupledSolidBase const & solid =
-    getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-  //END_SPHINX_INCLUDE_COUPLEDSOLID
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   if( m_isThermal )
@@ -430,8 +429,6 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
-                                                 fluid,
-                                                 solid,
                                                  localMatrix,
                                                  localRhs );
   }
@@ -442,8 +439,6 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
-                                                 fluid,
-                                                 solid,
                                                  localMatrix,
                                                  localRhs );
   }

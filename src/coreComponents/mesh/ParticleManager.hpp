@@ -824,8 +824,8 @@ public:
    */
   template< typename FIELD_TRAIT >
   ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-  constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                  arrayView1d< string const > const & materialNames,
+  constructMaterialFieldAccessor( string_array const & regionNames,
+                                  string_array const & materialNames,
                                   bool const allowMissingViews = false ) const;
 
   /**
@@ -855,7 +855,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false ) const;
 
@@ -873,7 +873,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false );
 
@@ -891,7 +891,7 @@ public:
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
   ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
+                                      string_array const & regionNames,
                                       string const & materialKeyName,
                                       bool const allowMissingViews = false ) const;
 
@@ -1281,7 +1281,7 @@ ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
-                                                arrayView1d< string const > const & regionNames,
+                                                string_array const & regionNames,
                                                 string const & materialKeyName,
                                                 bool const allowMissingViews ) const
 {
@@ -1297,7 +1297,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
@@ -1329,7 +1329,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
-                                                arrayView1d< string const > const & regionNames,
+                                                string_array const & regionNames,
                                                 string const & materialKeyName,
                                                 bool const allowMissingViews )
 {
@@ -1345,7 +1345,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
@@ -1375,8 +1375,8 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 
 template< typename FIELD_TRAIT >
 ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-ParticleManager::constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                                 arrayView1d< string const > const & materialNames,
+ParticleManager::constructMaterialFieldAccessor( string_array const & regionNames,
+                                                 string_array const & materialNames,
                                                  bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< typename FIELD_TRAIT::type,
@@ -1398,7 +1398,7 @@ ParticleManager::constructMaterialFieldAccessor( bool const allowMissingViews ) 
 template< typename T, int NDIM, typename PERM >
 ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ParticleManager::constructMaterialArrayViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
+                                                     string_array const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {

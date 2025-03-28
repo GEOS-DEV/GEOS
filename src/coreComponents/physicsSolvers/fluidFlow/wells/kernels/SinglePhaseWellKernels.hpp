@@ -23,6 +23,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -191,7 +192,7 @@ struct PressureRelationKernel
           bool const isLocallyOwned,
           localIndex const iwelemControl,
           WellControls const & wellControls,
-          real64 const & timeAtEndOfStep,
+          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -812,7 +813,7 @@ public:
                       WellElementSubRegion const & subRegion,
                       constitutive::SingleFluidBase const & fluid,
                       WellControls const & wellControls,
-                      real64 const timeAtEndOfStep,
+                      real64 const time,
                       real64 const dt,
                       real64 const minNormalizer )
     : Base( rankOffset,
@@ -824,8 +825,8 @@ public:
     m_isLocallyOwned( subRegion.isLocallyOwned() ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( wellControls.getTargetBHP( timeAtEndOfStep ) ),
-    m_targetRate( wellControls.getTargetTotalRate( timeAtEndOfStep ) ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
+    m_targetRate( wellControls.getTargetTotalRate( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_density_n( fluid.density_n() )
   {}
@@ -928,7 +929,7 @@ public:
    * @param[in] subRegion the well element subregion
    * @param[in] fluid the fluid model
    * @param[in] wellControls the controls
-   * @param[in] timeAtEndOfStep the time at the end of the step (time_n + dt)
+   * @param[in] time the time
    * @param[in] dt the time step size
    * @param[out] residualNorm the residual norm on the subRegion
    */
@@ -940,7 +941,7 @@ public:
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
                    WellControls const & wellControls,
-                   real64 const timeAtEndOfStep,
+                   real64 const time,
                    real64 const dt,
                    real64 const minNormalizer,
                    real64 (& residualNorm)[1] )
@@ -948,7 +949,7 @@ public:
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, wellControls, timeAtEndOfStep, dt, minNormalizer );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, wellControls, time, dt, minNormalizer );
     ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
   }
 

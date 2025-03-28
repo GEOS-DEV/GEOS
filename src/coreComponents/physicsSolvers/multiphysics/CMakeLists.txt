@@ -1,60 +1,100 @@
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+#
+#--------------------------------------------------------------------------------------------------
+
+#[[
+Package: multiPhysicsSolvers
+Contains:
+#]]
+
+
 # Specify solver headers
-set( physicsSolvers_headers
-     ${physicsSolvers_headers}
-     multiphysics/CompositionalMultiphaseReservoirAndWells.hpp
-     multiphysics/CoupledReservoirAndWellsBase.hpp
-     multiphysics/CoupledSolver.hpp
-     multiphysics/PoromechanicsSolver.hpp
-     multiphysics/FlowProppantTransportSolver.hpp
-     multiphysics/HydrofractureSolver.hpp
-     multiphysics/HydrofractureSolverKernels.hpp
-     multiphysics/MultiphasePoromechanics.hpp
-     multiphysics/MultiphasePoromechanicsConformingFractures.hpp
-     multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/PoromechanicsInitialization.hpp
-     multiphysics/PoromechanicsFields.hpp
-     multiphysics/PoromechanicsInitialization.hpp
-     multiphysics/LogLevelsInfo.hpp
-     multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
-     multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp
-     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
-     multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
-     multiphysics/SinglePhasePoromechanics.hpp
-     multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
-     multiphysics/SinglePhasePoromechanicsConformingFractures.hpp
-     multiphysics/SinglePhaseReservoirAndWells.hpp
-     PARENT_SCOPE )
+set( multiPhysicsSolvers_headers
+    CompositionalMultiphaseReservoirAndWells.hpp
+    CoupledReservoirAndWellsBase.hpp
+    CoupledSolver.hpp
+    PoromechanicsSolver.hpp
+    FlowProppantTransportSolver.hpp
+    HydrofractureSolver.hpp
+    HydrofractureSolverKernels.hpp
+    MultiphasePoromechanics.hpp
+    OneWayCoupledFractureFlowContactMechanics.hpp
+    MultiphasePoromechanicsConformingFractures.hpp
+    PhaseFieldFractureSolver.hpp
+    PhaseFieldPoromechanicsSolver.hpp
+    PoromechanicsInitialization.hpp
+    PoromechanicsFields.hpp
+    PoromechanicsInitialization.hpp
+    poromechanicsKernels/MultiphasePoromechanics.hpp
+    poromechanicsKernels/MultiphasePoromechanics_impl.hpp
+    poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
+    poromechanicsKernels/PoromechanicsBase.hpp
+    poromechanicsKernels/SinglePhasePoromechanics.hpp
+    poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
+    poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
+    poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp
+    poromechanicsKernels/SinglePhasePoromechanicsDamage_impl.hpp
+    poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
+    poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
+    poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
+    poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp
+    poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
+    poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
+    SinglePhasePoromechanics.hpp
+    SinglePhasePoromechanicsEmbeddedFractures.hpp
+    SinglePhasePoromechanicsConformingFractures.hpp
+    SinglePhaseReservoirAndWells.hpp )
 
 # Specify solver sources
-set( physicsSolvers_sources
-     ${physicsSolvers_sources}
-     multiphysics/CompositionalMultiphaseReservoirAndWells.cpp
-     multiphysics/CoupledReservoirAndWellsBase.cpp
-     multiphysics/FlowProppantTransportSolver.cpp
-     multiphysics/HydrofractureSolver.cpp
-     multiphysics/MultiphasePoromechanics.cpp
-     multiphysics/MultiphasePoromechanicsConformingFractures.cpp
-     multiphysics/PhaseFieldFractureSolver.cpp
-     multiphysics/PoromechanicsInitialization.cpp
-     multiphysics/SinglePhasePoromechanics.cpp
-     multiphysics/SinglePhasePoromechanicsEmbeddedFractures.cpp
-     multiphysics/SinglePhasePoromechanicsConformingFractures.cpp
-     multiphysics/SinglePhaseReservoirAndWells.cpp
-     PARENT_SCOPE )
+set( multiPhysicsSolvers_sources
+    CompositionalMultiphaseReservoirAndWells.cpp
+    CoupledReservoirAndWellsBase.cpp
+    FlowProppantTransportSolver.cpp
+    HydrofractureSolver.cpp
+    MultiphasePoromechanics.cpp
+    OneWayCoupledFractureFlowContactMechanics.cpp
+    MultiphasePoromechanicsConformingFractures.cpp
+    PhaseFieldFractureSolver.cpp
+    PhaseFieldPoromechanicsSolver.cpp
+    PoromechanicsInitialization.cpp
+    SinglePhasePoromechanics.cpp
+    SinglePhasePoromechanicsEmbeddedFractures.cpp
+    SinglePhasePoromechanicsConformingFractures.cpp
+    SinglePhaseReservoirAndWells.cpp )
 
-#include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+include(poromechanicsKernels/PoromechanicsKernels.cmake)
+
+set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers )
+
+geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
+
+blt_add_library( NAME       multiPhysicsSolvers
+                 SOURCES    ${multiPhysicsSolvers_sources}
+                 HEADERS    ${multiPhysicsSolvers_headers}
+                 DEPENDS_ON ${decoratedDependencies} ${externalComponentDeps}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
+               )
+
+target_include_directories( multiPhysicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+install( TARGETS multiPhysicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+if( externalComponentDeps )
+  target_include_directories( multiPhysicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+endif()

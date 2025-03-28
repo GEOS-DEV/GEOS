@@ -1493,11 +1493,6 @@ public:
   void loadFromConduit();
 
   /**
-   * @deprecated will be remove and replace by addLogLevel
-   */
-  void enableLogLevelInput();
-
-  /**
    * @brief Set verbosity level
    * @param logLevel new verbosity level value
    */
@@ -1599,7 +1594,7 @@ private:
    */
   template< bool DO_PACKING >
   localIndex packImpl( buffer_unit_type * & buffer,
-                       array1d< string > const & wrapperNames,
+                       string_array const & wrapperNames,
                        arrayView1d< localIndex const > const & packList,
                        integer const recursive,
                        bool onDevice,
