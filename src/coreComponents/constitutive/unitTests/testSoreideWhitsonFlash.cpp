@@ -30,7 +30,7 @@ namespace testing
  * This test compares the solubility calculated from our implementation of the Soreide Whitson
  * model against published experimental data.
  */
-using FlashData = std::tuple<
+using SolubilityData = std::tuple<
   real64 const,     // pressure
   real64 const,     // temperature
   real64 const,     // salinity
@@ -39,7 +39,7 @@ using FlashData = std::tuple<
   real64 const      // model liquid mole fraction (our implementation)
   >;
 
-class SoreideWhitsonSolubilityTestFixture : public ::testing::TestWithParam< FlashData >
+class SoreideWhitsonSolubilityTestFixture : public ::testing::TestWithParam< SolubilityData >
 {
 protected:
   static constexpr real64 relTol = 1.0e-5;
@@ -158,7 +158,7 @@ TEST_P( SoreideWhitsonSolubilityTestFixture, testSolubility )
 // - Soreide & Whitson (1992) https://doi.org/10.1016/0378-3812(92)85105-H
 // - Takenouchi & Kennedy (1964) https://doi.org/10.2475/ajs.262.9.1055
 INSTANTIATE_TEST_SUITE_P( SoreideWhitsonFlashTest, SoreideWhitsonSolubilityTestFixture,
-  ::testing::ValuesIn<FlashData>({
+  ::testing::ValuesIn< SolubilityData >({
     // CH4 data from O'Sullivan & Smith (1970)
     // Digitized from Fig 14 of Soreide & Whitson (1992)
     { 1.0039e+07, 376.15, 0.0, Fluid::C1,  1.352e-03, 1.246435e-03 }, 

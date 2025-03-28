@@ -164,7 +164,8 @@ public:
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
-
+      kValues( 0, 0 ) = 0.0;
+      
       NegativeTwoPhaseFlash::compute(
         numComps,
         p,
