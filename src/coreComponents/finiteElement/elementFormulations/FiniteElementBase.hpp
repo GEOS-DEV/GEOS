@@ -108,8 +108,7 @@ public:
    */
   template< typename SUBREGION_TYPE >
   struct MeshData
-  {
-  };
+  {};
 
 
   /**
