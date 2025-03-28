@@ -204,7 +204,7 @@ void TableData::addRow( Args const &... args )
     else if constexpr (std::is_floating_point_v< std::decay_t< decltype(args) > >) {
       if( !getErrorsList().hasErrors() && (std::isnan( args ) ||  std::isinf( args )))
       {
-        m_errors->addError( "Invalid values detected (nan/inf)." );
+        m_errors->addError( "Warning : Invalid values detected (nan/inf)." );
       }
       cells.push_back( {CellType::Value, GEOS_FMT( "{}", args )} );
     }

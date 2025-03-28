@@ -340,7 +340,7 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     // data input malformed
     if( !errorInData && tableLayout.getTotalLowermostColumnCount() != inputDataValues[idxRow].size())
     {
-      getErrorsList().addError( "Warning : One or more data lines are not equal to the number of headers\nData can be missing/misaligned" );
+      getErrorsList().addError( "Error : One or more data lines are not equal to the number of headers\nData can be missing/misaligned" );
       errorInData = true;
     }
 
@@ -655,6 +655,7 @@ void TableTextFormatter::outputErrors( PreparedTableLayout const & tableLayout,
       size_t const tableWidth = errorConfig.getWidth();
       errorConfig.prepareLayout( errorConfig.getLines().front(), errorConfig.getWidth() );
       errorConfig.setWidth( tableWidth );
+      errorConfig.m_alignment = TableLayout::Alignment::left;
       errorLayout.sublinesCount = errorConfig.getHeight();
     }
   }
