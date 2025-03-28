@@ -32,11 +32,14 @@ void TableData::addSeparator()
 {
   if( m_rows.empty())
   {
-    GEOS_ERROR( "Bad use of a Tabledata::addSeparator(). Make sure you have added values in TableData" );
+    m_errors->addError( "Warning : Bad use of a Tabledata::addSeparator(). Make sure you have added values in TableData" );
+  }
+  else
+  {
+    integer rowSize = m_rows.front().size();
+    m_rows.emplace_back( std::vector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
   }
 
-  integer rowSize = m_rows.front().size();
-  m_rows.emplace_back( std::vector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
 
 }
 
@@ -74,10 +77,9 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
     }
     else
     {
-      m_errors->addError(
-        GEOS_FMT( "Warning : Too much data for the number of columns * rows:\n"
-                  "Expected {} values, Found {} values\n"
-                  "Data may be missaligned", nRow * nCol, values.size() ) );
+      m_errors->addError( GEOS_FMT( "Warning : Too much data for the number of columns * rows:\n"
+                                    "Expected {} values, Found {} values\n"
+                                    "Data may be missaligned", nRow * nCol, values.size() ) );
     }
   }
 

@@ -92,7 +92,7 @@ private:
 
   /// @brief vector containing all rows with cell values
   std::vector< std::vector< CellData > > m_rows;
-    /// @brief Store all errors that can be found during the generation of the TableData
+  /// @brief Store all errors that can be found during the generation of the TableData
   std::unique_ptr< geos::ErrorListing > m_errors = std::make_unique< geos::ErrorListing >();
 
 };
@@ -200,6 +200,13 @@ void TableData::addRow( Args const &... args )
     static_assert( has_formatter_v< decltype(args) > || isCellType< std::decay_t< decltype(args) > >, "Argument passed in addRow cannot be converted to string nor a CellType" );
     if constexpr (std::is_same_v< Args, CellType >) {
       cells.push_back( { args, string() } );
+    }
+    else if constexpr (std::is_floating_point_v< std::decay_t< decltype(args) > >) {
+      if( !getErrorsList().hasErrors() && (std::isnan( args ) ||  std::isinf( args )))
+      {
+        m_errors->addError( "Invalid values detected (nan/inf)." );
+      }
+      cells.push_back( {CellType::Value, GEOS_FMT( "{}", args )} );
     }
     else
     {

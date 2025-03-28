@@ -728,23 +728,27 @@ TEST( testTable, tableHiddeSubColumn )
 
 
   TableData tableData;
-  tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0, 3 );
+  tableData.addSeparator();
+  tableData.addRow( "dummy value in table", "[30.21543]", "3.0", 54, 0, 3 );
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "------------------------------------------\n"
-             "|              Title table               |\n"
-             "|----------------------------------------|\n"
-             "|  Cras egestas  |  Prev     |   Next    |\n"
-             "|                |  element  |  element  |\n"
-             "|----------------|-----------|-----------|\n"
-             "|        value1  |           |           |\n"
-             "|----------------------------------------|\n"
-             "|  Warning : One or more data lines are  |\n"
-             "|   not equal to the number of headers   |\n"
-             "|     Data can be missing/misaligned     |\n"
-             "------------------------------------------\n"
+             "--------------------------------------------------\n"
+             "|                  Title table                   |\n"
+             "|------------------------------------------------|\n"
+             "|      Cras egestas      |  Prev     |   Next    |\n"
+             "|                        |  element  |  element  |\n"
+             "|------------------------|-----------|-----------|\n"
+             "|  dummy value in table  |           |           |\n"
+             "|------------------------------------------------|\n"
+             "|    Warning : One or more data lines are not    |\n"
+             "|         equal to the number of headers         |\n"
+             "|         Data can be missing/misaligned         |\n"
+             "|             Warning : Bad use of a             |\n"
+             "|    Tabledata::addSeparator(). Make sure you    |\n"
+             "|         have added values in TableData         |\n"
+             "--------------------------------------------------\n"
              );
 }
 
@@ -863,8 +867,59 @@ TEST( testTable, table2DMismatchingCoordValues )
   }
 }
 
+TEST( testTable, tableSpecialsValues )
+{
+  TableLayout const tableLayout( {
+    TableLayout::Column()
+      .setName( "Special values" )
+      .setHeaderAlignment( TableLayout::Alignment::center ),
+    TableLayout::Column()
+      .setName( "CoordX" )
+      .setHeaderAlignment( TableLayout::Alignment::right ),
+    "C",
+    TableLayout::Column()
+      .setName( "CoordZ" )
+      .setHeaderAlignment( TableLayout::Alignment::left ),
+    TableLayout::Column()
+      .setName( "Prev\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::left ),
+    TableLayout::Column()
+      .setName( "Next\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::center )} );
+
+  LvArray::NumericLimits< float > realLimit;
+
+  TableData tableData;
+  tableData.addRow( realLimit.infinity, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.quiet_NaN, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.signaling_NaN, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.lowest, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.max, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.denorm_min, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "-----------------------------------------------------------------------------\n"
+             "|  Special values  |  CoordX  |    C     |  CoordZ  |  Prev     |   Next    |\n"
+             "|                  |          |          |          |  element  |  element  |\n"
+             "|------------------|----------|----------|----------|-----------|-----------|\n"
+             "|             inf  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|             nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|             nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|  -3.4028235e+38  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|   3.4028235e+38  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|           1e-45  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|---------------------------------------------------------------------------|\n"
+             "|                    Invalid values detected (nan/inf).                     |\n"
+             "-----------------------------------------------------------------------------\n"
+             );
+}
+
+
 int main( int argc, char * * argv )
 {
   testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }
+
