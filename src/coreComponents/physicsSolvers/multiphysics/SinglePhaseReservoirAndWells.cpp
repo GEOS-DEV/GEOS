@@ -173,9 +173,6 @@ addCouplingSparsityPattern( DomainPartition const & domain,
         arrayView1d< localIndex const > const & perfWellElemIndex =
           perforationData->getField< fields::perforation::wellElementIndex >();
 
-        // get the perforation status
-        arrayView1d< integer const > const & perfStatus = perforationData->getField< fields::perforation::perforationStatus >();
-
         // get the element region, subregion, index
         arrayView1d< localIndex const > const & resElementRegion =
           perforationData->getField< fields::perforation::reservoirElementRegion >();
@@ -188,41 +185,38 @@ addCouplingSparsityPattern( DomainPartition const & domain,
         // This will fill J_WR, and J_RW
         forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
         {
-          if( perfStatus[iperf] )
+          // Get the reservoir (sub)region and element indices
+          localIndex const er = resElementRegion[iperf];
+          localIndex const esr = resElementSubRegion[iperf];
+          localIndex const ei = resElementIndex[iperf];
+          localIndex const iwelem = perfWellElemIndex[iperf];
+
+          globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
+          globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
+
+          // working arrays
+          stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
+          stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
+
+          for( integer idof = 0; idof < wellNDOF; ++idof )
           {
-            // Get the reservoir (sub)region and element indices
-            localIndex const er = resElementRegion[iperf];
-            localIndex const esr = resElementSubRegion[iperf];
-            localIndex const ei = resElementIndex[iperf];
-            localIndex const iwelem = perfWellElemIndex[iperf];
+            eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
+            dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
+          }
 
-            globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
-            globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
-
-            // working arrays
-            stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
-            stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
-
-            for( integer idof = 0; idof < wellNDOF; ++idof )
+          if( eqnRowIndexRes >= 0 && eqnRowIndexRes < pattern.numRows() )
+          {
+            for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
             {
-              eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
-              dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
+              pattern.insertNonZero( eqnRowIndexRes, dofColIndicesWell[j] );
             }
+          }
 
-            if( eqnRowIndexRes >= 0 && eqnRowIndexRes < pattern.numRows() )
+          for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
+          {
+            if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
             {
-              for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
-              {
-                pattern.insertNonZero( eqnRowIndexRes, dofColIndicesWell[j] );
-              }
-            }
-
-            for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
-            {
-              if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
-              {
-                pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndexRes );
-              }
+              pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndexRes );
             }
           }
         } );
