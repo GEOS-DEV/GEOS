@@ -120,7 +120,7 @@ class FaultStation:
         time = np.squeeze(input_data[f'stateVariable Time'])
 
         # Extract fault station variables
-        slip = np.squeeze(input_data[f'slip faultStation_{station_number}'])
+        slip = np.squeeze(input_data[f'totalSlip faultStation_{station_number}'])
         slip_velocity = np.squeeze(input_data[f'slipVelocity faultStation_{station_number}'])
         shear_traction = np.squeeze(input_data[f'shearTraction faultStation_{station_number}'])
         
@@ -129,7 +129,8 @@ class FaultStation:
             raise ValueError(f"Data for faultStation_{station_number} is not in expected shape (Nx2).")
 
         # Assign the components to separate variables
-        slip_2, slip_3 = slip, slip
+        slip_2 = slip[:, 0]
+        slip_3 = slip[:, 1]
         slip_rate_2 = np.log10(np.maximum( slip_velocity[:, 0], 1e-20 ) )
         slip_rate_3 = np.log10(np.maximum( slip_velocity[:, 1], 1e-20 ) )
         shear_stress_2, shear_stress_3 = shear_traction[:, 0] / 1.0e6 , shear_traction[:, 1] / 1.0e6

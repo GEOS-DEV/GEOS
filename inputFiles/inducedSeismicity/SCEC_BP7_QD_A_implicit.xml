@@ -20,7 +20,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="10"
+        newtonMaxIter="15"
         maxNumConfigurationAttempts="1"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
@@ -58,7 +58,7 @@
   </Solvers>
 
   <Events
-    maxTime="10">
+    maxTime="1">
     <SoloEvent 
       name="generateFault"
       target="/Solvers/SurfaceGen"/>

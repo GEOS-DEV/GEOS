@@ -190,7 +190,7 @@ DECLARE_FIELD( targetIncrementalJump,
                "targetIncrementalJump",
                array2d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "It's the target incremental jump in a timestep (e.g., slip coming from RS)." );
 

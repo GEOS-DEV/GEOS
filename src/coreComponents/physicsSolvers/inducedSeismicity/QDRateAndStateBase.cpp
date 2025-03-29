@@ -89,7 +89,7 @@ void QDRateAndStateBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< rateAndState::backgroundShearStress >( getName() ).
         setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
       subRegion.registerField< rateAndState::shearStressPerturbation >( getName() ).
-        setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );  
+        setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
       subRegion.registerField< rateAndState::backgroundNormalStress >( getName() );
 
       subRegion.registerField< rateAndState::backSlipRate >( getName() ).
@@ -99,8 +99,8 @@ void QDRateAndStateBase::registerDataOnMesh( Group & meshBodies )
         setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
 
       subRegion.registerField< rateAndState::totalSlip >( getName() ).
-        setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );   
-        
+        setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
+
     } );
   } );
 }
@@ -206,7 +206,7 @@ void QDRateAndStateBase::saveState( DomainPartition & domain ) const
         LvArray::tensorOps::copy< 2 >( deltaSlip_n[k], deltaSlip[k] );
         LvArray::tensorOps::copy< 2 >( slipVelocity_n[k], slipVelocity[k] );
         LvArray::tensorOps::copy< 2 >( shearTraction_n[k], shearTraction[k] );
-        LvArray::tensorOps::copy< 2 >( totalSlip_n[k], totalSlip[k] );    
+        LvArray::tensorOps::copy< 2 >( totalSlip_n[k], totalSlip[k] );
       } );
     } );
   } );
@@ -228,20 +228,23 @@ void QDRateAndStateBase::resetStateToBeginningOfStep( DomainPartition & domain )
       arrayView2d< real64 > const deltaSlip     = subRegion.getField< contact::deltaSlip >();
       arrayView2d< real64 > const shearTraction      = subRegion.getField< rateAndState::shearTraction >();
       arrayView1d< real64 > const normalTraction      = subRegion.getField< rateAndState::normalTraction >();
+      arrayView2d< real64 > const totalSlip     = subRegion.getField< rateAndState::totalSlip >();
 
 
       arrayView1d< real64 const > const stateVariable_n = subRegion.getField< rateAndState::stateVariable_n >();
       arrayView2d< real64 const > const slipVelocity_n  = subRegion.getField< rateAndState::slipVelocity_n >();
       arrayView2d< real64 const > const shearTraction_n = subRegion.getField< rateAndState::shearTraction_n >();
       arrayView1d< real64 const > const normalTraction_n = subRegion.getField< rateAndState::normalTraction_n >();
-      arrayView2d< real64 const > const deltaSlip_n     = subRegion.getField< contact::deltaSlip >();
+      arrayView2d< real64 const > const totalSlip_n     = subRegion.getField< rateAndState::totalSlip_n >();
 
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         stateVariable[k]  = stateVariable_n[k];
         normalTraction[k] = normalTraction_n[k];
-        LvArray::tensorOps::copy< 2 >( deltaSlip[k], deltaSlip_n[k] );
+        deltaSlip[k][0] = 0.0;
+        deltaSlip[k][1] = 0.0;
+        LvArray::tensorOps::copy< 2 >( totalSlip[k], totalSlip_n[k] );
         LvArray::tensorOps::copy< 2 >( slipVelocity[k], slipVelocity_n[k] );
         LvArray::tensorOps::copy< 2 >( shearTraction[k], shearTraction_n[k] );
       } );

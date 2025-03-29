@@ -84,8 +84,6 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
   saveState( domain );
 
   real64 dtAdaptive = dt;
-
-  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and State solver" );
   while( true ) // Adaptive time step loop. Performs a Runge-Kutta time stepping with error control on state and slip
   {
     real64 dtStress; GEOS_UNUSED_VAR( dtStress );
@@ -107,12 +105,14 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
     //
     for( integer stageIndex = 1; stageIndex < m_butcherTable.numStages-1; stageIndex++ )
     {
+      GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, GEOS_FMT( "{} substage {}, dt = {} s", getCatalogName(), stageIndex, dtStage ) );
       // Evolve ODE:s for slip and state evolution
       stepRateStateODESubstage( stageIndex, dtAdaptive, domain );
 
       // Compute stresses (linear mechanic + fluid solve) at next substage
       // Need to reset stress solver to beginning of time step to not
       // accumulate field in the stages.
+      dtStage = m_butcherTable.c[stageIndex+1]*dtAdaptive; // Stage time step size
       resetStressState( domain );
       dtStage = m_butcherTable.c[stageIndex+1]*dtAdaptive; // Stage time step size
       dtStress = updateStresses( time_n, dtStage, cycleNumber, domain );
@@ -151,7 +151,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
 
 void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, DomainPartition & domain ) const
 {
-
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, GEOS_FMT( "{}: Initial substage, dt = {} s", getCatalogName(), dt ) );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -176,7 +176,6 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
                                                        real64 const dt,
                                                        DomainPartition & domain ) const
 {
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

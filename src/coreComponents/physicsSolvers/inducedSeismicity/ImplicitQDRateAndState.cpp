@@ -95,11 +95,35 @@ real64 ImplicitQDRateAndState::solverStep( real64 const & time_n,
 {
   applyInitialConditionsToFault( cycleNumber, domain );
   GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Stress solver" );
+  computeDeltaSlip( domain, dt );
   updateStresses( time_n, dt, cycleNumber, domain );
   GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and state solver" );
   solveRateAndStateEquations( time_n, dt, domain );
   saveState( domain );
   return dt;
+}
+
+void ImplicitQDRateAndState::computeDeltaSlip( DomainPartition & domain, real64 const dt ) const
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+
+  {
+    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                           [&]( localIndex const,
+                                                                                SurfaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const slipVelocity = subRegion.getField< rateAndState::slipVelocity >();
+      arrayView2d< real64 > const deltaSlip          = subRegion.getField< contact::deltaSlip >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        deltaSlip[k][0] = slipVelocity[k][0] * dt;
+        deltaSlip[k][1] = slipVelocity[k][1] * dt;
+      } );
+    } );
+  } );
 }
 
 void ImplicitQDRateAndState::updateSlip( ElementSubRegionBase & subRegion, real64 const dt ) const
@@ -108,7 +132,6 @@ void ImplicitQDRateAndState::updateSlip( ElementSubRegionBase & subRegion, real6
   arrayView2d< real64 > const deltaSlip          = subRegion.getField< contact::deltaSlip >();
   arrayView2d< real64 const > const totalSlip_n  = subRegion.getField< rateAndState::totalSlip_n >();
   arrayView2d< real64 > const totalSlip          = subRegion.getField< rateAndState::totalSlip >();
-
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {

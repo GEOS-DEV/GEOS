@@ -188,7 +188,7 @@ public:
     m_stateVariable[k] = dt * stateVariableIncrement;
 
     real64 const deltaSlipLowOrder[2]  = { dt * deltaSlipIncrementLowOrder[0],
-                                           dt * deltaSlipIncrementLowOrder[1]};
+                 dt * deltaSlipIncrementLowOrder[1]};
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
 
     // Compute error
@@ -219,7 +219,7 @@ public:
     }
 
     real64 const deltaSlipLowOrder[2]  = { dt * deltaSlipIncrementLowOrder[0],
-                                           dt * deltaSlipIncrementLowOrder[1]};
+                 dt * deltaSlipIncrementLowOrder[1]};
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
 
     // Compute error
@@ -257,7 +257,7 @@ private:
 
   /// Current slip change
   arrayView2d< real64 > const m_deltaSlip;
-  
+
   /// Current Slip
   arrayView2d< real64 > const m_totalSlip;
 

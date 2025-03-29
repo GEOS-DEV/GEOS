@@ -52,6 +52,12 @@ public:
    */
   void updateSlip( ElementSubRegionBase & subRegion, real64 const dt ) const;
 
+  /**
+   * @brief save the old state
+   * @param subRegion
+   */
+  void computeDeltaSlip( DomainPartition &, real64 const dt ) const;
+
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,

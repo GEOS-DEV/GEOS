@@ -13,12 +13,12 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -505, 505 }"
-      yCoords="{ -505, 505 }"
-      zCoords="{ -10, 10 }"
-      nx="{ 101 }"
-      ny="{ 101 }"
-      nz="{ 2 }"
+      xCoords="{ -105, 105 }"
+      yCoords="{ -105, 105 }"
+      zCoords="{ -100, 100 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
+      nz="{ 20 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -315,7 +315,7 @@
     <PackCollection
       name="slipCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
-      fieldName="slip"
+      fieldName="totalSlip"
       setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
 
     <PackCollection
