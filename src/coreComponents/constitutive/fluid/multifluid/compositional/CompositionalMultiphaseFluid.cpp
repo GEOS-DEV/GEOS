@@ -87,6 +87,9 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
   registerWrapper( "phaseOrder", &m_phaseOrder )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( "componentType", &m_componentProperties->m_componentType )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );    
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
