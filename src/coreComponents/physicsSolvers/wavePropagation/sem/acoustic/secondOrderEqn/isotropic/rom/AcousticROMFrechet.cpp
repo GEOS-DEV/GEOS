@@ -129,18 +129,6 @@ void AcousticROMFrechet::registerDataOnMesh( Group & meshBodies )
     nodeManager.getField< acousticfields::PressureFrechet_np1 >().resizeDimension< 1 >(m_orderFrechet);
 
 
-    /// register  PML auxiliary variables only when a PML is specified in the xml
-    if( m_usePML )
-    {
-      nodeManager.registerField< acousticfields::AuxiliaryVar1PML,
-                                 acousticfields::AuxiliaryVar2PML,
-                                 acousticfields::AuxiliaryVar3PML,
-                                 acousticfields::AuxiliaryVar4PML >( getName() );
-
-      nodeManager.getField< acousticfields::AuxiliaryVar1PML >().resizeDimension< 1 >( 3 );
-      nodeManager.getField< acousticfields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
-    }
-
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< acousticfields::AcousticFreeSurfaceFaceIndicator >( getName() );
 
@@ -291,6 +279,20 @@ void AcousticROMFrechet::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, 
 	    m_timeSourceDelay,
 	    m_rickerOrder );
       } );
+
+      sourceConstants.move( LvArray::MemorySpace::host, true );
+      MpiWrapper::allReduce( sourceConstants.data(),
+			     sourceConstants.data(),
+			     sourceConstants.size( 0 )*sourceConstants.size( 1 ),
+			     MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+			     MPI_COMM_GEOS );
+
+      sourceValue.move( LvArray::MemorySpace::host, true );
+      MpiWrapper::allReduce( sourceValue.data(),
+			     sourceValue.data(),
+			     sourceValue.size( 0 )*sourceValue.size( 1 ),
+			     MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+			     MPI_COMM_GEOS );
     }
     else
     {
@@ -341,23 +343,6 @@ void AcousticROMFrechet::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, 
   baseMesh.getNodeManager().referencePosition().freeOnDevice();
   facesToNodes.freeOnDevice();
   nodesToElements.freeOnDevice();
-
-  if( m_solverROM )
-  {
-    sourceConstants.move( LvArray::MemorySpace::host, true );
-    MpiWrapper::allReduce( sourceConstants.data(),
-			   sourceConstants.data(),
-			   sourceConstants.size( 0 )*sourceConstants.size( 1 ),
-			   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-			   MPI_COMM_GEOS );
-
-    sourceValue.move( LvArray::MemorySpace::host, true );
-    MpiWrapper::allReduce( sourceValue.data(),
-			   sourceValue.data(),
-			   sourceValue.size( 0 )*sourceValue.size( 1 ),
-			   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-			   MPI_COMM_GEOS );
-  }
 }
 
 
@@ -413,14 +398,13 @@ void AcousticROMFrechet::initializePostInitialConditionsPreSubGroups()
     GEOS_MARK_SCOPE( WaveSolverBase::initializePostInitialConditionsPreSubGroups );
     WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   }
-  if( m_usePML )
-  {
-    AcousticROMFrechet::initializePML();
-  }
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  applyFreeSurfaceBC( 0.0, domain );
+  if( m_solverROM == 0 )
+  {
+    applyFreeSurfaceBC( 0.0, domain );
+  }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
@@ -623,18 +607,17 @@ void AcousticROMFrechet::initializePostInitialConditionsPreSubGroups()
 								 perturbation,
 								 massPerturbation );
 
-	    GEOS_MARK_SCOPE( DampingMatrixKernel );
-	    acousticROMFrechetKernels::DampingPerturbationMatrixKernel< FE_TYPE > kernelD( finiteElement );
-	    kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-								   nodeCoords,
-								   elemsToFaces,
-								   facesToNodes,
-								   facesDomainBoundaryIndicator,
-								   freeSurfaceFaceIndicator,
-								   velocity,
-								   perturbation,
-								   dampingPerturbation );
-
+	  GEOS_MARK_SCOPE( DampingMatrixKernel );
+	  acousticROMFrechetKernels::DampingPerturbationMatrixKernel< FE_TYPE > kernelD( finiteElement );
+	  kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+								 nodeCoords,
+								 elemsToFaces,
+								 facesToNodes,
+								 facesDomainBoundaryIndicator,
+								 freeSurfaceFaceIndicator,
+								 velocity,
+								 perturbation,
+								 dampingPerturbation );
 	  } );
 	}
       }
@@ -720,359 +703,6 @@ void AcousticROMFrechet::applyFreeSurfaceBC( real64 time, DomainPartition & doma
   } );
 }
 
-void AcousticROMFrechet::initializePML()
-{
-  GEOS_MARK_FUNCTION;
-
-  registerWrapper< parametersPML >( viewKeyStruct::parametersPMLString() ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Parameters needed to compute damping in the PML region" );
-
-  parametersPML & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
-
-  /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer
-  /// field specification parameters (from the xml)
-  real32 minThicknessPML=0;
-  real32 smallestXMinPML=0;
-  real32 largestXMaxPML=0;
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & fs )
-  {
-    param.xMinPML=fs.getMin();
-    param.xMaxPML=fs.getMax();
-    param.thicknessMinXYZPML=fs.getThicknessMinXYZ();
-    param.thicknessMaxXYZPML=fs.getThicknessMaxXYZ();
-    param.reflectivityPML = fs.getReflectivity();
-    param.waveSpeedMinXYZPML=fs.getWaveSpeedMinXYZ();
-    param.waveSpeedMaxXYZPML=fs.getWaveSpeedMaxXYZ();
-    minThicknessPML=fs.minThickness;
-    smallestXMinPML=fs.smallestXMin;
-    largestXMaxPML=fs.largestXMax;
-  } );
-
-  /// Now compute the PML parameters above internally
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-
-    NodeManager & nodeManager = mesh.getNodeManager();
-    /// WARNING: the array below is one of the PML auxiliary variables
-    arrayView1d< real32 > const indicatorPML = nodeManager.getField< acousticfields::AuxiliaryVar4PML >();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-    indicatorPML.zero();
-
-    real32 xInteriorMin[3]{};
-    real32 xInteriorMax[3]{};
-    real32 xGlobalMin[3]{};
-    real32 xGlobalMax[3]{};
-    real32 cMin[3]{};
-    real32 cMax[3]{};
-    integer counterMin[3]{};
-    integer counterMax[3]{};
-
-    /// Set a node-based flag in the PML regions
-    /// WARNING: the array used as a flag is one of the PML
-    /// auxiliary variables to save memory
-    fsManager.apply< ElementSubRegionBase,
-                     PerfectlyMatchedLayer >( 0.0,
-                                              mesh,
-                                              PerfectlyMatchedLayer::catalogName(),
-                                              [&]( PerfectlyMatchedLayer const &,
-                                                   string const &,
-                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                   ElementSubRegionBase & subRegion,
-                                                   string const & )
-
-    {
-      CellElementSubRegion::NodeMapType const & elemToNodes =
-        subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
-      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-
-      forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
-      {
-        localIndex const k = targetSet[ l ];
-        localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
-
-        for( localIndex i=0; i<numNodesPerElem; ++i )
-        {
-          indicatorPML[elemToNodesViewConst[k][i]]=1.0;
-        }
-      } );
-    } );
-
-
-    /// find the interior and global coordinates limits
-    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinGlobal( LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinGlobal( LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinGlobal( LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxGlobal( -LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxGlobal( -LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxGlobal( -LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinInterior( LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinInterior( LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinInterior( LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxInterior( -LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
-    RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
-
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      xMinGlobal.min( nodeCoords32[a][0] );
-      yMinGlobal.min( nodeCoords32[a][1] );
-      zMinGlobal.min( nodeCoords32[a][2] );
-      xMaxGlobal.max( nodeCoords32[a][0] );
-      yMaxGlobal.max( nodeCoords32[a][1] );
-      zMaxGlobal.max( nodeCoords32[a][2] );
-      if( !isZero( indicatorPML[a] - 1.0 ))
-      {
-        xMinInterior.min( nodeCoords32[a][0] );
-        yMinInterior.min( nodeCoords32[a][1] );
-        zMinInterior.min( nodeCoords32[a][2] );
-        xMaxInterior.max( nodeCoords32[a][0] );
-        yMaxInterior.max( nodeCoords32[a][1] );
-        zMaxInterior.max( nodeCoords32[a][2] );
-      }
-    } );
-
-    xGlobalMin[0] = xMinGlobal.get();
-    xGlobalMin[1] = yMinGlobal.get();
-    xGlobalMin[2] = zMinGlobal.get();
-    xGlobalMax[0] = xMaxGlobal.get();
-    xGlobalMax[1] = yMaxGlobal.get();
-    xGlobalMax[2] = zMaxGlobal.get();
-    xInteriorMin[0] = xMinInterior.get();
-    xInteriorMin[1] = yMinInterior.get();
-    xInteriorMin[2] = zMinInterior.get();
-    xInteriorMax[0] = xMaxInterior.get();
-    xInteriorMax[1] = yMaxInterior.get();
-    xInteriorMax[2] = zMaxInterior.get();
-
-    for( integer i=0; i<3; ++i )
-    {
-      xGlobalMin[i] = MpiWrapper::min( xGlobalMin[i] );
-      xGlobalMax[i] = MpiWrapper::max( xGlobalMax[i] );
-      xInteriorMin[i] = MpiWrapper::min( xInteriorMin[i] );
-      xInteriorMax[i] = MpiWrapper::max( xInteriorMax[i] );
-    }
-
-
-    /// if the coordinates limits and PML thicknesses are not provided
-    /// from the xml, replace them with the above
-    for( integer i=0; i<3; ++i )
-    {
-      if( param.xMinPML[i]<smallestXMinPML )
-        param.xMinPML[i] = xInteriorMin[i];
-      if( param.xMaxPML[i]>largestXMaxPML )
-        param.xMaxPML[i] = xInteriorMax[i];
-      if( param.thicknessMinXYZPML[i]<0 )
-        param.thicknessMinXYZPML[i] = xInteriorMin[i]-xGlobalMin[i];
-      if( param.thicknessMaxXYZPML[i]<0 )
-        param.thicknessMaxXYZPML[i] = xGlobalMax[i]-xInteriorMax[i];
-    }
-
-    /// Compute the average wave speeds in the PML regions internally
-    /// using the actual velocity field
-    fsManager.apply< ElementSubRegionBase,
-                     PerfectlyMatchedLayer >( 0.0,
-                                              mesh,
-                                              PerfectlyMatchedLayer::catalogName(),
-                                              [&]( PerfectlyMatchedLayer const &,
-                                                   string const &,
-                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                   ElementSubRegionBase & subRegion,
-                                                   string const & )
-
-    {
-      CellElementSubRegion::NodeMapType const & elemToNodes =
-        subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
-      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( acousticfields::AcousticVelocity::key());
-      finiteElement::FiniteElementBase const &
-      fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
-      real32 const xMin[3]{param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real32 const xMax[3]{param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
-
-      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-
-        acousticROMFrechetKernels::
-          waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( targetSet,
-          nodeCoords32,
-          elemToNodesViewConst,
-          vel,
-          xMin,
-          xMax,
-          cMin,
-          cMax,
-          counterMin,
-          counterMax );
-      } );
-    } );
-
-    for( integer i=0; i<3; ++i )
-    {
-      cMin[i] = MpiWrapper::sum( cMin[i] );
-      cMax[i] = MpiWrapper::sum( cMax[i] );
-      counterMin[i] = MpiWrapper::sum( counterMin[i] );
-      counterMax[i] = MpiWrapper::sum( counterMax[i] );
-    }
-    for( integer i=0; i<3; ++i )
-    {
-      cMin[i] /= std::max( 1, counterMin[i] );
-      cMax[i] /= std::max( 1, counterMax[i] );
-    }
-
-    /// if the PML wave speeds are not provided from the xml
-    /// replace them with the above
-    for( integer i=0; i<3; ++i )
-    {
-      if( param.waveSpeedMinXYZPML[i]<0 )
-        param.waveSpeedMinXYZPML[i] = cMin[i];
-      if( param.waveSpeedMaxXYZPML[i]<0 )
-        param.waveSpeedMaxXYZPML[i] = cMax[i];
-    }
-
-    /// add safeguards when PML thickness is negative or too small
-    for( integer i=0; i<3; ++i )
-    {
-      if( param.thicknessMinXYZPML[i] <= minThicknessPML )
-      {
-        param.thicknessMinXYZPML[i] = LvArray::NumericLimits< real32 >::max;
-        param.waveSpeedMinXYZPML[i] = 0;
-      }
-      if( param.thicknessMaxXYZPML[i]<=minThicknessPML )
-      {
-        param.thicknessMaxXYZPML[i] = LvArray::NumericLimits< real32 >::max;
-        param.waveSpeedMaxXYZPML[i] = 0;
-      }
-    }
-
-    /// WARNING: don't forget to reset the indicator to zero
-    /// so it can be used by the PML application
-    indicatorPML.zero();
-
-    GEOS_LOG_LEVEL_RANK_0( 1,
-                           "PML parameters are: \n"
-                           << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
-                           << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
-                           << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
-                           << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
-                           << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
-                           << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
-                           << "\t theoretical reflectivity = "<< param.reflectivityPML );
-
-  } );
-}
-
-
-
-void AcousticROMFrechet::applyPML( real64 const time, DomainPartition & domain )
-{
-  GEOS_MARK_FUNCTION;
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
-
-  /// Loop over the different mesh bodies; for wave propagation, there is only one mesh body
-  /// which is the whole mesh
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-
-    NodeManager & nodeManager = mesh.getNodeManager();
-
-    /// Array views of the pressure p, PML auxiliary variables, and node coordinates
-    arrayView1d< real32 const > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
-    arrayView2d< real32 const > const v_n = nodeManager.getField< acousticfields::AuxiliaryVar1PML >();
-    arrayView2d< real32 > const grad_n = nodeManager.getField< acousticfields::AuxiliaryVar2PML >();
-    arrayView1d< real32 > const divV_n = nodeManager.getField< acousticfields::AuxiliaryVar3PML >();
-    arrayView1d< real32 const > const u_n = nodeManager.getField< acousticfields::AuxiliaryVar4PML >();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-
-    /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
-    /// 'targetSet' contains the indices of the elements in a given subregion
-    fsManager.apply< ElementSubRegionBase,
-                     PerfectlyMatchedLayer >( time,
-                                              mesh,
-                                              PerfectlyMatchedLayer::catalogName(),
-                                              [&]( PerfectlyMatchedLayer const &,
-                                                   string const &,
-                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                   ElementSubRegionBase & subRegion,
-                                                   string const & )
-
-    {
-
-      /// Get the element to nodes mapping in the subregion
-      CellElementSubRegion::NodeMapType const & elemToNodes =
-        subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
-
-      /// Get a const ArrayView of the mapping above
-      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-
-      /// Array view of the wave speed
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( acousticfields::AcousticVelocity::key());
-
-      /// Get the object needed to determine the type of the element in the subregion
-      finiteElement::FiniteElementBase const &
-      fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
-      real32 xMin[3];
-      real32 xMax[3];
-      real32 dMin[3];
-      real32 dMax[3];
-      real32 cMin[3];
-      real32 cMax[3];
-      for( integer i=0; i<3; ++i )
-      {
-        xMin[i] = param.xMinPML[i];
-        xMax[i] = param.xMaxPML[i];
-        dMin[i] = param.thicknessMinXYZPML[i];
-        dMax[i] = param.thicknessMaxXYZPML[i];
-        cMin[i] = param.waveSpeedMinXYZPML[i];
-        cMax[i] = param.waveSpeedMaxXYZPML[i];
-      }
-      real32 const r = param.reflectivityPML;
-
-      /// Get the type of the elements in the subregion
-      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-
-        /// apply the PML kernel
-        acousticROMFrechetKernels::
-          PMLKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( targetSet,
-          nodeCoords32,
-          elemToNodesViewConst,
-          vel,
-          p_n,
-          v_n,
-          u_n,
-          xMin,
-          xMax,
-          dMin,
-          dMax,
-          cMin,
-          cMax,
-          r,
-          grad_n,
-          divV_n );
-      } );
-    } );
-  } );
-
-}
 
 real64 AcousticROMFrechet::explicitStepForward( real64 const & time_n,
                                                 real64 const & dt,
@@ -1437,7 +1067,7 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 
 	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 	  arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
-	  if( cycleForSource%20 == 0 || m_epsilonGS == 0 )
+	  if( cycleForSource%5 == 0 || m_epsilonGS == 0 )
 	  {
 	    bool success = gramSchmidtROMStiffness(fe,
 						   stiffnessVector,
@@ -1515,7 +1145,7 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 
 	  if( ordGS >= f+1 )
 	  {
-	    if( cycleForSource%20 == 0 || m_epsilonGS == 0 )
+	    if( cycleForSource%5 == 0 || m_epsilonGS == 0 )
 	    {
 	      bool success = gramSchmidtROMStiffness(fe,
 						     stiffnessVector,
@@ -1600,68 +1230,6 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 
       }
     }
-    else
-    {
-      parametersPML const & param = getReference< parametersPML >( viewKeyStruct::parametersPMLString() );
-      arrayView2d< real32 > const v_n = nodeManager.getField< acousticfields::AuxiliaryVar1PML >();
-      arrayView2d< real32 > const grad_n = nodeManager.getField< acousticfields::AuxiliaryVar2PML >();
-      arrayView1d< real32 > const divV_n = nodeManager.getField< acousticfields::AuxiliaryVar3PML >();
-      arrayView1d< real32 > const u_n = nodeManager.getField< acousticfields::AuxiliaryVar4PML >();
-      arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
-	nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-
-      real32 const xMin[3] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real32 const xMax[3] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
-      real32 const dMin[3] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
-      real32 const dMax[3] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
-      real32 const cMin[3] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
-      real32 const cMax[3] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
-      real32 const r = param.reflectivityPML;
-
-      /// apply the main function to update some of the PML auxiliary variables
-      /// Compute (divV) and (B.pressureGrad - C.auxUGrad) vectors for the PML region
-      applyPML( time_n, domain );
-
-      GEOS_MARK_SCOPE ( updatePWithPML );
-      forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-      {
-	localIndex const a = solverTargetNodesSet[n];
-	if( freeSurfaceNodeIndicator[a] != 1 )
-	{
-	  real32 sigma[3];
-	  real32 xLocal[ 3 ];
-
-	  for( integer i=0; i<3; ++i )
-	  {
-	    xLocal[i] = nodeCoords32[a][i];
-	  }
-
-	  acousticROMFrechetKernels::PMLKernelHelper::computeDampingProfilePML(
-									       xLocal,
-									       xMin,
-									       xMax,
-									       dMin,
-									       dMax,
-									       cMin,
-									       cMax,
-									       r,
-									       sigma );
-
-	  real32 const alpha = sigma[0] + sigma[1] + sigma[2];
-
-	  p_np1[a] = dt2 * ((rhs[a] - stiffnessVector[a]) / mass[a] - divV_n[a]) -
-	    (1 - 0.5*alpha*dt)*p_nm1[a] + 2 * p_n[a];
-
-	  p_np1[a] = p_np1[a] / (1 + 0.5 * alpha * dt);
-
-	  for( integer i=0; i<3; ++i )
-	  {
-	    v_n[a][i] = (1 - dt * sigma[i]) * v_n[a][i] - dt * grad_n[a][i];
-	  }
-	  u_n[a] += dt * p_n[a];
-	}
-      } );
-    }
   }
 }
 
@@ -1685,12 +1253,6 @@ void AcousticROMFrechet::synchronizeUnknowns( real64 const & time_n,
   fieldsToBeSync.addFields( FieldLocation::Node, { acousticfields::Pressure_np1::key() } );
   fieldsToBeSync.addFields( FieldLocation::Node, { acousticfields::PressureFrechet_np1::key() } );
 
-  if( m_usePML )
-  {
-    fieldsToBeSync.addFields( FieldLocation::Node, {
-        acousticfields::AuxiliaryVar1PML::key(),
-        acousticfields::AuxiliaryVar4PML::key() } );
-  }
 
   CommunicationTools & syncFields = CommunicationTools::getInstance();
   syncFields.synchronizeFields( fieldsToBeSync,
@@ -1703,13 +1265,6 @@ void AcousticROMFrechet::synchronizeUnknowns( real64 const & time_n,
   computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
   incrementIndexSeismoTrace( time_n );
 
-  if( m_usePML )
-  {
-    arrayView2d< real32 > const grad_n = nodeManager.getField< acousticfields::AuxiliaryVar2PML >();
-    arrayView1d< real32 > const divV_n = nodeManager.getField< acousticfields::AuxiliaryVar3PML >();
-    grad_n.zero();
-    divV_n.zero();
-  }
 }
 
 
@@ -2332,32 +1887,7 @@ void AcousticROMFrechet::computeReducedMatrices( arrayView2d< real32 > const mas
 		   InputError );
   }
 
-  /*
-  massPOD.move( LvArray::MemorySpace::host, true );
-  MpiWrapper::allReduce( massPOD.data(),
-			 massPOD.data(),
-			 massPOD.size( 0 )*massPOD.size( 1 ),
-			 MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-			 MPI_COMM_GEOS );
-  massPerturbationPOD.move( LvArray::MemorySpace::host, true );
-  MpiWrapper::allReduce( massPerturbationPOD.data(),
-                         massPerturbationPOD.data(),
-                         massPerturbationPOD.size( 0 )*massPerturbationPOD.size( 1 ),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOS );
-  dampingPOD.move( LvArray::MemorySpace::host, true );
-  MpiWrapper::allReduce( dampingPOD.data(),
-                         dampingPOD.data(),
-                         dampingPOD.size( 0 )*dampingPOD.size( 1 ),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOS );
-  dampingPerturbationPOD.move( LvArray::MemorySpace::host, true );
-  MpiWrapper::allReduce( dampingPerturbationPOD.data(),
-                         dampingPerturbationPOD.data(),
-                         dampingPerturbationPOD.size( 0 )*dampingPerturbationPOD.size( 1 ),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOS );
-  */
+
 
 }
 
