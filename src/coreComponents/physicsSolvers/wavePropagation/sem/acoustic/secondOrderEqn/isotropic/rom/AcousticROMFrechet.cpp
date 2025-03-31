@@ -64,7 +64,7 @@ AcousticROMFrechet::AcousticROMFrechet( const std::string & name,
 
   registerWrapper( viewKeyStruct::epsilonGSString(), &m_epsilonGS ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1e-1 ).
+    setApplyDefaultValue( 1e-2 ).
     setDescription( "Precision threshold in gramSchmidtStiffness process" );
 
   registerWrapper( viewKeyStruct::sizePOD_fString(), &m_sizePOD_f ).
@@ -86,6 +86,11 @@ AcousticROMFrechet::AcousticROMFrechet( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Cycle at which the basis functions is selected" );
+
+  registerWrapper( viewKeyStruct::solverROMString(), &m_solverROM ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to wheter use the ROM solver (1) or not (0)" );
 }
 
 AcousticROMFrechet::~AcousticROMFrechet()
@@ -385,7 +390,7 @@ void AcousticROMFrechet::addSourceToRightHandSide( integer const & cycleNumber, 
 	{
 	  real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
 	  RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
-	}
+        }
       }
     } );
   }
@@ -944,7 +949,7 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 {
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-  localIndex const cycleNumber = time_n/dt;
+  localIndex const cycleNumber = int(round(time_n/dt));
   integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
 
   /// calculate your time integrators
@@ -1040,195 +1045,193 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 
     addSourceToRightHandSide( cycleForSource, rhs );
     SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
-    if( !m_usePML )
+    
+    GEOS_MARK_SCOPE ( updateP );
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
-      GEOS_MARK_SCOPE ( updateP );
+      localIndex const a = solverTargetNodesSet[n];
+      if( freeSurfaceNodeIndicator[a] != 1 )
+      {
+	p_np1[a] = p_n[a];
+	p_np1[a] *= 2.0 * mass[a];
+	p_np1[a] -= (mass[a] - 0.5 * dt * damping[a]) * p_nm1[a];
+	p_np1[a] += dt2 * (rhs[a] - stiffnessVector[a]);
+	p_np1[a] /= mass[a] + 0.5 * dt * damping[a];
+      }
+    } );
+
+
+    if( ordGS >= 0)
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+											    CellElementSubRegion & elementSubRegion )
+      {
+	finiteElement::FiniteElementBase const &
+	  fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+	arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+	arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
+	if( cycleForSource%10 == 0 || m_epsilonGS == 0 )
+	{
+	  bool success = gramSchmidtROMStiffness(fe,
+						 stiffnessVector,
+						 p_n,
+						 nodeGhostRank,
+						 elementSubRegion.size(),
+						 elemsToNodes,
+						 nodeCoords32,
+						 0);
+	  if( success )
+    	  {
+	    localIndex nq = m_sizePOD - 1;
+	    m_selectionOrder[0][nq] = 0;
+	    m_selectionOrder[1][nq] = m_sizePOD_f[0];
+	    m_cycleOrder[0][m_sizePOD_f[0]] = cycleForSource;
+	  }
+	}
+      } );
+    }
+    for( localIndex f=0; f<ordF; ++f )
+    {
+      arrayView2d< real32 > const pf_nm1 = nodeManager.getField< acousticfields::PressureFrechet_nm1 >();
+      arrayView2d< real32 > const pf_n = nodeManager.getField< acousticfields::PressureFrechet_n >();
+      arrayView2d< real32 > const pf_np1 = nodeManager.getField< acousticfields::PressureFrechet_np1 >();
+      
+      array1d< real32 > pf;
+      pf.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, pf_n.size( 0 ));
+      arrayView1d< real32 > pfV = pf.toView();
+      
       forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
 	localIndex const a = solverTargetNodesSet[n];
-	if( freeSurfaceNodeIndicator[a] != 1 )
-	{
-	  p_np1[a] = p_n[a];
-	  p_np1[a] *= 2.0 * mass[a];
-	  p_np1[a] -= (mass[a] - 0.5 * dt * damping[a]) * p_nm1[a];
-	  p_np1[a] += dt2 * (rhs[a] - stiffnessVector[a]);
-	  p_np1[a] /= mass[a] + 0.5 * dt * damping[a];
-	}
+	pfV[a] = pf_n[a][f];
+	
+	stiffnessVector[a] = 0.0;
+	rhs[a] = rhs_fp1[a];
+	rhs_fp1[a] *= f+1;
       } );
 
-
-      if( ordGS >= 0)
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+											    CellElementSubRegion & elementSubRegion )
       {
-	mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-											      CellElementSubRegion & elementSubRegion )
+	finiteElement::FiniteElementBase const &
+	  fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+	
+	arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+	arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
+	
+	arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+	arrayView1d< real32 const > const grad = elementSubRegion.getField< acousticfields::PartialGradient >();
+	
+	finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
 	{
-	  finiteElement::FiniteElementBase const &
-	    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
-	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-	  arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
-	  if( cycleForSource%5 == 0 || m_epsilonGS == 0 )
+	  using FE_TYPE = TYPEOFREF( finiteElement );
+	  acousticROMFrechetKernels::computeStiffnessFrechetRhs::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
+														nodeCoords32,
+														elemsToNodes,
+														pfV,
+														rhs_fp1,
+														stiffnessVector,
+														grad,
+														velocity);
+	} );
+	forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+	{
+	  localIndex const a = solverTargetNodesSet[n];
+	  if( freeSurfaceNodeIndicator[a] != 1 )
+    	  {
+	    pf_np1[a][f] = pf_n[a][f];
+	    pf_np1[a][f] *= 2.0 * mass[a];
+	    pf_np1[a][f] -= (mass[a] - 0.5 * dt * damping[a]) * pf_nm1[a][f];
+	    pf_np1[a][f] += dt2*(rhs[a] - stiffnessVector[a]);
+	    pf_np1[a][f] /= mass[a] + 0.5 * dt * damping[a];
+	  }
+	} );
+	
+	if( ordGS >= f+1 )
+	{
+	  if( cycleForSource%10 == 0 || m_epsilonGS == 0 )
 	  {
 	    bool success = gramSchmidtROMStiffness(fe,
 						   stiffnessVector,
-						   p_n,
+						   pfV,
 						   nodeGhostRank,
 						   elementSubRegion.size(),
 						   elemsToNodes,
 						   nodeCoords32,
-						   0);
-	    if( success )
-    	    {
-	      localIndex nq = m_sizePOD - 1;
-	      m_selectionOrder[0][nq] = 0;
-	      m_selectionOrder[1][nq] = m_sizePOD_f[0];
-	      m_cycleOrder[0][m_sizePOD_f[0]] = cycleForSource;
-	    }
+						   f+1);
+	  if( success )
+	  {
+	    localIndex nq = m_sizePOD - 1;
+	    m_selectionOrder[0][nq] = f+1;
+	    m_selectionOrder[1][nq] = m_sizePOD_f[f+1];
+	    m_cycleOrder[f+1][m_sizePOD_f[f+1]] = cycleForSource;
 	  }
-	} );
-      }
-      for( localIndex f=0; f<ordF; ++f )
-      {
-	arrayView2d< real32 > const pf_nm1 = nodeManager.getField< acousticfields::PressureFrechet_nm1 >();
-	arrayView2d< real32 > const pf_n = nodeManager.getField< acousticfields::PressureFrechet_n >();
-	arrayView2d< real32 > const pf_np1 = nodeManager.getField< acousticfields::PressureFrechet_np1 >();
-
-	array1d< real32 > pf;
-	pf.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, pf_n.size( 0 ));
-	arrayView1d< real32 > pfV = pf.toView();
-	forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-	{
-	  localIndex const a = solverTargetNodesSet[n];
-	  pfV[a] = pf_n[a][f];
-
-	  stiffnessVector[a] = 0.0;
-	  rhs[a] = rhs_fp1[a];
-	  rhs_fp1[a] *= f+1;
-	} );
-	mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-											      CellElementSubRegion & elementSubRegion )
-	{
-	  finiteElement::FiniteElementBase const &
-	    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
-	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-	  arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
-
-	  arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
-	  arrayView1d< real32 const > const grad = elementSubRegion.getField< acousticfields::PartialGradient >();
-
-	  finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-	  {
-	    using FE_TYPE = TYPEOFREF( finiteElement );
-	    acousticROMFrechetKernels::computeStiffnessFrechetRhs::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
-														  nodeCoords32,
-														  elemsToNodes,
-														  pfV,
-														  rhs_fp1,
-														  stiffnessVector,
-														  grad,
-														  velocity);
-	  } );
-	  forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-	  {
-	    localIndex const a = solverTargetNodesSet[n];
-	    if( freeSurfaceNodeIndicator[a] != 1 )
-    	    {
-	      pf_np1[a][f] = pf_n[a][f];
-	      pf_np1[a][f] *= 2.0 * mass[a];
-	      pf_np1[a][f] -= (mass[a] - 0.5 * dt * damping[a]) * pf_nm1[a][f];
-	      pf_np1[a][f] += dt2*(rhs[a] - stiffnessVector[a]);
-	      pf_np1[a][f] /= mass[a] + 0.5 * dt * damping[a];
-	    }
-	  } );
-
-
-	  if( ordGS >= f+1 )
-	  {
-	    if( cycleForSource%5 == 0 || m_epsilonGS == 0 )
-	    {
-	      bool success = gramSchmidtROMStiffness(fe,
-						     stiffnessVector,
-						     pfV,
-						     nodeGhostRank,
-						     elementSubRegion.size(),
-						     elemsToNodes,
-						     nodeCoords32,
-						     f+1);
-	      if( success )
-    	      {
-		localIndex nq = m_sizePOD - 1;
-		m_selectionOrder[0][nq] = f+1;
-		m_selectionOrder[1][nq] = m_sizePOD_f[f+1];
-		m_cycleOrder[f+1][m_sizePOD_f[f+1]] = cycleForSource;
-	      }
-	    }
 	  }
-	} );
-      }
-
-      real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-      if( cycleNumber == round(maxTime / dt) - 1 )
-      {
-
-	arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
-	mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-											      CellElementSubRegion & elementSubRegion )
-	{
-	  finiteElement::FiniteElementBase const &
-	    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
-	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-	  gramSchmidtROMStiffnessFinal(fe,
-				       nodeGhostRank,
-				       elementSubRegion.size(),
-				       elemsToNodes,
-				       nodeCoords32);
-	} );
-
-	if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0)
-        {
-	  std::cout<<"Size final basis = "<<m_sizePOD<<std::endl;
 	}
+      } );
+    }
 
-	m_massPOD.resize( m_sizePOD, m_sizePOD );
-	m_dampingPOD.resize( m_sizePOD, m_sizePOD );
-	m_massPerturbationPOD.resize( m_sizePOD, m_sizePOD );
-	m_dampingPerturbationPOD.resize( m_sizePOD, m_sizePOD );
-	m_OpPOD.resize( m_sizePOD, m_sizePOD );
+    real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+    if( cycleNumber == int(maxTime / dt) - 1 )
+    {
+      arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+											    CellElementSubRegion & elementSubRegion )
+      {
+	finiteElement::FiniteElementBase const &
+	  fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-	m_massPOD.zero();
-	m_dampingPOD.zero();
-	m_massPerturbationPOD.zero();
-	m_dampingPerturbationPOD.zero();
-	m_OpPOD.zero();
-
-	m_a_np1.resize( m_sizePOD );
-	m_a_n.resize( m_sizePOD );
-	m_a_nm1.resize( m_sizePOD );
-	m_rhsPOD.resize( m_sizePOD );
-
-	m_a_n.zero();
-	m_a_nm1.zero();
-	m_a_np1.zero();
-	m_rhsPOD.zero();
-
-	arrayView2d< real32 > const dampingPOD = m_dampingPOD.toView();
-	arrayView2d< real32 > const massPOD = m_massPOD.toView();
-	arrayView2d< real32 > const massPerturbationPOD = m_massPerturbationPOD.toView();
-	arrayView2d< real32 > const dampingPerturbationPOD = m_dampingPerturbationPOD.toView();
-
-	computeReducedMatrices( massPOD,
-				massPerturbationPOD,
-				dampingPOD,
-				dampingPerturbationPOD,
-				mass,
-				massPerturbation,
-				damping,
-				dampingPerturbation,
-				nodeGhostRank );
-
+	arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+	gramSchmidtROMStiffnessFinal(fe,
+				     nodeGhostRank,
+				     elementSubRegion.size(),
+				     elemsToNodes,
+				     nodeCoords32);
+      } );
+      
+      if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0)
+      {
+	std::cout<<"Size final basis = "<<m_sizePOD<<std::endl;
       }
+      
+      m_massPOD.resize( m_sizePOD, m_sizePOD );
+      m_dampingPOD.resize( m_sizePOD, m_sizePOD );
+      m_massPerturbationPOD.resize( m_sizePOD, m_sizePOD );
+      m_dampingPerturbationPOD.resize( m_sizePOD, m_sizePOD );
+      m_OpPOD.resize( m_sizePOD, m_sizePOD );
+      
+      m_massPOD.zero();
+      m_dampingPOD.zero();
+      m_massPerturbationPOD.zero();
+      m_dampingPerturbationPOD.zero();
+      m_OpPOD.zero();
+      
+      m_a_np1.resize( m_sizePOD );
+      m_a_n.resize( m_sizePOD );
+      m_a_nm1.resize( m_sizePOD );
+      m_rhsPOD.resize( m_sizePOD );
+      
+      m_a_n.zero();
+      m_a_nm1.zero();
+      m_a_np1.zero();
+      m_rhsPOD.zero();
+      
+      arrayView2d< real32 > const dampingPOD = m_dampingPOD.toView();
+      arrayView2d< real32 > const massPOD = m_massPOD.toView();
+      arrayView2d< real32 > const massPerturbationPOD = m_massPerturbationPOD.toView();
+      arrayView2d< real32 > const dampingPerturbationPOD = m_dampingPerturbationPOD.toView();
+      
+      computeReducedMatrices( massPOD,
+			      massPerturbationPOD,
+			      dampingPOD,
+			      dampingPerturbationPOD,
+			      mass,
+			      massPerturbation,
+			      damping,
+			      dampingPerturbation,
+			      nodeGhostRank );
+      
     }
   }
 }
@@ -1348,16 +1351,15 @@ bool AcousticROMFrechet::gramSchmidtROMStiffness(finiteElement::FiniteElementBas
     q_newV[a] = u[a];
   } );
 
+  real64 test = val.get();
   real64 normK = MpiWrapper::sum(val.get());
   real64 val_all = normK;
-  //int nq = m_sizePOD;
   int nq = m_sizePOD_f[ordF];
-
+  
   for(int iq=nq; iq>0; --iq)
   {
     GEOS_MARK_SCOPE ( DirectRead );
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-    //std::string fileName = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, iq);
     std::string fileName = GEOS_FMT( "phi/shot_{:05}/rank_{:05}/order_{:02}/vector_{:03}.dat", shotIndex, rank, ordF, iq);
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
     GEOS_THROW_IF( !wf,
@@ -1420,7 +1422,6 @@ bool AcousticROMFrechet::gramSchmidtROMStiffness(finiteElement::FiniteElementBas
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
     q_newV.move( LvArray::MemorySpace::host, false );
 
-    //std::string fileName = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, nq+1);
     std::string fileName = GEOS_FMT( "phi/shot_{:05}/rank_{:05}/order_{:02}/vector_{:03}.dat", shotIndex, rank, ordF, nq+1);
     int lastDirSeparator = fileName.find_last_of( "/\\" );
     std::string dirName = fileName.substr( 0, lastDirSeparator );
@@ -1443,7 +1444,6 @@ bool AcousticROMFrechet::gramSchmidtROMStiffness(finiteElement::FiniteElementBas
     if( m_sizePOD_f[ordF]%20 == 0 )
     {
       std::string path = GEOS_FMT( "phi/shot_{:05}/rank_{:05}/order_{:02}/", shotIndex, rank, ordF);
-      //std::string path = GEOS_FMT("phi/shot_{:05}/finalBases/rank_{:05}/", shotIndex, rank);
 
       reorthogonalization(fe,
 			  nodeghostrank,
@@ -1800,30 +1800,18 @@ void AcousticROMFrechet::computeReducedMatrices( arrayView2d< real32 > const mas
 	    {
 	      localIncrement = phimV[a] * massPerturbation[a] * phinV[a];
               RAJA::atomicAdd< ATOMIC_POLICY >( &massPerturbationPOD[m][n], localIncrement );
-              //if( m!=n )
-              //{
-              //  RAJA::atomicAdd< ATOMIC_POLICY >( &massPerturbationPOD[n][m], localIncrement );
-              //}
-	    }
+            }
 
 	    if( damping[a] != 0 )
 	    {
 	      localIncrement = phimV[a] * damping[a] * phinV[a];
 	      RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
-	      //if( m!=n )
-	      //{
-	      //	RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
-	      //}
 	    }
 
 	    if( dampingPerturbation[a] != 0 )
 	    {
 	      localIncrement = phimV[a] * dampingPerturbation[a] * phinV[a];
 	      RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPerturbationPOD[m][n], localIncrement );
-	      //if( m!=n )
-	      //{
-	      //	RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPerturbationPOD[n][m], localIncrement );
-	      //}
 	    }
 	  }
 	}

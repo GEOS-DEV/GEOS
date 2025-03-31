@@ -92,11 +92,11 @@ public:
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
    */
-  virtual void initializePML() override;
+  virtual void initializePML() override {};
 
   /**
    */
-  virtual real64 computeTimeStep( real64 & dtOut ) override;
+  virtual real64 computeTimeStep( real64 & dtOut ) override {return 0;};
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
@@ -113,7 +113,8 @@ public:
     static constexpr char const * sizePODString() { return "sizePOD"; }
     static constexpr char const * selectionOrderString() { return "selectionOrder"; }
     static constexpr char const * cycleOrderString() { return "cycleOrder"; }
-
+    static constexpr char const * solverROMString() { return "solverROM"; }
+    
   } waveEquationViewKeys;
 
 
@@ -216,7 +217,7 @@ private:
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
-  virtual void applyPML( real64 const time, DomainPartition & domain ) override;
+  virtual void applyPML( real64 const time, DomainPartition & domain ) override {};
 
 
   //Pressure_np1 at the receiver location for each time step for each receiver
