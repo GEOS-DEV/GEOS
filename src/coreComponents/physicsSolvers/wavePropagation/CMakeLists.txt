@@ -18,6 +18,7 @@ Contains:
 
 # Specify solver headers
 set( wavePropagationSolvers_headers
+     LogLevelsInfo.hpp
      shared/WaveSolverBase.hpp
      shared/WaveSolverUtils.hpp
      shared/PrecomputeSourcesAndReceiversKernel.hpp
