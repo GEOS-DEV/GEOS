@@ -73,7 +73,7 @@ public:
   /**
    * @brief Get the minimum wavespeed on a mesh (S-wavespeed in the elastic case)
    */
-  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
 
 
   /**

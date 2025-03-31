@@ -202,7 +202,7 @@ void ElasticFirstOrderWaveEquationSEM::postInputInitialization()
   m_sigmayzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 }
 
-real32 ElasticFirstOrderWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+real32 ElasticFirstOrderWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
 {
 
   real32 localMinWavespeed = 1e8;
