@@ -24,13 +24,10 @@ void LogLevelsRegistry::addEntry( integer condition, std::string_view descriptio
 
   auto & targetValues = m_logLevelsDescriptions[condition];
 
-  std::unordered_set< string_view > uniqueDescriptions( targetValues.begin(), targetValues.end());
-
-  if( uniqueDescriptions.insert( description ).second )
+  if( !(std::find( targetValues.begin(), targetValues.end(), description ) != targetValues.end()))
   {
-    targetValues.emplace_back( description );
+    targetValues.emplace_back( std::string( description ) );
   }
-
 }
 
 string LogLevelsRegistry::buildLogLevelDescription() const
