@@ -502,6 +502,7 @@ struct PressureComputationKernel
         for( localIndex i=0; i<3; ++i )
         {
           xLocal[a][i] = X( elemsToNodes( k, a ), i );
+          printf("xLocal[%d][%d]=%f\n",a,i,xLocal[a][i]);
              
         }
       }
@@ -666,8 +667,8 @@ struct PressureComputationKernel
           M[k*numNodesPerElem+c2][k*numNodesPerElem+c1] -= 0.5*val;
           M[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1] += 0.5*val;
 
-          Mf[k*numNodesPerElem+c1][k*numNodesPerElem+c2] += 0.5*val;
-          Mf[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] -= 0.5*val;
+          Mf[k*numNodesPerElem+c1][k*numNodesPerElem+c2] -= 0.5*val;
+          Mf[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] += 0.5*val;
       
           Mf[k*numNodesPerElem+c2][k*numNodesPerElem+c1] -= 0.5*val;
           Mf[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1] += 0.5*val;
