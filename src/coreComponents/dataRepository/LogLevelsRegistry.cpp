@@ -14,20 +14,23 @@
  */
 
 #include "LogLevelsRegistry.hpp"
+#include <unordered_set>
 
 namespace geos
 {
 
 void LogLevelsRegistry::addEntry( integer condition, std::string_view description )
 {
-  if( m_logLevelsDescriptions.count( condition ) > 0 )
+
+  auto & targetValues = m_logLevelsDescriptions[condition];
+
+  std::unordered_set< string_view > uniqueDescriptions( targetValues.begin(), targetValues.end());
+
+  if( uniqueDescriptions.insert( description ).second )
   {
-    std::vector< string > const & targetValues = m_logLevelsDescriptions[condition];
-    if( std::find( targetValues.begin(), targetValues.end(), description ) != targetValues.end())
-    {
-      m_logLevelsDescriptions[condition].push_back( string( description ) );
-    }
+    targetValues.emplace_back( description );
   }
+
 }
 
 string LogLevelsRegistry::buildLogLevelDescription() const
