@@ -106,6 +106,7 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< acousticfieldsdg::Pressure_nm1 >( this->getName() );
       subRegion.registerField< acousticfieldsdg::Pressure_n >( this->getName() );
       subRegion.registerField< acousticfieldsdg::Pressure_np1 >( this->getName() );
+      subRegion.registerField< acousticfieldsdg::StiffnessVector >( this->getName() );
 
       subRegion.registerField< acousticfieldsdg::ElementToOpposite >( this->getName() );
       subRegion.registerField< acousticfieldsdg::ElementToOppositePermutation >( this->getName() );
@@ -125,6 +126,7 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
         subRegion.getField< acousticfieldsdg::Pressure_nm1 >().resizeDimension< 1 >( numNodesPerElem );
         subRegion.getField< acousticfieldsdg::Pressure_n >().resizeDimension< 1 >( numNodesPerElem );
         subRegion.getField< acousticfieldsdg::Pressure_np1 >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< acousticfieldsdg::StiffnessVector >().resizeDimension< 1 >( numNodesPerElem );
 
         subRegion.getField< acousticfieldsdg::ElementToOpposite >().resizeDimension< 1 >( 4 );
         subRegion.getField< acousticfieldsdg::ElementToOppositePermutation >().resizeDimension< 1 >( 4 );
@@ -509,6 +511,7 @@ void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
         arrayView2d< real32  > const p_nm1 = elementSubRegion.getField< acousticfieldsdg::Pressure_nm1 >();
         arrayView2d< real32  > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
         arrayView2d< real32 >  p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
+        arrayView2d< real32 > const stiffnessVector = elementSubRegion.getField< acousticfieldsdg::StiffnessVector >();
 
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
@@ -517,6 +520,7 @@ void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
           {
              p_nm1[k][i] = p_n[k][i];
              p_n[k][i]   = p_np1[k][i];
+             stiffnessVector[k][i] = 0.0;
 
           }
           
@@ -557,6 +561,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
         arrayView2d< real32 const > const p_nm1 = elementSubRegion.getField< acousticfieldsdg::Pressure_nm1 >();
         arrayView2d< real32  > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
         arrayView2d< real32 > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
+        arrayView2d< real32 > const stiffnessVector = elementSubRegion.getField< acousticfieldsdg::StiffnessVector >();
         arrayView1d< real32 const > const characteristicSize = elementSubRegion.getField< acousticfieldsdg::CharacteristicSize >();
 
         finiteElement::FiniteElementBase const &
@@ -564,18 +569,6 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
         finiteElement::FiniteElementDispatchHandler< DG_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
-
-          //for (localIndex i = 0; i < 6; i++)
-          //{
-          //  for (localIndex j = 0; j < 4; j++)
-          //  {
-          //    p_n[i][j] = 5.0;
-          //  }
-          //  
-          //}
-          
-        
-          //printf("before call");
 
           AcousticWaveEquationDGKernels::
           PressureComputationKernel::
@@ -601,6 +594,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
           m_rickerOrder,
           m_useSourceWaveletTables,
           m_sourceWaveletTableWrappers,
+          stiffnessVector,
           p_np1 );
 
         } );

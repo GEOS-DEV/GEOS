@@ -142,19 +142,30 @@ public:
   static real64 faceJacobianDeterminant( localIndex face,
                                          real64 const (&X)[4][3] )
   {
+    //printf("face=%d\n",face);
     int i1 = ( face + 1 ) % 4;
     int i2 = ( face + 2 ) % 4;
     int i3 = ( face + 3 ) % 4;
+    //printf("i1=%d,i2=%d,i3=%d\n",i1,i2,i3);
+    //printf("X[i1][0]=%f,X[i1][1]=%f,X[i1][2]=%f\n",X[i1][0],X[i1][1],X[i1][2]);
+    //printf("X[i2][0]=%f,X[i2][1]=%f,X[i2][2]=%f\n",X[i2][0],X[i2][1],X[i2][2]);
+    //printf("X[i3][0]=%f,X[i3][1]=%f,X[i3][2]=%f\n",X[i3][0],X[i3][1],X[i3][2]);
+
     real64 ab[3] = { X[ i2 ][ 0 ] - X[ i1 ][ 0 ],
                      X[ i2 ][ 1 ] - X[ i1 ][ 1 ],
                      X[ i2 ][ 2 ] - X[ i1 ][ 2 ] };
     real64 ac[3] = { X[ i3 ][ 0 ] - X[ i1 ][ 0 ],
                      X[ i3 ][ 1 ] - X[ i1 ][ 1 ],
                      X[ i3 ][ 2 ] - X[ i1 ][ 2 ] };
+    //printf("ab[0]=%f,ab[1]=%f,ab[2]=%f\n",ab[0],ab[1],ab[2]);
+    //printf("ac[0]=%f,ac[1]=%f,ac[2]=%f\n",ac[0],ac[1],ac[2]);
     real64 term1 = ab[1] * ac[2] - ab[2] * ac[1];
     real64 term2 = ab[2] * ac[0] - ab[0] * ac[2];
     real64 term3 = ab[0] * ac[1] - ab[1] * ac[0];
+    //printf("term1=%f,term2=%f,term3=%f\n",term1,term2,term3);
+    //printf("sqrt=%f\n",LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) ));
     return LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) );
+    
   }
 
   /**
@@ -922,7 +933,7 @@ public:
   computeMassTerm( real64 const (&X)[4][3],
                    FUNC && func )
   {
-    real64 detJ = jacobianDeterminant( X );
+    real64 detJ = LvArray::math::abs(jacobianDeterminant( X ));
     basisLoop( [&func, &detJ] ( auto const cc1, auto const ii1, auto const jj1, auto const kk1, auto const ll1 )
     {
       constexpr int c1 = cc1;
@@ -953,7 +964,7 @@ public:
   computeStiffnessTerm( real64 const (&X)[4][3],
                         FUNC && func )
   {
-    real64 detJ = jacobianDeterminant( X );
+    real64 detJ = LvArray::math::abs(jacobianDeterminant( X ));
     real64 dLambdadX[4][3] = {};
     for( int j = 0; j < 3; j ++ )
     {
@@ -1003,6 +1014,18 @@ public:
     } );
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 edgeLength2( localIndex i1,
+                             localIndex i2,                                                                                        
+                            real64 const (&X)[4][3] )
+  {
+    real64 ab[3] = { X[ i2 ][ 0 ] - X[ i1 ][ 0 ],
+                     X[ i2 ][ 1 ] - X[ i1 ][ 1 ],
+                     X[ i2 ][ 2 ] - X[ i1 ][ 2 ] };
+    return  ab[0] * ab[0] + ab[1] * ab[1]+ ab[2]*ab[2];
+  }
+
   /**
    * @brief Computes the non-zero contributions inside the element of the surface terms, including the value of
    *   the superposition integral of basis functions (used for the penalty and damping terms) and
@@ -1027,10 +1050,21 @@ public:
                        FUNCP && funcP,
                        FUNCF && funcF )
   {
-    real64 detJf[4] = { faceJacobianDeterminant( 0, X ), faceJacobianDeterminant( 1, X ),
-                        faceJacobianDeterminant( 2, X ), faceJacobianDeterminant( 3, X ) };
+    
+    real64 detJf[4] = { LvArray::math::abs(faceJacobianDeterminant( 0, X )), LvArray::math::abs(faceJacobianDeterminant( 1, X )),
+                        LvArray::math::abs(faceJacobianDeterminant( 2, X )), LvArray::math::abs(faceJacobianDeterminant( 3, X )) };
+                        real64 el2[3][2] = { { edgeLength2( 0, 1, X ), edgeLength2( 2, 3, X ) },
+                        { edgeLength2( 0, 2, X ), edgeLength2( 1, 3, X ) },
+                        { edgeLength2( 0, 3, X ), edgeLength2( 1, 2, X ) } };
+    real64 detJ = LvArray::math::abs(jacobianDeterminant( X ));
+    //printf("X[0][0]=%f, X[0][1]=%f, X[0][2]=%f\n", X[0][0], X[0][1], X[0][2]);
+    //printf("X[1][0]=%f, X[1][1]=%f, X[1][2]=%f\n", X[1][0], X[1][1], X[1][2]);  
+    //printf("X[2][0]=%f, X[2][1]=%f, X[2][2]=%f\n", X[2][0], X[2][1], X[2][2]);  
+    //printf("X[3][0]=%f, X[3][1]=%f, X[3][2]=%f\n", X[3][0], X[3][1], X[3][2]); 
+    //printf("detJf[0]=%f, detJf[1]=%f, detJf[2]=%f, detJf[3]=%f\n", detJf[0], detJf[1], detJf[2], detJf[3]);
+    
 
-    conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf] ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
+    conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf,&detJ,&el2] ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
     {
       constexpr int f1 = cf1;
       constexpr int d = cd;
@@ -1038,22 +1072,104 @@ public:
       constexpr int i1 = ci1;
       constexpr int j1 = cj1;
       constexpr int k1 = ck1;
-      conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf ] ( auto const f2, auto const, auto const c2, auto const i2, auto const j2, auto const k2 )
+      conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf, &detJ, &el2]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
       {
-        if constexpr ( f1 == f2 )
-        {
-          if constexpr( d == 0 )
-          {
-            constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
-            funcP( c1, c2, f1, i1, j1, k1, i2, j2, k2, val * detJf[ f1 ] );
-          }
-          else if constexpr ( d == 1 )
-          {
-            constexpr real64 factor = ( i1 + j1 + k1 + 4 )/( i1 + j1 + k1 + 3 );
-            constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 ) * factor;
-            funcF( c1, c2, f1, i1, j1, k1, i2, j2, k2, val * detJf[ f1 ] );
-          }
-        }
+        constexpr int f2 = cf2;
+        constexpr int c2 = cc2;
+        constexpr int i2 = ci2;
+        constexpr int j2 = cj2;
+        constexpr int k2 = ck2;
+               
+   // The second function is nonzero on the face indexed by f2, so we integrate on this face.
+
+   if constexpr( f1 == f2 )
+
+   {
+
+     // compute penalty term if the other function is also nonzero on the same face (i.e., d1==0)
+
+     if constexpr ( d == 0 )
+
+     {
+
+       constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
+
+       funcP( c1, c2, f1, i1, j1, k1, i2, j2, k2, val * detJf[ f1 ] );
+
+     }
+
+     // Compute flux term. This is nonzero in two cases.
+
+     // first case: function has exponent 1 wrt to the same face. In this case, one can derive it once wrt to the
+
+     // corresponding lambda and it will obtain a nonzero function on the face.
+
+     if constexpr ( d == 1 )
+
+     {
+
+       constexpr real64 derFactor = ( i1 + j1 + k1 + 4 );
+
+       constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 ) * derFactor;
+
+       funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] * detJf[ f2 ]/detJ);  
+
+     }
+
+     // second case: function has exponent zero wrt f2.
+
+     // In this case, one can derive it wrt to any other face.  
+
+     else if constexpr ( d == 0 )
+
+     {            
+
+       faceBarycentricCoordinateLoop( [ &funcF, &detJf, &detJ, &el2 ]( auto const cl )
+
+       {
+
+         constexpr int l = cl;
+
+         constexpr int ii1 = i1 + ( l == 0 ) * ( -1 );
+
+         constexpr int ij1 = j1 + ( l == 1 ) * ( -1 );
+
+         constexpr int ik1 = k1 + ( l == 2 ) * ( -1 );
+
+         if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0)
+
+         {
+
+           constexpr real64 derFactor = ( ii1 + ij1 + ik1 + 4 );
+
+           constexpr real64 val = computeFaceSuperpositionIntegral( ii1, ij1, ik1, i2, j2, k2 ) * derFactor;
+
+           constexpr int f = (f1 + 1 + l) % 4;
+
+           constexpr int ic1 = (f==0||f2==0) ? (f + f2 -1)  : (5 - f - f2);
+
+           constexpr int ic2 = (ic1 + 1) % 3;
+
+           constexpr int ic3 = (ic2 + 1) % 3;
+
+           real64 h2 = (el2[ic2][0]+el2[ic2][1])-(el2[ic3][0]+el2[ic3][1]);
+
+           h2 = (4.0 * el2[ic1][0]*el2[ic1][1] - h2 * h2)/16.0;
+
+           //real64 scal = -(detJf[ f ] * detJf[ f ] + detJf[ f2 ] * detJf[ f2 ] - 4.0*   h2) / (2.0);
+
+           real64 scal = -(detJf[ f ] * detJf[ f ] + detJf[ f2 ] * detJf[ f2 ] - 4.0*   h2) / (2.0);
+
+           funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * scal / detJ);
+
+         }
+
+       } );
+
+     }
+
+   }
+        
       } );
     } );
   }

@@ -456,19 +456,37 @@ struct PressureComputationKernel
                       localIndex const rickerOrder,
                       bool const useSourceWaveletTables,
                       arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
+                      arrayView2d< real32 > const stiffnessVector,
                       arrayView2d< real32 > const p_np1 )
 
  {
 
 
+    array2d< real64 > M;
+    M.resize( 8, 8 );
+    M.zero();
+
+    array2d< real64 > K;
+    K.resize( 8, 8 );
+    K.zero();
+
+    array2d< real64 > Mp;
+    Mp.resize( 8, 8 );
+    Mp.zero();
+
+    array2d< real64 > Mf;
+    Mf.resize( 8, 8 );
+    Mf.zero();
+
+
+
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
 
-
     //For now lots of comments with ideas  + needed array to add to the method prototype
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    //forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    for (localIndex k=0; k< 2;++k)
     {
 
-      //printf("nbelem=%d\n",size);
 
       real64 const dt2 = pow(dt,2);
 
@@ -476,93 +494,66 @@ struct PressureComputationKernel
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 pTemp[numNodesPerElem] = {0.0};
-      real32 flowx[numNodesPerElem] = {0.0};
-
+      real64 flowx[numNodesPerElem] = {0.0};
+      
       real64 xLocal[4][3];
       for( localIndex a=0; a< 4; ++a )
       {
         for( localIndex i=0; i<3; ++i )
         {
           xLocal[a][i] = X( elemsToNodes( k, a ), i );
-          //if (k==25279)
-          //{
-          //printf("k=%d,a=%d,i=%d,coord=%f\n",k,a,i,xLocal[a][i]);
-          //}
-          
-          
+             
         }
       }
-      //exit(0);
 
-      array2d< real64 > massMatrix;
-      massMatrix.resize( FE_TYPE::numNodes, FE_TYPE::numNodes );
-      massMatrix.zero();
-      FE_TYPE::computeReferenceMassMatrix( massMatrix );
-       
-       real64 const det = FE_TYPE::jacobianDeterminant(xLocal);
-      // for (localIndex i = 0; i < numNodesPerElem; ++i)
-      // {
-      //   real64 fx1=0.0;
-      //   real64 fx2=0.0;
-      //   for (localIndex j = 0; j < numNodesPerElem; ++j)
-      //   {
-      //     fx1+= 2.0*massMatrix(i,j)*p_n[k][j]; 
-          
-      //     //printf("i=%d,j=%d,massMatrix(i,j)=%f\n",i,j,massMatrix(i,j));
-      //     fx2+= massMatrix(i,j)*p_nm1[k][j];
-      //   }
-      //   flowx[i]+=fx1*det;
-      //   //printf("i=%d,flowx=%f\n",i,flowx[i]);
-      //   flowx[i]-=fx2*det;
-          
-      // }
-
+      //for (localIndex i = 0; i < size; i++)
+      //{
+      //  for (localIndex j = 0; j < 4; j++)
+      //  {
+      //    p_n[k][i]=X( elemsToNodes( k, i ), 0 );
+      //  }
+      //}
       
-      //printf("######################################\n");
-      //printf("Current element:%d\n",k);      
+  
+       real64 const det = LvArray::math::abs(FE_TYPE::jacobianDeterminant(xLocal));
 
       //Multiply by p_{n } by 2*Mass
       FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
       {
-         // printf("i=%d\n",i);
-         // printf("j=%d\n",j);
-         //printf("i=%d,j=%d,valMatrix=%f\n",i,j,val);
-         //printf("pnbefore=%f\n",p_n[k][j]);
-         //printf("i=%d,j=%d,val=%f\n",i,j,val);
          pTemp[i] += 2.0*val*p_n[k][j];
-         //printf("i=%d,flowx=%f\n",i,flowx[i]);
-         //printf("pn=%f\n",p_n[k][j]);
-         //printf("i=%d,flowxmasspn=%f\n",i,flowx[i]);
          pTemp[i] -= val*p_nm1[k][j];
-         //printf("pnm1=%f\n",p_nm1[k][j]);
-         //printf("flowxmasspnm1=%f\n",flowx[j]);
       } );
       
       //printf("\n");
+
+      //printf("before: stiffnessVector[%d][%d]=%f\n",k,0,stiffnessVector[k][0]);
+      //printf("before: stiffnessVector[%d][%d]=%f\n",k,1,stiffnessVector[k][1]);
+      //printf("before: stiffnessVector[%d][%d]=%f\n",k,2,stiffnessVector[k][2]);
+      //printf("before: stiffnessVector[%d][%d]=%f\n",k,3,stiffnessVector[k][3]);   
 
 
       //First stiffness part (volume)
       FE_TYPE::computeStiffnessTerm(xLocal, [&] (const int i, const int j, real64 val)
       {
-         flowx[i] -= val*p_n[k][j];
-         //printf("i=%d,j=%d, stiff=%f, pn=%f, dt2,=%f,flowstiffness=%f\n",i,j,val,p_n[k][j],dt2,flowx[i]);
+         stiffnessVector[k][i] -= val*p_n[k][j];
+         M[k*numNodesPerElem+i][k*numNodesPerElem+j] -= val;
+         K[k*numNodesPerElem+i][k*numNodesPerElem+j] += val;
+         //printf("stiffnessVector[%d][%d]=%f\n",k,i,stiffnessVector[k][i]);
+         //printf("val=%f\n",val);
+         //printf("p_n[%d][%d]=%f\n",k,j,p_n[k][j]);
       } );
 
-      // for (localIndex i = 0; i < 4; i++)
-      // {
-      //   printf("flowx=%f\n",flowx[i]);
-      // }
       
+      //printf("After :stiffnessVector[%d][%d]=%f\n",k,0,stiffnessVector[k][0]);
+      //printf("After :stiffnessVector[%d][%d]=%f\n",k,1,stiffnessVector[k][1]);
+      //printf("After :stiffnessVector[%d][%d]=%f\n",k,2,stiffnessVector[k][2]);
+      //printf("After :stiffnessVector[%d][%d]=%f\n",k,3,stiffnessVector[k][3]);   
       
 
-      // //m_finiteElement.template computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
-       //{
-         //We take the neighbour element
-        // const localIndex elemNeigh = elemsToOpposite(k,f1);
       FE_TYPE::computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
       {
         //We take the neighbour element
-        //printf("current element=%d\n",k);
+        //printf("current element=%d, current face=%d\n",k,f1);
         //printf("\n");
         const localIndex elemNeigh = elemsToOpposite(k,f1);
         //if (k==25284)
@@ -572,86 +563,68 @@ struct PressureComputationKernel
         
         if(elemNeigh >= 0)
         {
-          //printf("neighbour element=%d\n",elemNeigh);
-          //printf("\n");
           // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
           // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
           // permutation value contained inside elemsToOppositePermutation permutation
 
-          const int perm = elemsToOppositePermutation(elemNeigh,f1);
+          const int perm = elemsToOppositePermutation(k,f1);
   
-          //printf("global permutation=%d\n",perm);
-          //printf("\n");
           const int p1 = perm%4-1;
           const int p2 = (perm/4)%4-1;
           const int p3 = (perm/16)%4-1;
   
-          //printf("permutations value for 3 indices: p1=%d, p2=%d, p3=%d\n",p1,p2,p3);
-          //printf("\n");
           // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
           // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negati
           const int Indices[3] = {i2,j2,k2};
     
-          //printf("Index before permutation: i2=%d, j2=%d, k2=%d\n",i2,j2,k2);
-          //printf("\n");
           const int neighIndexBfPerm= FE_TYPE::dofIndex( i2, j2, k2 );
-     
-          //printf("neighIndexBfPerm=%d\n",neighIndexBfPerm);
-          //printf("\n");
-  
+       
           const int ii2 = p1 < 0 ? 0 : Indices[p1];
           const int jj2 = p2 < 0 ? 0 : Indices[p2];
           const int kk2 = p3 < 0 ? 0 : Indices[p3];
-           
-          //printf("Rotated indexes: ii2=%d, jj2=%d, kk2=%d\n", ii2,jj2,kk2);
-          // printf("\n");
-          // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
-  
+             
           const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
   
-          //printf("Value of the neighbor dof :%d\n",neighDof);
-          // printf("\n");
-           //Flux computation
-  
-           //flowx[c1] -= 12*(1.0/characteristicSize[k])*val*p_n[k][c2];
-           //flowx[c1] += 12*(1.0/characteristicSize[k])*val*p_n[elemNeigh][neighDof];
-           flowx[c1] += 12*(1.0/characteristicSize[k])*val*p_n[k][c2];
-           flowx[c1] -= 12*(1.0/characteristicSize[k])*val*p_n[elemNeigh][neighDof];
 
-          //printf("Values of dof and penalization matrix: c1=%d, c2=%d, neighDof=%d, val=%f,pn=%f, pnvois=%f,flowx=%f\n",c1,c2,neighDof,val,p_n[k][c2],p_n[elemNeigh][neighDof],flowx[c1]);
-          //printf("##########################################################################\n");
+           //stiffnessVector[k][c1] -= (1.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[k][c2];
+           //stiffnessVector[k][c1] += (1.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[elemNeigh][neighDof];
+
+           stiffnessVector[k][c1] -= (12.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[k][c2];
+           stiffnessVector[k][c1] += (12.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[elemNeigh][neighDof];
+
+           if(k==0 && elemNeigh==1 || k==1 && elemNeigh==0)
+           {
+             //printf("M[%d][%d]=%f\n",k*numNodesPerElem+c1,k*numNodesPerElem+c2,M[k*numNodesPerElem+c1][k*numNodesPerElem+c2]);
+             //printf("Mp[%d][%d]=%f\n",k*numNodesPerElem+c1,(1-k)*numNodesPerElem+neighDof,Mp[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof]);
+             M[k*numNodesPerElem+c1][k*numNodesPerElem+c2] -= val;
+             M[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] += val;
+             Mp[k*numNodesPerElem+c1][k*numNodesPerElem+c2] -= val;
+             Mp[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] += val;
+
+
+             //printf("M[%d][%d]=%f\n",k*numNodesPerElem+c2,k*numNodesPerElem+c1,M[k*numNodesPerElem+c2][k*numNodesPerElem+c1]);
+             //printf("Mp[%d][%d]=%f\n",(1-k)*numNodesPerElem+neighDof,k*numNodesPerElem+c1,Mp[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1]);
+      
+           }
+        
         }
 
        },
        [&] (const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val)
        {
 
-          //printf("################################Flux term#############################\n");
          //We take the neighbour element
           const int elemNeigh = elemsToOpposite(k,f1);
 
-       //printf("current element=%d\n",k);
-       // printf("\n");
-         // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
-         // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
-         // permutation value contained inside elemsToOppositePermutation permutation
+
          if (elemNeigh >= 0)
          {
        
-          //printf("neighbour element=%d\n",elemNeigh);
-          //printf("\n");
-
-         const int perm = elemsToOppositePermutation(elemNeigh,f1);
-
-          //printf("global permutation=%d\n",perm);
-          //printf("\n");
-
+         const int perm = elemsToOppositePermutation(k,f1);
 
          const int p1 = perm%4-1;
          const int p2 = (perm/4)%4-1;
          const int p3 = (perm/16)%4-1;
-          //         printf("permutations value for 3 indices: p1=%d, p2=%d, p3=%d\n",p1,p2,p3);
-          //printf("\n");
 
          // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
          // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negative
@@ -659,67 +632,50 @@ struct PressureComputationKernel
          
 
          const int Indices[3] = {i2,j2,k2};
-         //printf("Index before permutation: i2=%d, j2=%d, k2=%d\n",i2,j2,k2);
-         // printf("\n");
 
          const int ii2 = p1 < 0 ? 0 : Indices[p1];
          const int jj2 = p2 < 0 ? 0 : Indices[p2];
          const int kk2 = p3 < 0 ? 0 : Indices[p3];
 
-          //const int neighIndexBfPerm= FE_TYPE::dofIndex( i2, j2, k2 );
-          //printf("neighIndexBfPerm=%d\n",neighIndexBfPerm);
-          //printf("\n");
-
-
-          //printf("Rotated indexes: ii2=%d, jj2=%d, kk2=%d\n", ii2,jj2,kk2);
-          // printf("\n");
-
          // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
 
 
         const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
-           //printf("Value of the neighbor dof :%d\n",neighDof);
-           //printf("\n");
-         //Flux computation
 
-         //flowx[c1] += 0.5*dt2*val*p_n[elemNeigh][neighDof];
-         //flowx[c1] -= 0.5*dt2*val*p_n[k][c2];
-        flowx[c1] += 0.5*val*p_n[elemNeigh][neighDof];
-        flowx[c1] -= 0.5*val*p_n[k][c2];
-         //printf("Values of dof and flux matrix: c1=%d, c2=%d, neighDof=%d, val=%f,pn=%f, pnvois=%f,flowx=%f\n",c1,c2,neighDof,val,p_n[k][c2],p_n[elemNeigh][neighDof],flowx[c1]);
-         // printf("##########################################################################\n");
-
-         //Then we need a second time where we take the transpose of the previous values:
+        //stiffnessVector[k][c1] -= 0.5*val*p_n[k][c2];
+        //stiffnessVector[k][c1] += 0.5*val*p_n[elemNeigh][neighDof];
+        stiffnessVector[k][c1] -= 0.5*val*p_n[k][c2];
+        stiffnessVector[k][c1] += 0.5*val*p_n[elemNeigh][neighDof];
 
 
          const int IndicesTranspose[3] = {i1,j1,k1};
-          //const int neighIndexBfPerm2= FE_TYPE::dofIndex( i1, j1, k1 );
-          //printf("neighIndexBfPerm2=%d\n",neighIndexBfPerm2);
-          //printf("\n");
-
          const int ii1 = p1 < 0 ? 0 : IndicesTranspose[p1];
          const int jj1 = p2 < 0 ? 0 : IndicesTranspose[p2];
          const int kk1 = p3 < 0 ? 0 : IndicesTranspose[p3];
 
-            //printf("Rotated indexes 2: ii1=%d, jj1=%d, kk1=%d\n", ii1,jj1,kk1);
-           //printf("\n");
-
-
-         // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
-
         const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
-          //printf("Value of the neighbor2 dof :%d\n",neighDof);
-           //printf("\n");
+         
+        stiffnessVector[k][c2] -= 0.5*val*p_n[k][c1];
+        stiffnessVector[elemNeigh][neighDof] += 0.5*val*p_n[k][c1];
 
-         //Flux computation
+        if(k==0 && elemNeigh==1 || k==1 && elemNeigh==0)
+        {
+          M[k*numNodesPerElem+c1][k*numNodesPerElem+c2] += 0.5*val;
+          M[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] -= 0.5*val;
+      
+          M[k*numNodesPerElem+c2][k*numNodesPerElem+c1] -= 0.5*val;
+          M[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1] += 0.5*val;
 
-         //flowx[c2] -= 0.5*dt2*val*p_n[elemNeigh][neighDof2];
-         //flowx[c2] += 0.5*dt2*val*p_n[k][c1];
-         flowx[c2] += 0.5*val*p_n[elemNeigh][neighDof2];
-         flowx[c2] -= 0.5*val*p_n[k][c1];
-          //printf("Values of dof and flux matrix second part: c1=%d, c2=%d, neighDof2=%d, val=%f,pn=%f, pnvois=%f,flowx=%f\n",c1,c2,neighDof2,val,p_n[k][c1],p_n[elemNeigh][neighDof2],flowx[c2]);
-          //printf("##########################################################################\n");
+          Mf[k*numNodesPerElem+c1][k*numNodesPerElem+c2] += 0.5*val;
+          Mf[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] -= 0.5*val;
+      
+          Mf[k*numNodesPerElem+c2][k*numNodesPerElem+c1] -= 0.5*val;
+          Mf[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1] += 0.5*val;
 
+        //stiffnessVector[k][c2] -= 0.5*val*p_n[k][c1];
+        //stiffnessVector[elemNeigh][neighDof] += 0.5*val*p_n[k][c1];
+         
+         }
          }
        } );
            //printf("################################End One element################################\n");
@@ -728,8 +684,7 @@ struct PressureComputationKernel
       //Add time and physic dependency
       for (localIndex i = 0; i < numNodesPerElem; i++)
       {
-        //printf("i=%d,flowx=%f\n",i,flowx[i]);
-        pTemp[i] += flowx[i]*dt2*2250000;
+        pTemp[i] += stiffnessVector[k][i]*dt2*2250000;
       }
       
 
@@ -742,7 +697,6 @@ struct PressureComputationKernel
         }
         p_np1[k][i]=fx/det;
 
-        //printf("k=%d,i=%d,p_np1=%f\n",k,i,p_np1[k][i]);
           
       }
 
@@ -766,13 +720,10 @@ struct PressureComputationKernel
               srcAmp[i] = amp/det;
             }
             
-            //printf("Hé la source est là ! : %d\n",k);
             real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
               p_np1[k][i]+= 2250000*dt2*(srcAmp[i]*srcValue);
-              //printf("sourceValue=%f\n",srcValue);
-              //printf("i=%d, amplitude=%f\n",i,amp);
             }
           }
         }
@@ -782,7 +733,46 @@ struct PressureComputationKernel
       ////printf("######################End of element#########################\n");
 
 
-    } );
+    } //);
+
+    printf("#################Global Matrix#########################\n");
+    for (localIndex i = 0; i < 8; i++)
+    {
+     for (localIndex j = 0; j < 8; j++)
+     {
+       printf("M[%d][%d]=%f\n",i,j,M[i][j]);
+     }
+
+    }
+
+     printf("###################Global stiffness#########################\n");
+    for (localIndex i = 0; i < 8; i++)
+    {
+      for (localIndex j = 0; j < 8; j++)
+      {
+        printf("K[%d][%d]=%f\n",i,j,K[i][j]);
+      }
+    }
+     
+    printf("###################Global Mp#########################\n");
+    for (localIndex i = 0; i < 8; i++)
+    {
+      for (localIndex j = 0; j < 8; j++)
+      {
+        printf("Mp[%d][%d]=%f\n",i,j,Mp[i][j]);
+      }
+    
+     
+    }
+
+    printf("###################Global Mf#########################\n");
+    for (localIndex i = 0; i < 8; i++)
+    {
+      for (localIndex j = 0; j < 8; j++)
+      {
+        printf("Mf[%d][%d]=%f\n",i,j,Mf[i][j]);
+      }
+    }
     //exit(2);
 
  }

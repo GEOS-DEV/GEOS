@@ -59,6 +59,13 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
+DECLARE_FIELD( StiffnessVector,
+                "stiffnessVector",
+                array2d< real32 >,
+                0,
+                LEVEL_0,
+                WRITE_AND_READ,
+                "2d array to store stiffness and flux information (useful for neighbour contribution)." );
 //DECLARE_FIELD( ForcingRHS,
 //               "rhs",
 //               array1d< real32 >,
