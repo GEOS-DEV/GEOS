@@ -213,7 +213,7 @@ string_view trim( string_view str,
 
 /**
  * @brief Trim the left string
- * @param[in] str the string to trim
+ * @param[in] s the string to trim
  * @return the trimmed string
  */
 string_view ltrimSpaces( string_view s );
