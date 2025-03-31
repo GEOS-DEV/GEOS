@@ -294,7 +294,6 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
                                   &dCurrentVolRate_dPres,
                                   &dCurrentVolRate_dRate,
                                   &iwelemRef,
-                                  &logLevel,
                                   &wellControlsName] ( localIndex const )
       {
         //    We need to evaluate the density as follows:
@@ -695,8 +694,7 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                                                           subRegion.isLocallyOwned(),
                                                                           subRegion.getTopWellElementIndex(),
                                                                           wellControls,
-                                                                          time_n + dt, // controls evaluated with BHP/rate of the end of the
-                                                                                       // time interval
+                                                                          time_n, 
                                                                           wellElemDofNumber,
                                                                           wellElemGravCoef,
                                                                           nextWellElemIndex,

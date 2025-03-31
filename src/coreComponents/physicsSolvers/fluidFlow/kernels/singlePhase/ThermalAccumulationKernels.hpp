@@ -53,9 +53,6 @@ public:
   /// Note: Derivative lineup only supports dP & dT, not component terms
   static constexpr integer isThermal = NUM_DOF-1;
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< isThermal >;
-  /// Note: Derivative lineup only supports dP & dT, not component terms
-  static constexpr integer isThermal = NUM_DOF-1;
-  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< isThermal >;
   /**
    * @brief Constructor
    * @param[in] rankOffset the offset of my MPI rank
