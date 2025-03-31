@@ -177,12 +177,15 @@ void TractionBoundaryCondition::launch( real64 const time,
   arrayView1d< real64 const > const tractionMagnitudeArrayView = tractionMagnitudeArray;
 
   {
+    integer const nodalScaleFlag = m_nodalScaleFlag;
+    auto const scaleSet = m_scaleSet.toViewConst();
+
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const kf = targetSet[ i ];
       localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
 
-      real64 const nodalScale = ( m_nodalScaleFlag == 1 ) ? m_scaleSet[i] : 1.0;
+      real64 const nodalScale = ( nodalScaleFlag == 1 ) ? scaleSet[i] : 1.0;
 
       // TODO consider dispatch if appropriate
       real64 const tractionMagnitude = spatialFunction ? tractionMagnitudeArrayView[i] : (tractionMagnitude0 * nodalScale);
