@@ -134,7 +134,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -246,7 +246,7 @@ real32 ElasticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, arrayVie
 
 }
 
-void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -302,7 +302,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
 
       PreComputeSourcesAndReceivers::
         Compute3DSourceAndReceiverConstantsWithDAS
-      < EXEC_POLICY, FE_TYPE >
+      < EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         facesToNodes,
         nodeCoords,
@@ -389,7 +389,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
     precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
@@ -524,8 +524,14 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
-  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  if( m_useDAS == WaveSolverUtils::DASType::none )
+  {
+    WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  }
+  else
+  {
+    WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  }
 }
 
 real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
@@ -535,7 +541,7 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -698,7 +704,7 @@ real32 ElasticWaveEquationSEM::computeGlobalMinQFactor()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -816,7 +822,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                               real64 const & dt,
                                               DomainPartition &,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -926,7 +932,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                   real64 const & dt,
                                                   DomainPartition & domain,
                                                   MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+                                                  string_array const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1032,10 +1038,10 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  real64 dtCompute;
+  real64 dtCompute = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     localIndex nSubSteps = (int) ceil( dt/m_timeStep );
     dtCompute = dt/nSubSteps;
@@ -1059,7 +1065,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real32 const > const ux_n   = nodeManager.getField< elasticfields::Displacementx_n >();

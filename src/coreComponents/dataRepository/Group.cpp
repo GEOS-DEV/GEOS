@@ -17,6 +17,9 @@
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "GroupContext.hpp"
@@ -301,13 +304,30 @@ void Group::printDataHierarchy( integer const indent ) const
 string Group::dumpInputOptions() const
 {
   string rval;
-
-  bool writeHeader = true;
+  TableLayout const logLayout = TableLayout( "", {TableLayout::Column()
+                                                    .setName( "name" )
+                                                    .setValuesAlignment( TableLayout::Alignment::left ),
+                                                  TableLayout::Column()
+                                                    .setName( "Requirement" )
+                                                    .setValuesAlignment( TableLayout::Alignment::center ),
+                                                  TableLayout::Column()
+                                                    .setName( "Description" )
+                                                    .setValuesAlignment( TableLayout::Alignment::left ) } )
+                                  .setMaxColumnWidth( 80 );
+  TableData logData;
   for( auto const & wrapper : m_wrappers )
   {
-    rval.append( wrapper.second->dumpInputOptions( writeHeader ) );
-    writeHeader = false;
+    if( wrapper.second->getInputFlag() == InputFlags::OPTIONAL ||
+        wrapper.second->getInputFlag() == InputFlags::REQUIRED )
+    {
+      logData.addRow( wrapper.second->getName(),
+                      InputFlagToString( wrapper.second->getInputFlag() ),
+                      wrapper.second->getDescription() );
+    }
   }
+
+  TableTextFormatter logFormatter( logLayout );
+  rval.append( logFormatter.toString( logData ));
 
   return rval;
 }
@@ -355,7 +375,7 @@ void Group::initializationOrder( string_array & order )
 
 void Group::initialize_postMeshGeneration()
 {
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -369,7 +389,7 @@ void Group::initialize()
 {
   initializePreSubGroups();
 
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -385,7 +405,7 @@ void Group::initializePostInitialConditions()
 {
   initializePostInitialConditionsPreSubGroups();
 
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -398,7 +418,7 @@ void Group::initializePostInitialConditions()
 
 template< bool DO_PACKING >
 localIndex Group::packImpl( buffer_unit_type * & buffer,
-                            array1d< string > const & wrapperNames,
+                            string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             bool onDevice,
@@ -458,7 +478,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-localIndex Group::packSize( array1d< string > const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             bool onDevice,
@@ -475,13 +495,13 @@ localIndex Group::packSize( arrayView1d< localIndex const > const & packList,
                             parallelDeviceEvents & events ) const
 {
   std::vector< string > const tmp = mapKeys( m_wrappers );
-  array1d< string > wrapperNames;
-  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  string_array wrapperNames;
+  wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
   return this->packSize( wrapperNames, packList, recursive, onDevice, events );
 }
 
 
-localIndex Group::packSize( array1d< string > const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             integer const recursive,
                             bool onDevice,
                             parallelDeviceEvents & events ) const
@@ -492,7 +512,7 @@ localIndex Group::packSize( array1d< string > const & wrapperNames,
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        array1d< string > const & wrapperNames,
+                        string_array const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
                         bool onDevice,
@@ -509,14 +529,14 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         parallelDeviceEvents & events ) const
 {
   std::vector< string > const tmp = mapKeys( m_wrappers );
-  array1d< string > wrapperNames;
-  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  string_array wrapperNames;
+  wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
   return this->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        array1d< string > const & wrapperNames,
+                        string_array const & wrapperNames,
                         integer const recursive,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
@@ -649,15 +669,6 @@ void Group::postRestartInitializationRecursive()
   } );
 
   postRestartInitialization();
-}
-
-void Group::enableLogLevelInput()
-{
-  // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
-  registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Log level" );
 }
 
 Group const & Group::getBaseGroupByPath( string const & path ) const

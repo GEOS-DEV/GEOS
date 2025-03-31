@@ -223,7 +223,7 @@ protected:
    * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) = 0;
 
   /**
    * @brief Perform forward explicit step
@@ -392,7 +392,7 @@ protected:
   real32 m_reflectivityCoeff;
 
   /// Names of table functions for source wavelet (time dependency)
-  array1d< string > m_sourceWaveletTableNames;
+  string_array m_sourceWaveletTableNames;
 
   /// Flag to indicate if source wavelet table functions are used
   bool m_useSourceWaveletTables;

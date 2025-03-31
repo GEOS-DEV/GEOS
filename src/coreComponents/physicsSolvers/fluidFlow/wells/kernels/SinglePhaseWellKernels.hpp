@@ -22,6 +22,7 @@
 
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -145,13 +146,13 @@ struct PressureRelationKernel
           bool const isLocallyOwned,
           localIndex const iwelemControl,
           WellControls const & wellControls,
-          real64 const & timeAtEndOfStep,
+          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
+          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -171,9 +172,9 @@ struct PerforationKernel
   using SingleFluidAccessors =
     StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::density,
-                              fields::singlefluid::dDensity_dPressure,
+                              fields::singlefluid::dDensity,
                               fields::singlefluid::viscosity,
-                              fields::singlefluid::dViscosity_dPressure >;
+                              fields::singlefluid::dViscosity >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -208,16 +209,16 @@ struct PerforationKernel
   static void
   launch( localIndex const size,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView2d< real64 const > > const & resDensity,
-          ElementViewConst< arrayView2d< real64 const > > const & dResDensity_dPres,
-          ElementViewConst< arrayView2d< real64 const > > const & resViscosity,
-          ElementViewConst< arrayView2d< real64 const > > const & dResViscosity_dPres,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resDensity,
+          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dResDensity,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resViscosity,
+          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dResViscosity,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView2d< real64 const > const & wellElemViscosity,
-          arrayView2d< real64 const > const & dWellElemViscosity_dPres,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
+          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemViscosity,
+          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemViscosity,
           arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< localIndex const > const & perfWellElemIndex,
           arrayView1d< real64 const > const & perfTransmissibility,
@@ -243,9 +244,9 @@ struct AccumulationKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemVolume,
-          arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView2d< real64 const > const & wellElemDensity_n,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
+          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -280,7 +281,7 @@ struct PresInitializationKernel
           WellControls const & wellControls,
           real64 const & currentTime,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView2d< real64 const > > const & resDensity,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resDensity,
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
@@ -299,7 +300,7 @@ struct RateInitializationKernel
   launch( localIndex const subRegionSize,
           WellControls const & wellControls,
           real64 const & currentTime,
-          arrayView2d< real64 const > const & wellElemDens,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDens,
           arrayView1d< real64 > const & connRate );
 
 };
@@ -327,7 +328,7 @@ public:
                       WellElementSubRegion const & subRegion,
                       constitutive::SingleFluidBase const & fluid,
                       WellControls const & wellControls,
-                      real64 const timeAtEndOfStep,
+                      real64 const time,
                       real64 const dt,
                       real64 const minNormalizer )
     : Base( rankOffset,
@@ -339,8 +340,8 @@ public:
     m_isLocallyOwned( subRegion.isLocallyOwned() ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( wellControls.getTargetBHP( timeAtEndOfStep ) ),
-    m_targetRate( wellControls.getTargetTotalRate( timeAtEndOfStep ) ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
+    m_targetRate( wellControls.getTargetTotalRate( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_density_n( fluid.density_n() )
   {}
@@ -423,7 +424,7 @@ protected:
   arrayView1d< real64 const > const m_volume;
 
   /// View on total density at the previous converged time step
-  arrayView2d< real64 const > const m_density_n;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_density_n;
 
 };
 
@@ -443,7 +444,7 @@ public:
    * @param[in] subRegion the well element subregion
    * @param[in] fluid the fluid model
    * @param[in] wellControls the controls
-   * @param[in] timeAtEndOfStep the time at the end of the step (time_n + dt)
+   * @param[in] time the time
    * @param[in] dt the time step size
    * @param[out] residualNorm the residual norm on the subRegion
    */
@@ -455,7 +456,7 @@ public:
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
                    WellControls const & wellControls,
-                   real64 const timeAtEndOfStep,
+                   real64 const time,
                    real64 const dt,
                    real64 const minNormalizer,
                    real64 (& residualNorm)[1] )
@@ -463,7 +464,7 @@ public:
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, wellControls, timeAtEndOfStep, dt, minNormalizer );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, wellControls, time, dt, minNormalizer );
     ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
   }
 

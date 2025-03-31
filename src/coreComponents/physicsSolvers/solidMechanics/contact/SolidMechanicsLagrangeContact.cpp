@@ -31,6 +31,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
@@ -72,6 +73,7 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
 
   addLogLevel< logInfo::Configuration >();
+  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 void SolidMechanicsLagrangeContact::postInputInitialization()
@@ -92,8 +94,8 @@ void SolidMechanicsLagrangeContact::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
@@ -141,7 +143,7 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
 
     forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                       MeshLevel & mesh,
-                                                      arrayView1d< string const > const & )
+                                                      string_array const & )
     {
       FaceManager & faceManager = mesh.getFaceManager();
 
@@ -175,13 +177,13 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
                                                                        [&]( localIndex const,
                                                                             SurfaceElementRegion const & region )
       {
-        array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+        string_array & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
         stencilTargetRegions.emplace_back( region.getName() );
       } );
     } );
@@ -229,7 +231,7 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -281,7 +283,7 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -444,11 +446,11 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
     } );
   } );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration,
-                              GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
-                                        this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
-                                        minSlidingTolerance, maxSlidingTolerance,
-                                        minNormalTractionTolerance, maxNormalTractionTolerance ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration,
+                         GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
+                                   this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
+                                   minSlidingTolerance, maxSlidingTolerance,
+                                   minNormalTractionTolerance, maxNormalTractionTolerance ) );
 }
 
 void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition & domain )
@@ -457,7 +459,7 @@ void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -490,7 +492,7 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -584,12 +586,12 @@ void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
   // restrict coupling to fracture regions only
-  map< std::pair< string, string >, array1d< string > > meshTargets;
+  map< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
-    array1d< string > regions;
+    string_array regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                                     [&]( localIndex const,
@@ -638,11 +640,11 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
   assembleContact( domain, dofManager, localMatrix, localRhs );
 
   // for sequential: add (fixed) pressure force contribution into residual (no derivatives)
-  if( m_isFixedStressPoromechanicsUpdate )
+  if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel const & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
     {
       assembleForceResidualPressureContribution( mesh, regionNames, dofManager, localMatrix, localRhs );
     } );
@@ -656,7 +658,7 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     /// assemble Kut
     assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
@@ -669,7 +671,7 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
 
 void SolidMechanicsLagrangeContact::
   assembleForceResidualPressureContribution( MeshLevel const & mesh,
-                                             arrayView1d< string const > const & regionNames,
+                                             string_array const & regionNames,
                                              DofManager const & dofManager,
                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                              arrayView1d< real64 > const & localRhs )
@@ -792,7 +794,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                         [&]( localIndex const, FaceElementSubRegion const & subRegion )
@@ -949,7 +951,7 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
 
@@ -1322,7 +1324,7 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
 
 void SolidMechanicsLagrangeContact::
   assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
-                                              arrayView1d< string const > const & regionNames,
+                                              string_array const & regionNames,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
@@ -1436,7 +1438,7 @@ void SolidMechanicsLagrangeContact::
 
 void SolidMechanicsLagrangeContact::
   assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames,
+                                                                string_array const & regionNames,
                                                                 DofManager const & dofManager,
                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
@@ -2165,7 +2167,7 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -2195,7 +2197,7 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -2229,15 +2231,15 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, fricitonLawName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
@@ -2339,7 +2341,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   // and total area of fracture elements
   totalArea = MpiWrapper::sum( totalArea );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration, GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
 
   // Assume converged if changed area is below certain fraction of total area
   return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;
@@ -2347,10 +2349,10 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {
-  globalIndex numStick, numNewSlip, numSlip, numOpen;
+  globalIndex numStick = 0, numNewSlip = 0, numSlip = 0, numOpen = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
   } );

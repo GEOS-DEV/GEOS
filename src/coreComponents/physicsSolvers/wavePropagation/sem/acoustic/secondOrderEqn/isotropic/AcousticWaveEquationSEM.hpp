@@ -136,13 +136,13 @@ public:
                         integer const & cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
-                        arrayView1d< string const > const & regionNames );
+                        string_array const & regionNames );
 
   void synchronizeUnknowns( real64 const & time_n,
                             real64 const & dt,
                             DomainPartition & domain,
                             MeshLevel & mesh,
-                            arrayView1d< string const > const & regionNames );
+                            string_array const & regionNames );
 
   void prepareNextTimestep( MeshLevel & mesh );
 
@@ -160,7 +160,7 @@ private:
    * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml

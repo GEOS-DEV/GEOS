@@ -26,6 +26,8 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/contact/RateAndStateFriction.hpp"
 #include "ExplicitQDRateAndState.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+
 
 namespace geos
 {
@@ -53,7 +55,7 @@ void SpringSlider< RSSOLVER_TYPE >::registerDataOnMesh( Group & meshBodies )
 
   this->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                           MeshLevel & mesh,
-                                                          arrayView1d< string const > const & regionNames )
+                                                          string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -105,7 +107,7 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
   // Spring-slider shear traction computation
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+                                                                     string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -113,31 +115,16 @@ real64 SpringSlider< RSSOLVER_TYPE >::updateStresses( real64 const & time_n,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
 
-      arrayView2d< real64 const > const deltaSlip = subRegion.getField< contact::deltaSlip >();
-      arrayView2d< real64 > const shearTraction   = subRegion.getField< rateAndState::shearTraction >();
-      arrayView2d< real64 > const shearTraction_n = subRegion.getField< rateAndState::shearTraction_n >();
-
-      arrayView1d< real64 > const normalTraction  = subRegion.getField< rateAndState::normalTraction >();
 
 
-      string const & fricitonLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      RateAndStateFriction const & frictionLaw = this->template getConstitutiveModel< RateAndStateFriction >( subRegion, fricitonLawName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
 
-      RateAndStateFriction::KernelWrapper frictionKernelWrapper = frictionLaw.createKernelUpdates();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        SpringSliderParameters springSliderParameters = SpringSliderParameters( normalTraction[k],
-                                                                                frictionKernelWrapper.getACoefficient( k ),
-                                                                                frictionKernelWrapper.getBCoefficient( k ),
-                                                                                frictionKernelWrapper.getDcCoefficient( k ) );
+        typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionKernelWrapper = castedFrictionLaw.createKernelUpdates();
 
-
-
-        shearTraction[k][0] = shearTraction_n[k][0] + springSliderParameters.tauRate * dt
-                              - springSliderParameters.springStiffness * deltaSlip[k][0];
-        shearTraction[k][1] = shearTraction_n[k][1] + springSliderParameters.tauRate * dt
-                              - springSliderParameters.springStiffness * deltaSlip[k][1];
+        updateShearTraction( subRegion, frictionKernelWrapper, dt );
       } );
     } );
   } );
