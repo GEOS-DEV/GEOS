@@ -304,24 +304,24 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         {
           // we need to compute the surface density
           fluidWrapper.update( iwelemRef, 0, surfacePres );
-  
-        if( logSurfaceCondition )
+
+          if( logSurfaceCondition )
           {
-  
-          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
+
+            GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
                                      wellControlsName, surfacePres ) );
-        }
+          }
 
 #ifdef GEOS_USE_HIP
-        GEOS_UNUSED_VAR( wellControlsName );
+          GEOS_UNUSED_VAR( wellControlsName );
 #endif
 
-      }
-      else
-      {
-        real64 const refPres = pres[iwelemRef];
-        fluidWrapper.update( iwelemRef, 0, refPres );
-      }
+        }
+        else
+        {
+          real64 const refPres = pres[iwelemRef];
+          fluidWrapper.update( iwelemRef, 0, refPres );
+        }
 
         real64 const densInv = 1.0 / dens[iwelemRef][0];
         currentVolRate = connRate[iwelemRef] * densInv;
@@ -429,26 +429,26 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
         PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
         PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( meshLevel.getElemManager(), flowSolver.getName() );
 
-      // 1) Loop over all perforations to compute an average density
-      // 2) Initialize the reference pressure
-      // 3) Estimate the pressures in the well elements using the average density
-      PresTempInitializationKernel::
-        launch( isThermal(),
-                perforationData.size(),
-                subRegion.size(),
-                perforationData.getNumPerforationsGlobal(),
-                wellControls,
-                0.0,   // initialization done at t = 0
-                resSinglePhaseFlowAccessors.get( fields::flow::pressure{} ),
-                resSinglePhaseFlowAccessors.get( fields::flow::temperature{} ),
-                resSingleFluidAccessors.get( fields::singlefluid::density{} ),
-                resElementRegion,
-                resElementSubRegion,
-                resElementIndex,
-                perfGravCoef,
-                wellElemGravCoef,
-                wellElemPressure,
-                wellElemTemperature );
+        // 1) Loop over all perforations to compute an average density
+        // 2) Initialize the reference pressure
+        // 3) Estimate the pressures in the well elements using the average density
+        PresTempInitializationKernel::
+          launch( isThermal(),
+                  perforationData.size(),
+                  subRegion.size(),
+                  perforationData.getNumPerforationsGlobal(),
+                  wellControls,
+                  0.0, // initialization done at t = 0
+                  resSinglePhaseFlowAccessors.get( fields::flow::pressure{} ),
+                  resSinglePhaseFlowAccessors.get( fields::flow::temperature{} ),
+                  resSingleFluidAccessors.get( fields::singlefluid::density{} ),
+                  resElementRegion,
+                  resElementSubRegion,
+                  resElementIndex,
+                  perfGravCoef,
+                  wellElemGravCoef,
+                  wellElemPressure,
+                  wellElemTemperature );
 
         // 4) Recompute the pressure-dependent properties
         // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
@@ -694,7 +694,7 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                                                           subRegion.isLocallyOwned(),
                                                                           subRegion.getTopWellElementIndex(),
                                                                           wellControls,
-                                                                          time_n, 
+                                                                          time_n,
                                                                           wellElemDofNumber,
                                                                           wellElemGravCoef,
                                                                           nextWellElemIndex,

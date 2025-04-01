@@ -196,7 +196,6 @@ addCouplingSparsityPattern( DomainPartition const & domain,
           globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
 
           // working arrays
-          // working arrays
           stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
           stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
 

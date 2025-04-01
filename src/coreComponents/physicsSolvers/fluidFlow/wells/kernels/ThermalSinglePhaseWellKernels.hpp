@@ -49,6 +49,12 @@ template< integer IS_THERMAL >
 class ElementBasedAssemblyKernel : public singlePhaseWellKernels::ElementBasedAssemblyKernel< IS_THERMAL >
 {
 public:
+
+  // Well jacobian column and row indicies
+  using FLUID_PROP_COFFSET = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
+  using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
+
   using Base = singlePhaseWellKernels::ElementBasedAssemblyKernel< IS_THERMAL >;
   using Base::m_rankOffset;
   using Base::m_dofNumber;
@@ -59,14 +65,6 @@ public:
   using Base::m_dWellElemDensity;
   using Base::m_localMatrix;
   using Base::m_localRhs;
-  using ROFFSET = singlePhaseWellKernels::RowOffset;
-  using COFFSET = singlePhaseWellKernels::ColOffset;
-
-  /// Compute time value for the number of degrees of freedom
-  static constexpr integer NUM_DOF = 1 + IS_THERMAL; // tjb review
-
-  /// Compute time value for the number of equations
-  static constexpr integer numEqn = NUM_DOF;   // tjb review
 
   /**
    * @brief Constructor
@@ -102,47 +100,35 @@ public:
    * @return the ghost rank of the element
    */
   GEOS_HOST_DEVICE
-  integer elemGhostRank( localIndex const ei ) const
-  { return m_elemGhostRank( ei ); }
-
+  integer elemGhostRank( localIndex const iwelem ) const
+  { return m_elemGhostRank( iwelem ); }
 
 
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the kernel
-   * @param[in] ei the element index
-   * @param[inout] stack the stack variables
-   * @param[in] phaseAmountKernelOp the function used to customize the kernel
+   * @param[in] iwelem the element index
    */
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const iwelem ) const
   {
-    Base::computeAccumulation( iwelem, [&]( )
+    Base::computeAccumulation( iwelem, [&]( globalIndex const presDofColIndex, globalIndex const tempDofColIndex )
     {
+      // assemble the accumulation term of the energy equation
+      localIndex const eqnRowIndex = m_dofNumber[iwelem] + WJ_ROFFSET::ENERGYBAL - m_rankOffset;
 
-#if 0
-      // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
-      stack.localJacobian[0][numDof-1] =  stack.volume * m_dWellElemDensity_dTemperature[iwelem][0];
+      real64 const localEnergyAccum = m_wellElemVolume[iwelem] * ( m_wellElemDensity[iwelem][0]*m_internalEnergy[iwelem][0] - m_wellElemDensity_n[iwelem][0]*m_internalEnergy_n[iwelem][0]);
+      real64 const localEnergyAccumDP = m_wellElemVolume[iwelem] *(m_internalEnergy[iwelem][0] *m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dP] +
+                                                                   m_wellElemDensity[iwelem][0]*m_dInternalEnergy[iwelem][0][FLUID_PROP_COFFSET::dP]);
+      real64 const localEnergyAccumDT = m_wellElemVolume[iwelem] *(m_internalEnergy[iwelem][0] *m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dT] +
+                                                                   m_wellElemDensity[iwelem][0]*m_dInternalEnergy[iwelem][0][FLUID_PROP_COFFSET::dT]);
 
-      // Step 2: assemble the fluid part of the accumulation term of the energy equation
-      real64 const fluidEnergy = stack.volume   * stack.density  * m_internalEnergy[iwelem][0];
-      real64 const fluidEnergy_n = stack.volume   * stack.density_n  * m_internalEnergy_n[iwelem][0];
+      m_localRhs[eqnRowIndex] += localEnergyAccum;
+      m_localMatrix.template addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localEnergyAccumDP, 1 );
 
-      real64 const dFluidEnergy_dP =  stack.volume   * stack.dDensity_dPres  * m_internalEnergy[iwelem][0]
-                                     + stack.volume   * stack.density  * m_dInternalEnergy_dPres[iwelem][0];
+      m_localMatrix.template addToRow< serialAtomic >( eqnRowIndex, &tempDofColIndex, &localEnergyAccumDT, 1 );
 
-
-      real64 const dFluidEnergy_dT = stack.volume   * m_dWellElemDensity_dTemperature[iwelem][0] * m_internalEnergy[iwelem][0]
-                                     + stack.volume  * stack.density  * m_dInternalEnergy_dTemp[iwelem][0];
-
-      // local accumulation
-      stack.localResidual[numEqn-1] = fluidEnergy - fluidEnergy_n;
-
-      // derivatives w.r.t. pressure and temperature
-      stack.localJacobian[numEqn-1][0]        = dFluidEnergy_dP;
-      stack.localJacobian[numEqn-1][numDof-1] = dFluidEnergy_dT;
-#endif
     } );
   }
 
@@ -173,9 +159,6 @@ public:
   }
 
 protected:
-
-  /// View on derivative of fluid density w.r.t temperature
-  arrayView2d< real64 const > const m_dWellElemDensity_dTemperature;
 
   /// Views on fluid internal energy
   arrayView2d< real64 const > const m_internalEnergy;

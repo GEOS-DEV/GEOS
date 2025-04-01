@@ -183,7 +183,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
     integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
     integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-    integer constexpr maxNumDof  = maxNumComp + 2;
+    integer constexpr maxNumDof  = maxNumComp + 3;
 
     string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
     string const resDofKey  = dofManager.getKey( Base::wellSolver()->resElementDofName() );

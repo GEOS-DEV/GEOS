@@ -79,13 +79,13 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   IsothermalSinglePhaseFluxKernel( real64 const dt,
-                                               globalIndex const rankOffset,
-                                               string const wellDofKey,
-                                               ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                                               WellElementSubRegion const & subRegion,
-                                               PerforationData const * const perforationData,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                               arrayView1d< real64 > const & localRhs)
+                                   globalIndex const rankOffset,
+                                   string const wellDofKey,
+                                   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                                   WellElementSubRegion const & subRegion,
+                                   PerforationData const * const perforationData,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
     :
     m_dt( dt ),
     m_rankOffset( rankOffset ),
@@ -98,7 +98,7 @@ public:
     m_resElementSubRegion( perforationData->getField< fields::perforation::reservoirElementSubRegion >() ),
     m_resElementIndex( perforationData->getField< fields::perforation::reservoirElementIndex >() ),
     m_localMatrix( localMatrix ),
-    m_localRhs( localRhs ) 
+    m_localRhs( localRhs )
 
   { }
 
@@ -118,55 +118,55 @@ public:
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
 
-        // local working variables and arrays
-        localIndex eqnRowIndices[ 2 ] = { -1 };
-        globalIndex dofColIndices[ 2 ] = { -1 };
+    // local working variables and arrays
+    localIndex eqnRowIndices[ 2 ] = { -1 };
+    globalIndex dofColIndices[ 2 ] = { -1 };
 
 
-        real64 localPerf[ 2 ]{};
-        real64 localPerfJacobian[ 2 ][ 2 ]{};
+    real64 localPerf[ 2 ]{};
+    real64 localPerfJacobian[ 2 ][ 2 ]{};
 
-        // get the reservoir (sub)region and element indices
-        localIndex const er = m_resElementRegion[iperf];
-        localIndex const esr = m_resElementSubRegion[iperf];
-        localIndex const ei = m_resElementIndex[iperf];
+    // get the reservoir (sub)region and element indices
+    localIndex const er = m_resElementRegion[iperf];
+    localIndex const esr = m_resElementSubRegion[iperf];
+    localIndex const ei = m_resElementIndex[iperf];
 
-        // get the well element index for this perforation
-        localIndex const iwelem = m_perfWellElemIndex[iperf];
-        globalIndex const elemOffset = m_wellElemDofNumber[iwelem];
+    // get the well element index for this perforation
+    localIndex const iwelem = m_perfWellElemIndex[iperf];
+    globalIndex const elemOffset = m_wellElemDofNumber[iwelem];
 
-        // row index on reservoir side
-        eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
-        // column index on reservoir side
-        dofColIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei];
+    // row index on reservoir side
+    eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
+    // column index on reservoir side
+    dofColIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei];
 
-        // row index on well side
-        eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( elemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
-        // column index on well side
-        dofColIndices[TAG::WELL] = elemOffset + COFFSET::DPRES;
+    // row index on well side
+    eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( elemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
+    // column index on well side
+    dofColIndices[TAG::WELL] = elemOffset + COFFSET::DPRES;
 
-        // populate local flux vector and derivatives
-        localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
-        localPerf[TAG::WELL] = -localPerf[TAG::RES];
+    // populate local flux vector and derivatives
+    localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
+    localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
-        for( integer ke = 0; ke < 2; ++ke )
-        {
-          localPerfJacobian[TAG::RES][ke] = m_dt * m_dPerfRate[iperf][ke][0]; // tjb tag
-          localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
-        }
+    for( integer ke = 0; ke < 2; ++ke )
+    {
+      localPerfJacobian[TAG::RES][ke] = m_dt * m_dPerfRate[iperf][ke][0];     // tjb tag
+      localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
+    }
 
-        for( integer i = 0; i < 2; ++i )
-        {
-          if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
-          {
-            m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              &dofColIndices[0],
-                                                                              &localPerfJacobian[0][0] + 2 * i,
-                                                                              2 );
-            RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
-          }
-        }
-        //compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
+    for( integer i = 0; i < 2; ++i )
+    {
+      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+      {
+        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                            &dofColIndices[0],
+                                                                            &localPerfJacobian[0][0] + 2 * i,
+                                                                            2 );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+      }
+    }
+    //compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
 
   }
 
@@ -241,7 +241,7 @@ public:
   createAndLaunch( real64 const dt,
                    globalIndex const rankOffset,
                    string const wellDofKey,
-                  
+
                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                    WellElementSubRegion const & subRegion,
                    PerforationData const * const perforationData,
@@ -249,10 +249,10 @@ public:
                    arrayView1d< real64 > const & localRhs
                    )
   {
-      using kernelType = IsothermalSinglePhaseFluxKernel< 0 >;
-      kernelType kernel( dt, rankOffset, wellDofKey,  resDofNumber, subRegion, perforationData, localMatrix,
-        localRhs);
-      kernelType::template launch< POLICY >( perforationData->size(), kernel );
+    using kernelType = IsothermalSinglePhaseFluxKernel< 0 >;
+    kernelType kernel( dt, rankOffset, wellDofKey, resDofNumber, subRegion, perforationData, localMatrix,
+                       localRhs );
+    kernelType::template launch< POLICY >( perforationData->size(), kernel );
   }
 };
 
@@ -266,7 +266,7 @@ template< integer IS_THERMAL >
 class ThermalSinglePhaseFluxKernel : public IsothermalSinglePhaseFluxKernel< IS_THERMAL >
 {
 public:
-  using Base = IsothermalSinglePhaseFluxKernel<IS_THERMAL >;
+  using Base = IsothermalSinglePhaseFluxKernel< IS_THERMAL >;
   // Reservoir degrees of freedom
   static constexpr integer resNumDOF  =  1+IS_THERMAL;
 
@@ -308,16 +308,16 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   ThermalSinglePhaseFluxKernel( integer const isProducer,
-                               real64 const dt,
-                                            
-                                            globalIndex const rankOffset,
-                                            string const wellDofKey,
+                                real64 const dt,
 
-                                            ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                                            WellElementSubRegion const & subRegion,
-                                            PerforationData const * const perforationData,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs )
+                                globalIndex const rankOffset,
+                                string const wellDofKey,
+
+                                ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                                WellElementSubRegion const & subRegion,
+                                PerforationData const * const perforationData,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )
     : Base( dt,
             rankOffset,
             wellDofKey,
@@ -325,7 +325,7 @@ public:
             subRegion,
             perforationData,
             localMatrix,
-            localRhs),
+            localRhs ),
     m_isProducer( isProducer ),
     m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
@@ -350,8 +350,7 @@ public:
                                     globalIndex const & wellElemOffset,
                                     stackArray1d< globalIndex, 2*resNumDOF > & dofColIndices,
                                     localIndex const iwelem )
-    {
-    } );
+    {} );
 
 
   }
@@ -422,10 +421,10 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-      using kernelType = ThermalSinglePhaseFluxKernel< 1 >;
-      kernelType kernel( isProducer, dt,  rankOffset, wellDofKey,  resDofNumber,  subRegion, perforationData,localMatrix,
-                          localRhs);
-      kernelType::template launch< POLICY >( perforationData->size(), kernel );
+    using kernelType = ThermalSinglePhaseFluxKernel< 1 >;
+    kernelType kernel( isProducer, dt, rankOffset, wellDofKey, resDofNumber, subRegion, perforationData, localMatrix,
+                       localRhs );
+    kernelType::template launch< POLICY >( perforationData->size(), kernel );
   }
 };
 

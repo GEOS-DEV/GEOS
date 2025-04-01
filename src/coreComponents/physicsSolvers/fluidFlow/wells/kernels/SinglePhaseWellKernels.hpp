@@ -317,8 +317,6 @@ template< integer IS_THERMAL >
 class ElementBasedAssemblyKernel
 {
 public:
-  using COFFSET = singlePhaseWellKernels::ColOffset;
-  using ROFFSET = singlePhaseWellKernels::RowOffset;
 
   // Well jacobian column and row indicies
   using FLUID_PROP_COFFSET = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
@@ -329,7 +327,7 @@ public:
   static constexpr integer numDof = 1 + IS_THERMAL;  // tjb review
 
   /// Compute time value for the number of equations  mass bal + momentum + energy bal
-  static constexpr integer numEqn =  1 + IS_THERMAL;  // tjb review
+  static constexpr integer numEqn =  2 + IS_THERMAL;
 
 
   /**
@@ -387,17 +385,25 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
 
-    localIndex const eqnRowIndex = m_dofNumber[iwelem] + ROFFSET::MASSBAL - m_rankOffset;
-    globalIndex const presDofColIndex = m_dofNumber[iwelem] + COFFSET::DPRES;
+    localIndex const eqnRowIndex = m_dofNumber[iwelem] + WJ_ROFFSET::MASSBAL - m_rankOffset;
+    globalIndex const presDofColIndex = m_dofNumber[iwelem] + WJ_COFFSET::dP;
 
     real64 const localAccum = m_wellElemVolume[iwelem] * ( m_wellElemDensity[iwelem][0] - m_wellElemDensity_n[iwelem][0] );
-    real64 const localAccumJacobian = m_wellElemVolume[iwelem] * m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dP];
+    real64 const localAccumDP = m_wellElemVolume[iwelem] * m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dP];
 
     // add contribution to global residual and jacobian (no need for atomics here)
-    m_localMatrix.addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localAccumJacobian, 1 );
+    m_localMatrix.addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localAccumDP, 1 );
+    if constexpr ( IS_THERMAL )
+    {
+      real64 const localAccumDT = m_wellElemVolume[iwelem] * m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dT];
+      globalIndex const tempDofColIndex = m_dofNumber[iwelem] + WJ_COFFSET::dT;
+      m_localMatrix.addToRow< serialAtomic >( eqnRowIndex, &tempDofColIndex, &localAccumDT, 1 );
+      kernelOp( presDofColIndex, tempDofColIndex );
+    }
     m_localRhs[eqnRowIndex] += localAccum;
 
-    //kernelOp
+    // Energy Equation
+
 
   }
 
