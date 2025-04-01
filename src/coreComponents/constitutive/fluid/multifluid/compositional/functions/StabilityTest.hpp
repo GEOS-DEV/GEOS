@@ -94,12 +94,25 @@ public:
       hyperplane[ic] = LvArray::math::log( composition[ic] ) + logFugacity[ic];
     }
 
-    // Initialise the trial compositions using Wilson k-Values
-    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                        pressure,
-                                                        temperature,
-                                                        componentProperties,
-                                                        kValues );
+    if( equationOfState == EquationOfStateType::SoreideWhitson )
+    {
+      // Initialise the trial compositions using SW uniform values
+      KValueInitialization::computeSoreideWhitsonKvalue( numComps,
+                                                         pressure,
+                                                         temperature,
+                                                         componentProperties,
+                                                         presentComponents,
+                                                         kValues );
+    }
+    else
+    {
+      // Initialise the trial compositions using Wilson k-Values
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          pressure,
+                                                          temperature,
+                                                          componentProperties,
+                                                          kValues );
+    }
 
     tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     for( integer trialIndex = 0; trialIndex < numTrials; ++trialIndex )

@@ -233,6 +233,8 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
 
   calculatePresentComponents( numComps, composition, componentIndices );
 
+  auto const presentComponents = componentIndices.toSliceConst();
+
   // Initialise compositions to feed composition
   for( integer ic = 0; ic < numComps; ++ic )
   {
@@ -251,16 +253,26 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     }
   }
 
-  if( needInitialisation )
+  if( needInitialisation || true)
   {
-    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                        pressure,
-                                                        temperature,
-                                                        componentProperties,
-                                                        kVapourLiquid );
+    if( flashData.liquidEos == EquationOfStateType::SoreideWhitson )
+    {
+      KValueInitialization::computeSoreideWhitsonKvalue( numComps,
+                                                         pressure,
+                                                         temperature,
+                                                         componentProperties,
+                                                         presentComponents,
+                                                         kVapourLiquid );
+    }
+    else
+    {
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          pressure,
+                                                          temperature,
+                                                          componentProperties,
+                                                          kVapourLiquid );
+    }
   }
-
-  auto const presentComponents = componentIndices.toSliceConst();
 
   bool converged = false;
   for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
