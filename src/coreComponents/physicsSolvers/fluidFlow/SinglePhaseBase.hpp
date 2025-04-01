@@ -361,6 +361,8 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
 
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
+
 protected:
 
   /**
@@ -381,8 +383,6 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
-
-  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
