@@ -26,6 +26,7 @@ set( fluidFlowSolvers_headers
      CompositionalMultiphaseFVM.hpp
      CompositionalMultiphaseHybridFVM.hpp
      CompositionalMultiphaseUtilities.hpp
+     LogLevelsInfo.hpp
      ReactiveCompositionalMultiphaseOBL.hpp
      ReactiveCompositionalMultiphaseOBLFields.hpp
      SourceFluxStatistics.hpp
