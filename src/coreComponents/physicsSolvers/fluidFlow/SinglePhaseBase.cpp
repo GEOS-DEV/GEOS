@@ -1371,7 +1371,7 @@ void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) con
   mass_n.setValues< parallelDevicePolicy<> >( mass );
 }
 
-void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion )
+void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
 {
   arrayView1d< real64 > const dVol = subRegion.template getField< fields::flow::deltaVolume >();
   arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString());
