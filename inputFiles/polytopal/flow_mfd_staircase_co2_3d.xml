@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./column_co2_3d_base.xml"/>
+    <File name="./column_co2_3d_linear_base.xml"/>
   </Included>  
 
   <NumericalMethods>
