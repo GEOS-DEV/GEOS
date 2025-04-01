@@ -59,7 +59,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_fluidInitialPressure( 0.0 ),
   m_enableBuckling( 0 ),
   m_bucklingLength( 1. ),
-  m_bucklingAmplitude( 1. ),
+  m_bucklingAmplitude( 0. ),
   m_enableCreep( 0 ),
   m_creepC0( 0.0),
   m_creepC1( 0.0 ),

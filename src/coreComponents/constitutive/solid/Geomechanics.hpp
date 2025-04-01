@@ -305,6 +305,7 @@ public:
                    const real64 & Zeta_n,                
                    const real64 & coher_n,               
                    const real64 & porosity_n,            
+                   const real64 & buckling,               // scalar-valued buckling multiplier at start of step(t_n)
                    real64 const ( & sigma_n )[6],       
                    real64 const ( & ep_n )[6],          
                    real64 & Zeta_p,                      
@@ -386,7 +387,9 @@ public:
 		               const real64 & Kf,
 		               const real64 & C1,
 		               const real64 & ev0,
-		               const real64 & fluid_pressure_initial ) const;
+		               const real64 & fluid_pressure_initial,
+                   const real64 & buckling  // crush strength multiplier for cascading collapse.
+                   ) const;
 
   GEOS_HOST_DEVICE
   int computeStepDivisions( const real64 & X,
@@ -412,6 +415,7 @@ public:
                       const real64 & X_old,
                       const real64 & Zeta_old,
                       const real64 & coher_old,       
+                      const real64 & buckling,         // scalar valued buckling crush-curve modifier
                       const real64 & fluid_pressure_initial,
                       const real64 & Km,
                       const real64 & Kf,
@@ -437,6 +441,7 @@ public:
                           const real64 & coher,     
                           const real64 & hardening,          
                           const real64 & strengthScale,
+                          const real64 & buckling,
                           const real64 & bulk,                 
                           const real64 & shear,
                           real64 & I1_new,                     
@@ -503,7 +508,8 @@ public:
 		                           real64 & a4,
 		                           const real64 & coher,
                                const real64 & hardening,
-                               const real64 & strengthScale ) const;
+                               const real64 & strengthScale,
+                               const real64 & buckling ) const;
 
   /// Use base version of saveConvergedState
   using SolidBaseUpdates::saveConvergedState;
@@ -721,6 +727,11 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
+
+  // This form adjusts the buckling based on total strain, and then computes a return based on 
+  // the bucklin-adjusted yield surface, but there will generally be cap hardening associated with
+  // that return such that the returned state is never to a fully buckled value. (.e.g if buckling
+  // amplitude = 0.2, the actual stress oscillations will be much less that 80% of)
   real64 buckling= 1.0;   // strength-scale multiplier from buckling of truss-like microstructure
   if( m_enableBuckling > 0)
   {
@@ -836,6 +847,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
                oldZeta,                 // trace of isotropic backstress at start of step(t_n)
                oldCoher,                // scalar-valued coherence at start of step(t_n)
 						   oldPorosity,             // scalar-valued coherence at start of step(t_n)
+               buckling,                // buckling strength multiplier.
 						   oldStress,         // unrotated stress at start of step(t_n)
                oldPlasticStrain,            // plastic strain at start of step(t_n)
                newZeta,                        // trace of isotropic backstress at end of step(t_n+1)
@@ -907,6 +919,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                       const real64 & Zeta_n,                 // trace of isotropic backstress at start of step(t_n)
                                       const real64 & coher_n,                // scalar-valued coherence at start of step(t_n)
 						                          const real64 & porosity_n,             // scalar-valued coherence at start of step(t_n)
+                                      const real64 & buckling,               // scalar-valued buckling multiplier at start of step(t_n)
 						                          real64 const ( & sigma_n )[6],         // unrotated stress at start of step(t_n)
                                       real64 const ( & ep_n )[6],            // plastic strain at start of step(t_n)
                                       real64 & Zeta_p,                        // trace of isotropic backstress at end of step(t_n+1)
@@ -946,6 +959,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
   real64 evp_n = LvArray::tensorOps::symTrace< 3 >( ep_n ); // ep_n.Trace(); // Volumetric plastic strain at start of step.
   
+  // computeBuckling(buckling,       // this is overwritten
+  //                 evp_n,          // buckling strain, could be evp, directional strain, log(J), etc. 
+  //                 lengthScale);   // element
+
   // hydrostatic compressive strength at start of step(t_n)
   real64 X_n = computeX( evp_n,
                           phi_i,
@@ -953,7 +970,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                           Kf,
                           C1,
                           ev0,
-                          fluid_pressure_initial );
+                          fluid_pressure_initial,
+                          buckling );
   
   real64 dt,                                        // substep time increment
           X_old,                                     // X at start of substep
@@ -1198,6 +1216,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
  			  ep_iso[1] = evp_c/3.;
  			  ep_iso[2] = evp_c/3.;
 
+        // computeBuckling(buckling,       // this is overwritten
+        //                 evp_c,          // buckling strain, could be evp, directional strain, log(J), etc. 
+        //                 lengthScale);   // element
+
         // update cap function to be consistent with new vol. plastic
         X_old = computeX( evp_c,
         phi_i, // Initial porosity (inferred from crush curve, used for fluid model/
@@ -1205,7 +1227,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
         0.0, // Fluid bulk modulus
         0.0, // Term to simplify the fluid model expressions
         0.0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-        0.0 );
+        0.0,
+        buckling );
 
         // uncomment for debugging:
         //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
@@ -1235,6 +1258,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                   X_old,
                                   Zeta_old,
                                   coher_old,
+                                  buckling,         // scalar valued buckling crush-curve modifier
                                   fluid_pressure_initial,
                                   Km,
                                   Kf,
@@ -1767,7 +1791,8 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
 		                                  const real64 & Kf, // Fluid bulk modulus
 		                                  const real64 & C1, // Term to simplify the fluid model expressions
 		                                  const real64 & ev0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-		                                  const real64 & fluid_pressure_initial
+		                                  const real64 & fluid_pressure_initial,
+                                      const real64 & buckling  // crush strength multiplier for cascading collapse.
 ) const
 {
   // X is the value of (I1 - Zeta) at which the cap function crosses
@@ -1851,7 +1876,7 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
       X = X * Ksat / Kdry;   // This is X_sat = K_sat*eve = K_sat*(X_dry/K_dry)
     } // End fluid effects
   } // End plastic strain in allowable domain
-  return X;
+  return buckling*X;
 }
 
 
@@ -1867,6 +1892,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 		                                     const real64 & X_old,            // hydrostatic compressive strength at start of substep
 		                                     const real64 & Zeta_old,         // trace of isotropic backstress at start of substep
 		                                     const real64 & coher_old,        // scalar valued coherence = 1-Damage
+                                         const real64 & buckling,         // scalar valued buckling crush-curve modifier
 		                                     const real64 & fluid_pressure_initial,
 		                                     const real64 & Km,
 		                                     const real64 & Kf,
@@ -1887,43 +1913,6 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 
   real64 one_third = 1.0 / 3.0;
   real64 identity[6] = {1.0,1.0,1.0,0.0,0.0,0.0};
-
-
-  // real64 buckling= 1.0;   // strength-scale multiplier from buckling of truss-like microstructure
-  // if (m_buckling_alpha < 1)
-  // { // Compute the length-scale dependent compaction-buckling scalar used to 
-  //   // modify crush and shear strength:
-  //   real64 J;
-  //   if (m_bucklingType == "isotropic")
-  //   {
-  //     J = det(F);
-  //   }
-  //   else
-  //   {
-  //     J = dot(F,materialDirection);
-  //   }
-  //   real64 ev0 = m_p0/(2*m_b0);
-  //   real64 ev1 = ev0 - p3;
-  //   real64 ev = log(J);
-  //   real64 compactionStrain;
-  //   if (ev >= ev0)
-  //   {
-  //     compactionStrain = 0.;
-  //   }
-  //   else if (ev0 > ev && ev > ev1)
-  //   {
-  //     compactionStrain = (ev-ev0)/(ev1-ev0);
-  //   }
-  //   else
-  //   {
-  //     compactionStrain = 1.0;
-  //   }
-
-  //   // strength scale multiplier:
-  //   buckling = 1.0 - m_buckling_alpha*pow(sin(-1.0*ceil(m_buckling_beta)*pi*compactionStrain),2)
-  //   buckling = min(1.0,max(0.0,buckling));
-  // }    
-
 
 
 
@@ -1999,7 +1988,8 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                           a4,
                           coher_old,
                           hardening,
-                          strengthScale );
+                          strengthScale,
+                          buckling );
 
   int YIELD = computeYieldFunction( I1_trial,
                                     rJ2_trial,
@@ -2067,6 +2057,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      coher_old,
                                      hardening,
                                      strengthScale,
+                                     buckling,
                                      bulk,
                                      shear,
 									                   I1_0,
@@ -2126,13 +2117,18 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
     // Update X exactly
     real64 evp_new = evp_old + d_evp;
 
+    // computeBuckling(buckling,       // this is overwritten
+    //                 evp_new,        // buckling strain, could be evp, directional strain, log(J), etc. 
+    //                 lengthScale);   // element
+
     X_new = computeX( evp_new,
                       phi_i,
                       Km,
                       Kf,
                       C1,
                       ev0,
-                      fluid_pressure_initial );
+                      fluid_pressure_initial,
+                      buckling );
 
     // update the damage variable.  this is untested, and only active if Gf > 0
     computeCoher( a1,a2,a3,a4,
@@ -2210,6 +2206,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      coher_old,
                                      hardening,
                                      strengthScale,
+                                     buckling,
                                      bulk,
                                      shear,
                                      I1_new,
@@ -2302,7 +2299,8 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                         Kf, 
                         C1, 
                         ev0,
-        					      fluid_pressure_initial );
+        					      fluid_pressure_initial,
+                        buckling );
 
       // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
       Zeta_new = std::min(Zeta_old + dZetadevp*d_evp_new,0.0);
@@ -2381,7 +2379,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                                              const real64 & Zeta,                  // isotropic bacstress
                                              const real64 & coher,    
                                              const real64 & hardening,
-                                             const real64 & strengthScale,          
+                                             const real64 & strengthScale,      
+                                             const real64 & buckling,    
                                              const real64 & bulk,                  // elastic bulk modulus
                                              const real64 & shear,                 // elastic shear modulus
                                              real64 & I1_new,                      // New stress state on yield surface
@@ -2488,7 +2487,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                           a4,
                           coher,
                           hardening,
-                          strengthScale );
+                          strengthScale,
+                          buckling );
 
   // (3) Perform Bisection between in transformed space, to find the new point on the
   //  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
@@ -2854,6 +2854,61 @@ real64 GeomechanicsUpdates::computedZetadevp( real64 const & fluid_pressure_init
   return dZetadevp;
 } 
 
+// // Compute compaction buckling multiplier to crush curve.
+// GEOS_HOST_DEVICE
+// GEOS_FORCE_INLINE
+// void GeomechanicsUpdates::computeBuckling(real64 & buckling,          // this is overwritten
+//                                           const real64 & ev,          // buckling strain, could be evp, directional strain, log(J), etc. 
+// 		                                      const real64 & lengthScale  // element
+// ) const 
+// {   
+//     // m_enableBuckling
+//     // m_bucklingLength
+//     // m_bucklingAmplitude
+
+//     // // Number of unit cells per element, round up to nearest integer
+//     real64 beta = std::ceil( lengthScale / m_bucklingLength );
+
+//     // // Compute the length-scale dependent compaction-buckling scalar used to 
+//     // // modify crush and shear strength:
+//     // real64 J = 1.; // volumetric or directional stretch
+//     // if (m_enableBuckling == 1)
+//     // { // Isotropic:
+//     //   J = LvArray::tensorOps::determinant< 3 >( deformationGradient );
+//     // }
+//     // else if (m_enableBuckling == 2)
+//     // { // Anisotropic:
+//     //   real64 temp[3] = { 0 };
+//     //   LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( temp, deformationGradient, materialDirection  );
+//     //   J = LvArray::tensorOps::AiBi< 3 >( temp, materialDirection);
+//     // }
+//     // else{
+//     //   GEOS_LOG_RANK( "unsupported buckling type: " << m_enableBuckling );
+//     // }
+//     // real64 ev = log(J);     // volumetric or directional strain
+
+//     real64 ev0 = m_p0 / ( 2.*m_b0 );
+//     real64 ev1 = ev0 - m_p3;
+//     real64 normalizedStrain; // normalizedStrain
+
+//     if (ev >= ev0)
+//     {
+//       normalizedStrain = 0.;
+//     }
+//     else if (ev0 > ev && ev > ev1)
+//     {
+//       normalizedStrain = (ev-ev0)/(ev1-ev0);
+//     }
+//     else
+//     {
+//       normalizedStrain = 1.0;
+//     }
+//     // strength scale multiplier to crush curve (0: complete losss of strength, 1: no effect)
+//     real64 pi = 3.141592653589793;
+//     buckling = 1.0 - m_bucklingAmplitude*pow( sin( -1.0*beta*pi*normalizedStrain) , 2 );
+//     buckling = fmin(1.0,fmax(0.0,buckling));
+// }
+
 // Compute (dZeta/devp) Zeta and vol. plastic strain
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -2863,7 +2918,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a4,
 		                                              const real64 & coher,
                                                   const real64 & hardening,
-                                                  const real64 & strengthScale
+                                                  const real64 & strengthScale,
+                                                  const real64 & buckling
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
   // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
@@ -2872,18 +2928,17 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   // This routine computes the a_i parameters from the user inputs.  The code was
   // originally written by R.M. Brannon, with modifications by M.S. Swan.
   // harden peakI1 and stren together to not change slope:
-	
   // The following are the input parameters, modified by hardening and or damage
   //  Any change to peakI1 should be copied in the non-hardening return and
   //  yield function updates, which have branch points based on the peakI1 value.
   real64 stren_h, peakI1_h, fSlope_h, ySlope_h;  
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
 
-  stren_h = m_stren + hardening;
+  stren_h = buckling*(m_stren + hardening);
   fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
   ySlope_h = std::min( 0.99999*fSlope_h, m_ySlope );
   peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  peakI1_h = strengthScale*peakI1_h;
+  peakI1_h = strengthScale*peakI1_h*buckling;
 
   if (fSlope_h > 0.0 && peakI1_h >= 0.0 && m_stren == 0.0 && ySlope_h == 0.0)
   {// ----------------------------------------------Linear Drucker-Prager
