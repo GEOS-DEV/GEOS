@@ -6,6 +6,14 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3589 (2024-03-26)
+=====================
+Hypre update - make co2 cases use direct solver.
+
+PR #3396 (2024-03-21)
+=====================
+Use solid mechanics solver directly to perform poromechanics initialization.
+
 PR #2125 (2024-03-20)
 =====================
 Phase-field nucleation model.
