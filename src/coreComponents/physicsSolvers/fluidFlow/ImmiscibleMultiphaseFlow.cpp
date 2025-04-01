@@ -34,6 +34,7 @@
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
@@ -1405,10 +1406,10 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
   maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
-                                                           getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
+                                                      getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
+                                                      getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
 
@@ -1423,11 +1424,6 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
 
   return std::min( nextDtPressure, nextDtPhaseVolFrac );
 
-}
-
-real64 ImmiscibleMultiphaseFlow::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
-{
-  return PhysicsSolverBase::setNextDt( currentDt, domain );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlow, string const &, Group * const )
