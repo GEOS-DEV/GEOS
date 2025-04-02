@@ -69,6 +69,9 @@
 #endif
 
 #include <numeric>
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
@@ -1895,56 +1898,65 @@ void importRegularField( vtkDataArray * vtkArray,
 }
 
 
-void printMeshStatistics( vtkDataSet & mesh,
+void printMeshStatistics( vtkDataSet &,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
+  auto accumulateElemsCount = []( std::map< ElementType, globalIndex > & elemsTarget ) -> globalIndex
+  {
+    return std::accumulate(
+      std::begin( elemsTarget ), std::end( elemsTarget ), globalIndex{0},
+      []( std::size_t const previous, auto const & elems )
+    { return previous + elems.second; } );
+  };
+
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
 
-  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
-  RAJA::ReduceMax< parallelHostReduce, globalIndex > maxGlobalNode( -1 );
-  forAll< parallelHostPolicy >( mesh.GetNumberOfPoints(), [&globalPointId, maxGlobalNode]( vtkIdType const k )
-  {
-    maxGlobalNode.max( globalPointId.GetValue( k ) );
-  } );
-  globalIndex const numGlobalNodes = MpiWrapper::max( maxGlobalNode.get(), comm ) + 1;
-
-  localIndex numLocalElems = 0;
-  globalIndex numGlobalElems = 0;
-  std::map< ElementType, globalIndex > elemCounts;
+  std::map< ElementType, globalIndex > totalLocalElems;
+  std::map< ElementType, globalIndex > minLocalElemsCounts;
+  std::map< ElementType, globalIndex > avgLocalElemsCounts;
+  std::map< ElementType, globalIndex > maxLocalElemsCounts;
 
   for( auto const & typeToCells : cellMap )
   {
     localIndex const localElemsOfType =
       std::accumulate( typeToCells.second.begin(), typeToCells.second.end(), localIndex{},
                        []( auto const s, auto const & region ) { return s + region.second.size(); } );
-    numLocalElems += localElemsOfType;
 
-    globalIndex const globalElemsOfType = MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
-    numGlobalElems += globalElemsOfType;
-    elemCounts[typeToCells.first] = globalElemsOfType;
+    totalLocalElems[typeToCells.first] =  MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
+    minLocalElemsCounts[typeToCells.first] =  MpiWrapper::min( localElemsOfType );
+    avgLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( localElemsOfType ) / size );
+    maxLocalElemsCounts[typeToCells.first] = MpiWrapper::max( localElemsOfType );
   }
-
-  localIndex const minLocalElems = MpiWrapper::min( numLocalElems );
-  localIndex const maxLocalElems = MpiWrapper::max( numLocalElems );
-  localIndex const avgLocalElems = LvArray::integerConversion< localIndex >( numGlobalElems / size );
 
   if( rank == 0 )
   {
-    int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
-    for( auto const & typeCount: elemCounts )
-    {
-      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
-    }
 
-    int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                        widthLocal, "min", "avg", "max",
-                        minLocalElems, avgLocalElems, maxLocalElems ) );
+    auto sumOfElemsType = accumulateElemsCount( totalLocalElems );
+    auto sumOfMinElemsType = accumulateElemsCount( minLocalElemsCounts );
+    auto sumOfAvgElemsType = accumulateElemsCount( avgLocalElemsCounts );
+    auto sumOfMaxElemsType = accumulateElemsCount( maxLocalElemsCounts );
+
+    TableLayout const elemsLayout( "Load balancing, element / rank",
+                                   { TableLayout::Column()
+                                       .setName( "Element type" )
+                                       .setValuesAlignment( TableLayout::Alignment::left ),
+                                     "Total over ranks",
+                                     "minimum",
+                                     "average",
+                                     "maximum" } );
+    TableData elemsData;
+    for( auto const & typeCount: totalLocalElems )
+    {
+      elemsData.addRow( typeCount.first, typeCount.second,
+                        minLocalElemsCounts[typeCount.first],
+                        avgLocalElemsCounts[typeCount.first],
+                        maxLocalElemsCounts[typeCount.first] );
+    }
+    elemsData.addRow( "total elements", sumOfElemsType, sumOfMinElemsType, sumOfAvgElemsType, sumOfMaxElemsType );
+    TableTextFormatter elemsText( elemsLayout );
+    GEOS_LOG_RANK_0( elemsText.toString( elemsData ));
   }
 }
 
