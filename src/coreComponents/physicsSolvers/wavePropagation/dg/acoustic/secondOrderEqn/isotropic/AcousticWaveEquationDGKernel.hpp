@@ -461,30 +461,11 @@ struct PressureComputationKernel
 
  {
 
-
-    array2d< real64 > M;
-    M.resize( 8, 8 );
-    M.zero();
-
-    array2d< real64 > K;
-    K.resize( 8, 8 );
-    K.zero();
-
-    array2d< real64 > Mp;
-    Mp.resize( 8, 8 );
-    Mp.zero();
-
-    array2d< real64 > Mf;
-    Mf.resize( 8, 8 );
-    Mf.zero();
-
-
-
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
 
     //For now lots of comments with ideas  + needed array to add to the method prototype
     //forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    for (localIndex k=0; k< 2;++k)
+    for(localIndex k =0; k < 2 ; ++k)
     {
 
 
@@ -502,21 +483,12 @@ struct PressureComputationKernel
         for( localIndex i=0; i<3; ++i )
         {
           xLocal[a][i] = X( elemsToNodes( k, a ), i );
-          printf("xLocal[%d][%d]=%f\n",a,i,xLocal[a][i]);
              
         }
       }
-
-      //for (localIndex i = 0; i < size; i++)
-      //{
-      //  for (localIndex j = 0; j < 4; j++)
-      //  {
-      //    p_n[k][i]=X( elemsToNodes( k, i ), 0 );
-      //  }
-      //}
-      
+ 
   
-       real64 const det = LvArray::math::abs(FE_TYPE::jacobianDeterminant(xLocal));
+      real64 const det = LvArray::math::abs(FE_TYPE::jacobianDeterminant(xLocal));
 
       //Multiply by p_{n } by 2*Mass
       FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
@@ -525,42 +497,18 @@ struct PressureComputationKernel
          pTemp[i] -= val*p_nm1[k][j];
       } );
       
-      //printf("\n");
-
-      //printf("before: stiffnessVector[%d][%d]=%f\n",k,0,stiffnessVector[k][0]);
-      //printf("before: stiffnessVector[%d][%d]=%f\n",k,1,stiffnessVector[k][1]);
-      //printf("before: stiffnessVector[%d][%d]=%f\n",k,2,stiffnessVector[k][2]);
-      //printf("before: stiffnessVector[%d][%d]=%f\n",k,3,stiffnessVector[k][3]);   
-
-
       //First stiffness part (volume)
       FE_TYPE::computeStiffnessTerm(xLocal, [&] (const int i, const int j, real64 val)
       {
          stiffnessVector[k][i] -= val*p_n[k][j];
-         M[k*numNodesPerElem+i][k*numNodesPerElem+j] -= val;
-         K[k*numNodesPerElem+i][k*numNodesPerElem+j] += val;
-         //printf("stiffnessVector[%d][%d]=%f\n",k,i,stiffnessVector[k][i]);
-         //printf("val=%f\n",val);
-         //printf("p_n[%d][%d]=%f\n",k,j,p_n[k][j]);
       } );
 
       
-      //printf("After :stiffnessVector[%d][%d]=%f\n",k,0,stiffnessVector[k][0]);
-      //printf("After :stiffnessVector[%d][%d]=%f\n",k,1,stiffnessVector[k][1]);
-      //printf("After :stiffnessVector[%d][%d]=%f\n",k,2,stiffnessVector[k][2]);
-      //printf("After :stiffnessVector[%d][%d]=%f\n",k,3,stiffnessVector[k][3]);   
       
 
       FE_TYPE::computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
       {
-        //We take the neighbour element
-        //printf("current element=%d, current face=%d\n",k,f1);
-        //printf("\n");
         const localIndex elemNeigh = elemsToOpposite(k,f1);
-        //if (k==25284)
-        //{
-        //  printf("elemNeigh=%d\n",elemNeigh);
-        //}
         
         if(elemNeigh >= 0)
         {
@@ -587,26 +535,8 @@ struct PressureComputationKernel
           const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
   
 
-           //stiffnessVector[k][c1] -= (1.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[k][c2];
-           //stiffnessVector[k][c1] += (1.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[elemNeigh][neighDof];
-
-           stiffnessVector[k][c1] -= (12.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[k][c2];
-           stiffnessVector[k][c1] += (12.0/(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh])))*val*p_n[elemNeigh][neighDof];
-
-           if(k==0 && elemNeigh==1 || k==1 && elemNeigh==0)
-           {
-             //printf("M[%d][%d]=%f\n",k*numNodesPerElem+c1,k*numNodesPerElem+c2,M[k*numNodesPerElem+c1][k*numNodesPerElem+c2]);
-             //printf("Mp[%d][%d]=%f\n",k*numNodesPerElem+c1,(1-k)*numNodesPerElem+neighDof,Mp[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof]);
-             M[k*numNodesPerElem+c1][k*numNodesPerElem+c2] -= val;
-             M[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] += val;
-             Mp[k*numNodesPerElem+c1][k*numNodesPerElem+c2] -= val;
-             Mp[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] += val;
-
-
-             //printf("M[%d][%d]=%f\n",k*numNodesPerElem+c2,k*numNodesPerElem+c1,M[k*numNodesPerElem+c2][k*numNodesPerElem+c1]);
-             //printf("Mp[%d][%d]=%f\n",(1-k)*numNodesPerElem+neighDof,k*numNodesPerElem+c1,Mp[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1]);
-      
-           }
+           flowx[c1] -= (12.0/(dt*(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[k][c2];
+           flowx[c1] += (12.0/(dt*(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[elemNeigh][neighDof];
         
         }
 
@@ -643,10 +573,8 @@ struct PressureComputationKernel
 
         const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
 
-        //stiffnessVector[k][c1] -= 0.5*val*p_n[k][c2];
-        //stiffnessVector[k][c1] += 0.5*val*p_n[elemNeigh][neighDof];
-        stiffnessVector[k][c1] -= 0.5*val*p_n[k][c2];
-        stiffnessVector[k][c1] += 0.5*val*p_n[elemNeigh][neighDof];
+        stiffnessVector[k][c1] += 0.5*val*p_n[k][c2];
+        stiffnessVector[k][c1] -= 0.5*val*p_n[elemNeigh][neighDof];
 
 
          const int IndicesTranspose[3] = {i1,j1,k1};
@@ -656,36 +584,17 @@ struct PressureComputationKernel
 
         const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
          
-        stiffnessVector[k][c2] -= 0.5*val*p_n[k][c1];
-        stiffnessVector[elemNeigh][neighDof] += 0.5*val*p_n[k][c1];
+        stiffnessVector[k][c2] += 0.5*val*p_n[k][c1];
+        stiffnessVector[elemNeigh][neighDof] -= 0.5*val*p_n[k][c1];
 
-        if(k==0 && elemNeigh==1 || k==1 && elemNeigh==0)
-        {
-          M[k*numNodesPerElem+c1][k*numNodesPerElem+c2] += 0.5*val;
-          M[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] -= 0.5*val;
-      
-          M[k*numNodesPerElem+c2][k*numNodesPerElem+c1] -= 0.5*val;
-          M[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1] += 0.5*val;
-
-          Mf[k*numNodesPerElem+c1][k*numNodesPerElem+c2] -= 0.5*val;
-          Mf[k*numNodesPerElem+c1][(1-k)*numNodesPerElem+neighDof] += 0.5*val;
-      
-          Mf[k*numNodesPerElem+c2][k*numNodesPerElem+c1] -= 0.5*val;
-          Mf[(1-k)*numNodesPerElem+neighDof][k*numNodesPerElem+c1] += 0.5*val;
-
-        //stiffnessVector[k][c2] -= 0.5*val*p_n[k][c1];
-        //stiffnessVector[elemNeigh][neighDof] += 0.5*val*p_n[k][c1];
-         
-         }
          }
        } );
-           //printf("################################End One element################################\n");
 
 
       //Add time and physic dependency
       for (localIndex i = 0; i < numNodesPerElem; i++)
       {
-        pTemp[i] += stiffnessVector[k][i]*dt2*2250000;
+        pTemp[i] += 2250000*dt2*stiffnessVector[k][i] + dt2*flowx[i];
       }
       
 
@@ -729,52 +638,8 @@ struct PressureComputationKernel
           }
         }
       }
-      //
-//
-      ////printf("######################End of element#########################\n");
-
-
-    } //);
-
-    printf("#################Global Matrix#########################\n");
-    for (localIndex i = 0; i < 8; i++)
-    {
-     for (localIndex j = 0; j < 8; j++)
-     {
-       printf("M[%d][%d]=%f\n",i,j,M[i][j]);
-     }
-
-    }
-
-     printf("###################Global stiffness#########################\n");
-    for (localIndex i = 0; i < 8; i++)
-    {
-      for (localIndex j = 0; j < 8; j++)
-      {
-        printf("K[%d][%d]=%f\n",i,j,K[i][j]);
-      }
-    }
-     
-    printf("###################Global Mp#########################\n");
-    for (localIndex i = 0; i < 8; i++)
-    {
-      for (localIndex j = 0; j < 8; j++)
-      {
-        printf("Mp[%d][%d]=%f\n",i,j,Mp[i][j]);
-      }
-    
-     
-    }
-
-    printf("###################Global Mf#########################\n");
-    for (localIndex i = 0; i < 8; i++)
-    {
-      for (localIndex j = 0; j < 8; j++)
-      {
-        printf("Mf[%d][%d]=%f\n",i,j,Mf[i][j]);
-      }
-    }
-    //exit(2);
+      
+    }// );
 
  }
 

@@ -46,7 +46,8 @@ set( wavePropagationSolvers_headers
      sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.hpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEMKernel.hpp
      dg/acoustic/shared/AcousticFieldsDG.hpp
-     dg/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationDG.hpp )
+     dg/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationDG.hpp 
+     dg/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationDGKernel.hpp)
 
 # Specify solver sources
 set( wavePropagationSolvers_sources
