@@ -25,7 +25,7 @@
       temperature="300"
       useMass="1">
     <NonlinearSolverParameters
-        newtonTol="1.0e-4"
+        newtonTol="1.0e-3"
         lineSearchAction="Attempt"
         newtonMaxIter="40"/>
       <LinearSolverParameters
@@ -35,18 +35,18 @@
 
   <Events
     minTime="0.0"  
-    maxTime="864000">
+    maxTime="103680000">
     
     <PeriodicEvent
       name="outputs"
-      timeFrequency="86400"
+      timeFrequency="432000"
       target="/Outputs/vtkOutputTPFA"/>
 
     
     <PeriodicEvent
       name="solverApplications1"
-      endTime="864000"
-      maxEventDt="86400"
+      endTime="103680000"
+      maxEventDt="432000"
       target="/Solvers/twoPhaseFlow"/>
 
   </Events>

@@ -9,14 +9,14 @@
       useGlobalIds="0"
       fieldsToImport="{ PERM, PORO, REG }"
       fieldNamesInGEOS="{ rockPermChannel, rockPorosityChannel, region }"
-      file="meshes/reseroiv_level_0.vtu"/>
+      file="meshes/reservoir_mesh.vtu"/>
   </Mesh>
 
   <Geometry>
       <Box
       name="source"
-      xMin="{ 17348.4, 26911.7, -1670.18}"
-      xMax="{ 18023.7 , 27627.7, -1605.58}"/>
+      xMin="{ 24158.1, 23717.2, -1759.16}"
+      xMax="{ 27109.2 , 28197.6, -1412.05}"/>
   </Geometry>
 
   <ElementRegions>
@@ -26,7 +26,7 @@
       materialList="{ rockChannel, fluid, relperm }"/>
   </ElementRegions>  
 
-  <Solvers gravityVector="{ 0.0, 0.0, -9.81}"> </Solvers>
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
 
   <Constitutive>
 
@@ -82,7 +82,7 @@
       name="sourceTerm"
       objectPath="ElementRegions/Domain"
       component="0"
-      scale="-10.0"
+      scale="-10000.0"
       setNames="{source}"/>
   </FieldSpecifications>
 
