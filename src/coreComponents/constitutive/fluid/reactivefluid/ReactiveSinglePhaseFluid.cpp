@@ -26,16 +26,19 @@ using namespace dataRepository;
 namespace constitutive
 {
 
+namespace reactivefluid
+{
+
 template< typename BASE >
 ReactiveSinglePhaseFluid< BASE >::
-  ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
+  ReactiveSinglePhaseFluid( string const & name, Group * const parent ) :
   BASE( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::chemicalSystemNameString(), &m_chemicalSystemName ).
+  registerWrapper( viewKeyStruct::chemicalSystemNameString(), &m_chemicalSystemType ).
   setInputFlag( InputFlags::REQUIRED ).
-  setDescription( "AMG smoother type. Available options are: "
-                  "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "|" ) + "``" );
+  setDescription( "Chemical System type. Available options are: "
+                  "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
   // For now this is being hardcoded. We will see where this should come from.
   m_numPrimarySpecies = 7;
   m_numSecondarySpecies = 11;
@@ -49,25 +52,16 @@ template< typename BASE >
 std::unique_ptr< ConstitutiveBase > ReactiveSinglePhaseFluid< BASE >::
   deliverClone( string const & name, Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
+  std::unique_ptr< ConstitutiveBase > clone = BASE::deliverClone( name, parent );
 
   ReactiveSinglePhaseFluid & newConstitutiveRelation = dynamicCast< ReactiveSinglePhaseFluid & >( *clone );
-
-  newConstitutiveRelation.createChemicalReactions();
 
   return clone;
 }
 
 template< typename BASE >
 void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
-{
-  BASE::postInputInitialization();
-  GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
-
-  createChemicalReactions();
-}
+{}
 
 template< typename BASE >
 void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, localIndex const numPts )
@@ -82,10 +76,8 @@ void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, loca
   m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
 }
 
-template< typename BASE >
-void ReactiveSinglePhaseFluid< BASE >::createChemicalReactions()
-{}
+} // namespace reactivefluid
 
-} //namespace constitutive
+} // namespace constitutive
 
-} //namespace geos
+} // namespace geos

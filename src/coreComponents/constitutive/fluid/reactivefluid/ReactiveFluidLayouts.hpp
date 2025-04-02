@@ -17,8 +17,8 @@
  * @file Layouts.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_LAYOUTS_HPP
-#define GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_LAYOUTS_HPP
+#ifndef GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDLAYOUTS_HPP
+#define GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDLAYOUTS_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxConfig.hpp"
@@ -31,7 +31,7 @@ namespace geos
 namespace constitutive
 {
 
-namespace reactiveFluid
+namespace reactivefluid
 {
   struct DerivativeOffset
   {
@@ -88,16 +88,11 @@ namespace reactiveFluid
   using LAYOUT_FLUID_DC = RAJA::PERM_JKI;
   
   #else
-  
-  /// Constitutive model phase property array layout
-  using LAYOUT_PHASE = RAJA::PERM_IJK;
-  /// Constitutive model phase property compositional derivative array layout
-  using LAYOUT_PHASE_DC = RAJA::PERM_IJKL;
-  
+
   /// Constitutive model phase composition array layout
-  using LAYOUT_PHASE_COMP = RAJA::PERM_IJKL;
+  using LAYOUT_COMP = RAJA::PERM_IJ;
   /// Constitutive model phase composition compositional derivative array layout
-  using LAYOUT_PHASE_COMP_DC = RAJA::PERM_IJKLM;
+  using LAYOUT_COMP_DC = RAJA::PERM_IJK;
   
   /// Constitutive model fluid property array layout
   using LAYOUT_FLUID = RAJA::PERM_IJ;
@@ -105,16 +100,12 @@ namespace reactiveFluid
   using LAYOUT_FLUID_DC = RAJA::PERM_IJK;
   
   #endif
-  
-  /// Constitutive model phase property unit stride dimension
-  static constexpr int USD_PHASE = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE{} );
-  /// Constitutive model phase property compositional derivative unit stride dimension
-  static constexpr int USD_PHASE_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_DC{} );
+
   
   /// Constitutive model phase composition unit stride dimension
-  static constexpr int USD_PHASE_COMP = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_COMP{} );
+  static constexpr int USD_COMP = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_COMP{} );
   /// Constitutive model phase composition compositional derivative unit stride dimension
-  static constexpr int USD_PHASE_COMP_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_COMP_DC{} );
+  static constexpr int USD_COMP_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_COMP_DC{} );
   
   /// Constitutive model fluid property unit stride dimension
   static constexpr int USD_FLUID = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID{} );
@@ -125,4 +116,4 @@ namespace reactiveFluid
 } // namespace constitutive
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_SINGLEFLUID_LAYOUTS_HPP
+#endif //GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDLAYOUTS_HPP

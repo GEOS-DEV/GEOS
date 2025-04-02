@@ -25,7 +25,7 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
 
-#include "constitutive/HPCReact/src/reactions/bulkGeneric/Parameters.hpp"
+#include "constitutive/HPCReact/src/reactions/bulkGeneric/ParametersPredefined.hpp"
 #include "constitutive/HPCReact/src/reactions/bulkGeneric/EquilibriumReactions.hpp"
 #include <memory>
 
@@ -37,6 +37,12 @@ namespace constitutive
   
 namespace reactivefluid
 {
+
+enum class ChemicalSystemType : integer
+{
+  carbonate,
+  ultramafic
+};
 
 template< typename BASE >
 class ReactiveSinglePhaseFluid : public BASE
@@ -58,20 +64,9 @@ public:
   arrayView2d< real64 const, compflow::USD_COMP > secondarySpeciesConcentration() const
   { return m_secondarySpeciesConcentration; }
 
-  arrayView2d< real64 const, compflow::USD_COMP > kineticReactionRates() const
-  { return m_kineticReactionRates; }
-
   integer numPrimarySpecies() const { return m_numPrimarySpecies; }
 
   integer numSecondarySpecies() const { return m_numSecondarySpecies; }
-
-  integer numKineticReactions() const { return m_numKineticReactions; }
-
-  enum class ChemicalSystemType : integer
-  {
-    carbonate,
-    ultramafic
-  };
 
   /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
@@ -83,27 +78,43 @@ public:
 
     using EquilibriumReactionsType = hpcReact::bulkGeneric::EquilibriumReactions< real64, integer, localIndex >;
 
+    void computeChemistry( real64 const pressure,
+                           real64 const temperature,
+                           arraySlice1d< real64 const, reactivefluid::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                           arraySlice1d< real64, reactivefluid::USD_COMP - 1 > const & primarySpeciesConcentration,
+                           arraySlice1d< real64, reactivefluid::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
+
 protected:
 
-    arrayView2d< real64, reactiveFluid::USD_COMP >  m_primarySpeciesConcentration;
+    integer m_numPrimarySpecies;
 
-    arrayView2d< real64, reactiveFluid::USD_COMP >  m_secondarySpeciesConcentration;
+    integer m_numSecondarySpecies;
 
-    arrayView2d< real64, reactiveFluid::USD_COMP >  m_primarySpeciesTotalConcentration;
+    arrayView2d< real64, reactivefluid::USD_COMP >  m_primarySpeciesConcentration;
 
-    arrayView2d< real64, reactiveFluid::USD_COMP >  m_kineticReactionRates;
+    arrayView2d< real64, reactivefluid::USD_COMP >  m_secondarySpeciesConcentration;
+
+    arrayView2d< real64, reactivefluid::USD_COMP >  m_primarySpeciesTotalConcentration;
+
+    arrayView2d< real64, reactivefluid::USD_COMP >  m_kineticReactionRates;
 
 
   };
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
-  {};
+  {
+    static constexpr char const * chemicalSystemNameString() { return "chemicalSystemType"; }
+  };
 
 protected:
 
   virtual void postInputInitialization() override;
 
   virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+
+  integer m_numPrimarySpecies;
+    
+  integer m_numSecondarySpecies;
 
   array2d< real64, constitutive::reactivefluid::LAYOUT_FLUID >  m_primarySpeciesConcentration;
 
@@ -116,17 +127,18 @@ protected:
   ChemicalSystemType m_chemicalSystemType;
 };
 
+template<typename BASE>
 inline void
-ReactiveSinglePhaseFluid::KernelWrapper::
+ReactiveSinglePhaseFluid< BASE >::KernelWrapper::
   computeChemistry( real64 const pressure,
                     real64 const temperature,
-                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
+                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration,
-                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & kineticReactionRates ) const
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
 {
+  GEOS_UNUSED_VAR( pressure );
   auto params = hpcReact::bulkGeneric::carbonateSystem;
-  EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, params, speciesConcentration0, speciesConcentration );
+  EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
 }
 
 ENUM_STRINGS( ChemicalSystemType,
