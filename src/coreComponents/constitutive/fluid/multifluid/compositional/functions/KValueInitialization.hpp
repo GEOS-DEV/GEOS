@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_KVALUEINITIALIZATION_HPP_
 
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 
 namespace geos
 {
