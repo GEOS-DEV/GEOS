@@ -273,15 +273,17 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       // the rank that owns the reference well element is responsible
       if( m_writeCSV > 0 && subRegion.isLocallyOwned() )
       {
-        string const wellControlsName = wellControls.getName();
+        string const fileName = GEOS_FMT( "{}/{}.csv", m_ratesOutputDir, wellControls.getName() );
         string const massUnit = m_useMass ? "kg" : "mol";
         integer const useSurfaceConditions = wellControls.useSurfaceConditions();
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
         integer const numPhase = m_numPhases;
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
-        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "Time [s],Time step [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
+        makeDirsForPath( m_ratesOutputDir );
+        GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+        std::ofstream outputFile( fileName );
+        outputFile << "Time [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
           outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         outputFile << std::endl;
