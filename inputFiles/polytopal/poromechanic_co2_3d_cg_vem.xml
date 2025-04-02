@@ -4,7 +4,7 @@
 
   <Included>
     <File name="./poromechanic_co2_3d_base.xml"/>
-  </Included>
+  </Included>  
 
   <NumericalMethods>
     <FiniteElements>
@@ -22,23 +22,21 @@
         name="fluidHybridMimetic"
         innerProductType="TPFA"/>
     </FiniteVolume>
-  </NumericalMethods>  
+  </NumericalMethods>
 
-  <Solvers
-    gravityVector="{0,0,0}">
-
+  <Solvers>
+    
     <MultiphasePoromechanics
       name="multiphasePoroelasticity"
       solidSolverName="linearElasticity"
       flowSolverName="twoPhaseFlow"
-      stabilizationType="Global"
+      stabilizationType="None"
       stabilizationRegionNames="{ channel, barrier }"
-      stabilizationMultiplier="1"
       logLevel="1"
       targetRegions="{ channel, barrier }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-8"
-        lineSearchAction="None"
+    <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        lineSearchAction="Attempt"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -60,56 +58,54 @@
       targetRegions="{ channel, barrier  }"
       temperature="300"
       useMass="1"/>
-
-    
   </Solvers>
 
   <Events
     minTime="-1e11"  
-    maxTime="15552000">
+    maxTime="17280000">
     
     <PeriodicEvent
       name="outputs"
-      timeFrequency="15552000"
-      target="/Outputs/vtkOutput_fim"/>
-
+      timeFrequency="1728000"
+      target="/Outputs/vtkOutputVEM"/>
+<!-- 
     <SoloEvent
       name="multiphasePoroelasticityEquilibrationStep"
       targetTime="-1e11"
       beginTime="-1e11"
-      target="/Tasks/multiphasePoroelasticityEquilibrationStep"/>
+      target="/Tasks/multiphasePoroelasticityEquilibrationStep"/> -->
     
     <PeriodicEvent
       name="linearElasticityStatistics"
-      timeFrequency="15552000"
+      timeFrequency="1728000"
       target="/Tasks/linearElasticityStatistics"/>
     <PeriodicEvent
       name="twoPhaseFlowStatistics"
-      timeFrequency="15552000"
+      timeFrequency="1728000"
       target="/Tasks/twoPhaseFlowStatistics"/>
     
     <PeriodicEvent
       name="solverApplications1"
-      endTime="15552000"
-      forceDt="2592000"
+      endTime="17280000"
+      forceDt="864000"
       target="/Solvers/multiphasePoroelasticity"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="7776000"
-      target="/Outputs/restartOutput"/>  
+      timeFrequency="1728000"
+      target="/Outputs/restartOutputVEM"/>  
   </Events>
 
   <Outputs>
     <VTK
-      name="vtkOutput_polytopal"
+      name="vtkOutputVEM"
       fieldNames="{ initialPressure, skeletonChannel_density }"/>
     <Restart
-      name="restartOutput"/>
+      name="restartOutputVEM"/>      
   </Outputs>
 
-  <Tasks>  
-
+  <Tasks>
+  
     <SolidMechanicsStatistics
       name="linearElasticityStatistics"
       solidSolverName="linearElasticity"
@@ -120,10 +116,10 @@
       logLevel="1"
       computeRegionStatistics="1"/>
 
-    <MultiphasePoromechanicsInitialization 
+<!--     <MultiphasePoromechanicsInitialization 
       logLevel="1"      
       name="multiphasePoroelasticityEquilibrationStep"
-      poromechanicsSolverName="multiphasePoroelasticity"/>
+      poromechanicsSolverName="multiphasePoroelasticity"/> -->
     
   </Tasks>
   
