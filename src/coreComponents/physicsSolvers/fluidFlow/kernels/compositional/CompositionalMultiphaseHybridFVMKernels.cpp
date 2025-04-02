@@ -1679,6 +1679,53 @@ INST_FluxKernel( 6, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
 INST_FluxKernel( 6, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
 INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
 
+INST_FluxKernel( 7, 1, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 2, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 3, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 4, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 5, 2, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 7, 1, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 2, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 7, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 8, 1, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 2, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 3, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 4, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 5, 2, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 8, 1, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 2, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 8, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 9, 1, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 2, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 3, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 4, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 5, 2, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 9, 1, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 2, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 9, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 10, 1, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 2, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 3, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 4, 2, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 5, 2, mimeticInnerProduct::TPFAInnerProduct const );
+
+INST_FluxKernel( 10, 1, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 2, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 3, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 4, 3, mimeticInnerProduct::TPFAInnerProduct const );
+INST_FluxKernel( 10, 5, 3, mimeticInnerProduct::TPFAInnerProduct const );
 
 INST_FluxKernel( 4, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
 INST_FluxKernel( 4, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
@@ -1715,6 +1762,54 @@ INST_FluxKernel( 6, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 INST_FluxKernel( 6, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 INST_FluxKernel( 6, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 7, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 3, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 4, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 5, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 7, 1, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 7, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 8, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 3, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 4, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 5, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 8, 1, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 8, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 9, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 3, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 4, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 5, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 9, 1, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 9, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 10, 1, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 2, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 3, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 4, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 5, 2, mimeticInnerProduct::BdVLMInnerProduct const );
+
+INST_FluxKernel( 10, 1, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 2, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 3, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 4, 3, mimeticInnerProduct::BdVLMInnerProduct const );
+INST_FluxKernel( 10, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 
 
 #undef INST_FluxKernel

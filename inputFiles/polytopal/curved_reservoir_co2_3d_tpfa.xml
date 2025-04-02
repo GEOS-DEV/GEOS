@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./curved_reservoir_co2_3d_base.xml"/>
+  </Included>  
+
+  <NumericalMethods>
+  <FiniteVolume> 
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+
+  </FiniteVolume>
+  </NumericalMethods>
+
+<Solvers>     
+    <CompositionalMultiphaseFVM
+      name="twoPhaseFlow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
+      targetRegions="{ Domain  }"
+      temperature="300"
+      useMass="1">
+    <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        lineSearchAction="Attempt"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+         directParallel="0"/>
+    </CompositionalMultiphaseFVM> 
+    </Solvers>
+
+  <Events
+    minTime="0.0"  
+    maxTime="864000">
+    
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="86400"
+      target="/Outputs/vtkOutputTPFA"/>
+
+    
+    <PeriodicEvent
+      name="solverApplications1"
+      endTime="864000"
+      maxEventDt="86400"
+      target="/Solvers/twoPhaseFlow"/>
+
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutputTPFA"
+      fieldNames="{ initialPressure }"/>
+  </Outputs>
+
+  <Tasks>
+    
+  </Tasks>
+  
+</Problem>

@@ -1,0 +1,131 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      logLevel="5"  
+      useGlobalIds="0"
+      fieldsToImport="{ PERM, PORO, REG }"
+      fieldNamesInGEOS="{ rockPermChannel, rockPorosityChannel, region }"
+      file="meshes/reseroiv_level_0.vtu"/>
+  </Mesh>
+
+  <Geometry>
+      <Box
+      name="source"
+      xMin="{ 17348.4, 26911.7, -1670.18}"
+      xMax="{ 18023.7 , 27627.7, -1605.58}"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{ rockChannel, fluid, relperm }"/>
+  </ElementRegions>  
+
+  <Solvers gravityVector="{ 0.0, 0.0, -9.81}"> </Solvers>
+
+  <Constitutive>
+
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquid.txt }"
+      flashModelParaFile="pvt_tables/co2flash.txt"/>
+    
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
+                                            gasRelativePermeabilityTable }"/>
+    
+    <NullModel
+      name="nullSolid"/>
+
+    <ConstantPermeability
+      name="rockPermChannel"
+      permeabilityComponents="{ 9.8e-13, 9.8e-13, 9.8e-13 }"/>
+    <PressurePorosity
+      name="rockPorosityChannel"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>    
+
+    <CompressibleSolidConstantPermeability
+      name="rockChannel"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityChannel"
+      permeabilityModelName="rockPermChannel"/>
+
+
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions/Domain"      
+      datumElevation="-1670.18"
+      datumPressure="1e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Domain"
+      component="0"
+      scale="-10.0"
+      setNames="{source}"/>
+  </FieldSpecifications>
+
+  <Functions>
+   <TableFunction
+      name="initCO2CompFracTable"
+      coordinates="{ 0.0, 250.0 }"
+      values="{ 0.0, 0.0 }"/>
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinates="{ 0.0, 250.0 }"
+      values="{ 1.0, 1.0 }"/>
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ 0.0, 250.0 }"
+      values="{ 357.5, 350.0 }"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0, 0.0118, 0.0333, 0.0612, 0.0943, 0.1318, 0.1732, 0.2183, 0.2667, 0.3182, 0.3727, 0.4300, 0.4899, 0.5524, 0.6173, 0.6847, 0.7542, 0.8261, 0.9000, 0.9760 }"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0, 0.0118, 0.0333, 0.0612, 0.0943, 0.1318, 0.1732, 0.2183, 0.2667, 0.3182, 0.3727, 0.4300, 0.4899, 0.5524, 0.6173, 0.6847, 0.7542, 0.8261, 0.9000, 0.9760 }"/>
+    <TableFunction
+      name="jFunctionTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 10.5300, 2.0300, 0.9800, 0.4600, 0.1764, 0.0671, 0.0597, 0.0525, 0.0461, 0.0411, 0.0386, 0.0363, 0.0340, 0.0313, 0.0203, 0.0110, 0.0097, 0.0091, 0.0039, 0.0011, 0.0001 }"/>
+  </Functions>
+
+  <Functions>
+    <TableFunction
+      name="producerPhaseRateTable"
+      inputVarNames="{ time }"
+      coordinates="{ -1e9, 0, 1e9 }"
+      values="{ 0, 100, 100 }" 
+      interpolation="lower"/>
+    <TableFunction
+      name="injectorTotalRateTable"
+      inputVarNames="{ time }"
+      coordinates="{ -1e9, 0, 1e9 }"
+      values="{ 0, 7, 7 }" 
+      interpolation="lower"/>
+  </Functions>
+  
+</Problem>
