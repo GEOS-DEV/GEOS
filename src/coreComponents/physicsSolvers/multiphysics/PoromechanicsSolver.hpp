@@ -200,7 +200,7 @@ public:
           setSizedFromParent( 0 );
 
         // This is needed by the way the surface generator currently does things.
-        subRegion.registerWrapper< string >( CoupledSolidBase::viewKeyStruct::porosityModelNameString() ).
+        subRegion.registerWrapper< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() ).
           setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
           setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
           setSizedFromParent( 0 );
