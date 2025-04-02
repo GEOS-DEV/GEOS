@@ -382,8 +382,12 @@ public:
    * @brief Provide an immutable accessor to the particle neighbor list.
    * @return const reference to neighbor list
    */
-   void setNeighborList( OrderedVariableToManyParticleRelation newNeighborList )
-   { m_neighborList = newNeighborList; }
+   void setNeighborList( const OrderedVariableToManyParticleRelation & newNeighborList )
+   { 
+    // m_neighborList = OrderedVariableToManyParticleRelation( newNeighborList ); 
+    m_neighborList = newNeighborList; 
+    // m_neighborList( newNeighborList );
+  }
 
   /**
    * @brief Provide an immutable accessor to the particle neighbor list.

@@ -36,6 +36,51 @@ template< typename BASETYPE >
 class ToParticleRelation
 {
 public:
+  // Default constructor
+  ToParticleRelation() = default;
+
+  // Deleted move operators
+  ToParticleRelation( ToParticleRelation && ) = delete;
+  ToParticleRelation& operator=( ToParticleRelation && ) = delete;
+
+  // Copy constructor
+  ToParticleRelation( ToParticleRelation & src)
+  {
+    GEOS_LOG_RANK("Called ToParticleRelation( ToParticleRelation & src)");
+    m_numParticles = src.m_numParticles;
+    m_toParticleRegion = src.m_toParticleRegion;
+    m_toParticleSubRegion = src.m_toParticleSubRegion;
+    m_toParticleIndex = src.m_toParticleIndex;
+    m_particleManager = src.m_particleManager;
+  }
+
+  // Copy Constructor
+  ToParticleRelation( const ToParticleRelation & src)
+  {
+    GEOS_LOG_RANK("Called ToParticleRelation( const ToParticleRelation & src)");
+    m_numParticles = src.m_numParticles;
+    m_toParticleRegion = src.m_toParticleRegion;
+    m_toParticleSubRegion = src.m_toParticleSubRegion;
+    m_toParticleIndex = src.m_toParticleIndex;
+    m_particleManager = src.m_particleManager;
+  }
+
+  // Copy assignment operator
+  ToParticleRelation& operator=(const ToParticleRelation& src)
+  {
+    GEOS_LOG_RANK("Called ToParticleRelation& operator=(const ToParticleRelation& src)");
+    m_numParticles = src.m_numParticles;
+    GEOS_LOG_RANK("Copied m_numparticles");
+    m_toParticleRegion = src.m_toParticleRegion;
+    GEOS_LOG_RANK("Copied m_toParticleRegion");
+    m_toParticleSubRegion = src.m_toParticleSubRegion;
+    GEOS_LOG_RANK("Copied m_toParticleSubRegion");
+    m_toParticleIndex = src.m_toParticleIndex;
+    GEOS_LOG_RANK("Copied m_toParticleIndex");
+    m_particleManager = src.m_particleManager;
+    GEOS_LOG_RANK("Copied m_particleManager");
+    return *this;
+  }
 
   /// The type of the underlying relationship storage object.
   using base_type = BASETYPE;

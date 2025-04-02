@@ -488,7 +488,7 @@ public:
 
   void solverProfiling( std::string label );
 
-  real64 computeNeighborList( ParticleManager & particleManager );
+  real64 computeNeighborList(  const int cycleNumber, ParticleManager & particleManager );
 
   void optimizeBinSort( ParticleManager & particleManager );
 
