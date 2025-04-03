@@ -29,7 +29,9 @@
         lineSearchAction="Attempt"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-         directParallel="0"/>
+          solverType="gmres"
+          preconditionerType="mgr"
+          krylovTol="1e-5"/>
     </CompositionalMultiphaseFVM> 
     </Solvers>
 
