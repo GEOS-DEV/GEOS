@@ -127,7 +127,7 @@ public:
     /**
      * @return The view on each cell line.
      */
-    std::vector< string_view > & getLines() 
+    std::vector< string_view > & getLines()
     { return m_lines; }
 
     /**
@@ -822,7 +822,6 @@ private:
   void prepareLayoutRecusive( std::vector< TableLayout::Column > & columns, size_t level );
 
 };
-
 }
 
 #endif /* GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP */
