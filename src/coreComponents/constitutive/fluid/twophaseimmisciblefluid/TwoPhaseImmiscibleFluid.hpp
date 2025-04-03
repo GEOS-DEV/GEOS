@@ -14,11 +14,11 @@
  */
 
 /**
- * @file TwoPhaseFluid.hpp
+ * @file TwoPhaseImmiscibleFluid.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_TWOPHASEFLUID_TWOPHASEFLUID_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_TWOPHASEFLUID_TWOPHASEFLUID_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_TWOPHASEIMMISCIBLEFLUID_TWOPHASEIMMISCIBLEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_TWOPHASEIMMISCIBLEFLUID_TWOPHASEIMMISCIBLEFLUID_HPP_
 
 #include "common/DataLayouts.hpp"
 #include "functions/TableFunction.hpp"
@@ -35,12 +35,12 @@ namespace geos
 namespace constitutive
 {
 
-class TwoPhaseFluid : public ConstitutiveBase
+class TwoPhaseImmiscibleFluid : public ConstitutiveBase
 {
 public:
 
-  TwoPhaseFluid( string const & name,
-                 Group * const parent );
+  TwoPhaseImmiscibleFluid( string const & name,
+                           Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
@@ -58,7 +58,7 @@ public:
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return "TwoPhaseFluid"; }
+  static std::string catalogName() { return "TwoPhaseImmiscibleFluid"; }
 
   /**
    * @brief Get catalog name
@@ -143,7 +143,7 @@ public:
 
 private:
 
-    friend class TwoPhaseFluid;
+    friend class TwoPhaseImmiscibleFluid;
 
     /**
      * @brief Constructor for the class doing in-kernel two-phase fluid updates
@@ -255,7 +255,7 @@ private:
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void TwoPhaseFluid::KernelWrapper::
+void TwoPhaseImmiscibleFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     PhaseProp::SliceType const & phaseDensity ) const
 {
@@ -276,7 +276,7 @@ void TwoPhaseFluid::KernelWrapper::
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void TwoPhaseFluid::KernelWrapper::
+void TwoPhaseImmiscibleFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       PhaseProp::SliceType const & phaseViscosity ) const
 {
@@ -296,7 +296,7 @@ void TwoPhaseFluid::KernelWrapper::
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void TwoPhaseFluid::KernelWrapper::
+void TwoPhaseImmiscibleFluid::KernelWrapper::
   compute( real64 const pressure,
            PhaseProp::SliceType const phaseDensity,
            PhaseProp::SliceType const phaseViscosity ) const
@@ -311,7 +311,7 @@ void TwoPhaseFluid::KernelWrapper::
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void TwoPhaseFluid::KernelWrapper::
+void TwoPhaseImmiscibleFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure
@@ -324,21 +324,21 @@ void TwoPhaseFluid::KernelWrapper::
 
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( TwoPhaseFluid const & fluid,
+void constitutiveUpdatePassThru( TwoPhaseImmiscibleFluid const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< TwoPhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< TwoPhaseImmiscibleFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( TwoPhaseFluid & fluid,
+void constitutiveUpdatePassThru( TwoPhaseImmiscibleFluid & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< TwoPhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< TwoPhaseImmiscibleFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 }  // namespace constitutive
 }  // namespace geos
 
-#endif // GEOS_CONSTITUTIVE_FLUID_TWOPHASEFLUID_TWOPHASEFLUID_HPP_
+#endif // GEOS_CONSTITUTIVE_FLUID_TWOPHASEIMMISCIBLEFLUID_TWOPHASEIMMISCIBLEFLUID_HPP_

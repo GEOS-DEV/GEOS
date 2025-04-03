@@ -24,8 +24,7 @@ set( gtest_geosx_tests
      testSoreideWhitsonEOSPhaseModel.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
-     testRachfordRice.cpp
-     testTwoPhaseFluid.cpp )
+     testRachfordRice.cpp )
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
 

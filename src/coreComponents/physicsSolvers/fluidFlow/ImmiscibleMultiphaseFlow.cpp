@@ -37,7 +37,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 
 #include <cmath>
 
@@ -182,7 +182,7 @@ void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subR
 {
 
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< TwoPhaseFluid >( subRegion );
+  fluidName = getConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion );
   GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
                                               getDataContext(), subRegion.getName() ) );
 
@@ -232,7 +232,7 @@ void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup )
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
 
-  TwoPhaseFluid & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  TwoPhaseImmiscibleFluid & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
   constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
@@ -315,7 +315,7 @@ void ImmiscibleMultiphaseFlow::updatePhaseMass( ElementSubRegionBase & subRegion
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
-  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+  TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
   CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -345,7 +345,7 @@ void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGrou
 
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
-  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, fluidName );
+  TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( dataGroup, fluidName );
 
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
@@ -582,7 +582,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
-      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+      TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
       immiscibleMultiphaseKernels::
@@ -639,8 +639,6 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
   } );
 }
 
-// Ryan: Looks like this will need to be overwritten as well...
-// I have left the CompositionalMultiphaseFVM implementation for reference
 void ImmiscibleMultiphaseFlow::setupDofs( DomainPartition const & domain,
                                           DofManager & dofManager ) const
 {

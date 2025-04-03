@@ -24,9 +24,9 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluidFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -81,9 +81,9 @@ public:
                       fields::immiscibleMultiphaseFlow::dPhaseMobility >;
 
   using MultiphaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::TwoPhaseFluid,
-                              fields::twophasefluid::phaseDensity,
-                              fields::twophasefluid::dPhaseDensity >;
+    StencilMaterialAccessors< constitutive::TwoPhaseImmiscibleFluid,
+                              fields::twophaseimmisciblefluid::phaseDensity,
+                              fields::twophaseimmisciblefluid::dPhaseDensity >;
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
@@ -137,8 +137,8 @@ public:
     m_phaseVolFrac( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
     m_mob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
     m_dMob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),
-    m_dens( fluidAccessors.get( fields::twophasefluid::phaseDensity {} ) ),
-    m_dDens_dPres( fluidAccessors.get( fields::twophasefluid::dPhaseDensity {} ) ),
+    m_dens( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
+    m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
     m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
     m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
     m_localMatrix( localMatrix ),
@@ -843,7 +843,7 @@ public:
                       globalIndex const rankOffset,
                       string const dofKey,
                       ElementSubRegionBase const & subRegion,
-                      constitutive::TwoPhaseFluid const & fluid,
+                      constitutive::TwoPhaseImmiscibleFluid const & fluid,
                       constitutive::CoupledSolidBase const & solid,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs,
@@ -1080,7 +1080,7 @@ public:
                    integer const useTotalMassEquation,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
-                   constitutive::TwoPhaseFluid const & fluid,
+                   constitutive::TwoPhaseImmiscibleFluid const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -1129,7 +1129,7 @@ public:
    * @param[in] relperm the relperm model
    */
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
-                       TwoPhaseFluid const & fluid,
+                       TwoPhaseImmiscibleFluid const & fluid,
                        RelativePermeabilityBase const & relperm )
     :
     m_phaseDens( fluid.phaseDensity() ),
@@ -1251,7 +1251,7 @@ public:
   static void
   createAndLaunch( integer const numPhase,
                    ObjectManagerBase & subRegion,
-                   TwoPhaseFluid const & fluid,
+                   TwoPhaseImmiscibleFluid const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
     if( numPhase == 2 )

@@ -1,13 +1,13 @@
-.. _TwoPhaseFluid:
+.. _TwoPhaseImmiscibleFluid:
 
 ############################################
-Two-phase fluid model
+Two-phase immiscible fluid model
 ############################################
 
 Overview
 =========================
 
-This model represents a two-phase fluid with pressure-dependent density and viscosity.
+This model represents a two-phase immiscible fluid with pressure-dependent density and viscosity.
 
 For each phase, both density and viscosity are described as tabulated data, either in the form of ``TableFunction`` or text files.
 
@@ -19,11 +19,11 @@ Note that currently, there is no temperature dependence in the model.
 Parameters
 =========================
 
-The model is represented by ``<TwoPhaseFluid>`` node in the input.
+The model is represented by ``<TwoPhaseImmiscibleFluid>`` node in the input.
 
 The following attributes are supported:
 
-.. include:: /docs/sphinx/datastructure/TwoPhaseFluid.rst
+.. include:: /docs/sphinx/datastructure/TwoPhaseImmiscibleFluid.rst
               
 
 Example using TableFunctions
@@ -32,7 +32,7 @@ Example using TableFunctions
 .. code-block:: xml
 
   <Constitutive>
-    <TwoPhaseFluid
+    <TwoPhaseImmiscibleFluid
       name="fluid"
       phaseNames="{ oil, water }"
       densityTableNames="{ densityTableOil, densityTableWater }"
@@ -72,7 +72,7 @@ Example using text files
 .. code-block:: xml
 
   <Constitutive>
-    <TwoPhaseFluid
+    <TwoPhaseImmiscibleFluid
       name="fluid"
       phaseNames="{ oil, water }"
       tableNames="{ oil.txt, water.txt }" />

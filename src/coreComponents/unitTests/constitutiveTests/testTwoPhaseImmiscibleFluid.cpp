@@ -13,8 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluidFields.hpp"
 
 // Only for fill
 #include "unitTests/constitutiveTests/MultiFluidTest.hpp"
@@ -46,11 +46,11 @@ static constexpr char const * tableContentPhase1 = "# Pg(Pa) Dens(kg/m3) Visc(Pa
                                                    "2.0      0.40203  0.22";
 
 template< bool FROM_TABLE >
-class TwoPhaseFluidTest : public ConstitutiveTestBase< TwoPhaseFluid >
+class TwoPhaseImmiscibleFluidTest : public ConstitutiveTestBase< TwoPhaseImmiscibleFluid >
 {
 public:
 
-  TwoPhaseFluidTest()
+  TwoPhaseImmiscibleFluidTest()
   {
     if constexpr (!FROM_TABLE)
     {
@@ -60,13 +60,13 @@ public:
 
     m_parent.resize( 1 );
     string const fluidName = GEOS_FMT( "fluid{}", (FROM_TABLE ? "Tables" : "Files"));
-    m_model = makeTwoPhaseFluid( fluidName, m_parent );
+    m_model = makeTwoPhaseImmiscibleFluid( fluidName, m_parent );
 
     m_parent.initialize();
     m_parent.initializePostInitialConditions();
   }
 
-  ~TwoPhaseFluidTest()
+  ~TwoPhaseImmiscibleFluidTest()
   {
     if constexpr (!FROM_TABLE)
     {
@@ -75,24 +75,24 @@ public:
     }
   }
 
-  constitutive::TwoPhaseFluid & getFluid() const { return *m_model; }
+  constitutive::TwoPhaseImmiscibleFluid & getFluid() const { return *m_model; }
 
   dataRepository::Group & getParent() { return m_parent; }
 
 
-  void testDerivatives( constitutive::TwoPhaseFluid & fluid,
+  void testDerivatives( constitutive::TwoPhaseImmiscibleFluid & fluid,
                         dataRepository::Group * parent,
                         real64 const pressure,
                         real64 const perturbParameter,
                         real64 const relTol,
                         real64 const absTol = std::numeric_limits< real64 >::max() )
   {
-    auto const & phaseNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::phaseNamesString() );
+    auto const & phaseNames = fluid.getReference< string_array >( TwoPhaseImmiscibleFluid::viewKeyStruct::phaseNamesString() );
 
     // create a clone of the fluid to run updates on
     string const fluidCopyName = fluid.getName() + "Copy";
     std::unique_ptr< constitutive::ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( fluidCopyName, parent );
-    constitutive::TwoPhaseFluid & fluidCopy = dynamicCast< constitutive::TwoPhaseFluid & >( *fluidCopyPtr );
+    constitutive::TwoPhaseImmiscibleFluid & fluidCopy = dynamicCast< constitutive::TwoPhaseImmiscibleFluid & >( *fluidCopyPtr );
     fluidCopy.initializePostSubGroups();
 
     fluid.allocateConstitutiveData( fluid.getParent(), 1 );
@@ -103,18 +103,18 @@ public:
       FLUID.getReference< TRAIT::type >( TRAIT::key() )[0][0]
 
     constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseVisc {
-      GET_FLUID_DATA( fluid, fields::twophasefluid::phaseViscosity ),
-      GET_FLUID_DATA( fluid, fields::twophasefluid::dPhaseViscosity )
+      GET_FLUID_DATA( fluid, fields::twophaseimmisciblefluid::phaseViscosity ),
+      GET_FLUID_DATA( fluid, fields::twophaseimmisciblefluid::dPhaseViscosity )
     };
 
     constitutive::MultiFluidVarSlice< real64, 1, constitutive::multifluid::USD_PHASE - 2, constitutive::multifluid::USD_PHASE_DC - 2 > phaseDens {
-      GET_FLUID_DATA( fluid, fields::twophasefluid::phaseDensity ),
-      GET_FLUID_DATA( fluid, fields::twophasefluid::dPhaseDensity )
+      GET_FLUID_DATA( fluid, fields::twophaseimmisciblefluid::phaseDensity ),
+      GET_FLUID_DATA( fluid, fields::twophaseimmisciblefluid::dPhaseDensity )
     };
 
-    auto const & phaseDensCopy = GET_FLUID_DATA( fluidCopy, fields::twophasefluid::phaseDensity );
-    auto const & phaseViscCopy = GET_FLUID_DATA( fluidCopy, fields::twophasefluid::phaseViscosity );
-#undef GET_FLUID_DATA
+    auto const & phaseDensCopy = GET_FLUID_DATA( fluidCopy, fields::twophaseimmisciblefluid::phaseDensity );
+    auto const & phaseViscCopy = GET_FLUID_DATA( fluidCopy, fields::twophaseimmisciblefluid::phaseViscosity );
+    #undef GET_FLUID_DATA
 
 
     // set the original fluid state to current
@@ -164,13 +164,13 @@ protected:
 
 
 private:
-  static TwoPhaseFluid * makeTwoPhaseFluid( string const & name, Group & parent );
+  static TwoPhaseImmiscibleFluid * makeTwoPhaseImmiscibleFluid( string const & name, Group & parent );
 
-};  // class TwoPhaseFluidTest
+};  // class TwoPhaseImmiscibleFluidTest
 
 
 template<>
-TwoPhaseFluid * TwoPhaseFluidTest< true >::makeTwoPhaseFluid( string const & name, Group & parent )
+TwoPhaseImmiscibleFluid * TwoPhaseImmiscibleFluidTest< true >::makeTwoPhaseImmiscibleFluid( string const & name, Group & parent )
 {
   // 1D table with linear interpolation
   localIndex constexpr Naxis = 6;
@@ -204,17 +204,17 @@ TwoPhaseFluid * TwoPhaseFluidTest< true >::makeTwoPhaseFluid( string const & nam
 
 
   // 2) Set up the constitutive model
-  TwoPhaseFluid & fluid = parent.registerGroup< TwoPhaseFluid >( name );
+  TwoPhaseImmiscibleFluid & fluid = parent.registerGroup< TwoPhaseImmiscibleFluid >( name );
 
-  string_array & phaseNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::phaseNamesString() );
+  string_array & phaseNames = fluid.getReference< string_array >( TwoPhaseImmiscibleFluid::viewKeyStruct::phaseNamesString() );
   phaseNames.emplace_back( "oil" );
   phaseNames.emplace_back( "water" );
 
-  string_array & densityTableNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::densityTableNamesString() );
+  string_array & densityTableNames = fluid.getReference< string_array >( TwoPhaseImmiscibleFluid::viewKeyStruct::densityTableNamesString() );
   densityTableNames.emplace_back( "densityTablePhase0" );
   densityTableNames.emplace_back( "densityTablePhase1" );
 
-  string_array & viscosityTableNames = fluid.getReference< string_array >( TwoPhaseFluid::viewKeyStruct::viscosityTableNamesString() );
+  string_array & viscosityTableNames = fluid.getReference< string_array >( TwoPhaseImmiscibleFluid::viewKeyStruct::viscosityTableNamesString() );
   viscosityTableNames.emplace_back( "viscosityTablePhase0" );
   viscosityTableNames.emplace_back( "viscosityTablePhase1" );
 
@@ -224,11 +224,11 @@ TwoPhaseFluid * TwoPhaseFluidTest< true >::makeTwoPhaseFluid( string const & nam
 
 
 template<>
-TwoPhaseFluid * TwoPhaseFluidTest< false >::makeTwoPhaseFluid( string const & name, Group & parent )
+TwoPhaseImmiscibleFluid * TwoPhaseImmiscibleFluidTest< false >::makeTwoPhaseImmiscibleFluid( string const & name, Group & parent )
 {
-  TwoPhaseFluid & fluid = parent.registerGroup< TwoPhaseFluid >( name );
+  TwoPhaseImmiscibleFluid & fluid = parent.registerGroup< TwoPhaseImmiscibleFluid >( name );
 
-  path_array & tableNames = fluid.getReference< path_array >( TwoPhaseFluid::viewKeyStruct::tableFilesString() );
+  path_array & tableNames = fluid.getReference< path_array >( TwoPhaseImmiscibleFluid::viewKeyStruct::tableFilesString() );
   fill< 2 >( tableNames, {"phase0.txt", "phase1.txt"} );
 
   fluid.postInputInitializationRecursive();
@@ -237,11 +237,11 @@ TwoPhaseFluid * TwoPhaseFluidTest< false >::makeTwoPhaseFluid( string const & na
 
 
 
-using TwoPhaseFluidTestFromFiles = TwoPhaseFluidTest< false >;
-using TwoPhaseFluidTestFromTables = TwoPhaseFluidTest< true >;
+using TwoPhaseImmiscibleFluidTestFromFiles = TwoPhaseImmiscibleFluidTest< false >;
+using TwoPhaseImmiscibleFluidTestFromTables = TwoPhaseImmiscibleFluidTest< true >;
 
 
-TEST_F( TwoPhaseFluidTestFromTables, testNumericalDerivative_initFromTables )
+TEST_F( TwoPhaseImmiscibleFluidTestFromTables, testNumericalDerivative_initFromTables )
 {
   auto & fluid = getFluid();
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon());
@@ -255,7 +255,7 @@ TEST_F( TwoPhaseFluidTestFromTables, testNumericalDerivative_initFromTables )
 }
 
 
-TEST_F( TwoPhaseFluidTestFromFiles, testNumericalDerivative_initFromFiles )
+TEST_F( TwoPhaseImmiscibleFluidTestFromFiles, testNumericalDerivative_initFromFiles )
 {
   auto & fluid = getFluid();
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon());

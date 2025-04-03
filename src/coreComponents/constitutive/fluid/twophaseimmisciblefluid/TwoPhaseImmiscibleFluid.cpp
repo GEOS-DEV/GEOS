@@ -14,12 +14,12 @@
  */
 
 /**
- * @file TwoPhaseFluid.cpp
+ * @file TwoPhaseImmiscibleFluid.cpp
  */
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp" // for readTable
-#include "TwoPhaseFluid.hpp"
-#include "TwoPhaseFluidFields.hpp"
+#include "TwoPhaseImmiscibleFluid.hpp"
+#include "TwoPhaseImmiscibleFluidFields.hpp"
 
 #include "functions/FunctionManager.hpp"
 
@@ -33,7 +33,7 @@ namespace constitutive
 {
 
 
-TwoPhaseFluid::TwoPhaseFluid( string const & name, Group * const parent )
+TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
@@ -60,23 +60,23 @@ TwoPhaseFluid::TwoPhaseFluid( string const & name, Group * const parent )
     setDescription( "List of viscosity TableFuncion names from the Function block. \n"
                     "The user must provide one TableFunction per phase, respecting the order provided in \"phaseNames\"." );
 
-  registerField( fields::twophasefluid::phaseDensity{}, &m_phaseDensity.value );
-  registerField( fields::twophasefluid::dPhaseDensity{}, &m_phaseDensity.derivs );
-  registerField( fields::twophasefluid::phaseDensity_n{}, &m_phaseDensity_n );
+  registerField( fields::twophaseimmisciblefluid::phaseDensity{}, &m_phaseDensity.value );
+  registerField( fields::twophaseimmisciblefluid::dPhaseDensity{}, &m_phaseDensity.derivs );
+  registerField( fields::twophaseimmisciblefluid::phaseDensity_n{}, &m_phaseDensity_n );
 
-  registerField( fields::twophasefluid::phaseViscosity{}, &m_phaseViscosity.value );
-  registerField( fields::twophasefluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
+  registerField( fields::twophaseimmisciblefluid::phaseViscosity{}, &m_phaseViscosity.value );
+  registerField( fields::twophaseimmisciblefluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
 }
 
 
 std::unique_ptr< ConstitutiveBase >
-TwoPhaseFluid::deliverClone( string const & name, Group * const parent ) const
+TwoPhaseImmiscibleFluid::deliverClone( string const & name, Group * const parent ) const
 {
   return ConstitutiveBase::deliverClone( name, parent );
 }
 
 
-void TwoPhaseFluid::resizeFields( localIndex const size, localIndex const numPts )
+void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex const numPts )
 {
   // Assume sole dependency on pressure, i.e. one derivative
   m_phaseDensity.value.resize( size, numPts, 2 );
@@ -89,15 +89,15 @@ void TwoPhaseFluid::resizeFields( localIndex const size, localIndex const numPts
 }
 
 
-void TwoPhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void TwoPhaseImmiscibleFluid::allocateConstitutiveData( dataRepository::Group & parent,
+                                                        localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
 
-void TwoPhaseFluid::postInputInitialization()
+void TwoPhaseImmiscibleFluid::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();
 
@@ -108,8 +108,8 @@ void TwoPhaseFluid::postInputInitialization()
 }
 
 
-void TwoPhaseFluid::fillData( integer const ip,
-                              array1d< array1d< real64 > > const & tableValues )
+void TwoPhaseImmiscibleFluid::fillData( integer const ip,
+                                        array1d< array1d< real64 > > const & tableValues )
 {
   array1d< array1d< real64 > > pressureCoords( 1 );
   pressureCoords[0].resize( tableValues.size() );
@@ -148,7 +148,7 @@ void TwoPhaseFluid::fillData( integer const ip,
 }
 
 
-void TwoPhaseFluid::readInputDataFromFileTableFunctions()
+void TwoPhaseImmiscibleFluid::readInputDataFromFileTableFunctions()
 {
   // Check for ambiguous definition
   GEOS_THROW_IF( !(m_densityTableNames.empty() && m_viscosityTableNames.empty()),
@@ -171,7 +171,7 @@ void TwoPhaseFluid::readInputDataFromFileTableFunctions()
 }
 
 
-void TwoPhaseFluid::readInputDataFromTableFunctions()
+void TwoPhaseImmiscibleFluid::readInputDataFromTableFunctions()
 {
   // Check for ambiguous definition
   GEOS_THROW_IF( !m_tableFiles.empty(),
@@ -203,7 +203,7 @@ void TwoPhaseFluid::readInputDataFromTableFunctions()
 }
 
 
-void TwoPhaseFluid::initializePostSubGroups()
+void TwoPhaseImmiscibleFluid::initializePostSubGroups()
 {
   ConstitutiveBase::initializePostSubGroups();
 
@@ -223,7 +223,7 @@ void TwoPhaseFluid::initializePostSubGroups()
 }
 
 
-void TwoPhaseFluid::checkTableConsistency() const
+void TwoPhaseImmiscibleFluid::checkTableConsistency() const
 {
   FunctionManager const & functionManager = FunctionManager::getInstance();
   for( integer iph = 0; iph < 2; ++iph )
@@ -241,8 +241,8 @@ void TwoPhaseFluid::checkTableConsistency() const
 }
 
 
-TwoPhaseFluid::KernelWrapper
-TwoPhaseFluid::createKernelWrapper()
+TwoPhaseImmiscibleFluid::KernelWrapper
+TwoPhaseImmiscibleFluid::createKernelWrapper()
 {
   return KernelWrapper( m_densityTableKernels,
                         m_viscosityTableKernels,
@@ -251,7 +251,7 @@ TwoPhaseFluid::createKernelWrapper()
 }
 
 
-TwoPhaseFluid::KernelWrapper::KernelWrapper(
+TwoPhaseImmiscibleFluid::KernelWrapper::KernelWrapper(
   arrayView1d< TableFunction::KernelWrapper const > densityTables,
   arrayView1d< TableFunction::KernelWrapper const > viscosityTables,
   PhaseProp::ViewType phaseDensity,
@@ -262,7 +262,7 @@ TwoPhaseFluid::KernelWrapper::KernelWrapper(
   m_phaseViscosity( std::move( phaseViscosity )) {}
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, TwoPhaseFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, TwoPhaseImmiscibleFluid, string const &, Group * const )
 
 }  // namespace constitutive
 }  // namespace geos

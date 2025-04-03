@@ -14,11 +14,11 @@
  */
 
 /**
- * @file TwoPhaseFluidFields.hpp
+ * @file TwoPhaseImmiscibleFluidFields.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_TWOPHASEFLUIDFIELDS_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_TWOPHASEFLUIDFIELDS_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_TWOPHASEIMMISCIBLEFLUID_TWOPHASEIMMISCIBLEFLUIDFIELDS_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_TWOPHASEIMMISCIBLEFLUID_TWOPHASEIMMISCIBLEFLUIDFIELDS_HPP_
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "mesh/MeshFields.hpp"
@@ -30,7 +30,7 @@ namespace geos
 namespace fields
 {
 
-namespace twophasefluid
+namespace twophaseimmisciblefluid
 {
 
 using array3dLayoutPhase = array3d< real64, constitutive::multifluid::LAYOUT_PHASE >;
@@ -76,9 +76,9 @@ DECLARE_FIELD( dPhaseViscosity,
                NO_WRITE,
                "Derivative of phase viscosity with respect to pressure" );
 
-} // namespace twophasefluid
+} // namespace twophaseimmisciblefluid
 
 } // namespace constitutive
 } // namespace geos
 
-#endif // GEOS_CONSTITUTIVE_FLUID_TWOPHASEFLUIDFIELDS_HPP_
+#endif // GEOS_CONSTITUTIVE_FLUID_TWOPHASEIMMISCIBLEFLUID_TWOPHASEIMMISCIBLEFLUIDFIELDS_HPP_
