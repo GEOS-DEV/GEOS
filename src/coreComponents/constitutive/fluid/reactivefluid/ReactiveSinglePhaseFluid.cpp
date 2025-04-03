@@ -17,6 +17,7 @@
  * @file ReactiveSinglePhaseFluid.cpp
  */
 #include "ReactiveSinglePhaseFluid.hpp"
+#include "ReactiveFluidFields.hpp"
 
 namespace geos
 {

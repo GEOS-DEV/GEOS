@@ -136,7 +136,7 @@ ReactiveSinglePhaseFluid< BASE >::KernelWrapper::
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
 {
-  GEOS_UNUSED_VAR( pressure );
+  GEOS_UNUSED_VAR( pressure, secondarySpeciesConcentration );
   auto params = hpcReact::bulkGeneric::carbonateSystem;
   EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
 }

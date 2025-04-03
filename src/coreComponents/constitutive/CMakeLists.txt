@@ -111,6 +111,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
      fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp
+     fluid/reactivefluid/ReactiveFluidFields.hpp
      fluid/reactivefluid/ReactiveFluidLayouts.hpp
      fluid/singlefluid/CompressibleSinglePhaseFluid.hpp
      fluid/singlefluid/ParticleFluid.hpp
