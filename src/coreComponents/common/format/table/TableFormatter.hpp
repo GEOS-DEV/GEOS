@@ -223,8 +223,8 @@ private:
    * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
    */
   void outputErrors( PreparedTableLayout const & tableLayout,
-                    CellLayoutRows & errorCellsLayout,
-                    std::ostringstream & tableOutput ) const;
+                     CellLayoutRows & errorCellsLayout,
+                     std::ostringstream & tableOutput ) const;
 
   /**
    * @brief Populate a grid of CellLayout with the title rows.

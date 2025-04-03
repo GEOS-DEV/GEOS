@@ -644,8 +644,8 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
 }
 
 void TableTextFormatter::outputErrors( PreparedTableLayout const & tableLayout,
-                                      CellLayoutRows & errorCellsLayout,
-                                      std::ostringstream & tableOutput ) const
+                                       CellLayoutRows & errorCellsLayout,
+                                       std::ostringstream & tableOutput ) const
 {
   for( CellLayoutRow & errorLayout : errorCellsLayout )
   {

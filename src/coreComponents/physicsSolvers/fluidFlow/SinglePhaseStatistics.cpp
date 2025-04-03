@@ -258,7 +258,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel())&& MpiWrapper::commRank() == 0 )
     {
       TableData singPhaseStatsData;
-      singPhaseStatsData.addRow( "Pressure[Pa]",  stats.minPressure, stats.averagePressure, stats.maxPressure );
+      singPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
       singPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
       singPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
       singPhaseStatsData.addSeparator();
