@@ -811,8 +811,11 @@ public:
 
 private:
 
+  // Number of column layers that a table layout has, default is 1;
   size_t m_columnLayersCount;
+  // Numbers of lower most column
   size_t m_totalLowermostColumnCount;
+  // Numbers of lower most column that are visible
   size_t m_visibleLowermostColumnCount;
 
   /**

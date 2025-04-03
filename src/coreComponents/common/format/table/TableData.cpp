@@ -138,9 +138,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
       {
         currentRowValues.push_back( {CellType::Value, ""} );
       }
-      // float / double : voir ce qui se passe en cas de 1. NaN, 2. +-Inv, ou 3. autre nb non valide en IEEE 754
-      // voir pour detecter un nombre non valide, et insérer un texte adapté ("NaN", "+Inf", "-Inf", "Error")
-      // ajouter l'erreur au listing ("Some values are +Inf").
+
       currentRowValues.push_back( {CellType::Value, GEOS_FMT( "{}", cellValue )} );
     }
 

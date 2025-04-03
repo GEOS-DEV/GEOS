@@ -668,6 +668,173 @@ TEST( testTable, testFreeLayout )
              );
 }
 
+TEST( testTable, table2DMismatchingCoordValues )
+{
+  TableData2D tableData2D;
+
+  // 1. Prepare values
+  real64 const numRow = 5;
+  real64 const numCol = 5;
+  array1d< real64 > values( 25 );
+  for( real64 p = 0; p < numRow; p += 1 )
+  {
+    for( real64 t = 0; t < numCol; t += 1 )
+    {
+      real64 const value = t + p * numCol;
+      values[t + p * numCol] = value;
+    }
+  }
+  arrayView1d< real64 const > const valuesConst = values;
+
+  auto const testCoordinates = [&tableData2D, &values]( std::array< real64, 6 > const & coordXValues,
+                                                        std::array< real64, 6 >  const & coordYValues,
+                                                        std::size_t const expectedCoordSize )
+  {
+
+    struct Result
+    {
+      string text;
+      string csv;
+    };
+
+    // 2. Prepare coordinates
+    ArrayOfArrays< real64 > coordinates( 2, expectedCoordSize );
+    coordinates.appendToArray( 0, coordXValues.begin(), coordXValues.begin() + coordXValues.size());
+    coordinates.appendToArray( 1, coordYValues.begin(), coordYValues.begin() + coordYValues.size());
+
+    ArrayOfArraysView< real64 const > const constCoordinates = coordinates.toViewConst();
+
+    string const rowFmt = GEOS_FMT( "{}", "Temperature" );
+    string const columnFmt = GEOS_FMT( "{}", "Pressure" );
+
+    // 3. Convert
+    TableData2D::TableDataHolder const tableConverted = tableData2D.convertTable2D( constCoordinates,
+                                                                                    rowFmt,
+                                                                                    columnFmt,
+                                                                                    values,
+                                                                                    true,
+                                                                                    "T" );
+
+    // 4. Prepare table
+    TableLayout tableLayout;
+    tableLayout.addColumns( tableConverted.headerNames );
+
+    TableTextFormatter const tableText( tableLayout );
+    TableCSVFormatter const csvOutput( tableLayout );
+
+    return Result{tableText.toString( tableConverted.tableData ),
+                  csvOutput.toString( tableConverted.tableData )};
+  };
+
+  {  // Test with too many values
+    std::array< real64, 6 > const coordXValues = { 0, 1, 2, 3 };
+    std::array< real64, 6 > const coordYValues = { 0, 1, 2, 3 };
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 4 );
+    EXPECT_EQ( textFormatted,
+               "\n"
+               "-----------------------------------------------------------------------------------------\n"
+               "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |\n"
+               "|-------------------|----------------|----------------|----------------|----------------|\n"
+               "|  Temperature = 0  |             0  |             0  |             0  |             0  |\n"
+               "|  Temperature = 1  |            11  |             7  |             8  |             9  |\n"
+               "|  Temperature = 2  |            17  |            13  |            14  |            15  |\n"
+               "|  Temperature = 3  |            23  |            19  |            20  |            21  |\n"
+               "|---------------------------------------------------------------------------------------|\n"
+               "|  Warning : The number of values is insufficient for the number of columns * rows:     |\n"
+               "|  Expected 36 values, Found 25 values                                                  |\n"
+               "-----------------------------------------------------------------------------------------\n" );
+
+    EXPECT_EQ( csvFormatted,
+               "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3\n"
+               "Temperature = 0,0,0,0,0\n"
+               "Temperature = 1,11,7,8,9\n"
+               "Temperature = 2,17,13,14,15\n"
+               "Temperature = 3,23,19,20,21\n" );
+  }
+
+
+  tableData2D.clear();
+  {// Test with not enough values
+    std::array< real64, 6 > const coordXValues = { 0, 1, 2, 3, 4, 5 };
+    std::array< real64, 6 > const coordYValues = { 0, 1, 2, 3, 4, 5 };
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 6 );
+
+    EXPECT_EQ( textFormatted,
+               "\n"
+               "---------------------------------------------------------------------------------------------------------------------------\n"
+               "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |  Pressure = 4  |  Pressure = 5  |\n"
+               "|-------------------|----------------|----------------|----------------|----------------|----------------|----------------|\n"
+               "|  Temperature = 0  |             0  |             1  |             2  |             3  |             4  |             5  |\n"
+               "|  Temperature = 1  |             6  |             7  |             8  |             9  |            10  |            11  |\n"
+               "|  Temperature = 2  |            12  |            13  |            14  |            15  |            16  |            17  |\n"
+               "|  Temperature = 3  |            18  |            19  |            20  |            21  |            22  |            23  |\n"
+               "|  Temperature = 4  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|  Temperature = 5  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|-------------------------------------------------------------------------------------------------------------------------|\n"
+               "|  Warning : The number of values is insufficient for the number of columns * rows:                                       |\n"
+               "|  Expected 36 values, Found 25 values                                                                                    |\n"
+               "---------------------------------------------------------------------------------------------------------------------------\n" );
+
+    EXPECT_EQ( csvFormatted,
+               "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3,Pressure = 4,Pressure = 5\n"
+               "Temperature = 0,0,1,2,3,4,5\n"
+               "Temperature = 1,6,7,8,9,10,11\n"
+               "Temperature = 2,12,13,14,15,16,17\n"
+               "Temperature = 3,18,19,20,21,22,23\n"
+               "Temperature = 4,24,0,0,0,0,0\n"
+               "Temperature = 5,0,0,0,0,0,0\n" );
+  }
+}
+
+TEST( testTable, tableSpecialsValues )
+{
+  TableLayout const tableLayout( {
+    TableLayout::Column()
+      .setName( "Special values" )
+      .setHeaderAlignment( TableLayout::Alignment::center ),
+    TableLayout::Column()
+      .setName( "CoordX" )
+      .setHeaderAlignment( TableLayout::Alignment::right ),
+    "C",
+    TableLayout::Column()
+      .setName( "CoordZ" )
+      .setHeaderAlignment( TableLayout::Alignment::left ),
+    TableLayout::Column()
+      .setName( "Prev\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::left ),
+    TableLayout::Column()
+      .setName( "Next\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::center )} );
+
+  LvArray::NumericLimits< float > const realLimit;
+
+  TableData tableData;
+  tableData.addRow( realLimit.infinity, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.quiet_NaN, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.signaling_NaN, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.lowest, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.max, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.denorm_min, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "-----------------------------------------------------------------------------\n"
+             "|  Special values  |  CoordX  |    C     |  CoordZ  |  Prev     |   Next    |\n"
+             "|                  |          |          |          |  element  |  element  |\n"
+             "|------------------|----------|----------|----------|-----------|-----------|\n"
+             "|             inf  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|             nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|             nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|  -3.4028235e+38  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|   3.4028235e+38  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|           1e-45  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|---------------------------------------------------------------------------|\n"
+             "|  Warning : Invalid values detected (nan/inf).                             |\n"
+             "-----------------------------------------------------------------------------\n"
+             );
+}
+
 
 int main( int argc, char * * argv )
 {
