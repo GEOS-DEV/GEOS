@@ -30,6 +30,8 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
@@ -38,7 +40,6 @@
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
-#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -60,6 +61,11 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
     setApplyDefaultValue( 1 ). // negative pressure is allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
+
+  addLogLevel< logInfo::ResidualNorm >();
+  addLogLevel< logInfo::BoundaryConditions >();
+  addLogLevel< logInfo::SystemSolution >();
+  addLogLevel< logInfo::WellControl >();
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
@@ -102,12 +108,14 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       // write rates output header
       if( m_writeCSV > 0 && subRegion.isLocallyOwned())
       {
-        string const wellControlsName = wellControls.getName();
+        string const fileName = GEOS_FMT( "{}/{}.csv", m_ratesOutputDir, wellControls.getName() );
         integer const useSurfaceConditions = wellControls.useSurfaceConditions();
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
         // format: time,bhp,total_rate,total_vol_rate
-        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
+        makeDirsForPath( m_ratesOutputDir );
+        GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+        std::ofstream outputFile( fileName );
         outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
         outputFile.close();
       }
@@ -174,7 +182,6 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
-  integer const logLevel = wellControls.getLogLevel();
   real64 const & refGravCoef = wellControls.getReferenceGravityCoef();
 
   real64 & currentBHP =
@@ -196,11 +203,9 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
     dCurrentBHP_dPres = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
   } );
 
-  if( logLevel >= 2 )
-  {
-    GEOS_LOG_RANK( GEOS_FMT( "{}: The BHP (at the specified reference elevation) = {} Pa",
-                             wellControlsName, currentBHP ) );
-  }
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
+                          GEOS_FMT( "{}: The BHP (at the specified reference elevation) = {} Pa",
+                                    wellControlsName, currentBHP ) );
 
 }
 
@@ -234,7 +239,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
-  integer const logLevel = wellControls.getLogLevel();
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
 
@@ -255,13 +260,13 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
                                 connRate,
                                 dens,
                                 dDens,
+                                logSurfaceCondition,
                                 &useSurfaceConditions,
                                 &surfacePres,
                                 &currentVolRate,
                                 &dCurrentVolRate_dPres,
                                 &dCurrentVolRate_dRate,
                                 &iwelemRef,
-                                &logLevel,
                                 &wellControlsName] ( localIndex const )
     {
       //    We need to evaluate the density as follows:
@@ -272,14 +277,18 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       {
         // we need to compute the surface density
         fluidWrapper.update( iwelemRef, 0, surfacePres );
-        if( logLevel >= 2 )
+
+        if( logSurfaceCondition )
         {
+
           GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
                                    wellControlsName, surfacePres ) );
-#ifdef GEOS_USE_HIP
-          GEOS_UNUSED_VAR( wellControlsName );
-#endif
         }
+
+#ifdef GEOS_USE_HIP
+        GEOS_UNUSED_VAR( wellControlsName );
+#endif
+
       }
       else
       {
@@ -292,11 +301,13 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens[iwelemRef][0][DerivOffset::dP] * currentVolRate * densInv;
       dCurrentVolRate_dRate = densInv;
 
-      if( logLevel >= 2 && useSurfaceConditions )
+
+      if( logSurfaceCondition && useSurfaceConditions )
       {
         GEOS_LOG_RANK( GEOS_FMT( "{}: total fluid density at surface conditions = {} kg/sm3, total rate = {} kg/s, total surface volumetric rate = {} sm3/s",
-                                 wellControlsName, dens[iwelemRef][0], connRate[iwelemRef], currentVolRate ) );
+                                 wellControlsName, dens[iwelemRef][0], connRate[iwelemRef], currentVolRate ));
       }
+
     } );
   } );
 }
@@ -637,12 +648,14 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
         if( wellControls.getControl() == WellControls::Control::BHP )
         {
           wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( time_n ) );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl, GEOS_FMT( "Control switch for well {} from BHP constraint to rate constraint", subRegion.getName()) );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                 GEOS_FMT( "Control switch for well {} from BHP constraint to rate constraint", subRegion.getName()) );
         }
         else
         {
           wellControls.switchToBHPControl( wellControls.getTargetBHP( time_n ) );
-          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl, GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName()) );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                 GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName()) );
         }
       }
 
@@ -856,10 +869,9 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
   real64 const residualNorm = MpiWrapper::max( localResidualNorm );
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
+
   return residualNorm;
 }
 
@@ -908,8 +920,11 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
   numNegativePressures = MpiWrapper::sum( numNegativePressures );
 
   if( numNegativePressures > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                        getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
+  {
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SystemSolution,
+                           GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                     getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
+  }
 
   return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
 }
