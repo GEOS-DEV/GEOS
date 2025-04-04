@@ -247,7 +247,7 @@ void TractionBoundaryCondition::reinitScaleSet( FaceManager const & faceManager,
 
   m_scaleSet.resize( faceSize );
 
-  auto scaleSet = m_scaleSet.toView();
+  auto const scaleSet = m_scaleSet.toView();
 
   // Loop over targetSet to assign damage values to m_scaleSet
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
