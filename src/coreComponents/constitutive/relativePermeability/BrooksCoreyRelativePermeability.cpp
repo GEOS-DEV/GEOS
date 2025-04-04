@@ -60,6 +60,7 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
 void BrooksCoreyRelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
+  m_volFracScale.resize( 3 /*ndims*/ );
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
@@ -67,40 +68,57 @@ void BrooksCoreyRelativePermeability::postInputInitialization()
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                           InputError );
   };
-  checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
-  checkInputSize( m_phaseRelPermExponent, viewKeyStruct::phaseRelPermExponentString() );
-  checkInputSize( m_phaseRelPermMaxValue, viewKeyStruct::phaseRelPermMaxValueString() );
 
-  m_volFracScale = 1.0;
-  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  for( int dir = 0; dir < 3; ++dir )
   {
-    auto const errorMsg = [&]( auto const & attribute )
+    checkInputSize( m_phaseMinVolumeFraction[dir], viewKeyStruct::phaseMinVolumeFractionString());
+    m_volFracScale[dir] = 1.0;
+    for( integer ip = 0; ip < numFluidPhases(); ++ip )
     {
-      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
-    };
 
-    GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
-                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                          InputError );
-    GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
-                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                          InputError );
-    m_volFracScale -= m_phaseMinVolumeFraction[ip];
+      auto const errorMsg = [&]( auto const & attribute ) {
+        return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      };
 
-    GEOS_THROW_IF_LT_MSG( m_phaseRelPermExponent[ip], 0.0,
-                          errorMsg( viewKeyStruct::phaseRelPermExponentString() ),
-                          InputError );
-    GEOS_THROW_IF_LT_MSG( m_phaseRelPermMaxValue[ip], 0.0,
-                          errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
-                          InputError );
-    GEOS_THROW_IF_GT_MSG( m_phaseRelPermMaxValue[ip], 1.0,
-                          errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
+      GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[dir][ip], 0.0,
+                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
+                            InputError );
+      GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[dir][ip], 1.0,
+                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
+                            InputError );
+
+      m_volFracScale[dir] -= m_phaseMinVolumeFraction[dir][ip];
+    }
+  }
+
+  for( int dir = 0; dir < 3; ++dir )
+  {
+
+    checkInputSize( m_phaseRelPermExponent[dir], viewKeyStruct::phaseRelPermExponentString());
+    checkInputSize( m_phaseRelPermMaxValue[dir], viewKeyStruct::phaseRelPermMaxValueString());
+
+    for( integer ip = 0; ip < numFluidPhases(); ++ip )
+    {
+
+      auto const errorMsg = [&]( auto const & attribute ) {
+        return GEOS_FMT( "{}: invalid value at {}[{}][{}]", getFullName(), attribute, ip, dir );
+      };
+
+      GEOS_THROW_IF_LT_MSG( m_phaseRelPermExponent[dir][ip], 0.0,
+                            errorMsg( viewKeyStruct::phaseRelPermExponentString()),
+                            InputError );
+      GEOS_THROW_IF_LT_MSG( m_phaseRelPermMaxValue[dir][ip], 0.0,
+                            errorMsg( viewKeyStruct::phaseRelPermMaxValueString()),
+                            InputError );
+      GEOS_THROW_IF_GT_MSG( m_phaseRelPermMaxValue[dir][ip], 1.0,
+                            errorMsg( viewKeyStruct::phaseRelPermMaxValueString()),
+                            InputError );
+    }
+    GEOS_THROW_IF_LT_MSG( m_volFracScale[dir], 0.0,
+                          GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName()),
                           InputError );
   }
 
-  GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                        GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
-                        InputError );
 }
 
 BrooksCoreyRelativePermeability::KernelWrapper

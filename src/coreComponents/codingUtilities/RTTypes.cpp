@@ -220,7 +220,8 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
     { string( CustomTypes::plotLevel ), Regex( intRegex, intDesc ) },
     { string( CustomTypes::groupName ), Regex( groupNameRegex, groupNameDesc ) },
     { string( CustomTypes::groupNameRef ), Regex( groupNameRefRegex, groupNameRefDesc ) },
-    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) }
+    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) },
+    { string( CustomTypes::groupOfGroupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 2 ) }
   };
   return regexMap;
 }

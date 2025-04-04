@@ -60,7 +60,7 @@ struct Baker
            real64 const & goRelPerm,
            real64 const & dGoRelPerm_dOilVolFrac,
            real64 & threePhaseRelPerm,
-           arraySlice1d< real64, constitutive::relperm::USD_RELPERM_DS - 3 > const & dThreePhaseRelPerm_dVolFrac )
+           arraySlice1d< real64, constitutive::relperm::USD_RELPERM_DS - 4 > const & dThreePhaseRelPerm_dVolFrac )
   {
     using PT = RelativePermeabilityBase::PhaseType;
     integer const ipWater = phaseOrder[PT::WATER];
@@ -147,7 +147,7 @@ struct Stone2
                        real64 const & gRelPerm,
                        real64 const & dGRelPerm_dGasVolFrac,
                        real64 & threePhaseRelPerm,
-                       arraySlice1d< real64, constitutive::relperm::USD_RELPERM_DS - 3 > const & dThreePhaseRelPerm_dVolFrac )
+                       arraySlice1d< real64, constitutive::relperm::USD_RELPERM_DS - 4 > const & dThreePhaseRelPerm_dVolFrac )
   {
 
     using PT = RelativePermeabilityBase::PhaseType;
