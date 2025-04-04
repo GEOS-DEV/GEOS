@@ -23,6 +23,7 @@ Contains classes for storing and computing arbitrary N-dimensional functions.
 set( functions_headers
      FunctionBase.hpp
      FunctionManager.hpp
+     LogLevelsInfo.hpp
      TableFunction.hpp
    )
 
