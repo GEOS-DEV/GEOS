@@ -68,13 +68,32 @@ public:
 
   integer numSecondarySpecies() const { return m_numSecondarySpecies; }
 
+  auto createKernelWraper() const 
+  {
+
+  
+  std::variant< KernelWrapper< hpcReact::bubulkGeneric::carbonateSystemType >,
+                KernelWrapper< hpcReact::bubulkGeneric::simpleTestType > >
+  createKernelWrapper() const;
+  
   /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
    */
+  template< typename REACTION_PARAMS_TYPE >
   class KernelWrapper : public BASE::KernelWrapper
   {
 
 public:
+
+    KernelWrapper( arrayView2d< real64, reactivefluid::USD_COMP > const & secondarySpeciesConcentration,
+                   integer const numPrimarySpecies,
+                   integer const numSecondarySpecies,
+                   REACTION_PARAMS_TYPE params ) :
+      m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
+      m_numPrimarySpecies( numPrimarySpecies ),
+      m_numSecondarySpecies( numSecondarySpecies ),
+      m_params( params )
+    {}
 
     using EquilibriumReactionsType = hpcReact::bulkGeneric::EquilibriumReactions< real64, integer, localIndex >;
 
@@ -90,15 +109,11 @@ protected:
 
     integer m_numSecondarySpecies;
 
-    arrayView2d< real64, reactivefluid::USD_COMP >  m_primarySpeciesConcentration;
-
     arrayView2d< real64, reactivefluid::USD_COMP >  m_secondarySpeciesConcentration;
-
-    arrayView2d< real64, reactivefluid::USD_COMP >  m_primarySpeciesTotalConcentration;
 
     arrayView2d< real64, reactivefluid::USD_COMP >  m_kineticReactionRates;
 
-
+    REACTION_PARAMS_TYPE m_params;
   };
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
@@ -116,29 +131,43 @@ protected:
     
   integer m_numSecondarySpecies;
 
-  array2d< real64, constitutive::reactivefluid::LAYOUT_FLUID >  m_primarySpeciesConcentration;
-
   array2d< real64, constitutive::reactivefluid::LAYOUT_FLUID >  m_secondarySpeciesConcentration;
-
-  array2d< real64, constitutive::reactivefluid::LAYOUT_FLUID >  m_primarySpeciesTotalConcentration;
 
   array2d< real64, constitutive::reactivefluid::LAYOUT_FLUID >  m_kineticReactionRates;
 
   ChemicalSystemType m_chemicalSystemType;
 };
 
-template<typename BASE>
+template< typename BASE >
 inline void
 ReactiveSinglePhaseFluid< BASE >::KernelWrapper::
-  computeChemistry( real64 const pressure,
-                    real64 const temperature,
-                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
-                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
+  enforceEquilibrium( real64 const pressure,
+                      real64 const temperature,
+                      arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
+                      arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                      arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
 {
-  GEOS_UNUSED_VAR( pressure, secondarySpeciesConcentration );
-  auto params = hpcReact::bulkGeneric::carbonateSystem;
-  EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
+  GEOS_UNUSED_VAR( pressure );
+  // 1. We enforce equilibrium 
+  EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, m_params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
+  // 2. We calculate the secondary species concentration 
+  speciesUtilities::calculateLogSecondarySpeciesConcentration( m_params, primarySpeciesConcentration, secondarySpeciesConcentration );
+}
+
+template< typename BASE >
+inline void
+ReactiveSinglePhaseFluid< BASE >::KernelWrapper::
+  computeReactionRates( real64 const pressure,
+                        real64 const temperature,
+                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
+                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
+{
+  GEOS_UNUSED_VAR( pressure );
+  // 1. We enforce equilibrium 
+  EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, m_params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
+  // 2. We calculate the secondary species concentration 
+  speciesUtilities::calculateLogSecondarySpeciesConcentration( m_params, primarySpeciesConcentration, secondarySpeciesConcentration );
 }
 
 ENUM_STRINGS( ChemicalSystemType,
@@ -151,4 +180,4 @@ ENUM_STRINGS( ChemicalSystemType,
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_ReactiveSinglePhaseFluid_HPP
+#endif // GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVESINGLEPHASEFLUID_HPP_

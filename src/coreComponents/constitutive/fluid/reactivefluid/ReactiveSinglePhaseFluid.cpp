@@ -30,6 +30,8 @@ namespace constitutive
 namespace reactivefluid
 {
 
+using namespace hpcReact::bulkGeneric;  
+
 template< typename BASE >
 ReactiveSinglePhaseFluid< BASE >::
   ReactiveSinglePhaseFluid( string const & name, Group * const parent ) :
@@ -75,6 +77,28 @@ void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, loca
   m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
   m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
   m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
+}
+
+template< typename BASE >
+std::variant< KernelWrapper< carbonateSystemType >,
+              KernelWrapper< simpleTestType > >
+ReactiveSinglePhaseFluid< BASE >createKernelWrapper() const
+{
+    switch ( m_chemicalSystemType )
+    {
+      case ChemicalSystemType::carbonates:
+        return KernelWrapper< hpcReact::bubulkGeneric::carbonateSystemType >( m_primarySpeciesConcentration,
+                                                       m_secondarySpeciesConcentration,
+                                                       m_primarySpeciesTotalConcentration,
+                                                       m_numSecondarySpecies,
+                                                       carbonateSystem );
+      default:
+        return KernelWrapper< hpcReact::bubulkGeneric::simpleTestType >( m_primarySpeciesConcentration,
+                                                                         m_secondarySpeciesConcentration,
+                                                                         m_primarySpeciesTotalConcentration,
+                                                                         m_numSecondarySpecies,
+                                                                         simpleTest );
+    }
 }
 
 } // namespace reactivefluid
