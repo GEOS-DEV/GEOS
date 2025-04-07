@@ -49,6 +49,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/PhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -435,13 +436,24 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
                                                            real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                           WellElementSubRegion const & subRegion )
+                                                           WellElementSubRegion const & subRegion,
+                                                           ElementRegionManager const & elemManager )
 {
+  WellControls & wellControls = getWellControls( subRegion );
+  if( !wellControls.useSurfaceConditions() )
+  {
+    GEOS_THROW_IF( wellControls.referenceReservoirRegion()=="",
+                   "WellControls referenceReservoirRegion not set and is required if useSurfaceCondtions=0 ",
+                   InputError );
+    ElementRegionBase const & region = elemManager.getRegion( "wellControls.referenceReservoirRegion()" );
+    CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >( "regionStatistics" );
+    wellControls.setRegionAveragePressure( stats.averagePressure );
+    wellControls.setRegionAverageTemperature( stats.averageTemperature );
+
+  }
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  // now that we know we are single-phase, we can check a few things in the constraints
-  WellControls const & wellControls = getWellControls( subRegion );
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const & targetTotalRate = wellControls.getTargetTotalRate( time_n );
   real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
@@ -674,6 +686,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
   real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
+  real64 const & resAvePres = wellControls.getRegionAveragePressure();
 
   arrayView1d< real64 > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
@@ -717,6 +730,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                   logSurfaceCondition,
                                   &useSurfaceConditions,
                                   &surfacePres,
+                                  &resAvePres,
                                   &surfaceTemp,
                                   &currentTotalVolRate,
                                   dCurrentTotalVolRate,
@@ -752,7 +766,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         }
         else
         {
-          real64 const refPres = pres[iwelemRef];
+          real64 const refPres = resAvePres;
           fluidWrapper.update( iwelemRef, 0, refPres, temp[iwelemRef], compFrac[iwelemRef] );
         }
 
@@ -2072,7 +2086,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       fluid.saveConvergedState();
 
-      validateWellConstraints( time_n, dt, subRegion );
+      validateWellConstraints( time_n, dt, subRegion, elemManager );
 
       updateSubRegionState( subRegion );
     } );

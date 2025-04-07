@@ -63,25 +63,6 @@ public:
 
   /**@}*/
 
-private:
-
-  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
-
-  /**
-   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
-   */
-  struct viewKeyStruct
-  {
-    /// String for the flag deciding the computation of the CFL numbers
-    constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-    /// String for the flag deciding the computation of the region statistics
-    constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
-    /// String for the region statistics
-    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
-    /// String for the relperm threshold
-    constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
-  };
-
   struct RegionStatistics
   {
     /// average region pressure
@@ -119,6 +100,26 @@ private:
     /// region component mass
     array2d< real64 > componentMass;
   };
+private:
+
+  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
+
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct
+  {
+    /// String for the flag deciding the computation of the CFL numbers
+    constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
+    /// String for the flag deciding the computation of the region statistics
+    constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
+    /// String for the region statistics
+    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
+    /// String for the relperm threshold
+    constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
+  };
+
+
 
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, etc)

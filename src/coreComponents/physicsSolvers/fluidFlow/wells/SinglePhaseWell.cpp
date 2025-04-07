@@ -40,6 +40,7 @@
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
 
 namespace geos
 {
@@ -130,10 +131,21 @@ string SinglePhaseWell::resElementDofName() const
 
 void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                                                real64 const & GEOS_UNUSED_PARAM( dt ),
-                                               WellElementSubRegion const & subRegion )
+                                               WellElementSubRegion const & subRegion,
+                                               ElementRegionManager const & elemManager )
 {
-  WellControls const & wellControls = getWellControls( subRegion );
-  WellControls::Control const currentControl = wellControls.getControl();
+  WellControls & wellControls = getWellControls( subRegion );
+  if( !wellControls.useSurfaceConditions() )
+  {
+    GEOS_THROW_IF( wellControls.referenceReservoirRegion()=="",
+                   "WellControls referenceReservoirRegion not set and is required if useSurfaceCondtions=0 ",
+                   InputError );
+    ElementRegionBase const & region = elemManager.getRegion( "wellControls.referenceReservoirRegion()" );
+    SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( "regionStatistics" );
+    wellControls.setRegionAveragePressure( stats.averagePressure );
+
+  }
+  WellControls::Control currentControl = wellControls.getControl();
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
   GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
@@ -242,7 +254,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
   bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 const & surfacePres = wellControls.getSurfacePressure();
-
+  real64 const & resAvePres = wellControls.getRegionAveragePressure();
   real64 & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
   real64 & dCurrentVolRate_dPres =
@@ -263,6 +275,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
                                 logSurfaceCondition,
                                 &useSurfaceConditions,
                                 &surfacePres,
+                                &resAvePres,
                                 &currentVolRate,
                                 &dCurrentVolRate_dPres,
                                 &dCurrentVolRate_dRate,
@@ -292,7 +305,8 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       }
       else
       {
-        real64 const refPres = pres[iwelemRef];
+        real64 refPres = pres[iwelemRef];
+        refPres = resAvePres;
         fluidWrapper.update( iwelemRef, 0, refPres );
       }
 
@@ -1011,7 +1025,6 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
@@ -1028,7 +1041,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       fluid.saveConvergedState();
 
-      validateWellConstraints( time, dt, subRegion );
+      validateWellConstraints( time, dt, subRegion, elemManager );
 
       updateSubRegionState( subRegion );
     } );

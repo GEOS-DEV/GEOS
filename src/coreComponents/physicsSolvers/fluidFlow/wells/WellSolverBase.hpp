@@ -314,7 +314,8 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) = 0;
+                                        WellElementSubRegion const & subRegion,
+                                        ElementRegionManager const & elemManager ) = 0;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
