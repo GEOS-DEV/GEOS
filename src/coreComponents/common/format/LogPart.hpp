@@ -120,13 +120,15 @@ private:
     std::vector< string > m_lines;
     /// max length name (first part of a description) of a logPart
     size_t m_maxNameWidth;
+    /// max length name (first part of a description) of a logPart
+    size_t m_maxValueWidth;
   };
 
   Description m_startDescription = { {}, {}};
   Description m_endDescription  = { {}, {}};
 
-  FormattedDescription m_formattedStartDescription = {  "", {}, 0 };
-  FormattedDescription m_formattedEndDescription  = { "", {}, 0 };
+  FormattedDescription m_formattedStartDescription = {  "", {}, 0, 0 };
+  FormattedDescription m_formattedEndDescription  = { "", {}, 0, 0 };
 
   /// logPart length
   size_t m_width = 50;
@@ -139,7 +141,7 @@ private:
   /// numbers of character used as border
   static constexpr size_t m_nbBorderChar = 2;
   /// character used for logPart construction
-  static constexpr size_t m_borderCharacter = '#';
+  char const m_borderCharacter = '#';
   /// prefix to append to the title of bottom section
   static constexpr string_view m_prefixEndTitle = "End of ";
   /// string used to separate the name/description
@@ -185,21 +187,26 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
                                        string_view name, Args const &... args )
 {
   std::vector< string > values;
-  size_t maxValueSize = 0;
+  size_t & maxValueSize = formattedDescription.m_maxValueWidth;
+  size_t & maxNameSize = formattedDescription.m_maxNameWidth;
   ( [&] {
     static_assert( has_formatter_v< decltype(args) >,
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
 
-    //TODO Ajouter un formattedDescription.m_maxValueDescription et etre iso
     std::vector< string_view > splitValues =  divideLines< string_view >( maxValueSize, value );
     values.insert( values.end(), splitValues.begin(), splitValues.end() );
   } (), ...);
 
   description.m_values.push_back( values );
-  size_t tempMaxNameWidth = formattedDescription.m_maxNameWidth;
-  description.m_names.push_back( divideLines< string >( tempMaxNameWidth, name ));
-  formattedDescription.m_maxNameWidth = std::max( tempMaxNameWidth, formattedDescription.m_maxNameWidth );
+
+  size_t lineWidth = 0;
+  std::vector< string > nameDivided = divideLines< string >( lineWidth, name );
+  if( lineWidth == 0 )
+    lineWidth = name.size();
+  maxNameSize = std::max( maxNameSize, lineWidth );
+
+  description.m_names.push_back( nameDivided );
 }
 
 template< typename ... Args >
