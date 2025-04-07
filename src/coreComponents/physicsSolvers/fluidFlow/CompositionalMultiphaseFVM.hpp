@@ -32,7 +32,7 @@ enum class GravityDensityScheme : integer
 {
   ArithmeticAverage, ///< average phase density is computed using simple arithmetic average:
                      ///  rho_ave = 0.5 * (rho_i + rho_j)
-  PhasePresence,     ///< average phase density is computed using checking for phase presence:
+  PhasePresence      ///< average phase density is computed using checking for phase presence:
                      ///  rho_ave = 0.5 * (rho_i + rho_j) if phase is present in both cells i and j
                      ///          = rho_i if phase is present in only cell i
                      ///          = rho_j if phase is present in only cell j
@@ -134,6 +134,11 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
+  real64
+  scalingForSystemSolutionZFormulation( DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localSolution );
+
   virtual bool
   checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
@@ -190,11 +195,13 @@ public:
 
   /**
    * @brief function to set the next time step size
+   * @param[in] currentTime the current time
    * @param[in] currentDt the current time step size
    * @param[in] domain the domain object
    * @return the prescribed time step size
    */
-  real64 setNextDt( real64 const & currentDt,
+  real64 setNextDt( real64 const & currentTime,
+                    real64 const & currentDt,
                     DomainPartition & domain ) override;
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
