@@ -302,3 +302,6 @@ void Graphite::saveConvergedState() const
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Graphite, std::string const &, Group * const )
 }
 } /* namespace geos */
+
+//std::cout<<" active cohesive nodes pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
+std::cout<<" test  = "<< m_coupledShearResponseM1 <<"<<X_old<<std::endl;
