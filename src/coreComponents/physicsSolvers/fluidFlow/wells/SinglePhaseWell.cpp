@@ -140,7 +140,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
     GEOS_THROW_IF( wellControls.referenceReservoirRegion()=="",
                    "WellControls referenceReservoirRegion not set and is required if useSurfaceCondtions=0 ",
                    InputError );
-    ElementRegionBase const & region = elemManager.getRegion( "wellControls.referenceReservoirRegion()" );
+    ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
     SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( "regionStatistics" );
     wellControls.setRegionAveragePressure( stats.averagePressure );
 
