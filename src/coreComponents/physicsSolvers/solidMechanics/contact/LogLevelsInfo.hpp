@@ -15,7 +15,7 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains log level informations for contact solvers
+ * This file contains common log level informations for physics solvers
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_LOGLEVELSINFO_HPP
@@ -30,16 +30,21 @@ namespace logInfo
 {
 
 /**
- * @name Wells LogLevels info structures. They must comply with the `is_log_level_info` trait.
+ * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
  */
 ///@{
 
 /// @cond DO_NOT_DOCUMENT
+struct ConfigurationStatistics
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Output configuration statistics"; }
+};
 
-struct Configuration
+struct Tolerance
 {
   static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Configuration information"; }
+  static constexpr std::string_view getDescription() { return "Output Tolerance computed the given fracture element"; }
 };
 
 /// @endcond

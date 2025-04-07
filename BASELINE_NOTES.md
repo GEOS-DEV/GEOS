@@ -6,14 +6,67 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3551 (2024-02-19)
+PR #3537 (2025-04-02)
+=====================
+Added two attributes to TableFunction: writeCSV and logLevel.
+
+PR #3589 (2024-03-26)
+=====================
+Hypre update - make co2 cases use direct solver.
+
+PR #3396 (2024-03-21)
+=====================
+Use solid mechanics solver directly to perform poromechanics initialization.
+
+PR #2125 (2024-03-20)
+=====================
+Phase-field nucleation model.
+
+PR #3494 (2024-03-11)
+=====================
+Added more log level documentation
+
+PR #3427 (2024-03-10)
+=====================
+Well time step selector based on rates/bhp tables and clarify well rates logic.
+
+PR #3485 (2024-03-09)
+=====================
+Use mass and energy consistently for single phase solvers.
+
+PR #3460 (2024-03-08)
+=====================
+Refactor single phase constitutive containers.
+
+PR #3525 (2025-03-06)
+=====================
+Add analytical leakoff feature for hydrofrac solver.
+
+PR #3401 (2025-03-05)
+=====================
+Bugfix for IHU.
+
+PR #3483 (2025-03-02)
+=====================
+Remove relative permeability from wells.
+
+PR #3576 (2025-03-01)
+=====================
+Add an option to skip density and viscosity computes when phase is not present for CO2 fluid update.
+
+PR #3571 (2025-02-28)
+=====================
+Do not allow negative pressure by default, except for hydrofrac.
+
+PR #3551 (2025-02-19)
+=====================
 Add Passing Crack to the integrated tests.
 
-PR #3541 (2024-02-18)
+PR #3541 (2025-02-18)
 =====================
 Well control parallel synchronization fix.
 
-PR #3443 (2024-02-17)
+PR #3443 (2025-02-17)
 =====================
 Added tests for overall composition (Z) formulation.
 
