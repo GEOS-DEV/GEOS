@@ -388,7 +388,7 @@ void Geomechanics::postInputInitialization()
     // GEOS_THROW_IF( m_t1RateDependence <= 0.0, "t1RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_t2RateDependence <= 0.0, "t2RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fractureEnergyReleaseRate must be greater than 0", InputError );
-    GEOS_THROW_IF( m_fractureSofteningExponent <= 0.0, "fracture softening exponent must be greater than 0", InputError);
+    //GEOS_THROW_IF( m_fractureSofteningExponent <= 0.0, "fracture softening exponent must be greater than 0", InputError);
     GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
     // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
     // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );

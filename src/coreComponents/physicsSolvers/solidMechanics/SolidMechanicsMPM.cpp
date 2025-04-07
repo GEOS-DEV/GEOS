@@ -8335,7 +8335,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     tB[i] += normalForce * nAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][B]);
   }
 
-  if ( fabs(totalTangentialDisplacement) > 1e-20 )
+  if ( fabs(totalTangentialDisplacement) > 1e-12 )
   {
     real64 tAB[3] = { 0 }; // Tangent unit vector
     LvArray::tensorOps::copy< 3 >( tAB, tangentialInterfaceDisplacement );
