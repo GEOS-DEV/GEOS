@@ -37,8 +37,17 @@ class TableLayout
 
 public:
 
+  /// default value for m_maxColumnWidth when it is not set
+  static constexpr size_t noColumnMaxWidth = std::numeric_limits< size_t >::max();
+
   /// Type of aligment for a column
   enum Alignment { right, left, center };
+
+  /// default value for columns header cells alignement
+  static constexpr Alignment defaultHeaderAlignment = Alignment::center;
+
+  /// default value for data cells alignement
+  static constexpr Alignment defaultValueAlignment = Alignment::right;
 
   /// Space to apply between all data and border
   enum MarginValue : integer
@@ -60,38 +69,170 @@ public:
   struct ColumnAlignement
   {
     /// Alignment for column name. By default aligned to center
-    Alignment headerAlignment = Alignment::center;
+    Alignment headerAlignment = defaultHeaderAlignment;
     /// Alignment for column values. By default aligned to right side
-    Alignment valueAlignment = Alignment::right;
+    Alignment valueAlignment = defaultValueAlignment;
   };
 
-/**
- * @struct CellLayout
- * @brief Structure grouping the cell information to display it in a table (content, type, alignment, ...).
- */
-  struct CellLayout
+  /**
+   * @brief View on cell data with information to display it in a table (content, type, alignment, ...).
+   * @note the source text must not be freeed/moved as the CellLayout will *only be a view on the text data*.
+   */
+  class CellLayout
   {
-    /// vector containing each cell content, separated by lines.
-    std::vector< string > m_lines;
+public:
     /// The type of the cell (Header,Value, Merge, ...).
     CellType m_cellType;
     /// The alignment of the cell (left, center, right).
     Alignment m_alignment;
-    /// Maximum length of the data in the cell.
-    size_t m_cellWidth;
 
     /**
-     * @brief Constructor to initialize a Cell with a default settings.
+     * @brief Constructor to initialize a Cell with a default settings. Use prepareLayout() when setup.
      */
     CellLayout();
 
     /**
-     * @brief Constructor to initialize a cell given celltype, value and alignment.
+     * @brief Constructor to initialize an empty Cell of a given type.
      * @param cellType The type of the cell.
-     * @param value The value to be assigned to the cell.
+     */
+    CellLayout( CellType cellType );
+
+    /**
+     * @brief Constructor to fully initialize a cell with given celltype, text and alignment.
+     * m_cellWidth will be initialized aDter
+     * @param cellType The type of the cell.
      * @param alignment The alignment of the cell (left, right, or center).
      */
-    CellLayout( CellType cellType, string const & value, TableLayout::Alignment alignment );
+    CellLayout( CellType cellType, TableLayout::Alignment alignment );
+
+    /**
+     * @return The width of the cell, which must be constrained by the content lines length.
+     */
+    size_t getWidth() const
+    { return m_cellWidth; }
+
+    /**
+     * @brief Set the width of the cell, which must be constrained by the content lines length.
+     * @param cellWidth the new width to consider for this cell.
+     */
+    void setWidth( size_t cellWidth )
+    { m_cellWidth = cellWidth; }
+
+    /**
+     * @return The view on each cell line.
+     */
+    std::vector< string_view > const & getLines() const
+    { return m_lines; }
+
+    /**
+     * @return get the height of the cell (its number of lines).
+     */
+    size_t getHeight() const
+    { return m_lines.size(); }
+
+    /**
+     * @return True if the cell has no text.
+     */
+    size_t isEmpty() const
+    { return m_lines.empty() || m_lines[0].empty(); }
+
+    /**
+     * @brief Set the data view to the given string_view & precompute display settings.
+     * @param value The view on the full cell text, with '\n' for manual line breaks. Must not be deallocated!
+     *              `getLines()` will then contain each lines, and `m_cellWidth`, the maximum line width.
+     * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
+     */
+    void prepareLayout( string_view value, size_t maxLineWidth );
+
+private:
+    /// The width of the cell, which must be constrained by the content lines length.
+    size_t m_cellWidth;
+    /// vector containing each cell content, separated by lines.
+    std::vector< string_view > m_lines;
+  };
+
+  /**
+   * @brief Represents a cell in a table with ownership of its text data.
+   * @note Unlike CellLayout which is just a view, Cell owns its text data (m_text).
+   *       For safety & performance reasons, Cell is non-copyable/movable after layout has been prepared.
+   */
+  class Cell
+  {
+public:
+    /// The view & display setting on m_text.
+    CellLayout m_layout;
+
+    /**
+     * @brief Constructor to initialize a Cell with a default settings. Use prepareLayout() after setup.
+     */
+    Cell();
+
+    /**
+     * @brief Constructor to partially initialize a cell with display settings. Use prepareLayout() after setup.
+     * @param cellType The type of the cell.
+     * @param alignment The alignment of the cell (left, right, or center).
+     */
+    Cell( CellType cellType, TableLayout::Alignment alignment );
+
+    /**
+     * @brief Constructor to partially initialize a cell with all settings. Use prepareLayout() after setup.
+     * @param cellType The type of the cell.
+     * @param alignment The alignment of the cell (left, right, or center).
+     * @param value The text to set in the cell (stored in m_text).
+     */
+    Cell( CellType cellType, TableLayout::Alignment alignment, string_view value );
+
+    /**
+     * @brief Copy data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     */
+    Cell( Cell const & other );
+
+    /**
+     * @brief Move data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     */
+    Cell( Cell && other );
+
+    /**
+     * @brief Copy data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     * @return The instance reference.
+     */
+    Cell & operator=( Cell const & other );
+
+    /**
+     * @brief Move data, or throw an error if the layout has already been prepared (which means instance
+     *        will reference potencially outdated reference, and we do not want to compute the layout twice)
+     * @param other The source data.
+     * @return The instance reference.
+     */
+    Cell & operator=( Cell && other );
+
+    /**
+     * @return The full cell text.
+     */
+    string_view getText() const
+    { return m_text; }
+
+    /**
+     * @brief Set the full cell text.
+     * @param text The full cell text, with '\n' for manual line breaks.
+     */
+    void setText( string_view text );
+
+    /**
+     * @brief Precompute m_layout display settings and link it with m_text.
+     * @param maxLineWidth The maximum allowed line width. Use `noColumnMaxWidth` to disable.
+     */
+    void prepareLayout( size_t maxLineWidth );
+
+private:
+    /// The text data of the cell (potencially multiline).
+    string m_text;
   };
 
   /**
@@ -101,31 +242,48 @@ public:
   class Column
   {
 public:
-    /// The header cell layout.
-    CellLayout m_header;
+    /// Alias for the list of columns.
+    using ColumnsList = std::vector< Column >;
+
+    /// The header cell
+    Cell m_header;
     /// A vector containing all sub-columns in the column.
-    std::vector< Column > m_subColumn;
+    ColumnsList m_subColumns;
     /// struct containing m_alignment for the column (header and values)
     ColumnAlignement m_alignment;
 
     /**
-     * @brief Default constructor.
-     * Initializes a column with default values.
+     * @brief Construct a default column with no parameter (must be configurated).
      */
     Column();
 
     /**
-     * @brief Constructor to initialize a column with a specific `CellLayout`.
-     * @param cellLayout The `CellLayout` object to initialize the column.
-     *
+     * @brief Construct a default column with minimal parameters.
+     * @param name The name of the Column.
      */
-    Column( TableLayout::CellLayout cellLayout );
+    explicit Column( string_view name ):
+      Column( name, ColumnAlignement() )
+    {}
+
+    /**
+     * @brief Construct a default column with minimal parameters.
+     * @param name The name of the Column.
+     * @param alignment The alignment setting of the column header and values.
+     */
+    Column( string_view name, ColumnAlignement alignment );
 
     /**
      * @brief Get the parent column.
      * @return Pointer to the parent column, or `nullptr` if no parent is set.
      */
     Column * getParent()
+    { return m_parent; }
+
+    /**
+     * @brief Get the parent column.
+     * @return Pointer to the parent column, or `nullptr` if no parent is set.
+     */
+    Column const * getParent() const
     { return m_parent; }
 
     /**
@@ -136,17 +294,21 @@ public:
     { m_parent = parent; }
 
     /**
-     * @brief GGet the next column in the layout.
-     * @return  Pointer to the next column or `nullptr` if no next column exists.
+     * @return Pointer to the next column that has the same parent or `nullptr` if no next column exists.
      */
-    Column * getNextCell()
+    Column * getNext()
     { return m_next; }
 
     /**
-     * @brief Set the next column in the layout.
-     * @param nextCell  The next column in the table layout.
+     * @return Pointer to the next column that has the same parent or `nullptr` if no next column exists.
      */
-    void setNextCell( Column * nextCell )
+    Column const * getNext() const
+    { return m_next; }
+
+    /**
+     * @param nextCell The next column in the table layout that has the same parent.
+     */
+    void setNext( Column * nextCell )
     {  m_next = nextCell; }
 
     /**
@@ -157,72 +319,67 @@ public:
     Column & setName( string_view name );
 
     /**
-     * @brief Set the column visibility.
-     * @param celltype Cell type to apply to hide the colmun
+     * @brief Set the column and its children visibility.
+     * @param visible True to make the column visible.
      * @return The current column .
      */
-    Column & setVisibility( CellType celltype );
+    Column & setVisibility( bool visible );
 
     /**
      * @brief Adds multiple sub-columns to the column.
      * @param subCol A list of sub-column names to add.
      * @return The current column object
      */
-    TableLayout::Column & addSubColumns( std::initializer_list< TableLayout::Column > subCol );
+    Column & addSubColumns( std::initializer_list< Column > subCol );
 
     /**
      * @brief Adds multiple sub-columns to the column.
-     * @param subColName A list of sub-column names to add.
+     * @param subColNames A list of sub-column names to add.
      * @return The current column object
      */
-    TableLayout::Column & addSubColumns( std::initializer_list< string > subColName );
+    Column & addSubColumns( std::initializer_list< string > subColNames );
+
+    /**
+     * @brief Adds multiple sub-columns to the column.
+     * @param subColNames A list of sub-column names to add.
+     * @return The current column object
+     */
+    Column & addSubColumns( std::vector< string > const & subColNames );
 
     /**
      * @brief Adds a single sub-column to the column.
      * @param subColName The name of the sub-column to add.
      * @return The current column object.
      */
-    TableLayout::Column & addSubColumns( string const & subColName );
+    Column & addSubColumn( string_view subColName );
+
+    /**
+     * @brief Adds a single sub-column to the column.
+     * @param subCol The sub-column to add.
+     * @return The current column object.
+     */
+    Column & addSubColumn( Column const & subCol );
 
     /**
      * @brief Sets the header alignment for the column.
      * @param headerAlignment The alignment to set for the column header (left, right, or center).
      * @return The current column object
      */
-    TableLayout::Column & setHeaderAlignment( Alignment headerAlignment );
+    Column & setHeaderAlignment( Alignment headerAlignment );
 
     /**
      * @brief Sets the values alignment for the column.
      * @param valueAlignment The alignment to set for the column values (left, right, or center).
      * @return The current column object
      */
-    TableLayout::Column & setValuesAlignment( Alignment valueAlignment );
-
-    /**
-     * @return number of times we will divide the current cell
-     */
-    size_t getNumberCellMerge()
-    { return m_headerMergeCount; }
-
-    /**
-     * @brief Increment number of times we will divide the current cell
-     * @param value number of division to add
-     */
-    void incrementMergeHeaderCount( size_t value )
-    { m_headerMergeCount+= value;}
-
-    /**
-     * @brief Decremente number of times we will divide the current cell
-     */
-    void decrementMergeHeaderCount()
-    { m_headerMergeCount--; }
+    Column & setValuesAlignment( Alignment valueAlignment );
 
     /**
      * @brief Checks if the column has any child columns.
      * @return bool True if the column has child columns, otherwise false.
      */
     bool hasChild() const
-    { return !this->m_subColumn.empty(); }
+    { return !this->m_subColumns.empty(); }
 
     /**
      * @brief Checks if the column has a parent column.
@@ -231,13 +388,23 @@ public:
     bool hasParent() const
     { return this->m_parent != nullptr; }
 
+    /**
+     * @return bool True if the column has a neightboor to its right that has the same parent.
+     */
+    bool hasNext() const
+    { return this->m_next != nullptr; }
+
+    /**
+     * @return True if the column and its children are visible.
+     */
+    bool isVisible() const
+    { return m_header.m_layout.m_cellType!=CellType::Hidden; }
+
 private:
     /// Pointer to the parent cell (if any).
-    Column * m_parent;
+    Column * m_parent = nullptr;
     /// Pointer to the next cell (if any).
-    Column * m_next;
-    /// The width of the cell (e.g., for cell containing subColumns).
-    size_t m_headerMergeCount  = 0;
+    Column * m_next = nullptr;
   };
 
   /**
@@ -248,7 +415,7 @@ private:
   {
 public:
     ///alias for column
-    using ColumnType = Column;
+    using ColumnType = Column const;
 
     /**
      * @brief Construct a new Leaf Iterator object
@@ -264,9 +431,9 @@ public:
      * @param[in] columnPtr Coulmn  to copy
      * @return Leaf iterator
      */
-    DeepFirstIterator & operator=( Column * columnPtr )
+    DeepFirstIterator & operator=( ColumnType * columnPtr )
     {
-      this->m_currentColumn= columnPtr;
+      this->m_currentColumn = columnPtr;
       return *this;
     }
 
@@ -286,14 +453,20 @@ public:
      * @brief Dereference operator.
      * @return Reference to the current Column object pointed to by the iterator.
      */
-    ColumnType & operator*()
+    ColumnType & operator*() const
     { return *m_currentColumn; }
+
+    /**
+     * @return Pointer to the current Column object pointed to by the iterator.
+     */
+    ColumnType * getPtr() const
+    { return m_currentColumn; }
 
     /**
      * @brief Arrow operator.
      * @return Pointer to the current Column object.
      */
-    ColumnType * operator->()
+    ColumnType * operator->() const
     { return m_currentColumn; }
 
     /**
@@ -320,13 +493,6 @@ public:
     size_t getCurrentLayer() const
     { return m_currentLayer; }
 
-    /**
-     * @brief Check if the current cell belong the last column
-     * @return true
-     * @return false
-     */
-    bool isLastColumn();
-
 private:
     /// Pointer to the current column
     ColumnType * m_currentColumn;
@@ -339,22 +505,27 @@ private:
    * Example on 2 column with Column A : 2 layer and Column B : 3 layers
    * A.A -> A-B -> A-C -> A -> B-A-A -> B-A-B -> B-A -> B-B-A -> B-B-B -> B-B -> B
    */
-  DeepFirstIterator beginDeepFirst();
+  DeepFirstIterator beginDeepFirst() const;
 
   /**
    * @return Return a end itarator
    * This iterator is initialized with a null pointer
    * representing a position after the last valid element
    */
-  DeepFirstIterator endDeepFirst()
-  {
-    return DeepFirstIterator( nullptr, 0 );
-  }
+  DeepFirstIterator endDeepFirst() const
+  { return DeepFirstIterator( nullptr, 0 ); }
 
   /// Alias for an initializer list of variants that can contain either a string or a layout column.
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
-  TableLayout() = default;
+  /// Alias for the list of columns.
+  using ColumnsList = Column::ColumnsList;
+
+
+  TableLayout()
+  {
+    setMargin( MarginValue::medium );
+  }
 
   /**
    * @brief Construct a new Table Layout object
@@ -366,10 +537,7 @@ private:
   {
     setMargin( MarginValue::medium );
     setTitle( title );
-    for( auto const & column :columns )
-    {
-      addToColumns( column );
-    }
+    addColumns( columns );
   }
 
   /**
@@ -406,32 +574,38 @@ private:
   {
     setMargin( MarginValue::medium );
     setTitle( title );
-    addToColumns( args );
+    addColumns( args );
   }
 
   /**
-   * @brief Get the max depth of a column
-   * @return The max column depth
+   * @return The columns list
    */
-  size_t getMaxDepth() const;
+  ColumnsList const & getColumns() const
+  { return m_tableColumns; }
 
   /**
-   * @return The columns vector
+   * @return The columns list
    */
-  std::vector< Column > & getColumns()
-  { return m_tableColumnsData; }
+  ColumnsList & getColumns()
+  { return m_tableColumns; }
 
   /**
-   * @return The columns vector
+   * @return The table name. Returned as a for multiline support.
    */
-  std::vector< Column > const & getColumns() const
-  { return m_tableColumnsData; }
+  CellLayout const & getTitleLayout() const
+  { return m_tableTitleLayout; }
 
   /**
-   * @return The table name
+   * @return The table name. Returned as a for multiline support.
    */
-  string_view getTitle() const
-  { return m_tableTitle; }
+  CellLayout & getTitleLayout()
+  { return m_tableTitleLayout; }
+
+  /**
+   * @return The table name. Returned as a for multiline support.
+   */
+  string_view getTitleStr() const
+  { return m_tableTitleStr; }
 
   /**
    * @param title The table title
@@ -454,27 +628,38 @@ private:
   TableLayout & setMargin( MarginValue marginValue );
 
   /**
+   * @brief Set the maximal width for each column
+   * @param width The max column width
+   * @return The tableLayout reference
+   */
+  TableLayout & setMaxColumnWidth( size_t width );
+
+  /**
+   * @brief check if a column max width has been set
+   * @return Truef a column max width has been set, otherwise false
+   */
+  bool isMaxColumnWidthSet()
+  { return m_maxColumnWidth != noColumnMaxWidth; }
+
+  /**
    * @return check if the line break at the end & beginning is activated
    */
   bool isLineBreakEnabled() const;
 
-
   /**
-   * @return The border margin,
-   * number of spaces at both left and right table sides plus vertical character
+   * @return The number of spaces at each table sides
    */
   integer const & getBorderMargin() const
   { return m_borderMargin; }
 
   /**
-   * @return The column margin,
-   * numbers of spaces separating both left and right side from a vertical line
+   * @return The number of character between two columns (spaces + the separacting character).
    */
   integer const & getColumnMargin() const
   { return m_columnMargin; }
 
   /**
-   * @return The table margin value
+   * @return The number of margin spaces around contents.
    */
   integer const & getMarginValue() const
   { return m_marginValue; }
@@ -482,30 +667,34 @@ private:
   /**
    * @return The margin title
    */
-  integer const & getMarginTitle() const
-  { return m_titleMargin; }
+  size_t const & getMaxColumnWidth() const
+  { return m_maxColumnWidth; }
 
-/**
- * @brief Get the Nb Rows object
- * @return std::vector< integer >&
- */
-  std::vector< size_t > & getSublineInHeaderCounts()
-  { return m_sublineHeaderCounts; }
+  /**
+   * @brief Create and add columns to the columns vector given a string vector
+   * @param columnNames The columns name
+   */
+  void addColumns( std::vector< TableLayout::Column > const & columnNames );
 
-/**
- * @brief Get the Nb Rows object
- * @return std::vector< integer >&
- */
-  std::vector< size_t > & getNbSubDataLines()
-  { return m_sublineDataCounts; }
+  /**
+   * @brief Create and add columns to the columns vector given a string vector
+   * @param columns The columns list
+   */
+  void addColumns( std::vector< string > const & columns );
 
   /**
    * @brief Create and add a column to the columns vector given a string
-   * @param m_header The column name
+   * @param columnName The column name
    */
-  void addToColumns( string_view m_header );
+  void addColumn( string_view columnName );
 
-private:
+  /**
+   * @brief Create and add a column to the columns vector given a Column
+   * @param column Vector containing addition information on the column
+   */
+  void addColumn( TableLayout::Column const & column );
+
+protected:
 
   /**
    * @brief Add a column to the table given an initializer_list of string & Column
@@ -516,52 +705,110 @@ private:
     for( auto const & arg : args )
     {
       std::visit( [this]( auto const & value ) {
-        addToColumns( value );
+        addColumn( value );
       }, arg );
     }
   }
 
   /**
-   * @brief
-   *
    * @tparam Ts The remaining arguments
    * @param args The remaining arguments to be processed
    */
   template< typename ... Ts >
   void processArguments( Ts &... args )
   {
-    addToColumns( args ... );
+    addColumns( args ... );
   }
 
-  /**
-   * @brief Create and add columns to the columns vector given a string vector
-   * @param columnNames The columns name
-   */
-  void addToColumns( std::vector< string > const & columnNames );
+  /// Columns settings hierarchy
+  ColumnsList m_tableColumns;
 
-/**
- *
- * @brief Create and add a column to the columns vector given a Column
- * @param column Vector containing addition information on the column
- */
-  void addToColumns( TableLayout::Column const & column );
+  /// Indicate if we have a line break a the beginning of the table
+  bool m_lineBreakAtBegin = true;
 
-  /// Contains the columns layout
-  std::vector< Column > m_tableColumnsData;
-  /// Contains the subdivision (line) counts for each line in header.
-  std::vector< size_t > m_sublineHeaderCounts;
-  /// Contains the subdivision (line) counts for each line in data.
-  std::vector< size_t > m_sublineDataCounts;
-  bool m_wrapLine = true;
+  /// Table title text
+  string m_tableTitleStr;
 
-  string m_tableTitle;
+  /// Table title cell layout settings
+  CellLayout m_tableTitleLayout = CellLayout( CellType::Header, Alignment::center );
 
+  /// Max width for each column
+  size_t m_maxColumnWidth = noColumnMaxWidth;
+
+
+  /// The number of spaces at each table sides
   integer m_borderMargin;
+
+  /// The number of character between two columns (spaces + the separacting character).
   integer m_columnMargin;
+
+  /// The number of margin spaces around contents.
   integer m_marginValue;
-  integer m_titleMargin = 2;
 
 };
+
+/**
+ * @brief Variation of the TableLayout to store precomputed layout information, ready to be formatted.
+ */
+class PreparedTableLayout : public TableLayout
+{
+public:
+
+  /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
+   */
+  PreparedTableLayout();
+
+  /**
+   * @brief Precompute various information for formatting from a configurated TableLayout:
+   *        - parent-child relationships between columns and sub-columns,
+   *        - layout elements size,
+   *        - line wrapping.
+   *        For now, called automatically at TableFormatter construction.
+   * @note If an error happen while this process, it must output the table name and the error
+   *       message in a GEOS_WARNING().
+   * @param other The table layout configuration.
+   */
+  PreparedTableLayout( TableLayout const & other );
+
+  /**
+   * @brief As prepared CellLayout & Column types have internal pointers, we cannot copy this class.
+   */
+  PreparedTableLayout( PreparedTableLayout const & ) = delete;
+
+  /**
+   * @brief as prepared CellLayout & Column types have internal pointers, we cannot move this class
+   *        (SSO breaks string<-string_view move).
+   */
+  PreparedTableLayout( PreparedTableLayout && ) = delete;
+
+  /**
+   * @return The count of column layers
+   */
+  size_t getColumnLayersCount() const
+  { return m_columnLayersCount; }
+
+  /**
+   * @return The number of visible columns that does not contain child (useful to know the maximum number of
+   *         column to show in a given row).
+   */
+  size_t getLowermostColumnsCount() const
+  { return m_lowermostColumnCount; }
+
+private:
+
+  size_t m_columnLayersCount;
+  size_t m_lowermostColumnCount;
+
+  /**
+   * @brief Recursive part of column layout preparation, see constructor documentation.
+   * @param columns The list of columns to prepare.
+   */
+  void prepareLayoutRecusive( std::vector< TableLayout::Column > & columns, size_t level );
+
+};
+
 }
 
 #endif /* GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP */

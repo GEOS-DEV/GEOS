@@ -19,6 +19,7 @@
 
 #include "LinearSolverParameters.hpp"
 #include "common/format/table/TableFormatter.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -30,7 +31,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solverTypeString(), &m_parameters.solverType ).
     setApplyDefaultValue( m_parameters.solverType ).
@@ -215,6 +215,9 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.ifact.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
+
+  addLogLevel< logInfo::LinearSolver >();
+  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 void LinearSolverParametersInput::postInputInitialization()
@@ -342,7 +345,10 @@ void LinearSolverParametersInput::print()
     }
   }
   TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: linear solver", getParent().getName() ),
-                                               { "Parameter", "Value" } );
+                                               { TableLayout::Column()
+                                                   .setName( "Parameter" )
+                                                   .setValuesAlignment( TableLayout::Alignment::left ),
+                                                 "Value" } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
 }

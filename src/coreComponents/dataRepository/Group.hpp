@@ -1493,18 +1493,18 @@ public:
   void loadFromConduit();
 
   /**
-   * @deprecated will be remove and replace by addLogLevel
-   */
-  void enableLogLevelInput();
-
-  /**
    * @brief Set verbosity level
    * @param logLevel new verbosity level value
    */
   void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
 
-  /// @return The verbosity level
+  /**
+   * @return The verbosity level of the Group instance.
+   * @warning For logging activation, *Please use `isLogLevelActive< logInfo::yourInfo >( getLogLevel() )`*
+   * to be sure to document to the user what the Group is able to output.
+   */
   integer getLogLevel() const { return m_logLevel; }
+
   ///@}
 
   /**
@@ -1599,7 +1599,7 @@ private:
    */
   template< bool DO_PACKING >
   localIndex packImpl( buffer_unit_type * & buffer,
-                       array1d< string > const & wrapperNames,
+                       string_array const & wrapperNames,
                        arrayView1d< localIndex const > const & packList,
                        integer const recursive,
                        bool onDevice,
