@@ -137,13 +137,20 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   WellControls & wellControls = getWellControls( subRegion );
   if( !wellControls.useSurfaceConditions() )
   {
-    GEOS_THROW_IF( wellControls.referenceReservoirRegion()=="",
-                   "WellControls referenceReservoirRegion not set and is required if useSurfaceCondtions=0 ",
-                   InputError );
-    ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
-    SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( "regionStatistics" );
-    wellControls.setRegionAveragePressure( stats.averagePressure );
-
+    bool useSeg = wellControls.referenceReservoirRegion()=="";
+    GEOS_WARNING_IF( useSeg,
+                     "WellControls referenceReservoirRegion not set and well constraint fluid property calculations will use top segement pressure and temp " );
+    if( useSeg )
+    {
+      wellControls.setRegionAveragePressure( -1 );
+    }
+    else
+    {
+      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
+      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( "regionStatistics" );
+      wellControls.setRegionAveragePressure( stats.averagePressure );
+      wellControls.setRegionAverageTemperature( stats.averageTemperature );
+    }
   }
   WellControls::Control currentControl = wellControls.getControl();
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n );
@@ -253,8 +260,22 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
   string const wellControlsName = wellControls.getName();
   bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-  real64 const & surfacePres = wellControls.getSurfacePressure();
-  real64 const & resAvePres = wellControls.getRegionAveragePressure();
+  real64 flashPressure;
+  if( useSurfaceConditions )
+  {
+    // use surface conditions
+    flashPressure = wellControls.getSurfacePressure();
+  }
+  else
+  {
+    // use region conditions
+    flashPressure = wellControls.getRegionAveragePressure();
+    if( flashPressure < 0.0 )
+    {
+      // use segment conditions
+      flashPressure   = pres[iwelemRef];
+    }
+  }
   real64 & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
   real64 & dCurrentVolRate_dPres =
@@ -274,8 +295,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
                                 dDens,
                                 logSurfaceCondition,
                                 &useSurfaceConditions,
-                                &surfacePres,
-                                &resAvePres,
+                                &flashPressure,
                                 &currentVolRate,
                                 &dCurrentVolRate_dPres,
                                 &dCurrentVolRate_dRate,
@@ -284,18 +304,18 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
     {
       //    We need to evaluate the density as follows:
       //      - Surface conditions: using the surface pressure provided by the user
-      //      - Reservoir conditions: using the pressure in the top element
-
+      //      - Segment conditions: using the pressure in the top element
+      //      - Reservoir conditions: using the average region pressure
       if( useSurfaceConditions )
       {
         // we need to compute the surface density
-        fluidWrapper.update( iwelemRef, 0, surfacePres );
+        fluidWrapper.update( iwelemRef, 0, flashPressure );
 
         if( logSurfaceCondition )
         {
 
           GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
-                                   wellControlsName, surfacePres ) );
+                                   wellControlsName, flashPressure ) );
         }
 
 #ifdef GEOS_USE_HIP
@@ -305,9 +325,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       }
       else
       {
-        real64 refPres = pres[iwelemRef];
-        refPres = resAvePres;
-        fluidWrapper.update( iwelemRef, 0, refPres );
+        fluidWrapper.update( iwelemRef, 0, flashPressure );
       }
 
       real64 const densInv = 1.0 / dens[iwelemRef][0];

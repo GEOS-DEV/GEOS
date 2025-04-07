@@ -442,14 +442,20 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   WellControls & wellControls = getWellControls( subRegion );
   if( !wellControls.useSurfaceConditions() )
   {
-    GEOS_THROW_IF( wellControls.referenceReservoirRegion()=="",
-                   "WellControls referenceReservoirRegion not set and is required if useSurfaceCondtions=0 ",
-                   InputError );
-    ElementRegionBase const & region = elemManager.getRegion( "wellControls.referenceReservoirRegion()" );
-    CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >( "regionStatistics" );
-    wellControls.setRegionAveragePressure( stats.averagePressure );
-    wellControls.setRegionAverageTemperature( stats.averageTemperature );
-
+    bool useSeg = wellControls.referenceReservoirRegion()=="";
+    GEOS_WARNING_IF( useSeg,
+                     "WellControls referenceReservoirRegion not set and well constraint fluid property calculations will use top segement pressure and temp " );
+    if( useSeg )
+    {
+      wellControls.setRegionAveragePressure( -1 );
+    }
+    else
+    {
+      ElementRegionBase const & region = elemManager.getRegion( "wellControls.referenceReservoirRegion()" );
+      CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >( "regionStatistics" );
+      wellControls.setRegionAveragePressure( stats.averagePressure );
+      wellControls.setRegionAverageTemperature( stats.averageTemperature );
+    }
   }
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
@@ -684,10 +690,29 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   string const massUnit = m_useMass ? "kg" : "mol";
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-  real64 const & surfacePres = wellControls.getSurfacePressure();
-  real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
-  real64 const & resAvePres = wellControls.getRegionAveragePressure();
-
+  real64 flashPressure;
+  real64 flashTemperature;
+  if( useSurfaceConditions )
+  {
+    // use surface conditions
+    flashPressure = wellControls.getSurfacePressure();
+    flashTemperature = wellControls.getSurfaceTemperature();
+  }
+  else
+  {
+    // use region conditions
+    flashPressure = wellControls.getRegionAveragePressure();
+    if( flashPressure < 0.0 )
+    {
+      // use segment conditions
+      flashPressure   = pres[iwelemRef];
+      flashTemperature = temp[iwelemRef];
+    }
+    else
+    {
+      flashTemperature = wellControls.getRegionAveragePressure();
+    }
+  }
   arrayView1d< real64 > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
   arrayView2d< real64 > const & dCurrentPhaseVolRate =
@@ -729,9 +754,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                   dPhaseFrac,
                                   logSurfaceCondition,
                                   &useSurfaceConditions,
-                                  &surfacePres,
-                                  &resAvePres,
-                                  &surfaceTemp,
+                                  &flashPressure,
+                                  &flashTemperature,
                                   &currentTotalVolRate,
                                   dCurrentTotalVolRate,
                                   currentPhaseVolRate,
@@ -749,15 +773,16 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
         //    We need to evaluate the density as follows:
         //      - Surface conditions: using the surface pressure provided by the user
-        //      - Reservoir conditions: using the pressure in the top element
+        //      - Segment conditions: using the pressure in the top element
+        //      - Reservoir conditions: using the average region pressure
         if( useSurfaceConditions )
         {
           // we need to compute the surface density
-          fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
+          fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
           if( logSurfaceCondition )
           {
             GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
-                                     wellControlsName, surfacePres, surfaceTemp ) );
+                                     wellControlsName, flashPressure, flashTemperature ) );
           }
 #ifdef GEOS_USE_HIP
           GEOS_UNUSED_VAR( wellControlsName );
@@ -766,8 +791,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         }
         else
         {
-          real64 const refPres = resAvePres;
-          fluidWrapper.update( iwelemRef, 0, refPres, temp[iwelemRef], compFrac[iwelemRef] );
+          fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
         }
 
         // Step 2: update the total volume rate
