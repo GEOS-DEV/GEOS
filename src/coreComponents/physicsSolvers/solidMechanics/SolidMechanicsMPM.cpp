@@ -8310,6 +8310,8 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
   real64 normalForce = normalStress * surfaceArea;
   real64 shearForce = shearStress * surfaceArea;
 
+  std::cout << "element size in each direction " << m_hEl << std::endl;
+
   if ( m_preventCZInterpentration == 1 && normalForce < 0 )
   {
     normalForce = 0.0;
@@ -8335,7 +8337,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     tB[i] += normalForce * nAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][B]);
   }
 
-  if ( fabs(totalTangentialDisplacement) > 1e-12 )
+  if ( fabs(totalTangentialDisplacement) > 1*m_hEl )
   {
     real64 tAB[3] = { 0 }; // Tangent unit vector
     LvArray::tensorOps::copy< 3 >( tAB, tangentialInterfaceDisplacement );
