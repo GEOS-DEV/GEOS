@@ -193,6 +193,18 @@ constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
 template< typename T >
 constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
 
+/// True if T is an instantiation of LvArray::ArrayOfArrays.
+template< typename T >
+constexpr bool is_array_of_arrays = LvArray::isArrayOfArrays< T >;
+
+/// True if T is an instantiation of LvArray::ArrayOfArraysView.
+template< typename T >
+constexpr bool is_array_of_arrays_view = LvArray::isArrayOfArraysView< T >;
+
+/// True if T is an instantiation of LvArray::ArrayOfArraysView or LvArray::ArrayOfArrays
+template< typename T >
+constexpr bool is_array_of_arrays_type = traits::is_array_of_arrays_view< T > || traits::is_array_of_arrays< T >;
+
 /// True if T is an instantiation of LvArray::SortedArrayView or LvArray::SortedArray
 template< typename T >
 constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || traits::is_sorted_array< T >;

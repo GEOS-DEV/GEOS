@@ -382,17 +382,6 @@ public:
    * @brief Provide an immutable accessor to the particle neighbor list.
    * @return const reference to neighbor list
    */
-   void setNeighborList( const OrderedVariableToManyParticleRelation & newNeighborList )
-   { 
-    // m_neighborList = OrderedVariableToManyParticleRelation( newNeighborList ); 
-    m_neighborList = newNeighborList; 
-    // m_neighborList( newNeighborList );
-  }
-
-  /**
-   * @brief Provide an immutable accessor to the particle neighbor list.
-   * @return const reference to neighbor list
-   */
   OrderedVariableToManyParticleRelation const & neighborList() const
   { return m_neighborList; }
 
@@ -449,13 +438,13 @@ public:
 
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
-  
+
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
 
     /// @return String key for the member level field for the particle surface position.
     static constexpr char const * particleSurfacePositionString() { return "particleSurfacePosition"; }
-  
+
     /// @return String key for the member level field for the particle surface traction.
     static constexpr char const * particleSurfaceTractionString() { return "particleSurfaceTraction"; }
   };
