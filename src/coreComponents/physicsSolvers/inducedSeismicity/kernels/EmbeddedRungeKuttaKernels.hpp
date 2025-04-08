@@ -109,6 +109,10 @@ public:
     LvArray::tensorOps::copy< 2 >( m_slipVelocity[k], m_slipVelocity_n[k] );
     m_slipRate[k] =  LvArray::tensorOps::l2Norm< 2 >( m_slipVelocity_n[k] );
     m_stateVariable[k] = m_stateVariable_n[k];
+    // if( m_stateVariable[k] < 0)
+    // {
+    //   std::cout << "stateVariable " << m_stateVariable[k] << std::endl;
+    // }
   }
 
   /**
@@ -133,7 +137,7 @@ public:
   }
 
   /**
-   * @brief Update stage values (slip, state and displacement jump) to a Runge-Kutta substage.
+   * @brief Update stage values (delta slip, state) to a Runge-Kutta substage.
    */
   GEOS_HOST_DEVICE
   void updateStageValues( localIndex const k, integer const stageIndex, real64 const dt ) const
@@ -148,15 +152,19 @@ public:
       deltaSlipIncrement[1] += m_butcherTable.a[stageIndex-1][i] * m_stageRates[k][i][1];
       stateVariableIncrement += m_butcherTable.a[stageIndex-1][i] * m_stageRates[k][i][2];
     }
-    m_deltaSlip[k][0] = dt*deltaSlipIncrement[0];
-    m_deltaSlip[k][1] = dt*deltaSlipIncrement[1];
-    m_totalSlip[k][0] = m_totalSlip_n[k][0] + dt*deltaSlipIncrement[0];
-    m_totalSlip[k][1] = m_totalSlip_n[k][0] + dt*deltaSlipIncrement[1];
-    m_stateVariable[k] = m_stateVariable_n[k] + dt*stateVariableIncrement;
+    m_deltaSlip[k][0] = dt * deltaSlipIncrement[0];
+    m_deltaSlip[k][1] = dt * deltaSlipIncrement[1];
+    m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
+    
+    if( m_stateVariable[k] < 0)
+    {
+      std::cout << "stateVariable " << m_stateVariable[k] << std::endl;
+    }
+    
   }
 
   /**
-   * @brief Updates slip, state and displacement jump to the next time computes error the local error
+   * @brief Updates delta slip, total slip, state to the next time and computes the local error
    * in the time step
    */
   GEOS_HOST_DEVICE
@@ -183,17 +191,22 @@ public:
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
 
+    // Slip accumulated over time step
     m_deltaSlip[k][0]  = dt * deltaSlipIncrement[0];
     m_deltaSlip[k][1]  = dt * deltaSlipIncrement[1];
-    m_stateVariable[k] = dt * stateVariableIncrement;
+    
+    // Total slip accumulated
+    m_totalSlip[k][0] = m_totalSlip_n[k][0] + dt * deltaSlipIncrement[0];
+    m_totalSlip[k][1] = m_totalSlip_n[k][1] + dt * deltaSlipIncrement[1];
+    m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
 
-    real64 const deltaSlipLowOrder[2]  = { dt * deltaSlipIncrementLowOrder[0],
-                 dt * deltaSlipIncrementLowOrder[1]};
+    real64 const totalSlipLowOrder[2]  = { m_totalSlip_n[k][0] + dt * deltaSlipIncrementLowOrder[0],
+                                           m_totalSlip_n[k][0] + dt * deltaSlipIncrementLowOrder[1] };
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
 
     // Compute error
-    m_error[k][0] = computeError( m_deltaSlip[k][0], deltaSlipLowOrder[0], absTol, relTol );
-    m_error[k][1] = computeError( m_deltaSlip[k][1], deltaSlipLowOrder[1], absTol, relTol );
+    m_error[k][0] = computeError( m_totalSlip[k][0], totalSlipLowOrder[0], absTol, relTol );
+    m_error[k][1] = computeError( m_totalSlip[k][1], totalSlipLowOrder[1], absTol, relTol );
     m_error[k][2] = computeError( m_stateVariable[k], stateVariableLowOrder, absTol, relTol );
   }
 
@@ -208,23 +221,29 @@ public:
     real64 deltaSlipIncrementLowOrder[2] = {0.0, 0.0};
     real64 stateVariableIncrementLowOrder = 0.0;
 
+    // In FSAL algorithms the last RK substage update coincides with the
+    // high-order update. Only need to compute increments for the the
+    // low-order updates for error computation, and can reuse the high-order updates.
     for( localIndex i = 0; i < m_butcherTable.numStages; i++ )
     {
-      // In FSAL algorithms the last RK substage update coincides with the
-      // high-order update. Only need to compute increments for the the
-      // low-order updates for error computation.
       deltaSlipIncrementLowOrder[0]   += m_butcherTable.bStar[i] * m_stageRates[k][i][0];
       deltaSlipIncrementLowOrder[1]   += m_butcherTable.bStar[i] * m_stageRates[k][i][1];
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
+    
+    // Update total slip accumulated using delta slip from stage values.
+    // Note: deltaSlip already multiplied by dt.
+    m_totalSlip[k][0] = m_totalSlip_n[k][0] + m_deltaSlip[k][0]; 
+    m_totalSlip[k][1] = m_totalSlip_n[k][1] + m_deltaSlip[k][1];
 
-    real64 const deltaSlipLowOrder[2]  = { dt * deltaSlipIncrementLowOrder[0],
-                 dt * deltaSlipIncrementLowOrder[1]};
+    
+    real64 const totalSlipLowOrder[2]  = { m_totalSlip_n[k][0] +  dt * deltaSlipIncrementLowOrder[0],
+                                           m_totalSlip_n[k][1] +  dt * deltaSlipIncrementLowOrder[1]};
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
 
     // Compute error
-    m_error[k][0] = computeError( m_deltaSlip[k][0], deltaSlipLowOrder[0], absTol, relTol );
-    m_error[k][1] = computeError( m_deltaSlip[k][1], deltaSlipLowOrder[1], absTol, relTol );
+    m_error[k][0] = computeError( m_totalSlip[k][0], totalSlipLowOrder[0], absTol, relTol );
+    m_error[k][1] = computeError( m_totalSlip[k][1], totalSlipLowOrder[1], absTol, relTol );
     m_error[k][2] = computeError( m_stateVariable[k], stateVariableLowOrder, absTol, relTol );
   }
 
