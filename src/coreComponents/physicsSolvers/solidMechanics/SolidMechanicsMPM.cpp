@@ -8310,7 +8310,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
   real64 normalForce = normalStress * surfaceArea;
   real64 shearForce = shearStress * surfaceArea;
 
-  std::cout << "element size in each direction " << m_hEl << std::endl;
+  //std::cout << " minimum element size  " << std::min({ m_hEl[0], m_hEl[1], m_hEl[2] }) << std::endl;
 
   if ( m_preventCZInterpentration == 1 && normalForce < 0 )
   {
@@ -8337,7 +8337,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     tB[i] += normalForce * nAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][B]);
   }
 
-  if ( fabs(totalTangentialDisplacement) > 1*m_hEl )
+  if ( fabs(totalTangentialDisplacement) > 7e-14 * std::min({ m_hEl[0], m_hEl[1], m_hEl[2] }) )
   {
     real64 tAB[3] = { 0 }; // Tangent unit vector
     LvArray::tensorOps::copy< 3 >( tAB, tangentialInterfaceDisplacement );
@@ -11214,6 +11214,7 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
       Graphite & graphite = dynamic_cast< Graphite & >( constitutiveModel );
       shearModulus = graphite.effectiveShearModulus();
     }
+    GEOS_ERROR_IF( shearModulus.size() == 0, "Failed to initialize shearModulus for material: " + constitutiveModelName );
 
     GEOS_ERROR_IF( !constitutiveModel.hasWrapper( constitutive::SolidBase::viewKeyStruct:: defaultDensityString() ) , "Constitutive model must have particle density for the generalized vortex problem!");
     real64 const initialDensity = constitutiveModel.getReference< real64 >( constitutive::SolidBase::viewKeyStruct:: defaultDensityString() );
