@@ -11166,7 +11166,7 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
                                                                                  ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
-
+  std::cout<<"m_generalizedVortexMMS = "<<m_generalizedVortexMMS<<std::endl;
   // Method of Manufactured Solutions - generalized vortex.
   // As Described in K. Kamojjala, R Brannon, A Sadeghirad, J. Guilkey "Verification Tests
   // in Solid Mechanics", Engineering with computers, (2015).
@@ -11214,7 +11214,7 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
       Graphite & graphite = dynamic_cast< Graphite & >( constitutiveModel );
       shearModulus = graphite.effectiveShearModulus();
     }
-    GEOS_ERROR_IF( shearModulus.size() == 0, "Failed to initialize shearModulus for material: " + constitutiveModelName );
+    //GEOS_ERROR_IF( shearModulus.size() == 0, "Failed to initialize shearModulus for material: " + constitutiveModelName );
 
     GEOS_ERROR_IF( !constitutiveModel.hasWrapper( constitutive::SolidBase::viewKeyStruct:: defaultDensityString() ) , "Constitutive model must have particle density for the generalized vortex problem!");
     real64 const initialDensity = constitutiveModel.getReference< real64 >( constitutive::SolidBase::viewKeyStruct:: defaultDensityString() );
