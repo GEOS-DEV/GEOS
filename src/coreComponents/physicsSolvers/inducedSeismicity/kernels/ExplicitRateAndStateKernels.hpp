@@ -78,22 +78,8 @@ public:
     GEOS_UNUSED_VAR( dt );
     real64 const normalTraction = m_normalTraction[k];
     real64 const shearTractionMagnitude = LvArray::tensorOps::l2Norm< 2 >( m_shearTraction[k] );
-
-    // Slip rate is bracketed between [0, shear traction magnitude / shear impedance]
-    // If slip rate is outside the bracket, re-initialize to the middle value
-    real64 const upperBound = shearTractionMagnitude/m_shearImpedance;
-    real64 bracketedSlipRate = m_slipRate[k];
-    if( m_slipRate[k] > upperBound )
-    {
-      bracketedSlipRate  = 0.5*upperBound;
-    }
-    else if( m_slipRate[k] < 0.0 )
-    {
-      bracketedSlipRate = .01*upperBound;
-    }
-
-
-    stack.rhs = shearTractionMagnitude - m_shearImpedance *bracketedSlipRate - normalTraction * m_frictionLaw.frictionCoefficient( k, bracketedSlipRate, m_stateVariable[k] );
+    real64 const bracketedSlipRate = bracketSlipRate( m_slipRate[k], shearTractionMagnitude, m_shearImpedance);
+    stack.rhs = shearTractionMagnitude - m_shearImpedance * bracketedSlipRate - normalTraction * m_frictionLaw.frictionCoefficient( k, bracketedSlipRate, m_stateVariable[k] );
     stack.jacobian = -m_shearImpedance - normalTraction * m_frictionLaw.dFrictionCoefficient_dSlipRate( k, bracketedSlipRate, m_stateVariable[k] );
   }
 
@@ -103,18 +89,8 @@ public:
   {
     m_slipRate[k] -= stack.rhs/stack.jacobian;
 
-    // Slip rate is bracketed between [0, shear traction magnitude / shear impedance]
-    // Check that the update did not end outside of the bracket.
     real64 const shearTractionMagnitude = LvArray::tensorOps::l2Norm< 2 >( m_shearTraction[k] );
-    real64 const upperBound = shearTractionMagnitude/m_shearImpedance;
-    if( m_slipRate[k] > upperBound )
-    {
-      m_slipRate[k] =0.5*upperBound;
-    }
-    else if( m_slipRate[k] < 0.0 )
-    {
-      m_slipRate[k] = .01*upperBound; // Ensure slip rate does not go negative
-    }
+    m_slipRate[k] = bracketSlipRate(m_slipRate[k], shearTractionMagnitude, m_shearImpedance);
   }
 
 
@@ -133,6 +109,18 @@ public:
   {
     real64 const frictionCoefficient = m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] );
     projectSlipRateBase( k, frictionCoefficient, m_shearImpedance, m_normalTraction, m_shearTraction, m_slipRate, m_slipVelocity );
+  }
+
+  GEOS_HOST_DEVICE
+  real64 bracketSlipRate( real64 const slipRate, real64 const shearTractionMagnitude, real64 const shearImpedance) const
+  {
+    // Bounds for bracket
+    real64 const lowerBound = 0.;
+    real64 const upperBound = shearTractionMagnitude / shearImpedance;
+    // If slipRate is outside of the bracket, set bracketedSlipRate to the intermediate value of the bracket. Otherwise
+    // bracketedSlipRate is set to slipRate.
+    real64 const bracketedSlipRate = (slipRate < lowerBound || slipRate > upperBound) ? 0.5 * (lowerBound + upperBound) : slipRate;
+    return bracketedSlipRate;
   }
 
   GEOS_HOST_DEVICE
