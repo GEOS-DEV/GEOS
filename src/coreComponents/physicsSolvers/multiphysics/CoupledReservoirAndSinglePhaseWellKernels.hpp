@@ -279,14 +279,12 @@ public:
 
   using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-  //using TAG = singlePhaseWellKernels::SubRegionTag;
+  using TAG = singlePhaseWellKernels::SubRegionTag;
 
   using Base::m_dt;
   using Base::m_localRhs;
   using Base::m_localMatrix;
   using Base::m_rankOffset;
-
-
 
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = WJ_COFFSET::nDer;
@@ -350,9 +348,53 @@ public:
                                     globalIndex const & wellElemOffset,
                                     stackArray1d< globalIndex, 2*resNumDOF > & dofColIndices,
                                     localIndex const iwelem )
-    {} );
+    {
+      // No energy equation if top element and Injector
+      // Top element defined by global index == 0
+      // Assumption is global index == 0 is top segment with fixed temp BC
+      if( !m_isProducer )
+      {
+        if( m_globalWellElementIndex[iwelem] == 0 )
+          return;
+      }
+      // local working variables and arrays
+      stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
+
+      stackArray1d< real64, 2 > localPerf( 2 );
+      stackArray2d< real64, 2 * resNumDOF > localPerfJacobian( 2, 2 * resNumDOF );
 
 
+      // equantion offsets - note res and well have different equation lineups
+      eqnRowIndices[TAG::RES  ] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset )  + 1;
+      eqnRowIndices[TAG::WELL ] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
+
+      // populate local flux vector and derivatives
+      localPerf[TAG::RES  ]   = m_dt * m_energyPerfFlux[iperf];
+      localPerf[TAG::WELL ]   = -m_dt * m_energyPerfFlux[iperf];
+
+      for( integer ke = 0; ke < 2; ++ke )
+      {
+        localIndex localDofIndexPres = ke * resNumDOF;
+        localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+        localPerfJacobian[TAG::WELL ][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+
+        localPerfJacobian[TAG::RES ][localDofIndexPres+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+        localPerfJacobian[TAG::WELL][localDofIndexPres+1] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+      }
+
+
+      for( localIndex i = 0; i < localPerf.size(); ++i )
+      {
+        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+        {
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                                       dofColIndices.data(),
+                                                                                       localPerfJacobian[i].dataIfContiguous(),
+                                                                                       2 * resNumDOF );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+        }
+      }
+    } );
   }
 
 

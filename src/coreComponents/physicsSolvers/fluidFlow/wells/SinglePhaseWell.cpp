@@ -917,8 +917,17 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                                         arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+  integer numNorm = 1; // mass balance
+  array1d< real64 > localResidualNorm;
+  array1d< real64 > localResidualNormalizer;
 
-  real64 localResidualNorm = 0.0;
+  if( isThermal() )
+  {
+    numNorm = 2;  // mass balance and energy balance
+  }
+  localResidualNorm.resize( numNorm );
+  localResidualNormalizer.resize( numNorm );
+
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
@@ -934,7 +943,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
-      real64 subRegionResidualNorm[1]{};
+
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -942,38 +951,76 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
       WellControls const & wellControls = getWellControls( subRegion );
 
       // step 1: compute the norm in the subRegion
-
-      ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( rankOffset,
-                                                   wellDofKey,
-                                                   localRhs,
-                                                   subRegion,
-                                                   fluid,
-                                                   wellControls,
-                                                   time_n,
-                                                   dt,
-                                                   m_nonlinearSolverParameters.m_minNormalizer,
-                                                   subRegionResidualNorm );
-
-      // step 2: reduction across meshBodies/regions/subRegions
-
-      if( subRegionResidualNorm[0] > localResidualNorm )
+      if( isThermal() )
       {
-        localResidualNorm = subRegionResidualNorm[0];
-      }
+        real64 subRegionResidualNorm[2]{};
+        thermalSinglePhaseWellKernels::ResidualNormKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( rankOffset,
+                                                     wellDofKey,
+                                                     localRhs,
+                                                     subRegion,
+                                                     fluid,
+                                                     wellControls,
+                                                     time_n,
+                                                     dt,
+                                                     m_nonlinearSolverParameters.m_minNormalizer,
+                                                     subRegionResidualNorm );
+        // step 2: reduction across meshBodies/regions/subRegions
 
+        for( integer i=0; i<numNorm; i++ )
+        {
+          if( subRegionResidualNorm[i] > localResidualNorm[i] )
+          {
+            localResidualNorm[i] = subRegionResidualNorm[i];
+          }
+        }
+      }
+      else
+      {
+        real64 subRegionResidualNorm[1]{};
+        ResidualNormKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( rankOffset,
+                                                     wellDofKey,
+                                                     localRhs,
+                                                     subRegion,
+                                                     fluid,
+                                                     wellControls,
+                                                     time_n,
+                                                     dt,
+                                                     m_nonlinearSolverParameters.m_minNormalizer,
+                                                     subRegionResidualNorm );
+
+        // step 2: reduction across meshBodies/regions/subRegions
+
+        if( subRegionResidualNorm[0] > localResidualNorm[0] )
+        {
+          localResidualNorm[0] = subRegionResidualNorm[0];
+        }
+      }
     } );
   } );
 
+  real64 resNorm=localResidualNorm[0];
+  if( isThermal() )
+  {
+    real64 globalResidualNorm[2]{};
+    globalResidualNorm[0] = MpiWrapper::max( localResidualNorm[0] );
+    globalResidualNorm[1] = MpiWrapper::max( localResidualNorm[1] );
+    resNorm=sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-  // step 3: second reduction across MPI ranks
+    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                            coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
 
-  real64 const residualNorm = MpiWrapper::max( localResidualNorm );
+  }
+  else
+  {
+    resNorm= MpiWrapper::max( resNorm );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
-                         GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
+    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                            coupledSolverAttributePrefix(), resNorm ));
+  }
 
-  return residualNorm;
+  return resNorm;
 }
 
 bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
@@ -1110,6 +1157,14 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
         subRegion.getField< fields::well::pressure_n >();
       wellElemPressure.setValues< parallelDevicePolicy<> >( wellElemPressure_n );
 
+      if( isThermal() )
+      {
+        arrayView1d< real64 > const & wellElemTemperature =
+          subRegion.getField< fields::well::temperature >();
+        arrayView1d< real64 const > const & wellElemTemperature_n =
+          subRegion.getField< fields::well::temperature_n >();
+        wellElemTemperature.setValues< parallelDevicePolicy<> >( wellElemTemperature_n );
+      }
       arrayView1d< real64 > const & connRate =
         subRegion.getField< fields::well::connectionRate >();
       arrayView1d< real64 const > const & connRate_n =

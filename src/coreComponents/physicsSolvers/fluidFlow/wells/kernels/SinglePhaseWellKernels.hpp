@@ -691,7 +691,7 @@ public:
         }
       }
     }
-
+    compFluxKernelOp( iwelem, iwelemNext, flux, currentConnRate );
 
   }
 
@@ -833,6 +833,7 @@ public:
     m_currentControl( wellControls.getControl() ),
     m_targetBHP( wellControls.getTargetBHP( time ) ),
     m_targetRate( wellControls.getTargetTotalRate( time ) ),
+    m_targetMassRate( wellControls.getTargetMassRate( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_density_n( fluid.density_n() )
   {}
@@ -858,6 +859,11 @@ public:
           {
             // this residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_targetRate ), m_minNormalizer );
+          }
+          else if( m_currentControl == WellControls::Control::MASSRATE )
+          {
+            // the residual entry is in volume / time units
+            normalizer = LvArray::math::max( LvArray::math::abs( m_targetMassRate ), m_minNormalizer );
           }
         }
         // for the pressure difference equation, always normalize by the BHP
@@ -910,6 +916,7 @@ protected:
   WellControls::Control const m_currentControl;
   real64 const m_targetBHP;
   real64 const m_targetRate;
+  real64 const m_targetMassRate;
 
   /// View on the volume
   arrayView1d< real64 const > const m_volume;
