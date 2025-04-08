@@ -39,12 +39,26 @@ using namespace rateAndStateKernels;
 ExplicitQDRateAndState::ExplicitQDRateAndState( const string & name,
                                                 Group * const parent ):
   QDRateAndStateBase( name, parent ),
-  m_butcherTable( BogackiShampine32Table()), // TODO: The butcher table should be specified in the XML input.
+  m_butcherTable( BogackiShampine32Table() ), // TODO: The butcher table should be specified in the XML input.
   m_successfulStep( false ),
   m_stepUpdateFactor( 1.0 ),
-  m_controller( PIDController( { 0.6, -0.2, 0.0 },
-                               1.0e-6, 1.0e-6, 0.81 )) // TODO: The control parameters should be specified in the XML input
+  m_absTimeStepTol( 1.0e-6 ),
+  m_relTimeStepTol( 1.0e-6 ),
+  m_timeStepAcceptSafety( 0.81 ),
+  m_controller( PIDController( { 0.6, -0.2, 0.0 } ) ) // TODO: The control parameters should be specified in the XML input
 {
+  this->registerWrapper( viewKeyStruct::absTimeStepTol(), &m_absTimeStepTol ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0e-6 ).
+    setDescription( "Absolute error tolerance for explicit adaptive time stepping" );
+    this->registerWrapper( viewKeyStruct::relTimeStepTol(), &m_relTimeStepTol ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0e-6 ).
+    setDescription( "Relative error tolerance for explicit adaptive time stepping" );
+    this->registerWrapper( viewKeyStruct::timeStepAcceptSafety(), &m_timeStepAcceptSafety ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.81 ).
+    setDescription( "Acceptance safety factor for explicit adaptive time stepping" );
   addLogLevel< logInfo::SolverSteps >();
 }
 
@@ -105,14 +119,13 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
     //
     for( integer stageIndex = 1; stageIndex < m_butcherTable.numStages-1; stageIndex++ )
     {
-      GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, GEOS_FMT( "{} substage {}, dt = {} s", getCatalogName(), stageIndex, dtStage ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, GEOS_FMT( "{} substage {}, dt = {} s", getCatalogName(), stageIndex, dtAdaptive ) );
       // Evolve ODE:s for slip and state evolution
       stepRateStateODESubstage( stageIndex, dtAdaptive, domain );
 
       // Compute stresses (linear mechanic + fluid solve) at next substage
       // Need to reset stress solver to beginning of time step to not
       // accumulate field in the stages.
-      dtStage = m_butcherTable.c[stageIndex+1]*dtAdaptive; // Stage time step size
       resetStressState( domain );
       dtStage = m_butcherTable.c[stageIndex+1]*dtAdaptive; // Stage time step size
       dtStress = updateStresses( time_n, dtStage, cycleNumber, domain );
@@ -215,8 +228,8 @@ void ExplicitQDRateAndState::stepRateStateODEAndComputeError( real64 const dt, D
         rateAndStateKernels::createAndlaunchStepRateStateODEAndComputeError( subRegion,
                                                                              castedFrictionLaw,
                                                                              m_butcherTable,
-                                                                             m_controller.relTol,
-                                                                             m_controller.absTol,
+                                                                             m_relTimeStepTol,
+                                                                             m_absTimeStepTol,
                                                                              dt );
       } );
     } );
@@ -283,7 +296,7 @@ void ExplicitQDRateAndState::evalTimestep( DomainPartition & domain )
   // Compute update factor to currentDt using PID error controller + limiter
   m_stepUpdateFactor = m_controller.computeUpdateFactor( m_butcherTable.algHighOrder, m_butcherTable.algLowOrder );
   // Check if step was acceptable
-  m_successfulStep = (m_stepUpdateFactor >= m_controller.acceptSafety) ? true : false;
+  m_successfulStep = (m_stepUpdateFactor >= m_timeStepAcceptSafety) ? true : false;
   if( m_successfulStep )
   {
     m_controller.errors[2] = m_controller.errors[1];

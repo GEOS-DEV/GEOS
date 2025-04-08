@@ -43,7 +43,9 @@ public:
   struct viewKeyStruct : public QDRateAndStateBase::viewKeyStruct
   {
     /// target slip increment
-    constexpr static char const * timeStepTol() { return "timeStepTol"; }
+    constexpr static char const * absTimeStepTol() { return "absTimeStepTol"; }
+    constexpr static char const * relTimeStepTol() { return "relTimeStepTol"; }
+    constexpr static char const * timeStepAcceptSafety() { return "timeStepAcceptSafety"; }
   };
 
   virtual real64 solverStep( real64 const & time_n,
@@ -105,6 +107,12 @@ protected:
 
   real64 m_stepUpdateFactor; // Factor to update timestep with
 
+  real64 m_absTimeStepTol; // absolut tolerence
+
+  real64 m_relTimeStepTol; // relative tolerence
+
+  real64 m_timeStepAcceptSafety; // Acceptance safety
+
   /**
    * @brief Proportional-integral-derivative controller used for updating time step
    * based error estimate in the current and previous time steps.
@@ -114,14 +122,8 @@ protected:
 public:
 
     GEOS_HOST_DEVICE
-    PIDController( std::array< const real64, 3 > const & cparams,
-                   const real64 atol,
-                   const real64 rtol,
-                   const real64 safety ):
+    PIDController( std::array< const real64, 3 > const & cparams ):
       controlParameters{ cparams },
-      absTol( atol ),
-      relTol( rtol ),
-      acceptSafety( safety ),
       errors{ {0.0, 0.0, 0.0} }
     {}
 
@@ -142,12 +144,6 @@ public:
 
     /// Parameters for the PID error controller
     const std::array< const real64, 3 > controlParameters; // Controller parameters
-
-    real64 const absTol; // absolut tolerence
-
-    real64 const relTol; // relative tolerence
-
-    real64 const acceptSafety; // Acceptance safety
 
     std::array< real64, 3 > errors; // Errors for current and two previous updates
                                     // stored as [n+1, n, n-1]
