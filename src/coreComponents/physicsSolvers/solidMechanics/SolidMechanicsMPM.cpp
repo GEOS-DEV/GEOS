@@ -1593,7 +1593,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the flag for whether node is part of a cohesive zone" );
 
-      // CC: debug, currently using to check mappings of surface normals*******************************
+      // Begin debugging fields, currently using to check mappings of surface normals*******************************
+
       nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gridSurfaceMassString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
@@ -1634,7 +1635,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the cohesive force for each field" );
 
-      //*********************************************************************************************
+      //End debugging fields *********************************************************************************************
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridReferenceSurfacePositionString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -8501,6 +8502,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
         {
           for(int i = 0; i < m_numDims; i++)
           {
+            gridCohesiveMass[g][fieldIndex] = tempGridMassGlobal
             // gridCenterOfVolume[g][fieldIndex][i] = tempGridCenterOfVolumeGlobal[n][fieldIndex][i];
             // gridParticleSurfaceNormal[g][fieldIndex][i] = tempGridParticleSurfaceNormalGlobal[n][fieldIndex][i];
             gridCohesiveArea[g][fieldIndex][i] = m_referenceCohesiveGridNodeSurfaceNormals[n][fieldIndex][i];
