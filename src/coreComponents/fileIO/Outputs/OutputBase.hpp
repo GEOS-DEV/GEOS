@@ -115,7 +115,7 @@ public:
   struct viewKeysStruct
   {
     static constexpr auto childDirectoryString = "childDirectory";
-    static constexpr auto parallelThreadsString = "parallelThreads";
+    static constexpr auto parallelThreadsString = "parallelThreads"; // TODO: move to SiloOutput
   } outputBaseViewKeys;
   /// @endcond
 
