@@ -119,7 +119,14 @@ public:
     real64 const upperBound = shearTractionMagnitude / shearImpedance;
     // If slipRate is outside of the bracket, set bracketedSlipRate to the intermediate value of the bracket. Otherwise
     // bracketedSlipRate is set to slipRate.
-    real64 const bracketedSlipRate = (slipRate < lowerBound || slipRate > upperBound) ? 0.5 * (lowerBound + upperBound) : slipRate;
+    real64 bracketedSlipRate = slipRate;
+    if (slipRate < lowerBound || slipRate > upperBound)
+    {
+      // std::cout << "SlipRate outside of bracket!" << std::endl;
+      // std::cout << "Upper bound " << upperBound << std::endl;
+      // std::cout << "SlipRate " << slipRate << std::endl;
+      bracketedSlipRate = 0.5 * (lowerBound + upperBound);
+    }
     return bracketedSlipRate;
   }
 
@@ -149,13 +156,18 @@ public:
                              real64 const newtonTol )
   {
     GEOS_MARK_FUNCTION;
-
-    newtonSolve< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
-
-    forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    bool converged = newtonSolve< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
+    if ( converged )
     {
-      kernel.projectSlipRate( k );
-    } );
+      forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        kernel.projectSlipRate( k );
+      } );
+    }
+    else
+    {
+      GEOS_ERROR( "Maximum number of iterations reached without convergence." );
+    }
     return dt;
   }
 
