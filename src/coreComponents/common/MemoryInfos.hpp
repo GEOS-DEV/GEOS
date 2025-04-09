@@ -13,10 +13,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_COMMON_MemoryInfos_HPP_
-#define GEOS_COMMON_MemoryInfos_HPP_
+#ifndef GEOS_COMMON_MEMORYINFO_HPP_
+#define GEOS_COMMON_MEMORYINFO_HPP_
 
 #include "umpire/util/MemoryResourceTraits.hpp"
+#include "common/logger/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 #include <unistd.h>
 #include <iostream>

@@ -71,7 +71,7 @@ void toStream( std::ostream & outputStream, string_view content,
   }
   else if( !content.empty() && startPos >= 0 && outputStream.tellp() <= startPos )
   {
-    m_errors->addError( "Export completed but no data was written\nPossible reasons: Disk quota exceeded / streaming logical error." );
+    errorReporter( "Export completed but no data was written\nPossible reasons: Disk quota exceeded / streaming logical error." );
   }
 
   if( errno != 0 )
@@ -95,7 +95,7 @@ void toStream( std::ostream & outputStream, string_view content,
   string msgs;
   toStream( outputStream,
             content,
-            []( string_view msg ) { msgs += msg; },
+            [&]( string_view msg ) { msgs += msg; },
             isNewlyOpened );
   if( critical )
   {
