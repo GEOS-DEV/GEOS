@@ -25,6 +25,7 @@ Contains:
 set( fileIO_headers
      LogLevelsInfo.hpp
      Outputs/BlueprintOutput.hpp
+     Outputs/MemoryStatsOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
      Outputs/OutputUtilities.hpp
@@ -43,6 +44,7 @@ set( fileIO_headers
 #
 set( fileIO_sources
      Outputs/BlueprintOutput.cpp
+     Outputs/MemoryStatsOutput.cpp
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
      Outputs/OutputUtilities.cpp
