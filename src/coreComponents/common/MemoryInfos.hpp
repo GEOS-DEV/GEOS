@@ -83,15 +83,15 @@ public:
   /**
    * @return the text log level.
    */
-  bool getLogLevel() const
-  { return m_logUmpireStatsCsvReport; }
+  bool isUmpireStatsLogOutputEnabled() const
+  { return m_umpireStatsLogReport; }
 
   /**
    * @return true if the CSV output is enabled.
    * Refer to X "writeCSV" wrapper documentation for more documentation.
    */
-  bool isCsvOutputEnabled() const
-  { return m_umpireStatsCSV; }
+  bool isUmpireStatsCsvOutputEnabled() const
+  { return m_umpireStatsCsvReport; }
 
   /**
    * @param enable enable or disable the umpire statistics text logging.
