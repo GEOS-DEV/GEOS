@@ -68,6 +68,81 @@ private:
   bool m_physicalMemoryHandled;
 };
 
+/**
+ * @brief Singleton class keeping the application memory logging settings & features.
+ * @todo Manage the debug LvArray memory debug logging activation / deactivation.
+ */
+class MemoryLogging {
+public:
+
+  /**
+   * @return the instance reference.
+   */
+  static MemoryLogging & getInstance();
+
+  /**
+   * @return the text log level.
+   */
+  bool getLogLevel() const
+  { return m_logUmpireStatsCsvReport; }
+
+  /**
+   * @return true if the CSV output is enabled.
+   * Refer to X "writeCSV" wrapper documentation for more documentation.
+   */
+  bool isCsvOutputEnabled() const
+  { return m_umpireStatsCSV; }
+
+  /**
+   * @param enable enable or disable the umpire statistics text logging.
+   * @see umpireStatsReport() for more documentation.
+   */
+  void enableUmpireStatsLogReport( bool enable )
+  { m_umpireStatsLogReport = enable; }
+
+  /**
+   * @param enable enable or disable the text log level.
+   * @see umpireStatsReport() for more documentation.
+   */
+  void enableUmpireStatsCsvReport( bool enable )
+  { m_umpireStatsCsvReport = enable; }
+
+  /**
+   * @param enable enable or disable the text log level.
+   * @see umpireStatsReport() for more documentation.
+   */
+  void setUmpireStatsCsvReportFilename( string_view filename )
+  { m_umpireStatsCsvReportFilename = filename; }
+
+  /**
+   * @brief Output the umpire statistics according to settings set by enableUmpireStatsLogReport() and
+   * enableUmpireStatsCsvReport().
+   * The statistics are the Umpire/Adiak total high water mark across all ranks for each umpire allocator.
+   */
+  void umpireStatsReport() const;
+
+private:
+  /**
+   * @brief private constructor as the class is a singleton.
+   */
+  MemoryLogging();
+
+  /**
+   * @brief Enable the umpire statistics text log report.
+   */
+  bool m_umpireStatsLogReport;
+
+  /**
+   * @brief Enable the umpire statistics CSV report.
+   */
+  bool m_umpireStatsCsvReport;
+
+  /**
+   * @brief the filename for the umpire statistics CSV report.
+   */
+  string m_umpireStatsCsvReportFilename;
+};
+
 }
 
 #endif
