@@ -74,7 +74,7 @@ protected:
    * @param content The string view containing data to be written.
    * @param isNewlyOpened Flag indicating if the stream was just opened before this call
    */
-  void toStreamImpl( std::ostream & outputStream, string_view content, bool isNewlyOpened );
+  void toStreamImpl( std::ostream & outputStream, string_view content, bool isNewlyOpened ) const;
 };
 
 /**
