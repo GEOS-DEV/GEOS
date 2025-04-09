@@ -21,7 +21,6 @@
 #define GEOS_COMMON_DATALAYOUTS_HPP_
 
 #include "common/GeosxConfig.hpp"
-#include "common/DataTypes.hpp"
 
 #include "LvArray/src/Array.hpp"
 #include "RAJA/RAJA.hpp"
