@@ -21,6 +21,7 @@
 #define GEOS_MESH_TOPARTICLERELATION_HPP_
 
 #include "InterObjectRelation.hpp"
+#include "../codingUtilities/traits.hpp"
 
 namespace geos
 {
@@ -37,67 +38,87 @@ class ToParticleRelation
 {
 public:
   // Default constructor
-  ToParticleRelation() = default;
+  ToParticleRelation()
+  {
+    static_assert( traits::is_array_of_arrays_type< BASETYPE > || traits::is_array_type< BASETYPE >, "ToParticalRelation can only be instantiated with an Array or ArrayOfArrays" );
+  }
 
   // Deleted move operators
-  ToParticleRelation( ToParticleRelation && ) = delete;
-  ToParticleRelation& operator=( ToParticleRelation && ) = delete;
+  // ToParticleRelation( ToParticleRelation && ) = delete;
+  // ToParticleRelation& operator=( ToParticleRelation && ) = delete;
 
-  // Copy constructor
-  ToParticleRelation( ToParticleRelation & src)
-  {
-    GEOS_LOG_RANK("Called ToParticleRelation( ToParticleRelation & src)");
-    m_numParticles = src.m_numParticles;
-    m_toParticleRegion = src.m_toParticleRegion;
-    m_toParticleSubRegion = src.m_toParticleSubRegion;
-    m_toParticleIndex = src.m_toParticleIndex;
-    m_particleManager = src.m_particleManager;
-  }
+  // // Copy constructor
+  // ToParticleRelation( ToParticleRelation & src)
+  // {
+  //   GEOS_LOG_RANK("Called ToParticleRelation( ToParticleRelation & src)");
+  //   m_numParticles = src.m_numParticles;
+  //   m_toParticleRegion = src.m_toParticleRegion;
+  //   m_toParticleSubRegion = src.m_toParticleSubRegion;
+  //   m_toParticleIndex = src.m_toParticleIndex;
+  //   m_particleManager = src.m_particleManager;
+  // }
 
-  // Copy Constructor
-  ToParticleRelation( const ToParticleRelation & src)
-  {
-    GEOS_LOG_RANK("Called ToParticleRelation( const ToParticleRelation & src)");
-    m_numParticles = src.m_numParticles;
-    m_toParticleRegion = src.m_toParticleRegion;
-    m_toParticleSubRegion = src.m_toParticleSubRegion;
-    m_toParticleIndex = src.m_toParticleIndex;
-    m_particleManager = src.m_particleManager;
-  }
+  // // Copy Constructor
+  // ToParticleRelation( const ToParticleRelation & src)
+  // {
+  //   GEOS_LOG_RANK("Called ToParticleRelation( const ToParticleRelation & src)");
+  //   m_numParticles = src.m_numParticles;
+  //   m_toParticleRegion = src.m_toParticleRegion;
+  //   m_toParticleSubRegion = src.m_toParticleSubRegion;
+  //   m_toParticleIndex = src.m_toParticleIndex;
+  //   m_particleManager = src.m_particleManager;
+  // }
 
-  // Copy assignment operator
-  ToParticleRelation& operator=(const ToParticleRelation& src)
-  {
-    GEOS_LOG_RANK("Called ToParticleRelation& operator=(const ToParticleRelation& src)");
-    m_numParticles = src.m_numParticles;
-    GEOS_LOG_RANK("Copied m_numparticles");
-    m_toParticleRegion = src.m_toParticleRegion;
-    GEOS_LOG_RANK("Copied m_toParticleRegion");
-    m_toParticleSubRegion = src.m_toParticleSubRegion;
-    GEOS_LOG_RANK("Copied m_toParticleSubRegion");
-    m_toParticleIndex = src.m_toParticleIndex;
-    GEOS_LOG_RANK("Copied m_toParticleIndex");
-    m_particleManager = src.m_particleManager;
-    GEOS_LOG_RANK("Copied m_particleManager");
-    return *this;
-  }
+  // // Copy assignment operator
+  // ToParticleRelation& operator=(const ToParticleRelation& src)
+  // {
+  //   GEOS_LOG_RANK("Called ToParticleRelation& operator=(const ToParticleRelation& src)");
+  //   m_numParticles = src.m_numParticles;
+  //   GEOS_LOG_RANK("Copied m_numparticles");
+  //   m_toParticleRegion = src.m_toParticleRegion;
+  //   GEOS_LOG_RANK("Copied m_toParticleRegion");
+  //   m_toParticleSubRegion = src.m_toParticleSubRegion;
+  //   GEOS_LOG_RANK("Copied m_toParticleSubRegion");
+  //   m_toParticleIndex = src.m_toParticleIndex;
+  //   GEOS_LOG_RANK("Copied m_toParticleIndex");
+  //   m_particleManager = src.m_particleManager;
+  //   GEOS_LOG_RANK("Copied m_particleManager");
+  //   return *this;
+  // }
 
   /// The type of the underlying relationship storage object.
   using base_type = BASETYPE;
 
-  /**
-   * @brief Resize the underlying relationship storage.
-   * @tparam DIMS The types of each dimensions resize parameter.
-   * @param newdims A parameter pack of appropriate size to resize each
-   *                dimension of the relationship storage.
-   */
-  template< typename ... DIMS >
-  void resize( DIMS... newdims )
+  void resizeFromCapacities( array1d< localIndex > const & counts )
   {
-    m_toParticleRegion.resize( newdims ... );
-    m_toParticleSubRegion.resize( newdims ... );
-    m_toParticleIndex.resize( newdims ... );
+    if constexpr( traits::is_array_of_arrays_type< BASETYPE > )
+    {
+      m_toParticleRegion.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
+      m_toParticleSubRegion.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
+      m_toParticleIndex.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
+      m_numParticles.resizeDefault( m_toParticleRegion.size(), 0 );
+    }
+    else
+    {
+      GEOS_ERROR( "Cannot resize array2d from capacities." );
+    }
+  }
+
+
+  void resize( localIndex count, localIndex defaultArraySize = 0 )
+  {
+    m_toParticleRegion.resize( count, defaultArraySize );
+    m_toParticleSubRegion.resize( count, defaultArraySize );
+    m_toParticleIndex.resize( count, defaultArraySize );
     m_numParticles.resizeDefault( m_toParticleRegion.size(), 0 );
+  }
+
+  void freeOnDevice()
+  {
+    m_toParticleRegion.toView().freeOnDevice();
+    m_toParticleSubRegion.toView().freeOnDevice();
+    m_toParticleIndex.toView().freeOnDevice();
+    m_numParticles.toView().freeOnDevice();
   }
 
   /**
