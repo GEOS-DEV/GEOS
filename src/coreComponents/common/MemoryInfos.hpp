@@ -95,21 +95,21 @@ public:
 
   /**
    * @param enable enable or disable the umpire statistics text logging.
-   * @see umpireStatsReport() for more documentation.
+   * @see memoryStatsReport() for more documentation.
    */
   void enableUmpireStatsLogReport( bool enable )
   { m_umpireStatsLogReport = enable; }
 
   /**
    * @param enable enable or disable the text log level.
-   * @see umpireStatsReport() for more documentation.
+   * @see memoryStatsReport() for more documentation.
    */
   void enableUmpireStatsCsvReport( bool enable )
   { m_umpireStatsCsvReport = enable; }
 
   /**
-   * @param enable enable or disable the text log level.
-   * @see umpireStatsReport() for more documentation.
+   * @param filename enable or disable the text log level.
+   * @see memoryStatsReport() for more documentation.
    */
   void setUmpireStatsCsvReportFilename( string_view filename )
   { m_umpireStatsCsvReportFilename = filename; }
@@ -117,9 +117,9 @@ public:
   /**
    * @brief Output the umpire statistics according to settings set by enableUmpireStatsLogReport() and
    * enableUmpireStatsCsvReport().
-   * The statistics are the Umpire/Adiak total high water mark across all ranks for each umpire allocator.
+   * The statistics are the Umpire total high water mark across all ranks for each umpire allocator.
    */
-  void umpireStatsReport() const;
+  void memoryStatsReport() const;
 
 private:
   /**
