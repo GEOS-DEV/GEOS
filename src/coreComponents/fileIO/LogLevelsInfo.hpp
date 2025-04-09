@@ -54,6 +54,15 @@ struct OutputEvents
   static constexpr std::string_view getDescription() { return "Information on output events (VTK/ChomboIO/HDF5)"; }
 };
 
+struct UmpireStatistics
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription()
+  {
+    return "The statistics (minimal, maximal, average and sum) of memory usage of each Umpire memory pool "
+           "across all ranks.";
+  }
+};
 
 struct HDF5Writing
 {
