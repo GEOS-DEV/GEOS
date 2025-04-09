@@ -1198,6 +1198,12 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
       arrayView1d< real64 > const wellElemPressure_n = subRegion.getField< fields::well::pressure_n >();
       wellElemPressure_n.setValues< parallelDevicePolicy<> >( wellElemPressure );
 
+      if( isThermal() )
+      {
+        arrayView1d< real64 const > const wellElemTemperature = subRegion.getField< fields::well::temperature >();
+        arrayView1d< real64 > const wellElemTemperature_n = subRegion.getField< fields::well::temperature_n >();
+        wellElemTemperature_n.setValues< parallelDevicePolicy<> >( wellElemTemperature );
+      }
       arrayView1d< real64 const > const connRate = subRegion.getField< fields::well::connectionRate >();
       arrayView1d< real64 > const connRate_n = subRegion.getField< fields::well::connectionRate_n >();
       connRate_n.setValues< parallelDevicePolicy<> >( connRate );
