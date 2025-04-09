@@ -125,7 +125,7 @@ public:
    * @param outputStream The stream to write the content to.
    */
   void headerToStream( std::ostream & outputStream ) const
-  { toStreamImpl( outputStream, headerToStream(), true ); }
+  { toStreamImpl( outputStream, headerToString(), true ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -135,7 +135,7 @@ public:
    * @return The CSV string representation of the table data.
    */
   void dataToStream( std::ostream & outputStream, TableData const & tableData ) const
-  { toStreamImpl( outputStream, dataToStream( tableData ), false ); }
+  { toStreamImpl( outputStream, dataToString( tableData ), false ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -146,7 +146,7 @@ public:
    */
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
-  { toStreamImpl( outputStream, toStream( tableData ), true ); }
+  { toStreamImpl( outputStream, toString( tableData ), true ); }
 
 };
 

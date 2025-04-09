@@ -93,7 +93,10 @@ void toStream( std::ostream & outputStream, string_view content,
                string_view streamName, bool critical, bool isNewlyOpened )
 {
   string msgs;
-  toStream( outputStream, content, []( string_view msg ) { msgs += msg; } );
+  toStream( outputStream,
+            content,
+            []( string_view msg ) { msgs += msg; },
+            isNewlyOpened );
   if( critical )
   {
     GEOS_ERROR( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
