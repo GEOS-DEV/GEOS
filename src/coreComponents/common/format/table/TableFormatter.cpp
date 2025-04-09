@@ -96,11 +96,11 @@ void toStream( std::ostream & outputStream, string_view content,
   toStream( outputStream, content, []( string_view msg ) { msgs += msg; } );
   if( critical )
   {
-    GEOS_ERROR( "Error while writing to '{}':\n{}", streamName, msgs );
+    GEOS_ERROR( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
   }
   else
   {
-    GEOS_WARNING( "Error while writing to '{}':\n{}", streamName, msgs );
+    GEOS_WARNING( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
   }
 }
 
