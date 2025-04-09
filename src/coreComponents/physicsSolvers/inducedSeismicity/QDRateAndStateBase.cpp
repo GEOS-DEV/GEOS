@@ -141,34 +141,19 @@ void QDRateAndStateBase::applyInitialConditionsToFault( int const cycleNumber,
                                                                                   SurfaceElementSubRegion & subRegion )
       {
         enforceRateAndVelocityConsistency( subRegion );
-
-        arrayView1d< real64 const > const slipRate        = subRegion.getField< rateAndState::slipRate >();
-        arrayView1d< real64 const > const stateVariable   = subRegion.getField< rateAndState::stateVariable >();
-
         arrayView1d< real64 > const normalTraction  = subRegion.getField< rateAndState::normalTraction >();
         arrayView2d< real64 > const shearTraction   = subRegion.getField< rateAndState::shearTraction >();
-
-        arrayView1d< real64 > const stateVariable_n       = subRegion.getField< rateAndState::stateVariable_n >();
-        arrayView1d< real64 > const slipRate_n            = subRegion.getField< rateAndState::slipRate_n >();
-        arrayView1d< real64 > const normalTraction_n      = subRegion.getField< rateAndState::normalTraction_n >();
-        arrayView2d< real64 > const shearTraction_n       = subRegion.getField< rateAndState::shearTraction_n >();
-
         arrayView2d< real64 const > const backgroundShearStress  = subRegion.getField< rateAndState::backgroundShearStress >();
         arrayView1d< real64 const > const backgroundNormalStress = subRegion.getField< rateAndState::backgroundNormalStress >();
 
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
-          slipRate_n [k]       = slipRate[k];
-          stateVariable_n[k]   = stateVariable[k];
-
           normalTraction[k] = backgroundNormalStress[k];
           LvArray::tensorOps::copy< 2 >( shearTraction[k], backgroundShearStress[k] );
-
-          normalTraction_n[k]  = normalTraction[k];
-          LvArray::tensorOps::copy< 2 >( shearTraction_n[k], shearTraction[k] );
         } );
       } );
     } );
+    saveState( domain );
   }
 }
 
@@ -224,6 +209,7 @@ void QDRateAndStateBase::resetStateToBeginningOfStep( DomainPartition & domain )
                                                                                 SurfaceElementSubRegion & subRegion )
     {
       arrayView1d< real64 > const stateVariable = subRegion.getField< rateAndState::stateVariable >();
+      arrayView1d< real64 > const slipRate  = subRegion.getField< rateAndState::slipRate >();
       arrayView2d< real64 > const slipVelocity  = subRegion.getField< rateAndState::slipVelocity >();
       arrayView2d< real64 > const deltaSlip     = subRegion.getField< contact::deltaSlip >();
       arrayView2d< real64 > const shearTraction      = subRegion.getField< rateAndState::shearTraction >();
@@ -241,6 +227,7 @@ void QDRateAndStateBase::resetStateToBeginningOfStep( DomainPartition & domain )
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         stateVariable[k]  = stateVariable_n[k];
+        slipRate[k] = LvArray::tensorOps::l2Norm< 2 >( slipVelocity_n[k] );
         normalTraction[k] = normalTraction_n[k];
         deltaSlip[k][0] = 0.0;
         deltaSlip[k][1] = 0.0;

@@ -42,11 +42,11 @@ namespace rateAndStateKernels
  */
 struct Kutta32Table
 {
-  integer constexpr static algHighOrder = 3;                      // High-order update order
-  integer constexpr static algLowOrder = 2;                       // Low-order update order
-  integer constexpr static numStages = 3;                         // Number of stages
+  integer constexpr static algHighOrder = 3;           // High-order update order
+  integer constexpr static algLowOrder = 2;            // Low-order update order
+  integer constexpr static numStages = 3;              // Number of stages
   real64 const a[2][2] = { { 1.0/2.0, 0.0 },           // Coefficients for stage value updates
-    { -1.0, 2.0 } };                                              // (lower-triangular part of table).
+    { -1.0, 2.0 } };                                   // (lower-triangular part of table).
   real64 const c[3] = { 0.0, 1.0/2.0, 1.0 };           // Coefficients for time increments of substages
   real64 const b[3] = { 1.0/6.0, 4.0/6.0, 1.0/6.0 };   // Quadrature weights used to step the solution to next time
   real64 const bStar[3] = { 1.0/2.0, 0.0, 1.0/2.0 };   // Quadrature weights used for low-order comparision solution
@@ -58,17 +58,17 @@ struct Kutta32Table
  */
 struct BogackiShampine32Table
 {
-  integer constexpr static algHighOrder = 3;                                   // High-order update order
-  integer constexpr static algLowOrder = 2;                                    // Low-order update order
-  integer constexpr static numStages = 4;                                      // Number of stages
-  real64 const a[3][3] = { { 1.0/2.0, 0.0, 0.0     },               // Coefficients for stage value updates
-    { 0.0, 3.0/4.0, 0.0     },                                                 // (lower-triangular part of table).
+  integer constexpr static algHighOrder = 3;                       // High-order update order
+  integer constexpr static algLowOrder = 2;                        // Low-order update order
+  integer constexpr static numStages = 4;                          // Number of stages
+  real64 const a[3][3] = { { 1.0/2.0, 0.0, 0.0     },              // Coefficients for stage value updates
+    { 0.0, 3.0/4.0, 0.0     },                                     // (lower-triangular part of table).
     { 2.0/9.0, 1.0/3.0, 4.0/9.0 } };
   real64 const c[4] = { 0.0, 1.0/2.0, 3.0/4.0, 1.0 };               // Coefficients for time increments of substages
   real64 const b[4] = { 2.0/9.0, 1.0/3.0, 4.0/9.0, 0.0 };           // Quadrature weights used to step the solution to next time
   real64 const bStar[4] = { 7.0/24.0, 1.0/4.0, 1.0/3.0, 1.0/8.0};   // Quadrature weights used for low-order comparision solution
-  bool constexpr static FSAL = true;                                           // First same as last (can reuse the last stage rate in next
-                                                                               // update)
+  bool constexpr static FSAL = true;                                // First same as last (can reuse the last stage rate in next
+                                                                    // update)
 };
 
 /**
@@ -100,20 +100,6 @@ public:
     m_butcherTable( butcherTable )
   {}
 
-  /**
-   * @brief Initialize slip and state buffers
-   */
-  GEOS_HOST_DEVICE
-  void initialize( localIndex const k ) const
-  {
-    LvArray::tensorOps::copy< 2 >( m_slipVelocity[k], m_slipVelocity_n[k] );
-    m_slipRate[k] =  LvArray::tensorOps::l2Norm< 2 >( m_slipVelocity_n[k] );
-    m_stateVariable[k] = m_stateVariable_n[k];
-    // if( m_stateVariable[k] < 0)
-    // {
-    //   std::cout << "stateVariable " << m_stateVariable[k] << std::endl;
-    // }
-  }
 
   /**
    * @brief Re-uses the last stage rate from the previous time step as the first
@@ -156,10 +142,10 @@ public:
     m_deltaSlip[k][1] = dt * deltaSlipIncrement[1];
     m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
     
-    if( m_stateVariable[k] < 0)
-    {
-      std::cout << "stateVariable " << m_stateVariable[k] << std::endl;
-    }
+    // if( m_stateVariable[k] < 0)
+    // {
+    //   std::cout << "stateVariable " << m_stateVariable[k] << std::endl;
+    // }
     
   }
 
@@ -201,7 +187,7 @@ public:
     m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
 
     real64 const totalSlipLowOrder[2]  = { m_totalSlip_n[k][0] + dt * deltaSlipIncrementLowOrder[0],
-                                           m_totalSlip_n[k][0] + dt * deltaSlipIncrementLowOrder[1] };
+                                           m_totalSlip_n[k][1] + dt * deltaSlipIncrementLowOrder[1] };
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
 
     // Compute error
@@ -231,8 +217,7 @@ public:
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
     
-    // Update total slip accumulated using delta slip from stage values.
-    // Note: deltaSlip already multiplied by dt.
+    // Update total slip accumulated using delta slip from stage value updates.
     m_totalSlip[k][0] = m_totalSlip_n[k][0] + m_deltaSlip[k][0]; 
     m_totalSlip[k][1] = m_totalSlip_n[k][1] + m_deltaSlip[k][1];
 
@@ -296,47 +281,32 @@ private:
   TABLE_TYPE m_butcherTable;
 };
 
-template< typename FRICTION_TYPE, typename BUTCHER_TABLE_TYPE >
-void createAndlaunchODEInitialSubStage( SurfaceElementSubRegion & subRegion,
-                                        FRICTION_TYPE & frictionLaw,
-                                        BUTCHER_TABLE_TYPE const & butcherTable,
-                                        real64 const dt,
-                                        bool const successfulStep )
+template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >
+void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegion,
+                                              FRICTION_TYPE & frictionLaw,
+                                              BUTCHER_TABLE_TYPE const & butcherTable,
+                                              integer const stageIndex,
+                                              real64 const dt,
+                                              bool const successfulStep)
 {
+
   rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
-  if( butcherTable.FSAL && successfulStep )
+  if( butcherTable.FSAL && successfulStep && stageIndex == 0)
   {
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       rkKernel.updateStageRatesFSAL( k );
-      rkKernel.updateStageValues( k, 1, dt );
+      rkKernel.updateStageValues( k, stageIndex + 1, dt );
     } );
   }
   else
   {
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      rkKernel.initialize( k );
-      rkKernel.updateStageRates( k, 0 );
-      rkKernel.updateStageValues( k, 1, dt );
+      rkKernel.updateStageRates( k, stageIndex );
+      rkKernel.updateStageValues( k, stageIndex + 1, dt );
     } );
   }
-}
-
-template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >
-void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegion,
-                                              FRICTION_TYPE & frictionLaw,
-                                              BUTCHER_TABLE_TYPE const & butcherTable,
-                                              integer const stageIndex,
-                                              real64 const dt )
-{
-
-  rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    rkKernel.updateStageRates( k, stageIndex );
-    rkKernel.updateStageValues( k, stageIndex+1, dt );
-  } );
 }
 
 template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >
