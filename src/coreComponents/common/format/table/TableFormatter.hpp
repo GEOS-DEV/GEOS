@@ -72,8 +72,9 @@ protected:
    *        Adds appropriate messages to the error list when the operation fails.
    * @param outputStream The stream to write the content to.
    * @param content The string view containing data to be written.
+   * @param isNewlyOpened Flag indicating if the stream was just opened before this call
    */
-  void toStreamImpl( std::ostream & outputStream, string_view content );
+  void toStreamImpl( std::ostream & outputStream, string_view content, bool isNewlyOpened );
 };
 
 /**
@@ -124,7 +125,7 @@ public:
    * @param outputStream The stream to write the content to.
    */
   void headerToStream( std::ostream & outputStream ) const
-  { toStreamImpl( outputStream, headerToStream() ); }
+  { toStreamImpl( outputStream, headerToStream(), true ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -134,7 +135,7 @@ public:
    * @return The CSV string representation of the table data.
    */
   void dataToStream( std::ostream & outputStream, TableData const & tableData ) const
-  { toStreamImpl( outputStream, dataToStream( tableData ) ); }
+  { toStreamImpl( outputStream, dataToStream( tableData ), false ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -145,7 +146,7 @@ public:
    */
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
-  { toStreamImpl( outputStream, toStream( tableData ) ); }
+  { toStreamImpl( outputStream, toStream( tableData ), true ); }
 
 };
 
@@ -200,7 +201,7 @@ public:
    * @param outputStream The stream to write the content to.
    */
   void toStream( std::ostream & outputStream ) const
-  { toStreamImpl( outputStream, toString() ); }
+  { toStreamImpl( outputStream, toString(), true ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -211,7 +212,7 @@ public:
    */
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
-  { toStreamImpl( outputStream, toString( tableData ) ); }
+  { toStreamImpl( outputStream, toString( tableData ), true ); }
 
 private:
 
