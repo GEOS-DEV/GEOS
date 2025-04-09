@@ -30,19 +30,13 @@ OutputBase::OutputBase( string const & name,
                         Group * const parent ):
   ExecutableGroup( name, parent ),
   m_outputTimer(),
-  m_childDirectory(),
-  m_parallelThreads( 1 )
+  m_childDirectory()
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeysStruct::childDirectoryString, &m_childDirectory ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Child directory path" );
-
-  registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Number of plot files." );
 
   // Add the Timers log level
   addLogLevel< logInfo::OutputTimers >();

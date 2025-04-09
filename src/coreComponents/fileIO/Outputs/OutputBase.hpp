@@ -115,7 +115,6 @@ public:
   struct viewKeysStruct
   {
     static constexpr auto childDirectoryString = "childDirectory";
-    static constexpr auto parallelThreadsString = "parallelThreads"; // TODO: move to SiloOutput
   } outputBaseViewKeys;
   /// @endcond
 
@@ -124,14 +123,6 @@ public:
    * @return The directory path
    **/
   string childDirectory() const { return m_childDirectory; }
-
-  /**
-   * @brief Get the number of parallel threads to use to write plotfiles
-   * @return The number of threads
-   **/
-  integer parallelThreads() const { return m_parallelThreads; }
-
-
 
 protected:
   /**
@@ -159,7 +150,6 @@ protected:
 
 private:
   string m_childDirectory;
-  integer m_parallelThreads;
 
 };
 
