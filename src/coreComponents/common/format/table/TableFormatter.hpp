@@ -50,7 +50,6 @@ public:
   /// Represent a table section (title + header or values) layout: view on the data and its layout settings.
   using CellLayoutRows = std::vector< CellLayoutRow >;
 
-
 protected:
 
   /// Layout for a table
@@ -72,7 +71,7 @@ protected:
 /**
  * @brief class for CSV formatting
  */
-class TableCSVFormatter : public TableFormatter
+class TableCSVFormatter final : public TableFormatter
 {
 public:
 
@@ -104,7 +103,7 @@ public:
 
   /**
    * @brief Convert a data source to a CSV string.
-   * @tparam DATASOURCE The source to convert
+   * @tparam DATASOURCE The type of the source to convert
    * @param tableData The data source to convert
    * @return The CSV string representation of a data source.
    */
@@ -125,7 +124,7 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 /**
  * @brief class for log formatting
  */
-class TableTextFormatter : public TableFormatter
+class TableTextFormatter final : public TableFormatter
 {
 public:
 
@@ -145,12 +144,13 @@ public:
 
   /**
    * @return A TableLayout string representation,
-   * The TableTextFormatter receives hasn't receive any data, so only the header part is returned.
+   * The TableTextFormatter receives hasn't received any data, so only the header part is returned.
    */
   string toString() const;
 
   /**
    * @brief Convert a data source to a table string.
+   * @tparam DATASOURCE The type of the source to convert
    * @param tableData The data source to convert.
    * @return The table string representation of the TableData.
    */
