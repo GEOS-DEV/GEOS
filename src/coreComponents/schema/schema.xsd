@@ -309,6 +309,10 @@
 					<xsd:selector xpath="TimeHistory" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="OutputsUmpireStatsUniqueName">
+					<xsd:selector xpath="UmpireStats" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="OutputsVTKUniqueName">
 					<xsd:selector xpath="VTK" />
 					<xsd:field xpath="@name" />
@@ -2167,6 +2171,7 @@ Information output from lower logLevels is added with the desired log level-->
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="TimeHistory" type="TimeHistoryType" />
+			<xsd:element name="UmpireStats" type="UmpireStatsType" />
 			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -2271,6 +2276,13 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="sources" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="UmpireStatsType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--writeCSV => When set to 1, write the umpire stats into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKType">
 		<!--childDirectory => Child directory path-->
