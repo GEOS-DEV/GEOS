@@ -18,7 +18,6 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-#include "common/format/table/TableFormatter.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
 #include <umpire/TypedAllocator.hpp>

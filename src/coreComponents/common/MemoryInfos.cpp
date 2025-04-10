@@ -15,6 +15,8 @@
 
 #include "MemoryInfos.hpp"
 
+#include "MpiWrapper.hpp"
+#include "format/table/TableFormatter.hpp"
 #if defined( GEOS_USE_CALIPER ) and defined( GEOS_USE_ADIAK )
 #include <adiak.hpp>
 #endif
