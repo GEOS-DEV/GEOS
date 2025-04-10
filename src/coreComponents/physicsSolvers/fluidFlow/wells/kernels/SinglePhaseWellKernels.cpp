@@ -22,6 +22,7 @@
 // TODO: move keys to WellControls
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 namespace geos
 {
 
@@ -94,21 +95,29 @@ ControlEquationHelper::
            real64 const & targetBHP,
            real64 const & targetRate,
            real64 const & currentBHP,
+           arrayView1d< real64 const > const & dCurrentBHP,
            real64 const & dCurrentBHP_dPres,
            real64 const & currentVolRate,
+           arrayView1d< real64 const > const & dCurrentTotalVolRate,
            real64 const & dCurrentVolRate_dPres,
            real64 const & dCurrentVolRate_dRate,
            globalIndex const dofNumber,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
-  localIndex const eqnRowIndex = dofNumber + ROFFSET::CONTROL - rankOffset;
-  globalIndex const presDofColIndex = dofNumber + COFFSET::DPRES;
-  globalIndex const rateDofColIndex = dofNumber + COFFSET::DRATE;
+  using ROFFSET_WJ = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
+  using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
+
+  localIndex const eqnRowIndex = dofNumber + ROFFSET_WJ::CONTROL - rankOffset;
+  globalIndex dofColIndices[COFFSET_WJ::nDer]{};
+  for( integer i = 0; i < COFFSET_WJ::nDer; ++i )
+  {
+    dofColIndices[ i ] = dofNumber + i;
+  }
 
   real64 controlEqn = 0;
-  real64 dControlEqn_dRate = 0;
-  real64 dControlEqn_dPres = 0;
+  real64 dControlEqn[2+IS_THERMAL]{};
 
   // Note: We assume in the computation of currentBHP that the reference elevation
   //       is in the top well element. This is enforced by a check in the solver.
@@ -121,15 +130,20 @@ ControlEquationHelper::
   {
     // control equation is a difference between current BHP and target BHP
     controlEqn = currentBHP - targetBHP;
-    dControlEqn_dPres = dCurrentBHP_dPres;
+    dControlEqn[COFFSET_WJ::dP] = dCurrentBHP[Deriv::dP];
+    if constexpr ( IS_THERMAL )
+      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
+
   }
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
   {
     // control equation is the difference between volumetric current rate and target rate
     controlEqn = currentVolRate - targetRate;
-    dControlEqn_dRate = dCurrentVolRate_dRate;
-    dControlEqn_dPres = dCurrentVolRate_dPres;
+    dControlEqn[COFFSET_WJ::dP] = dCurrentTotalVolRate[COFFSET_WJ::dP];
+    dControlEqn[COFFSET_WJ::dQ] = dCurrentTotalVolRate[COFFSET_WJ::dQ];
+    if constexpr ( IS_THERMAL )
+      dControlEqn[COFFSET_WJ::dT] = dCurrentTotalVolRate[Deriv::dT];
   }
   else
   {
@@ -137,14 +151,10 @@ ControlEquationHelper::
   }
 
   localRhs[eqnRowIndex] += controlEqn;
-  localMatrix.addToRow< serialAtomic >( eqnRowIndex,
-                                        &presDofColIndex,
-                                        &dControlEqn_dPres,
-                                        1 );
-  localMatrix.addToRow< serialAtomic >( eqnRowIndex,
-                                        &rateDofColIndex,
-                                        &dControlEqn_dRate,
-                                        1 );
+  localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                            dofColIndices,
+                                                            dControlEqn,
+                                                            COFFSET_WJ::nDer );
 }
 
 /******************************** FluxKernel ********************************/
@@ -294,7 +304,7 @@ PressureRelationKernel::
           arrayView1d< real64 > const & localRhs )
 {
   using Deriv = constitutive::singlefluid::DerivativeOffset;
-  using Deriv = constitutive::singlefluid::DerivativeOffset;
+  using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
@@ -304,11 +314,17 @@ PressureRelationKernel::
   // dynamic well control data
   real64 const & currentBHP =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
+  arrayView1d< real64 const > const & dCurrentBHP =
+    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
+
   real64 const & dCurrentBHP_dPres =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
 
   real64 const & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
+  arrayView1d< real64 const > const & dCurrentVolRate =
+    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentVolRateString() );
+
   real64 const & dCurrentVolRate_dPres =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString() );
   real64 const & dCurrentVolRate_dRate =
@@ -342,8 +358,10 @@ PressureRelationKernel::
                                                     targetBHP,
                                                     targetRate,
                                                     currentBHP,
+                                                    dCurrentBHP,
                                                     dCurrentBHP_dPres,
                                                     currentVolRate,
+                                                    dCurrentVolRate,
                                                     dCurrentVolRate_dPres,
                                                     dCurrentVolRate_dRate,
                                                     wellElemDofNumber[iwelemControl],
@@ -354,8 +372,8 @@ PressureRelationKernel::
     {
 
       // local working variables and arrays
-      globalIndex dofColIndices[2]{};
-      real64 localPresRelJacobian[2]{};
+      globalIndex dofColIndices[2*(1+IS_THERMAL)]{};
+      real64 localPresRelJacobian[2*(1+IS_THERMAL)]{};
 
       // compute avg density
       real64 const avgDensity = 0.5 * ( wellElemDensity[iwelem][0] + wellElemDensity[iwelemNext][0] );
@@ -371,22 +389,33 @@ PressureRelationKernel::
 
       // compute momentum flux and derivatives
       real64 const localPresRel = pressureNext - pressureCurrent - avgDensity * gravD;
-      localPresRelJacobian[TAG::NEXT]    =  1 - dAvgDensity_dPresNext * gravD;
-      localPresRelJacobian[TAG::CURRENT] = -1 - dAvgDensity_dPresCurrent * gravD;
+      localPresRelJacobian[TAG::NEXT *(1+IS_THERMAL)]    =  1 - dAvgDensity_dPresNext * gravD;
+      localPresRelJacobian[TAG::CURRENT *(1+IS_THERMAL)]  = -1 - dAvgDensity_dPresCurrent * gravD;
+
+      if constexpr ( IS_THERMAL )
+      {
+        localPresRelJacobian[TAG::NEXT *(1+IS_THERMAL)+1]    =  -0.5 * dWellElemDensity[iwelemNext][0][Deriv::dT]* gravD;
+        localPresRelJacobian[TAG::CURRENT *(1+IS_THERMAL)+1] =  -0.5 * dWellElemDensity[iwelem][0][Deriv::dT]* gravD;
+       }
 
       // TODO: add friction and acceleration terms
 
       // jacobian indices
       globalIndex const eqnRowIndex = wellElemDofNumber[iwelem] + ROFFSET::CONTROL - rankOffset;
-      dofColIndices[TAG::NEXT]      = wellElemDofNumber[iwelemNext] + COFFSET::DPRES;
-      dofColIndices[TAG::CURRENT]   = wellElemDofNumber[iwelem] + COFFSET::DPRES;
+      dofColIndices[TAG::NEXT *(1+IS_THERMAL)]      = wellElemDofNumber[iwelemNext] + COFFSET_WJ::dP;
+      dofColIndices[TAG::CURRENT *(1+IS_THERMAL)]   = wellElemDofNumber[iwelem] + COFFSET_WJ::dP;
 
+      if constexpr ( IS_THERMAL )
+      {
+        dofColIndices[TAG::NEXT *(1+IS_THERMAL)+1]    = wellElemDofNumber[iwelemNext] + COFFSET_WJ::dT;
+        dofColIndices[TAG::CURRENT *(1+IS_THERMAL)+1] = wellElemDofNumber[iwelem] + COFFSET_WJ::dT;
+      }
       if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
       {
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
-                                                                          &dofColIndices[0],
-                                                                          &localPresRelJacobian[0],
-                                                                          2 );
+                                                                          dofColIndices,
+                                                                          localPresRelJacobian,
+                                                                          2 * (1+IS_THERMAL) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
       }
     }

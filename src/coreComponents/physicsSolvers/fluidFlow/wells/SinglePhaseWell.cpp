@@ -113,7 +113,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ).
         setSizedFromParent( 0 ).
-        reference().resizeDimension< 0 >( 2+ isThermal() );   // dP, dT, dQ
+        reference().resizeDimension< 0 >( 2+ isThermal() );   // dP, dT , dQ
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentBHP_dPresString() );
 
@@ -180,6 +180,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
     return;
   }
 
+
   localIndex const iwelemRef = subRegion.getTopWellElementIndex();
 
   // subRegion data
@@ -204,21 +205,34 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   real64 & currentBHP =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
+  arrayView1d< real64 > const & dCurrentBHP =
+    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
   real64 & dCurrentBHP_dPres =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
 
-  // bring everything back to host, capture the scalars by reference
-  forAll< serialPolicy >( 1, [pres,
-                              dens,
-                              dDens,
-                              wellElemGravCoef,
-                              &currentBHP,
-                              &dCurrentBHP_dPres,
-                              &iwelemRef,
-                              &refGravCoef] ( localIndex const )
+  geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
   {
-    currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
-    dCurrentBHP_dPres = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
+    integer constexpr IS_THERMAL = ISTHERMAL();
+    // bring everything back to host, capture the scalars by reference
+    forAll< serialPolicy >( 1, [pres,
+                                dens,
+                                dDens,
+                                wellElemGravCoef,
+                                &currentBHP,
+                                &dCurrentBHP,
+                                &dCurrentBHP_dPres,
+                                &iwelemRef,
+                                &refGravCoef] ( localIndex const )
+    {
+      real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
+      currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
+      dCurrentBHP_dPres = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] * diffGravCoef;
+      dCurrentBHP[DerivOffset::dP] = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] *diffGravCoef;
+      if constexpr ( IS_THERMAL )
+      {
+        dCurrentBHP[DerivOffset::dT] =  dDens[iwelemRef][0][DerivOffset::dT] * diffGravCoef;
+      }
+    } );
   } );
 
   GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
