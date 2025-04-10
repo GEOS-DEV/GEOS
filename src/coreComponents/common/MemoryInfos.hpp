@@ -17,7 +17,7 @@
 #define GEOS_COMMON_MEMORYINFO_HPP_
 
 #include "umpire/util/MemoryResourceTraits.hpp"
-#include "common/logger/DataTypes.hpp"
+#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 #include <unistd.h>
 #include <iostream>
