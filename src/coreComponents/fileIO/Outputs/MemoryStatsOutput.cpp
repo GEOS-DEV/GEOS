@@ -20,12 +20,27 @@
 
 #include "MemoryStatsOutput.hpp"
 
+#include "fileIO/LogLevelsInfo.hpp"
 #include "common/MemoryInfos.hpp"
 
 namespace geos
 {
 
 using namespace dataRepository;
+
+namespace logInfo
+{
+struct MemoryStatsOutputTimer : public OutputTimerBase
+{
+  std::string_view getDescription() const override { return "MemoryStats output timing"; }
+};
+}
+
+logInfo::OutputTimerBase const & MemoryStatsOutput::getTimerCategory() const
+{
+  static logInfo::MemoryStatsOutputTimer timer;
+  return timer;
+}
 
 MemoryStatsOutput::MemoryStatsOutput( string const & name,
                                       Group * const parent ):
@@ -34,29 +49,31 @@ MemoryStatsOutput::MemoryStatsOutput( string const & name,
 {
   bool const umpireStatsDefault = MemoryLogging::getInstance().isUmpireStatsLogOutputEnabled();
   addLogLevel< logInfo::UmpireStatistics >();
-  getWrapper( Group::viewKeyStruct::logLevelString() ).
+  getWrapper< integer >( string( Group::viewKeyStruct::logLevelString() ) ).
     setApplyDefaultValue( umpireStatsDefault ? 1 : 0 );
 
   bool const csvOutputDefault = MemoryLogging::getInstance().isUmpireStatsLogOutputEnabled();
-  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+  this->registerWrapper( viewKeysStruct::writeCSV, &m_writeCSV ).
     setApplyDefaultValue( csvOutputDefault ? 1 : 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file" );
 }
 
-virtual bool MemoryStatsOutput::execute( real64,
-                                         real64,
-                                         integer,
-                                         integer,
-                                         real64,
-                                         DomainPartition & ) override
+bool MemoryStatsOutput::execute( real64,
+                                 real64,
+                                 integer,
+                                 integer,
+                                 real64,
+                                 DomainPartition & )
 {
   auto & memLogging = MemoryLogging::getInstance();
-  memLogging.enableUmpireStatsLogReport( isLogLevelActive< logInfo::UmpireStatistics >() );
+  memLogging.enableUmpireStatsLogReport( isLogLevelActive< logInfo::UmpireStatistics >( getLogLevel() ) );
   memLogging.enableUmpireStatsCsvReport( m_writeCSV );
   memLogging.setUmpireStatsCsvReportFilename( GEOS_FMT( "{}_umpireStats.csv", getName() ) );
 
   memLogging.memoryStatsReport();
+
+  return false;
 }
 
 REGISTER_CATALOG_ENTRY( OutputBase, MemoryStatsOutput, string const &, Group * const )

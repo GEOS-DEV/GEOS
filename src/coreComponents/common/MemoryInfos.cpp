@@ -193,10 +193,16 @@ void MemoryLogging::memoryStatsReport() const
                                          "Sum over ranks" };
 
     if (m_umpireStatsLogReport)
+    {
       GEOS_LOG_RANK_0( TableTextFormatter( memoryStatLayout ).toString( tableData ) );
+    }
 
     if (m_umpireStatsCsvReport)
-      TableCSVFormatter( memoryStatLayout ).toStream( tableData, m_umpireStatsCsvReportFilename );
+    {
+      std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
+      TableCSVFormatter( memoryStatLayout ).toStream( csvFile, tableData );
+      csvFile.close();
+    }
   }
 }
 
