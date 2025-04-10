@@ -342,15 +342,13 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  ElementBasedAssemblyKernel( integer const isProducer,
-                              globalIndex const rankOffset,
+  ElementBasedAssemblyKernel( globalIndex const rankOffset,
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               constitutive::SingleFluidBase const & fluid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-    : m_isProducer( isProducer ),
-    m_rankOffset( rankOffset ),
+    : m_rankOffset( rankOffset ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
@@ -443,9 +441,6 @@ public:
 
 protected:
 
-  /// Well type
-  integer const m_isProducer;
-
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
 
@@ -491,8 +486,7 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( integer const isProducer,
-                   globalIndex const rankOffset,
+  createAndLaunch( globalIndex const rankOffset,
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
@@ -502,7 +496,7 @@ public:
     integer constexpr isThermal=0;
 
     ElementBasedAssemblyKernel< isThermal >
-    kernel( isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
+    kernel( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
     ElementBasedAssemblyKernel< isThermal >::template
     launch< POLICY, ElementBasedAssemblyKernel< isThermal > >( subRegion.size(), kernel );
   }

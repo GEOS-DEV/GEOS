@@ -83,7 +83,9 @@ public:
                               constitutive::SingleFluidBase const & fluid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-    :    Base( isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs ),
+    :    Base( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs ),
+    m_isProducer( isProducer ),
+    m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_internalEnergy( fluid.internalEnergy() ),
     m_internalEnergy_n( fluid.internalEnergy_n() ),
     m_dInternalEnergy( fluid.dInternalEnergy() )
@@ -117,16 +119,30 @@ public:
     {
       // assemble the accumulation term of the energy equation
       localIndex const eqnRowIndex = m_dofNumber[iwelem] + WJ_ROFFSET::ENERGYBAL - m_rankOffset;
+      real64 localEnergyAccum;
+      real64 localEnergyAccumDP;
+      real64 localEnergyAccumDT;
+      if( iwelem == m_iwelemControl && !m_isProducer )
+      {
+        integer const numRows = 1+ IS_THERMAL;
+        // For top segment energy balance eqn replaced with  T(n+1) - T = 0
+        // No other energy balance derivatives
+        // Assumption is global index == 0 is top segment with fixed temp BC
 
-      real64 const localEnergyAccum = m_wellElemVolume[iwelem] * ( m_wellElemDensity[iwelem][0]*m_internalEnergy[iwelem][0] - m_wellElemDensity_n[iwelem][0]*m_internalEnergy_n[iwelem][0]);
-      real64 const localEnergyAccumDP = m_wellElemVolume[iwelem] *(m_internalEnergy[iwelem][0] *m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dP] +
-                                                                   m_wellElemDensity[iwelem][0]*m_dInternalEnergy[iwelem][0][FLUID_PROP_COFFSET::dP]);
-      real64 const localEnergyAccumDT = m_wellElemVolume[iwelem] *(m_internalEnergy[iwelem][0] *m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dT] +
-                                                                   m_wellElemDensity[iwelem][0]*m_dInternalEnergy[iwelem][0][FLUID_PROP_COFFSET::dT]);
-
-      m_localRhs[eqnRowIndex] += localEnergyAccum;
+        localEnergyAccum = 0.0;
+        localEnergyAccumDT = 1.0;
+        localEnergyAccumDP = 0.0;
+      }
+      else
+      {
+        localEnergyAccum = m_wellElemVolume[iwelem] * ( m_wellElemDensity[iwelem][0]*m_internalEnergy[iwelem][0] - m_wellElemDensity_n[iwelem][0]*m_internalEnergy_n[iwelem][0]);
+        localEnergyAccumDP = m_wellElemVolume[iwelem] *(m_internalEnergy[iwelem][0] *m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dP] +
+                                                        m_wellElemDensity[iwelem][0]*m_dInternalEnergy[iwelem][0][FLUID_PROP_COFFSET::dP]);
+        localEnergyAccumDT = m_wellElemVolume[iwelem] *(m_internalEnergy[iwelem][0] *m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dT] +
+                                                        m_wellElemDensity[iwelem][0]*m_dInternalEnergy[iwelem][0][FLUID_PROP_COFFSET::dT]);
+      }
+      m_localRhs[eqnRowIndex]  = localEnergyAccum;
       m_localMatrix.template addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localEnergyAccumDP, 1 );
-
       m_localMatrix.template addToRow< serialAtomic >( eqnRowIndex, &tempDofColIndex, &localEnergyAccumDT, 1 );
 
     } );
@@ -159,7 +175,10 @@ public:
   }
 
 protected:
-
+  /// Well type
+  integer const m_isProducer;
+  /// Index of the element where the control is enforced
+  localIndex const m_iwelemControl;
   /// Views on fluid internal energy
   arrayView2d< real64 const > const m_internalEnergy;
   arrayView2d< real64 const > const m_internalEnergy_n;

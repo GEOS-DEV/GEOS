@@ -396,7 +396,7 @@ PressureRelationKernel::
       {
         localPresRelJacobian[TAG::NEXT *(1+IS_THERMAL)+1]    =  -0.5 * dWellElemDensity[iwelemNext][0][Deriv::dT]* gravD;
         localPresRelJacobian[TAG::CURRENT *(1+IS_THERMAL)+1] =  -0.5 * dWellElemDensity[iwelem][0][Deriv::dT]* gravD;
-       }
+      }
 
       // TODO: add friction and acceleration terms
 

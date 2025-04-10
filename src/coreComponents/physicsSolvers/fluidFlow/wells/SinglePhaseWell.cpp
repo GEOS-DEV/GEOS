@@ -779,7 +779,6 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
 
       if( isThermal() )
       {
-#if 1
         thermalSinglePhaseWellKernels::
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( wellControls.isProducer(),
@@ -789,32 +788,17 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
                                                      fluid,
                                                      localMatrix,
                                                      localRhs );
-#endif
       }
       else
       {
-#if 0
-        AccumulationKernel::launch( subRegion.size(),
-                                    dofManager.rankOffset(),
-                                    wellElemDofNumber,
-                                    wellElemGhostRank,
-                                    wellElemVolume,
-                                    wellElemDensity,
-                                    dWellElemDensity,
-                                    wellElemDensity_n,
-                                    localMatrix,
-                                    localRhs );
-#else
         singlePhaseWellKernels::
           ElementBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( wellControls.isProducer(),
-                                                     dofManager.rankOffset(),
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                      wellElemDofKey,
                                                      subRegion,
                                                      fluid,
                                                      localMatrix,
                                                      localRhs );
-#endif
       }
     } );
   } );

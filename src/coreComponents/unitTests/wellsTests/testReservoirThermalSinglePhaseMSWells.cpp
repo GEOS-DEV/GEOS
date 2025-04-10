@@ -168,11 +168,58 @@ char const * PostXmlInput =
   </Problem>
   )xml";
 
+template< typename T, typename COL_INDEX >
+void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
+                                CRSMatrixView< T const, COL_INDEX const > const & matrix2, std::string const & testName )
+{
+  std::cout << matrix1.numRows() << " " << matrix2.numColumns()  << std::endl;
+  std::ofstream omat1( testName+".csv" );
+
+
+  std::vector< std::vector< double > > fmat1( matrix1.numRows(), std::vector< double >( matrix1.numRows(), 0.0 ));
+  std::vector< std::vector< double > > fmat2( matrix2.numRows(), std::vector< double >( matrix2.numRows(), 0.0 ));
+
+  for( localIndex i = 0; i < matrix1.numRows(); ++i )
+  {
+    arraySlice1d< globalIndex const > indices1 = matrix1.getColumns( i );
+    arraySlice1d< globalIndex const > indices2 = matrix2.getColumns( i );
+    arraySlice1d< double const > values1  = matrix1.getEntries( i );
+    arraySlice1d< double const > values2  = matrix2.getEntries( i );
+    for( integer j=0; j<indices1.size(); j++ )
+    {
+      fmat1[i][indices1[j]] = values1[j];
+    }
+    for( integer j=0; j<indices2.size(); j++ )
+    {
+      fmat2[i][indices2[j]] = values2[j];
+    }
+  }
+  for( integer i=0; i<matrix1.numRows(); i++ )
+  {
+    for( integer j=0; j<matrix1.numColumns(); j++ )
+    {
+      omat1 << "," << fmat1[i][j];
+    }
+    omat1 << "\n";
+  }
+  omat1 << "\n";
+  for( integer i=0; i<matrix2.numRows(); i++ )
+  {
+    for( integer j=0; j<matrix2.numColumns(); j++ )
+    {
+      omat1 << "," << fmat2[i][j];
+
+    }
+    omat1 << "\n";
+
+  }
+  omat1.close();
+}
 template< typename LAMBDA >
 void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
-                            real64 const relTol,
+                            real64 const relTol, bool diag_check, std::string const & testName,
                             LAMBDA && assembleFunction )
 {
   SinglePhaseWell & wellSolver = *solver.wellSolver();
@@ -228,6 +275,11 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
             subRegion.getField< fields::well::pressure >();
           pres.move( hostMemorySpace, false );
 
+          // get the primary variables on reservoir elements
+          arrayView1d< real64 > const & temp =
+            subRegion.getField< fields::well::temperature >();
+          temp.move( hostMemorySpace, false );
+
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
           for( localIndex ei = 0; ei < subRegion.size(); ++ei )
           {
@@ -265,6 +317,43 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
                                      jacobianFD.toViewConstSizes() );
             }
           }
+          // b) compute all the derivatives wrt to the temperature in RESERVOIR elem ei
+          for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+          {
+            {
+              solver.resetStateToBeginningOfStep( domain );
+
+              // here is the perturbation in the temperature of the element
+              real64 const dT = perturbParameter * (temp[ei] + perturbParameter);
+              temp.move( hostMemorySpace, true );
+              temp[ei] += dT;
+
+              // after perturbing, update the temperature-dependent quantities in the reservoir
+              flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                       MeshLevel & mesh2,
+                                                                                       string_array const & regionNames2 )
+              {
+                mesh2.getElemManager().forElementSubRegions( regionNames2,
+                                                             [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion2 )
+                {
+                  flowSolver.updateFluidState( subRegion2 );
+                } );
+              } );
+
+              wellSolver.updateState( domain );
+
+              residual.zero();
+              jacobian.zero();
+              assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+              fillNumericalJacobian( residual.toViewConst(),
+                                     residualOrig.toViewConst(),
+                                     dofNumber[ei],
+                                     dT,
+                                     jacobianFD.toViewConstSizes() );
+            }
+          }
         } );
       }
     } );
@@ -293,6 +382,10 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
         subRegion.getField< fields::well::pressure >();
       wellElemPressure.move( hostMemorySpace, false );
 
+      arrayView1d< real64 > const & wellElemTemperature =
+        subRegion.getField< fields::well::temperature >();
+      wellElemTemperature.move( hostMemorySpace, false );
+
       arrayView1d< real64 > const & connRate =
         subRegion.getField< fields::well::connectionRate >();
       connRate.move( hostMemorySpace, false );
@@ -303,7 +396,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          // here is the perturbation in the pressure of the well element
+          // here is the perturbation in the  of the well element
           real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
           wellElemPressure.move( hostMemorySpace, true );
           wellElemPressure[iwelem] += dP;
@@ -319,13 +412,45 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset::DPRES,
+                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dP,
                                  dP,
                                  jacobianFD.toViewConstSizes() );
         }
       }
+      WellControls const & wellControls = wellSolver.getWellControls( subRegion );
+      // b) compute all the derivatives wrt to the temperature in WELL elem iwelem
+      for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
+      {
 
-      // b) compute all the derivatives wrt to the connection in WELL elem iwelem
+        solver.resetStateToBeginningOfStep( domain );
+
+        // here is the perturbation in the  of the well element
+        real64 const dT = perturbParameter * ( wellElemTemperature[iwelem] + perturbParameter );
+        wellElemTemperature.move( hostMemorySpace, true );
+        wellElemTemperature[iwelem] += dT;
+
+        // after perturbing, update the temperature-dependent quantities in the well
+        wellSolver.updateState( domain );
+
+        residual.zero();
+        jacobian.zero();
+        assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+        // consider mass balance eq lid in RESERVOIR elems and WELL elems
+        //      this is computing J_RW and J_WW
+        fillNumericalJacobian( residual.toViewConst(),
+                               residualOrig.toViewConst(),
+                               wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dT,
+                               dT,
+                               jacobianFD.toViewConstSizes() );
+
+        if( diag_check && !wellControls.isProducer() && iwelem == 0 )
+        {
+          localIndex rowIndex = wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dT;
+          setNumericalJacobianValue( rowIndex, rowIndex, 1.0, jacobianFD.toViewConstSizes() );
+        }
+      }
+      // c) compute all the derivatives wrt to the connection in WELL elem iwelem
       for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
       {
         {
@@ -347,7 +472,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset::DRATE,
+                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dQ,
                                  dRate,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -363,6 +488,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
+  //printCompareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), testName );
 }
 
 
@@ -398,7 +524,7 @@ protected:
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
-    testNumericalJacobian( *solver, domain, perturb, tol,
+    testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
@@ -413,7 +539,7 @@ protected:
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
-    testNumericalJacobian( *solver, domain, perturb, tol,
+    testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
@@ -425,10 +551,9 @@ protected:
   {
     real64 const perturb = std::sqrt( EPS );
     real64 const tol = 1e-1; // 10% error margin
-
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
-    testNumericalJacobian( *solver, domain, perturb, tol,
+    testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
@@ -443,7 +568,7 @@ protected:
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
-    testNumericalJacobian( *solver, domain, perturb, tol,
+    testNumericalJacobian( *solver, domain, perturb, tol, true, __func__,
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
@@ -525,7 +650,7 @@ TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux 
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
-  testNumericalJacobian( *solver, domain, perturb, tol,
+  testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
@@ -567,7 +692,7 @@ protected:
                       wellControlsName="wellControls1"
                       file="{}"
                       radius="0.1"
-                      numElementsPerSegment="1">
+                      numElementsPerSegment="2">
             <Perforation name="producer1_perf1"
                          distanceFromHead="1.45"/>
         </VTKWell>
@@ -576,7 +701,7 @@ protected:
                       wellControlsName="wellControls2"
                       file="{}"
                       radius="0.1"
-                      numElementsPerSegment="1">
+                      numElementsPerSegment="2">
             <Perforation name="injector1_perf1"
                          distanceFromHead="1.45"/>
         </VTKWell>)", testMeshDir + "/well1.vtk",
