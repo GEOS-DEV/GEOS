@@ -40,11 +40,14 @@ public:
   /// Represent a row of the Table (header or values) when structured for formatting
   struct CellLayoutRow
   {
+    /// The cell list of the row instance.
     std::vector< TableLayout::CellLayout > cells;
+
+    /// The maximum number of lines in the `cells` texts (no text is considered as one line).
     size_t sublinesCount;
   };
 
-  /// Represent the Table (header or values) when structured for formatting
+  /// Represent a table section (title + header or values) layout: view on the data and its layout settings.
   using CellLayoutRows = std::vector< CellLayoutRow >;
 
 
@@ -53,7 +56,11 @@ protected:
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
 
-  TableFormatter() = default;
+  /**
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
+   */
+  TableFormatter();
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
@@ -70,10 +77,11 @@ class TableCSVFormatter : public TableFormatter
 public:
 
   /**
-   * @brief Construct a new Table Formatter
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
    */
   TableCSVFormatter():
-    TableFormatter( TableLayout() )
+    TableFormatter()
   {}
 
   /**
@@ -122,10 +130,11 @@ class TableTextFormatter : public TableFormatter
 public:
 
   /**
-   * @brief Construct a new TableFormatter
+   * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
+   * without any column / title). Feature is not tested.
    */
   TableTextFormatter():
-    TableFormatter( TableLayout() )
+    TableFormatter()
   {}
 
   /**
@@ -185,57 +194,79 @@ private:
                     size_t tableTotalWidth ) const;
 
   /**
-   * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
-   * @note To produce a grid with the given column tree, there are 2 corner cases:
-   *       - A column have less subcolumns layers than its neightboors -> empty "Header" cells  will be added bellow.
-   *       - A parent column has 2 or more sub-columns -> it will be subdivised with "MergeNext" cells.
-   *         This is why stretchRowToMergedCellsWidth() must be called on the grid,
+   * @brief Populate a grid of CellLayout with the title rows.
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
    */
-  void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
-                                  CellLayoutRows & headerCellsLayout ) const;
+  void populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
+                                 CellLayoutRows & headerCellsLayout ) const;
 
-/**
- * @brief Populates the data cells layout based on input data values.
- * @param tableLayout The layout of the table,
- * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
- * @param inputDataValues A 2D vector containing the actual input data values.
- * @param nbVisibleColumn The number of columns that are not hidden
- */
+  /**
+   * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
+   * @note To produce a grid with the given column tree, there are 2 corner cases:
+   *       - A column have less subcolumns layers than its neightboors -> empty "Header" cells  will be added bellow.
+   *       - A parent column has 2 or more sub-columns -> it will be subdivised with "MergeNext" cells.
+   *         This is why stretchColumnsByMergedCellsWidth() must be called on the grid,
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
+   *                          gridified layout.
+   * @param inputDataColumnsCount The number of input data columns count, helps verifying the number of column.
+   */
+  void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
+                                  CellLayoutRows & headerCellsLayout,
+                                  size_t inputDataColumnsCount ) const;
+  /**
+   * @brief Populates the data cells layout based on input data values, as a free layout (no columns layout).
+   * @param tableLayout The layout of the table,
+   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
+   * @param inputDataValues A 2D vector containing the actual input data values.
+   */
+  void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
+                                CellLayoutRows & dataCellsLayout,
+                                RowsCellInput const & inputDataValues ) const;
+
+  /**
+   * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
+   * @param tableLayout The layout of the table,
+   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
+   * @param inputDataValues A 2D vector containing the actual input data values.
+   * @param nbVisibleColumn The number of columns that are not hidden
+   */
   void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
                                 CellLayoutRows & dataCellsLayout,
                                 RowsCellInput const & inputDataValues,
                                 size_t nbVisibleColumn ) const;
 
   /**
-   * @brief Adjust cell widths in a row to accommodate content width requirements.
-   * @param referenceRow The row to store the result in (typically, a unique reference row).
+   * @brief Expend the columns width to accomodate with the content of all cells that are not merged.
+   * @param columnsWidth The array to store the resulting columns width in.
    * @param tableGrid The grid of cells containing content.
    */
-  void stretchRowToCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
-                               TableFormatter::CellLayoutRows const & tableGrid ) const;
+  void stretchColumnsByCellsWidth( std::vector< size_t > & columnsWidth,
+                                   TableFormatter::CellLayoutRows const & tableGrid ) const;
 
   /**
    * @brief Adjust cell widths to accommodate merged cells across multiple columns.
-   * @param referenceRow The row to store the result in (typically, a unique reference row).
+   * @param columnsWidth The array to store the resulting columns width in.
+   *                     Initialized by stretchColumnsByCellsWidth().
    * @param tableGrid The grid of cells containing content that is potencially merged.
+   *                  The merged cells width will be computed.
    * @param tableLayout Layout information, including column margins and other settings.
    * @param compress Enable a final compression pass instead of only expanding widths.
    */
-  void stretchRowToMergedCellsWidth( TableFormatter::CellLayoutRow & referenceRow,
-                                     TableFormatter::CellLayoutRows & tableGrid,
-                                     PreparedTableLayout const & tableLayout,
-                                     bool const compress ) const;
+  void stretchColumnsByMergedCellsWidth( std::vector< size_t > & columnsWidth,
+                                         TableFormatter::CellLayoutRows & tableGrid,
+                                         PreparedTableLayout const & tableLayout,
+                                         bool const compress ) const;
 
   /**
-   * @brief Applies column widths from a given reference row to all rows in the table grid.
-   * @param referenceRow The row containing the finalized column width values.
+   * @brief Applies column widths to all rows in the table grid.
+   * @param columnsWidth The row containing the finalized column width values.
    * @param tableGrid The grid of cells that will have widths propagated to all rows.
    * @param tableLayout Layout information including spacing and other display settings.
    */
-  void propagateRowWidth( TableFormatter::CellLayoutRow const & referenceRow,
+  void applyColumnsWidth( std::vector< size_t > const & columnsWidth,
                           TableFormatter::CellLayoutRows & tableGrid,
                           PreparedTableLayout const & tableLayout ) const;
 
@@ -262,9 +293,7 @@ private:
    */
   void outputLines( PreparedTableLayout const & tableLayout,
                     CellLayoutRows const & cellsLayout,
-                    std::ostringstream & tableOutput,
-                    CellType sectionType,
-                    string_view separatorLine ) const;
+                    std::ostringstream & tableOutput ) const;
 };
 
 /**

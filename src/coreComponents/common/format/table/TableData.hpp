@@ -43,7 +43,7 @@ public:
     /// The cell type
     CellType type;
     /// The cell value
-    string value = "";
+    string value;
 
     bool operator==( CellData const & other ) const
     {
@@ -199,7 +199,7 @@ void TableData::addRow( Args const &... args )
   ( [&] {
     static_assert( has_formatter_v< decltype(args) > || isCellType< std::decay_t< decltype(args) > >, "Argument passed in addRow cannot be converted to string nor a CellType" );
     if constexpr (std::is_same_v< Args, CellType >) {
-      cells.push_back( { args } );
+      cells.push_back( { args, string() } );
     }
     else
     {

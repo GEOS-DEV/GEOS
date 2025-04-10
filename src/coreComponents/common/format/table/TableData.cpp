@@ -45,7 +45,7 @@ void TableData::clear()
   m_rows.clear();
 }
 
-TableData::DataRows const & TableData::getTableDataRows() const
+std::vector< std::vector< TableData::CellData > > const & TableData::getTableDataRows() const
 {
   return m_rows;
 }
