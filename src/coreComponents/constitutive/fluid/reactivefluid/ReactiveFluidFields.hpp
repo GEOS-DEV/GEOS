@@ -14,13 +14,13 @@
  */
 
 /**
- * @file ReactiveMultiFluidFields.hpp
+ * @file ReactiveFluidFields.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_REACTIVE_MULTIFLUIDFIELDS_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_REACTIVE_MULTIFLUIDFIELDS_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDFIELDS_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDFIELDS_HPP_
 
-#include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
 #include "mesh/MeshFields.hpp"
 
 namespace geos
@@ -32,8 +32,8 @@ namespace fields
 namespace reactivefluid
 {
 
-using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
-using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
+using array2dLayoutComp = array2d< real64, constitutive::reactivefluid::LAYOUT_COMP >;
+using array3dLayoutComp_dC = array3d< real64, constitutive::reactivefluid::LAYOUT_COMP_DC >;
 
 DECLARE_FIELD( primarySpeciesConcentration,
                "primarySpeciesConcentration",
@@ -88,4 +88,4 @@ DECLARE_FIELD( kineticReactionRates,
 
 }
 
-#endif // GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDFIELDS_HPP_
+#endif // GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDFIELDS_HPP_

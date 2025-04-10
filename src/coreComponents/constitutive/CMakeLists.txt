@@ -117,12 +117,9 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
-     fluid/multifluid/reactive/ReactiveBrineFluid.hpp
-     fluid/multifluid/reactive/ReactiveMultiFluid.hpp
-     fluid/multifluid/reactive/ReactiveMultiFluidFields.hpp
-     fluid/multifluid/reactive/chemicalReactions/EquilibriumReactions.hpp
-     fluid/multifluid/reactive/chemicalReactions/KineticReactions.hpp
-     fluid/multifluid/reactive/chemicalReactions/ReactionsBase.hpp
+     fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp
+     fluid/reactivefluid/ReactiveFluidFields.hpp
+     fluid/reactivefluid/ReactiveFluidLayouts.hpp
      fluid/singlefluid/CompressibleSinglePhaseFluid.hpp
      fluid/singlefluid/ParticleFluid.hpp
      fluid/singlefluid/ParticleFluidBase.hpp
@@ -270,11 +267,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
-     fluid/multifluid/reactive/ReactiveBrineFluid.cpp
-     fluid/multifluid/reactive/ReactiveMultiFluid.cpp
-     fluid/multifluid/reactive/chemicalReactions/EquilibriumReactions.cpp
-     fluid/multifluid/reactive/chemicalReactions/KineticReactions.cpp
-     fluid/multifluid/reactive/chemicalReactions/ReactionsBase.cpp
+     fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp
      fluid/singlefluid/CompressibleSinglePhaseFluid.cpp
      fluid/singlefluid/ParticleFluid.cpp
      fluid/singlefluid/ParticleFluidBase.cpp
@@ -351,6 +344,20 @@ if( ENABLE_PVTPackage )
     add_subdirectory( PVTPackage )
 
     list( APPEND dependencyList PVTPackage )
+endif()
+
+if (ENABLE_HPCREACT)
+    set( constitutive_headers
+        ${constitutive_headers}
+        fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp 
+        )
+
+    set( constitutive_sources
+         ${constitutive_sources}
+         fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp 
+        )
+  add_subdirectory( HPCReact )
+  list( APPEND dependencyList hpcReact )
 endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
