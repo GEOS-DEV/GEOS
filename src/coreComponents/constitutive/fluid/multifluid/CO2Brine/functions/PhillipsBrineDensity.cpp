@@ -190,7 +190,7 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
 
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  m_brineDensityTable->outputPVTTableData( pvtOutputOpts );
+  m_brineDensityTable->outputTableData( pvtOutputOpts );
 }
 
 PhillipsBrineDensity::KernelWrapper

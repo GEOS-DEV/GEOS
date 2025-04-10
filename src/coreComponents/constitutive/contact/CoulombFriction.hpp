@@ -21,6 +21,8 @@
 #define GEOS_CONSTITUTIVE_CONTACT_COULOMBFRICTION_HPP_
 
 #include "FrictionBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {
@@ -103,7 +105,6 @@ public:
                                arraySlice1d< real64 const > const & dispJump,
                                arraySlice1d< real64 const > const & penalty,
                                arraySlice1d< real64 const > const & traction,
-                               real64 const faceArea,
                                bool const symmetric,
                                bool const fixedLimitTau,
                                real64 const normalTractionTolerance,
@@ -119,7 +120,6 @@ public:
                                    arraySlice1d< real64 const > const & deltaDispJump,
                                    arraySlice1d< real64 const > const & penalty,
                                    arraySlice1d< real64 const > const & traction,
-                                   real64 const faceArea,
                                    arraySlice1d< real64 > const & tractionNew ) const override final;
 
   GEOS_HOST_DEVICE
@@ -243,13 +243,15 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
                                                           arraySlice1d< real64 > const & tractionVector,
                                                           arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
+  using namespace fields::contact;
+
   // Compute the slip
   real64 const slip[2] = { dispJump[1] - oldDispJump[1],
                            dispJump[2] - oldDispJump[2] };
 
   switch( fractureState )
   {
-    case fields::contact::FractureState::Stick:
+    case FractureState::Stick:
     {
       // Elastic tangential deformation
 
@@ -265,7 +267,7 @@ inline void CoulombFrictionUpdates::computeShearTraction( localIndex const k,
 
       break;
     }
-    case fields::contact::FractureState::Slip:
+    case FractureState::Slip:
     {
       // Plastic tangential deformation
 
@@ -363,7 +365,6 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
                                                     arraySlice1d< real64 const > const & dispJump,
                                                     arraySlice1d< real64 const > const & penalty,
                                                     arraySlice1d< real64 const > const & traction,
-                                                    real64 const faceArea,
                                                     bool const symmetric,
                                                     bool const fixedLimitTau,
                                                     real64 const normalTractionTolerance,
@@ -380,9 +381,9 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
 
   // Compute the trial traction
   real64 tractionTrial[ 3 ];
-  tractionTrial[ 0 ] = traction[0] + penalty[0] * dispJump[0] * faceArea;
-  tractionTrial[ 1 ] = traction[1] + penalty[1] * (dispJump[1] - oldDispJump[1]) * faceArea;
-  tractionTrial[ 2 ] = traction[2] + penalty[1] * (dispJump[2] - oldDispJump[2]) * faceArea;
+  tractionTrial[ 0 ] = traction[0] + penalty[0] * dispJump[0];
+  tractionTrial[ 1 ] = traction[1] + penalty[1] * (dispJump[1] - oldDispJump[1]);
+  tractionTrial[ 2 ] = traction[2] + penalty[1] * (dispJump[2] - oldDispJump[2]);
 
   // Compute tangential trial traction norm
   real64 const tau[2] = { tractionTrial[1],
@@ -502,16 +503,15 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
                                                         arraySlice1d< real64 const > const & deltaDispJump,
                                                         arraySlice1d< real64 const > const & penalty,
                                                         arraySlice1d< real64 const > const & traction,
-                                                        real64 const faceArea,
                                                         arraySlice1d< real64 > const & tractionNew ) const
 {
 
   // TODO: Pass this tol as an argument or define a new class member
   real64 const zero = LvArray::NumericLimits< real64 >::epsilon;
 
-  tractionNew[0] = traction[0] + penalty[0] * dispJump[0] * faceArea;
-  tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1] * faceArea;
-  tractionNew[2] = traction[2] + penalty[1] * deltaDispJump[2] * faceArea;
+  tractionNew[0] = traction[0] + penalty[0] * dispJump[0];
+  tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1];
+  tractionNew[2] = traction[2] + penalty[1] * deltaDispJump[2];
 
   real64 const tau[2] = { tractionNew[1],
                           tractionNew[2] };
@@ -557,7 +557,6 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
                                                      real64 const slidingCheckTolerance,
                                                      integer & condConv ) const
 {
-
   using namespace fields::contact;
 
   // Compute the slip
