@@ -85,6 +85,7 @@ void ExplicitQDRateAndState::registerDataOnMesh( Group & meshBodies )
       integer const numRKComponents = 3;
       subRegion.registerField< rateAndState::rungeKuttaStageRates >( getName() ).reference().resizeDimension< 1, 2 >( m_butcherTable.numStages, numRKComponents );
       subRegion.registerField< rateAndState::error >( getName() ).reference().resizeDimension< 1 >( numRKComponents );
+      subRegion.registerField< rateAndState::slipRateBounds >( getName() ).reference().resizeDimension< 1 >( 2 );
     } );
   } );
 }

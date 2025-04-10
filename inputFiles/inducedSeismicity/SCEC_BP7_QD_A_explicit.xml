@@ -12,16 +12,16 @@
       name="QDSolver"
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
-      initialDt="1.0"
-      relTimeStepTol="1e-7"
-      absTimeStepTol="1e-7"
+      initialDt="1.0e-5"
+      relTimeStepTol="1e-6"
+      absTimeStepTol="1e-6"
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="15"
+        newtonMaxIter="1000"
         maxNumConfigurationAttempts="1"
         lineSearchAction="None"
         lineSearchMaxCuts="2"
@@ -59,7 +59,7 @@
   </Solvers>
 
   <Events
-    maxTime="10">
+    maxTime="1">
 
     <SoloEvent 
       name="generateFault"

@@ -52,6 +52,7 @@ public:
     m_shearTraction( subRegion.getField< fields::rateAndState::shearTraction >() ),
     m_slipVelocity( subRegion.getField< fields::rateAndState::slipVelocity >() ),
     m_shearImpedance( shearImpedance ),
+    m_slipRateBounds( subRegion.getField< fields::rateAndState::slipRateBounds >() ),
     m_frictionLaw( frictionLaw.createKernelUpdates()  )
   {}
 
@@ -67,7 +68,6 @@ public:
 
     real64 jacobian{};
     real64 rhs{};
-
   };
 
   GEOS_HOST_DEVICE
@@ -76,11 +76,8 @@ public:
               StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( dt );
-    real64 const normalTraction = m_normalTraction[k];
-    real64 const shearTractionMagnitude = LvArray::tensorOps::l2Norm< 2 >( m_shearTraction[k] );
-    real64 const bracketedSlipRate = bracketSlipRate( m_slipRate[k], shearTractionMagnitude, m_shearImpedance);
-    stack.rhs = shearTractionMagnitude - m_shearImpedance * bracketedSlipRate - normalTraction * m_frictionLaw.frictionCoefficient( k, bracketedSlipRate, m_stateVariable[k] );
-    stack.jacobian = -m_shearImpedance - normalTraction * m_frictionLaw.dFrictionCoefficient_dSlipRate( k, bracketedSlipRate, m_stateVariable[k] );
+    stack.rhs = evalRhs( k , m_slipRate[k]);
+    stack.jacobian = -m_shearImpedance - m_normalTraction[k] * m_frictionLaw.dFrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] );
   }
 
   GEOS_HOST_DEVICE
@@ -89,8 +86,29 @@ public:
   {
     m_slipRate[k] -= stack.rhs/stack.jacobian;
 
-    real64 const shearTractionMagnitude = LvArray::tensorOps::l2Norm< 2 >( m_shearTraction[k] );
-    m_slipRate[k] = bracketSlipRate(m_slipRate[k], shearTractionMagnitude, m_shearImpedance);
+    // Check if updated slip rate falls outside of the bracketed interval.
+    // If so, fall back to bisection.
+    real64 const lowerBound = m_slipRateBounds[k][0];
+    real64 const upperBound = m_slipRateBounds[k][1];
+    if (m_slipRate[k] < lowerBound || m_slipRate[k] > upperBound)
+    {
+      // Outside of bracket! Use middle value for slip rate instead
+      m_slipRate[k] =  0.5 * (lowerBound + upperBound); 
+      // Update brackets
+      real64 const rhsMid = evalRhs( k , m_slipRate[k]);
+      real64 const rhsLower = evalRhs( k , lowerBound);
+      if (rhsMid * rhsLower > 0) // check signs
+      { 
+        // rhsMid and rhsLower has same signs. Root is in upper bracket. Update lower bound
+        m_slipRateBounds[k][0] = m_slipRate[k]; // Set lower bound to intermediate value
+      }
+      else
+      {
+        // rhsMid and rhsLower has diffrent signs. Root is in lower bracket. Update upper bound
+        m_slipRateBounds[k][1] = m_slipRate[k]; // Set upper bound to intermediate value
+      }
+      stack.rhs = rhsMid; // Update for convergence check
+    }
   }
 
 
@@ -105,29 +123,17 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  real64 evalRhs( localIndex const k , real64 const slipRate) const
+  {
+    real64 const shearTractionMagnitude = LvArray::tensorOps::l2Norm< 2 >( m_shearTraction[k] );
+    return shearTractionMagnitude - m_shearImpedance * slipRate - m_normalTraction[k] * m_frictionLaw.frictionCoefficient( k, slipRate, m_stateVariable[k] );
+  }
+
+  GEOS_HOST_DEVICE
   void projectSlipRate( localIndex const k ) const
   {
     real64 const frictionCoefficient = m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] );
     projectSlipRateBase( k, frictionCoefficient, m_shearImpedance, m_normalTraction, m_shearTraction, m_slipRate, m_slipVelocity );
-  }
-
-  GEOS_HOST_DEVICE
-  real64 bracketSlipRate( real64 const slipRate, real64 const shearTractionMagnitude, real64 const shearImpedance) const
-  {
-    // Bounds for bracket
-    real64 const lowerBound = 0.;
-    real64 const upperBound = shearTractionMagnitude / shearImpedance;
-    // If slipRate is outside of the bracket, set bracketedSlipRate to the intermediate value of the bracket. Otherwise
-    // bracketedSlipRate is set to slipRate.
-    real64 bracketedSlipRate = slipRate;
-    if (slipRate < lowerBound || slipRate > upperBound)
-    {
-      // std::cout << "SlipRate outside of bracket!" << std::endl;
-      // std::cout << "Upper bound " << upperBound << std::endl;
-      // std::cout << "SlipRate " << slipRate << std::endl;
-      bracketedSlipRate = 0.5 * (lowerBound + upperBound);
-    }
-    return bracketedSlipRate;
   }
 
   GEOS_HOST_DEVICE
@@ -140,6 +146,16 @@ public:
   void resetState( localIndex const k ) const
   {
     GEOS_UNUSED_VAR( k );
+  }
+
+  GEOS_HOST_DEVICE
+  void initializeSlipRateBounds( localIndex const k ) const
+  {
+    real64 const shearTractionMagnitude = LvArray::tensorOps::l2Norm< 2 >( m_shearTraction[k] );
+    real64 const lowerBound = 0.;
+    real64 const upperBound = shearTractionMagnitude / m_shearImpedance;
+    m_slipRateBounds[k][0] = lowerBound;
+    m_slipRateBounds[k][1] = upperBound;
   }
 
   /**
@@ -156,6 +172,10 @@ public:
                              real64 const newtonTol )
   {
     GEOS_MARK_FUNCTION;
+    forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      kernel.initializeSlipRateBounds( k );
+    } );
     bool converged = newtonSolve< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
     if ( converged )
     {
@@ -184,6 +204,8 @@ private:
   arrayView2d< real64 > const m_slipVelocity;
 
   real64 const m_shearImpedance;
+
+  arrayView2d< real64 > const m_slipRateBounds;
 
   typename FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
