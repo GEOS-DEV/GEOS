@@ -209,7 +209,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       else
       {
         fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath());
-        std::set< string > fieldNameAvail;
+        std::set< string > fieldNameAvailable;
         fs.apply< dataRepository::Group >( mesh,
                                            [&]( FieldSpecificationBase const &,
                                                 string const &,
@@ -221,15 +221,15 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           if( targetOMB )
           { // filter anything that is not an ObjectManagerBase type
             // show to the user all fields which are registered under the field-specification object path
-            fieldNameAvail.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
+            fieldNameAvailable.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
           }
 
         } );
 
-        for( auto it=fieldNameAvail.begin(); it!=fieldNameAvail.end(); ++it )
+        for( auto it=fieldNameAvailable.begin(); it!=fieldNameAvailable.end(); ++it )
         {
           fieldNameNotFoundMessage << *it;
-          if( it != std::prev( fieldNameAvail.end()))
+          if( it != std::prev( fieldNameAvailable.end()))
           {
             fieldNameNotFoundMessage << ", ";
           }

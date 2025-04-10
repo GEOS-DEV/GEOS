@@ -918,9 +918,7 @@ public:
   { return m_maxGlobalIndex; }
 
   /**
-   * @brief Get the Registered Fields object
-   *
-   * @return std::set< string >&
+   * @brief A vector containing all registered fields
    */
   std::set< string > const & getRegisteredFields() const { return m_registeredField; }
 
@@ -994,7 +992,7 @@ protected:
   /// The maximum global index of any object of all objects on this rank.
   globalIndex m_localMaxGlobalIndex = -1;
 
-  // Field that have been registered
+  /// Field that have been registered
   std::set< string > m_registeredField = {};
 };
 
