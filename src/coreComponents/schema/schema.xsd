@@ -1501,10 +1501,15 @@ stress - traction is applied to the faces as specified by the inner product of i
 * upper
 * lower-->
 		<xsd:attribute name="interpolation" type="geos_TableFunction_InterpolationType" default="linear" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />
 		<!--voxelFile => Voxel file name for ND Table-->
 		<xsd:attribute name="voxelFile" type="path" default="" />
+		<!--writeCSV => When set to 1, write the table into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3048,7 +3053,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useTotalMassEquation => Use total mass equation-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
-		<!--writeCSV => Write rates into a CSV file-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -4510,7 +4515,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeStepFromTables => Choose time step to honor rates/bhp tables time intervals-->
 		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
-		<!--writeCSV => Write rates into a CSV file-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -4993,7 +4998,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
-		<!--writeCSV => Write statistics into a CSV file-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5198,7 +5203,7 @@ Information output from lower logLevels is added with the desired log level
 1
  - Print statistics-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--writeCSV => Write statistics into a CSV file-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5228,7 +5233,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
-		<!--writeCSV => Write statistics into a CSV file-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5247,7 +5252,7 @@ Information output from lower logLevels is added with the desired log level
 3
  - Print statistics for each source flux in each regions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--writeCSV => Write statistics into a CSV file-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5507,7 +5512,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
-		<!--writeCSV => Write PVT tables into a CSV file-->
+		<!--writeCSV => When set to 1, write PVT tables into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5534,7 +5539,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
-		<!--writeCSV => Write PVT tables into a CSV file-->
+		<!--writeCSV => When set to 1, write PVT tables into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5561,7 +5566,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
-		<!--writeCSV => Write PVT tables into a CSV file-->
+		<!--writeCSV => When set to 1, write PVT tables into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5588,7 +5593,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
-		<!--writeCSV => Write PVT tables into a CSV file-->
+		<!--writeCSV => When set to 1, write PVT tables into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6701,7 +6706,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
-		<!--writeCSV => Write PVT tables into a CSV file-->
+		<!--writeCSV => When set to 1, write PVT tables into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6722,7 +6727,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
-		<!--writeCSV => Write PVT tables into a CSV file-->
+		<!--writeCSV => When set to 1, write PVT tables into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
