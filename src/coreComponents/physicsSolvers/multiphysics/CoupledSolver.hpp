@@ -498,6 +498,7 @@ protected:
           {
             iter = 0; // restart outer loop
             stepDt = solverDt; // sync time step
+            m_numTimestepsSinceLastDtCut = 0;
           }
         } );
 
