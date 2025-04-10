@@ -356,26 +356,6 @@ real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTi
                                      real64 const & currentDt,
                                      DomainPartition & domain )
 {
-  if( m_numTimestepsSinceLastDtCut >= 0 )
-  {
-    // Increase counter to indicate how many cycles since the last timestep cut
-    m_numTimestepsSinceLastDtCut++;
-
-    integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.minTimeStepIncreaseInterval();
-    if( m_numTimestepsSinceLastDtCut < minTimeStepIncreaseInterval )
-    {
-      GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
-                             GEOS_FMT( "{}: time-step size will be kept the same since it's been {} cycles since last cut.",
-                                       getName(), m_numTimestepsSinceLastDtCut ) );
-      return currentDt;
-    }
-    else
-    {
-      // Reset the counter
-      m_numTimestepsSinceLastDtCut = -1;
-    }
-  }
-
   real64 const nextDtIter  = setNextDtBasedOnIterNumber( currentDt );
   GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::TimeStep,
                                   GEOS_FMT( "{}: next time step based on number of iterations = {}", getName(), nextDtIter ),
@@ -427,7 +407,29 @@ real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTi
     }
   }
 
-  return std::min( nextDtIter, nextDtStateChange );
+  real64 nextDt = LvArray::math::min( nextDtIter, nextDtStateChange );
+
+  if( m_numTimestepsSinceLastDtCut >= 0 )
+  {
+    // Increase counter to indicate how many steps since the last timestep cut
+    m_numTimestepsSinceLastDtCut++;
+
+    integer const minTimeStepIncreaseInterval = m_nonlinearSolverParameters.minTimeStepIncreaseInterval();
+    if( m_numTimestepsSinceLastDtCut < minTimeStepIncreaseInterval )
+    {
+      GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
+                             GEOS_FMT( "{}: time-step size will capped at {} s since it's been {} steps since last cut.",
+                                       getName(), currentDt, m_numTimestepsSinceLastDtCut ) );
+      nextDt = LvArray::math::min( nextDt, currentDt );
+    }
+    else
+    {
+      // Reset the counter
+      m_numTimestepsSinceLastDtCut = -1;
+    }
+  }
+
+  return nextDt;
 }
 
 real64 PhysicsSolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,

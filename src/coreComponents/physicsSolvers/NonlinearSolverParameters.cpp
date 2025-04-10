@@ -128,9 +128,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setDescription( "Factor by which the time-step is increased when the number of Newton iterations is small." );
 
   registerWrapper( viewKeysStruct::minTimeStepIncreaseIntervalString(), &m_minTimeStepIncreaseInterval ).
-    setApplyDefaultValue( 10 ).
+    setApplyDefaultValue( 3 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum number of cycles since the last time-step cut for increasing the time-step again." );
+    setDescription( "Minimum number of steps since the last time-step cut for increasing the time-step again." );
 
   registerWrapper( viewKeysStruct::timeStepCutFactorString(), &m_timeStepCutFactor ).
     setApplyDefaultValue( 0.5 ).
