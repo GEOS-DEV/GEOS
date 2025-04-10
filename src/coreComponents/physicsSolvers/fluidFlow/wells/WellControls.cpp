@@ -118,7 +118,8 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
+                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions.\n"
+                    "See note on referenceReservoirRegion for reservoir condition options" );
 
   registerWrapper( viewKeyStruct::referenceReservoirRegionString(), &m_referenceReservoirRegion ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
