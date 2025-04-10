@@ -16,7 +16,6 @@
 #include "MemoryInfos.hpp"
 
 #include "MpiWrapper.hpp"
-#include "format/table/TableFormatter.hpp"
 #if defined( GEOS_USE_CALIPER ) and defined( GEOS_USE_ADIAK )
 #include <adiak.hpp>
 #endif
@@ -81,8 +80,25 @@ bool MemoryInfos::isPhysicalMemoryHandled() const
 MemoryLogging::MemoryLogging():
   m_umpireStatsLogReport( true ),
   m_umpireStatsCsvReport( false ),
-  m_umpireStatsCsvReportFilename( "./memoryStats.csv" )
-{}
+  m_umpireStatsCsvReportFilename( "./memoryStats.csv" ),
+  m_currentCycle( 0 ),
+  m_currentTime( 0.0 )
+{
+  TableLayout const memoryStatCsvLayout = { "Cycle",
+                                            "Time",
+                                            "Umpire Memory Pool\n(reserved / % over total)",
+                                            "Min over ranks",
+                                            "Max over ranks",
+                                            "Avg over ranks",
+                                            "Sum over ranks" };
+  m_memoryStatLogFormatter = TableTextFormatter( memoryStatCsvLayout );
+
+  // We do not need to output the cycle & time in the log table
+  TableLayout memoryStatLogLayout = memoryStatCsvLayout;
+  memoryStatLogLayout.getColumns()[0].setVisibility( false );
+  memoryStatLogLayout.getColumns()[1].setVisibility( false );
+  m_memoryStatCsvFormatter = TableCSVFormatter( memoryStatLogLayout );
+}
 
 MemoryLogging & MemoryLogging::getInstance()
 {
@@ -90,9 +106,19 @@ MemoryLogging & MemoryLogging::getInstance()
   return instance;
 }
 
+void enableUmpireStatsCsvReport( bool enable );
+{
+  m_umpireStatsCsvReport = enable;
+  if( enable )
+  {
+    m_memoryStatLogFormatter.headerToStream( std::ofstream( m_umpireStatsCsvReportFilename ),
+                                             tableData );
+  }
+}
+
 void MemoryLogging::memoryStatsReport() const
 {
-  if ( !m_umpireStatsLogReport && !m_umpireStatsCsvReport )
+  if( !m_umpireStatsLogReport && !m_umpireStatsCsvReport )
     return;
 
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
@@ -173,35 +199,30 @@ void MemoryLogging::memoryStatsReport() const
     string const sumMarkValue = GEOS_FMT( "{} {:>8}",
                                           LvArray::system::calculateSize( sumMark ), percentage );
 
-    tableData.addRow( allocatorName,
+    tableData.addRow( m_currentCycle,
+                      m_currentTime,
+                      allocatorName,
                       minMarkValue,
                       maxMarkValue,
                       avgMarkValue,
                       sumMarkValue );
 
-#if defined( GEOS_USE_CALIPER ) and defined( GEOS_USE_ADIAK )
+#if defined( GEOS_USE_CALIPER )and defined( GEOS_USE_ADIAK )
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
 #endif
   }
 
   { // output statistics
-    TableLayout const memoryStatLayout { "Umpire Memory Pool\n(reserved / % over total)",
-                                         "Min over ranks",
-                                         "Max over ranks",
-                                         "Avg over ranks",
-                                         "Sum over ranks" };
-
-    if (m_umpireStatsLogReport)
+    if( m_umpireStatsLogReport )
     {
-      GEOS_LOG_RANK_0( TableTextFormatter( memoryStatLayout ).toString( tableData ) );
+      GEOS_LOG_RANK_0( TableTextFormatter( m_memoryStatLogLayout ).toString( tableData ) );
     }
 
-    if (m_umpireStatsCsvReport)
+    if( m_umpireStatsCsvReport )
     {
-      std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
-      TableCSVFormatter( memoryStatLayout ).toStream( csvFile, tableData );
-      csvFile.close();
+      m_memoryStatLogFormatter.dataToStream( std::ofstream( m_umpireStatsCsvReportFilename ),
+                                             tableData );
     }
   }
 }

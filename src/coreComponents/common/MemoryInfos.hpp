@@ -19,6 +19,7 @@
 #include "umpire/util/MemoryResourceTraits.hpp"
 #include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
+#include "format/table/TableFormatter.hpp"
 #include <unistd.h>
 #include <iostream>
 #if defined( GEOS_USE_CUDA )
@@ -103,10 +104,10 @@ public:
 
   /**
    * @param enable enable or disable the text log level.
+   * @note when enabled, start a new csv immediately from zero, filling its header.
    * @see memoryStatsReport() for more documentation.
    */
-  void enableUmpireStatsCsvReport( bool enable )
-  { m_umpireStatsCsvReport = enable; }
+  void enableUmpireStatsCsvReport( bool enable );
 
   /**
    * @param filename enable or disable the text log level.
@@ -116,6 +117,21 @@ public:
   { m_umpireStatsCsvReportFilename = filename; }
 
   /**
+   * @brief Set the Current Cycle, to identify each CSV entry.
+   * @param currentCycle The current cycle id. Must be initialized before first memoryStatsReport() to valid values.
+   *                     The entry after the end of the simulation must be 'last_cycle + 1'.
+   */
+  void setCurrentCycle( integer currentCycle )
+  { m_currentCycle = currentCycle; }
+
+  /**
+   * @brief Set the Current Time, to identify each CSV entry.
+   * @param currentTime The current simulated time. Must be initialized before first memoryStatsReport() to valid values.
+   */
+  void setCurrentTime( integer currentTime )
+  { m_currentTime = currentTime; }
+
+  /**
    * @brief Output the umpire statistics according to settings set by enableUmpireStatsLogReport() and
    * enableUmpireStatsCsvReport().
    * The statistics are the Umpire total high water mark across all ranks for each umpire allocator.
@@ -123,25 +139,33 @@ public:
   void memoryStatsReport() const;
 
 private:
-  /**
-   * @brief private constructor as the class is a singleton.
-   */
-  MemoryLogging();
 
-  /**
-   * @brief Enable the umpire statistics text log report.
-   */
+
+  /// The table formatter of the stats for log output
+  TableTextFormatter m_memoryStatLogFormatter;
+
+  /// The table formatter of the stats for csv output
+  TableCSVFormatter m_memoryStatCsvFormatter;
+
+  /// Enable the umpire statistics text log report.
   bool m_umpireStatsLogReport;
 
-  /**
-   * @brief Enable the umpire statistics CSV report.
-   */
+  /// Enable the umpire statistics CSV report.
   bool m_umpireStatsCsvReport;
 
-  /**
-   * @brief the filename for the umpire statistics CSV report.
-   */
+  /// the filename for the umpire statistics CSV report.
   string m_umpireStatsCsvReportFilename;
+
+  /// The current cycle id.
+  integer m_currentCycle;
+
+  /// The current simulated time.
+  integer m_currentTime;
+
+
+  /// private constructor as the class is a singleton.
+  MemoryLogging();
+
 };
 
 }

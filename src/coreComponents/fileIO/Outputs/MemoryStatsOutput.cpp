@@ -59,9 +59,9 @@ MemoryStatsOutput::MemoryStatsOutput( string const & name,
     setDescription( "When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file" );
 }
 
-bool MemoryStatsOutput::execute( real64,
+bool MemoryStatsOutput::execute( real64 time_n,
                                  real64,
-                                 integer,
+                                 integer cycleNumber,
                                  integer,
                                  real64,
                                  DomainPartition & )
@@ -70,6 +70,9 @@ bool MemoryStatsOutput::execute( real64,
   memLogging.enableUmpireStatsLogReport( isLogLevelActive< logInfo::UmpireStatistics >( getLogLevel() ) );
   memLogging.enableUmpireStatsCsvReport( m_writeCSV );
   memLogging.setUmpireStatsCsvReportFilename( GEOS_FMT( "{}_umpireStats.csv", getName() ) );
+
+  memLogging.setCurrentCycle( cycleNumber);
+  memLogging.setCurrentTime( time_n );
 
   memLogging.memoryStatsReport();
 
