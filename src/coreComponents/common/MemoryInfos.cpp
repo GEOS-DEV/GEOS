@@ -88,7 +88,7 @@ MemoryLogging & MemoryLogging::getInstance()
   return instance;
 }
 
-void MemoryLogging::umpireStatsReport() const
+void MemoryLogging::memoryStatsReport() const
 {
   if ( !m_umpireStatsLogReport && !m_umpireStatsCsvReport )
     return;

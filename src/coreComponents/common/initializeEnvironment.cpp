@@ -263,7 +263,7 @@ void cleanupEnvironment()
 {
   LvArray::system::resetSignalHandling();
   finalizeLogger();
-  MemoryLogging::getInstance().umpireStatsReport();
+  MemoryLogging::getInstance().memoryStatsReport();
   finalizeCaliper();
   finalizeMPI();
 }
