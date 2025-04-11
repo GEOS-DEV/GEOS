@@ -1,7 +1,7 @@
 # Specify list of tests
 set( dataRepository_tests
      testDefaultValue.cpp
-     testLogLevels.cpp
+     testDocumentationGeneration.cpp
      testPacking.cpp
      testWrapper.cpp
      testXmlWrapper.cpp

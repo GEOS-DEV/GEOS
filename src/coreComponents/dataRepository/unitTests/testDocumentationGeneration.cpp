@@ -28,7 +28,7 @@ using namespace geos;
 using namespace dataRepository;
 
 
-TEST( testLogLevels, testLogLevel )
+TEST( testDocumentationGeneration, testLogLevelDocumentation )
 {
   // Keep track of log levels & descriptions
   std::unique_ptr< LogLevelsRegistry > logLevelsRegistry = std::make_unique< LogLevelsRegistry >();
