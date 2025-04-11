@@ -106,7 +106,7 @@ public:
 private:
 
   /// Table with CO2 viscosity tabulated as a function of (P,T)
-  TableFunction const * m_CO2ViscosityTable;
+  TableFunction const * m_CO2ViscosityTable = nullptr;
 
 };
 
