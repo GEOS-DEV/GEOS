@@ -918,7 +918,7 @@ public:
   { return m_maxGlobalIndex; }
 
   /**
-   * @brief A vector containing all registered fields
+   * @return A vector containing all registered fields
    */
   std::set< string > const & getRegisteredFields() const { return m_registeredField; }
 
