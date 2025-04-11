@@ -84,20 +84,19 @@ MemoryLogging::MemoryLogging():
   m_currentCycle( 0 ),
   m_currentTime( 0.0 )
 {
-  TableLayout const memoryStatCsvLayout = { "Cycle",
-                                            "Time",
-                                            "Umpire Memory Pool\n(reserved / % over total)",
-                                            "Min over ranks",
-                                            "Max over ranks",
-                                            "Avg over ranks",
-                                            "Sum over ranks" };
-  m_memoryStatLogFormatter = TableTextFormatter( memoryStatCsvLayout );
+  TableLayout memoryStatLayout = { "Cycle",
+                                   "Time",
+                                   "Umpire Memory Pool\n(reserved / % over total)",
+                                   "Min over ranks",
+                                   "Max over ranks",
+                                   "Avg over ranks",
+                                   "Sum over ranks" };
+  m_memoryStatLogFormatter = std::make_unique< TableTextFormatter >( memoryStatLayout );
 
   // We do not need to output the cycle & time in the log table
-  TableLayout memoryStatLogLayout = memoryStatCsvLayout;
-  memoryStatLogLayout.getColumns()[0].setVisibility( false );
-  memoryStatLogLayout.getColumns()[1].setVisibility( false );
-  m_memoryStatCsvFormatter = TableCSVFormatter( memoryStatLogLayout );
+  memoryStatLayout.getColumns()[0].setVisibility( false );
+  memoryStatLayout.getColumns()[1].setVisibility( false );
+  m_memoryStatCsvFormatter = std::make_unique< TableCSVFormatter >( memoryStatLayout );
 }
 
 MemoryLogging & MemoryLogging::getInstance()
@@ -106,13 +105,13 @@ MemoryLogging & MemoryLogging::getInstance()
   return instance;
 }
 
-void enableUmpireStatsCsvReport( bool enable );
+void MemoryLogging::enableUmpireStatsCsvReport( bool enable )
 {
   m_umpireStatsCsvReport = enable;
   if( enable )
   {
-    m_memoryStatLogFormatter.headerToStream( std::ofstream( m_umpireStatsCsvReportFilename ),
-                                             tableData );
+    std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
+    m_memoryStatCsvFormatter->headerToStream( csvFile );
   }
 }
 
@@ -216,13 +215,13 @@ void MemoryLogging::memoryStatsReport() const
   { // output statistics
     if( m_umpireStatsLogReport )
     {
-      GEOS_LOG_RANK_0( TableTextFormatter( m_memoryStatLogLayout ).toString( tableData ) );
+      GEOS_LOG_RANK_0( m_memoryStatLogFormatter->toString( tableData ) );
     }
 
     if( m_umpireStatsCsvReport )
     {
-      m_memoryStatLogFormatter.dataToStream( std::ofstream( m_umpireStatsCsvReportFilename ),
-                                             tableData );
+      std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
+      m_memoryStatCsvFormatter->dataToStream( csvFile, tableData );
     }
   }
 }

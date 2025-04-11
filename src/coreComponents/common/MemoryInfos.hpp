@@ -140,12 +140,11 @@ public:
 
 private:
 
-
   /// The table formatter of the stats for log output
-  TableTextFormatter m_memoryStatLogFormatter;
+  std::unique_ptr< TableTextFormatter > m_memoryStatLogFormatter;
 
   /// The table formatter of the stats for csv output
-  TableCSVFormatter m_memoryStatCsvFormatter;
+  std::unique_ptr< TableCSVFormatter > m_memoryStatCsvFormatter;
 
   /// Enable the umpire statistics text log report.
   bool m_umpireStatsLogReport;
