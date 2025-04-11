@@ -207,6 +207,11 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
   maxNameSize = std::max( maxNameSize, lineWidth );
 
   description.m_names.push_back( nameDivided );
+
+  size_t const formattingCharSize = m_nbBorderChar * 2 + m_borderMargin * 2;
+  size_t const currentTotalWidth =  maxNameSize + maxValueSize + formattingCharSize;
+  m_width = std::max( m_width, currentTotalWidth );
+  m_width = std::max( m_width, formattedDescription.m_title.size());
 }
 
 template< typename ... Args >

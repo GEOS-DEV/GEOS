@@ -65,9 +65,10 @@ void LogPart::formatDescriptions( LogPart::Description & description,
   size_t const formattingCharSize = borderSpaceWidth;
   size_t & maxNameSize = formattedDescription.m_maxNameWidth;
   size_t & maxValueSize = formattedDescription.m_maxValueWidth;
-  size_t const currentTotalWidth =  maxNameSize + maxValueSize + formattingCharSize;
-  m_width = currentTotalWidth > m_maxWidth ? m_maxWidth : currentTotalWidth;
-  m_width = currentTotalWidth < m_minWidth ? m_minWidth : currentTotalWidth;
+
+  m_width = std::max( m_minWidth, m_width );
+  m_width = std::min( m_maxWidth, m_width );
+
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
     std::vector< string > const & nonFormattedNames =  description.m_names[idxName];
@@ -136,10 +137,6 @@ void LogPart::formatDescriptions( LogPart::Description & description,
       }
     }
   }
-
-  m_width = std::max( m_width, formattingCharSize + maxNameSize + maxValueSize );
-  m_width = std::max( m_width, formattedDescription.m_title.size());
-  m_width = std::max( m_minWidth, m_width );
 }
 
 string LogPart::outputDescription( FormattedDescription & formattedDescription )
