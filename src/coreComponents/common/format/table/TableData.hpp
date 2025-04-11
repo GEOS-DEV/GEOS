@@ -45,12 +45,18 @@ public:
     /// The cell value
     string value;
 
+    /**
+     * @brief Comparison operator for cell value
+     * @param other The cell data value to compare
+     * @return The comparison result
+     */
     bool operator==( CellData const & other ) const
     {
       return value == other.value;
     }
   };
 
+  /// Alias for table data rows with cells values
   using DataRows = std::vector< std::vector< CellData > >;
 
   /**
@@ -89,9 +95,17 @@ public:
    */
   std::vector< string > const & getErrorMsgs() const;
 
+  /**
+   * @return The const table data rows
+   */
   DataRows const & getCellsData() const
   { return m_rows; }
 
+  /**
+   * @brief Comparison operator for data rows
+   * @param comparingTable The tableData values to compare
+   * @return The comparison result
+   */
   inline bool operator==( TableData const & comparingTable ) const
   {
 
