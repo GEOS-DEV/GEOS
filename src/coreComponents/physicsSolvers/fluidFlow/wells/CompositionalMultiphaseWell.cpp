@@ -407,11 +407,11 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 
     integer const streamSize = injectionStream.size();
     GEOS_THROW_IF( ( streamSize == 0 ),
-                   "WellControls '" << wellControls.getName() << "'" <<
+                   "WellControls " << wellControls.getName() << "'" <<
                    ": Injection stream not specified for well " << subRegion.getName(),
                    InputError );
     GEOS_THROW_IF( ( streamSize != m_numComponents ),
-                   "WellControls '" << wellControls.getName() << "'" <<
+                   "WellControls " << wellControls.getName() << "'" <<
                    ": Injection stream for well " << subRegion.getName() << " should have " <<
                    m_numComponents << " components.",
                    InputError );
@@ -442,9 +442,10 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   WellControls & wellControls = getWellControls( subRegion );
   if( !wellControls.useSurfaceConditions() )
   {
-    bool useSeg = wellControls.referenceReservoirRegion()=="";
+    bool const useSeg =wellControls.referenceReservoirRegion().empty();
     GEOS_WARNING_IF( useSeg,
-                     "WellControls referenceReservoirRegion not set and well constraint fluid property calculations will use top segement pressure and temp " );
+                     "WellControls " <<WellControls::viewKeyStruct::referenceReservoirRegionString() <<
+                     " not set and well constraint fluid property calculations will use top segement pressure and temp " );
     if( useSeg )
     {
       wellControls.setRegionAveragePressure( -1 );
@@ -700,16 +701,17 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   }
   else
   {
-    // use region conditions
+    // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
     flashPressure = wellControls.getRegionAveragePressure();
     if( flashPressure < 0.0 )
     {
-      // use segment conditions
+      // region name not set, use segment conditions
       flashPressure   = pres[iwelemRef];
       flashTemperature = temp[iwelemRef];
     }
     else
     {
+      // use reservoir region averages
       flashTemperature = wellControls.getRegionAveragePressure();
     }
   }
