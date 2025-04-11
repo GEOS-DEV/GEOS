@@ -694,6 +694,8 @@ public:
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+    /// @return string for the writeLinearSystem wrapper
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
   /**
@@ -1028,6 +1030,9 @@ protected:
 
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
+
+  /// Output csv file containing informations about convergence
+  integer m_writeCSV;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;

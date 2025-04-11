@@ -97,6 +97,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
+  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, output convergence information into a csv" );
+
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
   addLogLevel< logInfo::Solution >();
@@ -365,6 +371,16 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
   // Log the complete message once
   GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, logMessage );
   GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, "------------------------------------------------------------------\n" );
+
+    std::cout << "Time Step Statistics:" << std::endl;
+  std::cout << "Number of Time Steps: " << m_solverStatistics.getNumTimeSteps() << std::endl;
+  std::cout << "Number of Time Step Cuts: " << m_solverStatistics.getNumTimeStepCuts() << std::endl;
+  std::cout << "Successful Outer Loop Iterations: " << m_solverStatistics.getNumSuccessfulOuterLoopIterations() << std::endl;
+  std::cout << "Successful Nonlinear Iterations: " << m_solverStatistics.getNumSuccessfulNonlinearIterations() << std::endl;
+  std::cout << "Successful Linear Iterations: " << m_solverStatistics.getNumSuccessfulLinearIterations() << std::endl;
+  std::cout << "Discarded Outer Loop Iterations: " << m_solverStatistics.getNumDiscardedOuterLoopIterations() << std::endl;
+  std::cout << "Discarded Nonlinear Iterations: " << m_solverStatistics.getNumDiscardedNonlinearIterations() << std::endl;
+  std::cout << "Discarded Linear Iterations: " << m_solverStatistics.getNumDiscardedLinearIterations() << std::endl;
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),
@@ -429,7 +445,9 @@ real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTi
                              GEOS_FMT( "{}: time-step required will be kept the same based on state change.",
                                        getName()));
     }
+
   }
+
 
   return std::min( nextDtIter, nextDtStateChange );
 }
