@@ -114,6 +114,7 @@ public:
     static constexpr char const * selectionOrderString() { return "selectionOrder"; }
     static constexpr char const * cycleOrderString() { return "cycleOrder"; }
     static constexpr char const * solverROMString() { return "solverROM"; }
+    static constexpr char const * alphaString() { return "alpha"; }
     
   } waveEquationViewKeys;
 
@@ -336,6 +337,14 @@ DECLARE_FIELD( DampingPerturbationVector,
                WRITE_AND_READ,
                "Diagonal of the Damping Matrix with perturbation." );
 
+DECLARE_FIELD( Perturbation,
+               "perturbation",
+               array1d< real32 >,
+	       0,
+               NOPLOT,
+               WRITE_AND_READ,
+	       "Perturbation to apply to the velocity field" );
+  
 DECLARE_FIELD( ForcingRHS_fp1,
                "rhs_fp1",
                array1d< real32 >,
