@@ -126,10 +126,10 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< logPrimarySpeciesConcentration_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPrimarySpecies );
 
-      subRegion.registerField< totalPrimarySpeciesAmount >( getName() ).
+      subRegion.registerField< primarySpeciesAggregateMole >( getName() ).
         reference().resizeDimension< 1 >( m_numPrimarySpecies );
 
-      subRegion.registerField< totalPrimarySpeciesAmount_n >( getName() ).
+      subRegion.registerField< primarySpeciesAggregateMole_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPrimarySpecies );
 
       subRegion.registerField< bcLogPrimarySpeciesConcentration >( getName() ).
@@ -380,8 +380,8 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView2d< real64, compflow::USD_COMP > const totalPrimarySpeciesAmount = subRegion.getField< fields::flow::totalPrimarySpeciesAmount >();
-  arrayView2d< real64, compflow::USD_COMP > const totalPrimarySpeciesAmount_n = subRegion.getField< fields::flow::totalPrimarySpeciesAmount_n >();
+  arrayView2d< real64, compflow::USD_COMP > const primarySpeciesAggregateMole = subRegion.getField< fields::flow::primarySpeciesAggregateMole >();
+  arrayView2d< real64, compflow::USD_COMP > const primarySpeciesAggregateMole_n = subRegion.getField< fields::flow::primarySpeciesAggregateMole_n >();
 
   CoupledSolidBase const & porousSolid =
     getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
@@ -400,10 +400,10 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
   {
     for( integer is = 0; is < m_numPrimarySpecies; ++is )
     {
-      totalPrimarySpeciesAmount[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][is];
+      primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][is];
 
-      if( isZero( totalPrimarySpeciesAmount_n[ei][is] ) )
-        totalPrimarySpeciesAmount_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][is];
+      if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
+        primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][is];
     }
   } );
 }
@@ -996,9 +996,9 @@ void SinglePhaseReactiveTransport::saveConvergedState( ElementSubRegionBase & su
 {
   SinglePhaseBase::saveConvergedState( subRegion );
 
-  arrayView2d< real64 const, compflow::USD_COMP > const totalPrimarySpeciesAmount = subRegion.template getField< fields::flow::totalPrimarySpeciesAmount >();
-  arrayView2d< real64, compflow::USD_COMP > const totalPrimarySpeciesAmount_n = subRegion.template getField< fields::flow::totalPrimarySpeciesAmount_n >();
-  totalPrimarySpeciesAmount_n.setValues< parallelDevicePolicy<> >( totalPrimarySpeciesAmount );
+  arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesAggregateMole = subRegion.template getField< fields::flow::primarySpeciesAggregateMole >();
+  arrayView2d< real64, compflow::USD_COMP > const primarySpeciesAggregateMole_n = subRegion.template getField< fields::flow::primarySpeciesAggregateMole_n >();
+  primarySpeciesAggregateMole_n.setValues< parallelDevicePolicy<> >( primarySpeciesAggregateMole );
 }
 
 void SinglePhaseReactiveTransport::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),

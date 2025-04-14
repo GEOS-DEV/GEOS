@@ -58,7 +58,7 @@ public:
             minNormalizer ),
     m_numPrimarySpecies( numPrimarySpecies ),
     m_mass_n( subRegion.template getField< fields::flow::mass_n >() ),
-    m_totalPrimarySpeciesAmount_n( subRegion.getField< fields::flow::totalPrimarySpeciesAmount_n >() )
+    m_primarySpeciesAggregateMole_n( subRegion.getField< fields::flow::primarySpeciesAggregateMole_n >() )
   {}
 
   GEOS_HOST_DEVICE
@@ -77,7 +77,7 @@ public:
     // step 2: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_totalPrimarySpeciesAmount_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
       real64 const valAmount = LvArray::math::abs( m_localResidual[stack.localRow + idof + 1] ) / speciesAmountNormalizer;
       if( valAmount > stack.localValue[1] )
       {
@@ -99,7 +99,7 @@ public:
     // step 2: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_totalPrimarySpeciesAmount_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
 
       stack.localValue[1] += m_localResidual[stack.localRow + idof + 1] * m_localResidual[stack.localRow + idof + 1];
       stack.localNormalizer[1] += speciesAmountNormalizer;
@@ -115,8 +115,8 @@ protected:
   /// View on mass at the previous converged time step
   arrayView1d< real64 const > const m_mass_n;
 
-  // View on primary species amount (moles) from previous time step
-  arrayView2d< real64 const, compflow::USD_COMP > m_totalPrimarySpeciesAmount_n;
+  // View on primary species aggregate amount (moles) from previous time step
+  arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateMole_n;
 
 };
 
@@ -147,7 +147,7 @@ public:
             minNormalizer ),
     m_numPrimarySpecies( numPrimarySpecies ),
     m_mass_n( subRegion.template getField< fields::flow::mass_n >() ),
-    m_totalPrimarySpeciesAmount_n( subRegion.getField< fields::flow::totalPrimarySpeciesAmount_n >() ),
+    m_primarySpeciesAggregateMole_n( subRegion.getField< fields::flow::primarySpeciesAggregateMole_n >() ),
     m_energy_n( subRegion.template getField< fields::flow::energy_n >() )
   {}
 
@@ -185,7 +185,7 @@ public:
     // step 3: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_totalPrimarySpeciesAmount_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
       real64 const valAmount = LvArray::math::abs( m_localResidual[stack.localRow + idof + 2] ) / speciesAmountNormalizer;
       if( valAmount > stack.localValue[2] )
       {
@@ -214,7 +214,7 @@ public:
     // step 3: species amount residuals
     for( integer idof = 0; idof < m_numPrimarySpecies; ++idof )
     {
-      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_totalPrimarySpeciesAmount_n[ei][idof] );
+      real64 const speciesAmountNormalizer = LvArray::math::max( m_minNormalizer, m_primarySpeciesAggregateMole_n[ei][idof] );
 
       stack.localValue[2] += m_localResidual[stack.localRow + idof + 2] * m_localResidual[stack.localRow + idof + 2];
       stack.localNormalizer[2] += speciesAmountNormalizer;
@@ -230,8 +230,8 @@ protected:
   /// View on mass at the previous converged time step
   arrayView1d< real64 const > const m_mass_n;
 
-  // View on primary species amount (moles) from previous time step
-  arrayView2d< real64 const, compflow::USD_COMP > m_totalPrimarySpeciesAmount_n;
+  // View on primary species aggregate amount (moles) from previous time step
+  arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateMole_n;
 
   /// View on energy at the previous converged time step
   arrayView1d< real64 const > const m_energy_n;
