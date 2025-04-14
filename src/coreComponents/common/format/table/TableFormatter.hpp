@@ -54,7 +54,7 @@ public:
   /**
    * @return The Errors List object
    */
-  ErrorListing & getErrorsList() const
+  TableErrorListing & getErrorsList() const
   { return *m_errors; }
 
 
@@ -63,7 +63,7 @@ protected:
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
 
-  std::unique_ptr< geos::ErrorListing > m_errors = std::make_unique< geos::ErrorListing >();
+  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 
   /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
@@ -98,6 +98,8 @@ public:
    * @param tableLayout Contain all tableColumnData names and optionnaly the table title
    */
   TableCSVFormatter( TableLayout const & tableLayout );
+
+  ~TableCSVFormatter();
 
   /**
    * @return The string with all tableColumnData names.

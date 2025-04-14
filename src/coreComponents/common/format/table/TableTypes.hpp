@@ -38,7 +38,7 @@ enum class CellType : integer
   Hidden
 };
 
-class ErrorListing
+class TableErrorListing
 {
 
 public:
@@ -67,13 +67,13 @@ public:
 };
 
 
-inline void ErrorListing::addError( string_view text )
+inline void TableErrorListing::addError( string_view text )
 { errorText.emplace_back( text ); }
 
-inline bool ErrorListing::hasErrors() const
+inline bool TableErrorListing::hasErrors() const
 { return errorText.size() != 0; }
 
-inline void ErrorListing::clear()
+inline void TableErrorListing::clear()
 { errorText.clear(); }
 
 }

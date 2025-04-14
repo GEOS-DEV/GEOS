@@ -79,13 +79,13 @@ public:
   /**
    * @return The Errors List object
    */
-  ErrorListing & getErrorsList()
+  TableErrorListing & getErrorsList()
   { return *m_errors; }
 
   /**
    * @return The immuable Errors List object
    */
-  ErrorListing const & getErrorsList() const
+  TableErrorListing const & getErrorsList() const
   { return *m_errors; }
 
 private:
@@ -93,7 +93,7 @@ private:
   /// @brief vector containing all rows with cell values
   std::vector< std::vector< CellData > > m_rows;
   /// @brief Store all errors that can be found during the generation of the TableData
-  std::unique_ptr< geos::ErrorListing > m_errors = std::make_unique< geos::ErrorListing >();
+  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 
 };
 
@@ -182,7 +182,7 @@ private:
   /// @brief Store all column values when adding cell
   std::set< real64 > m_columnValues;
   /// @brief Store all errors that can be found during the generation of the TableData
-  std::unique_ptr< geos::ErrorListing > m_errors = std::make_unique< geos::ErrorListing >();
+  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 };
 
 /**

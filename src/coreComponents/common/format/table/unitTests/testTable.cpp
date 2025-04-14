@@ -806,7 +806,7 @@ TEST( testTable, tableSpecialsValues )
       .setName( "Next\nelement" )
       .setHeaderAlignment( TableLayout::Alignment::center )} );
 
-  LvArray::NumericLimits< float > const realLimit;
+  LvArray::NumericLimits< double > const realLimit;
 
   TableData tableData;
   tableData.addRow( realLimit.infinity, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
@@ -819,19 +819,19 @@ TEST( testTable, tableSpecialsValues )
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "-----------------------------------------------------------------------------\n"
-             "|  Special values  |  CoordX  |    C     |  CoordZ  |  Prev     |   Next    |\n"
-             "|                  |          |          |          |  element  |  element  |\n"
-             "|------------------|----------|----------|----------|-----------|-----------|\n"
-             "|             inf  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
-             "|             nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
-             "|             nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
-             "|  -3.4028235e+38  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
-             "|   3.4028235e+38  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
-             "|           1e-45  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
-             "|---------------------------------------------------------------------------|\n"
-             "|  Warning : Invalid values detected (nan/inf).                             |\n"
-             "-----------------------------------------------------------------------------\n"
+             "---------------------------------------------------------------------------------------\n"
+             "|       Special values       |  CoordX  |    C     |  CoordZ  |  Prev     |   Next    |\n"
+             "|                            |          |          |          |  element  |  element  |\n"
+             "|----------------------------|----------|----------|----------|-----------|-----------|\n"
+             "|                       inf  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|                       nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|                       nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|  -1.7976931348623157e+308  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|   1.7976931348623157e+308  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|                    5e-324  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|-------------------------------------------------------------------------------------|\n"
+             "|  Warning : Invalid values detected (nan/inf).                                       |\n"
+             "---------------------------------------------------------------------------------------\n"
              );
 }
 

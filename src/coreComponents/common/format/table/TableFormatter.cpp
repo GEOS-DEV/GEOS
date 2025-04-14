@@ -43,6 +43,18 @@ TableCSVFormatter::TableCSVFormatter( TableLayout const & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
+TableCSVFormatter::~TableCSVFormatter()
+{
+  if( getErrorsList().hasErrors() )
+  {
+
+    string const consoleWarning = std::accumulate( getErrorsList().errorText.begin(),
+                                                   getErrorsList().errorText.end(),
+                                                   std::string( "" ));
+    GEOS_WARNING( consoleWarning );
+  }
+}
+
 static constexpr string_view csvSeparator = ",";
 string TableCSVFormatter::headerToString() const
 {
@@ -121,10 +133,9 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 {
   if( tableData.getErrorsList().hasErrors() )
   {
-    std::vector< string > const & errors = tableData.getErrorsList().errorText;
-    string const consoleWarning = std::accumulate( errors.begin(), errors.end(), std::string( "" ));
-    GEOS_WARNING( consoleWarning );
+    getErrorsList().errorText = tableData.getErrorsList().errorText;
   }
+
   return headerToString() + dataToString( tableData );
 }
 
