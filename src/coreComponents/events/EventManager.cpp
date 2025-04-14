@@ -171,9 +171,11 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-
-    outputTime();
-
+    LogPart logPart( "TIMESTEP" );
+    outputTime( logPart );
+    logPart.begin();
+    std::vector< real64 > subStepDts;
+    integer numTimeSteps = 0;
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
     {
@@ -196,6 +198,13 @@ bool EventManager::run( DomainPartition & domain )
       else if( subEvent->isReadyForExec() )
       {
         earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
+
+        if( subEvent->getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
+        {
+          subStepDts = subEvent->getSubStepDts();
+          numTimeSteps = subEvent->getNumOfSubSteps();
+        }
+
       }
 
       // Check the exit flag
@@ -209,6 +218,8 @@ bool EventManager::run( DomainPartition & domain )
         return true;
       }
     }
+
+    logEndOfCycleInformation( logPart, m_cycle, numTimeSteps, subStepDts );
 
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
@@ -227,7 +238,7 @@ bool EventManager::run( DomainPartition & domain )
   return false;
 }
 
-void EventManager::outputTime() const
+void EventManager::outputTime( LogPart & logPart ) const
 {
   const bool isTimeLimited = m_maxTime < std::numeric_limits< real64 >::max();
   const bool isCycleLimited = m_maxCycle < std::numeric_limits< integer >::max();
@@ -247,19 +258,18 @@ void EventManager::outputTime() const
                      m_maxCycle, ( 100.0 * m_cycle ) / m_maxCycle );
   };
 
-  // The formating here is a work in progress.
-  GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",
-                             timeInfo.toUnfoldedString(),
-                             isTimeLimited ? timeCompletionUnfoldedString() : "" ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "                  ({}{})",
-                             timeInfo.toSecondsString(),
-                             isTimeLimited ? timeCompletionSecondsString() : "" ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}{}",
-                             m_cycle,
-                             isCycleLimited ? cycleCompletionString() : "" ) );
-  GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
+  string const timeCompletionUnfolded = isTimeLimited ? timeCompletionUnfoldedString() : "";
+  string const timeCompletionSecond = isTimeLimited ? timeCompletionSecondsString() : "";
+  string const cycleLimited = isCycleLimited ? cycleCompletionString() : "";
+
+  string const timeInfosUnfolded = timeInfo.toUnfoldedString() + timeCompletionUnfolded;
+  string const timeCompletionSeconds = timeInfo.toSecondsString() + timeCompletionSecond;
+
+  logPart.addDescription( "- Time ", timeInfosUnfolded, timeCompletionSeconds );
+  logPart.addDescription( "- Delta Time ", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
+  logPart.addDescription( "- Cycle ", m_cycle, cycleLimited );
+  logPart.setMinWidth( 80 );
+  logPart.setMaxWidth( 80 );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )
@@ -295,6 +305,32 @@ void EventManager::outputTime() const
   {
     GEOS_ERROR( "Unknown time output format requested." );
   }
+}
+
+void EventManager::logEndOfCycleInformation( LogPart & logpart,
+                                             integer const cycleNumber,
+                                             integer const numOfSubSteps,
+                                             std::vector< real64 > const & subStepDts ) const
+{
+  logpart.addEndDescription( "- Cycle: ", cycleNumber );
+  logpart.addEndDescription( "- N substeps: ", numOfSubSteps );
+  logpart.setMinWidth( 80 );
+  logpart.setMaxWidth( 80 );
+  std::stringstream logMessage;
+  for( integer i = 0; i < numOfSubSteps; ++i )
+  {
+    if( i > 0 )
+    {
+      logMessage << ", ";
+    }
+    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
+  }
+
+  if( logMessage.rdbuf()->in_avail() == 0 )
+    logMessage << "/";
+
+  logpart.addEndDescription( "- dt: ", logMessage.str() );
+  logpart.end();
 }
 
 } /* namespace geos */

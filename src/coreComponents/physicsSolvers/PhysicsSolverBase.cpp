@@ -17,6 +17,7 @@
 #include "PhysicsSolverManager.hpp"
 
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -279,11 +280,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
-
-  // Keep track of substeps. It is useful to output these.
-  std::vector< real64 > subStepDt( maxSubSteps, 0.0 );
-  integer numOfSubSteps = 0;
-
+  getSubStepDts().clear( );
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
@@ -293,8 +290,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
-    numOfSubSteps++;
-    subStepDt[subStep] = dtAccepted;
+
+    getSubStepDts().push_back( dtAccepted );
 
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();
@@ -337,7 +334,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-
   GEOS_ERROR_IF( dtRemaining > 0.0, getDataContext() << ": Maximum allowed number of sub-steps"
                                                         " reached. Consider increasing maxSubSteps." );
 
@@ -350,37 +346,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     m_numTimestepsSinceLastDtCut++;
   }
 
-  logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDt );
-
   return false;
-}
-
-void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
-                                                  integer const numOfSubSteps,
-                                                  std::vector< real64 > const & subStepDt ) const
-{
-  // The formating here is a work in progress.
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, "\n------------------------- TIMESTEP END -------------------------" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "    - Cycle:      {}", cycleNumber ) );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "    - N substeps: {}", numOfSubSteps ) );
-  std::string logMessage = "    - dt:";
-  for( integer i = 0; i < numOfSubSteps; ++i )
-  {
-    logMessage += "  " + units::TimeFormatInfo::fromSeconds( subStepDt[i] ).toString();
-  }
-  // Log the complete message once
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, logMessage );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, "------------------------------------------------------------------\n" );
-
-    std::cout << "Time Step Statistics:" << std::endl;
-  std::cout << "Number of Time Steps: " << m_solverStatistics.getNumTimeSteps() << std::endl;
-  std::cout << "Number of Time Step Cuts: " << m_solverStatistics.getNumTimeStepCuts() << std::endl;
-  std::cout << "Successful Outer Loop Iterations: " << m_solverStatistics.getNumSuccessfulOuterLoopIterations() << std::endl;
-  std::cout << "Successful Nonlinear Iterations: " << m_solverStatistics.getNumSuccessfulNonlinearIterations() << std::endl;
-  std::cout << "Successful Linear Iterations: " << m_solverStatistics.getNumSuccessfulLinearIterations() << std::endl;
-  std::cout << "Discarded Outer Loop Iterations: " << m_solverStatistics.getNumDiscardedOuterLoopIterations() << std::endl;
-  std::cout << "Discarded Nonlinear Iterations: " << m_solverStatistics.getNumDiscardedNonlinearIterations() << std::endl;
-  std::cout << "Discarded Linear Iterations: " << m_solverStatistics.getNumDiscardedLinearIterations() << std::endl;
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),
