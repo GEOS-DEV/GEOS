@@ -90,10 +90,10 @@ public:
     m_primarySpeciesAggregateConcentration( fluid.primarySpeciesAggregateConcentration() ),
     // m_dPrimarySpeciesAggregateConcentration_dPres( fluid.dPrimarySpeciesAggregateConcentration_dPres() ),
     m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc( fluid.dPrimarySpeciesAggregateConcentration_dLogPrimaryConc() ),
-    m_kineticReactionRates( fluid.kineticReactionRates() ),
-    // m_dPrimarySpeciesTotalKineticRate_dPres( fluid.dPrimarySpeciesTotalKineticRate_dPres() ),
-    // m_dPrimarySpeciesTotalKineticRate_dLogPrimaryConc( fluid.dPrimarySpeciesTotalKineticRate_dLogPrimaryConc() ),
-    m_totalPrimarySpeciesAmount_n( subRegion.template getField< fields::flow::totalPrimarySpeciesAmount_n >() )
+    m_primarySpeciesAggregateKineticRate( fluid.kineticReactionRates() ),
+    // m_dPrimarySpeciesAggregateKineticRate_dPres( fluid.dPrimarySpeciesAggregateKineticRate_dPres() ),
+    // m_dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc( fluid.dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc() ),
+    m_primarySpeciesAggregateMole_n( subRegion.template getField< fields::flow::primarySpeciesAggregateMole_n >() )
   {}
 
   /**
@@ -159,7 +159,7 @@ public:
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
-    // Residual[is] += (totalPrimarySpeciesConcentration[is] * stack.poreVolume - totalPrimarySpeciesAmount_n[is])
+    // Residual[is] += (primarySpeciesAggregateConcentration[is] * stack.poreVolume - primarySpeciesAggregateMole_n[is])
     //                 - dt * m_volume * primarySpeciesKineticRate[is] // To Check: what's the unit of the kinetic rate
 
     Base::computeAccumulation( ei, stack );
@@ -177,12 +177,13 @@ public:
     {
       // Step 2: assemble the accumulation term of the species mass balance equation
       // Step 2.1: residual
-      // Primary species amount in pore volume
-      stack.localResidual[is+numEqn-numSpecies] -= m_totalPrimarySpeciesAmount_n[ei][is];
+      // Primary species mole amount in pore volume
+      stack.localResidual[is+numEqn-numSpecies] -= m_primarySpeciesAggregateMole_n[ei][is];
       stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][is] * stack.poreVolume;
 
       // // Reaction term
-      // stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesTotalKineticRate[is];
+      // stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
+      // m_primarySpeciesAggregateKineticRate[is];
 
       // Step 2.1: jacobian
       // Drivative of primary species amount in pore volume wrt pressure
@@ -227,8 +228,8 @@ public:
     // - the total mass balance equations (i = 0)
     Base::complete( ei, stack );
 
-    // Step 2: assemble the primary species amount balance equation
-    // - the species amount balance equations (i = numEqn-numSpecies to i = numEqn-1)
+    // Step 2: assemble the primary species mole amount balance equation
+    // - the species mole amount balance equations (i = numEqn-numSpecies to i = numEqn-1)
     integer const beginRowSpecies = numEqn-numSpecies;
     for( integer i = 0; i < numSpecies; ++i )
     {
@@ -268,17 +269,17 @@ protected:
   // View on the derivatives of total ion concentration for the primary species wrt log of primary species concentration
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc;
 
-  // View on the total kinetic rate of primary species from all reactions
-  arrayView2d< real64 const, compflow::USD_COMP > m_kineticReactionRates;
+  // View on the aggregate kinetic rate of primary species from all reactions
+  arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateKineticRate;
 
-  // // View on the derivatives of total kinetic rate of primary species wrt pressure
-  // arrayView2d< real64 const, compflow::USD_COMP > m_dPrimarySpeciesTotalKineticRate_dPres;
+  // // View on the derivatives of aggregate kinetic rate of primary species wrt pressure
+  // arrayView2d< real64 const, compflow::USD_COMP > m_dPrimarySpeciesAggregateKineticRate_dPres;
 
-  // // View on the derivatives of total kinetic rate of primary species wrt log of primary species concentration
-  // arrayView3d< real64 const, compflow::USD_COMP_DC > m_dPrimarySpeciesTotalKineticRate_dLogPrimaryConc;
+  // // View on the derivatives of aggregate kinetic rate of primary species wrt log of primary species concentration
+  // arrayView3d< real64 const, compflow::USD_COMP_DC > m_dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc;
 
-  // View on primary species amount (moles) from previous time step
-  arrayView2d< real64 const, compflow::USD_COMP > m_totalPrimarySpeciesAmount_n;
+  // View on primary species mole amount from previous time step
+  arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateMole_n;
 };
 
 /**

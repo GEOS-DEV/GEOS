@@ -59,21 +59,21 @@ DECLARE_FIELD( bcLogPrimarySpeciesConcentration,
                WRITE_AND_READ,
                "Boundary condition for natural log of primary species concentration (molarity)" );
 
-DECLARE_FIELD( totalPrimarySpeciesAmount,
-               "totalPrimarySpeciesAmount",
+DECLARE_FIELD( primarySpeciesAggregateMole,
+               "primarySpeciesAggregateMole",
                array2dLayoutComp,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Total amount of species (both primary and secondary) that contain the ion in the primary species (mole)" );
+               "Aggregate amount of primary species in mole" );
 
-DECLARE_FIELD( totalPrimarySpeciesAmount_n,
-               "totalPrimarySpeciesAmount_n",
+DECLARE_FIELD( primarySpeciesAggregateMole_n,
+               "primarySpeciesAggregateMole_n",
                array2dLayoutComp,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Total amount of species (both primary and secondary) that contain the ion in the primary species (mole) at the previous converged time step" );
+               "Aggregate amount of primary species in mole at the previous converged time step" );
 
 DECLARE_FIELD( dMobility_dLogPrimaryConc,
                "dMobility_dLogPrimaryConc",
