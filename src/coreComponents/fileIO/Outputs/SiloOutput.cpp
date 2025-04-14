@@ -52,7 +52,8 @@ SiloOutput::SiloOutput( string const & name,
   m_writeFaceElementMesh( 1 ),
   m_plotLevel(),
   m_onlyPlotSpecifiedFieldNames(),
-  m_fieldNames()
+  m_fieldNames(),
+  m_parallelThreads( 1 )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -95,6 +96,10 @@ SiloOutput::SiloOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel" );
 
+  registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of plot files." );
 }
 
 SiloOutput::~SiloOutput()

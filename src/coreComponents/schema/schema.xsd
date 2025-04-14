@@ -293,6 +293,10 @@
 					<xsd:selector xpath="ChomboIO" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="OutputsMemoryStatsUniqueName">
+					<xsd:selector xpath="MemoryStats" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="OutputsPythonUniqueName">
 					<xsd:selector xpath="Python" />
 					<xsd:field xpath="@name" />
@@ -2163,6 +2167,7 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
+			<xsd:element name="MemoryStats" type="MemoryStatsType" />
 			<xsd:element name="Python" type="PythonType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
@@ -2178,8 +2183,6 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputFullQuadratureData => If true writes out data associated with every quadrature point.-->
 		<xsd:attribute name="outputFullQuadratureData" type="integer" default="0" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotLevel => Determines which fields to write.-->
 		<xsd:attribute name="plotLevel" type="geos_dataRepository_PlotLevel" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2197,12 +2200,21 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputPath => Path at which the geos to chombo file will be written.-->
 		<xsd:attribute name="outputPath" type="string" use="required" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--useChomboPressures => True iff geos should use the pressures chombo writes out.-->
 		<xsd:attribute name="useChomboPressures" type="integer" default="0" />
 		<!--waitForInput => True iff geos should wait for chombo to write out a file. When true the inputPath must be set.-->
 		<xsd:attribute name="waitForInput" type="integer" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MemoryStatsType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level-->
+		<xsd:attribute name="logLevel" type="integer" default="1" />
+		<!--writeCSV => When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2212,8 +2224,6 @@ Information output from lower logLevels is added with the desired log level-->
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2223,8 +2233,6 @@ Information output from lower logLevels is added with the desired log level-->
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2265,8 +2273,6 @@ Information output from lower logLevels is added with the desired log level-->
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--sources => A list of collectors from which to collect and output time history information.-->
 		<xsd:attribute name="sources" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2290,8 +2296,6 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``particle``, ``all``-->
 		<xsd:attribute name="outputRegionType" type="geos_vtk_VTKRegionTypes" default="all" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => Name of the root file for this output.-->
 		<xsd:attribute name="plotFileRoot" type="string" default="VTK" />
 		<!--plotLevel => Level detail plot. Only fields with lower of equal plot level will be output.-->
