@@ -22,6 +22,7 @@
 #include <numeric>
 #include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/BasicOutput.hpp"
 #include "TableFormatter.hpp"
 
 namespace geos
@@ -34,78 +35,6 @@ TableFormatter::TableFormatter():
 TableFormatter::TableFormatter( TableLayout const & tableLayout ):
   m_tableLayout( tableLayout )
 {}
-
-/**
- * @brief Helper function to write content to an output stream.
- *        Adds appropriate messages to the error report when the operation fails.
- * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
- * @param outputStream The stream to write the content to.
- * @param content The string view containing data to be written.
- * @param errorReporter Callable that handles error reporting by collecting messages
- * @param isNewlyOpened Flag indicating if the stream was just opened before this call
- * @note this method may be moved in a common/BasicOutput.xpp as a lot of output stream errors are not verified.
- */
-template< typename ErrorReporter >
-void toStream( std::ostream & outputStream, string_view content,
-               ErrorReporter && errorReporter, bool isNewlyOpened )
-{
-  if( !outputStream.good() )
-  {
-    errorReporter( isNewlyOpened ?
-                   "Output stream failed to open.\nPossible reasons: File doesn't exist / permissions / locking issue." :
-                   "Output stream is in invalid state for writing.\nPossible reasons: Stream closed / buffer corruption / previous writing failed." );
-    return;
-  }
-
-  const auto startPos = outputStream.tellp();
-  errno = 0;
-
-  outputStream << content;
-
-  if( outputStream.bad() )
-  {
-    const auto bytesWritten = outputStream.tellp() - startPos;
-    errorReporter( GEOS_FMT( "I/O error occurred while writing content, written {} / {} bytes.\n"
-                             "Possible reasons: Insufficient disk space / read-only filesystem / disk disconnection",
-                             bytesWritten, content.size() ) );
-  }
-  else if( !content.empty() && startPos >= 0 && outputStream.tellp() <= startPos )
-  {
-    errorReporter( "Export completed but no data was written\nPossible reasons: Disk quota exceeded / streaming logical error." );
-  }
-
-  if( errno != 0 )
-    errorReporter( GEOS_FMT( "\n{}", std::strerror( errno ) ) );
-}
-
-/**
- * @brief Helper function to write content to an output stream.
- *        Adds appropriate messages to the log when the operation fails.
- * @param outputStream The stream to write the content to.
- * @param content The string view containing data to be written.
- * @param streamName Name of the stream to use in potencial streaming errors
- * @param critical Flag indicating if any writing error is critical
- * @param isNewlyOpened Flag indicating if the stream was just opened before this call
- * @note this method may be moved in a common/BasicOutput.xpp as a lot of output stream errors are not verified.
- */
-template< typename ErrorReporter >
-void toStream( std::ostream & outputStream, string_view content,
-               string_view streamName, bool critical, bool isNewlyOpened )
-{
-  string msgs;
-  toStream( outputStream,
-            content,
-            [&]( string_view msg ) { msgs += msg; },
-            isNewlyOpened );
-  if( critical )
-  {
-    GEOS_ERROR( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
-  }
-  else
-  {
-    GEOS_WARNING( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
-  }
-}
 
 void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content, bool isNewlyOpened ) const
 {
