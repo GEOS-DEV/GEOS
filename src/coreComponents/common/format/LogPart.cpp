@@ -66,15 +66,14 @@ void LogPart::formatDescriptions( LogPart::Description & description,
   size_t & maxNameSize = formattedDescription.m_maxNameWidth;
   size_t & maxValueSize = formattedDescription.m_maxValueWidth;
 
-  m_width = std::max( m_minWidth, m_width );
-  m_width = std::min( m_maxWidth, m_width );
+  m_width = std::clamp(m_width, m_minWidth, m_maxWidth);
 
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
     std::vector< string > const & nonFormattedNames =  description.m_names[idxName];
     std::vector< string > const & nonFormattedValues =  description.m_values[idxName];
 
-    // first format name with no values associated
+    // Format name with no values associated
     if( nonFormattedValues.empty())
     {
       size_t maxLineLength = m_width - borderSpaceWidth;
@@ -93,6 +92,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
       continue;
     }
 
+    // Format name with values assiociated
     size_t maxLineLength = m_width - maxNameSize - formattingCharSize - m_delimiter.size();
     auto wrappedValues = stringutilities::wrapTextToMaxLength( nonFormattedValues, maxLineLength );
 
@@ -120,6 +120,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
 
     formattedLines.push_back( GEOS_FMT( "{}{}{}", formatNames.front(), m_delimiter, wrappedValues.front() ));
 
+    // combination name + value
     for( size_t idxLine = 1; idxLine < lineCount; ++idxLine )
     {
       if( idxLine < formatNames.size() && idxLine < wrappedValues.size())
@@ -127,11 +128,11 @@ void LogPart::formatDescriptions( LogPart::Description & description,
         formattedLines.push_back( GEOS_FMT( "{}{}{}", formatNames[idxLine], m_delimiter, wrappedValues[idxLine] ));
       }
       else if( idxLine < formatNames.size())
-      { // subnames
+      { // subnames remaining
         formattedLines.push_back( formatNames[idxLine] );
       }
       else if( idxLine < wrappedValues.size())
-      { // subvalues
+      { // subvalues remaining
         size_t const spaceAvailable = maxNameSize + wrappedValues[idxLine].size() + m_delimiter.size();
         formattedLines.push_back( GEOS_FMT( "{:>{}}", wrappedValues[idxLine], spaceAvailable ));
       }
