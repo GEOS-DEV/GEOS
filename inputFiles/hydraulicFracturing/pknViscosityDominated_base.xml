@@ -184,8 +184,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="zeroToughness"
-      plotLevel="3"
-      parallelThreads="48"/>
+      plotLevel="3"/>
 
     <TimeHistory
       name="timeHistoryOutput"

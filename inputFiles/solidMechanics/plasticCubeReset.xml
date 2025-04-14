@@ -154,8 +154,7 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"
-      parallelThreads="32"/>
+      name="vtkOutput"/>
     <Restart
       name="restartOutput"/>
   </Outputs>

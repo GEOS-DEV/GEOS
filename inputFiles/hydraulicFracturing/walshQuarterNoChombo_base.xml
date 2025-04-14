@@ -84,8 +84,7 @@
   <Outputs>
       <VTK name="siloOutput"
             plotFileRoot="walshQuarter"
-            plotLevel="3"
-            parallelThreads="48"/>
+            plotLevel="3"/>
       <Restart name="sidreRestart"/>
 
       <!-- ChomboIO name="chomboCoupling"

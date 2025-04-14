@@ -109,7 +109,6 @@
   <Outputs>
     <VTK 
       name="vtkOutput"
-      parallelThreads="32"
       plotFileRoot="plot"
     />
 
