@@ -22,6 +22,8 @@
 #define GEOS_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP
 
 #include "dataRepository/Group.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
@@ -41,6 +43,8 @@ public:
    */
   SolverStatistics( string const & name,
                     dataRepository::Group * const parent );
+
+  void prepareResidualTableLayout( bool isThermal );
 
   /**
    * @brief Initialize the counters used for an individual time step
@@ -70,15 +74,34 @@ public:
    */
   void logTimeStepCut();
 
+  void logNewtonIter( integer currentNewtonIter );
+
+  void logResidualNorm( real64 residualNorm,
+                        real64 residualMass,
+                        real64 residualVol );
+
+  void logThermalResidualNorm( real64 residualEnergy );
+
   /**
    * @brief Save the statistics for the individual time step and increment the cumulative stats
    */
   void saveTimeStepStatistics();
 
+  void registerStatsToTable();
+
+  void registerResidualNormToTable();
+
+  void registerThermalResidualNormToTable();
+
   /**
    * @brief Output the cumulative statistics to the terminal
    */
-  void outputStatistics() const;
+  void outputStatistics( bool writeCSV );
+
+  /**
+   * @brief Output the cumulative statistics to the terminal
+   */
+  void outputResidualNorm( bool writeCSV );
 
   /**
    * @return Number of time steps
@@ -127,6 +150,28 @@ public:
    */
   integer getNumDiscardedLinearIterations() const
   { return m_numDiscardedLinearIterations; }
+
+  integer getNewtonIter() const
+  { return m_currentNewtonIter; }
+
+
+  real64 getResidualNorm() const
+  { return m_residualNorm; }
+
+  real64 getResidualMass() const
+  { return m_residualMass; }
+
+  real64 getResidualVol() const
+  { return m_residualVol; }
+
+  real64 getResidualEnergy() const
+  { return m_residualEnergy; }
+
+  void setResidualNormsFileName( string filename )
+  { m_residualNormsFileName = filename; }
+
+  string getOutputDir()
+  { return m_residualNormsFileName; }
 
 
   /**
@@ -191,6 +236,29 @@ private:
 
   /// Cumulative number of discarded linear iterations
   integer m_numDiscardedLinearIterations;
+
+
+  integer m_currentNewtonIter = std::numeric_limits< integer >::max();
+
+  real64 m_residualNorm = std::numeric_limits< real64 >::max();
+
+  real64 m_residualMass = std::numeric_limits< real64 >::max();
+
+  real64 m_residualVol = std::numeric_limits< real64 >::max();
+
+  real64 m_residualEnergy =  std::numeric_limits< real64 >::max();
+
+  /// Table containing statistics relative to non linear parameter
+  TableData m_nonLinearData;
+
+  /// Table containing statistics relative to non linear norms
+  std::unique_ptr< TableLayout > m_nonLinearNormsLayout;
+  /// Table containing statistics relative to non linear norms
+  TableData m_nonLinearNormsData;
+
+  string m_residualNormsFileName;
+
+  string m_outputDir;
 
 };
 

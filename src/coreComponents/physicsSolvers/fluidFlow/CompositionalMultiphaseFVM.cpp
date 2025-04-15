@@ -123,6 +123,15 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when computing the next timestep." );
 
+  if( m_writeSolvingCSV )
+  {
+    m_solverStatistics.prepareResidualTableLayout( isThermal() );
+    m_solverStatistics.setResidualNormsFileName( GEOS_FMT( "{}/{}_solvings.csv",
+                                                           m_solverStatistics.getOutputDir(),
+                                                           getName() ));
+
+  }
+
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Solution >();
   addLogLevel< logInfo::TimeStep >();
@@ -566,6 +575,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
   globalResidualNorm.resize( numNorm );
   if( m_isThermal )
   {
+    std::cout << " im thermal "<< std::endl;
     if( normType == physicsSolverBaseKernels::NormType::Linf )
     {
       physicsSolverBaseKernels::LinfResidualNormHelper::
@@ -581,9 +591,13 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
                                GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                          globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
+    getSolverStatistics().logResidualNorm( residualNorm, globalResidualNorm[0], globalResidualNorm[1] );
+    getSolverStatistics().logThermalResidualNorm( globalResidualNorm[2] );
+    getSolverStatistics().registerThermalResidualNormToTable();
   }
   else
   {
+    std::cout << " not thermal "<< std::endl;
     if( normType == physicsSolverBaseKernels::NormType::Linf )
     {
       physicsSolverBaseKernels::LinfResidualNormHelper::
@@ -598,7 +612,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
 
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
                                                                globalResidualNorm[0], globalResidualNorm[1] ) );
+    getSolverStatistics().logResidualNorm( residualNorm, globalResidualNorm[0], globalResidualNorm[1] );
+    getSolverStatistics().registerResidualNormToTable();
   }
+
 
   return residualNorm;
 }

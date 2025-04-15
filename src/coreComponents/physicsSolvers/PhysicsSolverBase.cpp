@@ -98,8 +98,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
-  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
-    setApplyDefaultValue( 0 ).
+  registerWrapper( viewKeyStruct::writeSolvingCSVFlagString(), &m_writeSolvingCSV ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, output convergence information into a csv" );
@@ -345,6 +345,9 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   {
     m_numTimestepsSinceLastDtCut++;
   }
+
+  if( m_writeSolvingCSV )
+    getSolverStatistics().registerStatsToTable();
 
   return false;
 }
@@ -899,7 +902,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-
+    getSolverStatistics().logNewtonIter( newtonIter );
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
 
@@ -1093,7 +1096,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
-
+  m_solverStatistics.outputResidualNorm( m_writeSolvingCSV );
   return isNewtonConverged;
 }
 
@@ -1391,7 +1394,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  m_solverStatistics.outputStatistics();
+  m_solverStatistics.outputStatistics( m_writeSolvingCSV );
 
   for( auto & timer : m_timers )
   {
