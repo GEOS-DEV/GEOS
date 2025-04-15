@@ -248,6 +248,15 @@ void finalizeCaliper()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void finalizeMemoryLogging()
+{
+  MemoryLogging & memLogger = MemoryLogging::getInstance();
+  memLogger.setCurrentCycle( memLogger.getCurrentCycle() + 1 );
+
+  memLogger.memoryStatsReport();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
   setupMPI( argc, argv );
@@ -260,9 +269,9 @@ void setupEnvironment( int argc, char * argv[] )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
 {
+  finalizeMemoryLogging();
   LvArray::system::resetSignalHandling();
   finalizeLogger();
-  MemoryLogging::getInstance().memoryStatsReport();
   finalizeCaliper();
   finalizeMPI();
 }

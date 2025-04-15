@@ -96,6 +96,12 @@ public:
   { return m_umpireStatsCsvReport; }
 
   /**
+   * @return the current cycle for the next report to output.
+   */
+  integer getCurrentCycle() const
+  { return m_currentCycle; }
+
+  /**
    * @param enable enable or disable the umpire statistics text logging.
    * @see memoryStatsReport() for more documentation.
    */
@@ -122,7 +128,7 @@ public:
    * @brief Set the Current Time, to identify each CSV entry.
    * @param currentTime The current simulated time. Must be initialized before first memoryStatsReport() to valid values.
    */
-  void setCurrentTime( integer currentTime )
+  void setCurrentTime( real64 currentTime )
   { m_currentTime = currentTime; }
 
   /**
@@ -153,7 +159,7 @@ private:
   integer m_currentCycle;
 
   /// The current simulated time.
-  integer m_currentTime;
+  real64 m_currentTime;
 
 
   /// private constructor as the class is a singleton.
