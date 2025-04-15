@@ -22,7 +22,6 @@
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 namespace geos
 {
@@ -302,72 +301,6 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhasePorome
                                                                real64 const,
                                                                real64 const (&)[3],
                                                                string const >;
-
-/**
- * @brief A struct to perform volume, aperture and fracture traction updates
- */
-struct StateUpdateKernel
-{
-
-  /**
-   * @brief Launch the kernel function doing volume, aperture and fracture traction updates
-   * @tparam POLICY the type of policy used in the kernel launch
-   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
-   * @param[in] size the size of the subregion
-   * @param[in] contactWrapper the wrapper implementing the contact relationship
-   * @param[in] dispJump the displacement jump
-   * @param[in] pressure the pressure
-   * @param[in] area the area
-   * @param[in] volume the volume
-   * @param[out] deltaVolume the change in volume
-   * @param[out] aperture the aperture
-   * @param[out] hydraulicAperture the effecture aperture
-   * @param[out] fractureContactTraction the fracture contact traction
-   */
-  template< typename POLICY, typename POROUS_WRAPPER, typename CONTACT_WRAPPER >
-  static void
-  launch( localIndex const size,
-          CONTACT_WRAPPER const & contactWrapper,
-          POROUS_WRAPPER const & porousMaterialWrapper,
-          arrayView2d< real64 const > const & dispJump,
-          arrayView1d< real64 const > const & pressure,
-          arrayView1d< real64 const > const & area,
-          arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 > const & deltaVolume,
-          arrayView1d< real64 > const & aperture,
-          arrayView1d< real64 const > const & oldHydraulicAperture,
-          arrayView1d< real64 > const & hydraulicAperture,
-          arrayView2d< real64 > const & fractureEffectiveTraction,
-          arrayView1d< integer > const & fractureState )
-  {
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      // update aperture to be equal to the normal displacement jump
-      aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
-
-      real64 dHydraulicAperture_dNormalJump = 0.0;
-      real64 dHydraulicAperture_dNormalTraction = 0.0;
-      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
-                                                                      fractureEffectiveTraction[k][0],
-                                                                      fractureState[k],
-                                                                      dHydraulicAperture_dNormalJump,
-                                                                      dHydraulicAperture_dNormalTraction );
-
-      deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
-
-      real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
-      real64 const effectiveTraction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureEffectiveTraction[k] );
-
-      // all perm update models below should need effective traction instead of total traction
-      // (total traction is combined forces of fluid pressure and effective traction)
-      porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
-                                                                            oldHydraulicAperture[k], hydraulicAperture[k],
-                                                                            dHydraulicAperture_dNormalJump,
-                                                                            jump, effectiveTraction );
-
-    } );
-  }
-};
 
 } // namespace poromechanicsEFEMKernels
 

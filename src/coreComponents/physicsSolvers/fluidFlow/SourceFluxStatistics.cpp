@@ -93,7 +93,7 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group,
 
     string const logMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
     string const logRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
-    TableLayout const statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
+    TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
 
     m_logLayout = statsLogLayout;
 
