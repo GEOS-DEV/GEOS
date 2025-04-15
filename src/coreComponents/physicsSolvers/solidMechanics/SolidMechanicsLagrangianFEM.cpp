@@ -1007,8 +1007,6 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                ParallelVector & solution,
                                                bool const setSparsity )
 {
-  GEOS_LOG( "SolidMechanicsLagrangianFEM::setupSystem" );
-
   GEOS_MARK_FUNCTION;
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
