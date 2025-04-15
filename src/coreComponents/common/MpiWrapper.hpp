@@ -385,7 +385,7 @@ public:
   template< typename T >
   static int allGatherv( arrayView1d< T const > const & sendbuf,
                          array1d< T > & recvbuf,
-                         MPI_Comm comm = MPI_COMM_GEOSX );
+                         MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience wrapper for the MPI_Allreduce function.
