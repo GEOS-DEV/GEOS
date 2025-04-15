@@ -121,7 +121,6 @@ TableCSVFormatter::TableCSVFormatter( TableLayout const & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
-static constexpr string_view csvSeparator = ",";
 string TableCSVFormatter::headerToString() const
 {
   string result;
@@ -133,7 +132,7 @@ string TableCSVFormatter::headerToString() const
     {
       total_size += str.size();
     }
-    total_size += csvSeparator.size();
+    total_size += m_separator.size();
   }
   result.reserve( total_size );
 
@@ -147,7 +146,7 @@ string TableCSVFormatter::headerToString() const
 
     if( idxColumn < m_tableLayout.getColumns().size() - 1 )
     {
-      result.append( csvSeparator );
+      result.append( m_separator );
     }
   }
   result.append( "\n" );
@@ -188,7 +187,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
       if( !detectNewLine )
         rowConverted.push_back( item.value );
     }
-    result.append( stringutilities::join( rowConverted.cbegin(), rowConverted.cend(), csvSeparator ));
+    result.append( stringutilities::join( rowConverted.cbegin(), rowConverted.cend(), m_separator ));
     result.append( "\n" );
   }
 

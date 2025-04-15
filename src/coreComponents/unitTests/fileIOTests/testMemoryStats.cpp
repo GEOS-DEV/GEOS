@@ -18,6 +18,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "fileIO/Outputs/MemoryStatsOutput.hpp"
 #include "codingUtilities/Parsing.hpp"
+#include "common/format/table/TableFormatter.hpp"
 
 #include <gtest/gtest.h>
 
@@ -173,7 +174,7 @@ TEST( testXML, testMemoryCSVOutput )
   std::vector< string > csvLines;
   {
     std::ifstream is( memOutputFileName );
-    ASSERT_TRUE( is.good() );
+    EXPECT_TRUE( is.good() );
     string line;
     while( std::getline( is, line ) )
     {
@@ -184,7 +185,10 @@ TEST( testXML, testMemoryCSVOutput )
   auto const findCSVMemoryEntry = [=]( string_view cycleStr, string_view memSpaceName ) -> bool {
     for( string const & csvLine : csvLines )
     {
-      std::vector< string > const lineEntries = stringutilities::tokenize( csvLine, ";", false );
+      std::vector< string > const lineEntries = stringutilities::tokenize( csvLine,
+                                                                           TableCSVFormatter::m_separator,
+                                                                           false );
+      EXPECT_GT( lineEntries.size(), 3 );
       if( lineEntries[0] == cycleStr && lineEntries[2] == memSpaceName )
       { // we found the line coresponding to the given cycle & memory-space
         return true;
@@ -192,7 +196,7 @@ TEST( testXML, testMemoryCSVOutput )
     }
     return false;
   };
-  ASSERT_TRUE( findCSVMemoryEntry( dummyCycleStr, "HOST" ) );
+  EXPECT_TRUE( findCSVMemoryEntry( dummyCycleStr, "HOST" ) );
 }
 
 int main( int argc, char * * argv )

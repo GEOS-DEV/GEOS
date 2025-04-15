@@ -85,6 +85,11 @@ class TableCSVFormatter final : public TableFormatter
 public:
 
   /**
+   * @brief The column separator for the CSV output.
+   */
+  static constexpr string_view m_separator = ",";
+
+  /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
    * without any column / title). Feature is not tested.
    */
