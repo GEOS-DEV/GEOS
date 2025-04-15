@@ -252,7 +252,6 @@ void finalizeMemoryLogging()
 {
   MemoryLogging & memLogger = MemoryLogging::getInstance();
   memLogger.setCurrentCycle( memLogger.getCurrentCycle() + 1 );
-
   memLogger.memoryStatsReport();
 }
 
