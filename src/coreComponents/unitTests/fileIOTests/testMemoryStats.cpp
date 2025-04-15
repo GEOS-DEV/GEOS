@@ -147,7 +147,7 @@ static const string basicSimXml =
   )xml";
 
 static const string memOutputPath = "/Outputs/memoryOutput";
-static const string memOutputFileName = "memoryOutput_umpireStats.csv";
+static const string memOutputFileName = "MemoryStats_umpireStats.csv";
 
 CommandLineOptions g_commandLineOptions;
 
@@ -170,15 +170,22 @@ TEST( testXML, testMemoryCSVOutput )
   memOutput.execute( 0.0, 0.0, dummyCycle, 0, 0.0, problem.getDomainPartition() );
 
   // read the CSV output (parseFile() will throw if no CSV is generated)
-  auto const isLineBreakChar = []( char const c ){ return c == '\n' || c == '\r'; };
   std::vector< string > csvLines;
-  parseFile( memOutputFileName, csvLines, isLineBreakChar );
+  {
+    std::ifstream is( memOutputFileName );
+    ASSERT_TRUE( is.good() );
+    string line;
+    while( std::getline( is, line ) )
+    {
+      csvLines.emplace_back( line );
+    }
+  }
 
   auto const findCSVMemoryEntry = [=]( string_view cycleStr, string_view memSpaceName ) -> bool {
     for( string const & csvLine : csvLines )
     {
       std::vector< string > const lineEntries = stringutilities::tokenize( csvLine, ";", false );
-      if ( lineEntries[0] == cycleStr && lineEntries[2] == memSpaceName )
+      if( lineEntries[0] == cycleStr && lineEntries[2] == memSpaceName )
       { // we found the line coresponding to the given cycle & memory-space
         return true;
       }

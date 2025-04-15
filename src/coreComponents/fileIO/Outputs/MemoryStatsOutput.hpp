@@ -67,6 +67,11 @@ public:
 protected:
 
   /**
+   * @copydoc Group::getTimerCategory
+   */
+  void postInputInitialization() override;
+
+  /**
    * @copydoc OutputBase::getTimerCategory
    */
   logInfo::OutputTimerBase const & getTimerCategory() const override;

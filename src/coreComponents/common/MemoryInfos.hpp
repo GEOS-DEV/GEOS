@@ -104,17 +104,11 @@ public:
 
   /**
    * @param enable enable or disable the text log level.
+   * @param filename the relative file path to the csv output, including the extention. Can be empty if !enable.
    * @note when enabled, start a new csv immediately from zero, filling its header.
    * @see memoryStatsReport() for more documentation.
    */
-  void enableUmpireStatsCsvReport( bool enable );
-
-  /**
-   * @param filename enable or disable the text log level.
-   * @see memoryStatsReport() for more documentation.
-   */
-  void setUmpireStatsCsvReportFilename( string_view filename )
-  { m_umpireStatsCsvReportFilename = filename; }
+  void enableUmpireStatsCsvReport( bool enable, string_view filename = "" );
 
   /**
    * @brief Set the Current Cycle, to identify each CSV entry.

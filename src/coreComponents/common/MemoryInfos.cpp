@@ -80,7 +80,7 @@ bool MemoryInfos::isPhysicalMemoryHandled() const
 MemoryLogging::MemoryLogging():
   m_umpireStatsLogReport( true ),
   m_umpireStatsCsvReport( false ),
-  m_umpireStatsCsvReportFilename( "./memoryStats.csv" ),
+  m_umpireStatsCsvReportFilename( "./umpireStats.csv" ),
   m_currentCycle( 0 ),
   m_currentTime( 0.0 )
 {
@@ -105,12 +105,14 @@ MemoryLogging & MemoryLogging::getInstance()
   return instance;
 }
 
-void MemoryLogging::enableUmpireStatsCsvReport( bool enable )
+void MemoryLogging::enableUmpireStatsCsvReport( bool enable, string_view filename )
 {
   m_umpireStatsCsvReport = enable;
+  m_umpireStatsCsvReportFilename = filename;
   if( enable )
   {
-    std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
+    // start a new file
+    std::ofstream csvFile{ m_umpireStatsCsvReportFilename, std::ios_base::out };
     m_memoryStatCsvFormatter->headerToStream( csvFile );
   }
 }
@@ -220,7 +222,7 @@ void MemoryLogging::memoryStatsReport() const
 
     if( m_umpireStatsCsvReport )
     {
-      std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
+      std::ofstream csvFile{ m_umpireStatsCsvReportFilename, std::ios_base::app };
       m_memoryStatCsvFormatter->dataToStream( csvFile, tableData );
     }
   }
