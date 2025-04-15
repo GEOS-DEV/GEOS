@@ -19,6 +19,7 @@
 
 #include "EventManager.hpp"
 
+#include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
 #include "events/EventBase.hpp"
 #include "common/MpiWrapper.hpp"
