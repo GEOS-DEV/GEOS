@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -111,6 +112,15 @@ public:
   };
 
   /**
+   * @brief Indicates the type of (local to a rank) reordering applied to a given field
+   */
+  enum class LocalReorderingType
+  {
+    None,    ///< Do not reorder the variables
+    ReverseCutHillMcKee, ///< Use reverve CutHill-McKee reordering algorithm.
+  };
+
+  /**
    * @brief Constructor.
    *
    * @param [in] name a unique name for this DoF manager
@@ -170,12 +180,20 @@ public:
   /**
    * @copydoc addField(string const &, FieldLocation, integer, std::vector< FieldSupport > const &)
    *
-   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics solvers.
+   * Overload for  map< string, string_array > bodyFieldSupport used by physics solvers.
    */
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 map< std::pair< string, string >, array1d< string > > const & regions );
+                 map< std::pair< string, string >, string_array > const & regions );
+
+  /**
+   * @brief Set the local reodering of the dof numbers
+   * @param [in] fieldName the name of the field
+   * @param [in] reorderingType the reordering type
+   */
+  void setLocalReorderingType( string const & fieldName,
+                               LocalReorderingType const reorderingType );
 
   /**
    * @brief Disable the global coupling for a given equation
@@ -227,7 +245,7 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    map< std::pair< string, string >, array1d< string > > const & regions,
+                    map< std::pair< string, string >, string_array > const & regions,
                     bool symmetric = true );
 
   /**
@@ -397,11 +415,12 @@ public:
    * @param scalingFactor a factor to scale vector values by
    * @param mask component selection mask
    */
+  template< typename SCALING_FACTOR_TYPE >
   void addVectorToField( arrayView1d< real64 const > const & localVector,
                          string const & srcFieldName,
                          string const & dstFieldName,
-                         real64 scalingFactor,
-                         CompMask mask = CompMask( maxNumComp, true ) ) const;
+                         SCALING_FACTOR_TYPE const & scalingFactor,
+                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
    * @brief Copy values from simulation data arrays to vectors.
@@ -499,6 +518,7 @@ private:
     globalIndex blockOffset = 0;   ///< offset of this field's block in a block-wise ordered system
     globalIndex rankOffset = 0;    ///< field's first DoF on current processor (within its block, ignoring other fields)
     globalIndex globalOffset = 0;  ///< global offset of field's DOFs on current processor for multi-field problems
+    LocalReorderingType reorderingType = LocalReorderingType::None; ///< Type of local reordering applied to this field
   };
 
   /**
@@ -525,14 +545,33 @@ private:
   /**
    * @brief Create index array for the field
    * @param field the field descriptor
+   * @param permutation the local permutation used to fill the index array for this field
    */
-  void createIndexArray( FieldDescription const & field );
+  void createIndexArray( FieldDescription const & field,
+                         arrayView1d< localIndex const > const permutation );
 
   /**
    * @brief Remove an index array for the field
    * @param field the field descriptor
    */
   void removeIndexArray( FieldDescription const & field );
+
+  /**
+   * @brief Compute a local reordering of the dofNumbers or alternatively, return a trivial permutation
+   * @param field the field descriptor
+   * @return permutation the local permutation used to fill the index array for this field
+   */
+  array1d< localIndex > computePermutation( FieldDescription & field );
+
+  /**
+   * @brief Compute a local reordering of the dofNumbers
+   * @param field the field descriptor
+   * @param permutation the local permutation used to fill the index array for this field
+   * @detail This function throws an error if the field requires a trivial permutation
+   */
+  void computePermutation( FieldDescription const & field,
+                           arrayView1d< localIndex > const permutation );
+
 
   /**
    * @brief Calculate or estimate the number of nonzero entries in each local row
@@ -572,11 +611,11 @@ private:
    * @param scalingFactor a factor to scale vector values by
    * @param mask component selection mask (for partial copy)
    */
-  template< typename FIELD_OP, typename POLICY >
+  template< typename FIELD_OP, typename POLICY, typename SCALING_FACTOR_TYPE >
   void vectorToField( arrayView1d< real64 const > const & localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
-                      real64 scalingFactor,
+                      SCALING_FACTOR_TYPE const & scalingFactor,
                       CompMask mask ) const;
 
   /**

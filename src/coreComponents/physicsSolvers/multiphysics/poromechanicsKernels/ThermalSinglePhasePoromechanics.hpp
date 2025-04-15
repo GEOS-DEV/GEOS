@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -47,6 +48,7 @@ public:
                                                                CONSTITUTIVE_TYPE,
                                                                FE_TYPE >;
 
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
   /// will be the actual number of nodes per element.
@@ -66,9 +68,11 @@ public:
   using Base::m_pressure_n;
   using Base::m_fluidDensity;
   using Base::m_fluidDensity_n;
-  using Base::m_dFluidDensity_dPressure;
+  using Base::m_dFluidDensity;
   using Base::m_solidDensity;
   using Base::m_flowDofNumber;
+  using Base::m_dt;
+  using Base::m_performStressInitialization;
 
   /**
    * @brief Constructor
@@ -86,8 +90,10 @@ public:
                                    globalIndex const rankOffset,
                                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                    arrayView1d< real64 > const inputRhs,
+                                   real64 const inputDt,
                                    real64 const (&gravityVector)[3],
                                    string const inputFlowDofKey,
+                                   integer const performStressInitialization,
                                    string const fluidModelKey );
 
   //*****************************************************************************
@@ -274,14 +280,11 @@ public:
 
 protected:
 
-  /// Views on fluid density derivative wrt temperature
-  arrayView2d< real64 const > const m_dFluidDensity_dTemperature;
-
   /// Views on fluid internal energy
-  arrayView2d< real64 const > const m_fluidInternalEnergy_n;
-  arrayView2d< real64 const > const m_fluidInternalEnergy;
-  arrayView2d< real64 const > const m_dFluidInternalEnergy_dPressure;
-  arrayView2d< real64 const > const m_dFluidInternalEnergy_dTemperature;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidInternalEnergy_n;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidInternalEnergy;
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const m_dFluidInternalEnergy;
+
 
   /// Views on rock internal energy
   arrayView2d< real64 const > const m_rockInternalEnergy_n;
@@ -300,8 +303,10 @@ using ThermalSinglePhasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
+                                integer const,
                                 string const >;
 
 } // namespace thermalPoromechanicsKernels

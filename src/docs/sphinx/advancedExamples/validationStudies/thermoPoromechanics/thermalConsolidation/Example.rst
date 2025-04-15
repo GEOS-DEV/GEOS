@@ -20,7 +20,7 @@ This example uses no external input files and everything required is contained w
 
 .. code-block:: console
 
-  inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_benchmark.xml
+  inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_benchmark_fim.xml
 
 ---------------------------------------------------
 Description of the case
@@ -31,7 +31,7 @@ The initial temperature of the saturated soil is 0 degrees Celsius.
 The soil column is insulated and sealed everywhere, except at the top surface.
 The problem setup is illustrated below.
 
-.. _problemSketchFig:
+.. _thermoPoroMechanicsProblemSketchFig:
 .. figure:: sketch.png
    :align: center
    :width: 350
@@ -53,7 +53,7 @@ Solvers
 
 As demonstrated in this example, to setup a thermoporomechanical coupling, we need to define three different solvers in the **Solvers** part of the XML file:
 
-- the mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``solidMechSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
+- the mechanics solver, a solver of type ``SolidMechanicsLagrangianFEM`` called here ``solidMechSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
 .. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_smoke_fim.xml
   :language: xml

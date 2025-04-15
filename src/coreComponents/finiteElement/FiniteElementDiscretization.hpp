@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -47,6 +48,12 @@ class FiniteElementDiscretization : public dataRepository::Group
 {
 public:
 
+  /// Enumerator of available interpolation types
+  enum class Formulation : integer
+  {
+    Default,
+    SEM,
+  };
 
 
   FiniteElementDiscretization() = delete;
@@ -90,20 +97,29 @@ private:
     static constexpr char const * orderString() { return "order"; }
     static constexpr char const * formulationString() { return "formulation"; }
     static constexpr char const * useVemString() { return "useVirtualElements"; }
+    static constexpr char const * useHighOrderQuadratureRuleString() { return "useHighOrderQuadratureRule"; }
   };
 
   /// The order of the finite element basis
   int m_order;
 
   /// Optional string indicating any specialized formulation type.
-  string m_formulation;
+  Formulation m_formulation;
 
   /// Optional parameter indicating if the class should use Virtual Elements.
   int m_useVem;
 
-  void postProcessInput() override final;
+  /// Optional parameter indicating if the class should use a high order quadrature rule.
+  int m_useHighOrderQuadratureRule;
+
+  void postInputInitialization() override final;
 
 };
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( FiniteElementDiscretization::Formulation,
+              "default",
+              "SEM" );
 
 template< typename SUBREGION_TYPE,
           typename FE_TYPE >
@@ -117,7 +133,7 @@ FiniteElementDiscretization::
   GEOS_MARK_FUNCTION;
 
   // do not precompute shape functions in case of SEM formulation (not needed)
-  if( m_formulation == "SEM" )
+  if( m_formulation == Formulation::SEM )
     return;
 
   array4d< real64 > & dNdX = elementSubRegion->dNdX();

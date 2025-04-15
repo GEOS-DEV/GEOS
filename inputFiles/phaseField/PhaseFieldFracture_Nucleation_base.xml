@@ -11,12 +11,13 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         couplingType="Sequential"
+        lineSearchAction="None"  
         newtonMaxIter="100"/>
       <LinearSolverParameters
         directParallel="0"/>
     </PhaseFieldFracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="SolidMechSolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
@@ -28,7 +29,7 @@
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
 
     <PhaseFieldDamageFEM
       name="DamageSolve"
@@ -51,7 +52,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region1 }"
-      rockToughness="0"
+      initialRockToughness="0"
       mpiCommOrder="1"/>
   </Solvers>
 
@@ -66,12 +67,12 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="0.0"
+      defaultAperture="1e-6"
       materialList="{ rock }"/>
   </ElementRegions>
 

@@ -14,11 +14,15 @@ method `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.70
 
 **Input file**
 
-Everything required is contained within two xml files located at:
+Everything required is contained within these xml files located at:
 
 .. code-block:: console
 
-  inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
+  inputFiles/lagrangianContactMechanics/TFrac_base.xml
+
+.. code-block:: console
+
+  inputFiles/lagrangianContactMechanics/TFrac_benchmark.xml
 
 .. code-block:: console
 
@@ -64,12 +68,12 @@ The following figure shows the mesh used in this problem.
    Generated mesh
 
 This mesh was created using the internal mesh generator as parametrized in the ``InternalMesh`` XML tag. 
-The mesh contains 300 x 300 x 1 eight-node brick elements in the x, y, and z directions respectively. 
+The mesh contains 300 x 300 x 2 eight-node brick elements in the x, y, and z directions respectively. 
 Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and their collection forms a mesh
 with one group of cell blocks named here ``cb1``. 
 
 
-.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/TFrac_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -78,7 +82,7 @@ with one group of cell blocks named here ``cb1``.
 Refinement is necessary to conform with the fracture geometry specified in the ``Geometry`` section.
 
 
-.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/TFrac_base.xml
     :language: xml
     :start-after: <!-- SPHINX_GEOMETRY -->
     :end-before: <!-- SPHINX_GEOMETRY_END -->
@@ -104,12 +108,12 @@ To setup a coupling between rock and fracture deformations, we define three diff
 
 - For solving the frictional contact, we define a Lagrangian contact solver, called here ``lagrangiancontact``. In this solver, we specify ``targetRegions`` that include both the continuum region ``Region`` and the discontinuum region ``Fracture``  where the solver is applied to couple rock and fracture deformations. The contact constitutive law used for the fracture elements is named ``fractureMaterial``,  and is defined later in the ``Constitutive`` section. 
 
-- Rock deformations are handled by a solid mechanics solver ``SolidMechanics_LagrangianFEM``. This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM <SolidMechanicsLagrangianFEM>`) is based on the Lagrangian finite element formulation. The problem runs in ``QuasiStatic`` mode without inertial effects. The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. The solid material is named ``rock`` and its mechanical properties are specified later in the ``Constitutive`` section.
+- Rock deformations are handled by a solid mechanics solver ``SolidMechanicsLagrangianFEM``. This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM <SolidMechanicsLagrangianFEM>`) is based on the Lagrangian finite element formulation. The problem runs in ``QuasiStatic`` mode without inertial effects. The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. The solid material is named ``rock`` and its mechanical properties are specified later in the ``Constitutive`` section.
 
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness.
 
 
-.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLVER -->
   :end-before: <!-- SPHINX_SOLVER_END -->
@@ -124,13 +128,13 @@ A homogeneous and isotropic domain with one solid material is assumed, and its m
 
 Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction coefficient ``frictionCoefficient="0.577350269"`` are specified. 
 
-.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/TFrac_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
 
 
-Recall that in the ``SolidMechanics_LagrangianFEM`` section, 
+Recall that in the ``SolidMechanicsLagrangianFEM`` section, 
 ``rock`` is the material of the computational domain. 
 Here, the isotropic elastic model ``ElasticIsotropic`` is used to simulate the mechanical behavior of ``rock``.
 
@@ -145,7 +149,7 @@ In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time h
 Either the entire field or specified named sets of indices in the field can be collected. 
 In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="displacementJump"`` on the fracture surface.
 
-.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/TFrac_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
@@ -166,12 +170,12 @@ The next step is to specify fields, including:
   - The boundary conditions (traction loaded on the vertical fracture and the constraints of the outer boundaries have to be set).
 
 In this tutorial, we specify an uniaxial vertical stress ``SigmaY`` (:math:`\sigma_y` = -1.0e8 Pa). 
-A compressive traction ``NormalTraction`` (:math:`P_in` = -1.0e8 Pa) is applied at the surface of vertical fracture.
+A compressive traction ``NormalTraction`` (:math:`P_{in}` = -1.0e8 Pa) is applied at the surface of vertical fracture.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/TFrac_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->

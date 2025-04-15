@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -126,28 +127,57 @@ public:
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final;
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
+
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrain( localIndex const k,
+                                 localIndex const q,
+                                 real64 ( &elasticStrain )[6] ) const override final;
+
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( &elasticStrainInc )[6] ) const override final;
 
   // miscellaneous getters
 
   GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
 
+  /**
+   * @brief Getter for apparent shear modulus.
+   * @return reference to shear modulus that will be used for computing stabilization scalling parameter.
+   */
+  GEOS_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const override final
+  {
+    return LvArray::math::max( LvArray::math::max( m_c44[k], m_c55[k] ), m_c66[k] );
+  }
+
+protected:
+  GEOS_HOST_DEVICE
+  virtual void computeElasticStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const (&stress)[6],
+                                     real64 ( &elasticStrain )[6] ) const;
 
 private:
   /// A reference to the ArrayView holding c11 for each element.
@@ -180,7 +210,7 @@ private:
 };
 
 
-GEOS_FORCE_INLINE
+inline
 GEOS_HOST_DEVICE
 void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
                                                      localIndex const q,
@@ -206,7 +236,65 @@ void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
   stiffness[5][5] = m_c66[k];
 }
 
-GEOS_FORCE_INLINE
+
+GEOS_HOST_DEVICE
+inline
+void ElasticOrthotropicUpdates::computeElasticStrain( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const (&stress)[6],
+                                                      real64 ( & elasticStrain)[6] ) const
+{
+
+  GEOS_UNUSED_VAR( q );
+
+  real64 const detC = m_c11[k]*(m_c22[k]*m_c33[k] - m_c23[k]*m_c23[k]) - m_c12[k]*(m_c12[k]*m_c33[k] - m_c23[k]*m_c13[k]) + m_c13[k]*(m_c12[k]*m_c23[k] - m_c22[k]*m_c13[k]);
+
+  elasticStrain[0] =
+    ( (m_c22[k]*m_c33[k] - m_c23[k]*m_c23[k])*stress[0] + (m_c13[k]*m_c23[k] - m_c12[k]*m_c33[k])*stress[1] + (m_c12[k]*m_c23[k] - m_c13[k]*m_c22[k])*stress[2] ) /
+    detC;
+  elasticStrain[1] =
+    ( (m_c23[k]*m_c13[k] - m_c12[k]*m_c33[k])*stress[0] + (m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k])*stress[1] + (m_c13[k]*m_c12[k] - m_c11[k]*m_c23[k])*stress[2] ) /
+    detC;
+  elasticStrain[2] =
+    ( (m_c12[k]*m_c23[k] - m_c22[k]*m_c13[k])*stress[0] + (m_c12[k]*m_c13[k] - m_c11[k]*m_c23[k])*stress[1] + (m_c11[k]*m_c22[k] - m_c12[k]*m_c12[k])*stress[2] ) /
+    detC;
+
+  elasticStrain[3] = stress[3] / m_c44[k];
+  elasticStrain[4] = stress[4] / m_c55[k];
+  elasticStrain[5] = stress[5] / m_c66[k];
+}
+
+
+GEOS_HOST_DEVICE
+inline
+void ElasticOrthotropicUpdates::getElasticStrain( localIndex const k,
+                                                  localIndex const q,
+                                                  real64 ( & elasticStrain)[6] ) const
+{
+
+  real64 stress[6] = {m_newStress[k][q][0], m_newStress[k][q][1], m_newStress[k][q][2], m_newStress[k][q][3], m_newStress[k][q][4], m_newStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrain );
+
+}
+
+GEOS_HOST_DEVICE
+inline
+void ElasticOrthotropicUpdates::getElasticStrainInc( localIndex const k,
+                                                     localIndex const q,
+                                                     real64 ( & elasticStrainInc)[6] ) const
+{
+
+  real64 stress[6] =
+  {m_newStress[k][q][0] - m_oldStress[k][q][0], m_newStress[k][q][1] - m_oldStress[k][q][1], m_newStress[k][q][2] - m_oldStress[k][q][2], m_newStress[k][q][3] - m_oldStress[k][q][3],
+   m_newStress[k][q][4] - m_oldStress[k][q][4], m_newStress[k][q][5] - m_oldStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrainInc );
+
+}
+
+
+inline
 GEOS_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                                      localIndex const q,
@@ -224,7 +312,7 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex 
 }
 
 
-GEOS_FORCE_INLINE
+inline
 GEOS_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                           localIndex const q,
@@ -238,7 +326,7 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                           localIndex const q,
                                                           real64 const ( &totalStrain )[6],
@@ -258,41 +346,45 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 }
 
 
-GEOS_FORCE_INLINE
+inline
 GEOS_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                               localIndex const q,
+                                                              real64 const & timeIncrement,
                                                               real64 const ( &strainIncrement )[6],
                                                               real64 ( & stress )[6] ) const
 {
+  GEOS_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress =  incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
 
 
-GEOS_FORCE_INLINE
+inline
 GEOS_HOST_DEVICE
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
+                                                   real64 const & timeIncrement,
                                                    real64 const ( &strainIncrement )[6],
                                                    real64 ( & stress )[6],
                                                    real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   getElasticStiffness( k, q, stiffness );
 }
 
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
+                                                   real64 const & timeIncrement,
                                                    real64 const ( &strainIncrement )[6],
                                                    real64 ( & stress )[6],
                                                    DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_c11 = m_c11[k];
   stiffness.m_c12 = m_c12[k];
   stiffness.m_c13 = m_c13[k];
@@ -303,8 +395,6 @@ void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_c55 = m_c55[k];
   stiffness.m_c66 = m_c66[k];
 }
-
-
 
 /**
  * @class ElasticOrthotropic
@@ -715,7 +805,7 @@ public:
   }
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the Young's modulus E1 for any new
   /// allocations.

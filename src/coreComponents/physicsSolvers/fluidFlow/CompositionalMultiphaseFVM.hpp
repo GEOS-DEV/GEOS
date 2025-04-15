@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -23,6 +24,26 @@
 
 namespace geos
 {
+
+/**
+ * @brief Options for density treatment in gravity
+ */
+enum class GravityDensityScheme : integer
+{
+  ArithmeticAverage, ///< average phase density is computed using simple arithmetic average:
+                     ///  rho_ave = 0.5 * (rho_i + rho_j)
+  PhasePresence      ///< average phase density is computed using checking for phase presence:
+                     ///  rho_ave = 0.5 * (rho_i + rho_j) if phase is present in both cells i and j
+                     ///          = rho_i if phase is present in only cell i
+                     ///          = rho_j if phase is present in only cell j
+};
+
+/**
+ * @brief Strings for options for density treatment in gravity
+ */
+ENUM_STRINGS( GravityDensityScheme,
+              "ArithmeticAverage",
+              "PhasePresence" );
 
 /**
  * @class CompositionalMultiphaseFVM
@@ -71,6 +92,10 @@ public:
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
   static string catalogName() { return "CompositionalMultiphaseFVM"; }
+  /**
+   * @copydoc PhysicsSolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 //END_SPHINX_INCLUDE_01
 
   /**
@@ -79,6 +104,11 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+  virtual void
+  registerDataOnMesh( Group & MeshBodies ) override;
+
+  virtual void registerDataForCFL( Group & meshBodies ) override;
 
   virtual void
   setupDofs( DomainPartition const & domain,
@@ -100,12 +130,17 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
+  real64
+  scalingForSystemSolutionZFormulation( DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localSolution );
+
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
@@ -114,6 +149,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   /**@}*/
@@ -132,6 +168,14 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const override;
 
+  virtual void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
@@ -144,18 +188,73 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
-protected:
-
-  virtual void
-  initializePreSubGroups() override;
+  virtual void computeCFLNumbers( DomainPartition & domain,
+                                  real64 const & dt,
+                                  real64 & maxPhaseCFL,
+                                  real64 & maxCompCFL ) override;
 
   /**
-   * @brief Compute the largest CFL number in the domain
-   * @param dt the time step size
-   * @param domain the domain containing the mesh and fields
+   * @brief function to set the next time step size
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
    */
-  void
-  computeCFLNumbers( real64 const & dt, DomainPartition & domain );
+  real64 setNextDt( real64 const & currentTime,
+                    real64 const & currentDt,
+                    DomainPartition & domain ) override;
+
+  struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
+  {
+    // DBC parameters
+    static constexpr char const * useDBCString()                  { return "useDBC"; }
+    static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
+    static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
+
+    static constexpr char const * miscibleDBCString()             { return "miscibleDBC"; }
+    static constexpr char const * kappaminDBCString()             { return "kappaminDBC"; }
+    static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
+
+    // nonlinear solver parameters
+    static constexpr char const * scalingTypeString()             { return "scalingType"; }
+    static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
+  };
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+  virtual void initializePreSubGroups() override;
+
+  real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                              DomainPartition & domain );
+
+  struct DBCParameters
+  {
+    /// Flag to enable Dissipation Based Continuation Method
+    integer useDBC;
+    /// Factor by which the DBC flux is multiplied
+    real64 omega;
+    /// Factor by which the DBC flux is diminished every Newton
+    real64 kappa;
+    /// Flag to enable continuation for DBC Method
+    integer continuation;
+    /// Flag to enable DBC formulation
+    integer miscible;
+    /// Factor that controls how much dissipation is kept in the system when continuation is used
+    real64 kappamin;
+    /// Factor by which continuation parameter is changed every newton when DBC is used
+    real64 contMultiplier;
+  } m_dbcParams;
+
+  /// Solution scaling type
+  compositionalMultiphaseUtilities::ScalingType m_scalingType;
+
+  /// scheme for density treatment in gravity
+  GravityDensityScheme m_gravityDensityScheme;
+
+  /// the targeted CFL for timestep
+  real64 m_targetFlowCFL;
 
 private:
 
@@ -186,7 +285,6 @@ private:
   // no data needed here, see CompositionalMultiphaseBase
 
 };
-
 
 } // namespace geos
 

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -35,7 +36,7 @@ namespace geos
 
 // Check matching requirements on index/value types between GEOSX and SuperLU_Dist
 
-#if !defined(GEOSX_USE_HYPRE_CUDA)
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CPU
 static_assert( sizeof( int_t ) == sizeof( globalIndex ),
                "SuperLU_Dist int_t and geos::globalIndex must have the same size" );
 
@@ -183,9 +184,9 @@ void SuperLUDist< LAI >::setup( Matrix const & mat )
 
   typename Matrix::Export matExport;
   matExport.exportCRS( mat, m_data->rowPtr, m_data->colIndices, m_data->values );
-  m_data->rowPtr.move( LvArray::MemorySpace::host, false );
-  m_data->colIndices.move( LvArray::MemorySpace::host, false );
-  m_data->values.move( LvArray::MemorySpace::host, false );
+  m_data->rowPtr.move( hostMemorySpace, false );
+  m_data->colIndices.move( hostMemorySpace, false );
+  m_data->values.move( hostMemorySpace, false );
 
   dCreate_CompRowLoc_Matrix_dist( &m_data->mat,
                                   numGR,
@@ -221,10 +222,10 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  // pdgssvx operates on rhs/sol vector in-place
-  arrayView1d< real64 > const solution = dst.open();
-  solution.setValues< serialPolicy >( src.values() );
-  solution.move( LvArray::MemorySpace::host, true );
+  // Export the rhs to a host-based array (this is required when vector is on GPU)
+  typename Matrix::Export vecExport;
+  vecExport.exportVector( src, m_data->rhs );
+  m_data->rhs.move( hostMemorySpace, true );
 
   // Call the linear equation solver to solve the matrix.
   real64 berr = 0.0;
@@ -234,8 +235,8 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   pdgssvx( &m_data->options,
            &m_data->mat,
            &m_data->scalePerm,
-           solution.data(),
-           solution.size(),
+           m_data->rhs.data(),
+           m_data->rhs.size(),
            1,
            &m_data->grid,
            &m_data->lu,
@@ -248,7 +249,8 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   GEOS_LAI_ASSERT( !std::isnan( berr ) );
   GEOS_LAI_ASSERT( !std::isinf( berr ) );
 
-  dst.close();
+  // Import the solution back into the vector
+  vecExport.importVector( m_data->rhs, dst );
 }
 
 template< typename LAI >
@@ -298,7 +300,7 @@ void SuperLUDist< LAI >::solve( Vector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
-    GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
+    GEOS_LOG_RANK_0( "        Linear Solver | " << m_result.status <<
                      " | Iterations: " << m_result.numIterations <<
                      " | Final Rel Res: " << m_result.residualReduction <<
                      " | Setup Time: " << m_result.setupTime << " s" <<
@@ -436,15 +438,15 @@ real64 SuperLUDist< LAI >::estimateConditionNumberAdvanced() const
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class SuperLUDist< TrilinosInterface >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class SuperLUDist< HypreInterface >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class SuperLUDist< PetscInterface >;
 #endif
 

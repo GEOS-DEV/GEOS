@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -18,7 +19,7 @@
 
 #include "ProppantTransportKernels.hpp"
 
-#include "constitutive/fluid/ParticleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -31,6 +32,7 @@ namespace proppantTransportKernels
 {
 
 GEOS_HOST_DEVICE
+inline
 void
 AccumulationKernel::
   compute( localIndex const numComps,
@@ -167,15 +169,15 @@ FluxKernel::
                    arrayView3d< real64 const > const & dComponentDens_dPres,
                    arrayView4d< real64 const > const & dComponentDens_dComponentConc,
                    arrayView1d< real64 const > const & gravDepth,
-                   arrayView2d< real64 const > const & dens,
-                   arrayView2d< real64 const > const & dDens_dPres,
+                   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & dens,
+                   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDens,
                    arrayView2d< real64 const > const & dDens_dProppantConc,
                    arrayView3d< real64 const > const & dDens_dComponentConc,
-                   arrayView2d< real64 const > const & visc,
-                   arrayView2d< real64 const > const & dVisc_dPres,
+                   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & visc,
+                   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dVisc,
                    arrayView2d< real64 const > const & dVisc_dProppantConc,
                    arrayView3d< real64 const > const & dVisc_dComponentConc,
-                   arrayView2d< real64 const > const & fluidDensity,
+                   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & fluidDensity,
                    arrayView2d< real64 const > const & GEOS_UNUSED_PARAM( dFluidDens_dPres ),
                    arrayView3d< real64 const > const & GEOS_UNUSED_PARAM( dFluidDens_dComponentConc ),
                    arrayView1d< real64 const > const & settlingFactor,
@@ -245,11 +247,11 @@ FluxKernel::
     localIndex const ei  = stencilElementIndices[i];
 
     edgeDensity += geometricWeight[i] * dens[ei][0];
-    dEdgeDens_dP[i] = geometricWeight[i] * dDens_dPres[ei][0];
+    dEdgeDens_dP[i] = geometricWeight[i] * dDens[ei][0][DerivOffset::dP];
     dEdgeDens_dProppantC[i] = geometricWeight[i] * dDens_dProppantConc[ei][0];
 
     edgeViscosity += geometricWeight[i] * visc[ei][0];
-    dEdgeVisc_dP[i] = geometricWeight[i] * dVisc_dPres[ei][0];
+    dEdgeVisc_dP[i] = geometricWeight[i] * dVisc[ei][0][DerivOffset::dP];
     dEdgeVisc_dProppantC[i] = geometricWeight[i] * dVisc_dProppantConc[ei][0];
 
     proppantC[i] = proppantConc[ei];
@@ -745,15 +747,15 @@ void FluxKernel::
           ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
           ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
-          ElementViewConst< arrayView2d< real64 const > > const & dens,
-          ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dens,
+          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dDens,
           ElementViewConst< arrayView2d< real64 const > > const & dDens_dProppantConc,
           ElementViewConst< arrayView3d< real64 const > > const & dDens_dComponentConc,
-          ElementViewConst< arrayView2d< real64 const > > const & visc,
-          ElementViewConst< arrayView2d< real64 const > > const & dVisc_dPres,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & visc,
+          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dVisc,
           ElementViewConst< arrayView2d< real64 const > > const & dVisc_dProppantConc,
           ElementViewConst< arrayView3d< real64 const > > const & dVisc_dComponentConc,
-          ElementViewConst< arrayView2d< real64 const > > const & fluidDensity,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & fluidDensity,
           ElementViewConst< arrayView2d< real64 const > > const & dFluidDens_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dFluidDens_dComponentConc,
           ElementViewConst< arrayView1d< real64 const > > const & settlingFactor,
@@ -820,11 +822,11 @@ void FluxKernel::
                        dComponentDens_dComponentConc[er][esr],
                        gravDepth[er][esr],
                        dens[er][esr],
-                       dDens_dPres[er][esr],
+                       dDens[er][esr],
                        dDens_dProppantConc[er][esr],
                        dDens_dComponentConc[er][esr],
                        visc[er][esr],
-                       dVisc_dPres[er][esr],
+                       dVisc[er][esr],
                        dVisc_dProppantConc[er][esr],
                        dVisc_dComponentConc[er][esr],
                        fluidDensity[er][esr],
@@ -884,8 +886,8 @@ FluxKernel::
                         arraySlice1d< localIndex const > const & stencilElementIndices,
                         arrayView1d< real64 const > const & pres,
                         arrayView1d< real64 const > const & gravDepth,
-                        arrayView2d< real64 const > const & dens,
-                        arrayView2d< real64 const > const & visc,
+                        arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & dens,
+                        arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & visc,
                         arraySlice1d< R1Tensor const > const & cellCenterToEdgeCenters,
                         real64 const (&transmissibility)[MAX_NUM_FLUX_ELEMS],
                         real64 const (&apertureWeight)[MAX_NUM_FLUX_ELEMS],
@@ -943,8 +945,8 @@ void FluxKernel::
                                   R1Tensor const & unitGravityVector,
                                   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
                                   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
-                                  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dens,
-                                  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & visc,
+                                  FluxKernel::ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dens,
+                                  FluxKernel::ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & visc,
                                   FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & permeability,
                                   FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
                                   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture,
@@ -995,6 +997,7 @@ void FluxKernel::
 
 
 GEOS_HOST_DEVICE
+inline
 void
 ProppantPackVolumeKernel::
   computeProppantPackVolume( localIndex const numElems,
@@ -1009,9 +1012,8 @@ ProppantPackVolumeKernel::
                              arraySlice1d< real64 const > const & stencilWeights,
                              arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
                              arrayView1d< real64 const > const & settlingFactor,
-                             arrayView2d< real64 const > const & density,
-                             arrayView2d< real64 const > const & fluidDensity,
-                             arrayView2d< real64 const > const &,
+                             arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & density,
+                             arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & fluidDensity,
                              arrayView1d< real64 const > const & volume,
                              arrayView1d< real64 const > const & aperture,
                              arrayView1d< integer const > const & elemGhostRank,
@@ -1142,9 +1144,8 @@ void ProppantPackVolumeKernel::
                                        real64 const criticalShieldsNumber,
                                        real64 const frictionCoefficient,
                                        ElementView< arrayView1d< real64 const > > const & settlingFactor,
-                                       ElementView< arrayView2d< real64 const > > const & density,
-                                       ElementView< arrayView2d< real64 const > > const & fluidDensity,
-                                       ElementView< arrayView2d< real64 const > > const & fluidViscosity,
+                                       ElementView< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & density,
+                                       ElementView< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & fluidDensity,
                                        ElementView< arrayView1d< integer const > > const & isProppantMobile,
                                        ElementView< arrayView1d< integer const > > const & isProppantBoundaryElement,
                                        ElementView< arrayView1d< real64 const > > const & aperture,
@@ -1185,7 +1186,6 @@ void ProppantPackVolumeKernel::
                                settlingFactor[er][esr],
                                density[er][esr],
                                fluidDensity[er][esr],
-                               fluidViscosity[er][esr],
                                volume[er][esr],
                                aperture[er][esr],
                                elemGhostRank[er][esr],
@@ -1200,6 +1200,7 @@ void ProppantPackVolumeKernel::
 }
 
 GEOS_HOST_DEVICE
+inline
 void
 ProppantPackVolumeKernel::
   updateProppantPackVolume( localIndex const numElems,

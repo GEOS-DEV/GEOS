@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -21,8 +22,10 @@
 
 #include "FunctionBase.hpp"
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -43,6 +46,15 @@ public:
     Nearest,
     Upper,
     Lower
+  };
+
+  /// Struct containing output options
+  struct OutputOptions
+  {
+    /// Request table output in CSV file
+    bool writeCSV;
+    /// Request table output in log
+    bool writeInLog;
   };
 
   /// maximum dimensions for the coordinates in the table
@@ -162,6 +174,18 @@ private:
     interpolateRound( IN_ARRAY const & input ) const;
 
     /**
+     * @brief Method to get coordinates
+     * @param input a scalar input
+     * @param dim the table dimension
+     * @param interpolationMethod the interpolation method
+     * @return the coordinate
+     */
+    template< typename IN_ARRAY >
+    GEOS_HOST_DEVICE
+    real64
+    getCoord( IN_ARRAY const & input, localIndex dim, InterpolationType interpolationMethod ) const;
+
+    /**
      * @brief Interpolate in the table with derivatives using linear method.
      * @param[in] input vector of input value
      * @param[out] derivatives vector of derivatives of interpolated value wrt the variables present in input
@@ -206,6 +230,8 @@ private:
    */
   void reInitializeFunction();
 
+  void initializePostSubGroups() override;
+
   /**
    * @brief Method to evaluate a function on a target object
    * @param group a pointer to the object holding the function arguments
@@ -227,6 +253,24 @@ private:
    * @return the function result
    */
   virtual real64 evaluate( real64 const * const input ) const override final;
+
+  /**
+   * @brief Method to get coordinates
+   * @param input a scalar input
+   * @param dim the table dimension
+   * @param interpolationMethod the interpolation method
+   * @return the coordinate
+   */
+  real64 getCoord( real64 const * const input, localIndex dim, InterpolationType interpolationMethod ) const;
+
+  /**
+   * @brief Check if the given coordinate is in the bounds of the table coordinates in the
+   * specified dimension, throw an exception otherwise.
+   * @param coord the coordinate in the 'dim' dimension that must be checked
+   * @param dim the dimension in which the coordinate must be checked
+   * @throw SimulationError if the value is out of the coordinates bounds.
+   */
+  void checkCoord( real64 coord, localIndex dim ) const;
 
   /**
    * @brief @return Number of table dimensions
@@ -262,6 +306,15 @@ private:
   InterpolationType getInterpolationMethod() const { return m_interpolationMethod; }
 
   /**
+   * @return The unit of a coordinate dimension, or units::Unknown if no units has been specified.
+   * @param dim The coordinate dimension (= axe) we want the Unit.
+   */
+  units::Unit getDimUnit( localIndex const dim ) const
+  {
+    return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown;
+  }
+
+  /**
    * @brief Set the interpolation method
    * @param method The interpolation method
    */
@@ -270,14 +323,66 @@ private:
   /**
    * @brief Set the table coordinates
    * @param coordinates An array of arrays containing table coordinate definitions
+   * @param dimUnits The units of each dimension of the coordinates, in the same order
    */
-  void setTableCoordinates( array1d< real64_array > const & coordinates );
+  void setTableCoordinates( array1d< real64_array > const & coordinates,
+                            std::vector< units::Unit > const & dimUnits = {} );
+
+  /**
+   * @brief Set the units of each dimension
+   * @param dimUnits The units of each dimension
+   */
+  void setDimUnits( std::vector< units::Unit > const & dimUnits )
+  {
+    m_dimUnits = dimUnits;
+  }
 
   /**
    * @brief Set the table values
    * @param values An array of table values in fortran order
+   * @param unit The unit of the given values
    */
-  void setTableValues( real64_array values );
+  void setTableValues( real64_array values, units::Unit unit = units::Unknown );
+
+  /**
+   * @brief Set the table value units
+   * @param unit The unit of the values
+   */
+  void setValueUnits( units::Unit unit )
+  {
+    m_valueUnit = unit;
+  }
+
+  /**
+   * @return The unit of the values, or units::Unknown if no units has been specified.
+   */
+  units::Unit getValueUnit() const { return m_valueUnit; }
+
+  /**
+   * @return The description of the table, which contains the units, statistics and eventual source file
+   *         of the values and coordinates. Sub-call getCoordsDescription() and getValuesDescription().
+   */
+  string getTableDescription() const;
+
+  /**
+   * @return The description of the coordinate, which consists in its name and units.
+   *         Can be used for column headers, description...
+   * @param dimId The id of the coordinate.
+   * @param shortUnitsToVariables False if we want unit descriptive name, or true to only have unit symbol.
+   */
+  string getCoordsDescription( integer dimId, bool shortUnitsToVariables ) const;
+
+  /**
+   * @return The description of the values, which mainly consists in its unit.
+   *         Can be used for column headers, description...
+   */
+  string getValuesDescription() const;
+
+  /**
+   * @brief Print the table(s) in the log and/or CSV files when requested by the user.
+   * @param outputOpts Struct containing output options
+   */
+  void outputTableData( OutputOptions const outputOpts ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper
@@ -298,6 +403,8 @@ private:
     static constexpr char const * coordinateFilesString() { return "coordinateFiles"; }
     /// @return Key for name of file containing table values
     static constexpr char const * voxelFileString() { return "voxelFile"; }
+    /// @return Key for name of file containing table values
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
@@ -309,6 +416,7 @@ private:
    * @param[in] delimiter The delimiter used for file entries.
    */
   void readFile( string const & filename, array1d< real64 > & target );
+
 
   /// Coordinates for 1D table
   array1d< real64 > m_tableCoordinates1D;
@@ -328,13 +436,22 @@ private:
   /// Table values (in fortran order)
   array1d< real64 > m_values;
 
+  /// The units of each table coordinate axes
+  std::vector< units::Unit > m_dimUnits;
+
+  /// The unit of the table values
+  units::Unit m_valueUnit;
+
   /// Kernel wrapper object used in evaluate() interface
   KernelWrapper m_kernelWrapper;
 
+  /// Output table in a CSV file
+  integer m_writeCSV;
 };
-
+/// @cond DO_NOT_DOCUMENT
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 {
@@ -350,6 +467,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 {
@@ -381,8 +499,11 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     {
       // Find the coordinate index
       ///TODO make this fast
-      // Note: find uses a binary search...  If we assume coordinates are
+      // Sergey's note: find uses a binary search...  If we assume coordinates are
       // evenly spaced, we can speed things up considerably
+      // Mel's note: As we cannot be sure coords are evenly spaced,
+      // - Either we insert coords to get even spacing ( /!\ memory consumption ),
+      // - Or we can use an interpolation search with an hint array which would be linearly interpolated ( benchmark ).
       auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
       bounds[dim][1] = LvArray::integerConversion< localIndex >( lower );
       bounds[dim][0] = bounds[dim][1] - 1;
@@ -422,6 +543,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 {
@@ -481,8 +603,60 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
   return m_values[tableIndex];
 }
 
+template< typename IN_ARRAY >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+TableFunction::KernelWrapper::getCoord( IN_ARRAY const & input, localIndex const dim, InterpolationType interpolationMethod ) const
+{
+  // Determine the index to the nearest table entry
+  localIndex subIndex;
+  arraySlice1d< real64 const > const coords = m_coordinates[dim];
+  // Determine the index along each table axis
+  if( input[dim] <= coords[0] )
+  {
+    // Coordinate is to the left of the table axis
+    subIndex = 0;
+  }
+  else if( input[dim] >= coords[coords.size() - 1] )
+  {
+    // Coordinate is to the right of the table axis
+    subIndex = coords.size() - 1;
+  }
+  else
+  {
+    // Coordinate is within the table axis
+    // Note: find() will return the index of the upper table vertex
+    auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
+    subIndex = LvArray::integerConversion< localIndex >( lower );
+
+    // Interpolation types:
+    //   - Nearest returns the value of the closest table vertex
+    //   - Upper returns the value of the next table vertex
+    //   - Lower returns the value of the previous table vertex
+    if( interpolationMethod == TableFunction::InterpolationType::Nearest )
+    {
+      if( ( input[dim] - coords[subIndex - 1]) <= ( coords[subIndex] - input[dim]) )
+      {
+        --subIndex;
+      }
+    }
+    else if( interpolationMethod == TableFunction::InterpolationType::Lower )
+    {
+      if( subIndex > 0 )
+      {
+        --subIndex;
+      }
+    }
+  }
+
+  // Retrieve the nearest coordinate
+  return coords[subIndex];
+}
+
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -500,6 +674,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -600,6 +775,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -608,12 +784,30 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRA
   return 0.0;
 }
 
+/// @endcond
+
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( TableFunction::InterpolationType,
               "linear",
               "nearest",
               "upper",
               "lower" );
+
+/**
+ * @brief Template specialisation to convert a TableFunction to a CSV string.
+ * @param tableData The TableFunction object to convert.
+ * @return The CSV string representation of the TableFunction.
+ */
+template<>
+string TableTextFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
+
+/**
+ * @brief Template specialisation to convert a TableFunction to a table string.
+ * @param tableData The TableFunction object to convert.
+ * @return The table string representation of the TableFunction.
+ */
+template<>
+string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
 
 } /* namespace geos */
 

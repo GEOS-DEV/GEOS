@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -22,6 +23,12 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
@@ -33,7 +40,9 @@ using namespace fields;
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
-{}
+{
+  addLogLevel< logInfo::Statistics >();
+}
 
 void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 {
@@ -48,7 +57,7 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & )
+                                                              string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() ).
@@ -58,11 +67,20 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 
     nodeStatistics.minDisplacement.resizeDimension< 0 >( 3 );
     nodeStatistics.maxDisplacement.resizeDimension< 0 >( 3 );
+
+    // write output header
+    if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+    {
+      std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv" );
+      outputFile << "Time [s],Min displacement X [m],Min displacement Y [m],Min displacement Z [m],"
+                 << "Max displacement X [m],Max displacement Y [m],Max displacement Z [m]" << std::endl;
+      outputFile.close();
+    }
   } );
 }
 
-bool SolidMechanicsStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                        real64 const GEOS_UNUSED_PARAM( dt ),
+bool SolidMechanicsStatistics::execute( real64 const time_n,
+                                        real64 const dt,
                                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                         integer const GEOS_UNUSED_PARAM( eventCounter ),
                                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
@@ -70,14 +88,15 @@ bool SolidMechanicsStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n )
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & )
+                                                                          string_array const & )
   {
-    computeNodeStatistics( mesh );
+    // current time is time_n + dt
+    computeNodeStatistics( mesh, time_n + dt );
   } );
   return false;
 }
 
-void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
+void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 const time ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -102,7 +121,8 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
                                                          maxDispZ,
                                                          minDispX,
                                                          minDispY,
-                                                         minDispZ] GEOS_HOST_DEVICE ( localIndex const a )
+                                                         minDispZ]
+                                    GEOS_HOST_DEVICE ( localIndex const a )
   {
     if( ghostRank[a] < 0 )
     {
@@ -126,26 +146,43 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
   nodeStatistics.minDisplacement[1] = minDispY.get();
   nodeStatistics.minDisplacement[2] = minDispZ.get();
 
-  MpiWrapper::allReduce( nodeStatistics.maxDisplacement.data(),
-                         nodeStatistics.maxDisplacement.data(),
-                         3,
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-                         MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( nodeStatistics.maxDisplacement,
+                         nodeStatistics.maxDisplacement,
+                         MpiWrapper::Reduction::Max,
+                         MPI_COMM_GEOS );
 
-  MpiWrapper::allReduce( nodeStatistics.minDisplacement.data(),
-                         nodeStatistics.minDisplacement.data(),
-                         3,
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
-                         MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( nodeStatistics.minDisplacement,
+                         nodeStatistics.minDisplacement,
+                         MpiWrapper::Reduction::Min,
+                         MPI_COMM_GEOS );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Min displacement (X, Y, Z): "
-                                      << nodeStatistics.minDisplacement[0] << ", "
-                                      << nodeStatistics.minDisplacement[1] << ", "
-                                      << nodeStatistics.minDisplacement[2] << " m" );
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max displacement (X, Y, Z): "
-                                      << nodeStatistics.maxDisplacement[0] << ", "
-                                      << nodeStatistics.maxDisplacement[1] << ", "
-                                      << nodeStatistics.maxDisplacement[2] << " m" );
+  if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel()) && MpiWrapper::commRank() == 0 )
+  {
+    TableData mechanicsData;
+    mechanicsData.addRow( "min", GEOS_FMT( "[{},{},{}]", nodeStatistics.minDisplacement[0],
+                                           nodeStatistics.minDisplacement[1], nodeStatistics.minDisplacement[2] ));
+    mechanicsData.addRow( "max", GEOS_FMT( "[{},{},{}]", nodeStatistics.maxDisplacement[0],
+                                           nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ));
+
+    string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
+    TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
+
+    TableTextFormatter mechanicsFormatter( mechanicsLayout );
+    mechanicsFormatter.toString( mechanicsData );
+  }
+
+
+  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+  {
+    std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv", std::ios_base::app );
+    outputFile << time;
+    for( integer i = 0; i < 3; ++i )
+      outputFile << "," << nodeStatistics.minDisplacement[i];
+    for( integer i = 0; i < 3; ++i )
+      outputFile << "," << nodeStatistics.maxDisplacement[i];
+    outputFile << std::endl;
+    outputFile.close();
+  }
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,

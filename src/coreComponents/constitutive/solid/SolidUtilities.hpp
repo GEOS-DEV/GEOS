@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -40,6 +41,7 @@ struct SolidUtilities
    * @param solid the solid kernel wrapper
    * @param k the element number
    * @param q the quadrature index
+   * @param timeIncrement the time increment
    * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
    * @param print flag to decide if debug output is printed or not
    */
@@ -49,6 +51,7 @@ struct SolidUtilities
   checkSmallStrainStiffness( SOLID_TYPE const & solid,
                              localIndex k,
                              localIndex q,
+                             real64 const & timeIncrement,
                              real64 const ( &strainIncrement )[6],
                              bool print = false )
   {
@@ -56,8 +59,8 @@ struct SolidUtilities
     real64 stiffnessFD[6][6]{};   // finite difference approximation
     real64 stress[6]{};           // original stress
 
-    solid.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-    SolidUtilities::computeSmallStrainFiniteDifferenceStiffness( solid, k, q, strainIncrement, stiffnessFD );
+    solid.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+    SolidUtilities::computeSmallStrainFiniteDifferenceStiffness( solid, k, q, timeIncrement, strainIncrement, stiffnessFD );
 
     // compute relative error between two versions
 
@@ -106,6 +109,7 @@ struct SolidUtilities
    * @param solid the solid kernel wrapper
    * @param k the element number
    * @param q the quadrature index
+   * @param timeIncrement the time increment
    * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
    * @param stiffnessFD finite different stiffness approximation
    */
@@ -115,6 +119,7 @@ struct SolidUtilities
   computeSmallStrainFiniteDifferenceStiffness( SOLID_TYPE const & solid,
                                                localIndex k,
                                                localIndex q,
+                                               real64 const & timeIncrement,
                                                real64 const ( &strainIncrement )[6],
                                                real64 ( & stiffnessFD )[6][6] )
   {
@@ -132,7 +137,7 @@ struct SolidUtilities
 
     real64 eps = 1e-4*norm; // finite difference perturbation
 
-    solid.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    solid.smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -143,7 +148,7 @@ struct SolidUtilities
         strainIncrementFD[i-1] -= eps;
       }
 
-      solid.smallStrainUpdate( k, q, strainIncrementFD, stressFD, stiffnessFD );
+      solid.smallStrainUpdate( k, q, timeIncrement, strainIncrementFD, stressFD, stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
       {
@@ -174,6 +179,7 @@ struct SolidUtilities
    * @param solid the solid kernel wrapper
    * @param[in] k The element index.
    * @param[in] q The quadrature point index.
+   * @param[in] timeIncrement The time increment
    * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
    * @param[in] Rot The incremental rotation tensor
    * @param[out] stress New stress value (Cauchy stress)
@@ -185,15 +191,86 @@ struct SolidUtilities
   hypoUpdate( SOLID_TYPE const & solid,
               localIndex const k,
               localIndex const q,
+              real64 const & timeIncrement,
               real64 const ( &Ddt )[6],
               real64 const ( &Rot )[3][3],
               real64 ( & stress )[6],
               real64 ( & stiffness )[6][6] )
   {
-    solid.smallStrainUpdate( k, q, Ddt, stress, stiffness );
+    solid.smallStrainUpdate( k, q, timeIncrement, Ddt, stress, stiffness );
 
     real64 temp[6]{};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, stress );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+    solid.saveStress( k, q, stress );
+  }
+
+  /**
+   * @brief Hypo update 2 (large total strain but small incremental strain, large rotation).
+   *
+   * Taken from http://www.sci.utah.edu/publications/Kam2011a/Kamojjala_ECTC2011.pdf
+   *
+   * The base class rotates the beginning-of-step stress and rate-of-deformation back
+   * to the reference configuration using the beginning-of-step rotation (found via
+   * polar decomposition of the beginning-of-step deformation gradient). It then calls
+   * the small strain update to incrementally update the stress, followed by a rotation
+   * of stress back to the end-of-step configuration (found using polar decomposition
+   * of the end-of-step deformation gradient). This should be valid for most constitutive
+   * models being explicitly integrated since the time steps are small enough that any given
+   * step can be assumed to behave like a small-strain deformation with pre-stress.
+   *
+   * Note that if the derived class has tensorial state variables (beyond the
+   * stress itself) care must be taken to rotate these as well.
+   *
+   * This method should work as-is for anisotropic properties and yield functions.
+   *
+   * @param solid the solid kernel wrapper
+   * @param[in] k The element index.
+   * @param[in] q The quadrature point index.
+   * @param[in] timeIncrement The time increment
+   * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt) WITHOUT factors of 2 on the shear terms
+   * @param[in] RotBeginning Beginning-of-step rotation tensor (obtained via polar decomposition)
+   * @param[in] RotEnd End-of-step rotation tensor (obtained via polar decomposition)
+   * @param[out] stress New stress value (Cauchy stress)
+   * @param[out] stiffness New stiffness value
+   */
+  template< typename SOLID_TYPE >
+  GEOS_HOST_DEVICE
+  static void
+  hypoUpdate2( SOLID_TYPE const & solid,
+               localIndex const k,
+               localIndex const q,
+               real64 const timeIncrement,
+               real64 ( & Ddt )[6],
+               real64 const ( &RotBeginning )[3][3],
+               real64 const ( &RotEnd )[3][3],
+               real64 ( & stress )[6],
+               real64 ( & stiffness )[6][6] )
+  {
+    // Prepare strain increment for rotation
+    Ddt[3] *= 0.5;
+    Ddt[4] *= 0.5;
+    Ddt[5] *= 0.5;
+
+    // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
+    real64 temp[6] = { 0 };
+    real64 RotBeginningTranpose[3][3] = { {0} };
+    LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
+    LvArray::tensorOps::copy< 6 >( temp, solid.m_oldStress[ k ][ q ] );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( solid.m_oldStress[ k ][ q ], RotBeginningTranpose, temp );
+    LvArray::tensorOps::copy< 6 >( temp, Ddt );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( Ddt, RotBeginningTranpose, temp );
+
+    // Convert strain increment to Voigt notation by re-introducing factors of 2 on shear terms
+    Ddt[3] *= 2;
+    Ddt[4] *= 2;
+    Ddt[5] *= 2;
+
+    // Stress increment
+    solid.smallStrainUpdate( k, q, timeIncrement, Ddt, stress, stiffness );
+
+    // Rotate final stress to end-of-step (current) configuration
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, solid.m_newStress[ k ][ q ] );
     LvArray::tensorOps::copy< 6 >( stress, temp );
     solid.saveStress( k, q, stress );
   }
@@ -204,6 +281,7 @@ struct SolidUtilities
  * @param solid the solid kernel wrapper
  * @param[in] k The element index.
  * @param[in] q The quadrature point index.
+ * @param[in] timeIncrement The time increment
  * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt)
  * @param[in] Rot The incremental rotation tensor
  * @param[out] stress New stress value (Cauchy stress)
@@ -214,14 +292,68 @@ struct SolidUtilities
   hypoUpdate_StressOnly( SOLID_TYPE const & solid,
                          localIndex const k,
                          localIndex const q,
+                         real64 const & timeIncrement,
                          real64 const ( &Ddt )[6],
                          real64 const ( &Rot )[3][3],
                          real64 ( & stress )[6] )
   {
-    solid.smallStrainUpdate_StressOnly( k, q, Ddt, stress );
+    solid.smallStrainUpdate_StressOnly( k, q, timeIncrement, Ddt, stress );
 
     real64 temp[6]{};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, stress );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+    solid.saveStress( k, q, stress );
+  }
+
+/**
+ * @brief Hypo update 2, returning only stress
+ *
+ * @param solid the solid kernel wrapper
+ * @param[in] k The element index.
+ * @param[in] q The quadrature point index.
+ * @param[in] timeIncrement The time increment
+ * @param[in] Ddt The incremental deformation tensor (rate of deformation tensor * dt) WITHOUT factors of 2 on the shear terms
+ * @param[in] RotBeginning Beginning-of-step rotation tensor (obtained via polar decomposition)
+ * @param[in] RotEnd End-of-step rotation tensor (obtained via polar decomposition)
+ * @param[out] stress New stress value (Cauchy stress)
+ * @param[out] stiffness New stiffness value
+ */
+  template< typename SOLID_TYPE >
+  GEOS_HOST_DEVICE
+  static void
+  hypoUpdate2_StressOnly( SOLID_TYPE const & solid,
+                          localIndex const k,
+                          localIndex const q,
+                          real64 const timeIncrement,
+                          real64 ( & Ddt )[6],
+                          real64 const ( &RotBeginning )[3][3],
+                          real64 const ( &RotEnd )[3][3],
+                          real64 ( & stress )[6] )
+  {
+    // Prepare strain increment for rotation
+    Ddt[3] *= 0.5;
+    Ddt[4] *= 0.5;
+    Ddt[5] *= 0.5;
+
+    // Rotate m_oldStress and Ddt from beginning-of-step configuration to reference configuration.
+    real64 temp[6] = { 0 };
+    real64 RotBeginningTranpose[3][3] = { {0} };
+    LvArray::tensorOps::transpose< 3, 3 >( RotBeginningTranpose, RotBeginning ); // We require the transpose since we're un-rotating
+    LvArray::tensorOps::copy< 6 >( temp, solid.m_oldStress[ k ][ q ] );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( solid.m_oldStress[ k ][ q ], RotBeginningTranpose, temp );
+    LvArray::tensorOps::copy< 6 >( temp, Ddt );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( Ddt, RotBeginningTranpose, temp );
+
+    // Convert strain increment to Voigt notation by re-introducing factors of 2 on shear terms
+    Ddt[3] *= 2;
+    Ddt[4] *= 2;
+    Ddt[5] *= 2;
+
+    // Stress increment
+    solid.smallStrainUpdate_StressOnly( k, q, timeIncrement, Ddt, stress );
+
+    // Rotate final stress to end-of-step (current) configuration
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, solid.m_newStress[ k ][ q ] );
     LvArray::tensorOps::copy< 6 >( stress, temp );
     solid.saveStress( k, q, stress );
   }

@@ -7,6 +7,8 @@ from mpmath import *
 import math
 from math import sin, cos, tan, exp, atan, asin
 from mpl_toolkits.mplot3d import axes3d
+import os
+import argparse
 
 
 class Sneddon:
@@ -71,7 +73,7 @@ def getFracturePressureFromXML(xmlFilePath):
 def getFractureGeometryFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
 
-    param = tree.findall('Geometry/BoundedPlane')
+    param = tree.findall('Geometry/Rectangle')
 
     for elem in param:
         if elem.get("name") == "fracture1":
@@ -87,29 +89,42 @@ def getFractureGeometryFromXML(xmlFilePath):
 
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
     # File path
-    hdf5File1Path = "traction_history.hdf5"
-    hdf5File2Path = "displacementJump_history.hdf5"
-    xmlFilePath = "../../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml"
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+    hdf5File1Path = outputDir + "/traction_history.hdf5"
+    hdf5File2Path = outputDir + "/displacementJump_history.hdf5"
+    xmlFilePath = geosDir + "/inputFiles/lagrangianContactMechanics/TFrac_base.xml"
 
     # Read HDF5
     # Global Coordinate of Fracture Element Center
     hf = h5py.File(hdf5File1Path, 'r')
     xl = hf.get('traction elementCenter')
-    xl = np.array(xl)
+    xl = np.asarray(xl)
     xcord = xl[0, :, 0]
     ycord = xl[0, :, 1]
     zcord = xl[0, :, 2]
 
     # Local Normal Traction
     trac = hf.get('traction')
-    trac = np.array(trac)
+    trac = np.asarray(trac)
     normalTraction = trac[-1, :, 0]
 
     # Local Shear Displacement
     hf = h5py.File(hdf5File2Path, 'r')
     jump = hf.get('displacementJump')
-    jump = np.array(jump)
+    jump = np.asarray(jump)
     displacementJump = jump[-1, :, 1]
     aperture = jump[-1, :, 0]
 
@@ -160,7 +175,7 @@ def main():
     cmap = plt.get_cmap("tab10")
 
     ax[0, 0].plot(r1 - length2, tn_literature, color=cmap(-1), label='Phan et al.(2003)', lw=lw)
-    ax[0, 0].plot(xlist, tnlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOSX Results', markersize=msize)
+    ax[0, 0].plot(xlist, tnlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOS Results', markersize=msize)
     ax[0, 0].grid()
     ax[0, 0].set_xlabel('Horizontal Frac Length [m]', size=fsize, weight="bold")
     ax[0, 0].set_ylabel('Normal Traction [MPa]', size=fsize, weight="bold")
@@ -169,7 +184,7 @@ def main():
     ax[0, 0].yaxis.set_tick_params(labelsize=fsize)
 
     ax[0, 1].plot(r2 - length2, gt_literature, color=cmap(-1), label='Phan et al.(2003)', lw=lw)
-    ax[0, 1].plot(xlist, gtlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOSX Results', markersize=msize)
+    ax[0, 1].plot(xlist, gtlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOS Results', markersize=msize)
     ax[0, 1].grid()
     ax[0, 1].set_xlabel('Horizontal Frac Length [m]', size=fsize, weight="bold")
     ax[0, 1].set_ylabel('Slip [mm]', size=fsize, weight="bold")
@@ -185,9 +200,8 @@ def main():
                   alpha=0.6,
                   color=cmap(2),
                   mec='k',
-                  label='GEOSX Results',
+                  label='GEOS Results',
                   markersize=msize)
-    ax[1, 0].plot(x_analytical, aperture_analytical * 1.0e3, '--', color=cmap(1), label='Sneddon Solution', lw=lw)
     ax[1, 0].grid()
     ax[1, 0].set_xlabel('Vertical Frac Length [m]', size=fsize, weight="bold")
     ax[1, 0].set_ylabel('Aperture [mm]', size=fsize, weight="bold")

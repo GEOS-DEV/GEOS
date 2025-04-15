@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -34,21 +35,25 @@ class DamageVolDevUpdates : public DamageUpdates< UPDATE_BASE >
 {
 public:
   template< typename ... PARAMS >
-  DamageVolDevUpdates( arrayView2d< real64 > const & inputDamage,
+  DamageVolDevUpdates( arrayView2d< real64 > const & inputNewDamage,
+                       arrayView2d< real64 > const & inputOldDamage,
+                       arrayView3d< real64 > const & inputDamageGrad,
                        arrayView2d< real64 > const & inputStrainEnergyDensity,
+                       arrayView2d< real64 > const & inputVolumetricStrain,
                        arrayView2d< real64 > const & inputExtDrivingForce,
                        real64 const & inputLengthScale,
-                       real64 const & inputCriticalFractureEnergy,
+                       arrayView1d< real64 > const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
                        real64 const & inputDegradationLowerLimit,
                        int const & inputExtDrivingForceFlag,
-                       real64 const & inputTensileStrength,
-                       real64 const & inputCompressStrength,
-                       real64 const & inputDeltaCoefficient,
+                       arrayView1d< real64 > const & inputTensileStrength,
+                       arrayView1d< real64 > const & inputCompressStrength,
+                       arrayView1d< real64 > const & inputDeltaCoefficient,
+                       arrayView1d< real64 > const & inputBiotCoefficient,
                        PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
+    DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -63,28 +68,33 @@ public:
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
+  using DamageUpdates< UPDATE_BASE >::m_volStrain;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
-  using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_newDamage;
+  using DamageUpdates< UPDATE_BASE >::m_oldDamage;
+  using DamageUpdates< UPDATE_BASE >::m_damageGrad;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
   using DamageUpdates< UPDATE_BASE >::m_compressStrength;
   using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
+  using DamageUpdates< UPDATE_BASE >::m_biotCoefficient;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final
   {
     // perform elastic update for "undamaged" stress
 
-    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
+    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );  // elastic trial update
 
     if( m_disableInelasticity )
     {
@@ -161,8 +171,11 @@ public:
 
   using KernelWrapper = DamageVolDevUpdates< typename BASE::KernelWrapper >;
 
-  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_newDamage;
+  using Damage< BASE >::m_oldDamage;
+  using Damage< BASE >::m_damageGrad;
   using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_volStrain;
   using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
@@ -172,6 +185,7 @@ public:
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressStrength;
   using Damage< BASE >::m_deltaCoefficient;
+  using Damage< BASE >::m_biotCoefficient;
 
   DamageVolDev( string const & name, dataRepository::Group * const parent );
   virtual ~DamageVolDev() override;
@@ -183,17 +197,21 @@ public:
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_oldDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
-                                                                       m_criticalFractureEnergy,
+                                                                       m_criticalFractureEnergy.toView(),
                                                                        m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
-                                                                       m_tensileStrength,
-                                                                       m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_tensileStrength.toView(),
+                                                                       m_compressStrength.toView(),
+                                                                       m_deltaCoefficient.toView(),
+                                                                       m_biotCoefficient.toView() );
   }
 
 };

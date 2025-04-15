@@ -37,7 +37,7 @@ List of Symbols
 
 Introduction
 ============
-The `SolidMechanics_LagrangianFEM` solver applies a Continuous Galerkin finite element method to solve the linear momentum balance equation.
+The `SolidMechanicsLagrangianFEM` solver applies a Continuous Galerkin finite element method to solve the linear momentum balance equation.
 The primary variable is the displacement field which is discretized at the nodes.
 
 Theory
@@ -46,7 +46,7 @@ Theory
 Governing Equations
 --------------------------
 
-The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
+The `SolidMechanicsLagrangianFEM` solves the equations of motion as given by
 
 .. math::
    T_{ij,j} + \rho(b_{i}-\ddot{x}_{i}) = 0,
@@ -118,7 +118,7 @@ step acceleration.
    u^{n+1} &= \tilde{u}^{n+1} + \beta a^{n+1} \Delta t^2 \\
    v^{n+1} &= \tilde{v}^{n+1} + \gamma a^{n+1} \Delta t
 
-The acceleration and velocity may now be expressed in terms of displacement, and ultimatly in terms
+The acceleration and velocity may now be expressed in terms of displacement, and ultimately in terms
 of the incremental displacement.
 
 .. math::
@@ -192,14 +192,14 @@ storage of state at different points in time.
 Parameters
 =========================
 
-In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
-The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
+In the preceding XML block, The `SolidMechanicsLagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
+The following attributes are supported in the input block for `SolidMechanicsLagrangianFEM`:
 
-.. include:: /coreComponents/schema/docs/SolidMechanics_LagrangianFEM.rst
+.. include:: /docs/sphinx/datastructure/SolidMechanicsLagrangianFEM.rst
 
 The following data are allocated and used by the solver:
 
-.. include:: /coreComponents/schema/docs/SolidMechanics_LagrangianFEM_other.rst
+.. include:: /docs/sphinx/datastructure/SolidMechanicsLagrangianFEM_other.rst
 
 Example
 =========================

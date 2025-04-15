@@ -72,12 +72,12 @@ The solver ``SurfaceGenerator`` defines rock toughness :math:`K_{Ic}` as:
   :start-after: <!-- Sphinx_Solvers_SurfaceGenerator -->
   :end-before:  <!-- Sphinx_Solvers_SurfaceGenerator_End -->
 
-Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianSSLE``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is also specified in this solver by the ``contactRelationName``, besides the ``solidMaterialNames``.
+Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianFEM``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is also specified in this solver by the ``contactRelationName``, besides the ``solidMaterialNames``.
 
 .. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
-  :start-after: <!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE -->
-  :end-before:  <!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE_End -->
+  :start-after: <!-- Sphinx_Solvers_SolidMechanicsLagrangianFEM -->
+  :end-before:  <!-- Sphinx_Solvers_SolidMechanicsLagrangianFEM_End -->
 
 The single phase fluid flow inside the fracture is solved by the finite volume method in the solver ``SinglePhaseFVM`` as:
 
@@ -236,7 +236,7 @@ the HDF5 output is postprocessed and temporal evolution of fracture characterisc
            8 2.446e+05 0.0001277       4.5
           10 2.411e+05 0.0001409         5
 
-Note: GEOS python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
+Note: GEOS python tools ``geosx_xml_tools`` should be installed to run the query script (See `Python Tools Setup <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/>`_ for details). 
 
 A good agreement between GEOS results and analytical solutions is shown in the comparison below, which is generated using the visualization script:
 

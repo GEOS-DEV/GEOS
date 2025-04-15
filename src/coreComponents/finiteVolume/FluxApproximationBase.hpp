@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -30,6 +31,40 @@
 
 namespace geos
 {
+
+/**
+ * @brief Upwinding scheme.
+ */
+enum class UpwindingScheme : integer
+{
+  PPU,    ///< PPU upwinding
+  C1PPU,  ///< C1-PPU upwinding from https://doi.org/10.1016/j.advwatres.2017.07.028
+  IHU,    ///< IHU as in https://link.springer.com/content/pdf/10.1007/s10596-019-09835-6.pdf
+  HU2PH   ///< HU simplified 2-phase version
+};
+
+/**
+ * @brief Strings for upwinding scheme.
+ */
+ENUM_STRINGS( UpwindingScheme,
+              "PPU",
+              "C1PPU",
+              "IHU",
+              "HU2PH" );
+
+/**
+ * @struct UpwindingParameters
+ *
+ * Structure to store upwinding parameters, such as upwinding scheme and related tolerances etc.
+ */
+struct UpwindingParameters
+{
+  /// PPU or C1-PPU or IHU or HU2PH
+  UpwindingScheme upwindingScheme;
+
+  /// C1-PPU smoothing tolerance
+  //real64 epsC1PPU;
+};
 
 /**
  * @class FluxApproximationBase
@@ -100,11 +135,9 @@ public:
    * @brief Add a new fracture stencil.
    * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] faceElementRegionName the face element region name
-   * @param[in] initFields if true initialize physical fields, like pressure
    */
   virtual void addToFractureStencil( MeshLevel & mesh,
-                                     string const & faceElementRegionName,
-                                     bool const initFields ) const = 0;
+                                     string const & faceElementRegionName ) const = 0;
 
   /**
    * @brief Add a new embedded fracture stencil.
@@ -142,6 +175,13 @@ public:
 
     /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
+
+    /// @return The key for upwindingScheme
+    static constexpr char const * upwindingSchemeString() { return "upwindingScheme"; }
+
+    /// @return The key for epsC1PPU
+    //static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
+
   };
 
   /**
@@ -158,19 +198,25 @@ public:
    * @param[in] meshBodyName name of the meshBody
    * @return a list of the target regions on the meshBody
    */
-  array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
+  string_array & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
    * @brief set the name of the field.
    * @param name name of the field to be set.
    */
-  void setFieldName( string const & name );
+  void addFieldName( string const & name );
 
   /**
    * @brief set the name of the coefficient.
    * @param name name of the coefficient.
    */
   void setCoeffName( string const & name );
+
+  /**
+   * @brief get the upwinding parameters.
+   * @return upwinding parameters structure.
+   */
+  UpwindingParameters const & upwindingParams() const { return m_upwindingParams; }
 
 protected:
 
@@ -239,19 +285,22 @@ protected:
 
 
   /// name of the primary solution field
-  string m_fieldName;
+  string_array m_fieldNames;
 
   /// name of the coefficient field
   string m_coeffName;
 
   /// names of target regions to build the stencil for
-  map< string, array1d< string > > m_targetRegions;
+  map< string, string_array > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;
 
   /// length scale of the mesh body
   real64 m_lengthScale;
+
+  /// upwinding parameters
+  UpwindingParameters m_upwindingParams;
 
 };
 

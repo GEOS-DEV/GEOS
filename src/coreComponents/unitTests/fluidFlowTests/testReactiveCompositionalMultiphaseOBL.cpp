@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -71,7 +72,7 @@ char const * xmlInput =
       </FiniteVolume>
     </NumericalMethods>
     <ElementRegions>
-      <CellElementRegion name="region" cellBlocks="{cb1}" materialList="{rock}" />
+      <CellElementRegion name="region" cellBlocks="{*}" materialList="{rock}" />
     </ElementRegions>
     <Constitutive>
       <CompressibleSolidConstantPermeability name="rock"
@@ -196,7 +197,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
   localIndex const NC = solver.numFluidComponents();
   localIndex const NOPS = solver.numOBLOperators();
 
-  array1d< string > const operators( NOPS );
+  string_array operators( NOPS );
 
   // update component Fraction and check derivatives
   for( localIndex op = 0; op < NOPS; ++op )
@@ -207,7 +208,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -216,7 +217,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
     {
       SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
-      arrayView1d< string const > const & components = solver.componentNames();
+      string_array const & components = solver.componentNames();
 
       arrayView1d< real64 > const & pres =
         subRegion.getField< fields::flow::pressure >();
@@ -334,13 +335,13 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::host, false );
+  residual.move( hostMemorySpace, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( LvArray::MemorySpace::host );
+  jacobian.move( hostMemorySpace );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -349,7 +350,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
   solver.forDiscretizationOnMeshTargets ( domain.getMeshBodies(),
                                           [&]( string const,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                               string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -363,11 +364,11 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
 
       arrayView1d< real64 > const & pres =
         subRegion.getField< fields::flow::pressure >();
-      pres.move( LvArray::MemorySpace::host, false );
+      pres.move( hostMemorySpace, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & compFrac =
         subRegion.getField< fields::flow::globalCompFraction >();
-      compFrac.move( LvArray::MemorySpace::host, false );
+      compFrac.move( hostMemorySpace, false );
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -380,17 +381,17 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          pres.move( LvArray::MemorySpace::host, true );
+          pres.move( hostMemorySpace, true );
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOSX_USE_CUDA)
-          pres.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          pres.move( parallelDeviceMemorySpace, false );
 #endif
 
           solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                                  [&]( string const,
                                                       MeshLevel & mesh2,
-                                                      arrayView1d< string const > const & regionNames2 )
+                                                      string_array const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,
@@ -416,17 +417,17 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          compFrac.move( LvArray::MemorySpace::host, true );
+          compFrac.move( hostMemorySpace, true );
           compFrac[ei][jc] += perturbParameter;
-#if defined(GEOSX_USE_CUDA)
-          compFrac.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          compFrac.move( parallelDeviceMemorySpace, false );
 #endif
 
 
           solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                                  [&]( string const,
                                                       MeshLevel & mesh2,
-                                                      arrayView1d< string const > const & regionNames2 )
+                                                      string_array const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,

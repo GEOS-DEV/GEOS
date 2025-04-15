@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -28,7 +29,9 @@ using namespace dataRepository;
 TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group * parent ):
   FieldSpecificationBase( name, parent ),
   m_tractionType( TractionType::vector ),
-  m_inputStress{}//,
+  m_inputStress{},
+  m_scaleSet(),
+  m_nodalScaleFlag( 0 )//,
 //  m_stressFunctionNames(),
 //  m_useStressFunctions(false),
 //  m_stressFunctions{nullptr}
@@ -51,6 +54,16 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 //    setDescription( string("Function names for description of stress for ") + viewKeyStruct::tractionTypeString() +
 //                    " = " + toString( TractionType::stress ) + ". Overrides " + viewKeyStruct::inputStressString() + "." );
 
+  registerWrapper( viewKeyStruct::scaleSetString(), &m_scaleSet ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 );
+
+  registerWrapper( viewKeyStruct::nodalScaleFlagString(), &m_nodalScaleFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to apply the nodal scale on the traction magnitude" );
+
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
@@ -60,19 +73,19 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 }
 
 
-void TractionBoundaryCondition::postProcessInput()
+void TractionBoundaryCondition::postInputInitialization()
 {
   if( m_tractionType == TractionType::vector )
   {
     GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
-                   viewKeyStruct::directionString() << " is required for " <<
+                   getDataContext() << ": " << viewKeyStruct::directionString() << " is required for " <<
                    viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
                    ", but appears to be unspecified" );
   }
   else
   {
     GEOS_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
-                        viewKeyStruct::directionString() << " is not required unless " <<
+                        getDataContext() << ": " << viewKeyStruct::directionString() << " is not required unless " <<
                         viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
                         ", but appears to be specified" );
   }
@@ -80,12 +93,12 @@ void TractionBoundaryCondition::postProcessInput()
   bool const inputStressRead = getWrapper< R2SymTensor >( viewKeyStruct::inputStressString() ).getSuccessfulReadFromInput();
 
   GEOS_LOG_RANK_0_IF( inputStressRead && m_tractionType != TractionType::stress,
-                      viewKeyStruct::inputStressString() << " is specified, but " <<
+                      getDataContext() << ": " << viewKeyStruct::inputStressString() << " is specified, but " <<
                       viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
                       ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
 
   GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
-                 viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
+                 getDataContext() << ": " << viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
                  ", but " << viewKeyStruct::inputStressString() << " is not specified." );
 
 
@@ -164,13 +177,18 @@ void TractionBoundaryCondition::launch( real64 const time,
   arrayView1d< real64 const > const tractionMagnitudeArrayView = tractionMagnitudeArray;
 
   {
+    integer const nodalScaleFlag = m_nodalScaleFlag;
+    auto const scaleSet = m_scaleSet.toViewConst();
+
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const kf = targetSet[ i ];
       localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
 
+      real64 const nodalScale = ( nodalScaleFlag == 1 ) ? scaleSet[i] : 1.0;
+
       // TODO consider dispatch if appropriate
-      real64 const tractionMagnitude = spatialFunction ? tractionMagnitudeArrayView[i] : tractionMagnitude0;
+      real64 const tractionMagnitude = spatialFunction ? tractionMagnitudeArrayView[i] : (tractionMagnitude0 * nodalScale);
 
       real64 traction[3] = { 0 };
       // TODO consider dispatch if appropriate
@@ -217,6 +235,35 @@ void TractionBoundaryCondition::launch( real64 const time,
       }
     } );
   }
+}
+
+void TractionBoundaryCondition::reinitScaleSet( FaceManager const & faceManager,
+                                                SortedArrayView< localIndex const > const & targetSet,
+                                                arrayView1d< real64 const > const nodalScaleSet )
+{
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  localIndex const faceSize = targetSet.size();
+
+  m_scaleSet.resize( faceSize );
+
+  auto const scaleSet = m_scaleSet.toView();
+
+  // Loop over targetSet to assign damage values to m_scaleSet
+  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    localIndex const kf = targetSet[ i ];
+    localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+
+    real64 faceScale = 0.0;
+
+    for( localIndex a=0; a<numNodes; ++a )
+    {
+      faceScale  += nodalScaleSet[ faceToNodeMap( kf, a ) ];
+    }
+
+    scaleSet[i] = LvArray::math::min( 1.0, (1.0 - faceScale/numNodes)*(1.0 - faceScale/numNodes) );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, TractionBoundaryCondition, string const &, Group * const )

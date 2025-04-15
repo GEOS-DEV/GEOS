@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -83,34 +84,43 @@ public:
   {}
 
   /**
+   * @brief Set the path prefix of the file
+   * @details The path prefix is usually a folder path in which the XML file is located
+   * @param p Path prefix to be set.
+   */
+  static void setPathPrefix( std::string_view p )
+  { pathPrefix() = p; }
+
+  /**
    * @brief Get the path prefix of the file
    * @details The path prefix is usually a folder path in which the XML file is located
    * @return the path prefix
    */
-  static std::string & pathPrefix()
-  {
-    static std::string s_pathPrefix;
-    return s_pathPrefix;
-  }
+  static std::string_view getPathPrefix()
+  { return pathPrefix(); }
 
   /**
    * @brief @return the filename portion of the path
    */
-  std::string filename() const
-  {
-    size_type const pos = find_last_of( '/' );
-    return pos == npos ? static_cast< std::string >( *this ) : substr( pos + 1 );
-  }
+  std::string filename() const;
 
   /**
    * @brief @return the extension of the filename
    */
-  std::string extension() const
-  {
-    std::string const fname = filename();
-    size_type const pos = fname.find_last_of( '.' );
-    return pos == npos ? "" : fname.substr( pos + 1 );
-  }
+  std::string extension() const;
+
+  /**
+   * @brief @return the complete path to the file, relative to getPathPrefix().
+   */
+  std::string relativeFilePath() const;
+
+private:
+
+  /**
+   * @brief @return the reference of global variable of the path prefix
+   */
+  static std::string & pathPrefix();
+
 };
 
 /*!

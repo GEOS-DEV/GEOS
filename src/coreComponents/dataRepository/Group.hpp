@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,6 +27,8 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
+#include "LogLevelsInfo.hpp"
+#include "LogLevelsRegistry.hpp"
 
 
 #include <iostream>
@@ -142,7 +145,7 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< Group, string const &, Group * const >;
 
   /**
-   * @brief Get the singleton catalog for this class.
+   * @brief Get the singleton catalog for this Group.
    * @return reference to the catalog object
    */
   static CatalogInterface::CatalogType & getCatalog();
@@ -158,7 +161,7 @@ public:
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
    */
-  void printDataHierarchy( integer indent = 0 );
+  void printDataHierarchy( integer indent = 0 ) const;
 
   /**
    * @brief @return a table formatted string containing all input options.
@@ -247,24 +250,6 @@ public:
   }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
-   *
-   * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
-   * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
-   * @param[in] name        The name of the group to use as a string key.
-   * @param[in] catalogName The catalog name of the new type.
-   * @return                A pointer to the newly registered Group.
-   *
-   * Creates and registers a Group or class derived from Group as a subgroup of this Group.
-   */
-  template< typename T = Group, typename TBASE = Group >
-  T & registerGroup( string const & name, string const & catalogName )
-  {
-    std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
-    return registerGroup< T >( name, std::move( newGroup ) );
-  }
-
-  /**
    * @brief Removes a child group from this group.
    * @param name the name of the child group to remove from this group.
    */
@@ -334,11 +319,15 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getPath() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
-
-    return dynamicCast< T & >( *child );
+    T * const castedChild = dynamicCast< T * >( child );
+    GEOS_THROW_IF( castedChild == nullptr,
+                   GEOS_FMT( "{} was expected to be a '{}'.",
+                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   BadTypeError );
+    return *castedChild;
   }
 
   /**
@@ -349,11 +338,15 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getPath() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
-
-    return dynamicCast< T const & >( *child );
+    T const * const castedChild = dynamicCast< T const * >( child );
+    GEOS_THROW_IF( castedChild == nullptr,
+                   GEOS_FMT( "{} was expected to be a '{}'.",
+                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   BadTypeError );
+    return *castedChild;
   }
 
   /**
@@ -412,6 +405,21 @@ public:
   bool hasGroup( string const & name ) const
   { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
 
+  /**
+   * @brief Check whether a sub-group exists by type.
+   * @tparam T The type of sub-group to search for
+   * @return @p true if sub-group of type T exists, @p false otherwise
+   */
+  template< typename T >
+  bool hasSubGroupOfType( ) const
+  {
+    bool hasSubGroup = false;
+    // since forSubGroups only applies the lambda to groups matching the type,
+    //   any calls to the lambda indicates that we have a subgroup of the correct type.
+    forSubGroups< T >( [&]( T const & ){ hasSubGroup = true; } );
+    return hasSubGroup;
+  }
+
   ///@}
 
   /**
@@ -431,7 +439,6 @@ public:
   {
     using T = std::conditional_t< std::is_const< CONTAINERTYPE >::value, CASTTYPE const, CASTTYPE >;
     T * const castedContainer = dynamic_cast< T * >( &container );
-
     if( castedContainer != nullptr )
     {
       lambda( *castedContainer );
@@ -572,6 +579,7 @@ public:
   void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA && lambda )
   {
     localIndex counter = 0;
+
     for( auto const & subgroup : subGroupKeys )
     {
       applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
@@ -744,17 +752,50 @@ public:
   void postRestartInitializationRecursive();
 
   /**
-   * @brief Recursively read values using ProcessInputFile() from the input
-   *        file and put them into the wrapped values for this group.
-   * @param[in] targetNode the XML node that to extract input values from.
+   * @return The validated name for a given Group from its xml value: If the node has a "name"
+   *         attribute, it is validated after the `groupName` rtType regex, and its value is
+   *         returned. Else if the Group name is not "Required", the node tag name is used.
+   * @param targetNode The XML node whose name is to be processed. It throws if not of element type.
+   * @param targetNodePos The position of the target node within the XML document.
+   * @param parentNodeName The name of the parent node, used for error reporting.
+   * @param parentNodePos The position of the parent node, used for error reporting.
+   * @param siblingNames A set containing the names of sibling nodes (to verify that there are no
+   *                     duplicates). The function will populate this set if the attribute name is
+   *                     used and if no error is found.
+   * @throws InputError if the node type is not an xml element or if there are duplicate names
+   *         among xml siblings.
    */
-  void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
+  static string processInputName( xmlWrapper::xmlNode const & targetNode,
+                                  xmlWrapper::xmlNodePos const & targetNodePos,
+                                  string_view parentNodeName,
+                                  xmlWrapper::xmlNodePos const & parentNodePos,
+                                  std::set< string > & siblingNames );
 
   /**
-   * @brief Recursively call postProcessInput() to apply post processing after
+   * @brief Recursively read values using ProcessInputFile() from the input
+   * file and put them into the wrapped values for this group.
+   * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
+   * @param[in] xmlDocument the XML document that contains the targetNode.
+   * @param[in] targetNode the XML node that to extract input values from.
+   */
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode );
+  /**
+   * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
+   * but allow to reuse an existing xmlNodePos.
+   * @param[in] xmlDocument the XML document that contains the targetNode.
+   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] targetNodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   */
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode,
+                                  xmlWrapper::xmlNodePos const & targetNodePos );
+
+  /**
+   * @brief Recursively call postInputInitialization() to apply post processing after
    * reading input values.
    */
-  void postProcessInputRecursive();
+  void postInputInitializationRecursive();
 
   ///@}
 
@@ -825,6 +866,16 @@ public:
 
   ///@}
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
+
+  /**
+   * @brief Append a levelCondition and a log description to the description of the wrapped object given a log info struct.
+   * Must be called in constructor.
+   * @tparam LOG_LEVEL_INFO The log documentation to add.
+   * @return void if the trait is verified.
+   */
+  template< typename LOG_LEVEL_INFO >
+  std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, void >
+  addLogLevel();
 
   /**
    * @name Schema generation methods
@@ -1031,6 +1082,7 @@ public:
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
+   * @param[in] op           the operation to perform while unpacking
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -1043,7 +1095,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events );
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE );
 
   ///@}
 
@@ -1071,7 +1124,7 @@ public:
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1086,7 +1139,7 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1286,13 +1339,31 @@ public:
   string getPath() const;
 
   /**
+   * @return DataContext object that that stores contextual information on this group that can be
+   * used in output messages.
+   */
+  DataContext const & getDataContext() const
+  { return *m_dataContext; }
+
+  /**
+   * @return DataContext object that that stores contextual information on a wrapper contained by
+   * this group that can be used in output messages.
+   * @tparam KEY The lookup type.
+   * @param key The value used to lookup the wrapper.
+   * @throw std::domain_error if the wrapper doesn't exist.
+   */
+  template< typename KEY >
+  DataContext const & getWrapperDataContext( KEY key ) const
+  { return getWrapperBase< KEY >( key ).getDataContext(); }
+
+  /**
    * @brief Access the group's parent.
    * @return reference to parent Group
    * @throw std::domain_error if the Group doesn't have a parent.
    */
   Group & getParent()
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1301,9 +1372,15 @@ public:
    */
   Group const & getParent() const
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
+
+  /**
+   * @return true if this group has a parent.
+   */
+  bool hasParent() const
+  { return m_parent != nullptr; }
 
   /**
    * @brief Get the group's index within its parent group
@@ -1323,7 +1400,7 @@ public:
    * @brief Check whether this Group is resized when its parent is resized.
    * @return @p true if Group is resized with parent group, @p false otherwise
    */
-  integer sizedFromParent() const
+  int sizedFromParent() const
   { return m_sizedFromParent; }
 
   /**
@@ -1359,6 +1436,15 @@ public:
    * @param flags the new value of input flags
    */
   void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
+
+  /**
+   * @brief Structure to hold scoped key names
+   */
+  struct viewKeyStruct
+  {
+    /// @return String for the logLevel wrapper
+    static constexpr char const * logLevelString() { return "logLevel"; }
+  };
 
   ///@}
 
@@ -1406,11 +1492,19 @@ public:
    */
   void loadFromConduit();
 
-  /// Enable verbosity input for object
-  void enableLogLevelInput();
+  /**
+   * @brief Set verbosity level
+   * @param logLevel new verbosity level value
+   */
+  void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
 
-  /// @return The verbosity level
+  /**
+   * @return The verbosity level of the Group instance.
+   * @warning For logging activation, *Please use `isLogLevelActive< logInfo::yourInfo >( getLogLevel() )`*
+   * to be sure to document to the user what the Group is able to output.
+   */
   integer getLogLevel() const { return m_logLevel; }
+
   ///@}
 
   /**
@@ -1422,7 +1516,7 @@ public:
    * @brief Return PyGroup type.
    * @return Return PyGroup type.
    */
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const;
 #endif
 
@@ -1440,7 +1534,7 @@ protected:
    * This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void postProcessInput() {}
+  virtual void postInputInitialization() {}
 
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.
@@ -1480,9 +1574,12 @@ private:
   /**
    * @brief Read values from the input file and put them into the
    *   wrapped values for this group.
-   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] targetNode the XML node that to extract input values from
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition()
    */
-  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
@@ -1502,7 +1599,7 @@ private:
    */
   template< bool DO_PACKING >
   localIndex packImpl( buffer_unit_type * & buffer,
-                       array1d< string > const & wrapperNames,
+                       string_array const & wrapperNames,
                        arrayView1d< localIndex const > const & packList,
                        integer const recursive,
                        bool onDevice,
@@ -1534,6 +1631,8 @@ private:
 
   /// Verbosity flag for group logs
   integer m_logLevel;
+
+
   //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.
@@ -1544,6 +1643,13 @@ private:
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
+
+  // Keep track of log levels & descriptions
+  std::unique_ptr< LogLevelsRegistry > m_logLevelsRegistry;
+
+  /// A DataContext object used to provide contextual information on this Group,
+  /// if it is created from an input XML file, the line or offset in that file.
+  std::unique_ptr< DataContext > m_dataContext;
 
 };
 
@@ -1625,6 +1731,24 @@ Wrapper< T > & Group::registerWrapper( string const & name,
     rval.resize( size());
   }
   return rval;
+}
+
+template< typename LOG_LEVEL_INFO >
+std::enable_if_t< geos::is_log_level_info< LOG_LEVEL_INFO >, void >
+Group::addLogLevel()
+{
+  GEOS_ERROR_IF( m_logLevelsRegistry == nullptr, "You cannot call addLogLevel after schema generation" );
+
+  Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
+  if( wrapper == nullptr )
+  {
+    wrapper = &registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel );
+    wrapper->setApplyDefaultValue( 0 );
+    wrapper->setInputFlag( InputFlags::OPTIONAL );
+  }
+  m_logLevelsRegistry->addEntry( LOG_LEVEL_INFO::getMinLogLevel(),
+                                 LOG_LEVEL_INFO::getDescription() );
+  wrapper->setDescription( m_logLevelsRegistry->buildLogLevelDescription());
 }
 
 } /* end namespace dataRepository */

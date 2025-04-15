@@ -16,13 +16,13 @@
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
       targetRegions="{ Fracture }"
-      contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="10"
-        maxTimeStepCuts="5"/>
+        maxTimeStepCuts="5"
+        maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
@@ -32,18 +32,19 @@
   <!-- SPHINX_HYDROFRACSOLVER_END -->
 
   <!-- SPHINX_MECHANICALSOLVER -->
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">
+      contactRelationName="fractureContact"
+      contactPenaltyStiffness="1.0e0">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-10"/>    
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
   <!-- SPHINX_MECHANICALSOLVER_END -->
 
   <!-- SPHINX_SINGLEPHASEFVM -->
@@ -65,7 +66,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
-      rockToughness="0.1e6"
+      initialRockToughness="0.1e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SURFACEGENERATOR_END -->
   </Solvers>

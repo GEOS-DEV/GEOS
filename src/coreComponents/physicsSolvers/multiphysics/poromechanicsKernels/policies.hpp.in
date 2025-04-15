@@ -2,9 +2,11 @@
 #define GEOS_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_CONFIG_HPP
 
 using SinglePhasePoromechanicsPolicy = @SinglePhasePoromechanicsPolicy@;
+using SinglePhasePoromechanicsDamagePolicy = @SinglePhasePoromechanicsDamagePolicy@;
 using SinglePhasePoromechanicsEFEMPolicy = @SinglePhasePoromechanicsEFEMPolicy@;
 using MultiphasePoromechanicsPolicy = @MultiphasePoromechanicsPolicy@;
 using ThermalMultiphasePoromechanicsPolicy = @ThermalMultiphasePoromechanicsPolicy@;
 using ThermalSinglePhasePoromechanicsPolicy = @ThermalSinglePhasePoromechanicsPolicy@;
+using ThermalSinglePhasePoromechanicsEFEMPolicy = @ThermalSinglePhasePoromechanicsEFEMPolicy@;
 
 #endif /* GEOS_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_CONFIG_HPP */

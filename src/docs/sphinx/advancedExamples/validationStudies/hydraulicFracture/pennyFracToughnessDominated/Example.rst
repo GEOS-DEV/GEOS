@@ -121,7 +121,7 @@ Three elementary solvers are combined in the solver ``Hydrofracture`` to model t
   :end-before: <!-- SPHINX_HYDROFRACSOLVER_END -->
 
 
-- Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianSSLE``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is specified in this solver by the ``contactRelationName``.
+- Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianFEM``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is specified in this solver by the ``contactRelationName``.
 
 
 .. literalinclude:: ../../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated_benchmark.xml
@@ -258,7 +258,7 @@ the HDF5 output is postprocessed and temporal evolution of fracture characterisc
            8  6.07e+05 0.0006163     13.73
           10  6.32e+05 0.0006827     14.45
 
-Note: GEOS python tools ``geosx_xml_tools`` should be installed to run the query script (See :ref:`PythonToolsSetup` for details). 
+Note: GEOS python tools ``geosx_xml_tools`` should be installed to run the query script (See `Python Tools Setup <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/>`_ for details). 
  
 Next, the figure below compares the asymptotic solutions (curves) and the GEOS simulation results (markers) for this analysis, which is generated using the visualization script: 
 

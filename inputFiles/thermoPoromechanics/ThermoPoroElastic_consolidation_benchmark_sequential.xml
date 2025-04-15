@@ -19,14 +19,15 @@
     <NonlinearSolverParameters
       couplingType="Sequential"
       newtonMaxIter="200"
-      newtonTol="1e-6"
+      lineSearchAction="None"
+      newtonTol="1e-9"
       subcycling="1"/>
     <LinearSolverParameters
       directParallel="0"/>
   </SinglePhasePoromechanics>
   <!-- SPHINX_POROMECHANICSSOLVER_END -->
   <!-- SPHINX_MECHANICALSOLVER -->    
-  <SolidMechanicsLagrangianSSLE
+  <SolidMechanicsLagrangianFEM
     name="solidMechSolver"
     timeIntegrationOption="QuasiStatic"
     logLevel="1"
@@ -35,10 +36,10 @@
     <NonlinearSolverParameters
       newtonMaxIter="100"
       newtonMinIter="0"
-      newtonTol="1.0e-8"/>
+      newtonTol="1.0e-10"/>
     <LinearSolverParameters
       directParallel="0"/>
-  </SolidMechanicsLagrangianSSLE>
+  </SolidMechanicsLagrangianFEM>
   <!-- SPHINX_MECHANICALSOLVER_END -->
   <!-- SPHINX_SINGLEPHASEFVM -->    
   <SinglePhaseFVM
@@ -51,7 +52,7 @@
     <NonlinearSolverParameters
       newtonMaxIter="100"
       newtonMinIter="0"
-      newtonTol="1.0e-8"/>
+      newtonTol="1.0e-10"/>
     <LinearSolverParameters
       directParallel="0"/>
   </SinglePhaseFVM>

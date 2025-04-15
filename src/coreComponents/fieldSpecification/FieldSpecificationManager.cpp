@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -14,7 +15,7 @@
 
 #include "FieldSpecificationManager.hpp"
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 namespace geos
@@ -50,7 +51,9 @@ FieldSpecificationManager & FieldSpecificationManager::getInstance()
 
 Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::factory( childKey, childName, this );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  std::unique_ptr< FieldSpecificationBase > bc =
+    FieldSpecificationBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup( childName, std::move( bc ) );
 }
 
@@ -77,8 +80,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
 
-    array1d< string > const & setNames = fs.getSetNames();
-    for( localIndex i = 0; i < setNames.size(); ++i )
+    string_array const & setNames = fs.getSetNames();
+    for( size_t i = 0; i < setNames.size(); ++i )
     {
       isTargetSetEmpty[setNames[i]] = 1;
       isTargetSetCreated[setNames[i]] = 0;
@@ -167,13 +170,15 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     if( areAllSetsMissing )
     {
       // loop again over the map to collect the set names
-      array1d< string > missingSetNames;
+      string_array missingSetNames;
       for( auto const & mapEntry : isTargetSetCreated )
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
-                            fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
+      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
+                            fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
+                            fmt::join( missingSetNames, ", " ),
+                            FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
                   InputError );
     }
 
@@ -182,28 +187,56 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                          GEOS_FMT( "\nWarning!"
-                                    "\n{}: this FieldSpecification targets (an) empty set(s)"
+                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
                                     "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getName(), mapEntry.first, fs.getObjectPath() ) );
+                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
     }
 
     if( isFieldNameFound == 0 )
     {
-      char const fieldNameNotFoundMessage[] =
-        "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
-      string const errorMsg =
-        GEOS_FMT( fieldNameNotFoundMessage,
-                  fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
-                  FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+      std::ostringstream fieldNameNotFoundMessage;
+      std::string fieldNamePath =
+        GEOS_FMT( "\n{}: there is no {} named `{}` under the {} `{}`.\n",
+                  fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
+                  FieldSpecificationBase::viewKeyStruct::fieldNameString(),
+                  fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath());
+
+      fieldNameNotFoundMessage << fieldNamePath;
       if( areAllSetsEmpty )
       {
-        GEOS_LOG_RANK_0( errorMsg );
+        GEOS_LOG_RANK_0( fieldNameNotFoundMessage.str() );
       }
       else
       {
-        GEOS_THROW( errorMsg, InputError );
-      }
+        fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath());
+        std::set< string > fieldNameAvailable;
+        fs.apply< dataRepository::Group >( mesh,
+                                           [&]( FieldSpecificationBase const &,
+                                                string const &,
+                                                SortedArrayView< localIndex const > const &,
+                                                Group & targetObject,
+                                                string const )
+        {
+          ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &targetObject );
+          if( targetOMB )
+          { // filter anything that is not an ObjectManagerBase type
+            // show to the user all fields which are registered under the field-specification object path
+            fieldNameAvailable.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
+          }
+
+        } );
+
+        for( auto it=fieldNameAvailable.begin(); it!=fieldNameAvailable.end(); ++it )
+        {
+          fieldNameNotFoundMessage << *it;
+          if( it != std::prev( fieldNameAvailable.end()))
+          {
+            fieldNameNotFoundMessage << ", ";
+          }
+        }
+
+        GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
+      };
     }
   } );
 }
@@ -217,14 +250,14 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
       fs.apply< dataRepository::Group >( mesh,
                                          [&]( FieldSpecificationBase const & bc,
                                               string const &,
-                                              SortedArrayView< localIndex const > const & targetSet,
+                                              SortedArrayView< localIndex const > const & targetObject,
                                               Group & targetGroup,
                                               string const fieldName )
       {
-        bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+        bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
       } );
     }
   } );
 }
 
-} /* namespace geos */
+}   /* namespace geos */

@@ -2,17 +2,18 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -66,7 +67,7 @@ char const * xmlInput =
       </FiniteVolume>
     </NumericalMethods>
     <ElementRegions>
-      <CellElementRegion name="Region" cellBlocks="{cb1}" materialList="{fluid1, rock, relperm}" />
+      <CellElementRegion name="Region" cellBlocks="{*}" materialList="{fluid1, rock, relperm}" />
     </ElementRegions>
     <Constitutive>
       <CompositionalMultiphaseFluid name="fluid1"
@@ -174,13 +175,13 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::host, false );
+  residual.move( hostMemorySpace, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( LvArray::MemorySpace::host );
+  jacobian.move( hostMemorySpace );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -197,7 +198,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh,
-                                                                       arrayView1d< string const > const & )
+                                                                       string_array const & )
   {
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -205,16 +206,16 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
     // get the face-based pressure
     arrayView1d< real64 > const & facePres =
       faceManager.getField< fields::flow::facePressure >();
-    facePres.move( LvArray::MemorySpace::host, false );
+    facePres.move( hostMemorySpace, false );
 
     string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
 
     arrayView1d< globalIndex const > const & faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-    faceDofNumber.move( LvArray::MemorySpace::host );
+    faceDofNumber.move( hostMemorySpace );
 
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
-    faceGhostRank.move( LvArray::MemorySpace::host );
+    faceGhostRank.move( hostMemorySpace );
 
     for( localIndex iface = 0; iface < faceManager.size(); ++iface )
     {
@@ -225,11 +226,11 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
       solver.resetStateToBeginningOfStep( domain );
 
-      facePres.move( LvArray::MemorySpace::host, true ); // to get the correct facePres after reset
+      facePres.move( hostMemorySpace, true ); // to get the correct facePres after reset
       real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
       facePres[iface] += dFP;
-#if defined(GEOSX_USE_CUDA)
-      facePres.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+      facePres.move( parallelDeviceMemorySpace, false );
 #endif
 
 

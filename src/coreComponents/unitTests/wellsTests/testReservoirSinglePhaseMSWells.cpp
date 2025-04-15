@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,9 +27,11 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/kernels/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+
+#include "tests/meshDirName.hpp"
 
 using namespace geos;
 using namespace geos::dataRepository;
@@ -37,7 +40,7 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-char const * xmlInput =
+char const * PreXmlInput =
   R"xml(
   <Problem>
     <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
@@ -81,31 +84,11 @@ char const * xmlInput =
                     nx="{3}"
                     ny="{1}"
                     nz="{1}"
-                    cellBlockNames="{cb1}"/>
-      <InternalWell name="well_producer1"
-                    wellRegionName="wellRegion1"
-                    wellControlsName="wellControls1"
-                    meshName="mesh1"
-                    polylineNodeCoords="{ {4.5, 0,  2  },
-                                           {4.5, 0,  0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="producer1_perf1"
-                       distanceFromHead="1.45"/>
-      </InternalWell>
-      <InternalWell name="well_injector1"
-                    wellRegionName="wellRegion2"
-                    wellControlsName="wellControls2"
-                    meshName="mesh1"
-                    polylineNodeCoords="{ {0.5, 0, 2  },
-                                           {0.5, 0, 0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="injector1_perf1"
-                       distanceFromHead="1.45"/>
-      </InternalWell>
+                    cellBlockNames="{cb1}">)xml";
+
+char const * PostXmlInput =
+  R"xml(
+      </InternalMesh>
     </Mesh>
     <NumericalMethods>
       <FiniteVolume>
@@ -114,7 +97,7 @@ char const * xmlInput =
     </NumericalMethods>
     <ElementRegions>
       <CellElementRegion name="Region1"
-                         cellBlocks="{cb1}"
+                         cellBlocks="{ * }"
                          materialList="{water, rock}"/>
       <WellElementRegion name="wellRegion1"
                          materialList="{water}"/>
@@ -154,7 +137,7 @@ char const * xmlInput =
   )xml";
 
 template< typename LAMBDA >
-void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & solver,
+void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
@@ -174,13 +157,13 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::host, false );
+  residual.move( hostMemorySpace, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( LvArray::MemorySpace::host );
+  jacobian.move( hostMemorySpace );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -211,7 +194,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
           // get the primary variables on reservoir elements
           arrayView1d< real64 > const & pres =
             subRegion.getField< fields::well::pressure >();
-          pres.move( LvArray::MemorySpace::host, false );
+          pres.move( hostMemorySpace, false );
 
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
           for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -221,13 +204,13 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
               // here is the perturbation in the pressure of the element
               real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
-              pres.move( LvArray::MemorySpace::host, true );
+              pres.move( hostMemorySpace, true );
               pres[ei] += dP;
 
               // after perturbing, update the pressure-dependent quantities in the reservoir
               flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                        MeshLevel & mesh2,
-                                                                                       arrayView1d< string const > const & regionNames2 )
+                                                                                       string_array const & regionNames2 )
               {
                 mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                              [&]( localIndex const,
@@ -262,7 +245,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
   // loop over the wells
   wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                            MeshLevel & mesh,
-                                                                           arrayView1d< string const > const & regionNames )
+                                                                           string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                         [&]( localIndex const,
@@ -276,11 +259,11 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
       // get the primary variables on well elements
       arrayView1d< real64 > const & wellElemPressure =
         subRegion.getField< fields::well::pressure >();
-      wellElemPressure.move( LvArray::MemorySpace::host, false );
+      wellElemPressure.move( hostMemorySpace, false );
 
       arrayView1d< real64 > const & connRate =
         subRegion.getField< fields::well::connectionRate >();
-      connRate.move( LvArray::MemorySpace::host, false );
+      connRate.move( hostMemorySpace, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
       for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -290,7 +273,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
           // here is the perturbation in the pressure of the well element
           real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
-          wellElemPressure.move( LvArray::MemorySpace::host, true );
+          wellElemPressure.move( hostMemorySpace, true );
           wellElemPressure[iwelem] += dP;
 
           // after perturbing, update the pressure-dependent quantities in the well
@@ -318,7 +301,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
 
           // here is the perturbation in the pressure of the well element
           real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
-          connRate.move( LvArray::MemorySpace::host, true );
+          connRate.move( hostMemorySpace, true );
           connRate[iwelem] += dRate;
 
           // after perturbing, update the rate-dependent quantities in the well (well controls)
@@ -350,6 +333,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
+
 class SinglePhaseReservoirSolverTest : public ::testing::Test
 {
 public:
@@ -362,8 +346,7 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells< SinglePhaseBase > >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells<> >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -373,24 +356,139 @@ protected:
                          solver->getSystemRhs(),
                          solver->getSystemSolution() );
 
-    solver->implicitStepSetup( time, dt, domain );
+    solver->implicitStepSetup( TIME, DT, domain );
   }
 
-  static real64 constexpr time = 0.0;
-  static real64 constexpr dt = 1e4;
-  static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
+  void TestAssembleCouplingTerms()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->assembleCouplingTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  void TestAssembleFluxTerms()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  void TestAssemblePressureRelations()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->wellSolver()->assemblePressureRelations( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  void TestAssembleAccumulationTerms()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->wellSolver()->assembleAccumulationTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  static real64 constexpr TIME = 0.0;
+  static real64 constexpr DT = 1e4;
+  static real64 constexpr EPS = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  SinglePhaseReservoirAndWells< SinglePhaseBase > * solver;
+  SinglePhaseReservoirAndWells<> * solver;
 };
 
-real64 constexpr SinglePhaseReservoirSolverTest::time;
-real64 constexpr SinglePhaseReservoirSolverTest::dt;
-real64 constexpr SinglePhaseReservoirSolverTest::eps;
+real64 constexpr SinglePhaseReservoirSolverTest::TIME;
+real64 constexpr SinglePhaseReservoirSolverTest::DT;
+real64 constexpr SinglePhaseReservoirSolverTest::EPS;
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
+/**
+ * @brief Test SinglePhaseReservoirSolver with InternalWell generator
+ *
+ */
+class SinglePhaseReservoirSolverInternalWellTest : public SinglePhaseReservoirSolverTest
 {
-  real64 const perturb = std::sqrt( eps );
+
+public:
+
+  SinglePhaseReservoirSolverInternalWellTest():
+    SinglePhaseReservoirSolverTest()
+  {}
+
+protected:
+
+  void SetUp() override
+  {
+    string const internalWells =
+      R"(
+        <InternalWell name="well_producer1"
+                      wellRegionName="wellRegion1"
+                      wellControlsName="wellControls1"
+                      polylineNodeCoords="{ {4.5, 0,  2  },
+                                             {4.5, 0,  0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="producer1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>
+        <InternalWell name="well_injector1"
+                      wellRegionName="wellRegion2"
+                      wellControlsName="wellControls2"
+                      polylineNodeCoords="{ {0.5, 0, 2  },
+                                             {0.5, 0, 0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="injector1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>)";
+
+    string const xmlInput = PreXmlInput + internalWells + PostXmlInput;
+
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
+    SinglePhaseReservoirSolverTest::SetUp();
+  }
+};
+
+
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Perforation )
+{
+  TestAssembleCouplingTerms();
+}
+
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux )
+{
+  real64 const perturb = std::sqrt( EPS );
   real64 const tol = 1e-1; // 10% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
@@ -399,55 +497,86 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->assembleCouplingTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_PressureRel )
 {
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
-
-  DomainPartition & domain = state.getProblemManager().getDomainPartition();
-
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
-  {
-    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
+  TestAssemblePressureRelations();
 }
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Accum )
 {
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
-
-  DomainPartition & domain = state.getProblemManager().getDomainPartition();
-
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
-  {
-    solver->wellSolver()->assemblePressureRelations( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
+  TestAssembleAccumulationTerms();
 }
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Accum )
+
+/**
+ * @brief Test SinglePhaseReservoirSolver with VTKWell generator
+ *
+ */
+class SinglePhaseReservoirSolverVTKWellTest : public SinglePhaseReservoirSolverTest
 {
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+public:
 
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
+  SinglePhaseReservoirSolverVTKWellTest():
+    SinglePhaseReservoirSolverTest()
+  {}
+
+protected:
+
+  void SetUp() override
   {
-    solver->wellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
+    string const vtkWells =  GEOS_FMT( R"(
+        <VTKWell name="well_producer1"
+                      wellRegionName="wellRegion1"
+                      wellControlsName="wellControls1"
+                      file="{}"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="producer1_perf1"
+                         distanceFromHead="1.45"/>
+        </VTKWell>
+        <VTKWell name="well_injector1"
+                      wellRegionName="wellRegion2"
+                      wellControlsName="wellControls2"
+                      file="{}"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="injector1_perf1"
+                         distanceFromHead="1.45"/>
+        </VTKWell>)", testMeshDir + "/well1.vtk",
+                                       testMeshDir + "/well2.vtk" );
+
+    string const xmlInput = PreXmlInput + vtkWells + PostXmlInput;
+
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str());
+    SinglePhaseReservoirSolverTest::SetUp();
+  }
+};
+
+
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_Perforation )
+{
+  TestAssembleCouplingTerms();
 }
 
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_Flux )
+{
+  TestAssembleFluxTerms();
+}
+
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_PressureRel )
+{
+  TestAssemblePressureRelations();
+}
+
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_Accum )
+{
+  TestAssembleAccumulationTerms();
+}
 
 int main( int argc, char * * argv )
 {

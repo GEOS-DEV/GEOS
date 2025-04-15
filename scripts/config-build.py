@@ -170,12 +170,12 @@ def main(calling_script, args, unknown_args):
 
         install_path = os.path.abspath(install_path)
 
-        if os.path.exists(install_path):
-            logging.info("Install directory '%s' already exists. Deleting..." % install_path)
-            shutil.rmtree(install_path)
+        #     logging.info("Install directory '%s' already exists. Deleting..." % install_path)
+        #     shutil.rmtree(install_path)
 
-        logging.info("Creating install path '%s'..." % install_path)
-        os.makedirs(install_path)
+        if not os.path.exists(install_path):
+            logging.info("Creating install path '%s'..." % install_path)
+            os.makedirs(install_path)
 
     ############################
     # Build CMake command line
@@ -206,13 +206,13 @@ def main(calling_script, args, unknown_args):
         cmake_line.append("--graphviz=dependency.dot")
         dot_line = "dot -Tpng dependency.dot -o dependency.png"
 
-    # Append cache file at the end of the command line to make previous argument visible to the cache.
-    cmake_line.append("-C%s" % cache_file)
-
     for unknown_arg in unknown_args:
         if not unknown_arg.startswith('-D'):
             logging.warning("Additional argument '%s' does not start with '-D'. Keeping it nevertheless." % unknown_arg)
         cmake_line.append(unknown_arg)
+
+    # Append cache file at the end of the command line to make previous argument visible to the cache.
+    cmake_line.append("-C%s" % cache_file)
 
     cmake_line.append(os.path.normpath(os.path.join(scripts_dir, "..", "src")))
 
@@ -230,12 +230,14 @@ def main(calling_script, args, unknown_args):
     os.chdir(build_path)
     with open(cmake_cmd, "r") as cmd_file:
         logging.info("Executing cmake line: '%s'" % cmd_file.read().rstrip(os.linesep))
-    subprocess.call(cmake_cmd, shell=True)
+    main_return_code = subprocess.call(cmake_cmd, shell=True)
 
     if args.graphviz:
-        subprocess.call(dot_line, shell=True)
+        main_return_code |= subprocess.call(dot_line, shell=True)
 
+    return main_return_code
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(filename)s]:[%(levelname)s]: %(message)s', level=logging.INFO)
-    main(sys.argv[0], *parse_args(sys.argv[1:]))
+    return_code = main(sys.argv[0], *parse_args(sys.argv[1:]))
+    sys.exit(return_code)

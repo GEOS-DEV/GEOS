@@ -4,7 +4,7 @@ Code style
 
 Introduction
 ============
-GEOS is written in standard c++14. In general, target platforms are:
+GEOS is written in standard c++17. In general, target platforms are:
 
 - Linux
 - Mac OS X
@@ -157,7 +157,7 @@ Key points to the GEOS style are:
    .. code-block:: c
 
     void
-    SolidMechanics_LagrangianFEM::
+    SolidMechanicsLagrangianFEM::
     TimeStepExplicit( real64 const& time_n,
                       real64 const& dt,
                       const int cycleNumber,

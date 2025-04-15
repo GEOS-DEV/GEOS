@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -98,7 +99,7 @@ public:
   arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 
   /// Flag to disable inelasticity
-  const bool & m_disableInelasticity;
+  const bool m_disableInelasticity;
 
   /**
    * @brief Get bulkModulus
@@ -155,23 +156,46 @@ public:
    *
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
+   * @param[in] timeIncrement time increment for rate-dependent models.
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New tangent stiffness value
    */
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) const
+  /**
+   * this function is not virtual to avoid a compilation warning with nvcc.
+   */
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( & stress )[6],
+                          real64 ( & stiffness )[6][6] ) const
   {
     GEOS_UNUSED_VAR( k );
     GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
     GEOS_UNUSED_VAR( strainIncrement );
     GEOS_UNUSED_VAR( stress );
     GEOS_UNUSED_VAR( stiffness );
     GEOS_ERROR( "smallStrainUpdate() not implemented for this model" );
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_ElasticOnly( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & timeIncrement,
+                                              real64 const ( &strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              real64 ( & stiffness )[6][6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
+    GEOS_UNUSED_VAR( strainIncrement );
+    GEOS_UNUSED_VAR( stress );
+    GEOS_UNUSED_VAR( stiffness );
+    GEOS_ERROR( "smallStrainUpdate_ElasticOnly() not implemented for this model, or the model is already elastic." );
   }
 
   /**
@@ -222,17 +246,20 @@ public:
    *
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
+   * @param[in] timeIncrement time increment for rate-dependent models.
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
    */
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
+                                             real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
     GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( timeIncrement );
     GEOS_UNUSED_VAR( strainIncrement );
     GEOS_UNUSED_VAR( stress );
     GEOS_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
@@ -260,8 +287,6 @@ public:
     GEOS_ERROR( "smallStrainNoStateUpdate_StressOnly() not implemented for this model" );
   }
 
-  ///@}
-
   /**
    * @brief Helper to save point stress back to m_newStress array
    *
@@ -287,7 +312,7 @@ public:
    * @param[in] q Quadrature point index.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const
   {
@@ -313,6 +338,40 @@ public:
   }
 
   /**
+   * @brief Return the current elastic strain increment at a given material point (small-strain interface)
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @param elasticStrainInc Current elastic strain increment
+   */
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( & elasticStrainInc )[6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( elasticStrainInc );
+    GEOS_ERROR( "getElasticStrainInc() of SolidBase was called." );
+  }
+
+  /**
+   * @brief Perform a viscous (rate-dependent) state update
+   *
+   * @param beta time-dependent parameter
+   */
+  GEOS_HOST_DEVICE
+  virtual void viscousStateUpdate( localIndex const k,
+                                   localIndex const q,
+                                   real64 beta ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( beta );
+    GEOS_ERROR( "viscousStateUpdate() not implemented for this model" );
+  }
+
+  /**
    * @brief Return the strain energy density at a given material point
    *
    * @param k the element inex
@@ -325,7 +384,7 @@ public:
   {
     auto const & stress = m_newStress[k][q];
 
-    real64 strain[6];
+    real64 strain[6]{};
     getElasticStrain( k, q, strain );
 
     real64 energy = 0;
@@ -385,14 +444,15 @@ public:
   GEOS_HOST_DEVICE
   void computeSmallStrainFiniteDifferenceStiffness( localIndex k,
                                                     localIndex q,
+                                                    real64 const & timeIncrement,
                                                     real64 const ( &strainIncrement )[6],
                                                     real64 ( & stiffnessFD )[6][6] ) const
   {
-    real64 stiffness[6][6];      // coded stiffness
-    real64 stress[6];            // original stress
-    real64 stressFD[6];          // perturbed stress
-    real64 strainIncrementFD[6]; // perturbed strain
-    real64 norm = 0;             // norm for scaling (note: method is fragile w.r.t. scaling)
+    real64 stiffness[6][6]{};      // coded stiffness
+    real64 stress[6]{};            // original stress
+    real64 stressFD[6]{};          // perturbed stress
+    real64 strainIncrementFD[6]{}; // perturbed strain
+    real64 norm = 0;               // norm for scaling (note: method is fragile w.r.t. scaling)
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -402,7 +462,7 @@ public:
 
     real64 eps = 1e-4*norm;     // finite difference perturbation
 
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
     for( localIndex i=0; i<6; ++i )
     {
@@ -413,7 +473,7 @@ public:
         strainIncrementFD[i-1] -= eps;
       }
 
-      smallStrainUpdate( k, q, strainIncrementFD, stressFD, stiffnessFD );
+      smallStrainUpdate( k, q, timeIncrement, strainIncrementFD, stressFD, stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
       {
@@ -441,15 +501,16 @@ public:
   GEOS_HOST_DEVICE
   bool checkSmallStrainStiffness( localIndex k,
                                   localIndex q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   bool print = false ) const
   {
-    real64 stiffness[6][6];     // coded stiffness
-    real64 stiffnessFD[6][6];   // finite difference approximation
-    real64 stress[6];           // original stress
+    real64 stiffness[6][6]{};     // coded stiffness
+    real64 stiffnessFD[6][6]{};   // finite difference approximation
+    real64 stress[6]{};           // original stress
 
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-    computeSmallStrainFiniteDifferenceStiffness( k, q, strainIncrement, stiffnessFD );
+    smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+    computeSmallStrainFiniteDifferenceStiffness( k, q, timeIncrement, strainIncrement, stiffnessFD );
 
     // compute relative error between two versions
 
@@ -515,11 +576,13 @@ public:
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
     static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
                                                                                                                 // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; } // Default
-                                                                                                                              // thermal
-                                                                                                                              // expansion
-                                                                                                                              // coefficient
-                                                                                                                              // key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
+                                                                                                                   // drained
+                                                                                                                   // linear
+                                                                                                                   // thermal
+                                                                                                                   // expansion
+                                                                                                                   // coefficient
+                                                                                                                   // key
   };
 
   /**
@@ -633,7 +696,7 @@ public:
 protected:
 
   /// Post-process XML input
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress;
@@ -655,10 +718,6 @@ protected:
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
-
-  /// band-aid fix...going to have to remove this after we clean up
-  /// initialization for constitutive models.
-  bool m_postProcessed = false;
 };
 
 } // namespace constitutive
