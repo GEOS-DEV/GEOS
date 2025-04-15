@@ -14,7 +14,7 @@
   <!-- SPHINX_MESH_END -->
 
   <Events
-    maxTime="0.1">
+    maxTime="10.0">
   
     <PeriodicEvent
       name="outputs"
