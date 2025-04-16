@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -61,10 +61,12 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flow consistency index" );
 
+  // these would be in dDensity
   registerField( fields::slurryfluid::dDensity_dProppantConcentration{}, &m_dDensity_dProppantConc );
   registerField( fields::slurryfluid::dDensity_dComponentConcentration{}, &m_dDensity_dCompConc );
 
-  registerField( fields::slurryfluid::fluidDensity{}, &m_fluidDensity );
+
+  registerField( fields::slurryfluid::fluidDensity{}, &m_fluidDensity.value );
   registerField( fields::slurryfluid::dFluidDensity_dPressure{}, &m_dFluidDens_dPres );
   registerField( fields::slurryfluid::dFluidDensity_dComponentConcentration{}, &m_dFluidDens_dCompConc );
 
@@ -107,12 +109,16 @@ localIndex SlurryFluidBase::numFluidComponents() const
 void SlurryFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
+  localIndex const NC = numFluidComponents();
+  m_numDOF = 2 + NC;  // pressure,proppantconc, NC compconc
+
   SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent.size() );
 
-  localIndex const NC = numFluidComponents();
 
+  // These are also sized in m_dDenisty in base class , only dP and dT are populated
+  // Future dev should incorporate concentration derivatives in dDensity
   m_dDensity_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dDensity_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
 
@@ -120,7 +126,7 @@ void SlurryFluidBase::allocateConstitutiveData( Group & parent,
   m_dCompDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
   m_dCompDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC, NC );
 
-  m_fluidDensity.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_fluidDensity.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dFluidDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dFluidDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
 

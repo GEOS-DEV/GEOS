@@ -23,6 +23,7 @@
       outputCompressibility="1"
       outputPhaseComposition="1"
       baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
+      precision="6"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrineEzrokhiMixtureA"
@@ -147,7 +148,7 @@
   <ElementRegions>
     <CellElementRegion
       name="dummy"
-      cellBlocks="{ cellBlock01 }"
+      cellBlocks="{ * }"
       materialList="{ dummy }" />
   </ElementRegions>
 </Problem>

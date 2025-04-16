@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -68,10 +68,6 @@ public:
   /// The number of quadrature points per element.
   static constexpr localIndex numQuadraturePoints = 1;
 
-  ConformingVirtualElementOrder1() = default;
-
-  virtual ~ConformingVirtualElementOrder1() = default;
-
   /**
    * @struct StackVariables
    * @brief Kernel variables allocated on the stack.
@@ -82,12 +78,6 @@ public:
    */
   struct StackVariables : public FiniteElementBase::StackVariables
   {
-    /**
-     * Default constructor
-     */
-    GEOS_HOST_DEVICE
-    StackVariables()
-    {}
 
     /// The number of support points.
     localIndex numSupportPoints;
@@ -112,12 +102,6 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData : public FiniteElementBase::MeshData< SUBREGION_TYPE >
   {
-    /**
-     * Constructor
-     */
-    MeshData()
-    {}
-
     /// View to the array containing nodes coordinates.
     InputNodeCoords nodesCoords;
     /// View to the cell-to-node map in the sub-region.

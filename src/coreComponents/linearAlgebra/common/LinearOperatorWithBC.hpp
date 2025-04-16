@@ -17,7 +17,10 @@
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 
+#include "mesh/DomainPartition.hpp"
+
 #include "LvArray/src/output.hpp"
+
 
 namespace geos
 {
@@ -97,7 +100,7 @@ public:
    * @param time
    * @param diagPolicy The digonal policy to apply the boundary conditions.
    */
-  LinearOperatorWithBC( SolverBase const & solver,
+  LinearOperatorWithBC( PhysicsSolverBase const & solver,
                         LinearOperator< Vector > const & unconstrained_op,
                         DomainPartition & domain,
                         DofManager const & dofManager,
@@ -138,7 +141,7 @@ public:
     globalIndex totalSize = 0;
     solver.forDiscretizationOnMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & )
+                                                                           string_array const & )
     {
       fsManager.apply< NodeManager >( m_time,
                                       mesh,
@@ -172,12 +175,12 @@ public:
    * @param solver
    * @param fsManager
    */
-  void setupBoundaryConditions( SolverBase const & solver,
+  void setupBoundaryConditions( PhysicsSolverBase const & solver,
                                 FieldSpecificationManager const & fsManager )
   {
     solver.forDiscretizationOnMeshTargets( m_domain.getMeshBodies(), [&]( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & )
+                                                                           string_array const & )
     {
       auto const & nodeManager = mesh.getNodeManager();
       auto const & field = nodeManager.getReference< PrimaryFieldType >( m_fieldName ).toViewConst();
@@ -385,7 +388,7 @@ public:
 
   MPI_Comm comm() const
   {
-    return MPI_COMM_GEOSX;
+    return MPI_COMM_GEOS;
   }
 
 private:

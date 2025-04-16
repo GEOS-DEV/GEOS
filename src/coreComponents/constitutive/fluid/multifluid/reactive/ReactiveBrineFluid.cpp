@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -18,8 +18,10 @@
  */
 #include "ReactiveBrineFluid.hpp"
 
+#include "constitutive/fluid/multifluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -69,6 +71,12 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, write PVT tables into a CSV file" );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -80,6 +88,8 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
+
+  addLogLevel< logInfo::PVT >();
 }
 
 template< typename PHASE >
@@ -94,6 +104,7 @@ std::unique_ptr< ConstitutiveBase >
 ReactiveBrineFluid< PHASE > ::
 deliverClone( string const & name, Group * const parent ) const
 {
+
   std::unique_ptr< ConstitutiveBase > clone = ReactiveMultiFluid::deliverClone( name, parent );
 
   ReactiveBrineFluid & newConstitutiveRelation = dynamicCast< ReactiveBrineFluid & >( *clone );
@@ -129,10 +140,9 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
 template< typename PHASE >
 void ReactiveBrineFluid< PHASE > ::createPVTModels()
 {
-
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  array1d< array1d< string > > phase1InputParams;
+  std::vector< string_array > phase1InputParams;
   phase1InputParams.resize( 3 );
 
   // 1) Create the viscosity, density, enthalpy models
@@ -142,7 +152,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( str );
 
       if( !strs.empty() )
       {
@@ -193,9 +203,15 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
 
+  bool const isClone = this->isClone();
+  TableFunction::OutputOptions const pvtOutputOpts = {
+    !isClone && m_writeCSV,// writeCSV
+    !isClone && isLogLevelActive< logInfo::PVT >( this->getLogLevel() ), // writeInLog
+  };
+
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                       getLogLevel() > 0 && logger::internal::rank==0 );
+                                       pvtOutputOpts );
 }
 
 template< typename PHASE >

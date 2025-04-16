@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,9 +21,37 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <vector>
+#include <filesystem>
 
 namespace geos
 {
+
+std::string Path::filename() const
+{
+  size_type const pos = find_last_of( '/' );
+  return pos == npos ? static_cast< std::string >( *this ) : substr( pos + 1 );
+}
+
+std::string Path::extension() const
+{
+  std::string const fname = filename();
+  size_type const pos = fname.find_last_of( '.' );
+  return pos == npos ? "" : fname.substr( pos + 1 );
+}
+
+std::string Path::relativeFilePath() const
+{ // As it may be used extensively in the log, should we store this value?
+  namespace fs = std::filesystem;
+  fs::path relativePath = fs::relative( fs::path( static_cast< std::string >( *this ) ),
+                                        fs::path( pathPrefix() ) );
+  return relativePath.generic_string();
+}
+
+std::string & Path:: pathPrefix()
+{
+  static std::string s_pathPrefix = "";
+  return s_pathPrefix;
+}
 
 std::string getAbsolutePath( std::string const & path )
 {

@@ -1,3 +1,25 @@
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+#
+#--------------------------------------------------------------------------------------------------
+
+#[[
+Package: common
+
+Contains the definition of the basic static types of GEOS.
+Also provides commonly used components for such as logging, formatting, memory and wrapper of
+ dependencies.
+#]]
+
+
 #
 # Specify all headers
 #
@@ -6,6 +28,7 @@ set( common_headers
      format/table/TableLayout.hpp
      format/table/TableFormatter.hpp
      format/table/TableData.hpp
+     format/EnumStrings.hpp
      format/Format.hpp
      format/StringUtilities.hpp
      logger/Logger.hpp
@@ -16,6 +39,7 @@ set( common_headers
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
      MemoryInfos.hpp
+     logger/Logger.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
@@ -24,6 +48,7 @@ set( common_headers
      Tensor.hpp
      TimingMacros.hpp
      TypeDispatch.hpp
+     TypesHelpers.hpp
      initializeEnvironment.hpp
      LifoStorage.hpp
      LifoStorageCommon.hpp
@@ -56,7 +81,7 @@ set( common_sources
      Units.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray RAJA chai )
+set( dependencyList ${parallelDeps} lvarray RAJA chai umpire)
 
 if (TARGET conduit::conduit)
   set( dependencyList ${dependencyList} conduit::conduit )
@@ -112,6 +137,16 @@ blt_add_library( NAME       common
 
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+# Older g++ version need a hint to use std::filesystem
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+    if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
+        target_link_libraries( common PRIVATE "stdc++fs" )
+    endif ()
+endif ()
+if ( ENABLE_CUDA )
+  target_link_libraries( common PRIVATE "stdc++fs" )
+endif ()
 
 install( TARGETS common LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 

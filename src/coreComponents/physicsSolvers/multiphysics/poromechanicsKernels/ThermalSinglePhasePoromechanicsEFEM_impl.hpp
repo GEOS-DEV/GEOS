@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -66,18 +66,11 @@ ThermalSinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
         inputDt,
         inputGravityVector,
         fluidModelKey ),
-  m_dFluidDensity_dTemperature( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
-                                                                                                                        fluidModelKey ) ).dDensity_dTemperature() ),
-  m_fluidInternalEnergy_n( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy_n() ),
+  m_energy( elementSubRegion.template getField< fields::flow::energy >() ),
+  m_energy_n( elementSubRegion.template getField< fields::flow::energy_n >() ),
+  m_dEnergy( elementSubRegion.template getField< fields::flow::dEnergy >() ),
   m_fluidInternalEnergy( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy() ),
-  m_dFluidInternalEnergy_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
-                                                                                                                            fluidModelKey ) ).dInternalEnergy_dPressure() ),
-  m_dFluidInternalEnergy_dTemperature( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
-                                                                                                                               fluidModelKey ) ).dInternalEnergy_dTemperature() ),
-  m_temperature_n( embeddedSurfSubRegion.template getField< fields::flow::temperature_n >() ),
-  m_temperature( embeddedSurfSubRegion.template getField< fields::flow::temperature >() ),
   m_matrixTemperature( elementSubRegion.template getField< fields::flow::temperature >() )
-
 {}
 
 
@@ -174,28 +167,22 @@ complete( localIndex const k,
   }
 
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+
+  stack.dFluidMassIncrement_dTemperature = m_dFluidMass[embSurfIndex][DerivOffset::dT];
+
   // Energy balance accumulation
-  real64 const volume        =  m_elementVolume( embSurfIndex ) + m_deltaVolume( embSurfIndex );
-  real64 const volume_n      =  m_elementVolume( embSurfIndex );
-  real64 const fluidEnergy   =  m_fluidDensity( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * volume;
-  real64 const fluidEnergy_n =  m_fluidDensity_n( embSurfIndex, 0 ) * m_fluidInternalEnergy_n( embSurfIndex, 0 ) * volume_n;
+  stack.energyIncrement               = m_energy[embSurfIndex] - m_energy_n[embSurfIndex];
+  stack.dEnergyIncrement_dJump        = m_fluidDensity[embSurfIndex][0] * m_fluidInternalEnergy[embSurfIndex][0] * m_surfaceArea[embSurfIndex];
+  stack.dEnergyIncrement_dPressure    = m_dEnergy[embSurfIndex][DerivOffset::dP];
+  stack.dEnergyIncrement_dTemperature = m_dEnergy[embSurfIndex][DerivOffset::dT];
 
-  stack.dFluidMassIncrement_dTemperature =  m_dFluidDensity_dTemperature( embSurfIndex, 0 ) * volume;
-
-  stack.energyIncrement               = fluidEnergy - fluidEnergy_n;
-  stack.dEnergyIncrement_dJump        = m_fluidDensity( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
-  stack.dEnergyIncrement_dPressure    = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * volume;
-  stack.dEnergyIncrement_dTemperature = ( m_dFluidDensity_dTemperature( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) +
-                                          m_fluidDensity( embSurfIndex, 0 ) * m_dFluidInternalEnergy_dTemperature( embSurfIndex, 0 )  ) * volume;
-
-  globalIndex const fracturePressureDof        = m_fracturePresDofNumber[ embSurfIndex ];
-  globalIndex const fractureTemperatureDof     = m_fracturePresDofNumber[ embSurfIndex ] + 1;
+  globalIndex const fracturePressureDof        = m_fracturePresDofNumber[embSurfIndex];
+  globalIndex const fractureTemperatureDof     = m_fracturePresDofNumber[embSurfIndex] + 1;
   localIndex const massBalanceEquationIndex   = fracturePressureDof - m_dofRankOffset;
   localIndex const energyBalanceEquationIndex = massBalanceEquationIndex + 1;
 
   if( massBalanceEquationIndex >= 0 && massBalanceEquationIndex < m_matrix.numRows() )
   {
-
     m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( massBalanceEquationIndex,
                                                                             &fractureTemperatureDof,
                                                                             &stack.dFluidMassIncrement_dTemperature,
@@ -204,7 +191,6 @@ complete( localIndex const k,
 
   if( energyBalanceEquationIndex >= 0 && energyBalanceEquationIndex < m_matrix.numRows() )
   {
-
     m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyBalanceEquationIndex,
                                                                             &stack.jumpColIndices[0],
                                                                             &stack.dEnergyIncrement_dJump,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -23,6 +23,7 @@
 #include "events/EventBase.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/Units.hpp"
+#include "events/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -45,16 +46,13 @@ EventManager::EventManager( string const & name,
 {
   setInputFlags( InputFlags::REQUIRED );
 
-  // This enables logLevel filtering
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Start simulation time for the global event loop." );
 
   registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
-    setApplyDefaultValue( std::numeric_limits< real64 >::max() ).
+    setApplyDefaultValue( 10000 * units::YearSeconds ). // 10000 years
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation time for the global event loop. Disabled by default." );
 
@@ -83,6 +81,8 @@ EventManager::EventManager( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Format of the time in the GEOS log." );
+
+  addLogLevel< logInfo::EventExecution >();
 }
 
 
@@ -93,8 +93,9 @@ EventManager::~EventManager()
 
 Group * EventManager::createChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
-  std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  std::unique_ptr< EventBase > event =
+    EventBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
@@ -182,8 +183,9 @@ bool EventManager::run( DomainPartition & domain )
       subEvent->checkEvents( m_time, m_dt, m_cycle, domain );
 
       // Print debug information for logLevel >= 1
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Event: {} ({}), dt_request={}, forecast={}",
-                                          m_currentSubEvent, subEvent->getName(), subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::EventExecution,
+                             GEOS_FMT( "Event: {} ({}), dt_request={}, forecast={}", m_currentSubEvent,
+                                       subEvent->getName(), subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ) );
 
       // Execute, signal events
       bool earlyReturn = false;

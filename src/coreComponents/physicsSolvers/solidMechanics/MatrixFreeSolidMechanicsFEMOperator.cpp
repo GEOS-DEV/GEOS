@@ -45,7 +45,7 @@ using namespace constitutive;
 
 MatrixFreeSolidMechanicsFEMOperator::
   MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain,
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
+                                       map< std::pair< string, string >, string_array > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName,
                                        int const kernelOptimizationOption ):
@@ -58,7 +58,7 @@ MatrixFreeSolidMechanicsFEMOperator::
 
 MatrixFreeSolidMechanicsFEMOperator::
   MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies,
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
+                                       map< std::pair< string, string >, string_array > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName,
                                        int const kernelOptimizationOption ):
@@ -94,7 +94,7 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
   {
     string const meshBodyName = target.first.first;
     string const meshLevelName = target.first.second;
-    arrayView1d< string const > const & regionNames = target.second.toViewConst();
+    string_array const & regionNames = target.second;
     MeshBody & meshBody = m_meshBodies.getGroup< MeshBody >( meshBodyName );
 
     MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
@@ -166,7 +166,7 @@ localIndex MatrixFreeSolidMechanicsFEMOperator::numLocalCols() const
 
 MPI_Comm MatrixFreeSolidMechanicsFEMOperator::comm() const
 {
-  return MPI_COMM_GEOSX;
+  return MPI_COMM_GEOS;
 }
 
 } /* namespace geos */

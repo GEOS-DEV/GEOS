@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -39,11 +39,11 @@ string toLower( string const & input );
 
 /**
  * @brief Join strings or other printable objects with a delimiter.
- * @tparam IT   type of iterator into the range of objects to join
- * @tparam S    type of delimiter, usually char, char const * or string
- * @param first iterator to start of the range
- * @param last  iterator past-the-end of the range
- * @param delim delimiter used to glue together strings
+ * @tparam IT    type of iterator into the range of objects to join
+ * @tparam S     type of delimiter, usually char, char const * or string
+ * @param first  iterator to start of the range
+ * @param last   iterator past-the-end of the range
+ * @param delim  delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S = char >
@@ -66,14 +66,57 @@ string join( IT first, IT last, S const & delim = S() )
  * @brief Join strings or other printable objects with a delimiter.
  * @tparam CONTAINER type of container to join
  * @tparam S the type of delimiter, usually char, char const * or string
- * @param cont the container to join
+ * @param container the container to join
  * @param delim delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename CONTAINER, typename S = char >
-string join( CONTAINER const & cont, S const & delim = S() )
+string join( CONTAINER const & container, S const & delim = S() )
 {
-  return join( std::begin( cont ), std::end( cont ), delim );
+  return join( std::begin( container ), std::end( container ), delim );
+}
+
+/**
+ * @brief Join strings or other printable objects returned by a formatter functor.
+ * @tparam IT                type of iterator into the range of objects to join
+ * @tparam S                 type of delimiter, usually char, char const * or string
+ * @tparam LAMBDA            type of formatter functor, usually `[]( auto it ) -> string`
+ * @param formattingFunc     formatter function to get a formattable value from a IT iterator
+ * @param first              iterator to start of the range
+ * @param last               iterator past-the-end of the range
+ * @param delim              delimiter used to glue together strings
+ * @return a string containing input values concatenated with a delimiter
+ */
+template< typename IT, typename S, typename LAMBDA >
+string joinLambda( IT first, IT last, S const & delim, LAMBDA formattingFunc )
+{
+  if( first == last )
+  {
+    return {};
+  }
+  std::ostringstream oss;
+  oss << formattingFunc( first );
+  while( ++first != last )
+  {
+    oss << delim << formattingFunc( first );
+  }
+  return oss.str();
+}
+
+/**
+ * @brief Join strings or other printable objects returned by a formatter functor.
+ * @tparam CONTAINER         type of container to join
+ * @tparam S                 type of delimiter, usually char, char const * or string
+ * @tparam LAMBDA            type of formatter functor, usually `[]( auto it ) -> string`
+ * @param formattingFunc     formatter function to get a formattable value from an iterator of the container
+ * @param container          container to join
+ * @param delim              delimiter used to glue together strings
+ * @return a string containing input values concatenated with a delimiter
+ */
+template< typename CONTAINER, typename S, typename LAMBDA >
+string joinLambda( CONTAINER const & container, S const & delim, LAMBDA formattingFunc )
+{
+  return joinLambda( std::begin( container ), std::end( container ), delim, formattingFunc );
 }
 
 /**
@@ -169,6 +212,13 @@ string_view trim( string_view str,
                   string_view charsToRemove );
 
 /**
+ * @brief Trim the left string
+ * @param[in] s the string to trim
+ * @return the trimmed string
+ */
+string_view ltrimSpaces( string_view s );
+
+/**
  * @brief Trim the string so it does not starts nor ends with any whitespaces
  * @param[in] str the string to trim
  * @return the trimmed string
@@ -181,8 +231,41 @@ string_view trimSpaces( string_view str );
  * @param[in] strToRemove the string to search for in the line
  * @return the new (truncated) string
  */
-string removeStringAndFollowingContent( string const & str,
-                                        string const & strToRemove );
+string removeStringAndFollowingContent( string_view str,
+                                        string_view strToRemove );
+
+/**
+ * @brief Add comma separators to an integral number for readability.
+ * @tparam T the integral type of the number to format.
+ * @param[in] num the integral number to format.
+ * @return a string representation of the number with comma separators.
+ */
+template< typename T >
+string addCommaSeparators( T const & num );
+
+/**
+ * @brief Divides a string by newline characters and returns a vector of strings containing each line.
+ * Also calculates the width of the widest line.
+ * @param linesWidth [out] Reference to a size_t that will be set to the width of the widest line
+ * @param value The input string to divide into lines
+ * @tparam STRING_T The type of the string (string or string_view)
+ * @return A vector of STRING_T objects, each containing a single line from the input
+ */
+template< typename STRING_T >
+std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value );
+
+/**
+ * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
+ * If a word has a greater size than maxLength, it will be cut in one or many parts.
+ * @param lines Vector containing all the lines to be formatted.
+ * @param maxLineLength [inout] The max length a line can have.
+ *                      The value is then set to the effective maximum line length
+ * @tparam STRING_T The type of the string (string or string_view)
+ * @return A vector containing the lines wrapped.
+ */
+template< typename STRING_T >
+std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines,
+                                             size_t & maxLineLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

@@ -156,10 +156,11 @@ install( FILES ${CMAKE_INSTALL_PREFIX}/bin/geosx
          RENAME geos
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )
 
-if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
   set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
   set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)
+  set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
 
   add_custom_target( geosx_generate_schema
                      ALL
@@ -179,22 +180,20 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
 
   add_custom_target( geosx_validate_all_xml_files
                      ALL
-                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
+                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash ${SCHEMA_DIR}/schema.xsd ${SOURCE_DIR}/examples ${SOURCE_DIR}/inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Validating all XML files in the repository against the schema"
                      )
+  if( SPHINX_FOUND )
+    blt_add_sphinx_target( geosx_docs )
+    add_dependencies( geosx_docs geosx_build_datastructure_tables )
+  endif()
 endif()
 
 if( ENABLE_PYGEOSX )
    add_subdirectory( pygeosx )
 endif()
-
-if( SPHINX_FOUND )
-  blt_add_sphinx_target( geosx_docs )
-  add_dependencies( geosx_docs geosx_build_datastructure_tables )
-endif()
-
 
 install( DIRECTORY ../examples/
          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/examples )
@@ -221,8 +220,8 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-# message(WARNING "Temporarily changing the geosPythonBranch to bugfix/sherman/fixNumpyProd")
-# set(GEOS_PYTHON_PACKAGES_BRANCH "bugfix/sherman/fixNumpyProd" CACHE STRING "" FORCE)
+# message(WARNING "Temporarily changing the geosPythonBranch to cusini/addFailedTestsLogProcessing")
+# set(GEOS_PYTHON_PACKAGES_BRANCH "cusini/addFailedTestsLogProcessing" CACHE STRING "" FORCE)
 
 
 if ( Python3_EXECUTABLE )

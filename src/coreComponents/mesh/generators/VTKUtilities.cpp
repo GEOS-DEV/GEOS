@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -69,6 +69,9 @@
 #endif
 
 #include <numeric>
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
@@ -565,7 +568,7 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames )
+                         string_array const & faceBlockNames )
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
@@ -746,8 +749,7 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   {
     // Add global ids on the fly if needed
     int const me = hasGlobalIds( mesh );
-    int everyone;
-    MpiWrapper::allReduce( &me, &everyone, 1, MPI_MAX, MPI_COMM_GEOS );
+    int const everyone = MpiWrapper::allReduce( me, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
 
     if( everyone and not me )
     {
@@ -1817,36 +1819,6 @@ void fillCellBlock( vtkDataSet & mesh,
   }
 }
 
-/**
- * @brief Returns a string describing the element.
- * @param[in] type The element type.
- * @return The name.
- * @warning This information will be visible in the input file... Consider refactoring with great care.
- */
-string getElementTypeName( ElementType const type )
-{
-  switch( type )
-  {
-    case ElementType::Hexahedron:  return "hexahedra";
-    case ElementType::Tetrahedron: return "tetrahedra";
-    case ElementType::Wedge:       return "wedges";
-    case ElementType::Pyramid:     return "pyramids";
-    case ElementType::Prism5:      return "pentagonalPrisms";
-    case ElementType::Prism6:      return "hexagonalPrisms";
-    case ElementType::Prism7:      return "heptagonalPrisms";
-    case ElementType::Prism8:      return "octagonalPrisms";
-    case ElementType::Prism9:      return "nonagonalPrisms";
-    case ElementType::Prism10:     return "decagonalPrisms";
-    case ElementType::Prism11:     return "hendecagonalPrisms";
-    case ElementType::Polyhedron:  return "polyhedra";
-    default:
-    {
-      GEOS_ERROR( "Element type '" << type << "' is not supported" );
-      return {};
-    }
-  }
-}
-
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
@@ -1926,56 +1898,65 @@ void importRegularField( vtkDataArray * vtkArray,
 }
 
 
-void printMeshStatistics( vtkDataSet & mesh,
+void printMeshStatistics( vtkDataSet &,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
+  auto accumulateElemsCount = []( std::map< ElementType, globalIndex > & elemsTarget ) -> globalIndex
+  {
+    return std::accumulate(
+      std::begin( elemsTarget ), std::end( elemsTarget ), globalIndex{0},
+      []( std::size_t const previous, auto const & elems )
+    { return previous + elems.second; } );
+  };
+
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
 
-  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
-  RAJA::ReduceMax< parallelHostReduce, globalIndex > maxGlobalNode( -1 );
-  forAll< parallelHostPolicy >( mesh.GetNumberOfPoints(), [&globalPointId, maxGlobalNode]( vtkIdType const k )
-  {
-    maxGlobalNode.max( globalPointId.GetValue( k ) );
-  } );
-  globalIndex const numGlobalNodes = MpiWrapper::max( maxGlobalNode.get(), comm ) + 1;
-
-  localIndex numLocalElems = 0;
-  globalIndex numGlobalElems = 0;
-  std::map< ElementType, globalIndex > elemCounts;
+  std::map< ElementType, globalIndex > totalLocalElems;
+  std::map< ElementType, globalIndex > minLocalElemsCounts;
+  std::map< ElementType, globalIndex > avgLocalElemsCounts;
+  std::map< ElementType, globalIndex > maxLocalElemsCounts;
 
   for( auto const & typeToCells : cellMap )
   {
     localIndex const localElemsOfType =
       std::accumulate( typeToCells.second.begin(), typeToCells.second.end(), localIndex{},
                        []( auto const s, auto const & region ) { return s + region.second.size(); } );
-    numLocalElems += localElemsOfType;
 
-    globalIndex const globalElemsOfType = MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
-    numGlobalElems += globalElemsOfType;
-    elemCounts[typeToCells.first] = globalElemsOfType;
+    totalLocalElems[typeToCells.first] =  MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
+    minLocalElemsCounts[typeToCells.first] =  MpiWrapper::min( localElemsOfType );
+    avgLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( localElemsOfType ) / size );
+    maxLocalElemsCounts[typeToCells.first] = MpiWrapper::max( localElemsOfType );
   }
-
-  localIndex const minLocalElems = MpiWrapper::min( numLocalElems );
-  localIndex const maxLocalElems = MpiWrapper::max( numLocalElems );
-  localIndex const avgLocalElems = LvArray::integerConversion< localIndex >( numGlobalElems / size );
 
   if( rank == 0 )
   {
-    int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
-    for( auto const & typeCount: elemCounts )
-    {
-      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
-    }
 
-    int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                        widthLocal, "min", "avg", "max",
-                        minLocalElems, avgLocalElems, maxLocalElems ) );
+    auto sumOfElemsType = accumulateElemsCount( totalLocalElems );
+    auto sumOfMinElemsType = accumulateElemsCount( minLocalElemsCounts );
+    auto sumOfAvgElemsType = accumulateElemsCount( avgLocalElemsCounts );
+    auto sumOfMaxElemsType = accumulateElemsCount( maxLocalElemsCounts );
+
+    TableLayout const elemsLayout( "Load balancing, element / rank",
+                                   { TableLayout::Column()
+                                       .setName( "Element type" )
+                                       .setValuesAlignment( TableLayout::Alignment::left ),
+                                     "Total over ranks",
+                                     "minimum",
+                                     "average",
+                                     "maximum" } );
+    TableData elemsData;
+    for( auto const & typeCount: totalLocalElems )
+    {
+      elemsData.addRow( typeCount.first, typeCount.second,
+                        minLocalElemsCounts[typeCount.first],
+                        avgLocalElemsCounts[typeCount.first],
+                        maxLocalElemsCounts[typeCount.first] );
+    }
+    elemsData.addRow( "total elements", sumOfElemsType, sumOfMinElemsType, sumOfAvgElemsType, sumOfMaxElemsType );
+    TableTextFormatter elemsText( elemsLayout );
+    GEOS_LOG_RANK_0( elemsText.toString( elemsData ));
   }
 }
 
@@ -2035,7 +2016,7 @@ void importNodesets( integer const logLevel,
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
 
-  for( int i=0; i < nodesetNames.size(); ++i )
+  for( size_t i=0; i < nodesetNames.size(); ++i )
   {
     GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
@@ -2143,7 +2124,7 @@ void writeCells( integer const logLevel,
       GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
 
       // Create and resize the cell block.
-      CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
+      CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName, regionId );
       cellBlock.setElementType( elemType );
       cellBlock.resize( LvArray::integerConversion< localIndex >( cellIds.size() ) );
 

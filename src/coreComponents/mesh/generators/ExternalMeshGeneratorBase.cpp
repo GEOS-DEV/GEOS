@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -24,8 +24,6 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
                                                       dataRepository::Group * const parent )
   : MeshGeneratorBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -64,7 +62,7 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
 
 void ExternalMeshGeneratorBase::postInputInitialization()
 {
-  auto const checkSizes = [this]( arrayView1d< string const > from, arrayView1d< string const > to,
+  auto const checkSizes = [this]( string_array const & from, string_array const & to,
                                   string const & fromKey, string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
@@ -76,7 +74,7 @@ void ExternalMeshGeneratorBase::postInputInitialization()
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSString() );
 
-  auto const checkDuplicates = [this]( arrayView1d< string const > v, string const & key )
+  auto const checkDuplicates = [this]( string_array const & v, string const & key )
   {
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
@@ -90,19 +88,19 @@ void ExternalMeshGeneratorBase::postInputInitialization()
   checkDuplicates( m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsInGEOSString() );
 
   // Building the fields mapping from the two separated input/output vectors.
-  auto const buildMapping = [&]( arrayView1d< string const > from,
-                                 arrayView1d< string const > to ) -> std::map< string, string >
+  auto const buildMapping = [&]( string_array const & from,
+                                 string_array const & to ) -> std::map< string, string >
   {
     std::map< string, string > mapping;
-    for( int i = 0; i < from.size(); i++ )
+    for( size_t i = 0; i < from.size(); i++ )
     {
       mapping[from[i]] = to[i];
     }
     return mapping;
   };
 
-  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport.toViewConst(), m_volumicFieldsInGEOS.toViewConst() );
-  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOS.toViewConst() );
+  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport, m_volumicFieldsInGEOS );
+  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS );
 }
 
 } // namespace geos

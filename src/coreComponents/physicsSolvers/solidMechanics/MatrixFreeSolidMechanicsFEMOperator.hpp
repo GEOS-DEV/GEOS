@@ -33,20 +33,20 @@ class MatrixFreeSolidMechanicsFEMOperator : public LinearOperator< ParallelVecto
 {
 private:
   dataRepository::Group & m_meshBodies;
-  map< std::pair< string, string >, array1d< string > > const & m_meshTargets;
+  map< std::pair< string, string >, string_array > const & m_meshTargets;
   DofManager & m_dofManager;
   string const m_finiteElementName;
   int const m_kernelOptimizationOption = 0;
 
 public:
   MatrixFreeSolidMechanicsFEMOperator( DomainPartition & domain,
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
+                                       map< std::pair< string, string >, string_array > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName,
                                        int const kernelOptimizationOption );
 
   MatrixFreeSolidMechanicsFEMOperator( dataRepository::Group & meshBodies,
-                                       map< std::pair< string, string >, array1d< string > > const & meshTargets,
+                                       map< std::pair< string, string >, string_array > const & meshTargets,
                                        DofManager & dofManager,
                                        string const & finiteElementName,
                                        int const kernelOptimizationOption );

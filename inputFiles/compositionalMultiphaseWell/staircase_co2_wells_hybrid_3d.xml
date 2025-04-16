@@ -117,16 +117,16 @@
   <ElementRegions>
     <CellElementRegion
       name="Channel"
-      cellBlocks="{ tetrahedra }"
+      cellBlocks="{ * }"
       materialList="{ fluid1, rock, relperm }"/>
 
     <WellElementRegion
       name="wellRegion1"
-      materialList="{ fluid1, relperm }"/>
+      materialList="{ fluid1 }"/>
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{ fluid1, relperm }"/>
+      materialList="{ fluid1 }"/>
   </ElementRegions>
 
   <NumericalMethods>

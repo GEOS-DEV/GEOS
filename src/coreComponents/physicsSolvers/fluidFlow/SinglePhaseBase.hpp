@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,10 +21,11 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
 
 
 namespace geos
@@ -45,6 +46,8 @@ class ConstitutiveBase;
 class SinglePhaseBase : public FlowSolverBase
 {
 public:
+  using SingleFluidProp = constitutive::SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID, constitutive::singlefluid::LAYOUT_FLUID_DER >;
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -205,25 +208,6 @@ public:
                          arrayView1d< real64 > const & localRhs,
                          string const & jumpDofKey ) = 0;
 
-  /**
-   * @brief assembles the flux terms for all cells for the hydrofracture case
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the system matrix
-   * @param localRhs the system right-hand side vector
-   * @param dR_dAper
-   */
-  virtual void
-  assembleHydrofracFluxTerms( real64 const time_n,
-                              real64 const dt,
-                              DomainPartition const & domain,
-                              DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
-
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "singlePhaseVariables"; }
@@ -306,6 +290,13 @@ public:
   updateMass( ElementSubRegionBase & subRegion ) const;
 
   /**
+   * @brief Template function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  template< integer IS_THERMAL >
+  void updateMass( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Function to update energy
    * @param subRegion subregion that contains the fields
    */
@@ -335,10 +326,14 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
+
+  virtual void initializeThermalState( MeshLevel & mesh, string_array const & regionNames ) override;
+
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
-  void computeHydrostaticEquilibrium();
+  virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) override;
 
   /**
    * @brief Update the cell-wise pressure gradient
@@ -356,15 +351,17 @@ public:
    * @param[in] domain the domain
    * @param[in] localMatrix local system matrix
    * @param[in] localRhs local system right-hand side vector
-   * @detail This function is meant to be called when the flag m_keepFlowVariablesConstantDuringInitStep is on
+   * @detail This function is meant to be called when the flag m_keepVariablesConstantDuringInitStep is on
    *         The main use case is the initialization step in coupled problems during which we solve an elastic problem for a fixed pressure
    */
-  void keepFlowVariablesConstantDuringInitStep( real64 const time,
-                                                real64 const dt,
-                                                DofManager const & dofManager,
-                                                DomainPartition & domain,
-                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                arrayView1d< real64 > const & localRhs ) const;
+  void keepVariablesConstantDuringInitStep( real64 const time,
+                                            real64 const dt,
+                                            DofManager const & dofManager,
+                                            DomainPartition & domain,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs ) const;
+
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
 
 protected:
 
@@ -392,22 +389,14 @@ protected:
    */
   struct FluidPropViews
   {
-    arrayView2d< real64 const > const dens;             ///< density
-    arrayView2d< real64 const > const dDens_dPres;      ///< derivative of density w.r.t. pressure
-    arrayView2d< real64 const > const visc;             ///< viscosity
-    arrayView2d< real64 const > const dVisc_dPres;      ///< derivative of viscosity w.r.t. pressure
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens;             ///< density
+    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDens;             ///< density derivatives
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const visc;             ///< viscosity
+    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dVisc;             ///< viscosity derivatives
     real64 const defaultDensity;                     ///< default density to use for new elements
     real64 const defaultViscosity;                    ///< default vi to use for new elements
   };
 
-  /**
-   * @brief Structure holding views into thermal fluid properties used by the base solver.
-   */
-  struct ThermalFluidPropViews
-  {
-    arrayView2d< real64 const > const dDens_dTemp;      ///< derivative of density w.r.t. temperature
-    arrayView2d< real64 const > const dVisc_dTemp;      ///< derivative of viscosity w.r.t. temperature
-  };
 
   /**
    * @brief Extract properties from a fluid.
@@ -421,7 +410,6 @@ protected:
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
-  virtual ThermalFluidPropViews getThermalFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
@@ -434,36 +422,25 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  geos::constitutive::SingleFluidBase const & fluid =
-    getConstitutiveModel< geos::constitutive::SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
-  //START_SPHINX_INCLUDE_COUPLEDSOLID
-  geos::constitutive::CoupledSolidBase const & solid =
-    getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-  //END_SPHINX_INCLUDE_COUPLEDSOLID
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   if( m_isThermal )
   {
     thermalSinglePhaseBaseKernels::
-      ElementBasedAssemblyKernelFactory::
+      AccumulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
-                                                 fluid,
-                                                 solid,
                                                  localMatrix,
                                                  localRhs );
   }
   else
   {
     singlePhaseBaseKernels::
-      ElementBasedAssemblyKernelFactory::
+      AccumulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
-                                                 fluid,
-                                                 solid,
                                                  localMatrix,
                                                  localRhs );
   }

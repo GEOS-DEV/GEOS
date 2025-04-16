@@ -7,7 +7,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region }"
-      rockToughness="1.0e6"
+      initialRockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
  
@@ -22,7 +22,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ 0_hexahedra, 1_hexahedra }"
+      cellBlocks="{ * }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion

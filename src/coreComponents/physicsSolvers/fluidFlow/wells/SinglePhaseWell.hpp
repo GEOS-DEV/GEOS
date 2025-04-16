@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,8 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_
 
 #include "WellSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 
 namespace geos
 {
@@ -47,7 +47,7 @@ class SinglePhaseWell : public WellSolverBase
 {
 public:
 
-
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -82,7 +82,7 @@ public:
    */
   static string catalogName() { return "SinglePhaseWell"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -160,13 +160,30 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
-  virtual void computePerforationRates( DomainPartition & domain ) override;
+  virtual void computePerforationRates( real64 const & time_n,
+                                        real64 const & dt, DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+
+  /**
+   * @brief function to assemble the linear system matrix and rhs
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -177,11 +194,12 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void assembleFluxTerms( real64 const dt,
-                          DomainPartition const & domain,
-                          DofManager const & dofManager,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                          arrayView1d< real64 > const & localRhs ) override;
+  virtual void assembleFluxTerms( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the accumulation term for all the well elements
@@ -190,10 +208,11 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void assembleAccumulationTerms( DomainPartition const & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) override;
+  virtual void assembleAccumulationTerms( real64 const & time_n,
+                                          real64 const & dt, DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -202,10 +221,10 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs ) override;
+  void assembleVolumeBalanceTerms( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -226,20 +245,16 @@ public:
   /*
    * @brief apply a special treatment to the wells that are shut
    * @param time_n the time at the previous converged time step
-   * @param dt the time step size
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void shutDownWell( real64 const time_n,
-                             real64 const dt,
-                             DomainPartition const & domain,
-                             DofManager const & dofManager,
-                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                             arrayView1d< real64 > const & localRhs ) override;
-
-
+  void shutDownWell( real64 const time_n,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs );
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
@@ -260,13 +275,16 @@ protected:
                    real64 const & dt,
                    DomainPartition & domain ) override;
 
+  /// flag if negative pressure is allowed
+  integer m_allowNegativePressure;
+
 private:
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void initializeWells( DomainPartition & domain ) override;
+  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
 
   /**
    * @brief Make sure that the well constraints are compatible

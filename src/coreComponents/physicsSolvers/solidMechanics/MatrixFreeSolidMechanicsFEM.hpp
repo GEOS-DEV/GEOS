@@ -30,7 +30,7 @@ namespace geos
 
 
 //START_SPHINX_INCLUDE_BEGINCLASS
-class MatrixFreeSolidMechanicsFEM : public SolverBase
+class MatrixFreeSolidMechanicsFEM : public PhysicsSolverBase
 {
 public:
   /// The default nullary constructor is disabled to avoid compiler auto-generation:
@@ -74,7 +74,7 @@ public:
                         arrayView1d< real64 > const & localRhs );
 
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     static constexpr char const * kernelOptimizationOption() { return "kernelOptimizationOption"; }
   } solidMechanicsViewKeys;

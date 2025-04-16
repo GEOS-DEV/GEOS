@@ -80,7 +80,7 @@ using namespace constitutive;
 /* CONSTRUCTOR
    First, let us inspect the constructor of a "MatrixFreeSolidMechanicsFEM" object.
    This constructor does three important things:
-   1 - It constructs an instance of the MatrixFreeSolidMechanicsFEM class (here: using the SolverBase constructor and passing through the
+   1 - It constructs an instance of the MatrixFreeSolidMechanicsFEM class (here: using the PhysicsSolverBase constructor and passing through the
       arguments).
    2 - It sets some default values for the MatrixFreeSolidMechanicsFEM-specific private variables (here: m_fieldName and
       m_timeIntegrationOption).
@@ -94,7 +94,7 @@ using namespace constitutive;
 //START_SPHINX_INCLUDE_CONSTRUCTOR
 MatrixFreeSolidMechanicsFEM::MatrixFreeSolidMechanicsFEM( const string & name,
                                                           Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_fieldName( "totalDisplacement" ),
   m_kernelOptimizationOption( 0 )
 {
@@ -123,9 +123,9 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
   setupDofs( domain, m_dofManager );
   m_dofManager.reorderByRank();
   m_rhs.setName( this->getName() + "/rhs" );
-  m_rhs.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  m_rhs.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
   m_solution.setName( this->getName() + "/solution" );
-  m_solution.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  m_solution.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
   arrayView1d< real64 > const localRhs = m_rhs.open();
   applyTractionBC( time_n + dt, m_dofManager, domain, localRhs );
@@ -210,7 +210,7 @@ void MatrixFreeSolidMechanicsFEM::applyTractionBC( real64 const time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                 string_array const & )
   {
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -262,11 +262,11 @@ void MatrixFreeSolidMechanicsFEM::setupDofs( DomainPartition const & GEOS_UNUSED
 
 void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
 {
-  SolverBase::registerDataOnMesh( meshBodies );
+  PhysicsSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & GEOS_UNUSED_PARAM( regionNames ) )
+                                                     string_array const & GEOS_UNUSED_PARAM( regionNames ) )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
 
@@ -278,7 +278,7 @@ void MatrixFreeSolidMechanicsFEM::registerDataOnMesh( Group & meshBodies )
 
 void MatrixFreeSolidMechanicsFEM::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
-  SolverBase::setConstitutiveNamesCallSuper( subRegion );
+  PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
 
   subRegion.registerWrapper< string >( "solidMaterialNames" ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -286,7 +286,7 @@ void MatrixFreeSolidMechanicsFEM::setConstitutiveNamesCallSuper( ElementSubRegio
     setSizedFromParent( 0 );
 
   string & solidMaterialName = subRegion.getReference< string >( "solidMaterialNames" );
-  solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+  solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
   GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 }
 
@@ -308,7 +308,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & GEOS_UNUSED_PARAM( mesh ),
-                                                                arrayView1d< string const > const & )
+                                                                 string_array const & )
   {
     // auto const & disp = mesh.getNodeManager().getField<fields::solidMechanics::totalDisplacement>();
 //    std::cout<<disp<<std::endl;
@@ -317,7 +317,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
 
   // forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
   //                                                               MeshLevel & mesh,
-  //                                                               arrayView1d< string const > const & )
+  //                                                                string_array const & )
 
   // {
   //   FieldIdentifiers fieldsToBeSync;
@@ -336,7 +336,7 @@ MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
 
 
 //START_SPHINX_INCLUDE_REGISTER
-REGISTER_CATALOG_ENTRY( SolverBase, MatrixFreeSolidMechanicsFEM, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MatrixFreeSolidMechanicsFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
 } /* namespace geos */
 #undef SELECTED_FE_TYPES
