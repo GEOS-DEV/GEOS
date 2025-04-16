@@ -67,7 +67,7 @@ public:
 protected:
 
   /**
-   * @copydoc Group::getTimerCategory
+   * @copydoc Group::postInputInitialization()
    */
   void postInputInitialization() override;
 

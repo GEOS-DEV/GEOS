@@ -137,7 +137,6 @@ public:
    * @see toString( DATASOURCE const & tableData )
    * @param tableData The table data
    * @param outputStream The stream to write the content to.
-   * @return The CSV string representation of the table data.
    */
   void dataToStream( std::ostream & outputStream, TableData const & tableData ) const
   { toStreamImpl( outputStream, dataToString( tableData ), false ); }
