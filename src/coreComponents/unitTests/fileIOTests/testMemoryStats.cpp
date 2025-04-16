@@ -164,7 +164,6 @@ TEST( testXML, testMemoryCSVOutput )
   problem.problemSetup();
 
   // do a MemoryStats test output with a dummy entry
-  // EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
   integer const dummyCycle = 123456;
   string const dummyCycleStr = std::to_string( dummyCycle );
   MemoryStatsOutput & memOutput = problem.getGroupByPath< MemoryStatsOutput >( memOutputPath );
