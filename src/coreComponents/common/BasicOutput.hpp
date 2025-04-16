@@ -24,8 +24,9 @@
 #include "common/logger/Logger.hpp"
 
 /**
- * @brief Verify a opened stream is open.
+ * @brief Verify a opened stream is open, before streaming operations.
  *        Add appropriate messages to the error report when the operation fails.
+ * @note toStream() function should be prefered for few writes, as it verify each stream operation.
  * @tparam StreamType Type of the stream, typically std::ofstream or std::ifstream.
  * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
  * @param stream The stream to verify.
@@ -44,8 +45,9 @@ void validateStream( StreamType const & stream, bool isNewlyOpened, ErrorReporte
 }
 
 /**
- * @brief Verify a non-critical opened stream is open.
+ * @brief Verify a non-critical opened stream is open, before streaming operations.
  *        Add appropriate warning in the log if the operation fails.
+ * @note toStream() function should be prefered for few writes, as it verify each stream operation.
  * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
  * @param stream The stream to verify.
  * @param isNewlyOpened Flag indicating if the stream was just opened before this call
@@ -58,8 +60,9 @@ void validateStream( StreamType const & stream, bool isNewlyOpened )
 }
 
 /**
- * @brief Verify a critical opened stream is open.
+ * @brief Verify a critical opened stream is open, before streaming operations.
  *        Add appropriate errors in the log if the operation fails (terminate GEOS).
+ * @note toStream() function should be prefered for few writes, as it verify each stream operation.
  * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
  * @param stream The stream to verify.
  * @param isNewlyOpened Flag indicating if the stream was just opened before this call
