@@ -194,21 +194,49 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     if( isFieldNameFound == 0 )
     {
-      char const fieldNameNotFoundMessage[] =
-        "\n{}: there is no {} named `{}` under the {} `{}`.\n";
-      string const errorMsg =
-        GEOS_FMT( fieldNameNotFoundMessage,
+      std::ostringstream fieldNameNotFoundMessage;
+      std::string fieldNamePath =
+        GEOS_FMT( "\n{}: there is no {} named `{}` under the {} `{}`.\n",
                   fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
                   FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                  fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+                  fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath());
+
+      fieldNameNotFoundMessage << fieldNamePath;
       if( areAllSetsEmpty )
       {
-        GEOS_LOG_RANK_0( errorMsg );
+        GEOS_LOG_RANK_0( fieldNameNotFoundMessage.str() );
       }
       else
       {
-        GEOS_THROW( errorMsg, InputError );
-      }
+        fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath());
+        std::set< string > fieldNameAvailable;
+        fs.apply< dataRepository::Group >( mesh,
+                                           [&]( FieldSpecificationBase const &,
+                                                string const &,
+                                                SortedArrayView< localIndex const > const &,
+                                                Group & targetObject,
+                                                string const )
+        {
+          ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &targetObject );
+          if( targetOMB )
+          { // filter anything that is not an ObjectManagerBase type
+            // show to the user all fields which are registered under the field-specification object path
+            fieldNameAvailable.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
+          }
+
+        } );
+
+        for( auto it=fieldNameAvailable.begin(); it!=fieldNameAvailable.end(); ++it )
+        {
+          fieldNameNotFoundMessage << *it;
+          if( it != std::prev( fieldNameAvailable.end()))
+          {
+            fieldNameNotFoundMessage << ", ";
+          }
+        }
+
+        GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
+      };
     }
   } );
 }
@@ -219,17 +247,17 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
   {
     if( fs.initialCondition() )
     {
-      fs.apply< Group >( mesh,
-                         [&]( FieldSpecificationBase const & bc,
-                              string const &,
-                              SortedArrayView< localIndex const > const & targetSet,
-                              Group & targetGroup,
-                              string const fieldName )
+      fs.apply< dataRepository::Group >( mesh,
+                                         [&]( FieldSpecificationBase const & bc,
+                                              string const &,
+                                              SortedArrayView< localIndex const > const & targetObject,
+                                              Group & targetGroup,
+                                              string const fieldName )
       {
-        bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+        bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
       } );
     }
   } );
 }
 
-} /* namespace geos */
+}   /* namespace geos */

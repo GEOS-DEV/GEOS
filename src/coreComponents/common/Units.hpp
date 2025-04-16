@@ -50,7 +50,10 @@ inline constexpr double convertCToK( double celsius )
 
 
 /**
- * @brief Enumerator of available unit types. Units are in SI by default.
+ * @brief Enumerator of available unit types for given physical scales. Units are in SI by default.
+ * @todo Current `Unit` enum is short for `PhysicalScaleDefaultUnit`. We should separate `Unit` (`Meters`,
+ *       `celsius`) and `PhysicalScale` (`Distance`, `Temperature`), and add a function
+ *       `Unit getDefaultUnit( PhysicalScale )` to link the physical scales with GEOS default units.
  */
 enum Unit : integer
 {
@@ -165,6 +168,33 @@ constexpr inline std::string_view getSymbol( Unit unit )
     case Transmissibility:  return "(Pa*s*rm3/s)/Pa";
     case MolarVolume:       return "m3/mol";
     case MolarDensity:      return "mol/m3";
+  }
+}
+
+/**
+ * @param unit The unit we want the information.
+ * @return A typical variable symbol of the specified unit that is unique for a given physical scale.
+ */
+constexpr inline std::string_view getVariableSymbol( Unit unit )
+{
+  switch( unit )
+  {
+    default:
+    case Dimensionless:     return "?";
+    case Pressure:          return "P";
+    case Temperature:       return "T";
+    case TemperatureInC:    return "T";
+    case Distance:          return "L";
+    case Time:              return "t";
+    case Viscosity:         return "mu";
+    case Enthalpy:          return "H";
+    case Density:           return "rho";
+    case Solubility:        return "S";
+    case Mass:              return "m";
+    case Mole:              return "n";
+    case MassRate:          return "Qm";
+    case MoleRate:          return "Qn";
+    case Transmissibility:  return "Tr";
   }
 }
 

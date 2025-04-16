@@ -170,9 +170,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                               MeshLevel const & mesh,
-                                                                               string_array const & regionNames )
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel const & mesh,
+                                                                                 string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -289,9 +289,9 @@ assembleCouplingTerms( real64 const time_n,
   if( Base::wellSolver()->useTotalMassEquation() )
     kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                               MeshLevel const & mesh,
-                                                                               string_array const & regionNames )
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel const & mesh,
+                                                                                 string_array const & regionNames )
   {
     integer areWellsShut = 1;
 

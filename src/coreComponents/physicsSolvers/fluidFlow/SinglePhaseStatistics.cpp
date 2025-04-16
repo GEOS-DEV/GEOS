@@ -263,9 +263,6 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
       singPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
       singPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
       singPhaseStatsData.addSeparator();
-      singPhaseStatsData.addSeparator();
-      singPhaseStatsData.addRow( "statistics", CellType::MergeNext, CellType::MergeNext, "value" );
-      singPhaseStatsData.addSeparator();
 
       singPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
       singPhaseStatsData.addSeparator();
