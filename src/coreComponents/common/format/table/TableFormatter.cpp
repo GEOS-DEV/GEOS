@@ -42,18 +42,15 @@ TableFormatter::TableFormatter( TableLayout const & tableLayout ):
  * @param outputStream The stream to write the content to.
  * @param content The string view containing data to be written.
  * @param errorReporter Callable that handles error reporting by collecting messages
- * @param isNewlyOpened Flag indicating if the stream was just opened before this call
  * @note this method may be moved in a common/BasicOutput.xpp as a lot of output stream errors are not verified.
  */
 template< typename ErrorReporter >
-void toStream( std::ostream & outputStream, string_view content,
-               ErrorReporter && errorReporter, bool isNewlyOpened )
+void toStream( std::ostream & outputStream, string_view content, ErrorReporter && errorReporter )
 {
   if( !outputStream.good() )
   {
-    errorReporter( isNewlyOpened ?
-                   "Output stream failed to open.\nPossible reasons: File doesn't exist / permissions / locking issue." :
-                   "Output stream is in invalid state for writing.\nPossible reasons: Stream closed / buffer corruption / previous writing failed." );
+    errorReporter( "Output stream failed to open (File doesn't exist / permissions / locking issue) "
+                   "or is in invalid state (Stream closed / buffer corruption / previous operation failed)." );
     return;
   }
 
@@ -85,18 +82,15 @@ void toStream( std::ostream & outputStream, string_view content,
  * @param content The string view containing data to be written.
  * @param streamName Name of the stream to use in potencial streaming errors
  * @param critical Flag indicating if any writing error is critical
- * @param isNewlyOpened Flag indicating if the stream was just opened before this call
  * @note this method may be moved in a common/BasicOutput.xpp as a lot of output stream errors are not verified.
  */
 template< typename ErrorReporter >
-void toStream( std::ostream & outputStream, string_view content,
-               string_view streamName, bool critical, bool isNewlyOpened )
+void toStream( std::ostream & outputStream, string_view content, string_view streamName, bool critical )
 {
   string msgs;
   toStream( outputStream,
             content,
-            [&]( string_view msg ) { msgs += msg; },
-            isNewlyOpened );
+            [&]( string_view msg ) { msgs += msg; } );
   if( critical )
   {
     GEOS_ERROR( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
@@ -107,10 +101,10 @@ void toStream( std::ostream & outputStream, string_view content,
   }
 }
 
-void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content, bool isNewlyOpened ) const
+void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content ) const
 {
-  //TODO: after PR 3614, we should have m_errors->addError( X ) replacing GEOS_WARNING()
-  toStream( outputStream, content, []( string_view msg ) { GEOS_WARNING( msg ); }, isNewlyOpened );
+  // TODO: after PR 3614, we should have m_errors->addError( X ) replacing GEOS_WARNING()
+  toStream( outputStream, content, []( string_view msg ) { GEOS_WARNING( msg ); } );
 }
 
 ///////////////////////////////////////////////////////////////////////
