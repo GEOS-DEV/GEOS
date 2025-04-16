@@ -132,6 +132,7 @@ jobs:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      HOST_CONFIG: /spack-generated.cmake
       DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
       RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false

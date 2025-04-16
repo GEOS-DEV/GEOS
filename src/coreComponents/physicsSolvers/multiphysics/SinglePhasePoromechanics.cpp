@@ -22,9 +22,11 @@
 #include "SinglePhasePoromechanics.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/solid/PorousDamageSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -45,9 +47,15 @@ using namespace stabilization;
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
                                                                                      Group * const parent )
-  : Base( name, parent )
+  : Base( name, parent ),
+  m_damageFlag()
 {
   Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
+
+  this->registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether a damage solid model is used" );
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
@@ -273,15 +281,30 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
 
   set< string > poromechanicsRegionNames;
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                               MeshLevel & mesh,
-                                                                               string_array const & regionNames )
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 string_array const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
     string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-    if( this->m_isThermal )
+    if( m_damageFlag )
+    {
+      poromechanicsMaxForce =
+        this->template assemblyLaunch< constitutive::PorousDamageSolidBase,
+                                       poromechanicsDamageKernels::SinglePhasePoromechanicsDamageKernelFactory >( mesh,
+                                                                                                                  dofManager,
+                                                                                                                  regionNames,
+                                                                                                                  viewKeyStruct::porousMaterialNamesString(),
+                                                                                                                  localMatrix,
+                                                                                                                  localRhs,
+                                                                                                                  dt,
+                                                                                                                  flowDofKey,
+                                                                                                                  this->m_performStressInitialization,
+                                                                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
+    else if( this->m_isThermal )
     {
       poromechanicsMaxForce =
         this->template assemblyLaunch< constitutive::PorousSolidBase,
