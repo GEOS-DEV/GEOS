@@ -648,15 +648,14 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
         GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
         return ptscotch::partition( graph.toViewConst(), numRanks, comm );
 #else
-  GEOS_THROW( "Currently GEOSX must be built with ParMETIS support (ENABLE_PARMETIS=ON)"
-              "to use any graph partitioning method for parallel mesh distribution", InputError );
+        GEOS_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
 #endif
-
-  switch( method )
-  {
-    case PartitionMethod::parmetis:
-    {
-      return parmetis::partition( graph.toViewConst(), elemDist, numRanks, comm, numRefinements );
+      }
+      default:
+      {
+        GEOS_THROW( "Unknown partition method", InputError );
+      }
+    }
   }();
 
   // Extract the partition information related to the fracture mesh.
@@ -942,16 +941,7 @@ redistributeMeshes( integer const logLevel,
 
   AllMeshes result;
   // Redistribute the mesh again using higher-quality graph partitioner
-  if( !structuredIndexAttributeName.empty() )
-  {
-    mesh = redistributeByAreaGraphAndLayer( *mesh,
-                                            method,
-                                            structuredIndexAttributeName,
-                                            comm,
-                                            numPartZ,
-                                            partitionRefinement - 1 );
-  }
-  else if( partitionRefinement > 0 )
+  if( partitionRefinement > 0 )
   {
     AllMeshes input( mesh, namesToFractures );
     result = redistributeByCellGraph( input, method, comm, partitionRefinement - 1 );
@@ -2110,35 +2100,6 @@ real64 writeNodes( integer const logLevel,
   return LvArray::tensorOps::l2Norm< 3 >( xMax );
 }
 
-void writeStructuredIndex( vtkDataSet & mesh,
-                           string const & indexArrayName,
-                           Span< vtkIdType const > const cellIds,
-                           CellBlock & cellBlock )
-{
-  GEOS_ASSERT_EQ( LvArray::integerConversion< localIndex >( cellIds.size() ), cellBlock.size() );
-
-  vtkDataArray * const srcDataArray = mesh.GetCellData()->GetArray( indexArrayName.c_str() );
-  GEOS_THROW_IF( srcDataArray == nullptr, "Structured index array not found", InputError );
-  integer const numComp = srcDataArray->GetNumberOfComponents();
-
-  cellBlock.addProperty< fields::StructuredIndex::type >( fields::StructuredIndex::key() )
-    .resizeDimension< 1 >( numComp );
-  auto const dstIndex =
-    cellBlock.getReference< fields::StructuredIndex::type >( fields::StructuredIndex::key() ).toView();
-
-  vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Integrals >::Execute( srcDataArray, [&]( auto const * const srcArray )
-  {
-    vtkDataArrayAccessor< TYPEOFPTR( srcArray ) > const srcIndex( srcArray );
-    forAll< parallelHostPolicy >( cellBlock.size(), [numComp, dstIndex, srcIndex, cellIds]( localIndex const i )
-    {
-      for( integer c = 0; c < numComp; ++c )
-      {
-        dstIndex( i, c ) = static_cast< fields::StructuredIndex::dataType >( srcIndex.Get( cellIds[i], c ) );
-      }
-    } );
-  } );
-}
-
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
                  vtk::CellMapType const & cellMap,
@@ -2168,11 +2129,6 @@ void writeCells( integer const logLevel,
       cellBlock.resize( LvArray::integerConversion< localIndex >( cellIds.size() ) );
 
       vtk::fillCellBlock( mesh, cellIds, cellBlock );
-
-      if( !structuredIndexAttributeName.empty() )
-      {
-        writeStructuredIndex( mesh, structuredIndexAttributeName, cellIds, cellBlock );
-      }
     }
   }
 }

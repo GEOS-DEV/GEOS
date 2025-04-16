@@ -266,13 +266,11 @@ real64 writeNodes( integer const logLevel,
  * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
- * @param[in] structuredIndexAttributeName name of the VTK cell array to use as "structured index" attribute (if non-empty)
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 vtk::CellMapType const & cellMap,
-                 string const & structuredIndexAttributeName,
+                 const geos::vtk::CellMapType & cellMap,
                  CellBlockManager & cellBlockManager );
 
 /**

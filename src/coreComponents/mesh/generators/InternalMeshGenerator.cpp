@@ -919,13 +919,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                   {
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
-
-                  // Store original cartesian IJK indices for later use
-                  for( int dim = 0; dim < m_dim; ++dim )
-                  {
-                    cartIndex[localElemIndex][dim] = globalIJK[dim];
-                  }
-
                   ++localElemIndex;
                 }
               }

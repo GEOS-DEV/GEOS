@@ -141,6 +141,9 @@ private:
   vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
+  string m_attributeName;
+
+  /// Name of VTK dataset attribute used to mark regions
   string m_regionAttributeName;
 
   /// Name of VTK cell attribute storing (semi-)structured cell index, if available

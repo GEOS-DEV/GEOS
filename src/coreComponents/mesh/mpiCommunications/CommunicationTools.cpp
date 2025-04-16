@@ -947,7 +947,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( string_array const & fiel
     neighbor.mpiISendReceiveBufferSizes( icomm.commID(),
                                          icomm.mpiSendBufferSizeRequest( neighborIndex ),
                                          icomm.mpiRecvBufferSizeRequest( neighborIndex ),
-                                         MPI_COMM_GEOSX );
+                                         MPI_COMM_GEOS );
 
     neighbor.resizeSendBuffer( icomm.commID(), bufferSize );
   }
@@ -1147,30 +1147,6 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   return allDone;
 }
 
-void CommunicationTools::finalizeUnpack( ObjectManagerBase & manager,
-                                         std::vector< NeighborCommunicator > & neighbors,
-                                         MPI_iCommData & icomm,
-                                         bool onDevice,
-                                         parallelDeviceEvents & events )
-{
-  //GEOS_MARK_FUNCTION;
-
-  // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( manager, neighbors, icomm, onDevice, events ) );
-  if( onDevice )
-  {
-    waitAllDeviceEvents( events );
-  }
-
-  MpiWrapper::waitAll( icomm.size(),
-                       icomm.mpiSendBufferSizeRequest(),
-                       icomm.mpiSendBufferSizeStatus() );
-
-  MpiWrapper::waitAll( icomm.size(),
-                       icomm.mpiSendBufferRequest(),
-                       icomm.mpiSendBufferStatus() );
-}
-
 void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          std::vector< NeighborCommunicator > & neighbors,
                                          MPI_iCommData & icomm,
@@ -1197,16 +1173,6 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
 
 }
 
-void CommunicationTools::synchronizeUnpack( ObjectManagerBase & manager,
-                                            std::vector< NeighborCommunicator > & neighbors,
-                                            MPI_iCommData & icomm,
-                                            bool onDevice )
-{
-  //GEOS_MARK_FUNCTION;
-  parallelDeviceEvents events;
-  finalizeUnpack( manager, neighbors, icomm, onDevice, events );
-}
-
 void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
@@ -1215,19 +1181,6 @@ void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
   GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
   finalizeUnpack( mesh, neighbors, icomm, onDevice, events );
-}
-
-void CommunicationTools::synchronizeFields( string_array const & fieldNames,
-                                            ObjectManagerBase & manager,
-                                            std::vector< NeighborCommunicator > & neighbors,
-                                            bool onDevice )
-{
-  GEOS_MARK_FUNCTION;
-  MPI_iCommData icomm( getCommID() );
-  icomm.resize( neighbors.size() );
-  synchronizePackSendRecvSizes( fieldNames, manager, neighbors, icomm, onDevice );
-  synchronizePackSendRecv( fieldNames, manager, neighbors, icomm, onDevice );
-  synchronizeUnpack( manager, neighbors, icomm, onDevice );
 }
 
 void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeSync,

@@ -151,7 +151,7 @@ void DofManager::createIndexArray( FieldDescription const & field )
   // synchronize across ranks
   string_array fieldNames;
   fieldNames.emplace_back( field.key );
-  CommunicationTools::getInstance().synchronizeFields( fieldNames, *field.manager, m_domain->getNeighbors(), false );
+  // CommunicationTools::getInstance().synchronizeFields( fieldNames, *field.manager, m_domain->getNeighbors(), false );
 }
 
 void DofManager::addField( string const & fieldName,
@@ -226,7 +226,7 @@ void DofManager::reorderByRank()
 
     string_array fieldNames;
     fieldNames.emplace_back( field.key );
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, *field.manager, m_domain->getNeighbors(), false );
+    // CommunicationTools::getInstance().synchronizeFields( fieldNames, *field.manager, m_domain->getNeighbors(), false );
   }
 }
 

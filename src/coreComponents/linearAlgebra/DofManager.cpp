@@ -441,7 +441,7 @@ void DofManager::addField( string const & fieldName,
 {
   GEOS_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   GEOS_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
-  GEOS_ERROR_IF_GT_MSG( components, maxNumComp, "Number of components limit exceeded" );
+  GEOS_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
 
   std::vector< FieldSupport > processedSupports = processFieldSupportList( *m_domain, regions );
 

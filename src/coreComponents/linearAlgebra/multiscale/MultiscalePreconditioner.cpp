@@ -87,7 +87,7 @@ void MultiscalePreconditioner< LAI >::logMessage( integer const minLevel, string
 template< typename LAI >
 void MultiscalePreconditioner< LAI >::computeLevel( integer const level ) const
 {
-  CALI_CXX_MARK_SCOPE( GEOS_FMT( "Level {}", level ).c_str() );
+  //CALI_CXX_MARK_SCOPE( GEOS_FMT( "Level {}", level ).c_str() ); disable for now
   logMessage( 3, GEOS_FMT( "computing operators for level {}", level ) );
   m_levels[level].builder->compute( *m_levels[std::max( level - 1, 0 )].matrix );
 }
@@ -249,7 +249,7 @@ void MultiscalePreconditioner< LAI >::apply( Vector const & src,
     GEOS_MARK_SCOPE( v-cycle down phase );
     for( int levelIndex = 0; levelIndex < numLevels - 1; ++levelIndex )
     {
-      CALI_CXX_MARK_SCOPE( GEOS_FMT( "Level {}", levelIndex ).c_str() );
+      // CALI_CXX_MARK_SCOPE( GEOS_FMT( "Level {}", levelIndex ).c_str() ); disable for now
       LevelData const & fine = m_levels[levelIndex];
       LevelData const & coarse = m_levels[levelIndex + 1];
 
@@ -281,7 +281,7 @@ void MultiscalePreconditioner< LAI >::apply( Vector const & src,
     GEOS_MARK_SCOPE( v-cycle up phase );
     for( int levelIndex = numLevels - 2; levelIndex >= 0; --levelIndex )
     {
-      CALI_CXX_MARK_SCOPE( GEOS_FMT( "Level {}", levelIndex ).c_str() );
+      // CALI_CXX_MARK_SCOPE( GEOS_FMT( "Level {}", levelIndex ).c_str() ); disable for now
       LevelData const & fine = m_levels[levelIndex];
       LevelData const & coarse = m_levels[levelIndex + 1];
 

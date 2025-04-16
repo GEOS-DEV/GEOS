@@ -46,10 +46,10 @@ class DofManager
 public:
 
   /// Maximum number of components in a field
-  static int constexpr maxNumComp = 32;
+  static int constexpr MAX_COMP = 32;
 
   /// Type of component mask used by DofManager
-  using CompMask = ComponentMask< maxNumComp >;
+  using CompMask = ComponentMask< MAX_COMP >;
 
   /**
    * @brief Describes a selection of components from a DoF field.
@@ -404,7 +404,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( maxNumComp, true ) ) const;
+                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
    * @brief Add values from LA vectors to simulation data arrays.
@@ -435,7 +435,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( maxNumComp, true ) ) const;
+                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
    * @brief Add values from a simulation data array to a DOF vector.
@@ -450,7 +450,7 @@ public:
                          string const & srcFieldName,
                          string const & dstFieldName,
                          real64 scalingFactor,
-                         CompMask mask = CompMask( maxNumComp, true ) ) const;
+                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
    * @brief Create a dof selection by filtering out excluded components
