@@ -137,24 +137,8 @@ public:
   static void setOutputDirectory( string const & outputDir );
 
 protected:
-
-  /**
-   * @brief struct to serve as a container for variable strings and keys
-   */
-  struct viewKeyStruct
-  {
-    /// @return Key for input variable names array
-    static constexpr char const * inputVarNamesString() { return "inputVarNames"; }
-
-    /// @return Key for input variable scaling array
-    static constexpr char const * inputVarScaleString() { return "inputVarScale"; }
-  };
-
   /// names for the input variables
-  array1d< string > m_inputVarNames;
-
-  /// scaling for input variables
-  array1d< real64 > m_inputVarScale;
+  string_array m_inputVarNames;
 
   /**
    * @brief Method to apply an function with an arbitrary type of output
@@ -217,35 +201,23 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
   }
 
   // Make sure the inputs do not exceed the maximum length
-  GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS, "Function input size exceeded" );
-  GEOS_ERROR_IF_GT_MSG( totalVarSize, m_inputVarScale.size(), "Insufficient number of  scale values provided" );
   GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS,
                         getDataContext() << ": Function input size exceeded" );
 
   // Make sure the result / set size match
   GEOS_ERROR_IF_NE_MSG( result.size(), set.size(),
                         getDataContext() << ": To apply a function to a set, the size of the result and set must match" );
-
-  arrayView1d< real64 const > const scale = m_inputVarScale.toViewConst();
-  bool const scaleUsed = std::any_of( scale.begin(), scale.end(), []( real64 const v ){ return !isEqual( v, 1.0 ); } );
+  
   forAll< POLICY >( set.size(), [=]( localIndex const i )
   {
     localIndex const index = set[i];
     real64 input[MAX_VARS]{};
-    int inputIndex = 0;
+    int offset = 0;
     for( integer varIndex = 0; varIndex < numVars; ++varIndex )
     {
-      for( localIndex compIndex = 0; compIndex < varSize[varIndex]; ++compIndex, ++inputIndex )
+      for( localIndex compIndex = 0; compIndex < varSize[varIndex]; ++compIndex )
       {
-        localIndex const varOffset = index * varStride[varIndex][0] + compIndex * varStride[varIndex][1];
-        if( scaleUsed )
-        {
-          input[inputIndex] = inputPtrs[varIndex][varOffset] * scale[inputIndex];
-        }
-        else
-        {
-          input[inputIndex] = inputPtrs[varIndex][varOffset];
-        }
+        input[offset++] = inputPtrs[varIndex][index * varStride[varIndex][0] + compIndex * varStride[varIndex][1]];
       }
     }
     result[i] = static_cast< LEAF const * >( this )->evaluate( input );
