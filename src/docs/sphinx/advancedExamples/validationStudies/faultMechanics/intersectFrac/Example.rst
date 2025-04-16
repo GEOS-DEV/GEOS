@@ -170,7 +170,7 @@ The next step is to specify fields, including:
   - The boundary conditions (traction loaded on the vertical fracture and the constraints of the outer boundaries have to be set).
 
 In this tutorial, we specify an uniaxial vertical stress ``SigmaY`` (:math:`\sigma_y` = -1.0e8 Pa). 
-A compressive traction ``NormalTraction`` (:math:`P_in` = -1.0e8 Pa) is applied at the surface of vertical fracture.
+A compressive traction ``NormalTraction`` (:math:`P_{in}` = -1.0e8 Pa) is applied at the surface of vertical fracture.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
