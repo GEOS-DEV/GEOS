@@ -281,9 +281,9 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
 
   set< string > poromechanicsRegionNames;
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                               MeshLevel & mesh,
-                                                                               string_array const & regionNames )
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 string_array const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 

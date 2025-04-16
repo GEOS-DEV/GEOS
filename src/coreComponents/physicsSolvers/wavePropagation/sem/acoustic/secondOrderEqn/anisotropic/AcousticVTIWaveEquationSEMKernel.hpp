@@ -515,7 +515,7 @@ public:
                               StackVariables & stack ) const
   {
     // Pseudo Stiffness xy
-    m_finiteElementSpace.computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnessxyTerm<>( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       stack.stiffnessVectorLocal_p[ i ] += localIncrement_p;
@@ -525,7 +525,7 @@ public:
 
     // Pseudo-Stiffness z
 
-    m_finiteElementSpace.computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnesszTerm<>( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
       stack.stiffnessVectorLocal_p[ i ] += localIncrement_p;

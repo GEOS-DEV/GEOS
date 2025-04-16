@@ -145,7 +145,7 @@ public:
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
                                                                                  string_array const & regionNames )
     {
@@ -333,9 +333,9 @@ public:
     }
 
     // Step 2: loop over target regions of solver, and tag the elements belonging to the stabilization regions
-    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 string_array const & targetRegionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & mesh,
+                                                                                   string_array const & targetRegionNames )
     {
       //keep only target regions in filter
       string_array filteredTargetRegionNames;
@@ -387,9 +387,9 @@ public:
 
   void updateBulkDensity( DomainPartition & domain )
   {
-    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
@@ -579,9 +579,9 @@ protected:
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
 
-      this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                  MeshLevel & mesh,
-                                                                                  string_array const & regionNames )
+      this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                    MeshLevel & mesh,
+                                                                                    string_array const & regionNames )
       {
 
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -610,9 +610,9 @@ protected:
    */
   void averageMeanTotalStressIncrement( DomainPartition & domain )
   {
-    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
