@@ -30,7 +30,8 @@
  * @tparam StreamType Type of the stream, typically std::ofstream or std::ifstream.
  * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
  * @param stream The stream to verify.
- * @param errorReporter Callable that handles error reporting by collecting messages
+ * @param errorReporter Callable that handles error reporting by collecting messages, responsible to
+ *                      mention the stream description (filename typically).
  * @param isNewlyOpened Flag indicating if the stream was just opened before this call
  */
 template< typename StreamType, typename ErrorReporter >
@@ -53,10 +54,13 @@ void validateStream( StreamType const & stream, bool isNewlyOpened, ErrorReporte
  * @param isNewlyOpened Flag indicating if the stream was just opened before this call
  */
 template< typename StreamType >
-void validateStream( StreamType const & stream, bool isNewlyOpened )
+void validateStream( StreamType const & stream, string_view fileName, bool isNewlyOpened )
 {
-  validateStream( stream, isNewlyOpened,
-                  [&]( std::string_view msg ) { GEOS_WARNING( msg ); } );
+  auto const errorReporter = [=]( std::string_view msg )
+  {
+    GEOS_WARNING( GEOS_FMT( "Error with stream '{}':\n{}", fileName, msg ) );
+  };
+  validateStream( stream, isNewlyOpened, errorReporter );
 }
 
 /**
@@ -68,10 +72,13 @@ void validateStream( StreamType const & stream, bool isNewlyOpened )
  * @param isNewlyOpened Flag indicating if the stream was just opened before this call
  */
 template< typename StreamType >
-void validateCriticalStream( StreamType const & stream, bool isNewlyOpened )
+void validateCriticalStream( StreamType const & stream, string_view fileName, bool isNewlyOpened )
 {
-  validateStream( stream, isNewlyOpened,
-                  [&]( std::string_view msg ) { GEOS_ERROR( msg ); } );
+  auto const errorReporter = [=]( std::string_view msg )
+  {
+    GEOS_ERROR( GEOS_FMT( "Error with stream '{}':\n{}", fileName, msg ) );
+  };
+  validateStream( stream, isNewlyOpened, errorReporter );
 }
 
 /**
