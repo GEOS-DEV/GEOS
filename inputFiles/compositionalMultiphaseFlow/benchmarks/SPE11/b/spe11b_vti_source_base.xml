@@ -1,0 +1,287 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compositionalMultiphaseFlow"
+      targetRegions="{ reservoir1, reservoir2, reservoir3, reservoir4, reservoir5, reservoir6, reservoir7 }"
+      discretization="fluidTPFA"
+      temperature="333.15"
+      isThermal="1"
+      initialDt="1e2"
+      targetPhaseVolFractionChangeInTimeStep="0.2"      
+      maxCompFractionChange="0.2"
+      logLevel="1"
+      useMass="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="100"
+        maxSubSteps="1000"
+        lineSearchAction="Attempt"
+        lineSearchStartingIteration="5"
+        timeStepIncreaseIterLimit="0.3"
+        timeStepDecreaseIterLimit="0.6"
+        newtonMaxIter="15" />
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-5"
+        krylovMaxIter="100"
+        logLevel="1" />        
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+
+
+  <ElementRegions>
+    <CellElementRegion
+      name="reservoir1"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ fluid, rock, relperm1, cappres1, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir2"
+      cellBlocks="{ 2_hexahedra, 12_hexahedra }"
+      materialList="{ fluid, rock, relperm2, cappres2, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir3"
+      cellBlocks="{ 3_hexahedra, 13_hexahedra }"
+      materialList="{ fluid, rock, relperm3, cappres3, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir4"
+      cellBlocks="{ 4_hexahedra, 14_hexahedra }"
+      materialList="{ fluid, rock, relperm4, cappres4, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir5"
+      cellBlocks="{ 5_hexahedra, 15_hexahedra }"
+      materialList="{ fluid, rock, relperm5, cappres5, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir6"
+      cellBlocks="{ 6_hexahedra }"
+      materialList="{ fluid, rock, relperm6, cappres6, thermalCond, diffusion }" />
+    <CellElementRegion
+      name="reservoir7"
+      cellBlocks="{ 7_hexahedra }"
+      materialList="{ fluid, rock, relperm7, cappres7, thermalCond, noDiffusion }" />
+  </ElementRegions>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA" />
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Constitutive>
+    <CO2BrinePhillipsThermalFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      logLevel="0"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ tables/pvtgas_thermal.txt, tables/pvtliquid_thermal.txt }"
+      flashModelParaFile="tables/co2flash_thermal.txt" />
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="2.125e6"
+      referenceTemperature="313"
+      referenceInternalEnergy="2.125e7" />
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy" />
+    <NullModel
+      name="nullSolid" />
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="3e7"
+      compressibility="1e-12" />
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }" />
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ gas, water }"
+      defaultPhaseDiffusivityMultipliers="{ 20, 1 }"
+      diffusivityComponents="{ 1e-9, 1e-9, 1e-9 }" />
+    <ConstantDiffusion
+      name="noDiffusion"
+      phaseNames="{ gas, water }"
+      defaultPhaseDiffusivityMultipliers="{ 0, 0 }"
+      diffusivityComponents="{ 0, 0, 0 }" />
+
+    <MultiPhaseVolumeWeightedThermalConductivity
+      name="thermalCond"
+      phaseNames="{ gas, water }"
+      phaseThermalConductivity="{ 0.09, 0.65 }"
+      rockThermalConductivityComponents="{ 1.25, 1.25, 1.25 }" />
+
+    <!-- kr per facies -->
+    <TableRelativePermeability
+      name="relperm1"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable1, gasRelativePermeabilityTable1 }" />
+    <TableRelativePermeability
+      name="relperm2"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable2, gasRelativePermeabilityTable2 }" />
+    <TableRelativePermeability
+      name="relperm3"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable3, gasRelativePermeabilityTable3 }" />
+    <TableRelativePermeability
+      name="relperm4"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable4, gasRelativePermeabilityTable4 }" />
+    <TableRelativePermeability
+      name="relperm5"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable5, gasRelativePermeabilityTable5 }" />
+    <TableRelativePermeability
+      name="relperm6"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable6, gasRelativePermeabilityTable6 }" />
+    <TableRelativePermeability
+      name="relperm7"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable7, gasRelativePermeabilityTable7 }" />
+
+    <!-- cap per facies -->
+    <TableCapillaryPressure
+      name="cappres1"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable1" />
+    <TableCapillaryPressure
+      name="cappres2"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable2" />
+    <TableCapillaryPressure
+      name="cappres3"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable3" />
+    <TableCapillaryPressure
+      name="cappres4"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable4" />
+    <TableCapillaryPressure
+      name="cappres5"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable5" />
+    <TableCapillaryPressure
+      name="cappres6"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable6" />
+    <TableCapillaryPressure
+      name="cappres7"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="cappresTable7" />
+  </Constitutive>
+
+ <!-- SPHINX_EQUIL -->
+  <FieldSpecifications>
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"
+      datumElevation="300"
+      datumPressure="3e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable" />
+    <!-- SPHINX_EQUIL_END -->
+
+    <!-- SPHINX_SOURCES -->
+    <FieldSpecification
+      beginTime="0.01"
+      endTime="1.5768e9"
+      name="sourceTemperature1"
+      setNames="{ thermalSource1 }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="283.15" />
+    <SourceFlux
+      name="sourceTerm1"
+      objectPath="ElementRegions"
+      component="0"
+      functionName="totalRateTable1"
+      scale="1"
+      setNames="{ thermalSource1 }"
+      logLevel="0" />
+
+    <FieldSpecification
+      beginTime="7.8840000001e8"
+      endTime="1.5768e9"
+      name="sourceTemperature2"
+      setNames="{ thermalSource2 }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="283.15" />
+    <SourceFlux
+      name="sourceTerm2"
+      objectPath="ElementRegions"
+      component="0"
+      functionName="totalRateTable2"
+      scale="1"
+      setNames="{ thermalSource2 }"
+      logLevel="0" />
+  </FieldSpecifications>
+  <!-- SPHINX_SOURCES_END -->
+
+  <!-- SPHINX_FUNCTIONS -->
+  <Functions>
+    <TableFunction
+      name="initCO2CompFracTable"
+      coordinates="{ 0, 1200 }"
+      values="{ 0.0, 0.0 }" />
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinates="{ 0, 1200 }"
+      values="{ 1.0, 1.0 }" />
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ 0, 1200 }"
+      values="{ 343.15, 313.15 }" />
+   
+    <TableFunction
+      name="totalRateTable1"
+      inputVarNames="{ time }"
+      coordinates="{ -1e11, 0, 7.884e8, 1.5768e9, 1.576800001e9, 3.153600e10 }"
+      values="{ 0, -0.035, -0.035, -0.035, 0, 0}"
+      interpolation="lower" />
+    <TableFunction
+      name="totalRateTable2"
+      inputVarNames="{ time }"
+      coordinates="{ -1e11, 0, 7.8839999e8, 7.884e8, 1.5768e9, 1.576800001e9, 3.153600e10 }"
+      values="{ 0., 0., 0., -0.035, -0.035, 0, 0}"
+      interpolation="lower" />
+  </Functions>
+ <!-- SPHINX_FUNCTIONS_END -->
+
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1" />
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      outputRegionType="cell"	  
+      name="vtkOutput" />
+    <Restart
+      name="restartOutput" />
+  </Outputs>
+
+ <!-- SPHINX_INCLUSION -->
+  <Included>
+    <File name="include/kr.xml" />
+    <File name="include/properties_vti.xml" />
+    <File name="include/dirichlet_boundary_vti.xml" />
+  </Included>
+  <!-- SPHINX_INCLUSION_END -->
+
+</Problem>

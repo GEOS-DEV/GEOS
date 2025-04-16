@@ -1,0 +1,91 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Functions>
+    <TableFunction
+      name="waterRelativePermeabilityTable1"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_1.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_1.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable1"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_1.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_1.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable2"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_2.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_2.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable2"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_2.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_2.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable3"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_3.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_3.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable3"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_3.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_3.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable4"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_4.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_4.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable4"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_4.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_4.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable5"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_5.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_5.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable5"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_5.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_5.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable6"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_6.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_6.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable6"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_6.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_6.txt"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable7"
+      coordinateFiles="{ ../tables/waterSaturation_spe11b_7.txt }"
+      voxelFile="../tables/waterRelperm_spe11b_7.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable7"
+      coordinateFiles="{ ../tables/gasSaturation_spe11b_7.txt }"
+      voxelFile="../tables/gasRelperm_spe11b_7.txt"/>
+    
+    <TableFunction
+      name="cappresTable1"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_1.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_1.txt"/>
+    <TableFunction
+      name="cappresTable2"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_2.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_2.txt"/>
+    <TableFunction
+      name="cappresTable3"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_3.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_3.txt"/>
+    <TableFunction
+      name="cappresTable4"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_4.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_4.txt"/>
+    <TableFunction
+      name="cappresTable5"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_5.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_5.txt"/>
+    <TableFunction
+      name="cappresTable6"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_6.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_6.txt"/>
+    <TableFunction
+      name="cappresTable7"
+      coordinateFiles="{ ../tables/waterPCSaturation_spe11b_7.txt}"
+      voxelFile="../tables/waterCapPres_spe11b_7.txt"/>    
+    
+  </Functions>
+</Problem>

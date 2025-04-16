@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="spe11b_vti_source_base.xml" />
+  </Included>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      file="mesh/spe11b_00840x00120.vti"
+      regionAttribute="faciesIndex"
+      partitionRefinement="5"
+      logLevel="5">
+    </VTKMesh>
+  </Mesh>
+
+<!-- SPHINX_GEOM-->
+  <Geometry>
+    <Box
+      name="top"
+      xMin="{   -0.01, -0.01, 1189.99 }"
+      xMax="{ 8400.01,  1.01, 1200.01 }" />
+    <Box
+      name="bottom"
+      xMin="{   -0.01, -0.01, -0.01 }"
+      xMax="{ 8400.01,  1.01, 10.01 }" />
+      <Box
+       name="thermalSource1"
+       xMin="{ 2699.99, -0.01, 299.99 }"
+       xMax="{ 2710.01,  1.01, 310.01 }" />
+      <Box
+       name="thermalSource2"
+       xMin="{ 5099.99, -0.01, 699.99 }"
+       xMax="{ 5110.01,  1.01, 710.01 }" />
+  </Geometry>
+  <!-- SPHINX_GEOM_END-->
+
+  <Functions>
+    <TableFunction
+      name="bufferVolume"
+      inputVarNames="{ time }"
+      coordinates="{ -1e11 }"
+      values="{ 500100 }"
+      interpolation="lower" />
+  </Functions>
+
+
+   <!-- SPHINX_EVENTS -->
+  <Events
+    minTime="-31536000000"
+    maxTime="31536000000">
+
+    <PeriodicEvent
+      name="solverApplications0"
+      beginTime="-31536000000"
+      maxEventDt="157680000"
+      endTime="0"
+      target="/Solvers/compositionalMultiphaseFlow" />
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0"
+      maxEventDt="2.6e5"
+      endTime="7.884e5"
+      target="/Solvers/compositionalMultiphaseFlow" />
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="7.884e5"
+      maxEventDt="1.3e6"
+      target="/Solvers/compositionalMultiphaseFlow" />
+   <!-- SPHINX_EVENTS_END -->
+
+    <PeriodicEvent
+          name="outputs1"
+          beginTime="0"
+          endTime="3153600000"
+          timeFrequency="315360000"
+          targetExactTimestep="1"
+          target="/Outputs/vtkOutput" />
+    <PeriodicEvent
+            name="outputs2"
+            beginTime="3153600000"
+            timeFrequency="3153600000"
+            targetExactTimestep="1"
+            target="/Outputs/vtkOutput" />
+  </Events>
+  
+</Problem>
