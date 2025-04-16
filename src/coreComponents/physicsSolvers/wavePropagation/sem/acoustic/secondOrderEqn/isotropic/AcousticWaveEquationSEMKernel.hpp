@@ -189,7 +189,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
+    m_finiteElementSpace.computeStiffnessTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
       real32 const localIncrement = stack.invDensity*val*m_p_n[m_elemsToNodes( k, j )];
       stack.stiffnessVectorLocal[ i ] += localIncrement;

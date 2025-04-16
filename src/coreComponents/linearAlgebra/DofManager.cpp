@@ -1291,7 +1291,7 @@ void vectorToFieldKernel( ObjectManagerBase & GEOS_UNUSED_PARAM( manager ),
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
+        FIELD_OP::SpecifyFieldValue( field,
                                               i,
                                               fieldComp++,
                                               scalingFactor * localVector[lid + vecComp] );
@@ -1322,7 +1322,7 @@ void vectorToFieldKernel( ObjectManagerBase & manager,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
+        FIELD_OP::SpecifyFieldValue( field,
                                               i,
                                               fieldComp++,
                                               scalingFactor[i] * localVector[lid + vecComp] );
@@ -1382,7 +1382,7 @@ void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template readFieldValue( field,
+        FIELD_OP::readFieldValue( field,
                                            i,
                                            fieldComp++,
                                            localVector[lid + vecComp] );

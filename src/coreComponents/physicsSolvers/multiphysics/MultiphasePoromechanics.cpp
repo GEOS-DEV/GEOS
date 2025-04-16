@@ -169,7 +169,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
 
   set< string > poromechanicsRegionNames;
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
                                                                                string_array const & regionNames )
   {

@@ -139,7 +139,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
                                                                                string_array const & regionNames )
   {
@@ -244,7 +244,7 @@ assembleCouplingTerms( real64 const time_n,
                            this->getCatalogName(), this->getName() ),
                  std::runtime_error );
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
                                                                                string_array const & regionNames )
   {

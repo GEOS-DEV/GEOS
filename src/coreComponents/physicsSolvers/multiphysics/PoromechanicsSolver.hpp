@@ -145,7 +145,7 @@ public:
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
                                                                                  string_array const & regionNames )
     {
@@ -333,7 +333,7 @@ public:
     }
 
     // Step 2: loop over target regions of solver, and tag the elements belonging to the stabilization regions
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
                                                                                  string_array const & targetRegionNames )
     {
@@ -387,7 +387,7 @@ public:
 
   void updateBulkDensity( DomainPartition & domain )
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
                                                                                 string_array const & regionNames )
     {
@@ -579,7 +579,7 @@ protected:
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
 
-      this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+      this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
                                                                                   string_array const & regionNames )
       {
@@ -610,7 +610,7 @@ protected:
    */
   void averageMeanTotalStressIncrement( DomainPartition & domain )
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
                                                                                 string_array const & regionNames )
     {

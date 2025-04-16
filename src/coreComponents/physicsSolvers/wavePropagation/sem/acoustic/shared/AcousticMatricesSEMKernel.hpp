@@ -205,7 +205,7 @@ struct AcousticMatricesSEM
           {
             localIndex nodeIdx = elemsToNodes( e, q );
             grad[e] += q_dt2[nodeIdx] * p_n[nodeIdx] * m_finiteElement.computeMassTerm( q, xLocal );
-            m_finiteElement.template computeStiffnessTerm( q, xLocal, [&] ( const int i, const int j, const real64 val )
+            m_finiteElement.computeStiffnessTerm( q, xLocal, [&] ( const int i, const int j, const real64 val )
             {
               grad2[e] += val* q_n[elemsToNodes( e, j )] * p_n[elemsToNodes( e, i )];
             } );

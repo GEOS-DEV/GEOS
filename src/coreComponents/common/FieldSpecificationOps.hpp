@@ -96,7 +96,7 @@ struct FieldSpecificationOp
                      real64 const value )
   {
     GEOS_UNUSED_VAR( component );
-    OP::template apply( field( index ), value );
+    OP::apply( field( index ), value );
   }
 
   /**
@@ -119,7 +119,7 @@ struct FieldSpecificationOp
                      integer const component,
                      real64 const value )
   {
-    OP::template apply( field( index )[component], value );
+    OP::apply( field( index )[component], value );
   }
 
   /**
@@ -142,7 +142,7 @@ struct FieldSpecificationOp
                   real64 & value )
   {
     GEOS_UNUSED_VAR( component );
-    OP::template apply( value, field( index ) );
+    OP::apply( value, field( index ) );
   }
 
   /**
@@ -164,7 +164,7 @@ struct FieldSpecificationOp
                   integer const component,
                   real64 & value )
   {
-    OP::template apply( value, field( index )[component] );
+    OP::apply( value, field( index )[component] );
   }
 
   /**
@@ -189,13 +189,13 @@ struct FieldSpecificationOp
   {
     if( component >= 0 )
     {
-      OP::template apply( field( index, component ), value );
+      OP::apply( field( index, component ), value );
     }
     else
     {
       for( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        OP::template apply( field( index, a ), value );
+        OP::apply( field( index, a ), value );
       }
     }
   }
@@ -225,7 +225,7 @@ struct FieldSpecificationOp
     {
       for( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        OP::template apply( field( index, a )[component], value );
+        OP::apply( field( index, a )[component], value );
       }
     }
     else
@@ -234,7 +234,7 @@ struct FieldSpecificationOp
       {
         for( localIndex c = 0; c < T::SIZE; ++c )
         {
-          OP::template apply( field( index, a )[c], value );
+          OP::apply( field( index, a )[c], value );
         }
       }
     }
@@ -261,7 +261,7 @@ struct FieldSpecificationOp
                   real64 & value )
   {
     GEOS_ASSERT( component >= 0 );
-    OP::template apply( value, field( index, component ) );
+    OP::apply( value, field( index, component ) );
   }
 
   /**
@@ -313,7 +313,7 @@ struct FieldSpecificationOp
     {
       for( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        OP::template apply( field( index, a, component ), value );
+        OP::apply( field( index, a, component ), value );
       }
     }
     else
@@ -322,7 +322,7 @@ struct FieldSpecificationOp
       {
         for( localIndex b = 0; b < field.size( 2 ); ++b )
         {
-          OP::template apply( field( index, a, b ), value );
+          OP::apply( field( index, a, b ), value );
         }
       }
     }
@@ -355,7 +355,7 @@ struct FieldSpecificationOp
       {
         for( localIndex b = 0; b < field.size( 2 ); ++b )
         {
-          OP::template apply( field( index, a, b )[component], value );
+          OP::apply( field( index, a, b )[component], value );
         }
       }
     }
@@ -367,7 +367,7 @@ struct FieldSpecificationOp
         {
           for( localIndex c = 0; c < T::size(); ++c )
           {
-            OP::template apply( field( index, a, b )[c], value );
+            OP::apply( field( index, a, b )[c], value );
           }
         }
       }
@@ -424,7 +424,7 @@ struct FieldSpecificationOp
       {
         for( localIndex b = 0; b < field.size( 2 ); ++b )
         {
-          OP::template apply( field( index, a, b, component ), value );
+          OP::apply( field( index, a, b, component ), value );
         }
       }
     }
@@ -436,7 +436,7 @@ struct FieldSpecificationOp
         {
           for( localIndex c = 0; c < field.size( 3 ); ++c )
           {
-            OP::template apply( field( index, a, b, c ), value );
+            OP::apply( field( index, a, b, c ), value );
           }
         }
       }
@@ -472,7 +472,7 @@ struct FieldSpecificationOp
         {
           for( localIndex c = 0; c < field.size( 3 ); ++c )
           {
-            OP::template apply( field( index, a, b, c )[component], value );
+            OP::apply( field( index, a, b, c )[component], value );
           }
         }
       }
@@ -487,7 +487,7 @@ struct FieldSpecificationOp
           {
             for( localIndex d = 0; d < T::size(); ++d )
             {
-              OP::template apply( field( index, a, b, c )[d], value );
+              OP::apply( field( index, a, b, c )[d], value );
             }
           }
         }

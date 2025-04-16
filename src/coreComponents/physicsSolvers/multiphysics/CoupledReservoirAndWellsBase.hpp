@@ -335,7 +335,7 @@ private:
    */
   void computeWellTransmissibility( DomainPartition & domain ) const
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & meshLevel,
                                                                                  string_array const & regionNames )
     {

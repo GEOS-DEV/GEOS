@@ -819,7 +819,7 @@ makeTemporarySlice( ArrayView< T const, NDIM, USD > const & view )
   // return ArraySlice< T, NDIM - 1, USD - 1 >( nullptr, view.dims() + 1, view.strides() + 1 );
   localIndex const numComp = LvArray::indexing::multiplyAll< NDIM - 1 >( view.dims() + 1 );
   static array1d< T > arr;
-  arr.template resizeWithoutInitializationOrDestruction( numComp );
+  arr.resizeWithoutInitializationOrDestruction( numComp );
   return ArraySlice< T const, NDIM - 1, USD - 1 >( arr.data(), view.dims() + 1, view.strides() + 1 );
 }
 

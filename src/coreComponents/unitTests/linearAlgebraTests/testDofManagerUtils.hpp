@@ -226,7 +226,7 @@ void forLocalObjects( MeshLevel const & mesh,
                       REGIONS_CONTAINER const & regions,
                       LAMBDA && lambda )
 {
-  internal::forLocalObjectsImpl< LOC >::template f( mesh, regions, std::forward< LAMBDA >( lambda ) );
+  internal::forLocalObjectsImpl< LOC >::f( mesh, regions, std::forward< LAMBDA >( lambda ) );
 }
 
 /**

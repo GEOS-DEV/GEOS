@@ -501,7 +501,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    m_finiteElementSpace.template computeFirstOrderStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
+    m_finiteElementSpace.computeFirstOrderStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
     {
       real32 const Rxx_ij = val*(stack.Cvti[0]*J[p][0]*J[r][0]+stack.Cvti[4]*(J[p][1]*J[r][1])+stack.Cvti[3]*(J[p][2]*J[r][2]));
       real32 const Ryy_ij = val*(stack.Cvti[0]*J[p][1]*J[r][1]+stack.Cvti[4]*(J[p][0]*J[r][0])+stack.Cvti[3]*(J[p][2]*J[r][2]));

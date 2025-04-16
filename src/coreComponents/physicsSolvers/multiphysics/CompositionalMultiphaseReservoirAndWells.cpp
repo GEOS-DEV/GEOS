@@ -169,7 +169,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
                                                                                string_array const & regionNames )
   {
@@ -288,7 +288,7 @@ assembleCouplingTerms( real64 const time_n,
   if( Base::wellSolver()->useTotalMassEquation() )
     kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
                                                                                string_array const & regionNames )
   {
