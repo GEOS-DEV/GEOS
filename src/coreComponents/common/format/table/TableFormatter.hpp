@@ -72,9 +72,8 @@ protected:
    *        Adds appropriate messages to the error list when the operation fails.
    * @param outputStream The stream to write the content to.
    * @param content The string view containing data to be written.
-   * @param isNewlyOpened Flag indicating if the stream was just opened before this call
    */
-  void toStreamImpl( std::ostream & outputStream, string_view content, bool isNewlyOpened ) const;
+  void toStreamImpl( std::ostream & outputStream, string_view content ) const;
 };
 
 /**
@@ -130,7 +129,7 @@ public:
    * @param outputStream The stream to write the content to.
    */
   void headerToStream( std::ostream & outputStream ) const
-  { toStreamImpl( outputStream, headerToString(), true ); }
+  { toStreamImpl( outputStream, headerToString() ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -139,7 +138,7 @@ public:
    * @param outputStream The stream to write the content to.
    */
   void dataToStream( std::ostream & outputStream, TableData const & tableData ) const
-  { toStreamImpl( outputStream, dataToString( tableData ), false ); }
+  { toStreamImpl( outputStream, dataToString( tableData ) ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -150,7 +149,7 @@ public:
    */
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
-  { toStreamImpl( outputStream, toString( tableData ), true ); }
+  { toStreamImpl( outputStream, toString( tableData ) ); }
 
 };
 
