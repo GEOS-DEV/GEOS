@@ -1096,7 +1096,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
-  m_solverStatistics.outputResidualNorm( m_writeSolvingCSV );
+
   return isNewtonConverged;
 }
 
@@ -1395,6 +1395,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   m_solverStatistics.outputStatistics( m_writeSolvingCSV );
+  m_solverStatistics.outputResidualNorm( m_writeSolvingCSV );
 
   for( auto & timer : m_timers )
   {

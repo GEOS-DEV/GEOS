@@ -2399,10 +2399,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2466,10 +2466,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="timestepStabilityLimit" type="integer" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2543,10 +2543,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="timestepStabilityLimit" type="integer" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2610,10 +2610,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="timestepStabilityLimit" type="integer" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2703,10 +2703,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2796,10 +2796,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2821,10 +2821,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2857,10 +2857,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2908,6 +2908,8 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3041,10 +3043,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="timestepStabilityLimit" type="integer" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3114,10 +3116,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
 		<!--useVTI => Flag to apply VTI anisotropy. The default is to use isotropic physic.-->
 		<xsd:attribute name="useVTI" type="integer" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3143,10 +3145,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetObjects" type="groupNameRef_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3170,10 +3172,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="stressSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3195,10 +3197,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="shearImpedance" type="real64" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3220,10 +3222,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="proppantSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3272,10 +3274,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--useQuasiNewton => (no description available)-->
 		<xsd:attribute name="useQuasiNewton" type="integer" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3306,10 +3308,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--targetSlipIncrement => Target slip incrmeent for timestep size selction-->
 		<xsd:attribute name="targetSlipIncrement" type="real64" default="1e-07" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3333,10 +3335,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--targetSlipIncrement => Target slip incrmeent for timestep size selction-->
 		<xsd:attribute name="targetSlipIncrement" type="real64" default="1e-07" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3362,10 +3364,10 @@ Information output from lower logLevels is added with the desired log level-->
 * SteadyState
 * ImplicitTransient-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_LaplaceBaseH1_TimeIntegrationOption" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3403,10 +3405,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3439,10 +3441,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3464,10 +3466,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3489,10 +3491,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3524,10 +3526,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_PhaseFieldDamageFEM_TimeIntegrationOption" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3559,10 +3561,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3584,10 +3586,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3631,10 +3633,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3684,10 +3686,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="transMultExp" type="real64" default="1" />
 		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
 		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3715,10 +3717,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="stressSolverName" type="string" default="" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3754,10 +3756,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3793,10 +3795,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3831,10 +3833,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3869,10 +3871,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3894,10 +3896,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3932,10 +3934,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3957,10 +3959,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3996,10 +3998,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4021,10 +4023,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4059,10 +4061,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4097,10 +4099,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4129,6 +4131,8 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4185,10 +4189,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="tolNormalTrac" type="real64" default="0.5" />
 		<!--tolTauLimit => Tolerance for the sliding check-->
 		<xsd:attribute name="tolTauLimit" type="real64" default="0.05" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4236,10 +4240,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
 		<!--useStaticCondensation => Defines whether to use static condensation or not.-->
 		<xsd:attribute name="useStaticCondensation" type="integer" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4284,10 +4288,10 @@ Information output from lower logLevels is added with the desired log level-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4328,10 +4332,10 @@ Information output from lower logLevels is added with the desired log level-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4376,10 +4380,10 @@ Information output from lower logLevels is added with the desired log level-->
 * ImplicitDynamic
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4444,10 +4448,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="treatFullyDamagedAsSingleField" type="integer" default="1" />
 		<!--useDamageAsSurfaceFlag => Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag-->
 		<xsd:attribute name="useDamageAsSurfaceFlag" type="integer" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4484,10 +4488,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--toughnessScalingFactor => Scaling factor for the rock toughness of the solid material-->
 		<xsd:attribute name="toughnessScalingFactor" type="real64" default="0" />
-		<!--writeCSV => When set to 1, output convergence information into a csv-->
-		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSolvingCSV => When set to 1, output convergence information into a csv-->
+		<xsd:attribute name="writeSolvingCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
