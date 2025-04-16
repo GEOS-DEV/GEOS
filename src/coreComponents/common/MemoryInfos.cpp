@@ -91,6 +91,7 @@ MemoryLogging::MemoryLogging():
                                    "Max over ranks",
                                    "Avg over ranks",
                                    "Sum over ranks" };
+  memoryStatLayout.setMargin( TableLayout::MarginValue::small );
   m_memoryStatLogFormatter = std::make_unique< TableTextFormatter >( memoryStatLayout );
 
   // We do not need to output the cycle & time in the log table
