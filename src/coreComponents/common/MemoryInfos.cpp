@@ -200,7 +200,8 @@ void MemoryLogging::memoryStatsReport() const
     float sumPercentage;
     if( memInfos.getTotalMemory() == 0 )
     {
-      GEOS_WARNING( "umpire memory percentage could not be resolved" ); // TODO: add this in table error list.
+      // TODO: after PR 3614, this warning should rather be in table error list.
+      GEOS_WARNING( "umpire memory percentage could not be resolved" );
     }
     else
     {
