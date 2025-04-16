@@ -72,7 +72,7 @@ private:
 
 /**
  * @brief Singleton class keeping the application memory logging settings & features.
- * @todo Manage the debug LvArray memory debug logging activation / deactivation.
+ * @todo Manage the activation / deactivation of debug LvArray memory logging.
  */
 class MemoryLogging
 {
