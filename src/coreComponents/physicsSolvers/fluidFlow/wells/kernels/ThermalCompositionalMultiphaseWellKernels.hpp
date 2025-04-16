@@ -165,7 +165,7 @@ public:
                       WellElementSubRegion const & subRegion,
                       MultiFluidBase const & fluid,
                       WellControls const & wellControls,
-                      real64 const timeAtEndOfStep,
+                      real64 const time,
                       real64 const dt,
                       real64 const minNormalizer )
     : Base( rankOffset,
@@ -180,10 +180,10 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( wellControls.getTargetBHP( timeAtEndOfStep ) ),
-    m_targetTotalRate( wellControls.getTargetTotalRate( timeAtEndOfStep ) ),
-    m_targetPhaseRate( wellControls.getTargetPhaseRate( timeAtEndOfStep ) ),
-    m_targetMassRate( wellControls.getTargetMassRate( timeAtEndOfStep ) ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
+    m_targetTotalRate( wellControls.getTargetTotalRate( time ) ),
+    m_targetPhaseRate( wellControls.getTargetPhaseRate( time ) ),
+    m_targetMassRate( wellControls.getTargetMassRate( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() ),
@@ -390,7 +390,7 @@ public:
    * @param[in] subRegion the well element subregion
    * @param[in] fluid the fluid model
    * @param[in] wellControls the controls
-   * @param[in] timeAtEndOfStep the time at the end of the step (time_n + dt)
+   * @param[in] time the time
    * @param[in] dt the time step size
    * @param[out] residualNorm the residual norm on the subRegion
    */
@@ -404,7 +404,7 @@ public:
                    WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
                    WellControls const & wellControls,
-                   real64 const timeAtEndOfStep,
+                   real64 const time,
                    real64 const dt,
                    real64 const minNormalizer,
                    real64 (& residualNorm)[2] )
@@ -418,7 +418,7 @@ public:
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       kernelType kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                         targetPhaseIndex, subRegion, fluid, wellControls, timeAtEndOfStep, dt, minNormalizer );
+                         targetPhaseIndex, subRegion, fluid, wellControls, time, dt, minNormalizer );
       kernelType::template launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
     } );
   }
@@ -638,7 +638,7 @@ public:
                    localIndex const numPhases,
                    integer const isProducer,
                    globalIndex const rankOffset,
-                   integer const useTotalMassEquation,
+                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
@@ -649,11 +649,6 @@ public:
       internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
-
-
-      BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
-      if( useTotalMassEquation )
-        kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
 
       ElementBasedAssemblyKernel< NUM_COMP >
       kernel( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
@@ -1089,7 +1084,7 @@ public:
   createAndLaunch( integer const numComps,
                    real64 const dt,
                    globalIndex const rankOffset,
-                   integer const useTotalMassEquation,
+                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
                    string const dofKey,
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
@@ -1101,15 +1096,7 @@ public:
     {
       integer constexpr NUM_COMP = NC();
 
-
-      BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
-      if( useTotalMassEquation )
-        kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
-
-
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP >;
-
-
       kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, fluid, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( subRegion.size(), kernel );
     } );

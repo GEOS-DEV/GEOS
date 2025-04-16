@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
@@ -58,8 +58,8 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual void
-  setupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+  setupCoupling( DomainPartition const & domain,
+                 DofManager & dofManager ) const override;
 
   virtual void
   assembleSystem( real64 const time,
@@ -114,7 +114,7 @@ private:
             typename EFEM_KERNEL_WRAPPER >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -128,7 +128,7 @@ template< typename CONSTITUTIVE_BASE,
           typename EFEM_KERNEL_WRAPPER >
 real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & mesh,
                                                                   DofManager const & dofManager,
-                                                                  arrayView1d< string const > const & regionNames,
+                                                                  string_array const & regionNames,
                                                                   string const & materialNamesString,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs,
