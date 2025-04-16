@@ -67,7 +67,7 @@ public:
 protected:
 
   /**
-   * @copydoc Group::postInputInitialization()
+   * @copydoc Group::postInputInitialization
    */
   void postInputInitialization() override;
 
