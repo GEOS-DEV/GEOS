@@ -204,7 +204,7 @@ public:
    * @param outputStream The stream to write the content to.
    */
   void toStream( std::ostream & outputStream ) const
-  { toStreamImpl( outputStream, toString(), true ); }
+  { toStreamImpl( outputStream, toString() ); }
 
   /**
    * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
@@ -215,7 +215,7 @@ public:
    */
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
-  { toStreamImpl( outputStream, toString( tableData ), true ); }
+  { toStreamImpl( outputStream, toString( tableData ) ); }
 
 private:
 
