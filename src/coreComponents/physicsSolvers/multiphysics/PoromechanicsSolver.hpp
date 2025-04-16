@@ -145,9 +145,9 @@ public:
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & mesh,
+                                                                                   string_array const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
       elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
