@@ -10130,8 +10130,9 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
   int const numDims = m_numDims;
   for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
   {
-    RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > internalForce(3, 0.0);
-    forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+    // RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > internalForce(3, 0.0);
+    // forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+    forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
     {
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
@@ -10160,12 +10161,12 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
           gridCenterOfMass[g][fieldIndex][i] = 0.0; // * gridPosition[g][i]; // TODO: zero? since it's supposed to be relative position?
         }
       }
-      for(int i =0; i < numDims; i++)
-      {
-        internalForce[i] += gridInternalForce[g][fieldIndex][i];
-      }
+      // for(int i =0; i < numDims; i++)
+      // {
+      //   internalForce[i] += gridInternalForce[g][fieldIndex][i];
+      // }
     } );
-    GEOS_LOG_RANK_0("Field: " << fieldIndex << ", force: {"<< internalForce[0].get() << ", " << internalForce[1].get() << ", " << internalForce[2].get() << "}");
+    // GEOS_LOG_RANK_0("Field: " << fieldIndex << ", force: {"<< internalForce[0].get() << ", " << internalForce[1].get() << ", " << internalForce[2].get() << "}");
   }
 }
 
