@@ -700,13 +700,18 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
   // time-step when maxForce = 0;
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( RBubbleDisp ) = ( {:4.2e} )", bubbleResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( RBubbleDisp ) = ( {:4.2e} )", bubbleResidualNorm ));
 
-  return sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
 
+  real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
+
+  m_solverStatistics.m_residualBubbleDisp = bubbleResidualNorm;
+  m_solverStatistics.m_totalResidual = totalResidualNorm;
+
+  m_solverStatistics.registerResidualNormToTable();
+
+  return totalResidualNorm;
 }
 
 void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager const & dofManager,

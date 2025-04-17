@@ -75,13 +75,35 @@ public:
 
   integer m_currentNewtonIter = std::numeric_limits< integer >::max();
 
-  real64 m_residualNorm = std::numeric_limits< real64 >::max();
-
   real64 m_residualMass = std::numeric_limits< real64 >::max();
 
   real64 m_residualVol = std::numeric_limits< real64 >::max();
 
   real64 m_residualEnergy =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualFlow =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualBubbleDisp =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualFracture =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualStick =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualSlip =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualOpen =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualSolid =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualContact =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualProppant =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualWell =  std::numeric_limits< real64 >::max();
+
+  real64 m_residualDamage =  std::numeric_limits< real64 >::max();
+
+  real64 m_totalResidual =  std::numeric_limits< real64 >::max();
 
   /**
    * @brief Constructor for SolverStatistics Objects.
@@ -124,6 +146,8 @@ public:
    * @brief Tell the solverStatistics that there is a time step cut
    */
   void logTimeStepCut();
+
+  void removeInvalidResidualNorms();
 
   /**
    * @brief Save the current newton iteration

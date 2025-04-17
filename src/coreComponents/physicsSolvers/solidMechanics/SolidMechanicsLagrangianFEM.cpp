@@ -34,6 +34,7 @@
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "LvArray/src/output.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -1278,10 +1279,8 @@ SolidMechanicsLagrangianFEM::
     totalResidualNorm = std::max( residual, totalResidualNorm );
   } );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
 
   return totalResidualNorm;
 }

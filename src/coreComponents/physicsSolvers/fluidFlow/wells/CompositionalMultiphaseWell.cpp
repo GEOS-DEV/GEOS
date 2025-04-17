@@ -1364,6 +1364,8 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
 
+    m_solverStatistics.m_residualWell = globalResidualNorm[0];
+    m_solverStatistics.m_residualEnergy = globalResidualNorm[1];
   }
   else
   {
@@ -1371,7 +1373,11 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), resNorm ));
+    m_solverStatistics.m_residualWell = resNorm;
   }
+
+  m_solverStatistics.registerResidualNormToTable();
+
   return resNorm;
 }
 

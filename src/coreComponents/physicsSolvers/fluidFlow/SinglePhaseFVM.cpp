@@ -216,6 +216,9 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                                                FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+    BASE::m_solverStatistics.m_residualMass = globalResidualNorm[0];
+    BASE::m_solverStatistics.m_residualVol = globalResidualNorm[1];
+    BASE::m_solverStatistics.m_totalResidual = residualNorm;
   }
   else
   {
@@ -229,9 +232,12 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
     }
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
+   BASE:: m_solverStatistics.m_residualFlow = residualNorm;
   }
+  BASE::m_solverStatistics.registerResidualNormToTable();
+
   return residualNorm;
 }
 

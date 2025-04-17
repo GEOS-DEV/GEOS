@@ -468,7 +468,15 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
 
   real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
 
-  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+  real64 const totalResidual = sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+
+  m_solverStatistics.m_residualSolid = solidResidual;
+  m_solverStatistics.m_residualContact = contactResidual;
+  m_solverStatistics.m_totalResidual = totalResidual;
+
+  m_solverStatistics.registerResidualNormToTable();
+
+  return totalResidual;
 }
 
 real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( DomainPartition const & domain,

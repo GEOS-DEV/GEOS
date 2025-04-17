@@ -70,10 +70,7 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
     setDescription( "Cumulative number of discarded linear iterations" );
 
   makeDirsForPath( m_outputDir );
-}
 
-void SolverStatistics::prepareResidualTableLayout()
-{
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
   m_nonLinearNormsLayout =  std::make_unique< TableLayout >(
@@ -82,6 +79,9 @@ void SolverStatistics::prepareResidualTableLayout()
       std::variant< string_view, TableLayout::Column >{"Newton Iter"}
     } );
 }
+
+void SolverStatistics::prepareResidualTableLayout()
+{}
 
 void SolverStatistics::initializeTimeStepStatistics()
 {
@@ -123,6 +123,11 @@ void SolverStatistics::logTimeStepCut()
   initializeTimeStepStatistics();
 }
 
+void SolverStatistics::removeInvalidResidualNorms()
+{
+  for( int i = 0; i <= m_currentNewtonIter; i++ )
+    m_nonLinearNormsData.getTableDataRows().pop_back();
+}
 void SolverStatistics::logNewtonIter( integer currentNewtonIter )
 { m_currentNewtonIter = currentNewtonIter; }
 
@@ -145,30 +150,54 @@ void SolverStatistics::registerResidualNormToTable()
     return std::fabs( value - std::numeric_limits< real64 >::max()) > std::numeric_limits< real64 >::epsilon();
   };
 
+  struct ResidualInfo
+  {
+    const real64 & value;
+    string_view columnName;
+  };
+  ResidualInfo residuals[] = {
+    { m_residualMass, "RMass" },
+    { m_residualVol, "RVol" },
+    { m_residualEnergy, "REnergy" },
+    { m_residualFlow, "RFlow" },
+    { m_residualBubbleDisp, "RBubbleDisp" },
+    { m_residualFracture, "RFrac" },
+    { m_residualStick, "Rstick" },
+    { m_residualSlip, "Rslip" },
+    { m_residualOpen, "Ropen" },
+    { m_residualSolid, "RSolid" },
+    { m_residualContact, "RContact" },
+    { m_residualProppant, "RProppant" },
+    { m_residualWell, "RWell" },
+    { m_residualDamage, "RDamage" },
+    { m_totalResidual, "RTotal" }
+  };
+
 
   if( m_numTimeSteps == 0 && m_currentNewtonIter == 0 )
   {
-    if( hasValue( m_residualNorm ) )
-      m_nonLinearNormsLayout->addColumn( "RNorm" );
-    if( hasValue( m_residualMass ) )
-      m_nonLinearNormsLayout->addColumn( "RMass" );
-    if( hasValue( m_residualVol ) )
-      m_nonLinearNormsLayout->addColumn( "RVol" );
-    if( hasValue( m_residualEnergy ) )
-      m_nonLinearNormsLayout->addColumn( "REnergy" );
+    for( auto const & residual : residuals )
+    {
+      if( hasValue( residual.value ) )
+      {
+        m_nonLinearNormsLayout->addColumn( residual.columnName );
+      }
+    }
   }
 
-  residualsNormCells.push_back( TableData::CellData( {CellType::Value, GEOS_FMT( "{}", m_numTimeSteps )} ));
-  residualsNormCells.push_back( TableData::CellData( {CellType::Value, GEOS_FMT( "{}", m_currentNewtonIter )} ));
+  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
+                                                         GEOS_FMT( "{}", m_numTimeSteps )} ));
+  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
+                                                         GEOS_FMT( "{}", m_currentNewtonIter )} ));
 
-  if( hasValue( m_residualNorm ))
-    residualsNormCells.push_back( TableData::CellData( {CellType::Value, GEOS_FMT( "{}", m_residualNorm )} ));
-  if( hasValue( m_residualMass ))
-    residualsNormCells.push_back( TableData::CellData( {CellType::Value, GEOS_FMT( "{}", m_residualMass )} ));
-  if( hasValue( m_residualVol ))
-    residualsNormCells.push_back( TableData::CellData( {CellType::Value, GEOS_FMT( "{}", m_residualVol )} ));
-  if( hasValue( m_residualEnergy ))
-    residualsNormCells.push_back( TableData::CellData( {CellType::Value, GEOS_FMT( "{}", m_residualEnergy )} ));
+  for( auto const & residual : residuals )
+  {
+    if( hasValue( residual.value ) )
+    {
+      residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
+                                                             GEOS_FMT( "{}", residual.value )} ));
+    }
+  }
 
   m_nonLinearNormsData.addRow( residualsNormCells );
 }

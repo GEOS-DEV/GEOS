@@ -584,15 +584,22 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
   // Matrix residual
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+  m_solverStatistics.m_residualSolid = solidResidualNorm;
 
   if( !m_useStaticCondensation )
   {
     real64 const fractureResidualNorm = calculateFractureResidualNorm( domain, dofManager, localRhs );
+    real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
 
-    return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
+    m_solverStatistics.m_residualFracture = fractureResidualNorm;
+    m_solverStatistics.m_totalResidual = totalResidualNorm;
+    m_solverStatistics.registerResidualNormToTable();
+
+    return totalResidualNorm;
   }
   else
   {
+    m_solverStatistics.registerResidualNormToTable();
     return solidResidualNorm;
   }
 }
@@ -665,10 +672,9 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
   real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
                                                                                                 // time-step when maxForce = 0;
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm ));
+
 
   return fractureResidualNorm;
 }

@@ -867,12 +867,22 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   openNormalizer = MpiWrapper::max( openNormalizer );
   openResidual = sqrt( openResidual ) / ( openNormalizer + 1.0 );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )", stickResidual, slipResidual, openResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )",
+                                       stickResidual, slipResidual, openResidual ));
 
-  return sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
+
+  real64 totalResidualNorm = sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
+
+  m_solverStatistics.m_residualStick = stickResidual;
+  m_solverStatistics.m_residualSlip = slipResidual;
+  m_solverStatistics.m_residualOpen = openResidual;
+  m_solverStatistics.m_totalResidual = totalResidualNorm;
+
+  m_solverStatistics.registerResidualNormToTable();
+
+
+  return totalResidualNorm;
 }
 
 void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )
