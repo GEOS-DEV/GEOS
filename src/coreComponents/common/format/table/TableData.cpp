@@ -45,11 +45,6 @@ void TableData::clear()
   m_rows.clear();
 }
 
-std::vector< std::vector< TableData::CellData > > const & TableData::getTableDataRows() const
-{
-  return m_rows;
-}
-
 void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
                                       arraySlice1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,

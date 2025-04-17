@@ -72,9 +72,16 @@ public:
   void clear();
 
   /**
+   * @return The const rows of the table
+   */
+  std::vector< std::vector< CellData > > const & getTableDataRows() const
+  {  return m_rows; }
+
+  /**
    * @return The rows of the table
    */
-  std::vector< std::vector< CellData > > const & getTableDataRows() const;
+  std::vector< std::vector< CellData > > & getTableDataRows()
+  {  return m_rows; }
 
   /**
    * @brief Get all error messages

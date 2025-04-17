@@ -319,6 +319,13 @@ public:
     Column & setName( string_view name );
 
     /**
+     * @brief Get the name of the column.
+     * @param name The name to set for the column.
+     * @return The current column name.
+     */
+    string_view getName() const;
+
+    /**
      * @brief Set the column and its children visibility.
      * @param visible True to make the column visible.
      * @return The current column .
@@ -722,6 +729,9 @@ protected:
 
   /// Columns settings hierarchy
   ColumnsList m_tableColumns;
+
+  /// Columns registry ensuring having unique column name
+  std::map< string, integer > m_columnsRegistry;
 
   /// Indicate if we have a line break a the beginning of the table
   bool m_lineBreakAtBegin = true;

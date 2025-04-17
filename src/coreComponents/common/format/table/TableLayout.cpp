@@ -42,13 +42,20 @@ void TableLayout::addColumns( std::vector< TableLayout::Column > const & columns
 
 void TableLayout::addColumn( string_view columnName )
 {
-  TableLayout::Column column = TableLayout::Column().setName( columnName );
-  m_tableColumns.emplace_back( column );
+
+  if( m_columnsRegistry.insert( std::pair< string, integer >{columnName, m_columnsRegistry.size()} ).second )
+  {
+    TableLayout::Column column = TableLayout::Column().setName( columnName );
+    m_tableColumns.emplace_back( column );
+  }
 }
 
 void TableLayout::addColumn( TableLayout::Column const & column )
 {
-  m_tableColumns.emplace_back( column );
+  if( m_columnsRegistry.insert( std::pair< string, integer >{column.getName(), m_columnsRegistry.size()} ).second )
+  {
+    m_tableColumns.emplace_back( column );
+  }
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
@@ -171,6 +178,11 @@ TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
   m_header.setText( name );
   return *this;
+}
+
+string_view TableLayout::Column::getName() const
+{
+  return m_header.getText();
 }
 
 TableLayout::Column & TableLayout::Column::setVisibility( bool visible )
