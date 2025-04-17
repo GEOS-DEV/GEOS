@@ -32,17 +32,20 @@
  * @param stream The stream to verify.
  * @param errorReporter Callable that handles error reporting by collecting messages, responsible to
  *                      mention the stream description (filename typically).
- * @param isNewlyOpened Flag indicating if the stream was just opened before this call
+ * @param isNewlyOpened Flag indicating if the stream was just opened before this call.
+ * @return true if everything is OK.
  */
 template< typename StreamType, typename ErrorReporter >
-void validateStream( StreamType const & stream, bool isNewlyOpened, ErrorReporter && errorReporter )
+bool validateStream( StreamType const & stream, bool isNewlyOpened, ErrorReporter && errorReporter )
 {
   if( !stream.good() )
   {
     errorReporter( isNewlyOpened ?
                    "Output stream failed to open.\nPossible reasons: File doesn't exist in path / permissions / locking issue." :
                    "Output stream is in invalid state for writing.\nPossible reasons: Stream closed / buffer corruption / previous operation failed." );
+    return false;
   }
+  return true;
 }
 
 /**
@@ -51,35 +54,37 @@ void validateStream( StreamType const & stream, bool isNewlyOpened, ErrorReporte
  * @note toStream() function should be prefered for few writes, as it verify each stream operation.
  * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
  * @param stream The stream to verify.
- * @param isNewlyOpened Flag indicating if the stream was just opened before this call
+ * @param isNewlyOpened Flag indicating if the stream was just opened before this call.
+ * @param streamName Name of the stream to use in potencial streaming errors
+ * @return true if everything is OK.
  */
 template< typename StreamType >
-void validateStream( StreamType const & stream, string_view fileName, bool isNewlyOpened )
+bool validateStream( StreamType const & stream, string_view fileName, bool isNewlyOpened )
 {
   auto const errorReporter = [=]( std::string_view msg )
   {
     GEOS_WARNING( GEOS_FMT( "Error with stream '{}':\n{}", fileName, msg ) );
   };
-  validateStream( stream, isNewlyOpened, errorReporter );
+  return validateStream( stream, isNewlyOpened, errorReporter );
 }
 
-/**
- * @brief Verify a critical opened stream is open, before streaming operations.
- *        Add appropriate errors in the log if the operation fails (terminate GEOS).
- * @note toStream() function should be prefered for few writes, as it verify each stream operation.
- * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
- * @param stream The stream to verify.
- * @param isNewlyOpened Flag indicating if the stream was just opened before this call
- */
-template< typename StreamType >
-void validateCriticalStream( StreamType const & stream, string_view fileName, bool isNewlyOpened )
-{
-  auto const errorReporter = [=]( std::string_view msg )
-  {
-    GEOS_ERROR( GEOS_FMT( "Error with stream '{}':\n{}", fileName, msg ) );
-  };
-  validateStream( stream, isNewlyOpened, errorReporter );
-}
+// /**
+//  * @brief Verify a critical opened stream is open, before streaming operations.
+//  *        Add appropriate errors in the log if the operation fails (terminate GEOS).
+//  * @note toStream() function should be prefered for few writes, as it verify each stream operation.
+//  * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
+//  * @param stream The stream to verify.
+//  * @param isNewlyOpened Flag indicating if the stream was just opened before this call
+//  */
+// template< typename StreamType >
+// void validateCriticalStream( StreamType const & stream, string_view fileName, bool isNewlyOpened )
+// {
+//   auto const errorReporter = [=]( std::string_view msg )
+//   {
+//     GEOS_ERROR( GEOS_FMT( "Error with stream '{}':\n{}", fileName, msg ) );
+//   };
+//   validateStream( stream, isNewlyOpened, errorReporter );
+// }
 
 /**
  * @brief Helper function to write content to an output stream.
@@ -100,7 +105,7 @@ void toStream( std::ostream & outputStream,
   validateStream( outputStream, isNewlyOpened, errorReporter );
 
   const auto startPos = outputStream.tellp();
-  errno = 0;
+  std::errno = 0;
 
   outputStream << content;
 
@@ -137,13 +142,41 @@ void toStream( std::ostream & outputStream, std::string_view content,
   std::string msgs;
   toStream( outputStream, content, isNewlyOpened,
             [&]( std::string_view msg ) { msgs += msg; } );
-  if( critical )
+  if( !msgs.empty() )
   {
-    GEOS_ERROR( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
+    if( critical )
+    {
+      GEOS_THROW( GEOS_FMT( "Error while attempting to write to '{}':\n{}", streamName, msgs ) );
+    }
+    else
+    {
+      GEOS_WARNING( GEOS_FMT( "Error while attempting to write to '{}':\n{}", streamName, msgs ) );
+    }
   }
-  else
+}
+
+template< typename ... Args >
+void toFileStream( std::string_view filePath, bool critical, Args ... content )
+{
+  std::ofstream os( filePath );
+  int opId = 0;
+  std::string msgs;
+
+  ( toStream( filePath,
+              content,
+              (opId++) == 0,
+              [&]( std::string_view msg ) { msgs += msg; } ) ... );
+
+  if( !msgs.empty() )
   {
-    GEOS_WARNING( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
+    if( critical )
+    {
+      GEOS_THROW( GEOS_FMT( "Error while attempting to write to '{}':\n{}", filePath, msgs ) );
+    }
+    else
+    {
+      GEOS_WARNING( GEOS_FMT( "Error while attempting to write to '{}':\n{}", filePath, msgs ) );
+    }
   }
 }
 
