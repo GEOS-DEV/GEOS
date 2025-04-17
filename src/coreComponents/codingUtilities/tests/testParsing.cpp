@@ -120,9 +120,7 @@ protected:
   void testParseFile() const
   {
     std::string const fname = GEOS_FMT( "testParsing_{}_input", typeid(T).name() );
-    std::ofstream os( fname );
-    os << input;
-    os.close();
+    toFileStream( fname, input );
 
     std::vector< T > vec;
     geos::parseFile( fname, vec, issep );

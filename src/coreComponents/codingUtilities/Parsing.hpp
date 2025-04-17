@@ -104,6 +104,7 @@ void parseFile( string const & filename,
   buf[BUF_SIZE] = '\0'; // safe padding for strtol
 
   std::ifstream inputStream( filename );
+  validateStream( inputStream, filename, true );
   while( inputStream )
   {
     inputStream.read( buf, BUF_SIZE );
