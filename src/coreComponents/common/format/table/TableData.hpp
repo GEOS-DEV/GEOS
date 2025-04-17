@@ -44,7 +44,20 @@ public:
     CellType type;
     /// The cell value
     string value;
+
+    /**
+     * @brief Comparison operator for cell value
+     * @param other The cell data value to compare
+     * @return The comparison result
+     */
+    bool operator==( CellData const & other ) const
+    {
+      return value == other.value;
+    }
   };
+
+  /// Alias for table data rows with cells values
+  using DataRows = std::vector< std::vector< CellData > >;
 
   /**
    * @brief Add a row to the table.
@@ -80,7 +93,37 @@ public:
    * @brief Get all error messages
    * @return The vector of error messages
    */
+  std::vector< string > const & getErrorMsgs() const;
+
+  /**
+   * @return The const table data rows
+   */
+  DataRows const & getCellsData() const
+  { return m_rows; }
+
+  /**
+   * @brief Comparison operator for data rows
+   * @param comparingTable The tableData values to compare
+   * @return The comparison result
+   */
+  inline bool operator==( TableData const & comparingTable ) const
+  {
+
+    return getCellsData() == comparingTable.getCellsData();
+  }
+
+  /**
+   * @brief Get all error messages
+   * @return The vector of error messages
+   */
   TableErrorListing const & getErrorsList() const
+  { return *m_errors; }
+
+  /**
+   * @brief Get all error messages
+   * @return The vector of error messages
+   */
+  TableErrorListing & getErrorsList()
   { return *m_errors; }
 
 private:
