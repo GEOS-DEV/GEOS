@@ -77,21 +77,15 @@ public:
   std::vector< std::vector< CellData > > const & getTableDataRows() const;
 
   /**
-   * @return The Errors List object
-   */
-  TableErrorListing & getErrorsList()
-  { return *m_errors; }
-
-  /**
-   * @return The immuable Errors List object
+   * @brief Get all error messages
+   * @return The vector of error messages
    */
   TableErrorListing const & getErrorsList() const
   { return *m_errors; }
 
 private:
-
   /// @brief vector containing all rows with cell values
-  std::vector< std::vector< CellData > > m_rows;
+  DataRows m_rows;
   /// @brief Store all errors that can be found during the generation of the TableData
   std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 
