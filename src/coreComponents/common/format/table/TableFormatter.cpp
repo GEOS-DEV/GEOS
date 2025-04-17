@@ -36,10 +36,10 @@ TableFormatter::TableFormatter( TableLayout const & tableLayout ):
   m_tableLayout( tableLayout )
 {}
 
-void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content, bool isNewlyOpened ) const
+void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content ) const
 {
   //TODO: after PR 3614, we should have m_errors->addError( X ) replacing GEOS_WARNING()
-  toStream( outputStream, content, []( string_view msg ) { GEOS_WARNING( msg ); }, isNewlyOpened );
+  toStream( outputStream, content, []( string_view msg ) { GEOS_WARNING( msg ); } );
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -50,7 +50,6 @@ TableCSVFormatter::TableCSVFormatter( TableLayout const & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
-static constexpr string_view csvSeparator = ",";
 string TableCSVFormatter::headerToString() const
 {
   string result;
@@ -62,7 +61,7 @@ string TableCSVFormatter::headerToString() const
     {
       total_size += str.size();
     }
-    total_size += csvSeparator.size();
+    total_size += m_separator.size();
   }
   result.reserve( total_size );
 
@@ -76,7 +75,7 @@ string TableCSVFormatter::headerToString() const
 
     if( idxColumn < m_tableLayout.getColumns().size() - 1 )
     {
-      result.append( csvSeparator );
+      result.append( m_separator );
     }
   }
   result.append( "\n" );
@@ -117,7 +116,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
       if( !detectNewLine )
         rowConverted.push_back( item.value );
     }
-    result.append( stringutilities::join( rowConverted.cbegin(), rowConverted.cend(), csvSeparator ));
+    result.append( stringutilities::join( rowConverted.cbegin(), rowConverted.cend(), m_separator ));
     result.append( "\n" );
   }
 

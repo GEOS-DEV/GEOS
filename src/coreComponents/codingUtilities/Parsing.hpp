@@ -60,8 +60,8 @@ char const * parseBuffer( char const * first,
                           SEPFUNC issep = [] ( char const c ){ return std::isspace( c ); } )
 {
   using T = typename CONTAINER::value_type;
-  static_assert( std::is_arithmetic< T >::value && !std::is_same< T, char >::value,
-                 "Only valid for arithmetic types except char" );
+  static_assert( std::is_same_v< T, string > || ( std::is_arithmetic_v< T > && !std::is_same_v< T, char > ),
+                 "Only valid for strings or for arithmetic types except char" );
 
   while( true )
   {

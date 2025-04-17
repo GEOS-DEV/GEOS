@@ -59,6 +59,20 @@ MemoryStatsOutput::MemoryStatsOutput( string const & name,
     setDescription( "When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file" );
 }
 
+void MemoryStatsOutput::postInputInitialization()
+{
+  static bool isInstanceInitialized = false;
+  GEOS_ERROR_IF( isInstanceInitialized,
+                 GEOS_FMT( "{}: Multiple instances of {} are not supported, please remove this one.",
+                           getDataContext(), catalogName() ) );
+  isInstanceInitialized = true;
+
+  auto & memLogging = MemoryLogging::getInstance();
+  memLogging.enableUmpireStatsLogReport( isLogLevelActive< logInfo::UmpireStatistics >( getLogLevel() ) );
+  memLogging.enableUmpireStatsCsvReport( m_writeCSV,
+                                         GEOS_FMT( "{}_umpireStats.csv", catalogName() ) );
+}
+
 bool MemoryStatsOutput::execute( real64 time_n,
                                  real64,
                                  integer cycleNumber,
@@ -67,11 +81,7 @@ bool MemoryStatsOutput::execute( real64 time_n,
                                  DomainPartition & )
 {
   auto & memLogging = MemoryLogging::getInstance();
-  memLogging.enableUmpireStatsLogReport( isLogLevelActive< logInfo::UmpireStatistics >( getLogLevel() ) );
-  memLogging.enableUmpireStatsCsvReport( m_writeCSV );
-  memLogging.setUmpireStatsCsvReportFilename( GEOS_FMT( "{}_umpireStats.csv", getName() ) );
-
-  memLogging.setCurrentCycle( cycleNumber);
+  memLogging.setCurrentCycle( cycleNumber );
   memLogging.setCurrentTime( time_n );
 
   memLogging.memoryStatsReport();

@@ -27,7 +27,7 @@ namespace geos
 {
 
 /**
- * @brief A class for creating vtk outputs
+ * @brief An output Task to control the logging of memory statistics.
  */
 class MemoryStatsOutput final : public OutputBase
 {
@@ -65,6 +65,8 @@ public:
   /// @endcond
 
 protected:
+
+  void postInputInitialization() override;
 
   /**
    * @copydoc OutputBase::getTimerCategory

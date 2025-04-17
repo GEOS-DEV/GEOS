@@ -72,9 +72,10 @@ private:
 
 /**
  * @brief Singleton class keeping the application memory logging settings & features.
- * @todo Manage the debug LvArray memory debug logging activation / deactivation.
+ * @todo Manage the activation / deactivation of debug LvArray memory logging.
  */
-class MemoryLogging {
+class MemoryLogging
+{
 public:
 
   /**
@@ -96,6 +97,12 @@ public:
   { return m_umpireStatsCsvReport; }
 
   /**
+   * @return the current cycle for the next report to output.
+   */
+  integer getCurrentCycle() const
+  { return m_currentCycle; }
+
+  /**
    * @param enable enable or disable the umpire statistics text logging.
    * @see memoryStatsReport() for more documentation.
    */
@@ -104,17 +111,11 @@ public:
 
   /**
    * @param enable enable or disable the text log level.
+   * @param filename the relative file path to the csv output, including the extention. Can be empty if !enable.
    * @note when enabled, start a new csv immediately from zero, filling its header.
    * @see memoryStatsReport() for more documentation.
    */
-  void enableUmpireStatsCsvReport( bool enable );
-
-  /**
-   * @param filename enable or disable the text log level.
-   * @see memoryStatsReport() for more documentation.
-   */
-  void setUmpireStatsCsvReportFilename( string_view filename )
-  { m_umpireStatsCsvReportFilename = filename; }
+  void enableUmpireStatsCsvReport( bool enable, string_view filename = "" );
 
   /**
    * @brief Set the Current Cycle, to identify each CSV entry.
@@ -128,7 +129,7 @@ public:
    * @brief Set the Current Time, to identify each CSV entry.
    * @param currentTime The current simulated time. Must be initialized before first memoryStatsReport() to valid values.
    */
-  void setCurrentTime( integer currentTime )
+  void setCurrentTime( real64 currentTime )
   { m_currentTime = currentTime; }
 
   /**
@@ -159,7 +160,7 @@ private:
   integer m_currentCycle;
 
   /// The current simulated time.
-  integer m_currentTime;
+  real64 m_currentTime;
 
 
   /// private constructor as the class is a singleton.

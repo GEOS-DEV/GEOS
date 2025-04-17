@@ -260,9 +260,9 @@ void setupEnvironment( int argc, char * argv[] )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
 {
+  MemoryLogging::getInstance().memoryStatsReport();
   LvArray::system::resetSignalHandling();
   finalizeLogger();
-  MemoryLogging::getInstance().memoryStatsReport();
   finalizeCaliper();
   finalizeMPI();
 }

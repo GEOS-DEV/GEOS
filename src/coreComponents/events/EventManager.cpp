@@ -19,6 +19,7 @@
 
 #include "EventManager.hpp"
 
+#include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
 #include "events/EventBase.hpp"
 #include "common/MpiWrapper.hpp"
@@ -215,6 +216,10 @@ bool EventManager::run( DomainPartition & domain )
     ++m_cycle;
     m_currentSubEvent = 0;
   }
+
+  // setup the last time / cycle for the memory output
+  MemoryLogging::getInstance().setCurrentTime( m_time );
+  MemoryLogging::getInstance().setCurrentCycle( m_cycle );
 
   // Cleanup
   GEOS_LOG_RANK_0( "Cleaning up events" );
