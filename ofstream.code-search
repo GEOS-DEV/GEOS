@@ -1,0 +1,226 @@
+# Query: ofstream
+# Flags: RegExp
+# ContextLines: 1
+
+47 results - 33 files
+
+src/cmake/blt/thirdparty_builtin/benchmark-1.8.0/src/benchmark.cc:
+  552    // Setup the reporters
+  553:   std::ofstream output_file;
+  554    std::unique_ptr<BenchmarkReporter> default_display_reporter;
+
+src/coreComponents/codingUtilities/tests/testParsing.cpp:
+  122      std::string const fname = GEOS_FMT( "testParsing_{}_input", typeid(T).name() );
+  123:     std::ofstream os( fname );
+  124      os << input;
+
+  136      std::string const fname = GEOS_FMT( "testParsing_{}_input_invalid", typeid(T).name() );
+  137:     std::ofstream os( fname );
+  138      os << input;
+
+src/coreComponents/common/BasicOutput.hpp:
+  29   * @note toStream() function should be prefered for few writes, as it verify each stream operation.
+  30:  * @tparam StreamType Type of the stream, typically std::ofstream or std::ifstream.
+  31   * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
+
+src/coreComponents/common/LifoStorageCommon.hpp:
+  262  
+  263:     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+  264      GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
+
+src/coreComponents/common/MemoryInfos.cpp:
+  112    {
+  113:     std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
+  114      m_memoryStatCsvFormatter->headerToStream( csvFile );
+
+  222      {
+  223:       std::ofstream csvFile{ m_umpireStatsCsvReportFilename };
+  224        m_memoryStatCsvFormatter->dataToStream( csvFile, tableData );
+
+src/coreComponents/common/logger/Logger.cpp:
+  103      std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
+  104:     internal::rankStream = new std::ofstream( outputFilePath );
+  105    }
+
+  120      std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
+  121:     internal::rankStream = new std::ofstream( outputFilePath );
+  122    }
+
+src/coreComponents/constitutive/PVTPackage/PVTPackage/source/MultiphaseSystem/PhaseModel/BlackOil/BlackOil_GasModel.cpp:
+  55    ///DEBUG PURPOSE - PLOT table for matlab
+  56: //		std::ofstream outputFile("PVTG.txt");
+  57  //		for (size_t i = 0; i < m_PVTG.NSaturatedPoints; ++i)
+
+src/coreComponents/constitutive/PVTPackage/PVTPackage/source/MultiphaseSystem/PhaseModel/BlackOil/BlackOil_OilModel.cpp:
+  52    ///DEBUG PURPOSE - PLOT table for matlab
+  53: //		std::ofstream outputFile("PVTO.txt");
+  54  //		for (size_t i =0 ; i<m_PVTO.NSaturatedPoints; ++i )
+
+src/coreComponents/constitutive/PVTPackage/PVTPackage/source/tests/testPublicApi.cpp:
+  63  //      std::cerr << outputFile << std::endl;
+  64:       std::ofstream ofs( outputFile );
+  65        ofs << std::setprecision( std::numeric_limits< long double >::digits10 + 1 );
+
+src/coreComponents/constitutive/PVTPackage/PVTPackage/source/Utils/Logger.hpp:
+  79  
+  80:   std::ofstream m_logfile;
+  81  
+
+src/coreComponents/functions/TableFunction.cpp:
+  369      { // csv output
+  370:       std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ) );
+  371        TableCSVFormatter csvFormatter;
+
+src/coreComponents/functions/unitTests/testFunctions.cpp:
+  68  {
+  69:   std::ofstream os( filename );
+  70    ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/linearAlgebra/interfaces/hypre/HypreMatrix.cpp:
+  1323        {
+  1324:         std::ofstream os( filename );
+  1325          GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing: {}", filename ) );
+
+  1343            hypre::CSRData< true > csr{ fullMatrix };
+  1344:           std::ofstream os( filename, std::ios_base::app );
+  1345            GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+
+src/coreComponents/linearAlgebra/interfaces/hypre/HypreVector.cpp:
+  355        {
+  356:         std::ofstream os( filename );
+  357          GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing: {}", filename ) );
+
+  373          {
+  374:           std::ofstream os( filename, std::ios_base::app );
+  375            GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
+
+src/coreComponents/linearAlgebra/interfaces/trilinos/EpetraMatrix.cpp:
+  1063      {
+  1064:       std::ofstream ofs( filename );
+  1065        print( ofs );
+
+src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.cpp:
+  176  
+  177:           std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
+  178            TableCSVFormatter csvFormatter( tableLayout );
+
+  531  
+  532:       std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
+  533        TableCSVFormatter const csvOutput;
+
+src/coreComponents/physicsSolvers/fluidFlow/SinglePhaseStatistics.cpp:
+   73        {
+   74:         std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
+   75          outputFile <<
+
+  279        {
+  280:         std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
+  281          outputFile << time << "," << stats.minPressure << "," << stats.averagePressure << "," << stats.maxPressure << "," <<
+
+src/coreComponents/physicsSolvers/fluidFlow/SourceFluxStatistics.cpp:
+  192      {
+  193:       std::ofstream outputFile( filename );
+  194  
+
+src/coreComponents/physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.cpp:
+   284          GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+   285:         std::ofstream outputFile( fileName );
+   286          outputFile << "Time [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
+
+  2123        // format: time,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
+  2124:       std::ofstream outputFile;
+  2125        if( m_writeCSV > 0 )
+
+src/coreComponents/physicsSolvers/fluidFlow/wells/SinglePhaseWell.cpp:
+   117          GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+   118:         std::ofstream outputFile( fileName );
+   119          outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
+
+  1084        // format: time,total_rate,total_vol_rate
+  1085:       std::ofstream outputFile;
+  1086        if( m_writeCSV > 0 )
+
+src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp:
+   762    {
+   763:     std::ofstream file;
+   764      file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
+
+   859      {
+   860:       std::ofstream file;
+   861        file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+
+  1484    {
+  1485:     std::ofstream file;
+  1486      // can't enable exception now because of gcc bug that raises ios_base::failure with useless message
+
+  2773      // Write to file
+  2774:     std::ofstream file;
+  2775      file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+
+src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsStatistics.cpp:
+   73      {
+   74:       std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv" );
+   75        outputFile << "Time [s],Min displacement X [m],Min displacement Y [m],Min displacement Z [m],"
+
+  176    {
+  177:     std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv", std::ios_base::app );
+  178      outputFile << time;
+
+src/coreComponents/physicsSolvers/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.cpp:
+  967  
+  968:         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
+  969          GEOS_THROW_IF( !wf,
+
+src/coreComponents/physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp:
+  110          string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+  111:         std::ofstream f( fn, std::ios::out | std::ios::trunc );
+  112        }
+
+  171          string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+  172:         std::ofstream f( fn, std::ios::app );
+  173          if( f )
+
+src/coreComponents/unitTests/constitutiveTests/MultiFluidTest.hpp:
+  139    {
+  140:     std::ofstream os( fileName );
+  141      ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/constitutiveTests/testCO2BrinePVTModels.cpp:
+  330  {
+  331:   std::ofstream os( filename );
+  332    ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/fluidFlowTests/testFlowStatistics.cpp:
+  155      {
+  156:       std::ofstream os( fileName );
+  157        ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/fluidFlowTests/testReactiveCompositionalMultiphaseOBL.cpp:
+  144  {
+  145:   std::ofstream os( filename );
+  146    ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/fluidFlowTests/testThermalCompMultiphaseFlow.cpp:
+  259  {
+  260:   std::ofstream os( filename );
+  261    ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/wellsTests/testIsothermalReservoirCompositionalMultiphaseMSWells.cpp:
+  40  {
+  41:   std::ofstream os( filename );
+  42    ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/wellsTests/testIsothermalReservoirCompositionalMultiphaseSSWells.cpp:
+  40  {
+  41:   std::ofstream os( filename );
+  42    ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/wellsTests/testThermalReservoirCompositionalMultiphaseMSWells.cpp:
+  41  {
+  42:   std::ofstream os( filename );
+  43    ASSERT_TRUE( os.is_open() );
+
+src/coreComponents/unitTests/wellsTests/testThermalReservoirCompositionalMultiphaseSSWells.cpp:
+  41  {
+  42:   std::ofstream os( filename );
+  43    ASSERT_TRUE( os.is_open() );
