@@ -72,7 +72,7 @@ public:
   /// Cumulative number of discarded linear iterations
   integer m_numDiscardedLinearIterations;
 
-
+  /// @cond DO_NOT_DOCUMENT
   integer m_currentNewtonIter = std::numeric_limits< integer >::max();
 
   real64 m_residualMass = std::numeric_limits< real64 >::max();
@@ -104,6 +104,7 @@ public:
   real64 m_residualDamage =  std::numeric_limits< real64 >::max();
 
   real64 m_totalResidual =  std::numeric_limits< real64 >::max();
+  /// @endcond
 
   /**
    * @brief Constructor for SolverStatistics Objects.
@@ -147,6 +148,10 @@ public:
    */
   void logTimeStepCut();
 
+  /**
+   * @brief When a configuration did not converge, removes the last residual norms by the number of
+   * the newton iterations
+   */
   void removeInvalidResidualNorms();
 
   /**
@@ -154,13 +159,6 @@ public:
    * @param currentNewtonIter The current newton iteration done by the the linear solver
    */
   void logNewtonIter( integer currentNewtonIter );
-
-  /**
-   * @brief Save the current residuals norms to the corresponding TableData
-   * @param residualNorm
-   * @param residualMass
-   * @param residualVol
-   */
 
   /**
    * @brief Save the statistics for the individual time step and increment the cumulative stats
@@ -173,7 +171,7 @@ public:
   void registerStatsToTable();
 
   /**
-   * @brief Register the corresponding thermal residuals norms to the TableData
+   * @brief Register the corresponding residuals norms to the TableData
    */
   void registerResidualNormToTable();
 
@@ -187,9 +185,16 @@ public:
    */
   void outputResidualNorm( bool writeCSV );
 
+  /**
+   * @brief Set the Residual Norms filename
+   * @param filename The filename string
+   */
   void setResidualNormsFileName( string_view filename )
   { m_residualNormsFileName = filename; }
 
+  /**
+   * @return The output directory where all statistics related to the solver are atored
+   */
   string getOutputDir()
   { return m_outputDir; }
 
