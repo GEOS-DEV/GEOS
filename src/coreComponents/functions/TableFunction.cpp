@@ -17,6 +17,9 @@
  * @file TableFunction.cpp
  */
 
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "TableFunction.hpp"
 #include "LogLevelsInfo.hpp"
 #include "codingUtilities/Parsing.hpp"
