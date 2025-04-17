@@ -43,7 +43,6 @@ class TableErrorListing
 
 public:
   /// View on cell error grouping the cell information to display at the end of the table
-  //CellLayoutRows errors;   //TODO à enlever crée au last moment
   /// Contain all the errors
   std::vector< string > errorText;
 
