@@ -5205,7 +5205,6 @@ void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & s
   GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "ContinuumBase model not found on subregion {}", subRegion.getName() ) );
 }
 
-//Retain max number of neighbors for device parallelism in computeDamageFieldGradient
 real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
@@ -5287,8 +5286,6 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
     binCount[b] = 0;
   }
 
-  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Precomputed bin sizes");
-
   ArrayOfArraysView< localIndex > binsView = bins.toView();
 
   subRegionIndex = 0;
@@ -5310,10 +5307,7 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
     subRegionIndex++;
   } );
 
-  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Populated bins for searching");
-
   // Precompute number of neighbors for each particles
-  // int subRegionIndexA = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Get 'this' particle's location
@@ -5381,54 +5375,15 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
 
       // Store the count for this particle
       neighborCounts[a] = localNeighborCount;
-      // if(cycleNumber > m_logStartCycle)
-      // {
-      //   printf("subRegionIndexA: %d, a: %d, numNeighbors: %d\n", subRegionIndexA, a, localNeighborCount);
-      // }
     } );
 
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
     neighborList.freeOnDevice(); // just being careful
-
-    // OrderedVariableToManyParticleRelation newNeighborList;
-    // std::swap( neighborList, newNeighborList );
     neighborList.resizeFromCapacities( neighborCounts );
 
-    // if(cycleNumber >= m_logStartCycle)
-    // {
-    //   arrayView1d< localIndex const > const & numParticles = neighborList.m_numParticles.toViewConst();
-    //   ArrayOfArraysView< localIndex const > const & toParticleRegion = neighborList.m_toParticleRegion.toViewConst();
-    //   ArrayOfArraysView< localIndex const > const & toParticleSubRegion = neighborList.m_toParticleSubRegion.toViewConst();
-    //   ArrayOfArraysView< localIndex const > const & toParticleIndex = neighborList.m_toParticleIndex.toViewConst();
-
-    //   if(cycleNumber > m_logStartCycle)
-    //   {
-    //     printf("subRegionIndex: %d, m_toParticleRegion.maxOffset: %d, ", subRegionIndexA, toParticleRegion.getOffsets()[numParticles.size()]);
-      
-    //     for( int p= 0; p < numParticles.size(); p++)
-    //     {
-    //       // localIndex nP = numParticles[p];
-    //       printf("subRegionIndex: %d, p: %d numParticles[p]=%d, toParticleRegion.sizeOfArray(p): %d, toParticleSubRegion.sizeOfArray(p): %d, toParticleIndex.sizeOfArray(p): %d\n", subRegionIndexA, p, numParticles[p], toParticleRegion.sizeOfArray(p), toParticleSubRegion.sizeOfArray(p), toParticleIndex.sizeOfArray(p));
-    //       // printf("m_toParticleRegion[%d] (offsets, sizes): numParticles[p]=%d, ", p, nP);
-    //       // for(int i = 0; i < nP; i++)
-    //       // {
-    //       //   printf("(%d, %d), ", toParticleRegion.getOffsets()[i], toParticleRegion.getSizes()[i]);
-    //       // }
-    //       // printf("\n");
-    //     }
-    //   }
-    // }
-    // subRegionIndexA++;
-
-    // printf("Setting new neighborlist\n");
-
-    // printf("Finished setting new neighborlist\n");
   } );
 
-  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Precomputed neighborlist sizes");
-
   // Perform neighbor search over appropriate bins (populate neighborlist with particle data)
-  // subRegionIndexA = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Get neighbor list views
@@ -5464,11 +5419,6 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
       kmin = std::max( kmin, 0 );
       kmax = std::min( kmax, nzbins-1 );
 
-      // if(cycleNumber > m_logStartCycle)
-      // {
-      //   printf("subRegionIndexA: %d, pA: %d, numParticles: %d, neighborRegions.sizeOfArray(pA): %d, neighborSubRegions.sizeOfArray(pA): %d, neighorIndices.sizeOfArray(pA): %d\n", subRegionIndexA, a, numParticles[a], neighborRegions.sizeOfArray(a), neighborSubRegions.sizeOfArray(a), neighborIndices.sizeOfArray(a));
-      // }
-
       // Inner subregion loop
       subRegionIndex = 0;
       int neighborCount = 0;
@@ -5493,26 +5443,15 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
             for( int kBin=kmin; kBin<=kmax; kBin++ )
             {
               localIndex binIndex = subRegionIndex * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
-              // if(cycleNumber > m_logStartCycle)
-              // {
-              // printf("\t\tbinIndex %d, binView.sizeOfArray(binIndex): %d\n", binIndex, binsView.sizeOfArray( binIndex ));
-              // }
+
               for( localIndex bb = 0; bb < binsView.sizeOfArray( binIndex ); bb++ )
               {
-                // if(cycleNumber > m_logStartCycle)
-                // {
-                // printf("\t\tbb: %d, binView[binIndex][bb]: %d", bb, binsView[binIndex][bb]);
-                // }
                 localIndex b = binsView[binIndex][bb];
                 real64 xBA[3] = { 0.0 };
                 LvArray::tensorOps::copy< 3 >( xBA, xB[b] );
                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
                 if( LvArray::tensorOps::l2NormSquared< 3 >(xBA) <= neighborRadiusSquared )
                 {
-                  // if(cycleNumber > m_logStartCycle)
-                  // {
-                  // printf(" is neighbor %d\n", neighborCount);
-                  // }
                   neighborRegions[a][neighborCount] = regionIndex;
                   neighborSubRegions[a][neighborCount] = subRegionIndex2;
                   neighborIndices[a][neighborCount] = b;
@@ -5522,12 +5461,10 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
             }
           }
         }
+        subRegionIndex++;
       } );
     } );
-    // subRegionIndexA++;
   } );
-
-  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Neighborlist created");
 
   return( MPI_Wtime() - tStart );
 }
@@ -5786,8 +5723,7 @@ void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 const >
                                                     localIndex const numNeighbors,
                                                     arrayView2d< real64 const > const & xp,           // List of neighbor particle locations.
                                                     arrayView1d< real64 const > const & Vp,           // List of neighbor particle volumes.
-                                                    arrayView1d< real64 const > const & fp,           // scalar field values (e.g. damage) at
-                                                                                          // neighbor particles
+                                                    arrayView1d< real64 const > const & fp,           // scalar field values (e.g. damage) at neighbor particles
                                                     arraySlice1d< real64 > const result )
 {
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
