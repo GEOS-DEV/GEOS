@@ -282,6 +282,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
   PhysicsSolverBase( name, parent ),
   m_solverProfiling( 0 ),
+  m_logStartCycle( 0 ),
   m_plottableFields(),
   m_plottableFieldsSorted(),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
@@ -307,6 +308,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_boreholeRadius( 0.0 ),
   m_stressControl(),
   m_stressTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
+  m_stressTable(),
   m_stressControlKp( 0.1 ),
   m_stressControlKi( 0.0 ),
   m_stressControlKd( 0.0 ),
@@ -315,14 +317,20 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_stressControlITerm(),
   m_boxAverageHistory( 0 ),
   m_boxAverageWriteInterval( 0.0 ),
+  m_nextBoxAverageWriteTime( 0.0 ),
+  m_boxAverageMin(),
+  m_boxAverageMax(),
   m_reactionHistory( 0 ),
   m_reactionWriteInterval( 0.0 ),
+  m_nextReactionWriteTime( 0.0 ),
   m_writeParticleData( 0 ),
   m_particleDataWriteInterval( 0.0 ),
+  m_nextParticleDataWriteTime( 0.0 ),
   m_explicitSurfaceNormalInfluence( 0.0 ),
   m_computeSurfaceNormalsOnlyOnInitialization( 0 ),
   m_computeSurfaceNormals( 0 ),
   m_computeSurfacePositions( 0 ),
+  m_gpuScheme( GPUSchemeOption::Atomics ),
   m_referenceCohesiveZone( 0 ),
   m_enableCohesiveLaws( 0 ),
   m_cohesiveLaw( CohesiveLawOption::NeedlemanXu ),
@@ -330,7 +338,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_preventCZInterpentration( 0 ),
   m_normalForceConstant( 0.0 ),
   m_shearForceConstant( 0.0 ),
-  m_gpuScheme( GPUSchemeOption::Atomics ),
   m_numSurfaceIntegrationPoints( 200 ),
   m_maxCohesiveNormalStress( 0 ),
   m_maxCohesiveShearStress( 0 ),
@@ -392,14 +399,16 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_frictionCoefficientTable(),
   m_planeStrain( 0 ),
   m_numDims( 3 ),
+  m_generalizedVortexMMS( 0 ),
   m_ijkMap(),
   m_useEvents( 0 ),
   m_mpmEventManager( nullptr ),
-  m_surfaceHealing( false ),
+  m_surfaceHealing( 0 ),
   m_computeXProfile( 0 ),
   m_xProfileWriteInterval( 0.0 ),
   m_nextXProfileWriteTime( 0.0 ),
-  m_xProfileVx0( 0.0 )
+  m_xProfileVx0( 0.0 ),
+  m_implicitContinuumFluidPressure( 0.0 )
 {
   // setInputFlags( InputFlags::OPTIONAL );
 
@@ -407,6 +416,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for timing subroutines in the solver" );
+
+  registerWrapper( "logStartCycle", &m_logStartCycle ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Cycle to start logging output for debugging" );
 
   registerWrapper( "plottableFields", &m_plottableFields ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -5194,8 +5208,6 @@ void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & s
 //Retain max number of neighbors for device parallelism in computeDamageFieldGradient
 real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleManager & particleManager )
 {
-  #define CYCLE_START 8000
-
   GEOS_MARK_FUNCTION;
 
   // Time this function
@@ -5275,7 +5287,7 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
     binCount[b] = 0;
   }
 
-  GEOS_LOG_RANK_0_IF(cycleNumber > CYCLE_START, "Precomputed bin sizes");
+  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Precomputed bin sizes");
 
   ArrayOfArraysView< localIndex > binsView = bins.toView();
 
@@ -5298,16 +5310,17 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
     subRegionIndex++;
   } );
 
-  GEOS_LOG_RANK_0_IF(cycleNumber > CYCLE_START, "Populated bins for searching");
+  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Populated bins for searching");
 
   // Precompute number of neighbors for each particles
-  int subRegionIndexA = 0;
+  // int subRegionIndexA = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Get 'this' particle's location
     arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
+
     // Create an array to store neighbor counts for all particles
-    array1d<localIndex> neighborCounts(subRegionA.size());
+    array1d< localIndex > neighborCounts(subRegionA.size());
 
     // Find neighbors of all particles and count them
     SortedArrayView< localIndex const > const subRegionAActiveParticleIndices = subRegionA.activeParticleIndices();
@@ -5368,48 +5381,59 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
 
       // Store the count for this particle
       neighborCounts[a] = localNeighborCount;
+      // if(cycleNumber > m_logStartCycle)
+      // {
+      //   printf("subRegionIndexA: %d, a: %d, numNeighbors: %d\n", subRegionIndexA, a, localNeighborCount);
+      // }
     } );
 
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
     neighborList.freeOnDevice(); // just being careful
 
-    OrderedVariableToManyParticleRelation newNeighborList;
-    std::swap( neighborList, newNeighborList );
+    // OrderedVariableToManyParticleRelation newNeighborList;
+    // std::swap( neighborList, newNeighborList );
     neighborList.resizeFromCapacities( neighborCounts );
 
-    if(cycleNumber > CYCLE_START)
-    {
-      arrayView1d< localIndex const > const & numParticles = neighborList.m_numParticles.toViewConst();
-      ArrayOfArraysView< localIndex const > const & toParticleRegion = neighborList.m_toParticleRegion.toViewConst();
-      // ArrayOfArraysView< localIndex > toParticleSubRegion = neighborList.m_toParticleSubRegion.toView();
-      // ArrayOfArraysView< localIndex > toParticleIndex = neighborList.m_toParticleIndex.toView();
+    // if(cycleNumber >= m_logStartCycle)
+    // {
+    //   arrayView1d< localIndex const > const & numParticles = neighborList.m_numParticles.toViewConst();
+    //   ArrayOfArraysView< localIndex const > const & toParticleRegion = neighborList.m_toParticleRegion.toViewConst();
+    //   ArrayOfArraysView< localIndex const > const & toParticleSubRegion = neighborList.m_toParticleSubRegion.toViewConst();
+    //   ArrayOfArraysView< localIndex const > const & toParticleIndex = neighborList.m_toParticleIndex.toViewConst();
 
-      printf("subRegionIndex: %d, m_toParticleRegion.maxOffset: %d, ", subRegionIndexA, toParticleRegion.getOffsets()[numParticles.size()]);
-      for( int p= 0; p < numParticles.size(); p++)
-      {
-        printf("m_toParticleRegion[%d] (offsets, sizes): ", p);
-        localIndex nP = numParticles[p];
-        for(int i = 0; i < nP; i++)
-        {
-          printf("(%d, %d), ", toParticleRegion.getOffsets()[i], toParticleRegion.getSizes()[i]);
-        }
-        printf("\n");
-      }
-    }
-    subRegionIndexA++;
+    //   if(cycleNumber > m_logStartCycle)
+    //   {
+    //     printf("subRegionIndex: %d, m_toParticleRegion.maxOffset: %d, ", subRegionIndexA, toParticleRegion.getOffsets()[numParticles.size()]);
+      
+    //     for( int p= 0; p < numParticles.size(); p++)
+    //     {
+    //       // localIndex nP = numParticles[p];
+    //       printf("subRegionIndex: %d, p: %d numParticles[p]=%d, toParticleRegion.sizeOfArray(p): %d, toParticleSubRegion.sizeOfArray(p): %d, toParticleIndex.sizeOfArray(p): %d\n", subRegionIndexA, p, numParticles[p], toParticleRegion.sizeOfArray(p), toParticleSubRegion.sizeOfArray(p), toParticleIndex.sizeOfArray(p));
+    //       // printf("m_toParticleRegion[%d] (offsets, sizes): numParticles[p]=%d, ", p, nP);
+    //       // for(int i = 0; i < nP; i++)
+    //       // {
+    //       //   printf("(%d, %d), ", toParticleRegion.getOffsets()[i], toParticleRegion.getSizes()[i]);
+    //       // }
+    //       // printf("\n");
+    //     }
+    //   }
+    // }
+    // subRegionIndexA++;
 
     // printf("Setting new neighborlist\n");
 
     // printf("Finished setting new neighborlist\n");
   } );
 
-  GEOS_LOG_RANK_0_IF(cycleNumber > CYCLE_START, "Precomputed neighborlist sizes");
+  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Precomputed neighborlist sizes");
 
   // Perform neighbor search over appropriate bins (populate neighborlist with particle data)
+  // subRegionIndexA = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Get neighbor list views
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
+    arrayView1d< localIndex const > const & numParticles = neighborList.m_numParticles.toViewConst();
     ArrayOfArraysView< localIndex > neighborRegions = neighborList.m_toParticleRegion.toView();
     ArrayOfArraysView< localIndex > neighborSubRegions = neighborList.m_toParticleSubRegion.toView();
     ArrayOfArraysView< localIndex > neighborIndices = neighborList.m_toParticleIndex.toView();
@@ -5440,6 +5464,11 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
       kmin = std::max( kmin, 0 );
       kmax = std::min( kmax, nzbins-1 );
 
+      // if(cycleNumber > m_logStartCycle)
+      // {
+      //   printf("subRegionIndexA: %d, pA: %d, numParticles: %d, neighborRegions.sizeOfArray(pA): %d, neighborSubRegions.sizeOfArray(pA): %d, neighorIndices.sizeOfArray(pA): %d\n", subRegionIndexA, a, numParticles[a], neighborRegions.sizeOfArray(a), neighborSubRegions.sizeOfArray(a), neighborIndices.sizeOfArray(a));
+      // }
+
       // Inner subregion loop
       subRegionIndex = 0;
       int neighborCount = 0;
@@ -5464,16 +5493,26 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
             for( int kBin=kmin; kBin<=kmax; kBin++ )
             {
               localIndex binIndex = subRegionIndex * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
+              // if(cycleNumber > m_logStartCycle)
+              // {
+              // printf("\t\tbinIndex %d, binView.sizeOfArray(binIndex): %d\n", binIndex, binsView.sizeOfArray( binIndex ));
+              // }
               for( localIndex bb = 0; bb < binsView.sizeOfArray( binIndex ); bb++ )
               {
+                // if(cycleNumber > m_logStartCycle)
+                // {
                 // printf("\t\tbb: %d, binView[binIndex][bb]: %d", bb, binsView[binIndex][bb]);
+                // }
                 localIndex b = binsView[binIndex][bb];
                 real64 xBA[3] = { 0.0 };
                 LvArray::tensorOps::copy< 3 >( xBA, xB[b] );
                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
                 if( LvArray::tensorOps::l2NormSquared< 3 >(xBA) <= neighborRadiusSquared )
                 {
+                  // if(cycleNumber > m_logStartCycle)
+                  // {
                   // printf(" is neighbor %d\n", neighborCount);
+                  // }
                   neighborRegions[a][neighborCount] = regionIndex;
                   neighborSubRegions[a][neighborCount] = subRegionIndex2;
                   neighborIndices[a][neighborCount] = b;
@@ -5485,9 +5524,10 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
         }
       } );
     } );
+    // subRegionIndexA++;
   } );
 
-  GEOS_LOG_RANK_0_IF(cycleNumber > CYCLE_START, "Neighborlist created");
+  // GEOS_LOG_RANK_0_IF(cycleNumber >= m_logStartCycle, "Neighborlist created");
 
   return( MPI_Wtime() - tStart );
 }
@@ -8473,7 +8513,6 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
         {
           for(int i = 0; i < m_numDims; i++)
           {
-            gridCohesiveMass[g][fieldIndex] = tempGridMassGlobal
             // gridCenterOfVolume[g][fieldIndex][i] = tempGridCenterOfVolumeGlobal[n][fieldIndex][i];
             // gridParticleSurfaceNormal[g][fieldIndex][i] = tempGridParticleSurfaceNormalGlobal[n][fieldIndex][i];
             gridCohesiveArea[g][fieldIndex][i] = m_referenceCohesiveGridNodeSurfaceNormals[n][fieldIndex][i];
@@ -8529,7 +8568,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
             localIndex nodeIndex = 0;
             for( int n = 0; n < numCohesiveNodes; n++ )
             {
-              if( m_cohesiveNodeGlobalIndices[n] ==  mappedNode )
+              if( m_cohesiveNodeGlobalIndices[n] == mappedNode )
               {
                 nodeIndex = n;
                 break;

@@ -192,8 +192,8 @@ public:
   ///@}
 
   /**
-   * @brief Return true iff this wrapper has a valid default value.
-   * @return True iff this wrapper has a valid default value.
+   * @brief Return true if this wrapper has a valid default value.
+   * @return True if this wrapper has a valid default value.
    */
   virtual bool hasDefaultValue() const = 0;
 

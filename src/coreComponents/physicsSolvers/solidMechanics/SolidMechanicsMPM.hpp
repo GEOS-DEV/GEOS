@@ -899,6 +899,7 @@ protected:
                                                                   // a particle on the subregion maps to, 3}
 
   int m_solverProfiling;
+  int m_logStartCycle;
   std::vector< real64 > m_profilingTimes;
   std::vector< std::string > m_profilingLabels;
 
@@ -964,6 +965,8 @@ protected:
   int m_computeSurfaceNormals;
   int m_computeSurfacePositions;
 
+  GPUSchemeOption m_gpuScheme;
+
   // Cohesive law variables
   int m_referenceCohesiveZone;
   int m_enableCohesiveLaws;
@@ -972,8 +975,6 @@ protected:
   int m_preventCZInterpentration;
   real64 m_normalForceConstant;
   real64 m_shearForceConstant;
-
-  GPUSchemeOption m_gpuScheme;
 
   real64 m_numSurfaceIntegrationPoints;
   real64 m_maxCohesiveNormalStress;
@@ -1060,7 +1061,6 @@ protected:
 
   int m_planeStrain;
   int m_numDims;
-
 
   int m_generalizedVortexMMS;
 
