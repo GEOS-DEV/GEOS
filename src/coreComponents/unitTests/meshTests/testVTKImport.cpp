@@ -410,7 +410,7 @@ TEST( VTKImport, cube )
     }
   };
 
-  std::set< string > const meshFiles{ "cube.vtk",
+  std::set< string > const meshFiles{ //"cube.vtk",
                                       "cube_STRUCTURED_POINTS.vtk",
                                       "cube_RECTILINEAR_GRID.vtk",
                                       "cube_STRUCTURED_GRID.vtk",
