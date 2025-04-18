@@ -35,162 +35,182 @@ namespace geos
 class SolverStatistics : public dataRepository::Group
 {
 public:
+  class IterationsStatistics
+  {
+public:
+    /// Number of time steps
+    integer m_numTimeSteps;
 
-  /// Number of time steps
-  integer m_numTimeSteps;
-
-  /// Number of time step cuts
-  integer m_numTimeStepCuts;
-
-
-  /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumOuterLoopIterations;
-
-  /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumNonlinearIterations;
-
-  /// Number of linear iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumLinearIterations;
+    /// Number of time step cuts
+    integer m_numTimeStepCuts;
 
 
-  /// Cumulative number of successful outer loop iterations
-  integer m_numSuccessfulOuterLoopIterations;
+    /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
+    integer m_currentNumOuterLoopIterations;
 
-  /// Cumulative number of successful nonlinear iterations
-  integer m_numSuccessfulNonlinearIterations;
+    /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
+    integer m_currentNumNonlinearIterations;
 
-  /// Cumulative number of successful linear iterations
-  integer m_numSuccessfulLinearIterations;
+    /// Number of linear iterations in the current time step (utility variable constantly overwritten)
+    integer m_currentNumLinearIterations;
 
 
-  /// Cumulative number of discarded outer loop iterations
-  integer m_numDiscardedOuterLoopIterations;
+    /// Cumulative number of successful outer loop iterations
+    integer m_numSuccessfulOuterLoopIterations;
 
-  /// Cumulative number of discarded nonlinear iterations
-  integer m_numDiscardedNonlinearIterations;
+    /// Cumulative number of successful nonlinear iterations
+    integer m_numSuccessfulNonlinearIterations;
 
-  /// Cumulative number of discarded linear iterations
-  integer m_numDiscardedLinearIterations;
+    /// Cumulative number of successful linear iterations
+    integer m_numSuccessfulLinearIterations;
 
-  /// @cond DO_NOT_DOCUMENT
-  integer m_currentNewtonIter = std::numeric_limits< integer >::max();
 
-  real64 m_residualMass = std::numeric_limits< real64 >::max();
+    /// Cumulative number of discarded outer loop iterations
+    integer m_numDiscardedOuterLoopIterations;
 
-  real64 m_residualVol = std::numeric_limits< real64 >::max();
+    /// Cumulative number of discarded nonlinear iterations
+    integer m_numDiscardedNonlinearIterations;
 
-  real64 m_residualEnergy =  std::numeric_limits< real64 >::max();
+    /// Cumulative number of discarded linear iterations
+    integer m_numDiscardedLinearIterations;
 
-  real64 m_residualFlow =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Initialize the counters used for an individual time step
+     */
+    void initializeTimeStepStatistics();
 
-  real64 m_residualBubbleDisp =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Tell the solverStatistics that we are doing a nonlinear iteration
+     * @param[in] numLinearIterations the number of linear iterations done by the linear solver
+     * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
+     */
+    void logNonlinearIteration( integer const numLinearIterations );
 
-  real64 m_residualFracture =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Tell the solverStatistics that we are doing a nonlinear iteration
+     * @detail This function is well suited for the outer loop in sequential schemes
+     */
+    void logNonlinearIteration();
 
-  real64 m_residualStick =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Tell the solverStatistics that we are doing an outer loop iteration
+     */
+    void logOuterLoopIteration();
 
-  real64 m_residualSlip =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Tell the solverStatistics that there is a time step cut
+     */
+    void logTimeStepCut();
 
-  real64 m_residualOpen =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Save the statistics for the individual time step and increment the cumulative stats
+     */
+    void saveTimeStepStatistics();
 
-  real64 m_residualSolid =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Register the corresponding solver statistics to the TableData
+     */
+    void registerStatsToTable();
 
-  real64 m_residualContact =  std::numeric_limits< real64 >::max();
+    /**
+     * @brief Output the statistics to the console and csv file if needed
+     * @param writeCSV Indicate if we output to CSV FILE
+     */
+    void outputStatistics( bool writeCSV );
 
-  real64 m_residualProppant =  std::numeric_limits< real64 >::max();
 
-  real64 m_residualWell =  std::numeric_limits< real64 >::max();
+private:
+    /// Table containing statistics relative to non linear parameter
+    TableData m_nonLinearData;
+  } m_iterationsStats;
 
-  real64 m_residualDamage =  std::numeric_limits< real64 >::max();
+  class ConvergenceStatistics
+  {
+public:
 
-  real64 m_totalResidual =  std::numeric_limits< real64 >::max();
-  /// @endcond
+    integer m_currentNewtonIter = std::numeric_limits< integer >::max();
+
+    real64 m_residualMass = std::numeric_limits< real64 >::max();
+
+    real64 m_residualVol = std::numeric_limits< real64 >::max();
+
+    real64 m_residualEnergy =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualFlow =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualBubbleDisp =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualFracture =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualStick =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualSlip =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualOpen =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualSolid =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualContact =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualProppant =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualWell =  std::numeric_limits< real64 >::max();
+
+    real64 m_residualDamage =  std::numeric_limits< real64 >::max();
+
+    real64 m_totalResidual =  std::numeric_limits< real64 >::max();
+
+    /**
+     * @brief Output the cumulative statistics to the terminal
+     * @param Indicate if we output to CSV FILE
+     */
+    void outputResidualNorm( bool writeCSV );
+
+    /**
+     * @brief Set the Residual Norms filename
+     * @param filename The filename string
+     */
+    void setResidualNormsFileName( string_view filename )
+    { m_residualNormsFileName = filename; }
+
+    /**
+     * @brief Register the corresponding residuals norms to the TableData
+     */
+    void registerResidualNormToTable();
+
+    /**
+     * @brief When a configuration did not converge, removes the last residual norms by the number of
+     * the newton iterations
+     */
+    void removeInvalidResidualNorms();
+
+    /**
+     * @brief Save the current newton iteration
+     * @param currentNewtonIter The current newton iteration done by the the linear solver
+     */
+    void logNewtonIter( integer currentNewtonIter );
+
+private:
+    /// Table containing statistics relative to non linear norms
+    std::unique_ptr< TableLayout > m_nonLinearNormsLayout;
+
+    /// Table containing statistics relative to non linear norms
+    TableData m_nonLinearNormsData;
+
+    /// Residuals norms csv filename
+    string m_residualNormsFileName;
+
+  } m_convergenceStats;
+
 
   /**
    * @brief Constructor for SolverStatistics Objects.
    * @param[in] name the name of this instantiation of SolverStatistics in the repository
    * @param[in] parent the parent group of this instantiation of SolverStatistics
+   * @note For now, we register only the iteration statistics as the convergence value will be lost during the solving
    */
   SolverStatistics( string const & name,
                     dataRepository::Group * const parent );
-
-  /**
-   * @brief Prepare the residual table layout whether it's thermal or not
-   * @param isThermal Value indicating the thermal state
-   */
-  void prepareResidualTableLayout();
-
-  /**
-   * @brief Initialize the counters used for an individual time step
-   */
-  void initializeTimeStepStatistics();
-
-  /**
-   * @brief Tell the solverStatistics that we are doing a nonlinear iteration
-   * @param[in] numLinearIterations the number of linear iterations done by the linear solver
-   * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
-   */
-  void logNonlinearIteration( integer const numLinearIterations );
-
-  /**
-   * @brief Tell the solverStatistics that we are doing a nonlinear iteration
-   * @detail This function is well suited for the outer loop in sequential schemes
-   */
-  void logNonlinearIteration();
-
-  /**
-   * @brief Tell the solverStatistics that we are doing an outer loop iteration
-   */
-  void logOuterLoopIteration();
-
-  /**
-   * @brief Tell the solverStatistics that there is a time step cut
-   */
-  void logTimeStepCut();
-
-  /**
-   * @brief When a configuration did not converge, removes the last residual norms by the number of
-   * the newton iterations
-   */
-  void removeInvalidResidualNorms();
-
-  /**
-   * @brief Save the current newton iteration
-   * @param currentNewtonIter The current newton iteration done by the the linear solver
-   */
-  void logNewtonIter( integer currentNewtonIter );
-
-  /**
-   * @brief Save the statistics for the individual time step and increment the cumulative stats
-   */
-  void saveTimeStepStatistics();
-
-  /**
-   * @brief Register the corresponding solver statistics to the TableData
-   */
-  void registerStatsToTable();
-
-  /**
-   * @brief Register the corresponding residuals norms to the TableData
-   */
-  void registerResidualNormToTable();
-
-  /**
-   * @brief Output the cumulative statistics to the terminal
-   */
-  void outputStatistics( bool writeCSV );
-
-  /**
-   * @brief Output the cumulative statistics to the terminal
-   */
-  void outputResidualNorm( bool writeCSV );
-
-  /**
-   * @brief Set the Residual Norms filename
-   * @param filename The filename string
-   */
-  void setResidualNormsFileName( string_view filename )
-  { m_residualNormsFileName = filename; }
 
   /**
    * @return The output directory where all statistics related to the solver are atored
@@ -226,21 +246,8 @@ public:
   };
 
 private:
-  /// Table containing statistics relative to non linear parameter
-  TableData m_nonLinearData;
-
-  /// Table containing statistics relative to non linear norms
-  std::unique_ptr< TableLayout > m_nonLinearNormsLayout;
-
-  /// Table containing statistics relative to non linear norms
-  TableData m_nonLinearNormsData;
-
-  /// Residuals norms csv filename
-  string m_residualNormsFileName;
-
   /// Output directory for solver statiscis csv
   string m_outputDir;
-
 };
 
 } //namespace geos

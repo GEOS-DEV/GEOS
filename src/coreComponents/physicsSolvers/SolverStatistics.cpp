@@ -34,7 +34,7 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   m_currentNumNonlinearIterations( 0 ),
   m_currentNumLinearIterations( 0 ),
   m_currentNewtonIter( 0 ),
-  m_outputDir( joinPath( OutputBase::getOutputDirectory(), "convergence" ))
+  m_outputDir( joinPath( OutputBase::getOutputDirectory(), "convergence" ))// TODO DANS LE HPP
 {
   registerWrapper( viewKeyStruct::numTimeStepsString(), &m_numTimeSteps ).
     setApplyDefaultValue( 0 ).
@@ -80,10 +80,7 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
     } );
 }
 
-void SolverStatistics::prepareResidualTableLayout()
-{}
-
-void SolverStatistics::initializeTimeStepStatistics()
+void SolverStatistics::IterationsStatistics::initializeTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
   m_currentNumOuterLoopIterations = 0;
@@ -91,27 +88,35 @@ void SolverStatistics::initializeTimeStepStatistics()
   m_currentNumLinearIterations = 0;
 }
 
-void SolverStatistics::logNonlinearIteration( integer const numLinearIterations )
+void SolverStatistics::IterationsStatistics::logNonlinearIteration( integer const numLinearIterations )
 {
   // we have just performed a Newton iteration, so we increment the individual-timestep counters
   m_currentNumNonlinearIterations++;
   m_currentNumLinearIterations += numLinearIterations;
 }
 
-void SolverStatistics::logNonlinearIteration()
+void SolverStatistics::IterationsStatistics::logNonlinearIteration()
 {
   // we have just performed an outer iteration, so we increment the individual-timestep counter (number of outer iteration)
   m_currentNumNonlinearIterations++;
 }
 
-void SolverStatistics::logOuterLoopIteration()
+void SolverStatistics::IterationsStatistics::logOuterLoopIteration()
 {
   // we have just performed an outer loop iteration, so we increment the individual-timestep counter for outer loop iterations
   m_currentNumOuterLoopIterations++;
 }
 
+void SolverStatistics::IterationsStatistics::saveTimeStepStatistics()
+{
+  // the timestep has converged, so we increment the cumulative counters for successful timesteps
+  m_numSuccessfulOuterLoopIterations += m_currentNumOuterLoopIterations;
+  m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
+  m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
+  m_numTimeSteps++;
+}
 
-void SolverStatistics::logTimeStepCut()
+void SolverStatistics::IterationsStatistics::logTimeStepCut()
 {
   // we have just cut the time step, so we increment the cumulative counters for discarded timesteps
   m_numDiscardedOuterLoopIterations += m_currentNumOuterLoopIterations;
@@ -123,25 +128,72 @@ void SolverStatistics::logTimeStepCut()
   initializeTimeStepStatistics();
 }
 
-void SolverStatistics::removeInvalidResidualNorms()
+void SolverStatistics::IterationsStatistics::registerStatsToTable()
+{
+  m_nonLinearData.addRow( m_numTimeSteps,
+                          m_numTimeStepCuts,
+                          m_numSuccessfulOuterLoopIterations,
+                          m_numSuccessfulNonlinearIterations,
+                          m_numSuccessfulLinearIterations,
+                          m_numDiscardedOuterLoopIterations,
+                          m_numDiscardedNonlinearIterations,
+                          m_numDiscardedLinearIterations );
+}
+
+void SolverStatistics::IterationsStatistics::outputStatistics( bool writeCSV )
+{
+  { // output to log
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time steps cut: {}", getParent().getName(), m_numTimeStepCuts ) );
+    TableLayout statsLayout( GEOS_FMT( "{} statistics", getParent().getName()),
+                             { TableLayout::Column()
+                                 .setName( "Components" )
+                                 .setValuesAlignment( TableLayout::Alignment::left ),
+                               "Iter"} );
+    TableTextFormatter const statsFormatter( statsLayout );
+
+    TableData nonLinearDataLog;
+    nonLinearDataLog.addRow( "Successful outer loop", m_numSuccessfulOuterLoopIterations );
+    nonLinearDataLog.addRow( "Successful nonlinear", m_numSuccessfulNonlinearIterations );
+    nonLinearDataLog.addRow( "Successful linear", m_numSuccessfulLinearIterations );
+    nonLinearDataLog.addRow( "Discarded outer loop", m_numDiscardedOuterLoopIterations );
+    nonLinearDataLog.addRow( "Discarded nonlinear", m_numDiscardedNonlinearIterations );
+    nonLinearDataLog.addRow( "Discarded linear", m_numDiscardedLinearIterations );
+
+    std::cout << statsFormatter.toString( nonLinearDataLog ) << std::endl;
+  }
+
+  if( writeCSV )
+  {
+    string const fileName = GEOS_FMT( "{}/statistics_cycle_{}.csv", m_outputDir, m_numTimeSteps );
+    std::ofstream logStream( fileName );
+    std::cout << "fileName : " << fileName <<  std::endl;
+
+    TableLayout statsLayout( {  "Time-steps", "Time steps cut",
+                                "Successful outer loop", "Successful nonlinear", "Successful linear",
+                                "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
+    TableCSVFormatter const csvOutput( statsLayout );
+    std::cout << csvOutput.toString( m_nonLinearData ) << std::endl;
+
+    logStream << csvOutput.toString( m_nonLinearData );
+    logStream.close();
+    m_nonLinearData.clear();
+  }
+}
+
+
+void SolverStatistics::ConvergenceStatistics::removeInvalidResidualNorms()
 {
   for( int i = 0; i <= m_currentNewtonIter; i++ )
     m_nonLinearNormsData.getTableDataRows().pop_back();
 }
-void SolverStatistics::logNewtonIter( integer currentNewtonIter )
+
+void SolverStatistics::ConvergenceStatistics::logNewtonIter( integer currentNewtonIter )
 { m_currentNewtonIter = currentNewtonIter; }
 
-void SolverStatistics::saveTimeStepStatistics()
-{
-  // the timestep has converged, so we increment the cumulative counters for successful timesteps
-  m_numSuccessfulOuterLoopIterations += m_currentNumOuterLoopIterations;
-  m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
-  m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
-  m_numTimeSteps++;
-}
 
 
-void SolverStatistics::registerResidualNormToTable()
+void SolverStatistics::ConvergenceStatistics::registerResidualNormToTable()
 {
   std::vector< TableData::CellData > residualsNormCells;
 
@@ -202,66 +254,12 @@ void SolverStatistics::registerResidualNormToTable()
   m_nonLinearNormsData.addRow( residualsNormCells );
 }
 
-void SolverStatistics::registerStatsToTable()
-{
-  m_nonLinearData.addRow( m_numTimeSteps,
-                          m_numTimeStepCuts,
-                          m_numSuccessfulOuterLoopIterations,
-                          m_numSuccessfulNonlinearIterations,
-                          m_numSuccessfulLinearIterations,
-                          m_numDiscardedOuterLoopIterations,
-                          m_numDiscardedNonlinearIterations,
-                          m_numDiscardedLinearIterations );
-}
-
-void SolverStatistics::outputStatistics( bool writeCSV )
-{
-  { // output to log
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time steps cut: {}", getParent().getName(), m_numTimeStepCuts ) );
-    TableLayout statsLayout( GEOS_FMT( "{} statistics", getParent().getName()),
-                             { TableLayout::Column()
-                                 .setName( "Components" )
-                                 .setValuesAlignment( TableLayout::Alignment::left ),
-                               "Iter"} );
-    TableTextFormatter const statsFormatter( statsLayout );
-
-    TableData nonLinearDataLog;
-    nonLinearDataLog.addRow( "Successful outer loop", m_numSuccessfulOuterLoopIterations );
-    nonLinearDataLog.addRow( "Successful nonlinear", m_numSuccessfulNonlinearIterations );
-    nonLinearDataLog.addRow( "Successful linear", m_numSuccessfulLinearIterations );
-    nonLinearDataLog.addRow( "Discarded outer loop", m_numDiscardedOuterLoopIterations );
-    nonLinearDataLog.addRow( "Discarded nonlinear", m_numDiscardedNonlinearIterations );
-    nonLinearDataLog.addRow( "Discarded linear", m_numDiscardedLinearIterations );
-
-    std::cout << statsFormatter.toString( nonLinearDataLog ) << std::endl;
-  }
-
-  if( writeCSV )
-  {
-    string const fileName = GEOS_FMT( "{}/statistics_cycle_{}.csv", m_outputDir, m_numTimeSteps );
-    std::ofstream logStream( fileName );
-    std::cout << "fileName : " << fileName <<  std::endl;
-
-    TableLayout statsLayout( {  "Time-steps", "Time steps cut",
-                                "Successful outer loop", "Successful nonlinear", "Successful linear",
-                                "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
-    TableCSVFormatter const csvOutput( statsLayout );
-    std::cout << csvOutput.toString( m_nonLinearData ) << std::endl;
-
-    logStream << csvOutput.toString( m_nonLinearData );
-    logStream.close();
-    m_nonLinearData.clear();
-  }
-}
-
-void SolverStatistics::outputResidualNorm( bool writeCSV )
+void SolverStatistics::ConvergenceStatistics::outputResidualNorm( bool writeCSV )
 {
   std::ofstream logStream( m_residualNormsFileName );
 
   if( writeCSV )
   {
-    std::cout <<  " outputResidualNorm " << m_residualNormsFileName << std::endl;
     TableCSVFormatter const csvOutput( *m_nonLinearNormsLayout );
     std::cout << csvOutput.toString( m_nonLinearNormsData ) << std::endl;
     logStream << csvOutput.toString( m_nonLinearNormsData );
@@ -270,4 +268,5 @@ void SolverStatistics::outputResidualNorm( bool writeCSV )
   m_nonLinearNormsData.clear();
 
 }
+
 } // namespace geos
