@@ -1296,10 +1296,10 @@ void vectorToFieldKernel( ObjectManagerBase & GEOS_UNUSED_PARAM( manager ),
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1327,10 +1327,10 @@ void vectorToFieldKernel( ObjectManagerBase & manager,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor[i] * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor[i] * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1387,10 +1387,10 @@ void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template readFieldValue( field,
-                                           i,
-                                           fieldComp++,
-                                           localVector[lid + vecComp] );
+        FIELD_OP::template readFieldValue<>( field,
+                                             i,
+                                             fieldComp++,
+                                             localVector[lid + vecComp] );
       }
     }
   } );
