@@ -61,6 +61,15 @@ char const * parseValueImpl( char const * const first,
   return ptr;
 }
 
+template< typename T, std::enable_if_t< std::is_same< T, std::string >::value > * = nullptr >
+char const * parseValueImpl( char const * const first,
+                             char const * const last,
+                             T & value )
+{
+  value = std::string( first, last );
+  return last;
+}
+
 }
 
 template< typename T >
@@ -80,6 +89,7 @@ INST_PARSEVALUE( short );
 INST_PARSEVALUE( int );
 INST_PARSEVALUE( long );
 INST_PARSEVALUE( long long );
+INST_PARSEVALUE( std::string );
 // Add other types as needed
 
 #undef INST_PARSEVALUE

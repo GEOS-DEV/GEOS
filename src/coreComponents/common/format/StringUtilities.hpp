@@ -152,8 +152,8 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
  * @return The container of the divided substrings.
  */
 template< template< class ... > class CONTAINER = std::vector >
-CONTAINER< string > tokenize( string const & str,
-                              string const & delimiters,
+CONTAINER< string > tokenize( string_view str,
+                              string_view delimiters,
                               bool const treatConsecutiveDelimAsOne = true,
                               bool const preTrimStr = false )
 {
@@ -197,7 +197,7 @@ CONTAINER< string > tokenize( string const & str,
  * @return CONTAINER< string > The list of the subdivided substrings (std::vector< string > for instance).
  */
 template< template< class ... > class CONTAINER = std::vector >
-CONTAINER< string > tokenizeBySpaces( string const & str )
+CONTAINER< string > tokenizeBySpaces( string_view str )
 {
   return tokenize< CONTAINER >( str, " \f\n\r\t\v", true, true );
 }

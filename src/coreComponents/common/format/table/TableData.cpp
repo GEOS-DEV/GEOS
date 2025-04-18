@@ -23,6 +23,40 @@
 namespace geos
 {
 
+TableData::TableData():
+  m_errors( std::make_unique< TableErrorListing >() )
+{}
+
+TableData::TableData( TableData const & other ):
+  m_rows( other.m_rows ),
+  m_errors( std::make_unique< TableErrorListing >( *other.m_errors ) )
+{}
+
+TableData::TableData( TableData && other ):
+  m_rows( std::move( other.m_rows )),
+  m_errors( std::move( other.m_errors ))
+{}
+
+TableData & TableData::operator=( TableData && other )
+{
+  if( this != &other )
+  {
+    m_rows = std::move( other.m_rows );
+    m_errors = std::move( other.m_errors );
+  }
+  return *this;
+}
+
+TableData & TableData::operator=( TableData const & other )
+{
+  if( this != &other )
+  {
+    m_rows = other.m_rows;
+    *m_errors = *other.m_errors;
+  }
+  return *this;
+}
+
 void TableData::addRow( std::vector< TableData::CellData > const & row )
 {
   m_rows.push_back( row );
@@ -40,7 +74,6 @@ void TableData::addSeparator()
     m_rows.emplace_back( std::vector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
   }
 
-
 }
 
 void TableData::clear()
@@ -53,6 +86,17 @@ std::vector< std::vector< TableData::CellData > > const & TableData::getTableDat
 {
   return m_rows;
 }
+
+
+
+TableData2D::TableData2D()
+{}
+
+TableData2D::TableData2D( TableData2D const & other ):
+  m_data( other.m_data ),
+  m_columnValues( other.m_columnValues ),
+  m_errors( other.m_errors ? std::make_unique< TableErrorListing >( *other.m_errors ) : nullptr )
+{}
 
 void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
                                       arraySlice1d< real64 const > dim1AxisCoordinates,

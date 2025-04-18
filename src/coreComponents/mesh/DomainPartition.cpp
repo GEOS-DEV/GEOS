@@ -504,7 +504,7 @@ void DomainPartition::outputPartitionInformation() const
           }
 
 
-          partitionsData.push_back( std::move( tableData )  );
+          partitionsData.push_back( tableData );
           if( partitionsData.size() == 1 ||
               !(partitionsData[0] == partitionsData.back()))
           {

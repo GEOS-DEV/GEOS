@@ -15,8 +15,14 @@
 
 #include "MemoryInfos.hpp"
 
+#include "MpiWrapper.hpp"
+#if defined( GEOS_USE_CALIPER )and defined( GEOS_USE_ADIAK )
+#include <adiak.hpp>
+#endif
+
 namespace geos
 {
+
 MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceType ):
   m_totalMemory( 0 ),
   m_availableMemory( 0 ),
@@ -71,4 +77,179 @@ bool MemoryInfos::isPhysicalMemoryHandled() const
   return m_physicalMemoryHandled;
 }
 
+MemoryLogging::MemoryLogging():
+  m_umpireStatsLogReport( true ),
+  m_umpireStatsCsvReport( false ),
+  m_umpireStatsCsvReportFilename( "./umpireStats.csv" ),
+  m_currentCycle( 0 ),
+  m_currentTime( 0.0 )
+{
+  TableLayout memoryStatLogLayout = { "Umpire Memory Pool",
+                                      TableLayout::Column( "Min reserved rank memory" )
+                                        .addSubColumns( { "bytes", "over total" } ),
+                                      TableLayout::Column( "Max reserved rank memory" )
+                                        .addSubColumns( { "bytes", "over total" } ),
+                                      TableLayout::Column( "Avg reserved rank memory" )
+                                        .addSubColumns( { "bytes", "over total" } ),
+                                      TableLayout::Column( "Sum reserved rank memory" )
+                                        .addSubColumns( { "bytes", "over total" } ),
+  };
+  memoryStatLogLayout.setMargin( TableLayout::MarginValue::small );
+  m_memoryStatLogFormatter = std::make_unique< TableTextFormatter >( memoryStatLogLayout );
+
+  TableLayout const memoryStatCsvLayout = { "Cycle",
+                                            "Time",
+                                            "Umpire Memory Pool",
+                                            "Min rank mem bytes",
+                                            "Min rank mem %",
+                                            "Max rank mem bytes",
+                                            "Max rank mem %",
+                                            "Avg rank mem bytes",
+                                            "Avg rank mem %",
+                                            "Sum rank mem bytes",
+                                            "Sum rank mem %" };
+  m_memoryStatCsvFormatter = std::make_unique< TableCSVFormatter >( memoryStatCsvLayout );
 }
+
+MemoryLogging & MemoryLogging::getInstance()
+{
+  static MemoryLogging instance;
+  return instance;
+}
+
+void MemoryLogging::enableUmpireStatsCsvReport( bool enable, string_view filename )
+{
+  m_umpireStatsCsvReport = enable;
+  m_umpireStatsCsvReportFilename = filename;
+  if( enable )
+  {
+    // start a new file
+    std::ofstream csvFile{ m_umpireStatsCsvReportFilename, std::ios_base::out };
+    m_memoryStatCsvFormatter->headerToStream( csvFile );
+  }
+}
+
+void MemoryLogging::memoryStatsReport() const
+{
+  if( !m_umpireStatsLogReport && !m_umpireStatsCsvReport )
+    return;
+
+  umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
+  integer size;
+  MPI_Comm_size( MPI_COMM_WORLD, &size );
+  size_t nbRank = (std::size_t)size;
+  // Get a list of all the allocators and sort it so that it's in the same order on each rank.
+  std::vector< string > allocatorNames = rm.getAllocatorNames();
+  std::sort( allocatorNames.begin(), allocatorNames.end() );
+
+  // If each rank doesn't have the same number of allocators you can't aggregate them.
+  std::size_t const numAllocators = allocatorNames.size();
+  std::size_t const minNumAllocators = MpiWrapper::min( numAllocators );
+
+  if( numAllocators != minNumAllocators )
+  {
+    GEOS_WARNING( "Not all ranks have created the same number of umpire allocators, cannot compute high water marks." );
+    return;
+  }
+
+  // Loop over the allocators to collect stats.
+  TableData tableDataLog;
+  TableData tableDataCsv;
+  for( string const & allocatorName : allocatorNames )
+  {
+    // Skip umpire internal allocators.
+    if( allocatorName.rfind( "__umpire_internal", 0 ) == 0 )
+      continue;
+
+    static constexpr int MAX_NAME_LENGTH = 100;
+    GEOS_ERROR_IF_GT( allocatorName.size(), MAX_NAME_LENGTH );
+    string allocatorNameFixedSize = allocatorName;
+    allocatorNameFixedSize.resize( MAX_NAME_LENGTH, '\0' );
+    string allocatorNameMinChars = string( MAX_NAME_LENGTH, '\0' );
+
+    // Make sure that each rank is looking at the same allocator.
+    MpiWrapper::allReduce( allocatorNameFixedSize, allocatorNameMinChars, MpiWrapper::Reduction::Min, MPI_COMM_GEOS );
+    if( allocatorNameFixedSize != allocatorNameMinChars )
+    {
+      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
+      continue;
+    }
+
+    umpire::Allocator allocator = rm.getAllocator( allocatorName );
+    umpire::strategy::AllocationStrategy const * allocationStrategy = allocator.getAllocationStrategy();
+    umpire::MemoryResourceTraits const traits = allocationStrategy->getTraits();
+    umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
+    MemoryInfos const memInfos( resourceType );
+
+    if( !memInfos.isPhysicalMemoryHandled() )
+    {
+      continue;
+    }
+
+    // Get the total number of bytes allocated with this allocator across ranks.
+    // This is a little redundant since
+    std::size_t const mark = allocator.getHighWatermark();
+    std::size_t const minMark = MpiWrapper::min( mark );
+    std::size_t const maxMark = MpiWrapper::max( mark );
+    std::size_t const sumMark = MpiWrapper::sum( mark );
+    std::size_t const avgMark = sumMark / nbRank;
+
+    float minPercentage;
+    float maxPercentage;
+    float avgPercentage;
+    float sumPercentage;
+    if( memInfos.getTotalMemory() == 0 )
+    {
+      // TODO: after PR 3614, this warning should rather be in table error list.
+      GEOS_WARNING( "umpire memory percentage could not be resolved" );
+    }
+    else
+    {
+      float const memDivider = 1.0f / float( memInfos.getTotalMemory() );
+      minPercentage = 100.0f * ( float( minMark ) * memDivider );
+      maxPercentage = 100.0f * ( float( maxMark ) * memDivider );
+      avgPercentage = 100.0f * ( float( avgMark ) * memDivider );
+      sumPercentage = 100.0f * ( float( sumMark ) * memDivider );
+    }
+
+    if( m_umpireStatsLogReport )
+    {
+      tableDataLog.addRow( allocatorName,
+                           LvArray::system::calculateSize( minMark ), GEOS_FMT( "{:.1f} %", minPercentage ),
+                           LvArray::system::calculateSize( maxMark ), GEOS_FMT( "{:.1f} %", maxPercentage ),
+                           LvArray::system::calculateSize( avgMark ), GEOS_FMT( "{:.1f} %", avgPercentage ),
+                           LvArray::system::calculateSize( sumMark ), GEOS_FMT( "{:.1f} %", sumPercentage ) );
+    }
+
+    if( m_umpireStatsCsvReport )
+    {
+      tableDataCsv.addRow( m_currentCycle,
+                           m_currentTime,
+                           allocatorName,
+                           minMark, minPercentage,
+                           maxMark, maxPercentage,
+                           avgMark, avgPercentage,
+                           sumMark, sumPercentage );
+    }
+
+#if defined( GEOS_USE_CALIPER )and defined( GEOS_USE_ADIAK )
+    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
+    pushStatsIntoAdiak( allocatorName + " rank max", mark );
+#endif
+  }
+
+  { // output statistics
+    if( m_umpireStatsLogReport )
+    {
+      GEOS_LOG_RANK_0( m_memoryStatLogFormatter->toString( tableDataLog ) );
+    }
+
+    if( m_umpireStatsCsvReport )
+    {
+      std::ofstream csvFile{ m_umpireStatsCsvReportFilename, std::ios_base::app };
+      m_memoryStatCsvFormatter->dataToStream( csvFile, tableDataCsv );
+    }
+  }
+}
+
+} /* namespace geos */

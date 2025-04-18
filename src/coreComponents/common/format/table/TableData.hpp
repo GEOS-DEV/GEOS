@@ -35,6 +35,17 @@ class TableData
 {
 public:
 
+
+  TableData();
+
+  TableData( TableData const & other );
+
+  TableData( TableData && other );
+
+  TableData & operator=( TableData const & other );
+
+  TableData & operator=( TableData && other );
+
   /**
    * @brief Representing a data in TableData
    */
@@ -130,9 +141,10 @@ private:
   /// @brief vector containing all rows with cell values
   DataRows m_rows;
   /// @brief Store all errors that can be found during the generation of the TableData
-  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
+  std::unique_ptr< geos::TableErrorListing > m_errors;
 
 };
+
 
 /**
  * @brief Class for managing 2D table m_data
@@ -145,6 +157,10 @@ public:
   using RowType = real64;
   /// Type real64 for a column
   using ColumnType = real64;
+
+  TableData2D();
+
+  TableData2D( TableData2D const & other );
 
   /// Struct containing conversion informations
   struct TableDataHolder

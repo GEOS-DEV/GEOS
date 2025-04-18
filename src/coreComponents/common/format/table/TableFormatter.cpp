@@ -35,6 +35,78 @@ TableFormatter::TableFormatter( TableLayout const & tableLayout ):
   m_tableLayout( tableLayout )
 {}
 
+/**
+ * @brief Helper function to write content to an output stream.
+ *        Adds appropriate messages to the error report when the operation fails.
+ * @tparam ErrorReporter Type of the error reporter callable, signature: void( string_view msg )
+ * @param outputStream The stream to write the content to.
+ * @param content The string view containing data to be written.
+ * @param errorReporter Callable that handles error reporting by collecting messages
+ * @note this method may be moved in a common/BasicOutput.xpp as a lot of output stream errors are not verified.
+ */
+template< typename ErrorReporter >
+void toStream( std::ostream & outputStream, string_view content, ErrorReporter && errorReporter )
+{
+  if( !outputStream.good() )
+  {
+    errorReporter( "Output stream failed to open (File doesn't exist / permissions / locking issue) "
+                   "or is in invalid state (Stream closed / buffer corruption / previous operation failed)." );
+    return;
+  }
+
+  const auto startPos = outputStream.tellp();
+  errno = 0;
+
+  outputStream << content;
+
+  if( outputStream.bad() )
+  {
+    const auto bytesWritten = outputStream.tellp() - startPos;
+    errorReporter( GEOS_FMT( "I/O error occurred while writing content, written {} / {} bytes.\n"
+                             "Possible reasons: Insufficient disk space / read-only filesystem / disk disconnection",
+                             bytesWritten, content.size() ) );
+  }
+  else if( !content.empty() && startPos >= 0 && outputStream.tellp() <= startPos )
+  {
+    errorReporter( "Export completed but no data was written\nPossible reasons: Disk quota exceeded / streaming logical error." );
+  }
+
+  if( errno != 0 )
+    errorReporter( GEOS_FMT( "\n{}", std::strerror( errno ) ) );
+}
+
+/**
+ * @brief Helper function to write content to an output stream.
+ *        Adds appropriate messages to the log when the operation fails.
+ * @param outputStream The stream to write the content to.
+ * @param content The string view containing data to be written.
+ * @param streamName Name of the stream to use in potencial streaming errors
+ * @param critical Flag indicating if any writing error is critical
+ * @note this method may be moved in a common/BasicOutput.xpp as a lot of output stream errors are not verified.
+ */
+template< typename ErrorReporter >
+void toStream( std::ostream & outputStream, string_view content, string_view streamName, bool critical )
+{
+  string msgs;
+  toStream( outputStream,
+            content,
+            [&]( string_view msg ) { msgs += msg; } );
+  if( critical )
+  {
+    GEOS_ERROR( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
+  }
+  else
+  {
+    GEOS_WARNING( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
+  }
+}
+
+void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content ) const
+{
+  // TODO: after PR 3614, we should have m_errors->addError( X ) replacing GEOS_WARNING()
+  toStream( outputStream, content, []( string_view msg ) { GEOS_WARNING( msg ); } );
+}
+
 ///////////////////////////////////////////////////////////////////////
 ////// CSV Formatter implementation
 ///////////////////////////////////////////////////////////////////////
@@ -67,7 +139,7 @@ string TableCSVFormatter::headerToString() const
     {
       total_size += str.size();
     }
-    total_size += csvSeparator.size();
+    total_size += m_separator.size();
   }
   result.reserve( total_size );
 
@@ -81,7 +153,7 @@ string TableCSVFormatter::headerToString() const
 
     if( idxColumn < m_tableLayout.getColumns().size() - 1 )
     {
-      result.append( csvSeparator );
+      result.append( m_separator );
     }
   }
   result.append( "\n" );
@@ -121,7 +193,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
       if( !detectNewLine )
         rowConverted.push_back( item.value );
     }
-    result.append( stringutilities::join( rowConverted.cbegin(), rowConverted.cend(), csvSeparator ));
+    result.append( stringutilities::join( rowConverted.cbegin(), rowConverted.cend(), m_separator ));
     result.append( "\n" );
   }
 

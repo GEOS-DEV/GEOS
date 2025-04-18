@@ -76,14 +76,27 @@ protected:
    * @param tableLayout Contain all tableColumnData names and optionnaly the table title
    */
   TableFormatter( TableLayout const & tableLayout );
+
+  /**
+   * @brief Implements the actual writing of content to an output stream.
+   *        Adds appropriate messages to the error list when the operation fails.
+   * @param outputStream The stream to write the content to.
+   * @param content The string view containing data to be written.
+   */
+  void toStreamImpl( std::ostream & outputStream, string_view content ) const;
 };
 
 /**
  * @brief class for CSV formatting
  */
-class TableCSVFormatter : public TableFormatter
+class TableCSVFormatter final : public TableFormatter
 {
 public:
+
+  /**
+   * @brief The column separator for the CSV output.
+   */
+  static constexpr string_view m_separator = ",";
 
   /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
@@ -115,12 +128,40 @@ public:
 
   /**
    * @brief Convert a data source to a CSV string.
-   * @tparam DATASOURCE The source to convert
+   * @tparam DATASOURCE The type of the source to convert
    * @param tableData The data source to convert
    * @return The CSV string representation of a data source.
    */
   template< typename DATASOURCE >
   string toString( DATASOURCE const & tableData ) const;
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @param outputStream The stream to write the content to.
+   */
+  void headerToStream( std::ostream & outputStream ) const
+  { toStreamImpl( outputStream, headerToString() ); }
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @param tableData The table data
+   * @param outputStream The stream to write the content to.
+   */
+  void dataToStream( std::ostream & outputStream, TableData const & tableData ) const
+  { toStreamImpl( outputStream, dataToString( tableData ) ); }
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @tparam DATASOURCE The source to convert
+   * @param tableData The data source to convert
+   * @param outputStream The stream to write the content to.
+   */
+  template< typename DATASOURCE >
+  void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
+  { toStreamImpl( outputStream, toString( tableData ) ); }
 
 };
 
@@ -136,7 +177,7 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 /**
  * @brief class for log formatting
  */
-class TableTextFormatter : public TableFormatter
+class TableTextFormatter final : public TableFormatter
 {
 public:
 
@@ -156,17 +197,37 @@ public:
 
   /**
    * @return A TableLayout string representation,
-   * The TableTextFormatter receives hasn't receive any data, so only the header part is returned.
+   * The TableTextFormatter receives hasn't received any data, so only the header part is returned.
    */
   string toString() const;
 
   /**
    * @brief Convert a data source to a table string.
+   * @tparam DATASOURCE The type of the source to convert
    * @param tableData The data source to convert.
    * @return The table string representation of the TableData.
    */
   template< typename DATASOURCE >
   string toString( DATASOURCE const & tableData ) const;
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString()
+   * @param outputStream The stream to write the content to.
+   */
+  void toStream( std::ostream & outputStream ) const
+  { toStreamImpl( outputStream, toString() ); }
+
+  /**
+   * @brief Output the formatted data to a stream. Adds appropriate messages to the error list when the operation fails.
+   * @see toString( DATASOURCE const & tableData )
+   * @tparam DATASOURCE The type of the source to convert
+   * @param tableData The data source to convert.
+   * @param outputStream The stream to write the content to.
+   */
+  template< typename DATASOURCE >
+  void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
+  { toStreamImpl( outputStream, toString( tableData ) ); }
 
 private:
 
