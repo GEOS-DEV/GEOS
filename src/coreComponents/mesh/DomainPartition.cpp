@@ -383,7 +383,7 @@ void DomainPartition::outputPartitionInformation() const
 
   GEOS_LOG_RANK_0( "MPI Partitioning information:" );
 
-  std::vector< TableData > partitionsData;
+  std::set< TableData > partitionsData;
   forMeshBodies( [&]( MeshBody const & meshBody )
   {
     meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
@@ -504,14 +504,10 @@ void DomainPartition::outputPartitionInformation() const
           }
 
 
-          partitionsData.push_back( tableData );
-          if( partitionsData.size() == 1 ||
-              !(partitionsData[0] == partitionsData.back()))
-          {
-            TableTextFormatter logPartition( layout );
-            GEOS_LOG( logPartition.toString( tableData ));
-          }
+          TableTextFormatter logPartition( layout );
+          GEOS_LOG( logPartition.toString( tableData ));
 
+          partitionsData.emplace_back( std::move( tableData ) );
         }
 
       }
