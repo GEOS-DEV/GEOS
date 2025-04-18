@@ -112,6 +112,10 @@ public:
    */
   TableCSVFormatter( TableLayout const & tableLayout );
 
+  /**
+   * @brief Destroy the Table CSV Formatter object
+   * We launch GEOS_WARNING if we have encountered any errors
+   */
   ~TableCSVFormatter();
 
   /**

@@ -145,6 +145,7 @@ public:
 private:
   /// @brief vector containing all rows with cell values
   DataRows m_rows;
+  
   /// @brief Store all errors that can be found during the generation of the TableData
   std::unique_ptr< geos::TableErrorListing > m_errors;
 

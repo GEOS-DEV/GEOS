@@ -103,8 +103,7 @@ void toStream( std::ostream & outputStream, string_view content, string_view str
 
 void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content ) const
 {
-  // TODO: after PR 3614, we should have m_errors->addError( X ) replacing GEOS_WARNING()
-  toStream( outputStream, content, []( string_view msg ) { GEOS_WARNING( msg ); } );
+  toStream( outputStream, content, [&errors = *m_errors]( string_view msg ) { errors.addError( msg ); } );
 }
 
 ///////////////////////////////////////////////////////////////////////
