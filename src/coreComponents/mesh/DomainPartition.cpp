@@ -503,11 +503,10 @@ void DomainPartition::outputPartitionInformation() const
             addSummaryRow( tableData, localTotalMaxRatio, "max(local/total)" );
           }
 
-
+          partitionsData.insert( tableData );
           TableTextFormatter logPartition( layout );
-          GEOS_LOG( logPartition.toString( tableData ));
+          GEOS_LOG( logPartition.toString( *partitionsData.rbegin() ));
 
-          partitionsData.emplace_back( std::move( tableData ) );
         }
 
       }

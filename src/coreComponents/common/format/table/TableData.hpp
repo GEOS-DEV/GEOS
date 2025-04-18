@@ -35,7 +35,7 @@ class TableData
 {
 public:
 
-
+  /// @cond DO_NOT_DOCUMENT
   TableData();
 
   TableData( TableData const & other );
@@ -45,6 +45,9 @@ public:
   TableData & operator=( TableData const & other );
 
   TableData & operator=( TableData && other );
+
+  bool operator<( TableData const & other ) const;
+  ///@endcond
 
   /**
    * @brief Representing a data in TableData
@@ -56,15 +59,17 @@ public:
     /// The cell value
     string value;
 
-    /**
-     * @brief Comparison operator for cell value
-     * @param other The cell data value to compare
-     * @return The comparison result
-     */
+    /// @cond DO_NOT_DOCUMENTreturn The comparison result
     bool operator==( CellData const & other ) const
     {
       return value == other.value;
     }
+
+    bool operator<( CellData const & other ) const
+    {
+      return value < other.value;
+    }
+    ///@endcond
   };
 
   /// Alias for table data rows with cells values
@@ -157,10 +162,6 @@ public:
   using RowType = real64;
   /// Type real64 for a column
   using ColumnType = real64;
-
-  TableData2D();
-
-  TableData2D( TableData2D const & other );
 
   /// Struct containing conversion informations
   struct TableDataHolder

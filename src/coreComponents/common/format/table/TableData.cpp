@@ -57,6 +57,11 @@ TableData & TableData::operator=( TableData const & other )
   return *this;
 }
 
+bool TableData::operator<(TableData const & other) const
+{
+  return m_rows < other.m_rows;
+}
+
 void TableData::addRow( std::vector< TableData::CellData > const & row )
 {
   m_rows.push_back( row );
@@ -86,17 +91,6 @@ std::vector< std::vector< TableData::CellData > > const & TableData::getTableDat
 {
   return m_rows;
 }
-
-
-
-TableData2D::TableData2D()
-{}
-
-TableData2D::TableData2D( TableData2D const & other ):
-  m_data( other.m_data ),
-  m_columnValues( other.m_columnValues ),
-  m_errors( other.m_errors ? std::make_unique< TableErrorListing >( *other.m_errors ) : nullptr )
-{}
 
 void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
                                       arraySlice1d< real64 const > dim1AxisCoordinates,
