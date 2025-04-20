@@ -5232,35 +5232,57 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
          dy = ( ymax - ymin ) / nybins,
          dz = ( zmax - zmin ) / nzbins;
 
-  // Determine number of subregions (this might be best to do at the start of the timestep if also used elsewhere)
-  ArrayOfArrays< localIndex > bins;
-  array1d< localIndex > binCount;
+  // Determine total number of subregions and particles 
+  // TODO: this might be best to do at the start of the timestep if also used elsewhere
+  localIndex totalNumberOfParticles = 0;
   localIndex numberOfSubRegions = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    numberOfSubRegions++;
+    totalNumberOfParticles += subRegion.size();
+    ++numberOfSubRegions;
   } );
   localIndex totalNumberOfBins = nbins * numberOfSubRegions;
-  bins.resize( totalNumberOfBins );
 
+  // Initializes array with totalNumberOfBins inner arrays and default sizes 0 (first dimension is the bins, second are particles indices per bin)
+  ArrayOfArrays< localIndex > bins(totalNumberOfBins, 0); 
+  
   // Precompute number of particles in each bin and resize the bins arrayOfArrays
-  int subRegionIndex = 0;
+
+  // ParticleSubRegions are not access in gpu kernels so we must make copies of all relevant fields
+  // such as the particle centers for neighbor checking
+  array2d< real64 > allParticleCenters(totalNumberOfParticles, 3);
+
+  // TODO: We create a view here, but we may want to have views with different access restrictions (e.g. const) separately in each step
+  arrayView2d< real64 > const allParticleCentersView = allParticleCenters.toView();
+  
+  array1d< localIndex > subRegionSizes(numberOfSubRegions);
+  array1d< localIndex > regionIndicesOfSubRegions(numberOfSubRegions);
+  array1d< localIndex > subRegionIndicesInRegions(numberOfSubRegions);
+
+  arrayView1d< localIndex > const subRegionSizesView = subRegionSizes.toView();
+  arrayView1d< localIndex > const regionIndicesOfSubRegionsView = regionIndicesOfSubRegions.toView();
+  arrayView1d< localIndex > const subRegionIndicesInRegionsView = subRegionIndicesInRegions.toView();
+  localIndex particleIndexOffset = 0;
+  localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // #if defined(GEOS_USE_CUDA)
-    //   using reduce_policy = RAJA::cuda_multi_reduce_atomic;
-    // #endif
+    #if defined(GEOS_USE_CUDA) || defined(GEOS_USE_HIP)
+      #ifdef GEOS_USE_CUDA
+        using reduce_policy = RAJA::cuda_multi_reduce_atomic;
+      #endif
 
-    // #if defined(GEOS_USE_HIP)
-    //   using reduce_policy = RAJA::hip_multi_reduce_atomic;
-    // #
-
-    using reduce_policy = RAJA::seq_multi_reduce;
+      #ifdef GEOS_USE_HIP
+        using reduce_policy = RAJA::hip_multi_reduce_atomic;
+      #endif
+    #else
+      using reduce_policy = RAJA::seq_multi_reduce;
+    #endif
 
     RAJA::MultiReduceSum< reduce_policy, localIndex > binSizeReduction( nbins, 0 );
 
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
-    forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+    
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
     {
       // Particle bin ijk indices
       localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
@@ -5268,20 +5290,36 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
       localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
       localIndex binIndex = i + j * nxbins + k * nxbins * nybins;
       binSizeReduction[binIndex] += 1;
+
+      // Copy particle data for neighbor search later
+      LvArray::tensorOps::copy< 3 >( allParticleCentersView[particleIndexOffset + p], particlePosition[p] );
     } );
+    particleIndexOffset += subRegion.size();
 
     // Not sure this would be worth doing in parallel (also resizing is not done on device)
-    for( int b = 0; b < nbins; b++ )
+    for( int b = 0; b < nbins; ++b )
     {
       bins.resizeArray( subRegionIndex * nbins + b,
                         binSizeReduction[b].get() );
     }
-    subRegionIndex++;
+    
+    ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+ 
+    regionIndicesOfSubRegionsView[subRegionIndex] = region.getIndexInParent();
+    subRegionIndicesInRegionsView[subRegionIndex] = subRegion.getIndexInParent();
+    subRegionSizesView[subRegionIndex] = subRegion.size();
+    ++subRegionIndex;
+
+    allParticleCentersView.move( LvArray::MemorySpace::host ); // Must move the particle center data back from device explicitly
   } );
 
   // Populate bins with particle data
-  binCount.resize( totalNumberOfBins ); // Initialize to 0
-  for( int b = 0; b < totalNumberOfBins; b++)
+
+  // Stored the current count of particles per bin during population
+  array1d< localIndex > binCount(totalNumberOfBins);
+
+  // Initialize bin count to zero
+  for( localIndex b = 0; b < totalNumberOfBins; ++b )
   {
     binCount[b] = 0;
   }
@@ -5291,96 +5329,103 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
   subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    arrayView1d< localIndex > binCountView = binCount;
+    arrayView1d< localIndex > const binCountView = binCount.toView();
 
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+    // Running this in parallel threading over particles would result in race condition during particle index assignment to bin
+    // We could introduce atomics, but it's unclear whether there would be any substantial performance improvement, should still test
+    // Alternatively we could thread over bins, but it may be faster to just compute in serial
     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
     {
       // Particle bin ijk indices
       localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
       localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
       localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
-      int binIndex = nbins * subRegionIndex + i + j * nxbins + k * nxbins * nybins;
+      localIndex binIndex = nbins * subRegionIndex + i + j * nxbins + k * nxbins * nybins;
+      
       binsView[binIndex][binCountView[binIndex]] = p;
-      binCountView[binIndex]++;
+      ++binCountView[binIndex];
     } );
-    subRegionIndex++;
+
+    binsView.move( LvArray::MemorySpace::host );
+    binCountView.move( LvArray::MemorySpace::host );
+
+    ++subRegionIndex;
   } );
 
   // Precompute number of neighbors for each particles
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionA )
   {
     // Get 'this' particle's location
-    arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
-
-    // Create an array to store neighbor counts for all particles
-    array1d< localIndex > neighborCounts(subRegionA.size());
+    arrayView2d< real64 const > const xA = subRegionA.getParticleCenter();
 
     // Find neighbors of all particles and count them
     SortedArrayView< localIndex const > const subRegionAActiveParticleIndices = subRegionA.activeParticleIndices();
-    forAll< serialPolicy >( subRegionAActiveParticleIndices.size(), [&, subRegionAActiveParticleIndices, xA] GEOS_HOST ( localIndex const pp )
+ 
+    // Create an array to store neighbor counts for all particles
+    array1d< localIndex > neighborCounts(subRegionAActiveParticleIndices.size());
+    arrayView1d< localIndex > const neighborCountsView = neighborCounts.toView();
+
+    forAll< parallelDevicePolicy<> >( subRegionAActiveParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
-      // Particle A index
+      // Locating neighbors of particle with index a
       localIndex a = subRegionAActiveParticleIndices[pp];
 
       // Bin ijk indices bounding a sphere of radius m_neighborRadius centered at 'this' particle
-      int imin = std::floor( ( xA[a][0] - neighborRadius - xmin ) / dx );
-      int jmin = std::floor( ( xA[a][1] - neighborRadius - ymin ) / dy );
-      int kmin = std::floor( ( xA[a][2] - neighborRadius - zmin ) / dz );
-      int imax = std::floor( ( xA[a][0] + neighborRadius - xmin ) / dx );
-      int jmax = std::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
-      int kmax = std::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
+      localIndex imin = LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx );
+      localIndex jmin = LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy );
+      localIndex kmin = LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz );
+      localIndex imax = LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx );
+      localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
+      localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
 
       // Adjust bin ijk indices if necessary
-      imin = std::max( imin, 0 );
-      imax = std::min( imax, nxbins-1 );
-      jmin = std::max( jmin, 0 );
-      jmax = std::min( jmax, nybins-1 );
-      kmin = std::max( kmin, 0 );
-      kmax = std::min( kmax, nzbins-1 );
+      imin = LvArray::math::max( imin, 0 );
+      imax = LvArray::math::min( imax, nxbins-1 );
+      jmin = LvArray::math::max( jmin, 0 );
+      jmax = LvArray::math::min( jmax, nybins-1 );
+      kmin = LvArray::math::max( kmin, 0 );
+      kmax = LvArray::math::min( kmax, nzbins-1 );
 
-      // Inner subregion loop
-      subRegionIndex = 0;
-      int localNeighborCount = 0;
-      particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionB )
+      neighborCountsView[a] = 0;
+      localIndex particleIndexOffset = 0;
+      // Loop all over subRegions
+      for( localIndex subRegionIndex = 0; subRegionIndex < numberOfSubRegions; subRegionIndex++)
       {
-        // Get 'other' particle location
-        arrayView2d< real64 > const xB = subRegionB.getParticleCenter();
-
         // Loop over bins
-        for( int iBin=imin; iBin<=imax; iBin++ )
+        for( localIndex iBin=imin; iBin<=imax; ++iBin )
         {
-          for( int jBin=jmin; jBin<=jmax; jBin++ )
+          for( localIndex jBin=jmin; jBin<=jmax; ++jBin )
           {
-            for( int kBin=kmin; kBin<=kmax; kBin++ )
+            for( localIndex kBin=kmin; kBin<=kmax; ++kBin )
             {
               localIndex binIndex = subRegionIndex * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
 
-              for( int bb = 0; bb < binsView.sizeOfArray( binIndex ); bb++ )
+              for( localIndex bb = 0; bb < binsView.sizeOfArray( binIndex ); ++bb )
               {
                 localIndex b = binsView[binIndex][bb];
                 real64 xBA[3] = { 0.0 };
-                LvArray::tensorOps::copy< 3 >(xBA, xB[b]);
+                LvArray::tensorOps::copy< 3 >(xBA, allParticleCentersView[particleIndexOffset + b]);
                 LvArray::tensorOps::subtract< 3 >(xBA, xA[a]);
                 if( LvArray::tensorOps::l2NormSquared< 3 >(xBA) <= neighborRadiusSquared )
                 {
-                  localNeighborCount++;
+                  // Update neighbor count for this particles
+                  ++neighborCountsView[a];
                 }
               }
             }
           }
         }
-        subRegionIndex++;
-      } );
-
-      // Store the count for this particle
-      neighborCounts[a] = localNeighborCount;
+        particleIndexOffset += subRegionSizesView[subRegionIndex];
+      }
     } );
+
+    subRegionSizesView.move(LvArray::MemorySpace::host);
+    neighborCountsView.move(LvArray::MemorySpace::host); // Must explicitly move array back to host
 
     OrderedVariableToManyParticleRelation & neighborList = subRegionA.neighborList();
     neighborList.freeOnDevice(); // just being careful
-    neighborList.resizeFromCapacities( neighborCounts );
-
+    neighborList.resizeFromCapacities( neighborCounts ); // Resize inner arrays from neighborCounts
   } );
 
   // Perform neighbor search over appropriate bins (populate neighborlist with particle data)
@@ -5394,77 +5439,72 @@ real64 SolidMechanicsMPM::computeNeighborList( const int cycleNumber, ParticleMa
     ArrayOfArraysView< localIndex > neighborIndices = neighborList.m_toParticleIndex.toView();
 
     // Get 'this' particle's location
-    arrayView2d< real64 > const xA = subRegionA.getParticleCenter();
+    arrayView2d< real64 const > const xA = subRegionA.getParticleCenter();
 
     // Find neighbors of 'this' particle
     SortedArrayView< localIndex const > const subRegionAActiveParticleIndices = subRegionA.activeParticleIndices();
-    forAll< serialPolicy >( subRegionAActiveParticleIndices.size(), [&, subRegionAActiveParticleIndices, xA] GEOS_HOST ( localIndex const pp )
+    forAll< parallelDevicePolicy<> >( subRegionAActiveParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
-      // Particle A index
       localIndex a = subRegionAActiveParticleIndices[pp];
 
-      // Bin ijk indices bounding a sphere of radius m_neighborRadius centered at 'this' particle
-      int imin = std::floor( ( xA[a][0] - m_neighborRadius - xmin ) / dx );
-      int jmin = std::floor( ( xA[a][1] - m_neighborRadius - ymin ) / dy );
-      int kmin = std::floor( ( xA[a][2] - m_neighborRadius - zmin ) / dz );
-      int imax = std::floor( ( xA[a][0] + m_neighborRadius - xmin ) / dx );
-      int jmax = std::floor( ( xA[a][1] + m_neighborRadius - ymin ) / dy );
-      int kmax = std::floor( ( xA[a][2] + m_neighborRadius - zmin ) / dz );
+      // Bin ijk indices bounding a sphere of radius neighborRadius centered at 'this' particle
+      localIndex imin = LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx );
+      localIndex jmin = LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy );
+      localIndex kmin = LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz );
+      localIndex imax = LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx );
+      localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
+      localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
 
       // Adjust bin ijk indices if necessary
-      imin = std::max( imin, 0 );
-      imax = std::min( imax, nxbins-1 );
-      jmin = std::max( jmin, 0 );
-      jmax = std::min( jmax, nybins-1 );
-      kmin = std::max( kmin, 0 );
-      kmax = std::min( kmax, nzbins-1 );
+      imin = LvArray::math::max( imin, 0 );
+      imax = LvArray::math::min( imax, nxbins-1 );
+      jmin = LvArray::math::max( jmin, 0 );
+      jmax = LvArray::math::min( jmax, nybins-1 );
+      kmin = LvArray::math::max( kmin, 0 );
+      kmax = LvArray::math::min( kmax, nzbins-1 );
 
       // Inner subregion loop
-      subRegionIndex = 0;
-      int neighborCount = 0;
-      particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionB )
+      localIndex neighborCount = 0;
+      localIndex particleIndexOffset = 0;
+      for( localIndex subRegionIndex = 0; subRegionIndex < numberOfSubRegions; ++subRegionIndex )
       {
-        // Get region and subregion indices
-        ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegionB.getParent().getParent() );
-        localIndex regionIndex = region.getIndexInParent();
-        localIndex subRegionIndex2 = subRegionB.getIndexInParent();
-        // binKey.regionIndex = region.getIndexInParent();
-        // binKey.subRegionIndex = subRegionB.getIndexInParent();
-
-        // Get 'other' particle location
-        arrayView2d< real64 > const xB = subRegionB.getParticleCenter();
-
         // Loop over bins
-        // int count = 0; // Count the number of neighbors on this subregion
-        for( int iBin=imin; iBin<=imax; iBin++ )
+        for( localIndex iBin=imin; iBin<=imax; ++iBin )
         {
-          for( int jBin=jmin; jBin<=jmax; jBin++ )
+          for( localIndex jBin=jmin; jBin<=jmax; ++jBin )
           {
-            for( int kBin=kmin; kBin<=kmax; kBin++ )
+            for( localIndex kBin=kmin; kBin<=kmax; ++kBin )
             {
               localIndex binIndex = subRegionIndex * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
-
-              for( localIndex bb = 0; bb < binsView.sizeOfArray( binIndex ); bb++ )
+              
+              for( localIndex bb = 0; bb < binsView.sizeOfArray( binIndex ); ++bb )
               {
                 localIndex b = binsView[binIndex][bb];
                 real64 xBA[3] = { 0.0 };
-                LvArray::tensorOps::copy< 3 >( xBA, xB[b] );
+                LvArray::tensorOps::copy< 3 >( xBA, allParticleCentersView[particleIndexOffset + b] );
                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
                 if( LvArray::tensorOps::l2NormSquared< 3 >(xBA) <= neighborRadiusSquared )
                 {
-                  neighborRegions[a][neighborCount] = regionIndex;
-                  neighborSubRegions[a][neighborCount] = subRegionIndex2;
+                  neighborRegions[a][neighborCount] = regionIndicesOfSubRegionsView[subRegionIndex];
+                  neighborSubRegions[a][neighborCount] = subRegionIndicesInRegionsView[subRegionIndex];
                   neighborIndices[a][neighborCount] = b;
-                  neighborCount++;
+                  ++neighborCount;
                 }
               }
             }
           }
         }
-        subRegionIndex++;
-      } );
+        particleIndexOffset += subRegionSizesView[subRegionIndex];
+      }
     } );
+    
+    // Do these need to be here if I do not need to print these to console for debugging
+    neighborRegions.move( LvArray::MemorySpace::host );
+    neighborSubRegions.move( LvArray::MemorySpace::host );
+    neighborIndices.move( LvArray::MemorySpace::host );
   } );
+
+  GEOS_LOG_LEVEL_BY_RANK(2, "Populated neighbors for each particle");
 
   return( MPI_Wtime() - tStart );
 }
