@@ -28,13 +28,15 @@
 namespace geos
 {
 
+using pFieldType = real32;
+  
 class AcousticROMFrechet : public WaveSolverBase
 {
 public:
 
   using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
-
+  
   AcousticROMFrechet( const std::string & name,
                            Group * const parent );
 
@@ -145,9 +147,10 @@ public:
 
   void prepareNextTimestep( MeshLevel & mesh );
 
+  
   bool gramSchmidtROMStiffness(finiteElement::FiniteElementBase const & fe,
-                               arrayView1d< real32 const > const Ku,
-                               arrayView1d< real32 const > const u,
+                               arrayView1d< pFieldType const > const Ku,
+                               arrayView1d< pFieldType const > const u,
                                arrayView1d< integer const > const nodeghostrank,
                                localIndex const elemRegionSize,
                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
@@ -178,7 +181,6 @@ public:
 			       arrayView1d< real32 const > const damping,
 			       arrayView1d< real32 const > const dampingPerturbation,
 			       arrayView1d< localIndex const > const nodesGhostRank );
-
 
   void computeSeismoTracePOD( real64 const time_n,
 			      real64 const dt,
@@ -296,10 +298,41 @@ namespace fields
 namespace acousticfields
 {
 
+DECLARE_FIELD( Pressure64_nm1,
+	       "pressure_nm1",
+               array1d< pFieldType >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar of pressure at time n-1." );
 
+DECLARE_FIELD( Pressure64_n,
+               "pressure_n",
+	       array1d< pFieldType >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+	       "Scalar of pressure at time n." );
+
+DECLARE_FIELD( Pressure64_np1,
+	       "pressure_np1",
+	       array1d< pFieldType >,
+	       0,
+               LEVEL_0,
+	       WRITE_AND_READ,
+	       "Scalar of pressure at time n+1." );
+
+DECLARE_FIELD( StiffnessVector64,
+               "stiffnessVector",
+	       array1d< pFieldType >,
+               0,
+	       LEVEL_0,
+               WRITE_AND_READ,
+	       "Resulting vector of stiffness matrix pressure vector product at time n" );
+  
 DECLARE_FIELD( PressureFrechet_nm1,
                "pressureFrechet_nm1",
-               array2d< real32 >,
+               array2d< pFieldType >,
                0,
                NOPLOT,
                WRITE_AND_READ,
@@ -307,7 +340,7 @@ DECLARE_FIELD( PressureFrechet_nm1,
 
 DECLARE_FIELD( PressureFrechet_n,
                "pressureFrechet_n",
-               array2d< real32 >,
+               array2d< pFieldType >,
                0,
                NOPLOT,
                WRITE_AND_READ,
@@ -315,7 +348,7 @@ DECLARE_FIELD( PressureFrechet_n,
 
 DECLARE_FIELD( PressureFrechet_np1,
                "pressureFrechet_np1",
-               array2d< real32 >,
+               array2d< pFieldType >,
                0,
                LEVEL_0,
                WRITE_AND_READ,

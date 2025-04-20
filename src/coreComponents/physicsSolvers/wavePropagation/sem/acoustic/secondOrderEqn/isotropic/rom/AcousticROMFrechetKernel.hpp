@@ -273,6 +273,58 @@ struct computeMassRhs
 struct computeStiffnessFrechet
 {
 
+  /**                                                                                                                                                                 
+   * @brief Launches the precomputation of the source and receiver terms                                                                                              
+   * @tparam EXEC_POLICY execution policy                                                                                                                             
+   * @tparam FE_TYPE finite element type                                                                                                                              
+   * @param[in] size the number of cells in the subRegion                                                                                                             
+   * @param[in] numQuadraturePointsPerElem number of quadrature points per element                                                                                    
+   * @param[in] X coordinates of the nodes                                                                                                                            
+   * @param[in] xLocal coordinates of the nodes                                                                                                                       
+   * @param[in] stiffnessPOD stiffness POD matrix                                                                                                                     
+   * @param[in] phi POD basis                                                                                                                                         
+   * @param[in] elemsToNodes map from element to nodes                                                                                                                
+   */
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
+  static void
+  launch( localIndex const size,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+	  arrayView1d< real32 > const pf_n,
+          arrayView1d< real32 > const stiffnessVectorFrechet)
+  {
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
+      {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
+        }
+      }
+
+      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
+        {
+          real32 const localIncrement = val*pf_n[elemsToNodes( k, j )];
+          RAJA::atomicAdd< parallelDeviceAtomic >( &stiffnessVectorFrechet[elemsToNodes( k, i )], localIncrement );
+        } );
+      }
+    } );
+  }
+};
+
+	  
+
+struct computeStiffnessFrechet64
+{
+
   /**
    * @brief Launches the precomputation of the source and receiver terms
    * @tparam EXEC_POLICY execution policy
@@ -290,8 +342,8 @@ struct computeStiffnessFrechet
   launch( localIndex const size,
 	  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
 	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-	  arrayView1d< real32 > const pf_n,
-	  arrayView1d< real32 > const stiffnessVectorFrechet)
+	  arrayView1d< pFieldType > const pf_n,
+	  arrayView1d< pFieldType > const stiffnessVectorFrechet)
   {
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -312,7 +364,7 @@ struct computeStiffnessFrechet
       {
 	FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
 	{
-	  real32 const localIncrement = val*pf_n[elemsToNodes( k, j )];
+	  pFieldType const localIncrement = val*pf_n[elemsToNodes( k, j )];
 	  RAJA::atomicAdd< parallelDeviceAtomic >( &stiffnessVectorFrechet[elemsToNodes( k, i )], localIncrement );
 	} );
       }
