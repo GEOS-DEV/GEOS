@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -19,6 +19,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
@@ -33,8 +34,6 @@ RelpermDriver::RelpermDriver( const geos::string & name,
   :
   TaskBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::relpermNameString(), &m_relpermName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -53,6 +52,9 @@ RelpermDriver::RelpermDriver( const geos::string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  addLogLevel< logInfo::Initialisation >();
+  addLogLevel< logInfo::Results >();
 }
 
 
@@ -117,16 +119,13 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
   constitutive::RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "Launching Relperm Driver" );
-    GEOS_LOG_RANK_0( "  Relperm .................. " << m_relpermName );
-    GEOS_LOG_RANK_0( "  Type ................... " << baseRelperm.getCatalogName() );
-    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching Relperm Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Relperm .................. " << m_relpermName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseRelperm.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -323,10 +322,7 @@ void RelpermDriver::compareWithBaseline()
 
   // success
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }

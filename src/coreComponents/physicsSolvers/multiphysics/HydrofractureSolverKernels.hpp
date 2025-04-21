@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -40,7 +40,7 @@ struct DeformationUpdateKernel
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-          ArrayOfArraysView< localIndex const > const & elemsToFaces,
+          arrayView2d< localIndex const > const & elemsToFaces,
           arrayView1d< real64 const > const & area,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
@@ -66,8 +66,6 @@ struct DeformationUpdateKernel
     forAll< POLICY >( size,
                       [=] GEOS_HOST_DEVICE ( localIndex const kfe ) mutable
     {
-      if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-      { return; }
 
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
@@ -184,7 +182,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                          localIndex const numNodesPerFace,
                          arraySlice1d< localIndex const > const & columns,
                          arraySlice1d< real64 const > const & values,
-                         ArrayOfArraysView< localIndex const > const elemsToFaces,
+                         arrayView2d< localIndex const > const elemsToFaces,
                          ArrayOfArraysView< localIndex const > const faceToNodeMap,
                          arrayView1d< globalIndex const > const dispDofNumber,
                          real64 const (&Nbar)[ 3 ],
@@ -218,14 +216,14 @@ struct FluidMassResidualDerivativeAssemblyKernel
           globalIndex const rankOffset,
           HYDRAULICAPERTURE_WRAPPER const & hydraulicApertureWrapper,
           integer const useQuasiNewton,
-          ArrayOfArraysView< localIndex const > const elemsToFaces,
+          arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const faceToNodeMap,
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const area,
           arrayView1d< real64 const > const aperture,
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
-          arrayView2d< real64 const > const dens,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens,
           CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dNormalJump,
           CRSMatrixView< real64, globalIndex const > const & localMatrix )
   {

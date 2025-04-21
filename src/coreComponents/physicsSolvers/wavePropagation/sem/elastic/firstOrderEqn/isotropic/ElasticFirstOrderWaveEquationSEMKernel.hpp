@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -58,9 +58,11 @@ struct StressComputation
    * @param[in] sourceIsLocal flag indicating whether the source is accessible or not
    * @param[in] sourceElem element where a source is located
    * @param[in] sourceRegion region where the source is located
-   * @param[in] sourceValue value of the temporal source (eg. Ricker)
    * @param[in] dt time-step
-   * @param[in] cycleNumber the number of cycle
+   * @param[in] time_n current time
+   * @param[in] timeSourceFrequency the central frequency of the source
+   * @param[in] timeSourceDelay the time delay of the source
+   * @param[in] rickerOrder order of the Ricker wavelet
    * @param[out] stressxx xx-component of the strain tensor array (updated here)
    * @param[out] stressyy yy-component of the strain tensor array (updated here)
    * @param[out] stresszz zz-component of the strain tensor array (updated here)
@@ -87,9 +89,13 @@ struct StressComputation
           arrayView1d< localIndex const > const sourceIsLocal,
           arrayView1d< localIndex const > const sourceElem,
           arrayView1d< localIndex const > const sourceRegion,
-          arrayView2d< real32 const > const sourceValue,
           real64 const dt,
-          integer const cycleNumber,
+          real64 const time_n,
+          real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
+          localIndex const rickerOrder,
+          bool const useSourceWaveletTables,
+          arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
           arrayView2d< real32 > const stressxx,
           arrayView2d< real32 > const stressyy,
           arrayView2d< real32 > const stresszz,
@@ -98,6 +104,7 @@ struct StressComputation
           arrayView2d< real32 > const stressyz )
 
   {
+    real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // only the eight corners of the mesh cell are needed to compute the Jacobian
@@ -145,7 +152,7 @@ struct StressComputation
       {
 
         //Volume integral
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int const i, int const j, real32 const dfx1, real32 const dfx2, real32 const dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX<>( q, xLocal, [&] ( int const i, int const j, real32 const dfx1, real32 const dfx2, real32 const dfx3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
           auxx[j] = auxx[j] + dfx1*ux_np1[nodeIndex];
@@ -157,7 +164,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int const i, int const j, real32 const dfy1, real32 const dfy2, real32 const dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY<>( q, xLocal, [&] ( int const i, int const j, real32 const dfy1, real32 const dfy2, real32 const dfy3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
           auxx[j] = auxx[j] + dfy1*ux_np1[nodeIndex];
@@ -169,7 +176,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int const i, int const j, real32 const dfz1, real32 const dfz2, real32 const dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ<>( q, xLocal, [&] ( int const i, int const j, real32 const dfz1, real32 const dfz2, real32 const dfz3 )
         {
           localIndex const nodeIndex = elemsToNodes[k][i];
           auxx[j] = auxx[j] + dfz1*ux_np1[nodeIndex];
@@ -214,10 +221,11 @@ struct StressComputation
         {
           if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
+            real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
               real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-              real32 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/massLoc;
+              real32 const localIncrement = dt*(sourceConstants[isrc][i]*srcValue)/massLoc;
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][i], localIncrement );
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][i], localIncrement );
               RAJA::atomicAdd< ATOMIC_POLICY >( &stresszz[k][i], localIncrement );
@@ -323,7 +331,7 @@ struct VelocityComputation
 
 
         // Stiffness part
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX<>( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[i] -= stressxx[k][j]*dfx1 + stressxy[k][j]*dfx2 + stressxz[k][j]*dfx3;
           flowy[i] -= stressxy[k][j]*dfx1 + stressyy[k][j]*dfx2 + stressyz[k][j]*dfx3;
@@ -331,14 +339,14 @@ struct VelocityComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY<>( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[i] -= stressxx[k][j]*dfy1 + stressxy[k][j]*dfy2 + stressxz[k][j]*dfy3;
           flowy[i] -= stressxy[k][j]*dfy1 + stressyy[k][j]*dfy2 + stressyz[k][j]*dfy3;
           flowz[i] -= stressxz[k][j]*dfy1 + stressyz[k][j]*dfy2 + stresszz[k][j]*dfy3;
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ<>( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[i] -= stressxx[k][j]*dfz1 + stressxy[k][j]*dfz2 + stressxz[k][j]*dfz3;
           flowy[i] -= stressxy[k][j]*dfz1 + stressyy[k][j]*dfz2 + stressyz[k][j]*dfz3;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_COMPOSITIONALDENSITY_HPP_
 
 #include "FunctionBase.hpp"
-#include "EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
@@ -58,17 +58,17 @@ public:
                 arraySlice1d< real64, USD2 > const & dMassDensity,
                 bool useMass ) const;
 
-private:
   template< integer USD >
   GEOS_HOST_DEVICE
-  void computeCompressibilityFactor( integer const numComps,
-                                     real64 const & pressure,
-                                     real64 const & temperature,
-                                     arraySlice1d< real64 const, USD > const & composition,
-                                     ComponentProperties::KernelWrapper const & componentProperties,
-                                     EquationOfStateType const equationOfState,
-                                     real64 & compressibilityFactor,
-                                     arraySlice1d< real64 > const & compressibilityFactorDerivs ) const;
+  static void
+  computeCompressibilityFactor( integer const numComps,
+                                real64 const & pressure,
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD > const & composition,
+                                ComponentProperties::KernelWrapper const & componentProperties,
+                                EquationOfStateType const equationOfState,
+                                real64 & compressibilityFactor,
+                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
 private:
   arrayView1d< real64 const > m_componentDimensionalVolumeShift;
@@ -170,7 +170,7 @@ void CompositionalDensityUpdate::computeCompressibilityFactor( integer const num
                                                                ComponentProperties::KernelWrapper const & componentProperties,
                                                                EquationOfStateType const equationOfState,
                                                                real64 & compressibilityFactor,
-                                                               arraySlice1d< real64 > const & compressibilityFactorDerivs ) const
+                                                               arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
   if( equationOfState == EquationOfStateType::PengRobinson )
   {

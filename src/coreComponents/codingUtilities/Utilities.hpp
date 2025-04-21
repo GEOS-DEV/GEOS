@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -57,6 +57,20 @@ GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
 {
   return -tol <= val && val <= tol;
+}
+
+template< typename ARRAY_TYPE >
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE
+bool hasNonZero( ARRAY_TYPE const & array )
+{
+  for( auto it = array.begin(); it != array.end(); ++it )
+  {
+    if( !isZero( *it ) )
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 template< typename T >

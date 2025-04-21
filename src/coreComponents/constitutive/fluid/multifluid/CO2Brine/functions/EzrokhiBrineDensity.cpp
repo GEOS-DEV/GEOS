@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -53,13 +53,13 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
   m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
 
-  m_waterSatPressureTable->outputPVTTableData( pvtOutputOpts );
-  m_waterSatDensityTable->outputPVTTableData( pvtOutputOpts );
+  m_waterSatPressureTable->outputTableData( pvtOutputOpts );
+  m_waterSatDensityTable->outputTableData( pvtOutputOpts );
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
 {
-  // compute brine density following Ezrokhi`s method (referenced in Eclipse TD, Aqueous phase properties)
+  // compute brine density following Ezrokhi`s method
   // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
 
   m_waterCompressibility = 4.5e-10; // Pa-1

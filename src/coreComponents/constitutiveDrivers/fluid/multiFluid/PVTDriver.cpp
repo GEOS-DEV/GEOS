@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -18,9 +18,9 @@
  */
 
 #include "PVTDriver.hpp"
-
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
@@ -41,7 +41,6 @@ PVTDriver::PVTDriver( const string & name,
                       Group * const parent ):
   TaskBase( name, parent )
 {
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::fluidNameString(), &m_fluidName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -77,6 +76,11 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to indicate that phase compositions should be output" );
 
+  registerWrapper( viewKeyStruct::precisionString(), &m_precision ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_precision ).
+    setDescription( "The precision to use to data out to files" );
+
   //todo refactor in mother class
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -91,6 +95,9 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  addLogLevel< logInfo::Initialisation >();
+  addLogLevel< logInfo::Results >();
 }
 
 void PVTDriver::postInputInitialization()
@@ -107,6 +114,16 @@ void PVTDriver::postInputInitialization()
   GEOS_ERROR_IF( m_outputPhaseComposition != 0 && m_outputPhaseComposition != 1,
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
+
+  GEOS_WARNING_IF( m_precision < minPrecision,
+                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                             minPrecision, maxPrecision, minPrecision ));
+
+  GEOS_WARNING_IF( maxPrecision < m_precision,
+                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                             minPrecision, maxPrecision, maxPrecision ) );
 
   // get number of phases and components
 
@@ -189,22 +206,19 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   // depending on logLevel, print some useful info
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "Launching PVT Driver" );
-    GEOS_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
-    GEOS_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
-    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOS_LOG_RANK_0( "  No. of Components ...... " << m_numComponents );
-    GEOS_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
-    GEOS_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
-    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
-    GEOS_LOG_RANK_0( "  Output Mass Density .... " << m_outputMassDensity );
-    GEOS_LOG_RANK_0( "  Output Compressibility . " << m_outputCompressibility );
-    GEOS_LOG_RANK_0( "  Output Phase Comp. ..... " << m_outputPhaseComposition );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching PVT Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Fluid .................. " << m_fluidName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseFluid.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Components ...... " << m_numComponents );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Pressure Control ....... " << m_pressureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Temperature Control .... " << m_temperatureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output Mass Density .... " << m_outputMassDensity );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output Compressibility . " << m_outputCompressibility );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output Phase Comp. ..... " << m_outputPhaseComposition );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -284,11 +298,13 @@ void PVTDriver::outputResults()
     }
   }
 
+  integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
+  string const format = GEOS_FMT( "%{}.{}e ", precision+7, precision );
   for( integer n=0; n<m_table.size( 0 ); ++n )
   {
     for( integer col=0; col<m_table.size( 1 ); ++col )
     {
-      fprintf( fp, "%.4e ", m_table( n, col ) );
+      fprintf( fp, format.c_str(), m_table( n, col ) );
     }
     fprintf( fp, "\n" );
   }
@@ -353,10 +369,7 @@ void PVTDriver::compareWithBaseline()
 
   // success
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }

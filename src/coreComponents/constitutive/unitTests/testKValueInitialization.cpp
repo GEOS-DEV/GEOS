@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -81,6 +81,7 @@ private:
   ComponentProperties::KernelWrapper createKernelWrapper() const
   {
     return ComponentProperties::KernelWrapper(
+      discardedInteger,
       discarded,
       criticalPressure,
       criticalTemperature,
@@ -95,6 +96,7 @@ protected:
   array1d< real64 > criticalTemperature;
   array1d< real64 > acentricFactor;
   array1d< real64 > discarded;
+  array1d< integer > discardedInteger;
   array2d< real64 > discarded2d;
 };
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernelBase.hpp"
 
 namespace geos
 {
@@ -42,7 +43,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using SinglePhaseFVMAbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using SinglePhaseFVMAbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = SinglePhaseFVMAbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
@@ -55,8 +56,10 @@ public:
   using SinglePhaseFVMAbstractBase::m_gravCoef;
   using SinglePhaseFVMAbstractBase::m_mob;
   using SinglePhaseFVMAbstractBase::m_dens;
+  using SinglePhaseFVMAbstractBase::m_dDens;
+  using SinglePhaseFVMAbstractBase::m_dMob;
 
-  using SinglePhaseFVMBase = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using SinglePhaseFVMBase = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using SinglePhaseFVMBase::numDof;
   using SinglePhaseFVMBase::numEqn;
   using SinglePhaseFVMBase::maxNumElems;
@@ -71,15 +74,12 @@ public:
   using Base = singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
 
   using ThermalSinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::temperature,
-                      fields::flow::dMobility_dTemperature >;
+    StencilAccessors< fields::flow::temperature >;
 
   using ThermalSinglePhaseFluidAccessors =
     StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::dDensity_dTemperature,
                               fields::singlefluid::enthalpy,
-                              fields::singlefluid::dEnthalpy_dPressure,
-                              fields::singlefluid::dEnthalpy_dTemperature >;
+                              fields::singlefluid::dEnthalpy >;
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
@@ -113,11 +113,8 @@ public:
             localRhs,
             dR_dAper ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
-    m_dMob_dTemp( thermalSinglePhaseFlowAccessors.get( fields::flow::dMobility_dTemperature {} ) ),
-    m_dDens_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dDensity_dTemperature {} ) ),
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
-    m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
-    m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
+    m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
@@ -205,25 +202,24 @@ public:
       real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
       real64 dMassFlux_dT[2]{};
 
-      fluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
-                                              trans,
-                                              m_enthalpy,
-                                              m_dEnthalpy_dPres,
-                                              m_dEnthalpy_dTemp,
-                                              m_gravCoef,
-                                              m_dDens_dTemp,
-                                              m_dMob_dTemp,
-                                              alpha,
-                                              mobility,
-                                              potGrad,
-                                              massFlux,
-                                              dMassFlux_dTrans,
-                                              dMassFlux_dP,
-                                              dMassFlux_dT,
-                                              stack.energyFlux,
-                                              stack.dEnergyFlux_dTrans,
-                                              stack.dEnergyFlux_dP,
-                                              stack.dEnergyFlux_dT );
+      singlePhaseFluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
+                                                         trans,
+                                                         m_enthalpy,
+                                                         m_dEnthalpy,
+                                                         m_gravCoef,
+                                                         m_dDens,
+                                                         m_dMob,
+                                                         alpha,
+                                                         mobility,
+                                                         potGrad,
+                                                         massFlux,
+                                                         dMassFlux_dTrans,
+                                                         dMassFlux_dP,
+                                                         dMassFlux_dT,
+                                                         stack.energyFlux,
+                                                         stack.dEnergyFlux_dTrans,
+                                                         stack.dEnergyFlux_dP,
+                                                         stack.dEnergyFlux_dT );
 
       // add dMassFlux_dT to localFluxJacobian
       for( integer ke = 0; ke < 2; ++ke )
@@ -260,7 +256,7 @@ public:
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // Step 2: compute temperature difference at the interface
-        fluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
+        singlePhaseFluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
@@ -312,16 +308,11 @@ private:
   /// Views on temperature
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
-  /// Views on derivatives of fluid mobilities
-  ElementViewConst< arrayView1d< real64 const > > const m_dMob_dTemp;
-
-  /// Views on derivatives of fluid densities
-  ElementViewConst< arrayView2d< real64 const > > const m_dDens_dTemp;
+  /// Views on enthalpies
+  ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const m_enthalpy;
 
   /// Views on enthalpies
-  ElementViewConst< arrayView2d< real64 const > > const m_enthalpy;
-  ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dPres;
-  ElementViewConst< arrayView2d< real64 const > > const m_dEnthalpy_dTemp;
+  ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const m_dEnthalpy;
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
@@ -331,7 +322,7 @@ private:
 
 
 /**
- * @class FaceBasedAssemblyKernelFactory
+ * @class ConnectorBasedAssemblyKernelFactory
  */
 class ConnectorBasedAssemblyKernelFactory
 {

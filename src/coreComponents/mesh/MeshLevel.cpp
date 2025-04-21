@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -32,34 +32,33 @@ using namespace dataRepository;
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
-  m_nodeManager( new NodeManager( groupStructKeys::nodeManagerString(), this ) ),
-  m_particleManager( new ParticleManager( groupStructKeys::particleManagerString(), this ) ),
-  m_edgeManager( new EdgeManager( groupStructKeys::edgeManagerString(), this ) ),
-  m_faceManager( new FaceManager( groupStructKeys::faceManagerString(), this ) ),
-  m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
-  m_embSurfNodeManager( new EmbeddedSurfaceNodeManager( groupStructKeys::embSurfNodeManagerString, this ) ),
-  m_embSurfEdgeManager( new EdgeManager( groupStructKeys::embSurfEdgeManagerString, this ) ),
+  m_nodeManager( std::make_shared< NodeManager >( groupStructKeys::nodeManagerString(), this ) ),
+  m_particleManager( std::make_shared< ParticleManager >( groupStructKeys::particleManagerString(), this ) ),
+  m_edgeManager( std::make_shared< EdgeManager >( groupStructKeys::edgeManagerString(), this ) ),
+  m_faceManager( std::make_shared< FaceManager >( groupStructKeys::faceManagerString(), this ) ),
+  m_elementManager( std::make_shared< ElementRegionManager >( groupStructKeys::elemManagerString(), this ) ),
+  m_embSurfNodeManager( std::make_shared< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, this ) ),
+  m_embSurfEdgeManager( std::make_shared< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, this ) ),
   m_modificationTimestamp( 0 ),
-  m_isShallowCopy( false ),
   m_shallowParent( nullptr )
 {
 
-  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager.get() );
 
-  registerGroup( groupStructKeys::particleManagerString(), m_particleManager );
+  registerGroup( groupStructKeys::particleManagerString(), m_particleManager.get() );
 
-  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager );
+  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager.get() );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager.get() );
   m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
 
 
-  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager );
+  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager.get() );
 
-  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager );
+  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager.get() );
 
-  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager );
+  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager.get() );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 
@@ -82,25 +81,24 @@ MeshLevel::MeshLevel( string const & name,
   m_embSurfNodeManager( source.m_embSurfNodeManager ),
   m_embSurfEdgeManager( source.m_embSurfEdgeManager ),
   m_modificationTimestamp( 0 ),
-  m_isShallowCopy( true ),
   m_shallowParent( &source )
 {
   this->setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager );
+  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager.get() );
 
-  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager );
+  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager.get() );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager );
+  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager.get() );
   m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
 
 
-  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager );
+  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager.get() );
 
-  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager );
+  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager.get() );
 
-  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager );
+  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager.get() );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 
@@ -263,18 +261,7 @@ MeshLevel::MeshLevel( string const & name,
 
 
 MeshLevel::~MeshLevel()
-{
-  if( !m_isShallowCopy )
-  {
-    delete m_nodeManager;
-    delete m_edgeManager;
-    delete m_faceManager;
-    delete m_elementManager;
-    delete m_embSurfNodeManager;
-    delete m_embSurfEdgeManager;
-  }
-
-}
+{}
 
 void MeshLevel::initializePostInitialConditionsPostSubGroups()
 {
@@ -339,7 +326,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   {
     ArrayOfArraysView< localIndex const > const elems2dToNodes = subRegion.nodeList().toViewConst();
     ArrayOfArraysView< localIndex const > const elem2dToEdges = subRegion.edgeList().toViewConst();
-    ArrayOfArraysView< localIndex const > const elems2dToFaces = subRegion.faceList().toViewConst();
+    arrayView2d< localIndex const > const elems2dToFaces = subRegion.faceList().toViewConst();
 
     for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
@@ -353,7 +340,10 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       }
       for( localIndex const & fi: elems2dToFaces[ei] )
       {
-        faceAdjacencySet.insert( fi );
+        if( fi != -1 )
+        {
+          faceAdjacencySet.insert( fi );
+        }
       }
     }
   };

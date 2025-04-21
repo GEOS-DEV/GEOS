@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -22,13 +22,19 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
 
 
 /**
@@ -52,6 +58,7 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
   m_numDofPerCell = 1;
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM;
 
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 
@@ -65,7 +72,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
   // pressureGradient is specific for HybridFVM
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -117,7 +124,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -166,7 +173,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -177,6 +184,13 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
       faceManager.getField< fields::flow::facePressure_n >();
     facePres_n.setValues< parallelDevicePolicy<> >( facePres );
   } );
+}
+
+void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time,
+                                                 real64 const & dt,
+                                                 DomainPartition & domain )
+{
+  SinglePhaseBase::implicitStepComplete( time, dt, domain );
 }
 
 void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
@@ -233,7 +247,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -307,25 +321,6 @@ void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM
                      localRhs );
 }
 
-void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
-                                                       real64 const dt,
-                                                       DomainPartition const & domain,
-                                                       DofManager const & dofManager,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       arrayView1d< real64 > const & localRhs,
-                                                       CRSMatrixView< real64, localIndex const > const & dR_dAper )
-{
-  GEOS_UNUSED_VAR ( time_n );
-  GEOS_UNUSED_VAR ( dt );
-  GEOS_UNUSED_VAR ( domain );
-  GEOS_UNUSED_VAR ( dofManager );
-  GEOS_UNUSED_VAR ( localMatrix );
-  GEOS_UNUSED_VAR ( localRhs );
-  GEOS_UNUSED_VAR ( dR_dAper );
-
-  GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
-}
-
 void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
                                                     real64 const dt,
                                                     DomainPartition & domain,
@@ -336,7 +331,7 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
   GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  if( !m_keepFlowVariablesConstantDuringInitStep )
+  if( !m_keepVariablesConstantDuringInitStep )
   {
     applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
   }
@@ -366,7 +361,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
-                                                                      arrayView1d< string const > const & )
+                                                                      string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -391,12 +386,14 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
     {
 
       // provide some logging at the first nonlinear iteration
-      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                   setName, targetGroup.getName(), numTargetFaces ) );
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                        GEOS_FMT( faceBcLogMessage,
+                                                  this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                  setName, targetGroup.getName(), numTargetFaces ),
+                                        fs );
       }
 
       // next, we use the field specification functions to apply the boundary conditions to the system
@@ -472,7 +469,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
 
-  solverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
+  physicsSolverBaseKernels::NormType const normType = getNonlinearSolverParameters().normType();
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -480,7 +477,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -516,7 +513,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
       // step 1.2: reduction across meshBodies/regions/subRegions
 
-      if( normType == solverBaseKernels::NormType::Linf )
+      if( normType == physicsSolverBaseKernels::NormType::Linf )
       {
         if( subRegionResidualNorm[0] > localResidualNorm )
         {
@@ -558,7 +555,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
     // step 2.2: reduction across meshBodies/regions/subRegions
 
-    if( normType == solverBaseKernels::NormType::Linf )
+    if( normType == physicsSolverBaseKernels::NormType::Linf )
     {
       if( faceResidualNorm[0] > localResidualNorm )
       {
@@ -575,19 +572,16 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
   // step 3: second reduction across MPI ranks
 
   real64 residualNorm = 0.0;
-  if( normType == solverBaseKernels::NormType::Linf )
+  if( normType == physicsSolverBaseKernels::NormType::Linf )
   {
-    solverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
+    physicsSolverBaseKernels::LinfResidualNormHelper::computeGlobalNorm( localResidualNorm, residualNorm );
   }
   else
   {
-    solverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
+    physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   return residualNorm;
 }
@@ -619,7 +613,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -639,7 +633,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
   // 2. Reset the face-based fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -656,7 +650,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -669,5 +663,5 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseHybridFVM, string const &, Group * const )
 } /* namespace geos */

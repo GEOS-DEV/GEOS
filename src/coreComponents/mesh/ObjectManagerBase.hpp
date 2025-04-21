@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -572,6 +572,8 @@ public:
     // This is required for the Tensor classes.
     typename FIELD_TRAIT::dataType defaultValue( FIELD_TRAIT::defaultValue() );
 
+    m_registeredField.insert( FIELD_TRAIT::key());
+
     return this->registerWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).
              setApplyDefaultValue( defaultValue ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
@@ -591,6 +593,9 @@ public:
   dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
                                                                          typename FIELD_TRAIT::type * newObject )
   {
+
+    m_registeredField.insert( FIELD_TRAIT::key());
+
     return registerWrapper( fieldTrait.key(), newObject ).
              setApplyDefaultValue( fieldTrait.defaultValue() ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
@@ -912,6 +917,11 @@ public:
   globalIndex maxGlobalIndex() const
   { return m_maxGlobalIndex; }
 
+  /**
+   * @return A vector containing all registered fields
+   */
+  std::set< string > const & getRegisteredFields() const { return m_registeredField; }
+
 
   /**
    * @brief Get the domain boundary indicator
@@ -928,6 +938,15 @@ public:
   arrayView1d< integer const > getDomainBoundaryIndicator() const
   {
     return m_domainBoundaryIndicator.toViewConst();
+  }
+
+  /**
+   * @brief Function to output connectivity in order to assist debugging issues
+   *        with object connectivity.
+   */
+  virtual void outputObjectConnectivity() const
+  {
+    GEOS_ERROR( "Called outputObjectConnectivity in ObjectManagerBase. Function should be implemented." );
   }
 
 protected:
@@ -972,6 +991,9 @@ protected:
 
   /// The maximum global index of any object of all objects on this rank.
   globalIndex m_localMaxGlobalIndex = -1;
+
+  /// Field that have been registered
+  std::set< string > m_registeredField = {};
 };
 
 
@@ -1001,7 +1023,10 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOS_ERROR_IF( relation[li][a] == unmappedLocalIndexValue, "Index not set" );
+      // temporarily disabled this check to allow for the case where the index is not set
+      // this entire fixUpDownMaps will be removed in a future PR as the unpacking is modified
+      // s.t. there are no invalid unpacked values that are not expected.
+      //GEOS_ERROR_IF( relation[li][a] == unmappedLocalIndexValue, "Index not set" );
     }
   }
   GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used" );

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -65,14 +65,10 @@ ThermalSinglePhasePoromechanics( NodeManager const & nodeManager,
         inputFlowDofKey,
         performStressInitialization,
         fluidModelKey ),
-  m_dFluidDensity_dTemperature( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
-                                                                                                                   fluidModelKey ) ).dDensity_dTemperature() ),
   m_fluidInternalEnergy_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy_n() ),
   m_fluidInternalEnergy( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy() ),
-  m_dFluidInternalEnergy_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
-                                                                                                                       fluidModelKey ) ).dInternalEnergy_dPressure() ),
-  m_dFluidInternalEnergy_dTemperature( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
-                                                                                                                          fluidModelKey ) ).dInternalEnergy_dTemperature() ),
+  m_dFluidInternalEnergy( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                             fluidModelKey ) ).dInternalEnergy() ),
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
   m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
@@ -176,7 +172,7 @@ computeBodyForce( localIndex const k,
 
   real64 const dMixtureDens_dTemperature =
     dPorosity_dTemperature * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
-    + porosity * m_dFluidDensity_dTemperature( k, q );
+    + porosity * m_dFluidDensity( k, q, DerivOffset::dT );
 
   LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dTemperature, m_gravityVector, dMixtureDens_dTemperature );
 }
@@ -206,7 +202,8 @@ computeFluidIncrement( localIndex const k,
                                stack );
 
   // Step 2: compute derivative of fluid mass increment wrt temperature
-  stack.dFluidMassIncrement_dTemperature = dPorosity_dTemperature * m_fluidDensity( k, q ) + porosity * m_dFluidDensity_dTemperature( k, q );
+  stack.dFluidMassIncrement_dTemperature = dPorosity_dTemperature * m_fluidDensity( k, q ) + porosity * m_dFluidDensity( k, q, DerivOffset::dT );
+  // tag
 
   // Step 3: compute fluid energy increment and its derivatives wrt vol strain, pressure, and temperature
   real64 const fluidMass = porosity * m_fluidDensity( k, q );
@@ -216,9 +213,9 @@ computeFluidIncrement( localIndex const k,
 
   stack.dEnergyIncrement_dVolStrainIncrement = stack.dFluidMassIncrement_dVolStrainIncrement * m_fluidInternalEnergy( k, q );
   stack.dEnergyIncrement_dPressure = stack.dFluidMassIncrement_dPressure * m_fluidInternalEnergy( k, q )
-                                     + fluidMass * m_dFluidInternalEnergy_dPressure( k, q );
+                                     + fluidMass * m_dFluidInternalEnergy( k, q, DerivOffset::dP );
   stack.dEnergyIncrement_dTemperature = stack.dFluidMassIncrement_dTemperature * m_fluidInternalEnergy( k, q )
-                                        + fluidMass * m_dFluidInternalEnergy_dTemperature( k, q );
+                                        + fluidMass * m_dFluidInternalEnergy( k, q, DerivOffset::dT );
 
 
   // Step 4: assemble the solid part of the accumulation term

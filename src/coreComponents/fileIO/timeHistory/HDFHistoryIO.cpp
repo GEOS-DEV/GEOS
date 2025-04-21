@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -16,6 +16,7 @@
 #include "HDFHistoryIO.hpp"
 
 #include "HDFFile.hpp"
+#include "fileIO/LogLevelsInfo.hpp"
 
 #include "common/MpiWrapper.hpp"
 
@@ -212,9 +213,11 @@ void HDFHistoryIO::init( bool existsOkay )
   // create a dataset in the file if needed, don't erase file
   if( subcomm != MPI_COMM_NULL )
   {
-    GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
+    GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                      GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
     HDFFile target( m_filename, false, true, subcomm );
-    GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
+    GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                      GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
     bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
@@ -238,7 +241,8 @@ void HDFHistoryIO::init( bool existsOkay )
       maxFileDims[1] = H5S_UNLIMITED;
       hid_t space = H5Screate_simple( m_rank+1, &historyFileDims[0], &maxFileDims[0] );
       hid_t dataset = H5Dcreate( target, m_name.c_str(), m_hdfType, space, H5P_DEFAULT, dcplId, H5P_DEFAULT );
-      GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: {}, created hdf5 dataset {}.", m_filename, m_name ) );
+      GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                        GEOS_FMT( "TimeHistory: {}, created hdf5 dataset {}.", m_filename, m_name ) );
       H5Dclose( dataset );
       H5Sclose( space );
       H5Pclose( dcplId );
@@ -251,15 +255,17 @@ void HDFHistoryIO::init( bool existsOkay )
     {
       GEOS_ERROR( "Dataset (" + m_name + ") already exists in output file: " + m_filename );
     }
-    GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: closed file {}.", m_filename ) );
+    GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                      GEOS_FMT( "TimeHistory: closed file {}.", m_filename ) );
   }
 }
 
 void HDFHistoryIO::write()
 {
   // check if the size has changed on any process in the primary comm
-  int anyChanged = false;
-  MpiWrapper::allReduce( &m_sizeChanged, &anyChanged, 1, MPI_LOR, m_comm );
+  int const anyChanged = MpiWrapper::allReduce( m_sizeChanged,
+                                                MpiWrapper::Reduction::LogicalOr,
+                                                m_comm );
   m_sizeChanged = anyChanged;
 
   // this will set the first dim large enough to hold all the rows we're about to write
@@ -285,9 +291,11 @@ void HDFHistoryIO::write()
 
       if( m_subcomm != MPI_COMM_NULL )
       {
-        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
+        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                          GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
         HDFFile target( m_filename, false, true, m_subcomm );
-        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
+        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                          GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
 
         if( !target.hasDataset( m_name ) )
         {
@@ -317,7 +325,8 @@ void HDFHistoryIO::write()
         hid_t dxplId = H5Pcreate( H5P_DATASET_XFER );
         H5Pset_dxpl_mpio( dxplId, H5FD_MPIO_COLLECTIVE );
         H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, dxplId, dataBuffer );
-        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: wrote row {} of dataset '{}'.", m_writeHead, m_name ) );
+        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                          GEOS_FMT( "TimeHistory: wrote row {} of dataset '{}'.", m_writeHead, m_name ) );
         H5Pclose( dxplId );
 
         // forward the data buffer pointer to the start of the next row
@@ -335,7 +344,8 @@ void HDFHistoryIO::write()
         H5Sclose( memspace );
         H5Sclose( filespace );
         H5Dclose( dataset );
-        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: closing file {}.", m_filename ) );
+        GEOS_LOG_RANK_IF( this->getLogLevel() >= logInfo::HDF5Writing::getMinLogLevel(),
+                          GEOS_FMT( "TimeHistory: closing file {}.", m_filename ) );
       }
       m_writeHead++;
     }

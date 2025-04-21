@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,6 +21,9 @@
 
 #include "common/FieldSpecificationOps.hpp"
 #include "common/TypeDispatch.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/ReverseCutHillMcKeeOrdering.hpp"
@@ -460,7 +463,7 @@ void DofManager::addField( string const & fieldName,
 void DofManager::addField( string const & fieldName,
                            FieldLocation const location,
                            integer const components,
-                           map< std::pair< string, string >, array1d< string > > const & regions )
+                           map< std::pair< string, string >, string_array > const & regions )
 {
   // Convert input into internal format
   std::vector< FieldSupport > support;
@@ -661,7 +664,7 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< std::pair< string, string >, array1d< string > > const & supports,
+                              map< std::pair< string, string >, string_array > const & supports,
                               bool symmetric )
 {
   // Convert input into internal format
@@ -1288,10 +1291,10 @@ void vectorToFieldKernel( ObjectManagerBase & GEOS_UNUSED_PARAM( manager ),
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1319,10 +1322,10 @@ void vectorToFieldKernel( ObjectManagerBase & manager,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor[i] * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor[i] * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1379,10 +1382,10 @@ void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template readFieldValue( field,
-                                           i,
-                                           fieldComp++,
-                                           localVector[lid + vecComp] );
+        FIELD_OP::template readFieldValue<>( field,
+                                             i,
+                                             fieldComp++,
+                                             localVector[lid + vecComp] );
       }
     }
   } );
@@ -1794,18 +1797,16 @@ void DofManager::printFieldInfo( std::ostream & os ) const
   {
     localIndex const numFields = LvArray::integerConversion< localIndex >( m_fields.size() );
 
-    os << "Fields:" << std::endl;
-    os << " # | " << std::setw( 20 ) << "name" << " | " << "comp" << " | " << "N global DOF" << std::endl;
-    os << "---+----------------------+------+-------------" << std::endl;
+    TableLayout const fieldLayout( "The summary of declared fields and coupling",
+                                   {" ", "name", "comp", "N global DOF"} );
+    TableData fieldData;
     for( localIndex i = 0; i < numFields; ++i )
     {
       FieldDescription const & f = m_fields[i];
-      os << ' ' << i << " | "
-         << std::setw( 20 ) << f.name << " | "
-         << std::setw( 4 ) << f.numComponents << " | "
-         << std::setw( 12 ) << f.numGlobalDof << std::endl;
+      fieldData.addRow( i, f.name, f.numComponents, f.numGlobalDof );
     }
-    os << "---+----------------------+------+-------------" << std::endl;
+    TableTextFormatter const logFormatter( fieldLayout );
+    GEOS_LOG_RANK_0( logFormatter.toString( fieldData ) );
 
     os << std::endl << "Connectivity:" << std::endl;
     for( localIndex i = 0; i < numFields; ++i )

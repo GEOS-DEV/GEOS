@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -20,6 +20,7 @@
 
 #include "VTKWellGenerator.hpp"
 
+#include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include <vtkPolyData.h>
 #include <vtkCellData.h>
@@ -38,6 +39,7 @@ VTKWellGenerator::VTKWellGenerator( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Path to the well file" );
 
+  addLogLevel< logInfo::VTKSteps >();
 }
 
 void VTKWellGenerator::fillPolylineDataStructure( )
@@ -49,8 +51,8 @@ void VTKWellGenerator::fillPolylineDataStructure( )
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading well from {}", catalogName(), getName(), m_filePath ) );
   {
-    GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", array1d< string >());
+    GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  reading the dataset..." );
+    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", string_array());
     vtkSmartPointer< vtkDataSet > loadedMesh = allMeshes.getMainMesh();
     controller->Broadcast( loadedMesh, 0 );
 
@@ -101,5 +103,5 @@ void VTKWellGenerator::fillPolylineDataStructure( )
   }
 }
 
-REGISTER_CATALOG_ENTRY( WellGeneratorBase, VTKWellGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshComponentBase, VTKWellGenerator, string const &, Group * const )
 }
