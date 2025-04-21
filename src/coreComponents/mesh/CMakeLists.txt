@@ -70,6 +70,11 @@ set( mesh_headers
      ToParticleRelation.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
+     graphs/GraphTools.hpp
+     graphs/GraphToolsMPI.hpp
+     graphs/GraphColoringBase.hpp
+     graphs/RLFGraphColoring.hpp
+     graphs/RLFGraphColoringMPI.hpp
      generators/CellBlock.hpp
      generators/CellBlockABC.hpp
      generators/CellBlockManager.hpp
@@ -155,6 +160,11 @@ set( mesh_sources
      ToParticleRelation.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
+     graphs/GraphTools.cpp
+     graphs/GraphToolsMPI.cpp
+     graphs/GraphColoringBase.cpp
+     graphs/RLFGraphColoring.cpp
+     graphs/RLFGraphColoringMPI.cpp
      generators/CellBlock.cpp
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
@@ -189,6 +199,15 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp )
 
 set( dependencyList ${parallelDeps} schema constitutive finiteElement parmetis metis )
+
+if( ENABLE_TRILINOS )
+    set( mesh_headers ${mesh_headers} graphs/ZoltanGraphColoring.hpp )
+    set( mesh_sources ${mesh_sources} graphs/ZoltanGraphColoring.cpp )
+    list( APPEND dependencyList trilinos )
+endif()
+
+
+
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")

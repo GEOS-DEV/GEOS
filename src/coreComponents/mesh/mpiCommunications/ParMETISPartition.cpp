@@ -117,8 +117,11 @@ void ParMETISPartition::updateSizes( arrayView1d< real64 > const domainL,
 void ParMETISPartition::setSizes( real64 const ( &min )[ 3 ],
                                  real64 const ( &max )[ 3 ] )
 {
+  GEOS_UNUSED_VAR(min);
+  GEOS_UNUSED_VAR(max);
+
   std::cout<<" MpiWrapper::commRank() = "<<MpiWrapper::commRank()<<" has neighbors ( ";
-  for( integer const neighborRank : metisNeighborList )
+  for( integer const neighborRank : m_metisNeighborList )
   {
     m_neighbors.emplace_back( neighborRank );
     std::cout<<neighborRank<<", ";
