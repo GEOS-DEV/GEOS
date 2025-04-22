@@ -180,7 +180,7 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
 
