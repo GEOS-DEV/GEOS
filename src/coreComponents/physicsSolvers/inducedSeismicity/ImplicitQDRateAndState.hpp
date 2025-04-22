@@ -42,7 +42,8 @@ public:
     constexpr static char const * targetSlipIncrementString() { return "targetSlipIncrement"; }
   };
 
-  virtual real64 setNextDt( real64 const & currentDt,
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
                             DomainPartition & domain ) override final;
 
   /**

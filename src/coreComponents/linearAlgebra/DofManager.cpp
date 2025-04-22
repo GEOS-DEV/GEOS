@@ -21,6 +21,9 @@
 
 #include "common/FieldSpecificationOps.hpp"
 #include "common/TypeDispatch.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/ReverseCutHillMcKeeOrdering.hpp"
@@ -1288,10 +1291,10 @@ void vectorToFieldKernel( ObjectManagerBase & GEOS_UNUSED_PARAM( manager ),
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1319,10 +1322,10 @@ void vectorToFieldKernel( ObjectManagerBase & manager,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor[i] * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor[i] * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1379,10 +1382,10 @@ void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template readFieldValue( field,
-                                           i,
-                                           fieldComp++,
-                                           localVector[lid + vecComp] );
+        FIELD_OP::template readFieldValue<>( field,
+                                             i,
+                                             fieldComp++,
+                                             localVector[lid + vecComp] );
       }
     }
   } );
@@ -1794,18 +1797,16 @@ void DofManager::printFieldInfo( std::ostream & os ) const
   {
     localIndex const numFields = LvArray::integerConversion< localIndex >( m_fields.size() );
 
-    os << "Fields:" << std::endl;
-    os << " # | " << std::setw( 20 ) << "name" << " | " << "comp" << " | " << "N global DOF" << std::endl;
-    os << "---+----------------------+------+-------------" << std::endl;
+    TableLayout const fieldLayout( "The summary of declared fields and coupling",
+                                   {" ", "name", "comp", "N global DOF"} );
+    TableData fieldData;
     for( localIndex i = 0; i < numFields; ++i )
     {
       FieldDescription const & f = m_fields[i];
-      os << ' ' << i << " | "
-         << std::setw( 20 ) << f.name << " | "
-         << std::setw( 4 ) << f.numComponents << " | "
-         << std::setw( 12 ) << f.numGlobalDof << std::endl;
+      fieldData.addRow( i, f.name, f.numComponents, f.numGlobalDof );
     }
-    os << "---+----------------------+------+-------------" << std::endl;
+    TableTextFormatter const logFormatter( fieldLayout );
+    GEOS_LOG_RANK_0( logFormatter.toString( fieldData ) );
 
     os << std::endl << "Connectivity:" << std::endl;
     for( localIndex i = 0; i < numFields; ++i )

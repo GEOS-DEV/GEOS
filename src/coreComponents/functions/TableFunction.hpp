@@ -51,9 +51,9 @@ public:
   /// Struct containing output options
   struct OutputOptions
   {
-    /// Output PVT in CSV file
+    /// Request table output in CSV file
     bool writeCSV;
-    /// Output PVT in log
+    /// Request table output in log
     bool writeInLog;
   };
 
@@ -174,6 +174,18 @@ private:
     interpolateRound( IN_ARRAY const & input ) const;
 
     /**
+     * @brief Method to get coordinates
+     * @param input a scalar input
+     * @param dim the table dimension
+     * @param interpolationMethod the interpolation method
+     * @return the coordinate
+     */
+    template< typename IN_ARRAY >
+    GEOS_HOST_DEVICE
+    real64
+    getCoord( IN_ARRAY const & input, localIndex dim, InterpolationType interpolationMethod ) const;
+
+    /**
      * @brief Interpolate in the table with derivatives using linear method.
      * @param[in] input vector of input value
      * @param[out] derivatives vector of derivatives of interpolated value wrt the variables present in input
@@ -218,6 +230,8 @@ private:
    */
   void reInitializeFunction();
 
+  void initializePostSubGroups() override;
+
   /**
    * @brief Method to evaluate a function on a target object
    * @param group a pointer to the object holding the function arguments
@@ -239,6 +253,15 @@ private:
    * @return the function result
    */
   virtual real64 evaluate( real64 const * const input ) const override final;
+
+  /**
+   * @brief Method to get coordinates
+   * @param input a scalar input
+   * @param dim the table dimension
+   * @param interpolationMethod the interpolation method
+   * @return the coordinate
+   */
+  real64 getCoord( real64 const * const input, localIndex dim, InterpolationType interpolationMethod ) const;
 
   /**
    * @brief Check if the given coordinate is in the bounds of the table coordinates in the
@@ -283,8 +306,8 @@ private:
   InterpolationType getInterpolationMethod() const { return m_interpolationMethod; }
 
   /**
-   * @param dim The coordinate dimension (= axe) we want the Unit.
    * @return The unit of a coordinate dimension, or units::Unknown if no units has been specified.
+   * @param dim The coordinate dimension (= axe) we want the Unit.
    */
   units::Unit getDimUnit( localIndex const dim ) const
   {
@@ -330,17 +353,36 @@ private:
     m_valueUnit = unit;
   }
 
-/**
- * @return The table unit
- */
+  /**
+   * @return The unit of the values, or units::Unknown if no units has been specified.
+   */
   units::Unit getValueUnit() const { return m_valueUnit; }
 
+  /**
+   * @return The description of the table, which contains the units, statistics and eventual source file
+   *         of the values and coordinates. Sub-call getCoordsDescription() and getValuesDescription().
+   */
+  string getTableDescription() const;
+
+  /**
+   * @return The description of the coordinate, which consists in its name and units.
+   *         Can be used for column headers, description...
+   * @param dimId The id of the coordinate.
+   * @param shortUnitsToVariables False if we want unit descriptive name, or true to only have unit symbol.
+   */
+  string getCoordsDescription( integer dimId, bool shortUnitsToVariables ) const;
+
+  /**
+   * @return The description of the values, which mainly consists in its unit.
+   *         Can be used for column headers, description...
+   */
+  string getValuesDescription() const;
 
   /**
    * @brief Print the table(s) in the log and/or CSV files when requested by the user.
-   * @param pvtOutputOpts Struct containing output options
+   * @param outputOpts Struct containing output options
    */
-  void outputPVTTableData( OutputOptions const pvtOutputOpts ) const;
+  void outputTableData( OutputOptions const outputOpts ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper
@@ -361,6 +403,8 @@ private:
     static constexpr char const * coordinateFilesString() { return "coordinateFiles"; }
     /// @return Key for name of file containing table values
     static constexpr char const * voxelFileString() { return "voxelFile"; }
+    /// @return Key for name of file containing table values
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
@@ -401,6 +445,8 @@ private:
   /// Kernel wrapper object used in evaluate() interface
   KernelWrapper m_kernelWrapper;
 
+  /// Output table in a CSV file
+  integer m_writeCSV;
 };
 /// @cond DO_NOT_DOCUMENT
 template< typename IN_ARRAY >
@@ -453,8 +499,11 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
     {
       // Find the coordinate index
       ///TODO make this fast
-      // Note: find uses a binary search...  If we assume coordinates are
+      // Sergey's note: find uses a binary search...  If we assume coordinates are
       // evenly spaced, we can speed things up considerably
+      // Mel's note: As we cannot be sure coords are evenly spaced,
+      // - Either we insert coords to get even spacing ( /!\ memory consumption ),
+      // - Or we can use an interpolation search with an hint array which would be linearly interpolated ( benchmark ).
       auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
       bounds[dim][1] = LvArray::integerConversion< localIndex >( lower );
       bounds[dim][0] = bounds[dim][1] - 1;
@@ -552,6 +601,57 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 
   // Retrieve the nearest value
   return m_values[tableIndex];
+}
+
+template< typename IN_ARRAY >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+TableFunction::KernelWrapper::getCoord( IN_ARRAY const & input, localIndex const dim, InterpolationType interpolationMethod ) const
+{
+  // Determine the index to the nearest table entry
+  localIndex subIndex;
+  arraySlice1d< real64 const > const coords = m_coordinates[dim];
+  // Determine the index along each table axis
+  if( input[dim] <= coords[0] )
+  {
+    // Coordinate is to the left of the table axis
+    subIndex = 0;
+  }
+  else if( input[dim] >= coords[coords.size() - 1] )
+  {
+    // Coordinate is to the right of the table axis
+    subIndex = coords.size() - 1;
+  }
+  else
+  {
+    // Coordinate is within the table axis
+    // Note: find() will return the index of the upper table vertex
+    auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
+    subIndex = LvArray::integerConversion< localIndex >( lower );
+
+    // Interpolation types:
+    //   - Nearest returns the value of the closest table vertex
+    //   - Upper returns the value of the next table vertex
+    //   - Lower returns the value of the previous table vertex
+    if( interpolationMethod == TableFunction::InterpolationType::Nearest )
+    {
+      if( ( input[dim] - coords[subIndex - 1]) <= ( coords[subIndex] - input[dim]) )
+      {
+        --subIndex;
+      }
+    }
+    else if( interpolationMethod == TableFunction::InterpolationType::Lower )
+    {
+      if( subIndex > 0 )
+      {
+        --subIndex;
+      }
+    }
+  }
+
+  // Retrieve the nearest coordinate
+  return coords[subIndex];
 }
 
 template< typename IN_ARRAY, typename OUT_ARRAY >

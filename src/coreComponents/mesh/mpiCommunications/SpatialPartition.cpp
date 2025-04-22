@@ -49,8 +49,8 @@ real64 MapValueToRange( real64 value, real64 min, real64 max )
 
 SpatialPartition::SpatialPartition():
   PartitionBase(),
-  m_Periodic( nsdof ),
-  m_coords( nsdof ),
+  m_Periodic( m_nsdof ),
+  m_coords( m_nsdof ),
   m_min{ 0.0 },
   m_max{ 0.0 },
   m_blockSize{ 1.0 },
@@ -77,7 +77,7 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
   m_Partitions( 1 ) = yPartitions;
   m_Partitions( 2 ) = zPartitions;
   m_size = 1;
-  for( int i = 0; i < nsdof; i++ )
+  for( int i = 0; i < m_nsdof; i++ )
   {
     m_size *= m_Partitions( i );
   }
@@ -113,10 +113,10 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
                                      int * ncoords )
 {
 
-  if( idim == nsdof )
+  if( idim == m_nsdof )
   {
     bool me = true;
-    for( int i = 0; i < nsdof; i++ )
+    for( int i = 0; i < m_nsdof; i++ )
     {
       if( ncoords[i] != this->m_coords( i ))
       {
@@ -185,26 +185,30 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 
     //check to make sure our dimensions agree
     {
-      int check = 1;
-      for( int i = 0; i < nsdof; i++ )
+      string_view partitionsLogMessage =
+        "The total number of processes = {} does not correspond to the total number of partitions = {}.\n"
+        "The number of cells in an axis cannot be lower that the partition count of this axis\n";
+
+      int nbPartitions = 1;
+      for( int i = 0; i < m_nsdof; i++ )
       {
-        check *= this->m_Partitions( i );
+        nbPartitions *= this->m_Partitions( i );
       }
-      GEOS_ERROR_IF_NE( check, m_size );
+      GEOS_ERROR_IF_NE_MSG( nbPartitions, m_size, GEOS_FMT( partitionsLogMessage, m_size, nbPartitions )  );
     }
 
     //get communicator, rank, and coordinates
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOS, m_nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
     }
     m_rank = MpiWrapper::commRank( cartcomm );
-    MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
+    MpiWrapper::cartCoords( cartcomm, m_rank, m_nsdof, m_coords.data());
 
     //add neighbors
     {
-      int ncoords[nsdof];
+      int ncoords[m_nsdof];
       m_neighbors.clear();
       addNeighbors( 0, cartcomm, ncoords );
     }
@@ -222,7 +226,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
   LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
 
   LvArray::tensorOps::copy< 3 >( m_min, min );
-  for( int i = 0; i < nsdof; ++i )
+  for( int i = 0; i < m_nsdof; ++i )
   {
     const int nloc = m_Partitions( i ) - 1;
     const localIndex nlocl = static_cast< localIndex >(nloc);
@@ -290,7 +294,7 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
                                                       const real64 & boundaryRadius ) const
 // test a point relative to a boundary box. If non-zero buffer specified, expand the box.
 {
-  for( int i = 0; i < nsdof; i++ )
+  for( int i = 0; i < m_nsdof; i++ )
   {
     // Is particle already in bounds of partition?
     if( !(m_Partitions( i )==1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )

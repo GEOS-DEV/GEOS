@@ -23,7 +23,6 @@
 
 #include <map>
 
-constexpr int nsdof = 3;
 namespace geos
 {
 
@@ -139,6 +138,9 @@ public:
   array1d< int > m_Periodic;
   /// ijk partition indexes
   array1d< int > m_coords;
+
+  // dimensions into which the simulation is executed
+  static constexpr int m_nsdof = 3;
 
 private:
 

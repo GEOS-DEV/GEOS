@@ -17,39 +17,49 @@
  * @file TableData.hpp
  */
 #include "TableLayout.hpp"
+
+#include "common/format/StringUtilities.hpp"
 #include <numeric>
 
 namespace geos
 {
 
-void TableLayout::addToColumns( stdVector< string > const & columnNames )
+void TableLayout::addColumns( stdVector< string > const & columnNames )
 {
-  for( auto const & m_header : columnNames )
+  for( auto const & columnName : columnNames )
   {
-    addToColumns( m_header );
+    addColumn( columnName );
   }
 }
 
-void TableLayout::addToColumns( string_view m_header )
+void TableLayout::addColumns( std::vector< TableLayout::Column > const & columns )
 {
-  TableLayout::Column column = TableLayout::Column().setName( m_header );
-  m_tableColumnsData.push_back( column );
+  for( auto const & column : columns )
+  {
+    addColumn( column );
+  }
 }
 
-void TableLayout::addToColumns( TableLayout::Column const & column )
+void TableLayout::addColumn( string_view columnName )
 {
-  m_tableColumnsData.push_back( column );
+  TableLayout::Column column = TableLayout::Column().setName( columnName );
+  m_tableColumns.emplace_back( column );
+}
+
+void TableLayout::addColumn( TableLayout::Column const & column )
+{
+  m_tableColumns.emplace_back( column );
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
 {
-  m_tableTitle = title;
+  m_tableTitleStr = title;
   return *this;
 }
 
 TableLayout & TableLayout::enableLineBreak( bool value )
 {
-  m_wrapLine = value;
+  m_lineBreakAtBegin = value;
   return *this;
 }
 
@@ -62,144 +72,191 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
   return *this;
 }
 
+TableLayout & TableLayout::setMaxColumnWidth( size_t width )
+{
+  m_maxColumnWidth = width;
+  return *this;
+}
+
 bool TableLayout::isLineBreakEnabled() const
-{ return m_wrapLine; }
-
-size_t TableLayout::getMaxDepth() const
-{
-  size_t depthMax = 1;
-  size_t currDepth = 1;
-  for( auto const & column : m_tableColumnsData )
-  {
-    currDepth = 1;
-    TableLayout::Column const * currColumn = &column;
-    while( !currColumn->m_subColumn.empty())
-    {
-      currColumn = &currColumn->m_subColumn[0];
-      currDepth++;
-    }
-    depthMax = std::max( currDepth, depthMax );
-  }
-  return depthMax;
-}
-
-void divideCell( stdVector< string > & lines, string const & value )
-{
-  std::istringstream strStream( value );
-  std::string line;
-  lines.clear();
-  while( getline( strStream, line, '\n' ))
-  {
-    lines.push_back( line );
-  }
-
-  if( line.empty())
-  {
-    lines.push_back( "" );
-  }
-}
+{ return m_lineBreakAtBegin; }
 
 TableLayout::CellLayout::CellLayout():
-  m_lines( {""} ),
   m_cellType( CellType::Header ),
   m_alignment( TableLayout::Alignment::center ),
   m_cellWidth( 0 )
 {}
 
-TableLayout::CellLayout::CellLayout( CellType type, string const & cellValue, TableLayout::Alignment alignment ):
+TableLayout::CellLayout::CellLayout( CellType const cellType ):
+  m_cellType( cellType ),
+  m_alignment( TableLayout::Alignment::center ),
+  m_cellWidth( 0 )
+{}
+
+TableLayout::CellLayout::CellLayout( CellType type, TableLayout::Alignment alignment ):
   m_cellType( type ),
-  m_alignment( alignment )
+  m_alignment( alignment ),
+  m_cellWidth( 0 )
+{}
+
+TableLayout::Cell::Cell():
+  m_layout(),
+  m_text()
+{}
+
+TableLayout::Cell::Cell( CellType cellType, TableLayout::Alignment alignment ):
+  m_layout( cellType, alignment ),
+  m_text()
+{}
+
+TableLayout::Cell::Cell( CellType cellType, TableLayout::Alignment alignment, string_view value ):
+  m_layout( cellType, alignment ),
+  m_text( value )
+{}
+
+TableLayout::Cell::Cell( TableLayout::Cell const & other ):
+  Cell()
+{ *this = other; }
+
+TableLayout::Cell::Cell( TableLayout::Cell && other ):
+  Cell()
+{ *this = other; }
+
+TableLayout::Cell & TableLayout::Cell::operator=( TableLayout::Cell const & other )
 {
-  divideCell( m_lines, cellValue );
-  if( !m_lines.empty())
+  if( this != &other )
   {
-    m_cellWidth = std::max_element( m_lines.begin(), m_lines.end(), []( const auto & a, const auto & b )
-    {
-      return a.length() < b.length();
-    } )->length();
+    if( !m_layout.getLines().empty() || !other.m_layout.getLines().empty() )
+      throw std::runtime_error( "Cannot copy from a Cell after its layout has been prepared." );
+
+    m_layout.m_cellType = other.m_layout.m_cellType;
+    m_layout.m_alignment = other.m_layout.m_alignment;
+    m_text = other.m_text;
   }
-  else
+  return *this;
+}
+
+TableLayout::Cell & TableLayout::Cell::operator=( TableLayout::Cell && other )
+{
+  if( this != &other )
   {
-    m_cellWidth = 0;
+    if( !m_layout.getLines().empty() || !other.m_layout.getLines().empty() )
+      throw std::runtime_error( "Cannot move from a Cell after its layout has been prepared." );
+
+    m_layout.m_cellType = other.m_layout.m_cellType;
+    m_layout.m_alignment = other.m_layout.m_alignment;
+    m_text = std::move( other.m_text );
   }
+  return *this;
+}
+
+void TableLayout::Cell::setText( string_view text )
+{
+  if( !m_layout.getLines().empty() )
+    throw std::runtime_error( "Cannot reassign Cell text after its layout has been prepared." );
+
+  m_text = text;
 }
 
 TableLayout::Column::Column():
-  m_parent( nullptr ), m_next( nullptr )
-{
-  m_header.m_lines = {};
-  m_header.m_cellType  = CellType::Header;
-  m_header.m_alignment = Alignment::center;
-}
+  m_header( CellType::Header, defaultHeaderAlignment )
+{}
 
-TableLayout::Column::Column( TableLayout::CellLayout cell ):
-  m_parent( nullptr ), m_next( nullptr )
-{ m_header = cell; }
-
+TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):
+  m_header( CellType::Header, alignment.headerAlignment, name ),
+  m_alignment( alignment )
+{}
 
 TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
-  m_header.m_lines.push_back( std::string( name ) );
-  divideCell( m_header.m_lines, m_header.m_lines[0] );
-  m_header.m_cellType = CellType::Header;
+  m_header.setText( name );
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::setVisibility( CellType celltype )
+TableLayout::Column & TableLayout::Column::setVisibility( bool visible )
 {
-  m_header.m_cellType = celltype;
+  m_header.m_layout.m_cellType = visible ? CellType::Header : CellType::Hidden;
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< string > subColName )
+TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< string > subColNames )
 {
-  stdVector< TableLayout::Column > subColumns;
-  for( auto const & name : subColName )
+  m_subColumns.reserve( m_subColumns.size() + subColNames.size() );
+  for( auto const & name : subColNames )
   {
-    TableLayout::CellLayout cell{CellType::Header, name, TableLayout::Alignment::center};
-    TableLayout::Column col{cell};
-    subColumns.emplace_back( col );
+    m_subColumns.emplace_back( TableLayout::Column( name, m_alignment ) );
   }
-  m_subColumn = subColumns;
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< TableLayout::Column > subCol )
+TableLayout::Column & TableLayout::Column::addSubColumns( std::vector< string > const & subColNames )
 {
-  m_subColumn = subCol;
+  m_subColumns.reserve( m_subColumns.size() + subColNames.size() );
+  for( auto const & name : subColNames )
+  {
+    m_subColumns.emplace_back( TableLayout::Column( name, m_alignment ) );
+  }
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( string const & subColName )
+TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list< TableLayout::Column > newSubColumns )
 {
-  TableLayout::CellLayout cell{CellType::Header, subColName, TableLayout::Alignment::center};
-  TableLayout::Column col{cell};
-  this->m_subColumn.push_back( col );
+  m_subColumns.insert( m_subColumns.end(),
+                       std::make_move_iterator( newSubColumns.begin() ),
+                       std::make_move_iterator( newSubColumns.end() ) );
+  return *this;
+}
+
+TableLayout::Column & TableLayout::Column::addSubColumn( string_view subColName )
+{
+  m_subColumns.emplace_back( Column( subColName, TableLayout::ColumnAlignement() ) );
+  return *this;
+}
+
+TableLayout::Column & TableLayout::Column::addSubColumn( TableLayout::Column const & subCol )
+{
+  m_subColumns.push_back( subCol );
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::setHeaderAlignment( Alignment headerAlignment )
 {
   m_alignment.headerAlignment = headerAlignment;
-  m_header.m_alignment = headerAlignment;
+  m_header.m_layout.m_alignment = headerAlignment;
+
+  if( !m_subColumns.empty() )
+  {
+    for( auto & subColumn : m_subColumns )
+    {
+      subColumn.setHeaderAlignment( headerAlignment );
+    }
+  }
   return *this;
 }
 
 TableLayout::Column & TableLayout::Column::setValuesAlignment( Alignment valueAlignment )
 {
   m_alignment.valueAlignment = valueAlignment;
+
+  if( !m_subColumns.empty() )
+  {
+    for( auto & subColumn : m_subColumns )
+    {
+      subColumn.setValuesAlignment( valueAlignment );
+    }
+  }
   return *this;
 }
 
 TableLayout::DeepFirstIterator & TableLayout::DeepFirstIterator::operator++()
 {
-  if( m_currentColumn->getNextCell() != nullptr )
+  if( m_currentColumn->getNext() != nullptr )
   {
-    m_currentColumn = m_currentColumn->getNextCell();
+    m_currentColumn = m_currentColumn->getNext();
     while( m_currentColumn->hasChild() )
     {
       m_currentLayer++;
-      m_currentColumn = &m_currentColumn->m_subColumn[0];
+      m_currentColumn = &m_currentColumn->m_subColumns[0];
     }
   }
   else
@@ -218,32 +275,89 @@ TableLayout::DeepFirstIterator TableLayout::DeepFirstIterator::operator++( int )
   return temp;
 }
 
-TableLayout::DeepFirstIterator TableLayout::beginDeepFirst()
+TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
 {
-  TableLayout::Column * startColumn = &(*m_tableColumnsData.begin());
+  TableLayout::Column const * startColumn = &(*m_tableColumns.begin());
   size_t idxLayer = 0;
   if( startColumn->hasChild() )
   {
     while( startColumn->hasChild() )
     {
       idxLayer++;
-      startColumn = &startColumn->m_subColumn[0];
+      startColumn = &startColumn->m_subColumns[0];
     }
   }
   return DeepFirstIterator( startColumn, idxLayer );
 }
 
-bool TableLayout::DeepFirstIterator::isLastColumn()
+PreparedTableLayout::PreparedTableLayout(  ):
+  TableLayout(),
+  m_columnLayersCount( 0 ),
+  m_lowermostColumnCount( 0 )
+{}
+
+PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
+  TableLayout( other ),
+  m_columnLayersCount( 0 ),
+  m_lowermostColumnCount( 0 )
 {
-  if( m_currentColumn == nullptr )
-    return true;
-  TableLayout::Column * tempColumn = m_currentColumn;
-  while( tempColumn->getParent() )
-  {
-    tempColumn = tempColumn->getParent();
-  }
-  return tempColumn->getNextCell() == nullptr;
+  prepareLayoutRecusive( m_tableColumns, 0 );
+
+  m_tableTitleLayout.prepareLayout( m_tableTitleStr, noColumnMaxWidth );
 }
 
+void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
+                                                 size_t level )
+{
+  for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  {
+    Column & column = columns[idxColumn];
+
+    if( column.isVisible() )
+    {
+      m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
+
+      if( !column.hasChild() )
+      {
+        ++m_lowermostColumnCount;
+      }
+    }
+
+    column.m_header.prepareLayout( getMaxColumnWidth() );
+
+    if( idxColumn < columns.size() - 1 )
+    {
+      column.setNext( &columns[idxColumn + 1] );
+    }
+
+    if( !column.m_subColumns.empty())
+    {
+      for( auto & subCol : column.m_subColumns )
+      {
+        subCol.setParent( &column );
+        subCol.setVisibility( subCol.isVisible() && column.isVisible() );
+      }
+
+      prepareLayoutRecusive( column.m_subColumns, level + 1 );
+    }
+  }
+}
+
+void TableLayout::CellLayout::prepareLayout( string_view inputText, size_t maxLineWidth )
+{
+  m_lines = stringutilities::divideLines< string_view >( m_cellWidth, inputText );
+
+  if( maxLineWidth != noColumnMaxWidth && m_cellWidth > maxLineWidth )
+  {
+    m_lines = stringutilities::wrapTextToMaxLength( m_lines, maxLineWidth );
+    // maxLineWidth has been updated
+    m_cellWidth = maxLineWidth;
+  }
+}
+
+void TableLayout::Cell::prepareLayout( size_t maxLineWidth )
+{
+  m_layout.prepareLayout( m_text, maxLineWidth );
+}
 
 }
